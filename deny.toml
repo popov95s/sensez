@@ -1,0 +1,88 @@
+# cargo-deny policy — supply-chain guardrails enforced in CI.
+#
+# The core invariant this file encodes: **sensez has no network capability**,
+# except the optional `semantic` feature's one-time embedding-model download
+# (ureq, reachable only via hf-hub / model2vec-rs). Any commit or dependency
+# bump that introduces another network-capable crate anywhere in the graph —
+# including transitively — fails the build. See SECURITY.md.
+
+[graph]
+# Audit the maximal surface: every feature combination we ship.
+all-features = true
+
+[advisories]
+# Fail on any RustSec advisory (vulnerabilities, unmaintained, unsound).
+version = 2
+yanked = "deny"
+ignore = [
+  # custom_derive is unmaintained, pulled transitively by `bio` (suffix array).
+  # Accepted until the planned libsais migration replaces bio (see
+  # specs/feature-roadmap.md, perf section). No vulnerability — staleness only.
+  { id = "RUSTSEC-2025-0058", reason = "transitive via bio; replaced when bio -> libsais lands" },
+  # fxhash is unmaintained; sensez itself moved to rustc-hash, but bio still
+  # uses it internally. Same bio -> libsais migration covers it.
+  { id = "RUSTSEC-2025-0057", reason = "transitive via bio; replaced when bio -> libsais lands" },
+  # number_prefix is unmaintained, pulled by hf-hub's progress bars (indicatif)
+  # under the optional `semantic` feature. No vulnerability — staleness only.
+  { id = "RUSTSEC-2025-0119", reason = "transitive via model2vec-rs -> hf-hub -> indicatif" },
+  # paste (proc-macro) is unmaintained, pulled by tokenizers/simba under the
+  # optional `semantic` feature. Compile-time only — never in the binary.
+  { id = "RUSTSEC-2024-0436", reason = "transitive via model2vec-rs -> tokenizers; build-time proc-macro" },
+]
+
+[licenses]
+# Sensez is MIT; keep the tree to permissive, MIT-compatible licenses.
+version = 2
+allow = [
+  "MIT",
+  "Apache-2.0",
+  "Apache-2.0 WITH LLVM-exception",
+  "BSD-2-Clause",
+  "BSD-3-Clause",
+  "ISC",
+  "Zlib",
+  "Unicode-3.0",
+  "MPL-2.0",
+  "CDLA-Permissive-2.0",
+]
+confidence-threshold = 0.8
+
+# model2vec-rs ships an MIT LICENSE file (verified) but omits the `license`
+# field from its manifest; clarify so the check stays strict for everyone else.
+[[licenses.clarify]]
+crate = "model2vec-rs"
+expression = "MIT"
+license-files = [{ path = "LICENSE", hash = 0 }]
+
+[bans]
+multiple-versions = "warn"
+wildcards = "deny"   # no `*` version requirements
+deny = [
+  # --- network stacks: sensez must not gain telemetry capability ---
+  # ureq is allowed ONLY as the model-download transport of the `semantic`
+  # feature (wrappers = the crates allowed to depend on it).
+  { crate = "ureq", wrappers = ["hf-hub", "model2vec-rs"] },
+  { crate = "reqwest" },
+  { crate = "hyper" },
+  { crate = "hyper-util" },
+  { crate = "h2" },
+  { crate = "curl" },
+  { crate = "curl-sys" },
+  { crate = "isahc" },
+  { crate = "attohttpc" },
+  { crate = "minreq" },
+  { crate = "libssh2-sys" },
+  # --- TLS stacks only via the sanctioned download path ---
+  { crate = "rustls", wrappers = ["ureq"] },
+  { crate = "native-tls" },
+  { crate = "openssl" },
+  { crate = "openssl-sys" },
+]
+
+[sources]
+# Dependencies may come only from crates.io — no git or alternate registries,
+# closing the "repoint a dep at a malicious fork" vector.
+unknown-registry = "deny"
+unknown-git = "deny"
+allow-registry = ["https://github.com/rust-lang/crates.io-index"]
+allow-git = []

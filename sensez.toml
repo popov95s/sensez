@@ -1,0 +1,66 @@
+# sensez architectural boundary configuration.
+#
+# `roots` overrides package-root auto-detection (src-layout vs flat). Leave
+# empty to auto-detect from pyproject.toml / __init__.py chains.
+roots = []
+
+# Files excluded from the scan entirely (every pillar). Globs.
+exclude = []   # e.g. ["**/tests/**", "**/migrations/**"]
+
+# Duplication detector: minimum structural-token run length to report a clone.
+# Copy-paste detection. A clone is a run of identical lexemes — real
+# names/methods/types/literals/operators are kept; only function-local variable
+# names are normalized (so `module.get(b)` and `module.get(y)` match, but
+# `.get` vs `.post`, `str` vs `int`, and `5` vs `10` do not).
+[duplication]
+threshold = 50         # minimum matched token-run length
+max_gap = 10           # Type-3: stitch two clones separated by <= N tokens (a small
+                       # inserted/edited region) when the gap is consistent; 0 disables
+exclude = [            # paths kept out of duplication only (still in the graph)
+    "**/tests/**", "**/test/**", "**/migrations/**", "**/alembic/**",
+    "**/conftest.py", "**/test_*.py", "**/*_test.py",
+]
+
+# Dead-code detector. Liveness is modeled from declared entry points + usage
+# evidence; sensez carries no hardcoded framework names.
+#   entrypoints      = decorator trailing names treated as registration (live).
+#   entrypoint_names = function/class names invoked dynamically (register/main/...).
+#   entry_points     = file globs whose modules are reached outside the import
+#                      graph (path-discovered runners). Their symbols are never
+#                      flagged. (pyproject [project.scripts]/entry-points are
+#                      auto-detected in addition to these.)
+[dead_code]
+entrypoints = ["route", "fixture", "task", "command", "app", "cli"]
+entrypoint_names = ["register", "main", "setup"]
+# File globs reached outside the import graph (their symbols are never flagged
+# dead, but they still contribute import edges). Defaults cover alembic
+# migrations and tests/fixtures; override to customize (the list replaces these).
+entry_points = [
+    "**/alembic/**", "**/migrations/**",
+    "**/tests/**", "**/test/**", "**/conftest.py", "**/test_*.py", "**/*_test.py",
+]
+# Opt-in expanded categories (off by default). Enable to approach vulture's
+# coverage at the cost of more candidates to review.
+unused_imports = false    # flag imports whose bound name is never used in-file
+unused_methods = false    # flag class methods never referenced in their module
+unused_variables = false  # flag unused module-level variables
+
+# Boundary auditor: forbidden import edges. Each rule forbids any module
+# matching `from` from importing any module matching `to`.
+#
+# Pattern matching (per endpoint):
+#   - Plain name      → dotted PREFIX (matches the module and its submodules):
+#                         from = "app.domain"   # app.domain + app.domain.*
+#   - Glob (* ? [])   → matched against BOTH the module name AND the file path:
+#                         from = "app.domain.*"     # module-name glob
+#                         from = "**/domain/**"     # file-path glob (robust to
+#                                                   # namespace packages / no __init__.py)
+# The `to` side also matches the literal import target, so rules still fire when
+# an import can't be resolved to an in-repo module. A rule whose `from` matches
+# no module is reported under meta.unmatched_boundary_rules (so a typo isn't
+# mistaken for a clean pass).
+[boundaries]
+
+# [[boundaries.forbidden]]
+# from = "app.api.endpoints.*"
+# to = "app.db.*"

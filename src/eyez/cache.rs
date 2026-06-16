@@ -1,0 +1,146 @@
+//! On-disk eyez cache (bincode) with a content-hash delta.
+//!
+//! Correctness rests on a per-doc content key — `hash(symbol_path, kind, text)` —
+//! NOT on mtime and NOT on a tree structure. On refresh, any doc whose key is
+//! already cached keeps its vector; only genuinely new/changed docs are embedded;
+//! docs that disappeared are dropped. So a docstring edit re-embeds exactly that
+//! one symbol, and untouched docs are never recomputed.
+
+use super::embed::Embedder;
+use super::extract::Doc;
+use crate::eyez::DocKind;
+use anyhow::{Context, Result};
+use serde::{Deserialize, Serialize};
+use std::collections::{HashMap, HashSet};
+use std::path::Path;
+
+/// Cache location relative to the project root.
+const CACHE_REL: &str = ".sensez/eyez-cache.bin";
+
+/// The persisted index: `docs[i]` is described by `vectors[i]` (kept 1:1).
+#[derive(Default, Serialize, Deserialize)]
+pub struct SystemCache {
+    pub docs: Vec<CachedDoc>,
+    pub vectors: Vec<Vec<f32>>,
+}
+
+/// One indexed doc plus its content key.
+#[derive(Clone, Serialize, Deserialize)]
+pub struct CachedDoc {
+    pub key: u64,
+    pub file: String,
+    pub line: usize,
+    pub symbol_path: String,
+    pub kind: DocKind,
+    pub text: String,
+}
+
+/// Hydrate the cache from disk; a missing/corrupt file yields an empty cache.
+pub fn load(root: &Path) -> SystemCache {
+    let path = root.join(CACHE_REL);
+    std::fs::read(&path)
+        .ok()
+        .and_then(|bytes| postcard::from_bytes(&bytes).ok())
+        .unwrap_or_default()
+}
+
+impl SystemCache {
+    /// Diff `docs` against the cache by content key and embed only the misses.
+    pub fn refresh(&mut self, docs: &[Doc], embedder: &Embedder) -> Result<()> {
+        // Cached key -> vector. Both sides are rebuilt below, so the old
+        // entries are MOVED out, never cloned (vectors can be MBs in total).
+        let mut have: HashMap<u64, Vec<f32>> = std::mem::take(&mut self.docs)
+            .into_iter()
+            .map(|d| d.key)
+            .zip(std::mem::take(&mut self.vectors))
+            .collect();
+
+        // Desired docs, de-duplicated by key (identical doc text under the same
+        // symbol/kind collapses to one entry).
+        let mut seen: HashSet<u64> = HashSet::new();
+        let wanted: Vec<&Doc> = docs.iter().filter(|d| seen.insert(key(d))).collect();
+
+        // Embed the cache misses in one batch.
+        let missing: Vec<&Doc> = wanted
+            .iter()
+            .copied()
+            .filter(|d| !have.contains_key(&key(d)))
+            .collect();
+        let texts: Vec<String> = missing.iter().map(|d| d.text.clone()).collect();
+        for (d, vector) in missing.iter().zip(embedder.embed(&texts)) {
+            have.insert(key(d), vector);
+        }
+
+        // Rebuild aligned docs+vectors for exactly the wanted set (drops stale).
+        let mut new_docs = Vec::with_capacity(wanted.len());
+        let mut new_vecs = Vec::with_capacity(wanted.len());
+        for d in &wanted {
+            let k = key(d);
+            // `wanted` is key-deduplicated, so each vector is taken exactly once.
+            if let Some(vector) = have.remove(&k) {
+                new_docs.push(CachedDoc {
+                    key: k,
+                    file: d.file.to_string_lossy().into_owned(),
+                    line: d.line,
+                    symbol_path: d.symbol_path.clone(),
+                    kind: d.kind,
+                    text: d.text.clone(),
+                });
+                new_vecs.push(vector);
+            }
+        }
+        self.docs = new_docs;
+        self.vectors = new_vecs;
+        Ok(())
+    }
+
+    /// Write the cache back to `.sensez/eyez-cache.bin` under `root`.
+    pub fn persist(&self, root: &Path) -> Result<()> {
+        crate::dotdir::ensure(root, None)?;
+        let path = root.join(CACHE_REL);
+        let bytes = postcard::to_allocvec(self).context("serializing eyez cache")?;
+        std::fs::write(&path, bytes).with_context(|| format!("writing {}", path.display()))?;
+        Ok(())
+    }
+}
+
+/// Content+identity key: changes whenever the file, symbol path, kind, or text
+/// changes. Including the file keeps identical docs in different files as
+/// distinct results (and only re-embeds a doc whose *text* actually changed —
+/// the line moving within a file does not change the key).
+pub fn key(d: &Doc) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut h = rustc_hash::FxHasher::default();
+    d.file.to_string_lossy().hash(&mut h);
+    d.symbol_path.hash(&mut h);
+    (d.kind as u8).hash(&mut h);
+    d.text.hash(&mut h);
+    h.finish()
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn doc(sym: &str, text: &str) -> Doc {
+        Doc {
+            file: std::path::PathBuf::from("m.py"),
+            line: 1,
+            symbol_path: sym.to_string(),
+            kind: DocKind::Docstring,
+            text: text.to_string(),
+        }
+    }
+
+    /// A changed key (edited text) is a cache miss; an unchanged key is reused.
+    #[test]
+    fn key_changes_only_on_content_change() {
+        let a = doc("m::f", "Add one.");
+        let same = doc("m::f", "Add one.");
+        let edited = doc("m::f", "Add two.");
+        let moved = doc("m::g", "Add one.");
+        assert_eq!(key(&a), key(&same));
+        assert_ne!(key(&a), key(&edited), "text edit must change the key");
+        assert_ne!(key(&a), key(&moved), "symbol move must change the key");
+    }
+}

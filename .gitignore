@@ -1,0 +1,8 @@
+.DS_Store
+.sensez/
+.venv/
+target/
+__pycache__/
+node_modules/
+results/
+specs*

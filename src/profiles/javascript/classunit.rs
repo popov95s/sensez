@@ -1,0 +1,108 @@
+//! Per-class structural summary for the design-smell pillar (JS/TS), plus the
+//! tuple-return-arity helper used by `units::analyze_function`. Split from
+//! `units` to keep each file within the module size budget.
+
+use super::symbols;
+use crate::spine::ir::ClassUnit;
+use tree_sitter::Node;
+
+/// Build a [`ClassUnit`] for a `class`/`class_declaration`/`abstract_class_declaration`.
+pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
+    let mut unit = ClassUnit {
+        name: symbols::def_name(class, src).unwrap_or_default(),
+        start_line: class.start_position().row + 1,
+        end_line: class.end_position().row + 1,
+        bases: base_classes(class, src),
+        is_abstract: class.kind() == "abstract_class_declaration",
+        ..Default::default()
+    };
+    let Some(body) = class.child_by_field_name("body") else {
+        return unit;
+    };
+    let mut cursor = body.walk();
+    for member in body.named_children(&mut cursor) {
+        if member.kind() != "method_definition" {
+            continue;
+        }
+        let Some(name) = symbols::def_name(member, src) else {
+            continue;
+        };
+        unit.methods.push(name.clone());
+        if let Some(mbody) = member.child_by_field_name("body") {
+            if is_stub_body(mbody) {
+                unit.overrides_to_stub.push(name);
+            }
+        }
+        // `method_attr_use` is filled by the post-walk join in `traversal`.
+    }
+    unit
+}
+
+/// `extends Base` + TS `implements I1, I2` — every (type-)identifier named in
+/// the class heritage clause.
+fn base_classes(class: Node, src: &[u8]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cursor = class.walk();
+    for child in class.children(&mut cursor) {
+        if child.kind() == "class_heritage" {
+            collect_idents(child, src, &mut out);
+        }
+    }
+    out
+}
+
+fn collect_idents(node: Node, src: &[u8], out: &mut Vec<String>) {
+    if matches!(node.kind(), "identifier" | "type_identifier") {
+        if let Ok(t) = node.utf8_text(src) {
+            out.push(t.to_string());
+        }
+        return;
+    }
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        collect_idents(child, src, out);
+    }
+}
+
+/// A method body that only `throw`s (`throw new Error("not implemented")`) — the
+/// JS/TS analog of a `raise NotImplementedError` stub.
+fn is_stub_body(body: Node) -> bool {
+    let mut cursor = body.walk();
+    let stmts: Vec<Node> = body
+        .named_children(&mut cursor)
+        .filter(|s| s.kind() != "comment")
+        .collect();
+    matches!(stmts.as_slice(), [one] if one.kind() == "throw_statement")
+}
+
+/// Top-level element count of a tuple return annotation `(): [A, B, C]`, else 0.
+/// JS array returns are too common to treat as tuples, so only the annotation
+/// counts — the analog of Python's bare `return a, b, c`.
+pub fn tuple_return_arity(func: Node, src: &[u8]) -> usize {
+    let Some(text) = func
+        .child_by_field_name("return_type")
+        .and_then(|n| n.utf8_text(src).ok())
+    else {
+        return 0;
+    };
+    let body = match text
+        .trim_start_matches(':')
+        .trim()
+        .strip_prefix('[')
+        .and_then(|s| s.strip_suffix(']'))
+    {
+        Some(b) if !b.trim().is_empty() => b,
+        _ => return 0,
+    };
+    let mut depth = 0usize;
+    let mut count = 1usize;
+    for c in body.chars() {
+        match c {
+            '[' | '(' | '<' | '{' => depth += 1,
+            ']' | ')' | '>' | '}' => depth = depth.saturating_sub(1),
+            ',' if depth == 0 => count += 1,
+            _ => {}
+        }
+    }
+    count
+}

@@ -1,0 +1,46 @@
+[project]
+name = "baseline-comparisons"
+version = "0.1.0"
+requires-python = ">=3.11"
+dependencies = [
+    "pycycle>=0.0.8",
+    "pylint>=4.0.5",        # provides `symilar`
+    "vulture>=2.16",
+    "smellcheck>=0.1",      # Python code-smell detector (sensez smells pillar)
+    "repowise>=0.1",        # codebase-intelligence layer (sensez dead-code pillar)
+]
+# NOTE: `import-linter` (a would-be boundaries comparison tool) was removed — it pins
+# rich>=14.2 while repowise pins rich<14, a disjoint conflict uv cannot lock.
+# It's unused by the harness anyway (boundaries needs project contracts). To
+# benchmark it, install it into a SEPARATE venv. The non-Python TypeScript
+# solution is `fallow`, pinned in package.json and run from node_modules/.bin.
+
+[dependency-groups]
+dev = [
+    "ruff>=0.15.16",
+]
+
+[tool.ruff.lint]
+# Activate every rule ruff ships.
+select = ["ALL"]
+# Formatter-conflicting + mutually-incompatible rules (ruff recommends disabling).
+ignore = ["COM812", "ISC001", "D203", "D213"]
+
+[tool.ruff.lint.per-file-ignores]
+# These are local benchmark/analysis scripts: prints ARE the intended output,
+# they shell out to known tools, and full docstring/annotation/pathlib
+# strictness is not warranted. `select = ALL` still applies fully to any real
+# package modules added later.
+"*.py" = [
+    "T201",                                  # print is the output
+    "S603", "S607", "S311",                  # subprocess of known tools; non-crypto random
+    "INP001",                                # scripts dir, not a package
+    "D",                                     # docstring completeness
+    "ANN",                                   # type annotations
+    "PTH", "SIM115", "PLW1514",              # os.path / open() conveniences
+    "PLR2004",                               # magic numeric thresholds
+    "BLE001",                                # broad except in best-effort helpers
+    "EM101", "EM102", "TRY003",              # inline exception/exit messages
+    "C901", "PLR0911", "PLR0912", "PLR0915", # script complexity
+    "E501", "ERA001",                        # long HTML/f-strings; example-comment lines
+]

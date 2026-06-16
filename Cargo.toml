@@ -1,0 +1,78 @@
+[package]
+name = "sensez"
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+description = "Sensez — the structural maintainability layer that complements your linter and type-checker"
+default-run = "sense"
+readme = "README.md"
+documentation = "https://docs.rs/sensez"
+keywords = ["architecture", "dead-code", "duplication", "code-quality", "tree-sitter"]
+categories = ["command-line-utilities", "development-tools"]
+exclude = [
+    "baseline-comparisons/**",
+    "skills/**",
+    "specs/**",
+    ".github/**",
+    "CLAUDE.md",
+    "sensez.toml",
+    "uv.lock",
+]
+
+[lib]
+name = "sensez"
+
+[[bin]]
+name = "sense"
+path = "src/main.rs"
+
+[features]
+default = ["all-langs"]
+lang-python = ["dep:tree-sitter-python"]
+lang-javascript = ["dep:tree-sitter-javascript"]
+# TypeScript reuses the JavaScript walker helpers, so it implies lang-javascript.
+lang-typescript = ["dep:tree-sitter-typescript", "lang-javascript"]
+lang-rust = ["dep:tree-sitter-rust"]
+all-langs = ["lang-python", "lang-javascript", "lang-typescript", "lang-rust"]
+mcp = ["dep:tokio"]
+# Optional, standalone eyez layer (doc/comment indexing + local embeddings +
+# on-disk cache). Independent of `mcp`; opt in with `--features eyez`.
+# Default embedder is the pure-Rust Model2Vec static model.
+eyez = ["dep:model2vec-rs", "dep:postcard"]
+# Backwards-compatible alias for older build invocations.
+semantic = ["eyez"]
+
+[dependencies]
+clap = { version = "4.5", features = ["derive", "env"] }
+tree-sitter = "0.25"
+tree-sitter-python = { version = "0.25", optional = true }
+tree-sitter-javascript = { version = "0.25", optional = true }
+# Latest published TS grammar is 0.23.x; it targets the same tree-sitter ABI
+# as core 0.25 (verified at runtime by the per-language parse smoke tests).
+tree-sitter-typescript = { version = "0.23", optional = true }
+# Same ABI note as TS: latest Rust grammar is 0.24.x (parse smoke tests verify).
+tree-sitter-rust = { version = "0.24", optional = true }
+ignore = "0.4"
+globset = "0.4"
+rustc-hash = "2"  # FxHasher; replaced unmaintained fxhash (RUSTSEC-2025-0057)
+rayon = "1.10"
+petgraph = "0.6"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+anyhow = "1"
+bio = "2"
+colored = "2"
+tokio = { version = "1", features = ["full"], optional = true }
+# Eyez doc search (feature = "eyez"). Model2Vec is pure-Rust static
+# embeddings (no ONNX runtime); postcard persists the on-disk cache (compact
+# serde binary format; replaced unmaintained bincode, RUSTSEC-2025-0141).
+model2vec-rs = { version = "0.2", optional = true }
+postcard = { version = "1", default-features = false, features = ["use-std"], optional = true }
+
+[dev-dependencies]
+# Unique, panic-safe temp dirs for tests (no fixed-name collisions or leaks).
+tempfile = "3"
+
+[package.metadata.docs.rs]
+all-features = true

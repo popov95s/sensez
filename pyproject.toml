@@ -1,0 +1,36 @@
+[build-system]
+requires = ["maturin>=1.7,<2.0"]
+build-backend = "maturin"
+
+[project]
+name = "sensez"
+version = "0.1.0"
+description = "Sensez — the structural maintainability layer that complements your linter and type-checker"
+requires-python = ">=3.9"
+readme = "README.md"
+keywords = ["architecture", "dead-code", "duplication", "code-quality"]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Rust",
+    "Topic :: Software Development :: Quality Assurance",
+]
+
+[tool.maturin]
+# Build the PyO3 bindings (gated behind the `python` cargo feature) as an
+# extension module only for wheel builds, not for ordinary cargo tests.
+features = ["python", "pyo3/extension-module"]
+
+[tool.uv]
+cache-keys = [
+    { file = "pyproject.toml" },
+    { file = "Cargo.toml" },
+    { file = "**/*.rs" },
+]
+
+[tool.uv.workspace]
+members = [
+    "baseline-comparisons",
+]
+
+[dependency-groups]
+dev = ["pytest>=8", "maturin>=1.7,<2.0"]

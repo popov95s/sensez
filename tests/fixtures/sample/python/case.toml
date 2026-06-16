@@ -1,0 +1,74 @@
+name = "python product signals"
+
+[meta]
+issues_empty = true
+boundaries_configured = true
+min_internal_edges = 3
+
+[[cycles.contains]]
+modules = ["app.api.schemas", "app.domain.orders"]
+action = "warning"
+
+[[boundaries.contains]]
+from = "app.domain.orders"
+to = "app.api.schemas"
+rule = "app.domain -x-> app.api"
+action = "must_fix"
+
+[[dead_code.contains]]
+module = "app.domain.orders"
+symbol = "stale_discount"
+confidence = "High"
+action = "advisory"
+
+[[dead_code.absent]]
+symbol = "create_order"
+
+[[dead_code.absent]]
+symbol = "nightly_reindex"
+
+[[dead_code.absent]]
+symbol = "setup"
+
+[[duplication.contains]]
+files = ["app/domain/billing.py", "app/domain/pricing.py"]
+
+[[smells.contains]]
+kind = "boolean_blindness"
+symbol = "create_order"
+
+[[smells.contains]]
+kind = "loose_typing"
+symbol = "create_order"
+
+[[smells.contains]]
+kind = "mutated_parameter"
+symbol = "create_order"
+
+[[smells.contains]]
+kind = "implicit_schema"
+symbol = "create_order"
+
+[[smells.contains]]
+kind = "tuple_packing"
+symbol = "create_order"
+
+[[smells.contains]]
+kind = "literal_membership"
+symbol = "create_order"
+
+[[smells.contains]]
+kind = "split_variable"
+symbol = "pick_pipeline"
+
+[[smells.contains]]
+kind = "message_chain"
+symbol = "read_remote_country"
+
+[[smells.contains]]
+kind = "high_complexity"
+symbol = "overloaded_policy"
+
+[[smells.contains]]
+kind = "long_parameter_list"
+symbol = "overloaded_policy"

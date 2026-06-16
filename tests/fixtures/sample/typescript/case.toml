@@ -1,0 +1,66 @@
+name = "typescript product signals"
+
+[meta]
+issues_empty = true
+boundaries_configured = true
+min_internal_edges = 6
+
+[[cycles.contains]]
+modules = ["src/ui/viewModel", "src/domain/orders"]
+action = "warning"
+
+[[boundaries.contains]]
+from = "src/domain/orders"
+to = "src/ui/viewModel"
+rule = "src/domain/* -x-> src/ui/*"
+action = "must_fix"
+
+[[dead_code.contains]]
+module = "src/domain/orders"
+symbol = "unusedFormatter"
+confidence = "High"
+action = "advisory"
+
+[[dead_code.absent]]
+symbol = "testHelper"
+
+[[duplication.contains]]
+files = ["src/domain/priceQuote.ts", "src/domain/shippingQuote.ts"]
+
+[[smells.contains]]
+kind = "boolean_blindness"
+symbol = "normalizeOptions"
+
+[[smells.contains]]
+kind = "loose_typing"
+symbol = "normalizeOptions"
+
+[[smells.contains]]
+kind = "mutated_parameter"
+symbol = "normalizeOptions"
+
+[[smells.contains]]
+kind = "implicit_schema"
+symbol = "normalizeOptions"
+
+[[smells.contains]]
+kind = "tuple_packing"
+symbol = "normalizeOptions"
+
+[[smells.contains]]
+kind = "literal_membership"
+symbol = "normalizeOptions"
+
+[[smells.contains]]
+kind = "boolean_blindness"
+symbol = "deeplyNested"
+
+[[smells.contains]]
+kind = "shotgun_surgery_hazard"
+symbol = "src/domain/orders"
+
+[[smells.absent]]
+kind = "deep_nesting"
+
+[[smells.absent]]
+kind = "high_cognitive_complexity"

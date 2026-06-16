@@ -1,0 +1,18 @@
+[duplication]
+threshold = 8
+max_gap = 0
+near_miss = false
+
+[smells.python]
+max_cognitive = 4
+max_chain_depth = 2
+split_variable = true
+param_reassignment = true
+cyclomatic_complexity = true
+max_cyclomatic = 3
+long_parameter_list = true
+max_params = 4
+
+[[boundaries.forbidden]]
+from = "app.domain"
+to = "app.api"

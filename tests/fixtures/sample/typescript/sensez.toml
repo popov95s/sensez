@@ -1,0 +1,11 @@
+[duplication]
+threshold = 8
+max_gap = 0
+near_miss = false
+
+[smells.typescript]
+max_chain_depth = 2
+
+[[boundaries.forbidden]]
+from = "src/domain/*"
+to = "src/ui/*"

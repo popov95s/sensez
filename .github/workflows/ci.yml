@@ -1,0 +1,39 @@
+name: CI
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  pull_request:
+
+jobs:
+  rust:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Install cargo-deny
+        run: cargo install cargo-deny --locked
+
+      - name: Audit dependencies
+        run: cargo deny check
+
+      - name: Lint
+        run: cargo clippy --all-features --all-targets -- -D warnings
+
+      - name: Run tests
+        run: cargo test --all-features
