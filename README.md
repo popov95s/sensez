@@ -1,8 +1,4 @@
-# sensez
-
-Why can't coding agents detect code smells? Because they don't have a `noze`.
-
-That is the whole bit. Also, unfortunately, the whole problem.
+### Why can't coding agents detect code smells? Because they don't have a `noze`.
 
 Coding agents are very good at producing code. They are also very good at
 producing the same helper three times, gently ignoring your architecture notes,
@@ -13,14 +9,39 @@ The vibes are immaculate. You come back a few minutes later to a slopocalypse
 that looks nothing like what your AGENTS.md says and you spend hours trying to
 understand where to start.
 
-Sensez is a structural maintainability layer for maintenance before tech debt
+Sensez is a suite of Rust CLIs with an MCP server for maintenance before tech debt
 accumulates. It runs beside your linter and type-checker and looks for cross-file
 problems they usually do not own: duplication, dead code, import cycles, boundary
 violations, and design smells. It is designed to give your coding agent the
 `noze` to detect code smells, the `bonez` to respect architectural boundaries,
 and the `spine` to do it fast.
 
-Supported language profiles currently include Python, JavaScript, TypeScript, and Rust.
+Supported language profiles currently include Python, JavaScript, TypeScript, and Rust (for dogfooding primarily).
+
+## Quick Start
+### Python
+```Bash
+# Run a one-off scan with uv
+uvx --from sensez sense noze .
+
+# Add as a dev dependency
+uv add --dev sensez
+# Or install using pip
+pip install sensez
+```
+
+### JS/TS
+```Bash
+# Add as a dev dependency
+npm install --save-dev sensez
+# Generate a sensez.toml starter config
+sense init . --yes
+
+# Run a one-off scan with npx
+npx sense noze .
+```
+
+`sense noze .` is the default scan, but you can also use the verbose method: `sense noze sniff .`
 
 ## The Problem
 
@@ -40,24 +61,13 @@ Coding agents drift. Not due to bad intentions, but because their loop is leaky.
 3. Slow checks do not fit the turn.
    If a check takes minutes, it should not run every agent turn. If it does not
    run every turn, the slop has time to ferment.
-
-Sensez gives agents short, structured feedback while the edit is still fresh.
-Less archaeology, more "fix it before it becomes load-bearing."
-
-## Install
-
-Public npm and PyPI distributions are planned. Both will expose the same
-`sense` command.
-
-```bash
-uvx --from sensez sense noze .
-uv add --dev sensez
-sense init . --yes
-sense noze .
-sense noze . --diff --json
+```
+[Agent Proposes Turn Finish] ──> [ 👃 Sensez MCP Sniff ] ──> [ Catches Import Cycle / Duplication ]
+                                   │
+                                   └──> (Immediate Agent Feedback: "Loose typing violation on line 40 of code.py. Replace loose collections with dataclass/model.")
 ```
 
-`sense noze .` is the default scan, but you can also use the verbose method: `sense noze sniff .`
+Sensez provides short, structured feedback directly to the agent while the edit is still fresh. Less archaeology, more "fix it before it becomes load-bearing."
 
 ## noze
 
@@ -193,6 +203,6 @@ It is a lead finder, not a complete code search.
 ## Privacy
 
 Sensez does not send telemetry or source code anywhere. Local metrics stay under
-`.sensez/local-metrics/`. The optional `eyez` feature may download an embedding
-model the first time it is used; after that, indexing and search are local.
+`.sensez/local-metrics/`. The optional `eyez` feature downloads an embedding
+model from HuggingFace the first time it is used; after that, indexing and search are local.
 
