@@ -2,6 +2,7 @@
 
 use super::*;
 use std::fs;
+use std::path::PathBuf;
 
 fn temp_root() -> (tempfile::TempDir, PathBuf) {
     let tmp = tempfile::tempdir().unwrap();
@@ -43,6 +44,8 @@ fn flag_driven_init_writes_all_artifacts() {
     assert!(fs::read_to_string(root.join(".gitignore"))
         .unwrap()
         .contains(".sensez/"));
+    assert!(root.join(".sensez").is_dir(), ".sensez dir created");
+    assert!(root.join(".sensez/.gitignore").exists());
 
     // Idempotent: a second run must not duplicate the hook entry.
     run(InitOptions {
@@ -57,6 +60,33 @@ fn flag_driven_init_writes_all_artifacts() {
         serde_json::from_str(&fs::read_to_string(root.join(".claude/settings.json")).unwrap())
             .unwrap();
     assert_eq!(settings["hooks"]["Stop"].as_array().unwrap().len(), 1);
+}
+
+#[test]
+fn interactive_agent_catalog_includes_more_modern_agents() {
+    let ids: Vec<&str> = agents::AGENTS.iter().map(|a| a.id).collect();
+    assert!(ids.contains(&"cline"));
+    assert!(ids.contains(&"codex"));
+    assert!(ids.contains(&"opencode"));
+    assert!(ids.contains(&"pi"));
+    assert_eq!(
+        agents::find("codex").unwrap().mcp_relpath,
+        Some(".codex/config.toml")
+    );
+}
+
+#[test]
+fn codex_resolves_to_project_config_path() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path().to_path_buf();
+    let path = root.join(".codex/config.toml");
+    assert_eq!(root.join(".codex/config.toml"), path);
+}
+
+#[test]
+fn codex_has_project_config_path_and_can_fallback() {
+    let spec = agents::find("codex").unwrap();
+    assert_eq!(spec.mcp_relpath, Some(".codex/config.toml"));
 }
 
 #[test]

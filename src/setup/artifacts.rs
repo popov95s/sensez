@@ -1,6 +1,7 @@
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::path::Path;
+use std::process::Command;
 
 const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability layer that complements your linter and
 # type-checker (e.g. Ruff/ty for Python, ESLint/tsc for JS/TS): duplication,
@@ -107,24 +108,85 @@ pub fn write_config(root: &Path, self_improvement: bool, into_pyproject: bool) -
     }
 }
 
+pub fn ensure_sensez_dir(root: &Path) -> Result<String> {
+    let dir = root.join(".sensez");
+    std::fs::create_dir_all(&dir).with_context(|| format!("creating {}", dir.display()))?;
+    let ignore = dir.join(".gitignore");
+    if !ignore.exists() {
+        std::fs::write(&ignore, "*\n").with_context(|| format!("writing {}", ignore.display()))?;
+    }
+    Ok("created .sensez/ for local metrics and caches".into())
+}
+
 pub fn write_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<String> {
-    let rel = match agent {
-        "cursor" => ".cursor/mcp.json",
-        _ => ".mcp.json",
-    };
+    let rel = crate::setup::agents::find(agent)
+        .and_then(|spec| spec.mcp_relpath)
+        .ok_or_else(|| anyhow::anyhow!("no MCP config path is known for agent '{agent}'"))?;
     let path = root.join(rel);
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("creating {}", parent.display()))?;
     }
-    let mut config: Value = std::fs::read_to_string(&path)
+    match path.extension().and_then(|ext| ext.to_str()) {
+        Some("toml") => write_mcp_toml(&path, sensez_bin)?,
+        _ => write_mcp_json(&path, sensez_bin)?,
+    }
+    Ok(format!("registered Sensez MCP server as `sense` in {}", path.display()))
+}
+
+pub fn codex_mcp_add(sensez_bin: &str) -> Result<String> {
+    let output = Command::new("codex")
+        .args(["mcp", "add", "sense", sensez_bin, "mcp", "serve"])
+        .output()
+        .context("running `codex mcp add`")?;
+    if output.status.success() {
+        return Ok("registered Sensez MCP server as `sense` with `codex mcp add`".into());
+    }
+    let stderr = String::from_utf8_lossy(&output.stderr);
+    Err(anyhow::anyhow!(
+        "`codex mcp add` failed (status {}): {}",
+        output.status,
+        stderr.trim()
+    ))
+}
+
+fn write_mcp_json(path: &Path, sensez_bin: &str) -> Result<()> {
+    let mut config: Value = std::fs::read_to_string(path)
         .ok()
         .and_then(|t| serde_json::from_str(&t).ok())
         .unwrap_or_else(|| json!({}));
     config["mcpServers"]["sense"] = json!({"command": sensez_bin, "args": ["mcp", "serve"]});
-    std::fs::write(&path, serde_json::to_string_pretty(&config)?)
+    std::fs::write(path, serde_json::to_string_pretty(&config)?)
         .with_context(|| format!("writing {}", path.display()))?;
-    Ok(format!("registered Sensez MCP server as `sense` in {rel}"))
+    Ok(())
+}
+
+fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
+    let mut config: toml::Value = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|t| toml::from_str(&t).ok())
+        .unwrap_or_else(|| toml::Value::Table(toml::map::Map::new()));
+    let table = config
+        .as_table_mut()
+        .ok_or_else(|| anyhow::anyhow!("{} must be a TOML table", path.display()))?;
+    let mcp = table
+        .entry("MCP_servers")
+        .or_insert_with(|| toml::Value::Table(toml::map::Map::new()))
+        .as_table_mut()
+        .ok_or_else(|| anyhow::anyhow!("MCP_servers must be a TOML table"))?;
+    let mut sense = toml::map::Map::new();
+    sense.insert("command".to_string(), toml::Value::String(sensez_bin.to_string()));
+    sense.insert(
+        "args".to_string(),
+        toml::Value::Array(vec![
+            toml::Value::String("mcp".to_string()),
+            toml::Value::String("serve".to_string()),
+        ]),
+    );
+    mcp.insert("sense".to_string(), toml::Value::Table(sense));
+    std::fs::write(path, toml::to_string_pretty(&config)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
 }
 
 pub fn write_gate(root: &Path) -> Result<String> {

@@ -75,6 +75,7 @@ pub enum Command {
 
 #[derive(Args, Debug)]
 #[command(
+    after_help = "Examples:\n  sense noze . --diff --fail-on-new\n  sense noze . --diff --fail-on-new warning\n  sense noze . --diff --fail-on-new must_fix",
     args_conflicts_with_subcommands = true,
     subcommand_precedence_over_arg = true
 )]
@@ -165,10 +166,19 @@ pub struct ScanOptions {
     /// Keep only findings touching a unified diff read from FILE ("-" = stdin).
     #[arg(long, value_name = "FILE", conflicts_with = "diff")]
     pub diff_from: Option<String>,
-    /// Exit non-zero if any diff-relevant findings remain.
-    #[arg(long)]
-    pub fail_on_new: bool,
+    /// Exit non-zero if diff-scoped findings meet or exceed the given action level.
+    /// Defaults to `must_fix` when the flag is present without a value.
+    #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1)]
+    pub fail_on_new: Option<FailOnNewLevel>,
     /// Append a plain-English legend defining each finding category shown.
     #[arg(long)]
     pub explain: bool,
+}
+
+#[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
+pub enum FailOnNewLevel {
+    MustFix,
+    Warning,
+    Advisory,
+    Info,
 }

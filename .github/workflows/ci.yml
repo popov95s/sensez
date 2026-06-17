@@ -37,3 +37,6 @@ jobs:
 
       - name: Run tests
         run: cargo test --all-features
+
+      - name: Dogfood
+        run: cargo run -- noze . --diff --fail-on-new must_fix

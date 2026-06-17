@@ -5,7 +5,7 @@ mod spec;
 use crate::diff::ChangedLines;
 use anyhow::{Context, Result};
 use clap::Parser;
-use spec::{Cli, Command, NozeAction, NozeArgs, ScanOptions};
+use spec::{Cli, Command, FailOnNewLevel, NozeAction, NozeArgs, ScanOptions};
 use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::process::ExitCode;
@@ -136,17 +136,40 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     };
     println!("{output}");
 
-    if options.fail_on_new && report.meta.mode == crate::noze::ReportMode::Diff {
-        let relevant = report.cycles.len()
-            + report.dead_code.len()
-            + report.boundaries.len()
-            + report.duplication.len()
-            + report.smells.len();
-        if relevant > 0 {
+    if let Some(level) = options.fail_on_new {
+        if report.meta.mode == crate::noze::ReportMode::Diff
+            && report_meets_fail_level(&report, level)
+        {
             return Ok(ExitCode::FAILURE);
         }
     }
     Ok(ExitCode::SUCCESS)
+}
+
+fn report_meets_fail_level(
+    report: &crate::report::AnalysisReport,
+    level: FailOnNewLevel,
+) -> bool {
+    let threshold = match level {
+        FailOnNewLevel::MustFix => crate::report::ActionLevel::MustFix,
+        FailOnNewLevel::Warning => crate::report::ActionLevel::Warning,
+        FailOnNewLevel::Advisory => crate::report::ActionLevel::Advisory,
+        FailOnNewLevel::Info => crate::report::ActionLevel::Info,
+    };
+    report_findings(report).any(|action| action <= threshold)
+}
+
+fn report_findings(
+    report: &crate::report::AnalysisReport,
+) -> impl Iterator<Item = crate::report::ActionLevel> + '_ {
+    report
+        .cycles
+        .iter()
+        .map(|finding| finding.action)
+        .chain(report.dead_code.iter().map(|finding| finding.action))
+        .chain(report.boundaries.iter().map(|finding| finding.action))
+        .chain(report.duplication.iter().map(|finding| finding.action))
+        .chain(report.smells.iter().map(|finding| finding.action))
 }
 
 /// Resolve the optional diff source into a [`ChangedLines`] set.
@@ -167,4 +190,87 @@ fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> Result<Option
         return Ok(Some(ChangedLines::from_unified(&text, path)));
     }
     Ok(None)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::report::{
+        ActionLevel, AnalysisReport, BoundaryViolation, CloneClass, CloneOccurrence, Confidence,
+        CycleEdge, CycleFinding, DeadCodeFinding, ReportMode, ReportMeta, Severity, SmellFinding,
+        SmellKind,
+    };
+    use crate::spine::ir::SymbolKind;
+    use std::path::PathBuf;
+
+    #[test]
+    fn fail_on_new_blocks_at_configured_level() {
+        let mut report = AnalysisReport {
+            meta: ReportMeta {
+                mode: ReportMode::Diff,
+                ..ReportMeta::default()
+            },
+            ..AnalysisReport::default()
+        };
+        report.smells.push(SmellFinding {
+            action: ActionLevel::Advisory,
+            kind: SmellKind::LongFunction,
+            message: String::new(),
+            file: PathBuf::from("a.py"),
+            line: 1,
+            end_line: 1,
+            symbol: "f".into(),
+            severity: Severity::Warning,
+            metric: 1,
+            threshold: 1,
+            reason: String::new(),
+        });
+        assert!(!report_meets_fail_level(&report, FailOnNewLevel::MustFix));
+        assert!(!report_meets_fail_level(&report, FailOnNewLevel::Warning));
+        report.smells[0].action = ActionLevel::Warning;
+        assert!(report_meets_fail_level(&report, FailOnNewLevel::Warning));
+        report.smells[0].action = ActionLevel::MustFix;
+        assert!(report_meets_fail_level(&report, FailOnNewLevel::MustFix));
+
+        let _ = (
+            CycleFinding {
+                action: ActionLevel::Advisory,
+                modules: vec![],
+                edges: vec![CycleEdge {
+                    from_module: String::new(),
+                    to_module: String::new(),
+                    file: PathBuf::from("a.py"),
+                    line: 1,
+                }],
+            },
+            DeadCodeFinding {
+                action: ActionLevel::Advisory,
+                module: String::new(),
+                symbol: String::new(),
+                kind: SymbolKind::Function,
+                confidence: Confidence::High,
+                file: PathBuf::from("a.py"),
+                line: 1,
+                reason: String::new(),
+            },
+            BoundaryViolation {
+                action: ActionLevel::Advisory,
+                from_module: String::new(),
+                to_module: String::new(),
+                file: PathBuf::from("a.py"),
+                line: 1,
+                rule: String::new(),
+            },
+            CloneClass {
+                action: ActionLevel::Advisory,
+                token_length: 1,
+                occurrences: vec![CloneOccurrence {
+                    file: PathBuf::from("a.py"),
+                    start_row: 1,
+                    end_row: 1,
+                }],
+                hint: None,
+            },
+        );
+    }
 }

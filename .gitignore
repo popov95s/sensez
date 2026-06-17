@@ -4,5 +4,10 @@
 target/
 __pycache__/
 node_modules/
-results/
+results*
 specs*
+evals/**/results*/
+evals/**/predictions/
+evals/**/__pycache__/
+evals/*
+.codex

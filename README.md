@@ -61,7 +61,7 @@ Coding agents drift. Not due to bad intentions, but because their loop is leaky.
 3. Slow checks do not fit the turn.
    If a check takes minutes, it should not run every agent turn. If it does not
    run every turn, the slop has time to ferment.
-```
+```text
 [Agent Proposes Turn Finish] ──> [ 👃 Sensez MCP Sniff ] ──> [ Catches Import Cycle / Duplication ]
                                    │
                                    └──> (Immediate Agent Feedback: "Loose typing violation on line 40 of code.py. Replace loose collections with dataclass/model.")
@@ -205,4 +205,3 @@ It is a lead finder, not a complete code search.
 Sensez does not send telemetry or source code anywhere. Local metrics stay under
 `.sensez/local-metrics/`. The optional `eyez` feature downloads an embedding
 model from HuggingFace the first time it is used; after that, indexing and search are local.
-

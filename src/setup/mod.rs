@@ -1,3 +1,4 @@
+mod agents;
 mod artifacts;
 mod prompts;
 
@@ -23,20 +24,19 @@ pub fn run(opts: InitOptions) -> Result<()> {
     }
 
     let agent = match opts.agent.as_deref() {
-        Some(a @ ("claude-code" | "cursor" | "other")) => a.to_string(),
-        Some(other) => bail!("unknown --agent '{other}' (claude-code | cursor | other)"),
+        Some(a) if agents::find(a).is_some() => a.to_string(),
+        Some(other) => bail!(
+            "unknown --agent '{other}' (claude-code | cursor | cline | codex | opencode | pi | other)"
+        ),
         None if interactive => {
-            let choice = prompts::select(
-                "Which coding agent will use Sensez here?",
-                &["Claude Code", "Cursor", "Other / none (print instructions)"],
-                0,
-            )?;
-            ["claude-code", "cursor", "other"][choice].to_string()
+            let options = agents::prompt_options();
+            let choice = prompts::select("Which coding agent will use Sensez here?", &options, 0)?;
+            agents::from_choice(choice).id.to_string()
         }
         None => "claude-code".to_string(),
     };
 
-    let gate = if agent == "claude-code" {
+    let gate = if agents::find(&agent).is_some_and(|spec| spec.supports_hooks) {
         opts.gate
             || (interactive
                 && !opts.yes
@@ -89,14 +89,28 @@ pub fn run(opts: InitOptions) -> Result<()> {
         metrics_enabled,
         into_pyproject,
     )?];
-    if agent == "other" {
+    done.push(artifacts::ensure_sensez_dir(&root)?);
+    let agent_spec = agents::find(&agent);
+    if matches!(agent_spec.map(|spec| spec.kind), Some(agents::AgentKind::Other)) {
         done.push(
             "any MCP client works: speak JSON-RPC over stdio to `sense mcp serve` \
              (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)"
                 .to_string(),
         );
-    } else {
+    } else if matches!(agent_spec.map(|spec| spec.kind), Some(agents::AgentKind::Codex)) {
+        match artifacts::codex_mcp_add(&sensez_bin) {
+            Ok(msg) => done.push(msg),
+            Err(err) => {
+                eprintln!("note: {err:#}");
+                done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
+            }
+        }
+    } else if agent_spec.and_then(|spec| spec.mcp_relpath).is_some() {
         done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
+    } else {
+        done.push(
+            "no MCP config path is known for this agent yet; use `sense mcp serve` from your agent's MCP settings".to_string(),
+        );
     }
     if gate {
         done.push(artifacts::write_gate(&root)?);
@@ -115,7 +129,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
         } else {
             "sensez.toml"
         },
-        if agent == "claude-code" {
+        if agents::find(&agent).is_some_and(|spec| spec.supports_hooks) {
             "Reload your Claude Code window to pick up the MCP server."
         } else {
             "Restart your agent to pick up the MCP server."
