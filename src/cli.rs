@@ -146,10 +146,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
-fn report_meets_fail_level(
-    report: &crate::report::AnalysisReport,
-    level: FailOnNewLevel,
-) -> bool {
+fn report_meets_fail_level(report: &crate::report::AnalysisReport, level: FailOnNewLevel) -> bool {
     let threshold = match level {
         FailOnNewLevel::MustFix => crate::report::ActionLevel::MustFix,
         FailOnNewLevel::Warning => crate::report::ActionLevel::Warning,
@@ -197,7 +194,7 @@ mod tests {
     use super::*;
     use crate::report::{
         ActionLevel, AnalysisReport, BoundaryViolation, CloneClass, CloneOccurrence, Confidence,
-        CycleEdge, CycleFinding, DeadCodeFinding, ReportMode, ReportMeta, Severity, SmellFinding,
+        CycleEdge, CycleFinding, DeadCodeFinding, ReportMeta, ReportMode, Severity, SmellFinding,
         SmellKind,
     };
     use crate::spine::ir::SymbolKind;

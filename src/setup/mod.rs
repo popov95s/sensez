@@ -91,13 +91,19 @@ pub fn run(opts: InitOptions) -> Result<()> {
     )?];
     done.push(artifacts::ensure_sensez_dir(&root)?);
     let agent_spec = agents::find(&agent);
-    if matches!(agent_spec.map(|spec| spec.kind), Some(agents::AgentKind::Other)) {
+    if matches!(
+        agent_spec.map(|spec| spec.kind),
+        Some(agents::AgentKind::Other)
+    ) {
         done.push(
             "any MCP client works: speak JSON-RPC over stdio to `sense mcp serve` \
              (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)"
                 .to_string(),
         );
-    } else if matches!(agent_spec.map(|spec| spec.kind), Some(agents::AgentKind::Codex)) {
+    } else if matches!(
+        agent_spec.map(|spec| spec.kind),
+        Some(agents::AgentKind::Codex)
+    ) {
         match artifacts::codex_mcp_add(&sensez_bin) {
             Ok(msg) => done.push(msg),
             Err(err) => {

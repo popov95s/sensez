@@ -131,7 +131,10 @@ pub fn write_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<St
         Some("toml") => write_mcp_toml(&path, sensez_bin)?,
         _ => write_mcp_json(&path, sensez_bin)?,
     }
-    Ok(format!("registered Sensez MCP server as `sense` in {}", path.display()))
+    Ok(format!(
+        "registered Sensez MCP server as `sense` in {}",
+        path.display()
+    ))
 }
 
 pub fn codex_mcp_add(sensez_bin: &str) -> Result<String> {
@@ -175,7 +178,10 @@ fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
         .as_table_mut()
         .ok_or_else(|| anyhow::anyhow!("MCP_servers must be a TOML table"))?;
     let mut sense = toml::map::Map::new();
-    sense.insert("command".to_string(), toml::Value::String(sensez_bin.to_string()));
+    sense.insert(
+        "command".to_string(),
+        toml::Value::String(sensez_bin.to_string()),
+    );
     sense.insert(
         "args".to_string(),
         toml::Value::Array(vec![
