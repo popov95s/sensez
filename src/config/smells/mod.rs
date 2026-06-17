@@ -12,8 +12,8 @@ mod knobs;
 
 pub use knobs::Smells;
 
-use crate::noze::{ActionLevel, SmellKind};
 use crate::profiles::Language;
+use crate::report::{ActionLevel, SmellKind};
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
 
