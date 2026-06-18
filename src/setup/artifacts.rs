@@ -1,7 +1,6 @@
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::path::Path;
-use std::process::Command;
 
 const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability layer that complements your linter and
 # type-checker (e.g. Ruff/ty for Python, ESLint/tsc for JS/TS): duplication,
@@ -137,22 +136,6 @@ pub fn write_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<St
     ))
 }
 
-pub fn codex_mcp_add(sensez_bin: &str) -> Result<String> {
-    let output = Command::new("codex")
-        .args(["mcp", "add", "sense", sensez_bin, "mcp", "serve"])
-        .output()
-        .context("running `codex mcp add`")?;
-    if output.status.success() {
-        return Ok("registered Sensez MCP server as `sense` with `codex mcp add`".into());
-    }
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    Err(anyhow::anyhow!(
-        "`codex mcp add` failed (status {}): {}",
-        output.status,
-        stderr.trim()
-    ))
-}
-
 fn write_mcp_json(path: &Path, sensez_bin: &str) -> Result<()> {
     let mut config: Value = std::fs::read_to_string(path)
         .ok()
@@ -172,11 +155,23 @@ fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
     let table = config
         .as_table_mut()
         .ok_or_else(|| anyhow::anyhow!("{} must be a TOML table", path.display()))?;
+    let remove_legacy = if let Some(legacy) = table
+        .get_mut("MCP_servers")
+        .and_then(toml::Value::as_table_mut)
+    {
+        legacy.remove("sense");
+        legacy.is_empty()
+    } else {
+        false
+    };
+    if remove_legacy {
+        table.remove("MCP_servers");
+    }
     let mcp = table
-        .entry("MCP_servers")
+        .entry("mcp_servers")
         .or_insert_with(|| toml::Value::Table(toml::map::Map::new()))
         .as_table_mut()
-        .ok_or_else(|| anyhow::anyhow!("MCP_servers must be a TOML table"))?;
+        .ok_or_else(|| anyhow::anyhow!("mcp_servers must be a TOML table"))?;
     let mut sense = toml::map::Map::new();
     sense.insert(
         "command".to_string(),

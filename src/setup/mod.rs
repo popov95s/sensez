@@ -100,17 +100,6 @@ pub fn run(opts: InitOptions) -> Result<()> {
              (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)"
                 .to_string(),
         );
-    } else if matches!(
-        agent_spec.map(|spec| spec.kind),
-        Some(agents::AgentKind::Codex)
-    ) {
-        match artifacts::codex_mcp_add(&sensez_bin) {
-            Ok(msg) => done.push(msg),
-            Err(err) => {
-                eprintln!("note: {err:#}");
-                done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
-            }
-        }
     } else if agent_spec.and_then(|spec| spec.mcp_relpath).is_some() {
         done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
     } else {
