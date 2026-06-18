@@ -1,0 +1,24 @@
+{
+  "name": "sensez",
+  "version": "0.1.0",
+  "description": "Sensez CLI launcher for structural maintainability checks",
+  "license": "MIT",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/popov95s/sensez.git",
+    "directory": "npm"
+  },
+  "bin": {
+    "sense": "bin/sense.js"
+  },
+  "files": [
+    "bin"
+  ],
+  "publishConfig": {
+    "provenance": true
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

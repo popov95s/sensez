@@ -37,7 +37,7 @@ jobs:
           const wanted = process.env.RELEASE_VERSION;
           const cargo = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
           const pyproject = fs.readFileSync('pyproject.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
-          const npm = JSON.parse(fs.readFileSync('package.json', 'utf8')).version;
+          const npm = JSON.parse(fs.readFileSync('npm/package.json', 'utf8')).version;
           if (!wanted || cargo !== wanted || pyproject !== wanted || npm !== wanted) {
             console.error(`release version mismatch: wanted=${wanted}, cargo=${cargo}, pyproject=${pyproject}, npm=${npm}`);
             process.exit(1);
@@ -61,13 +61,13 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: build
-          args: --release --no-default-features --features lang-python --out dist
+          args: --release --no-default-features --features lang-python --out dist/pypi
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
           name: pypi-wheel-${{ matrix.os }}
-          path: dist/*.whl
+          path: dist/pypi/*.whl
           if-no-files-found: error
 
   publish-pypi:
@@ -82,7 +82,7 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           pattern: pypi-wheel-*
-          path: dist
+          path: dist/pypi
           merge-multiple: true
 
       - name: Publish to PyPI
@@ -120,18 +120,18 @@ jobs:
       - name: Stage release asset
         shell: bash
         run: |
-          mkdir -p dist
+          mkdir -p dist/npm
           binary="target/release/sense"
           if [ "${{ runner.os }}" = "Windows" ]; then
             binary="target/release/sense.exe"
           fi
-          cp "$binary" "dist/${{ matrix.asset }}"
+          cp "$binary" "dist/npm/${{ matrix.asset }}"
 
       - name: Upload release asset
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
-          files: dist/${{ matrix.asset }}
+          files: dist/npm/${{ matrix.asset }}
           generate_release_notes: ${{ matrix.asset == 'sensez-js-linux-x64' }}
 
   publish-npm:
@@ -154,4 +154,5 @@ jobs:
         run: npm install -g npm@11.5.1
 
       - name: Publish npm package
+        working-directory: npm
         run: npm publish --provenance --access public
