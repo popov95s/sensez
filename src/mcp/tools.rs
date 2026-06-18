@@ -10,12 +10,26 @@ use serde_json::{json, Value};
 pub fn tools_list() -> Value {
     #[cfg(feature = "eyez")]
     let tools = {
-        let mut tools = vec![scan(), gate(), explain(), triage_finding(), usage_report()];
+        let mut tools = vec![
+            scan(),
+            configuration_summary(),
+            gate(),
+            explain(),
+            triage_finding(),
+            usage_report(),
+        ];
         tools.insert(1, search_docs());
         tools
     };
     #[cfg(not(feature = "eyez"))]
-    let tools = vec![scan(), gate(), explain(), triage_finding(), usage_report()];
+    let tools = vec![
+        scan(),
+        configuration_summary(),
+        gate(),
+        explain(),
+        triage_finding(),
+        usage_report(),
+    ];
     json!({ "tools": tools })
 }
 
@@ -42,6 +56,32 @@ fn scan() -> Value {
                 "threshold": {"type": "integer", "description": "Duplication token threshold"},
                 "limit": {"type": "integer", "description": "Cap each pillar to top-N ranked findings (0 = unlimited)"},
                 "diff": {"type": "boolean", "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Full-graph analysis either way."}
+            },
+            "required": ["path"]
+        }
+    })
+}
+
+fn configuration_summary() -> Value {
+    json!({
+        "name": "get_configuration_summary",
+        "description": "Use this tool when the user explicitly asks to tune, \
+                        optimize, or adjust their sensez linting and code-smell \
+                        thresholds. It returns a high-level statistical summary \
+                        of rule violations across the repository without \
+                        flooding the context window.\n\n\
+                        Protocol after invoking: analyze which rules generate \
+                        the most noise based on counts; present a concise, \
+                        conversational summary highlighting the top 2-3 noisy \
+                        rules; offer specific adjustments to the .toml \
+                        configuration file, such as raising a complexity \
+                        threshold or disabling a rule; after user approval, use \
+                        normal file-writing capabilities to update the \
+                        configuration .toml directly.",
+        "inputSchema": {
+            "type": "object",
+            "properties": {
+                "path": {"type": "string", "description": "Absolute path to the repository root"}
             },
             "required": ["path"]
         }

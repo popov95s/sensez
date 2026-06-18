@@ -1,7 +1,9 @@
 //! Tool-call handlers for the MCP surface.
 
+use anyhow::Context;
 use serde_json::{json, Value};
 use std::path::Path;
+use std::process::Command;
 use std::time::Instant;
 
 pub(super) type ToolResult = Result<Value, (i64, String)>;
@@ -9,6 +11,7 @@ pub(super) type ToolResult = Result<Value, (i64, String)>;
 pub(super) fn call(name: &str, args: &Value) -> ToolResult {
     match name {
         "noze_sniff" | "scan" => scan_tool(args),
+        "get_configuration_summary" => configuration_summary(args),
         #[cfg(feature = "eyez")]
         "eyez_search_docs" | "search_docs" => search_docs(args),
         "noze_gate" | "gate" => super::gate::gate(args),
@@ -27,6 +30,27 @@ pub(super) fn required_str<'a>(args: &'a Value, key: &str) -> Result<&'a str, (i
 
 pub(super) fn text_result(text: String, is_error: bool) -> Value {
     json!({"content": [{"type": "text", "text": text}], "isError": is_error})
+}
+
+fn configuration_summary(args: &Value) -> ToolResult {
+    let path = required_str(args, "path")?;
+    match run_summary_command(path) {
+        Ok(text) => Ok(text_result(text, false)),
+        Err(err) => Ok(text_result(format!("{err:#}"), true)),
+    }
+}
+
+fn run_summary_command(path: &str) -> anyhow::Result<String> {
+    let exe = std::env::current_exe().context("resolving current executable")?;
+    let output = Command::new(exe)
+        .args(["noze", path, "--summary"])
+        .output()
+        .context("running `sense noze --summary`")?;
+    if !output.status.success() {
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        anyhow::bail!("summary command failed: {stderr}");
+    }
+    String::from_utf8(output.stdout).context("summary command emitted non-UTF-8 output")
 }
 
 fn scan_tool(args: &Value) -> ToolResult {
@@ -170,6 +194,7 @@ mod tests {
             .filter_map(|t| t["name"].as_str())
             .collect();
         assert!(names.contains(&"noze_sniff"));
+        assert!(names.contains(&"get_configuration_summary"));
         assert!(names.contains(&"brainz_triage"));
         assert!(names.contains(&"brainz_report"));
         assert!(!names.contains(&"record_outcome"));

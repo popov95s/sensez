@@ -8,6 +8,7 @@ mod bonez;
 mod brainz;
 mod cli;
 pub mod config;
+mod config_summary;
 mod diff;
 mod dotdir;
 #[cfg(feature = "eyez")]

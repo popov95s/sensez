@@ -149,8 +149,11 @@ pub enum EyezAction {
 #[derive(Args, Debug)]
 pub struct ScanOptions {
     /// Minimum structural-token run length for the duplication detector.
-    #[arg(long, default_value_t = 50)]
-    pub threshold: usize,
+    #[arg(long)]
+    pub threshold: Option<usize>,
+    /// Emit aggregated per-rule JSON for configuration tuning.
+    #[arg(long)]
+    pub summary: bool,
     /// Emit machine-readable JSON instead of a human-readable report.
     #[arg(long)]
     pub json: bool,
