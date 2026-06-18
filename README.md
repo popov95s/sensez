@@ -18,6 +18,36 @@ and the `spine` to do it fast.
 
 Supported language profiles currently include Python, JavaScript, TypeScript, and Rust (for dogfooding primarily).
 
+## Performance Snapshot
+
+```mermaid
+xychart-beta
+  title "pylint benchmark seconds"
+  x-axis ["sensez", "vulture", "repowise", "symilar"]
+  y-axis "seconds" 0 --> 20
+  bar [0.27, 1.29, 17.26, 20]
+```
+
+`sensez` scans all structural pillars in one pass (`0.27s`). `vulture` checks
+Python dead code (`1.29s`). `repowise` uses a custom ranking mechanism, including dead code (`17.26s`).
+`symilar` checks line-based duplication (`234.12s`; chart capped at `20s`).
+
+### JS/TS
+
+```mermaid
+xychart-beta
+  title "zod benchmark seconds"
+  x-axis ["sensez", "fallow", "repowise"]
+  y-axis "seconds" 0 --> 6
+  bar [0.16, 0.48, 5.75]
+```
+
+`sensez` scans all structural pillars in one pass (`0.16s`). `fallow` checks
+JS/TS structural dead-code and dependency findings (`0.48s`). `repowise` checks
+repo intelligence signals, including dead code (`5.75s`).
+
+`sensez` tries to lower dead code noise and allows for configuration of what gets reported to the agent based on filter levels. It also includes a few more Python and TS/JS opinionated smells, apart from overall structural consistency metrics.
+
 ## Quick Start
 ### Python
 ```Bash
