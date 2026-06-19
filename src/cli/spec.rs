@@ -180,6 +180,7 @@ pub struct ScanOptions {
 
 #[derive(clap::ValueEnum, Clone, Copy, Debug, PartialEq, Eq)]
 pub enum FailOnNewLevel {
+    #[value(name = "must_fix", alias = "must-fix")]
     MustFix,
     Warning,
     Advisory,

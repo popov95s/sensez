@@ -5,7 +5,34 @@ use crate::report::{
     SmellKind,
 };
 use crate::spine::ir::SymbolKind;
+use clap::Parser;
 use std::path::PathBuf;
+
+#[test]
+fn fail_on_new_accepts_project_level_spelling() {
+    for value in ["must_fix", "must-fix"] {
+        let cli = match spec::Cli::try_parse_from(["sense", "noze", ".", "--fail-on-new", value]) {
+            Ok(cli) => cli,
+            Err(err) => panic!("failed to parse --fail-on-new {value}: {err}"),
+        };
+        let Command::Noze(args) = cli.command else {
+            panic!("expected noze command");
+        };
+        assert_eq!(args.options.fail_on_new, Some(FailOnNewLevel::MustFix));
+    }
+}
+
+#[test]
+fn fail_on_new_without_value_defaults_to_must_fix() {
+    let cli = match spec::Cli::try_parse_from(["sense", "noze", ".", "--fail-on-new"]) {
+        Ok(cli) => cli,
+        Err(err) => panic!("failed to parse bare --fail-on-new: {err}"),
+    };
+    let Command::Noze(args) = cli.command else {
+        panic!("expected noze command");
+    };
+    assert_eq!(args.options.fail_on_new, Some(FailOnNewLevel::MustFix));
+}
 
 #[test]
 fn fail_on_new_blocks_at_configured_level() {
