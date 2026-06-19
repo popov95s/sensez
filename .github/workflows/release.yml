@@ -41,15 +41,19 @@ jobs:
       - name: Verify package versions
         env:
           RELEASE_VERSION: ${{ inputs.version }}
+          RELEASE_TARGET: ${{ inputs.target }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
           const wanted = process.env.RELEASE_VERSION;
+          const target = process.env.RELEASE_TARGET;
           const cargo = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
           const pyproject = fs.readFileSync('pyproject.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
-          const npm = JSON.parse(fs.readFileSync('npm/package.json', 'utf8')).version;
+          const npm = target === 'npm' || target === 'release'
+            ? JSON.parse(fs.readFileSync('npm/package.json', 'utf8')).version
+            : wanted;
           if (!wanted || cargo !== wanted || pyproject !== wanted || npm !== wanted) {
-            console.error(`release version mismatch: wanted=${wanted}, cargo=${cargo}, pyproject=${pyproject}, npm=${npm}`);
+            console.error(`release version mismatch: target=${target}, wanted=${wanted}, cargo=${cargo}, pyproject=${pyproject}, npm=${npm}`);
             process.exit(1);
           }
           NODE
@@ -63,8 +67,15 @@ jobs:
       matrix:
         include:
           - os: ubuntu-latest
-          - os: macos-13
+            target: x86_64-unknown-linux-gnu
+          - os: ubuntu-24.04-arm
+            target: aarch64-unknown-linux-gnu
+          - os: macos-15-intel
+            target: x86_64-apple-darwin
+          - os: macos-15
+            target: aarch64-apple-darwin
           - os: windows-latest
+            target: x86_64-pc-windows-msvc
     steps:
       - uses: actions/checkout@v4
 
@@ -72,12 +83,13 @@ jobs:
         uses: PyO3/maturin-action@v1
         with:
           command: build
+          target: ${{ matrix.target }}
           args: --release --no-default-features --features lang-python --out dist/pypi
 
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: pypi-wheel-${{ matrix.os }}
+          name: pypi-wheel-${{ matrix.target }}
           path: dist/pypi/*.whl
           if-no-files-found: error
 
@@ -89,6 +101,7 @@ jobs:
       name: pypi
     permissions:
       id-token: write
+      contents: read
     steps:
       - name: Download wheels
         uses: actions/download-artifact@v4
@@ -103,14 +116,7 @@ jobs:
   build-testpypi-wheels:
     needs: guard
     if: ${{ inputs.target == 'testpypi' }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: ubuntu-latest
-          - os: macos-13
-          - os: windows-latest
+    runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
@@ -123,7 +129,7 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: testpypi-wheel-${{ matrix.os }}
+          name: testpypi-wheel-linux
           path: dist/testpypi/*.whl
           if-no-files-found: error
 
@@ -135,6 +141,7 @@ jobs:
       name: testpypi
     permissions:
       id-token: write
+      contents: read
     steps:
       - name: Download wheels
         uses: actions/download-artifact@v4
@@ -152,16 +159,18 @@ jobs:
     needs: guard
     if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
-    permissions:
-      contents: write
     strategy:
       fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
             asset: sensez-js-linux-x64
-          - os: macos-13
+          - os: ubuntu-24.04-arm
+            asset: sensez-js-linux-arm64
+          - os: macos-15-intel
             asset: sensez-js-darwin-x64
+          - os: macos-15
+            asset: sensez-js-darwin-arm64
           - os: windows-latest
             asset: sensez-js-win32-x64.exe
     steps:
@@ -188,21 +197,42 @@ jobs:
           fi
           cp "$binary" "dist/npm/${{ matrix.asset }}"
 
-      - name: Upload release asset
+      - name: Upload multiplatform binary artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: npm-binary-${{ matrix.asset }}
+          path: dist/npm/${{ matrix.asset }}
+
+  create-gh-release:
+    needs: build-npm-assets
+    if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Download binaries
+        uses: actions/download-artifact@v4
+        with:
+          pattern: npm-binary-*
+          path: dist/release-assets
+          merge-multiple: true
+
+      - name: Create Single GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ inputs.version }}
-          files: dist/npm/${{ matrix.asset }}
-          generate_release_notes: ${{ matrix.asset == 'sensez-js-linux-x64' }}
+          files: dist/release-assets/*
+          generate_release_notes: true
 
   publish-npm:
-    needs: build-npm-assets
+    needs: create-gh-release
     if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
       name: npm
     permissions:
       id-token: write
+      contents: read
     steps:
       - uses: actions/checkout@v4
 

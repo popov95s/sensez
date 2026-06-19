@@ -29,17 +29,26 @@ await ensureBinary(binaryPath, `${baseUrl}/${asset}`);
 await run(binaryPath, process.argv.slice(2));
 
 function assetName(platform, arch) {
-  if (arch !== "x64") {
-    return null;
-  }
   if (platform === "linux") {
-    return "sensez-js-linux-x64";
+    if (arch === "x64") {
+      return "sensez-js-linux-x64";
+    }
+    if (arch === "arm64") {
+      return "sensez-js-linux-arm64";
+    }
   }
   if (platform === "darwin") {
-    return "sensez-js-darwin-x64";
+    if (arch === "x64") {
+      return "sensez-js-darwin-x64";
+    }
+    if (arch === "arm64") {
+      return "sensez-js-darwin-arm64";
+    }
   }
   if (platform === "win32") {
-    return "sensez-js-win32-x64.exe";
+    if (arch === "x64") {
+      return "sensez-js-win32-x64.exe";
+    }
   }
   return null;
 }

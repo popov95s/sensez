@@ -59,6 +59,7 @@ pub struct DeadCodeDefaults {
 }
 
 impl DeadCodeDefaults {
+    #[cfg(feature = "lang-rust")]
     pub const EMPTY: DeadCodeDefaults = DeadCodeDefaults {
         entrypoints: &[],
         entrypoint_names: &[],
