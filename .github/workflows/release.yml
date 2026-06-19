@@ -7,6 +7,16 @@ on:
         description: "Release version without the leading v"
         required: true
         type: string
+      target:
+        description: "Where to publish"
+        required: true
+        default: testpypi
+        type: choice
+        options:
+          - testpypi
+          - pypi
+          - npm
+          - release
 
 jobs:
   guard:
@@ -46,6 +56,7 @@ jobs:
 
   build-pypi-wheels:
     needs: guard
+    if: ${{ inputs.target == 'pypi' || inputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -72,6 +83,7 @@ jobs:
 
   publish-pypi:
     needs: build-pypi-wheels
+    if: ${{ inputs.target == 'pypi' || inputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -88,8 +100,57 @@ jobs:
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
 
+  build-testpypi-wheels:
+    needs: guard
+    if: ${{ inputs.target == 'testpypi' }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+          - os: macos-13
+          - os: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build Python-only wheel
+        uses: PyO3/maturin-action@v1
+        with:
+          command: build
+          args: --release --no-default-features --features lang-python --out dist/testpypi
+
+      - name: Upload wheel artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: testpypi-wheel-${{ matrix.os }}
+          path: dist/testpypi/*.whl
+          if-no-files-found: error
+
+  publish-testpypi:
+    needs: build-testpypi-wheels
+    if: ${{ inputs.target == 'testpypi' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: testpypi
+    permissions:
+      id-token: write
+    steps:
+      - name: Download wheels
+        uses: actions/download-artifact@v4
+        with:
+          pattern: testpypi-wheel-*
+          path: dist/testpypi
+          merge-multiple: true
+
+      - name: Publish to TestPyPI
+        uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          repository-url: https://test.pypi.org/legacy/
+
   build-npm-assets:
     needs: guard
+    if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
     permissions:
       contents: write
@@ -136,6 +197,7 @@ jobs:
 
   publish-npm:
     needs: build-npm-assets
+    if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
       name: npm
