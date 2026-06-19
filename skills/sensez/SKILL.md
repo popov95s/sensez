@@ -2,11 +2,12 @@
 name: sensez
 description: >-
   Use when checking a codebase for structural duplication, dead code candidates,
-  circular imports, boundary violations, or design smells with the `sense` CLI,
-  MCP server. Good triggers: "find duplicate code", "audit this
-  project", "check dead code", "detect cycles", "enforce boundaries", or "run
-  Sensez". Not for per-file lint/type issues; use the language's linter and
-  type-checker for those.
+  circular imports, boundary violations, or design smells with the `sense` CLI
+  or MCP server. Use after edit turns to verify that newly written code is
+  structurally correct. You can also run it on user triggers: "find duplicate code", "audit this
+  project", "check dead code", "detect cycles", "enforce boundaries", "run
+  Sensez", or "check this change". Not for per-file lint/type issues; use the
+  language's linter and type-checker for those.
 ---
 
 # Sensez
@@ -54,10 +55,15 @@ Diff-scoped mode is the right default inside an edit loop:
 sense noze . --diff --json
 git diff HEAD | sense noze . --diff-from - --json
 sense noze . --diff --fail-on-new
+sense noze . --diff --fail-on-new must_fix
 ```
 
 `--max N` caps each pillar's returned findings while preserving true totals in
 `meta.*_total`. Use it to keep agent payloads small.
+
+`--fail-on-new LEVEL` exits non-zero when a diff-scoped finding meets or exceeds
+the configured action level (`must_fix`, `warning`, `advisory`, or `info`). The
+default when the flag is present without a value is `must_fix`.
 
 ## Reading Results
 
@@ -128,8 +134,11 @@ Useful tools:
 
 ## Agent Guidance
 
-Run `sense noze . --diff --json` after code edits. Report only findings that
-touch the current change unless the user asked for a full audit.
+After each edit turn, run `sense noze . --diff --json` to check that the code
+just written is structurally sound. If acting as a gate, use
+`sense noze . --diff --fail-on-new must_fix` so only configured must-fix
+findings block progress. Report only findings that touch the current change
+unless the user asked for a full audit.
 
 Lead with reliable signals: boundary violations, cycles, high-confidence dead
 code, and large duplication classes. For smells, explain why the finding matters

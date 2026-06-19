@@ -15,6 +15,7 @@ pub struct AgentSpec {
     pub id: &'static str,
     pub label: &'static str,
     pub mcp_relpath: Option<&'static str>,
+    pub skill_relpath: Option<&'static str>,
     pub supports_hooks: bool,
 }
 
@@ -24,6 +25,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "claude-code",
         label: "Claude Code",
         mcp_relpath: Some(".mcp.json"),
+        skill_relpath: Some(".claude/skills/sensez"),
         supports_hooks: true,
     },
     AgentSpec {
@@ -31,6 +33,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "cursor",
         label: "Cursor",
         mcp_relpath: Some(".cursor/mcp.json"),
+        skill_relpath: None,
         supports_hooks: false,
     },
     AgentSpec {
@@ -38,6 +41,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "cline",
         label: "Cline",
         mcp_relpath: Some(".cline/mcp.json"),
+        skill_relpath: None,
         supports_hooks: false,
     },
     AgentSpec {
@@ -45,6 +49,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "codex",
         label: "Codex",
         mcp_relpath: Some(".codex/config.toml"),
+        skill_relpath: Some(".codex/skills/sensez"),
         supports_hooks: false,
     },
     AgentSpec {
@@ -52,6 +57,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "opencode",
         label: "OpenCode",
         mcp_relpath: Some(".opencode/mcp.json"),
+        skill_relpath: None,
         supports_hooks: false,
     },
     AgentSpec {
@@ -59,6 +65,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "pi",
         label: "Pi",
         mcp_relpath: Some(".pi/mcp.json"),
+        skill_relpath: None,
         supports_hooks: false,
     },
     AgentSpec {
@@ -66,6 +73,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "other",
         label: "Other / none",
         mcp_relpath: None,
+        skill_relpath: None,
         supports_hooks: false,
     },
 ];

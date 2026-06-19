@@ -1,6 +1,7 @@
 mod agents;
 mod artifacts;
 mod prompts;
+mod skills;
 
 use anyhow::{bail, Context, Result};
 use std::path::{Path, PathBuf};
@@ -106,6 +107,9 @@ pub fn run(opts: InitOptions) -> Result<()> {
         done.push(
             "no MCP config path is known for this agent yet; use `sense mcp serve` from your agent's MCP settings".to_string(),
         );
+    }
+    if let Some(msg) = skills::install(&root, &agent)? {
+        done.push(msg);
     }
     if gate {
         done.push(artifacts::write_gate(&root)?);
