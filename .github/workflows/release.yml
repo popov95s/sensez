@@ -118,7 +118,7 @@ jobs:
   build-testpypi-wheels:
     needs: guard
     if: ${{ inputs.target == 'testpypi' }}
-    runs-on: ubuntu-latest
+    runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
 
@@ -131,7 +131,7 @@ jobs:
       - name: Upload wheel artifact
         uses: actions/upload-artifact@v4
         with:
-          name: testpypi-wheel-linux
+          name: testpypi-wheel-macos-arm64
           path: dist/testpypi/*.whl
           if-no-files-found: error
 
