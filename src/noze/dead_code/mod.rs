@@ -28,7 +28,7 @@ use std::collections::HashSet;
 /// Find unreferenced symbols across the codebase.
 pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Vec<DeadCodeFinding> {
     let entry_modules: HashSet<&str> = config.entry_modules.iter().map(String::as_str).collect();
-    let rules = RuleSets::from_files(files, config);
+    let rule_sets = RuleSets::from_files(files, config);
     let class_entrypoints =
         class_entrypoints::ClassEntrypoints::from_files(files, &config.entrypoint_bases);
     let mut findings = Vec::new();
@@ -36,11 +36,16 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
     for idx in cg.graph.node_indices() {
         let node = &cg.graph[idx];
         let profile = registry::dead_code_profile(node.language);
-        let rules = rules.for_language(node.language);
+        let rules = rule_sets.for_language(node.language);
         if node.is_external || is_entry_module(node, profile, &entry_modules, &rules.entry_globs) {
             continue;
         }
-        let inbound = inbound_usage(cg, idx);
+        let inbound = inbound_usage(cg, idx, |source| {
+            rule_sets
+                .for_language(source.language)
+                .test_source_globs
+                .is_match(&source.file_path)
+        });
         if inbound.star {
             continue; // `from mod import *` consumes everything
         }
@@ -90,7 +95,10 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
         }
         if config.unused_methods {
             findings.extend(extra::unused_methods(files, &modmap, |language, name| {
-                rules.for_language(language).entrypoint_names.contains(name)
+                rule_sets
+                    .for_language(language)
+                    .entrypoint_names
+                    .contains(name)
             }));
         }
     }
@@ -105,6 +113,7 @@ struct RuleSet {
     entrypoints: HashSet<String>,
     entrypoint_names: HashSet<String>,
     entry_globs: GlobSet,
+    test_source_globs: GlobSet,
 }
 
 impl RuleSets {
@@ -118,12 +127,14 @@ impl RuleSets {
                 let entrypoint_names =
                     merged_set(&config.entrypoint_names, defaults.entrypoint_names);
                 let entry_globs = merged_globset(&config.entry_points, defaults.entry_points);
+                let test_source_globs = merged_globset(&[], defaults.test_sources);
                 (
                     language,
                     RuleSet {
                         entrypoints,
                         entrypoint_names,
                         entry_globs,
+                        test_source_globs,
                     },
                 )
             })
@@ -158,5 +169,7 @@ fn merged_globset(configured: &[String], defaults: &'static [&'static str]) -> G
     build_globset(&globs)
 }
 
+#[cfg(test)]
+mod test_sources;
 #[cfg(test)]
 mod tests;

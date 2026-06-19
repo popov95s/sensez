@@ -8,7 +8,10 @@ use std::collections::HashSet;
 use std::path::Path;
 
 pub fn defaults() -> DeadCodeDefaults {
-    DeadCodeDefaults::EMPTY
+    DeadCodeDefaults {
+        test_sources: &["tests/**", "benches/**", "**/*_test.rs"],
+        ..DeadCodeDefaults::EMPTY
+    }
 }
 
 /// Rust has no decorator equivalent in scope yet → never classified.

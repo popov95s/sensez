@@ -54,6 +54,13 @@ pub fn defaults() -> DeadCodeDefaults {
             "**/test_*.py",
             "**/*_test.py",
         ],
+        test_sources: &[
+            "**/tests/**",
+            "**/test/**",
+            "**/conftest.py",
+            "**/test_*.py",
+            "**/*_test.py",
+        ],
     }
 }
 

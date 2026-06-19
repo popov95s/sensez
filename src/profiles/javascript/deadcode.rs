@@ -20,6 +20,15 @@ pub fn defaults() -> DeadCodeDefaults {
             "**/*.test.jsx",
             "**/*.spec.jsx",
         ],
+        test_sources: &[
+            "**/__tests__/**",
+            "**/tests/**",
+            "**/test/**",
+            "**/*.test.js",
+            "**/*.spec.js",
+            "**/*.test.jsx",
+            "**/*.spec.jsx",
+        ],
     }
 }
 
@@ -29,6 +38,15 @@ pub fn typescript_defaults() -> DeadCodeDefaults {
         entrypoint_names: &[],
         entrypoint_bases: &[],
         entry_points: &[
+            "**/__tests__/**",
+            "**/tests/**",
+            "**/test/**",
+            "**/*.test.ts",
+            "**/*.spec.ts",
+            "**/*.test.tsx",
+            "**/*.spec.tsx",
+        ],
+        test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
             "**/test/**",

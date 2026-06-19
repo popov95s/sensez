@@ -56,6 +56,7 @@ pub struct DeadCodeDefaults {
     pub entrypoint_names: &'static [&'static str],
     pub entrypoint_bases: &'static [&'static str],
     pub entry_points: &'static [&'static str],
+    pub test_sources: &'static [&'static str],
 }
 
 impl DeadCodeDefaults {
@@ -65,6 +66,7 @@ impl DeadCodeDefaults {
         entrypoint_names: &[],
         entrypoint_bases: &[],
         entry_points: &[],
+        test_sources: &[],
     };
 }
 

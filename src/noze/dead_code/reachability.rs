@@ -5,6 +5,7 @@ use crate::profiles::DeadCodeProfile;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use globset::GlobSet;
 use petgraph::graph::NodeIndex;
+use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use std::collections::HashSet;
 
@@ -18,10 +19,18 @@ pub(super) struct Inbound {
     pub count: usize,
 }
 
-pub(super) fn inbound_usage(cg: &CodebaseGraph, idx: NodeIndex) -> Inbound {
+pub(super) fn inbound_usage(
+    cg: &CodebaseGraph,
+    idx: NodeIndex,
+    skip_source: impl Fn(&ModuleNode) -> bool,
+) -> Inbound {
     let mut used = HashSet::new();
     let (mut star, mut count) = (false, 0usize);
     for edge in cg.graph.edges_directed(idx, Direction::Incoming) {
+        let source = &cg.graph[edge.source()];
+        if skip_source(source) {
+            continue;
+        }
         count += 1;
         for sym in &edge.weight().imported_symbols {
             if sym == "*" {
