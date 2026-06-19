@@ -112,6 +112,8 @@ jobs:
 
       - name: Publish to PyPI
         uses: pypa/gh-action-pypi-publish@release/v1
+        with:
+          packages-dir: dist/pypi
 
   build-testpypi-wheels:
     needs: guard
@@ -153,6 +155,7 @@ jobs:
       - name: Publish to TestPyPI
         uses: pypa/gh-action-pypi-publish@release/v1
         with:
+          packages-dir: dist/testpypi
           repository-url: https://test.pypi.org/legacy/
 
   build-npm-assets:
