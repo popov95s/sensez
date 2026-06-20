@@ -142,4 +142,6 @@ mod determinism_tests;
 #[cfg(test)]
 mod discipline_tests;
 #[cfg(test)]
+mod nested_if_tests;
+#[cfg(test)]
 mod tests;

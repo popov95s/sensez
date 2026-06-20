@@ -15,6 +15,7 @@ pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
             magic_numbers(func, file, out);
         }
         message_chains(func, cfg, file, out);
+        unnecessary_nested_if(func, file, out);
         if cfg.split_variable {
             split_variables(func, cfg, file, out);
         }
@@ -110,6 +111,24 @@ fn message_chains(
             Severity::Warning,
             func.max_chain_depth as u32,
             cfg.max_chain_depth as u32,
+        ));
+    }
+}
+
+fn unnecessary_nested_if(func: &FunctionUnit, file: &ParsedFile, out: &mut Vec<SmellFinding>) {
+    if func.collapsible_nested_ifs > 0 {
+        out.push(make(
+            SmellKind::UnnecessaryNestedIf,
+            format!(
+                "{} nested if(s) can be combined with a boolean AND",
+                func.collapsible_nested_ifs
+            ),
+            &file.path,
+            func.start_line,
+            &func.name,
+            Severity::Info,
+            func.collapsible_nested_ifs as u32,
+            0,
         ));
     }
 }

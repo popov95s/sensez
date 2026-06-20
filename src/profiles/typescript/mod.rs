@@ -91,6 +91,7 @@ mod tests {
         assert!(kinds.contains(&SmellKind::TuplePacking), "{kinds:?}");
         assert!(kinds.contains(&SmellKind::MutatedParameter), "{kinds:?}");
         assert!(kinds.contains(&SmellKind::MagicStringDefault), "{kinds:?}");
+        assert!(kinds.contains(&SmellKind::UnnecessaryNestedIf), "{kinds:?}");
         // ESLint/SonarJS own these — off by the TS default.
         assert!(!kinds.contains(&SmellKind::DeepNesting), "{kinds:?}");
         assert!(!kinds.contains(&SmellKind::MagicNumbers), "{kinds:?}");

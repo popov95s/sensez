@@ -4,7 +4,7 @@
 //! [`FunctionUnit`] — and `this.<attr>` is normalized to the canonical `"self"`
 //! receiver so the language-neutral detectors work unchanged.
 
-use super::{obsession, symbols};
+use super::{conditionals, obsession, symbols};
 use crate::spine::ir::FunctionUnit;
 use tree_sitter::Node;
 
@@ -109,6 +109,9 @@ impl Acc<'_> {
         }
         if is_branch(kind, node, src) {
             self.unit.branch_count += 1;
+        }
+        if conditionals::is_collapsible_nested_if(node) {
+            self.unit.collapsible_nested_ifs += 1;
         }
         match kind {
             "return_statement" => self.unit.return_count += 1,

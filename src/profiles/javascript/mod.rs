@@ -2,6 +2,7 @@
 //! different grammar.
 
 pub(crate) mod classunit;
+pub(crate) mod conditionals;
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;

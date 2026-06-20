@@ -17,6 +17,8 @@ pub struct FunctionUnit {
     pub return_count: usize,
     /// Decision points (cyclomatic basis): cyclomatic complexity = 1 + this.
     pub branch_count: usize,
+    /// `if x { if y { ... } }` shapes with no else/default path.
+    pub collapsible_nested_ifs: usize,
     /// Nesting-weighted cognitive-complexity accumulator (Sonar-style).
     pub cognitive: usize,
     /// Count of "magic" numeric literals (not 0/1/2).

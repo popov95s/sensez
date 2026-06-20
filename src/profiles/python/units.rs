@@ -1,10 +1,8 @@
 //! Per-function / per-class structural metrics for the design-smell pillar.
 //!
-//! Each function's metrics cover its own body only — nested functions/lambdas
-//! are not descended into (they receive their own [`FunctionUnit`] when the
-//! main traversal reaches them), so complexity isn't double-counted upward.
+//! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
-use super::{classunit, symbols};
+use super::{classunit, conditionals, symbols};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use tree_sitter::Node;
 
@@ -60,6 +58,9 @@ impl<'u> Acc<'u> {
         }
         if is_branch(kind) {
             self.unit.branch_count += 1;
+        }
+        if conditionals::is_collapsible_nested_if(node) {
+            self.unit.collapsible_nested_ifs += 1;
         }
         match kind {
             "return_statement" => self.unit.return_count += 1,

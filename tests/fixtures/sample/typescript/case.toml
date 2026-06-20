@@ -56,6 +56,10 @@ kind = "boolean_blindness"
 symbol = "deeplyNested"
 
 [[smells.contains]]
+kind = "unnecessary_nested_if"
+symbol = "deeplyNested"
+
+[[smells.contains]]
 kind = "shotgun_surgery_hazard"
 symbol = "src/domain/orders"
 

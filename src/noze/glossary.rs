@@ -80,12 +80,13 @@ impl SmellKind {
             SplitVariable => ("Split Variable", "One local is reassigned to mean different things at different points — use distinct, single-purpose bindings."),
             TooManyReturns => ("Too Many Returns", "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much."),
             TuplePacking => ("Tuple Packing", "Data passed as positional tuples whose fields aren't named — use a named structure so meaning is explicit."),
+            UnnecessaryNestedIf => ("Unnecessary Nested If", "An `if` whose only body is another `if`, with no else path — combine the conditions with `and`/`&&` to flatten the control flow."),
         }
     }
 }
 
 /// All smell kinds, for `explain` (no arg) and exhaustiveness in tests.
-pub const ALL_SMELLS: [SmellKind; 26] = {
+pub const ALL_SMELLS: [SmellKind; 27] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -114,6 +115,7 @@ pub const ALL_SMELLS: [SmellKind; 26] = {
         SplitVariable,
         TooManyReturns,
         TuplePacking,
+        UnnecessaryNestedIf,
     ]
 };
 
