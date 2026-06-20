@@ -18,6 +18,13 @@ exclude = [
     "uv.lock",
 ]
 
+[profile.dev]
+debug = 1
+incremental = false
+
+[profile.release]
+debug = 0
+
 [lib]
 name = "sensez"
 
