@@ -73,12 +73,18 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         report.meta.duplication_total,
     );
     for class in &report.duplication {
-        let _ = writeln!(
-            out,
-            "    [{}] clone of {} tokens:",
-            action_label(class.action),
-            class.token_length.to_string().bold()
-        );
+        let detail = class.hint.as_deref().unwrap_or("structural clone");
+        if class.token_length > 0 {
+            let _ = writeln!(
+                out,
+                "    [{}] {} ({}):",
+                action_label(class.action),
+                detail,
+                class.token_length.to_string().bold()
+            );
+        } else {
+            let _ = writeln!(out, "    [{}] {}:", action_label(class.action), detail);
+        }
         for occ in &class.occurrences {
             let _ = writeln!(
                 out,
@@ -227,27 +233,5 @@ fn action_label(level: ActionLevel) -> colored::ColoredString {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn renders_section_headers() {
-        let text = render(&AnalysisReport::default(), false);
-        assert!(text.contains("Circular imports"));
-        assert!(text.contains("Duplication"));
-        assert!(text.contains("Dead code candidates"));
-        assert!(text.contains("Boundary violations"));
-    }
-
-    #[test]
-    fn legend_is_opt_in() {
-        let mut report = AnalysisReport::default();
-        report.meta.glossary = vec![crate::noze::GlossaryEntry {
-            term: "cycles".into(),
-            title: "Import Cycle".into(),
-            explanation: "modules import each other".into(),
-        }];
-        assert!(!render(&report, false).contains("What these mean"));
-        assert!(render(&report, true).contains("What these mean"));
-    }
-}
+#[path = "terminal_tests.rs"]
+mod tests;

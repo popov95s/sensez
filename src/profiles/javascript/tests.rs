@@ -100,6 +100,7 @@ fn identical_functions_are_a_clone() {
         threshold: 10,
         max_gap: 0,
         near_miss: false,
+        class_property_overlap_min: 4,
     };
     let dup = crate::noze::duplication::detect(&files, &cfg);
     assert!(!dup.is_empty(), "identical JS functions must be a clone");
@@ -134,6 +135,7 @@ fn no_cross_language_clones() {
         threshold: 6,
         max_gap: 0,
         near_miss: false,
+        class_property_overlap_min: 4,
     };
     let dup = crate::noze::duplication::detect(&files, &cfg);
     assert!(

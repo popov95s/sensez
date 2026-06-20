@@ -1,5 +1,6 @@
 //! Python language profile.
 
+mod classunit;
 mod deadcode;
 mod imports;
 mod lexeme;

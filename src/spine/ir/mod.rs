@@ -13,7 +13,7 @@ use crate::eyez::RawDoc;
 pub use import_context::ImportContext;
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
-pub use units::{ClassUnit, FunctionUnit, TypeHints};
+pub use units::{ClassProperty, ClassUnit, FunctionUnit, TypeHints};
 
 use std::collections::{HashMap, HashSet};
 

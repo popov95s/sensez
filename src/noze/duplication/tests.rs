@@ -1,8 +1,7 @@
 use super::detect;
+use super::test_support::write_files;
 use crate::config::model::Duplication;
 use crate::noze::CloneClass;
-use crate::spine::parser::parse_file;
-use std::fs;
 
 /// Config with the given threshold, no excludes, no gap stitching.
 fn cfg(threshold: usize) -> Duplication {
@@ -11,6 +10,7 @@ fn cfg(threshold: usize) -> Duplication {
         threshold,
         max_gap: 0,
         near_miss: false,
+        class_property_overlap_min: 4,
     }
 }
 
@@ -20,22 +20,6 @@ fn cfg_near_miss(threshold: usize) -> Duplication {
         near_miss: true,
         ..cfg(threshold)
     }
-}
-
-fn write_files(
-    dir: &std::path::Path,
-    files: &[(&str, &str)],
-) -> Vec<crate::spine::parser::ParsedFile> {
-    for (name, body) in files {
-        let path = dir.join(name);
-        fs::create_dir_all(path.parent().unwrap()).unwrap();
-        fs::write(path, body).unwrap();
-    }
-    files
-        .iter()
-        .enumerate()
-        .map(|(i, (n, _))| parse_file(&dir.join(n), i as u32).unwrap())
-        .collect()
 }
 
 fn touches(clones: &[CloneClass], stem: &str) -> bool {
@@ -190,6 +174,7 @@ fn exclude_globs_drop_matches() {
         threshold: 8,
         max_gap: 0,
         near_miss: false,
+        class_property_overlap_min: 4,
     };
     assert!(detect(&files, &excluded).is_empty(), "tests excluded");
 }

@@ -9,10 +9,13 @@
 //! groups ([`clones`]), optionally gap-stitched ([`gapped`]); occurrences are
 //! mapped back to file/line ranges, de-overlapped, de-duped, and ranked.
 
+mod class_shapes;
 mod clones;
 mod flatten;
 mod gapped;
 mod near_miss;
+#[cfg(test)]
+mod test_support;
 
 use crate::config::model::Duplication;
 use crate::globs::build_globset;
@@ -41,8 +44,8 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
         .collect();
 
     let mut by_language: BTreeMap<crate::profiles::Language, Vec<&ParsedFile>> = BTreeMap::new();
-    for file in kept {
-        by_language.entry(file.language).or_default().push(file);
+    for file in &kept {
+        by_language.entry(file.language).or_default().push(*file);
     }
 
     let mut seen: FxHashSet<u64> = FxHashSet::default();
@@ -50,9 +53,27 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
     for partition in by_language.values() {
         detect_partition(partition, config, &mut seen, &mut out);
     }
+    out.extend(class_shapes::detect(
+        &kept,
+        config.class_property_overlap_min,
+    ));
     // Rank by impact: long clones with many occurrences first.
-    out.sort_by_key(|c| std::cmp::Reverse(c.token_length * c.occurrences.len()));
+    out.sort_by_key(|c| {
+        (
+            action_rank(c.action),
+            std::cmp::Reverse(c.token_length * c.occurrences.len()),
+        )
+    });
     out
+}
+
+fn action_rank(level: ActionLevel) -> u8 {
+    match level {
+        ActionLevel::MustFix => 0,
+        ActionLevel::Warning => 1,
+        ActionLevel::Advisory => 2,
+        ActionLevel::Info => 3,
+    }
 }
 
 /// Run the suffix-array clone pipeline over one single-language file cohort,

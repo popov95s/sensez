@@ -3,7 +3,7 @@
 //! `units` to keep each file within the module size budget.
 
 use super::symbols;
-use crate::spine::ir::ClassUnit;
+use crate::spine::ir::{ClassProperty, ClassUnit};
 use tree_sitter::Node;
 
 /// Build a [`ClassUnit`] for a `class`/`class_declaration`/`abstract_class_declaration`.
@@ -21,6 +21,10 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
     };
     let mut cursor = body.walk();
     for member in body.named_children(&mut cursor) {
+        if let Some(prop) = property_from_member(member, src) {
+            unit.properties.push(prop);
+            continue;
+        }
         if member.kind() != "method_definition" {
             continue;
         }
@@ -36,6 +40,50 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
         // `method_attr_use` is filled by the post-walk join in `traversal`.
     }
     unit
+}
+
+fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
+    if member.kind().contains("method") {
+        return None;
+    }
+    let name = member
+        .child_by_field_name("name")
+        .and_then(|node| node.utf8_text(src).ok())
+        .map(str::trim)
+        .filter(|name| {
+            !name.is_empty()
+                && name
+                    .chars()
+                    .all(|c| c == '_' || c == '$' || c.is_alphanumeric())
+        })?;
+    let ty = type_text(member.child_by_field_name("type"), src)
+        .or_else(|| instantiated_type(member.child_by_field_name("value"), src))?;
+    Some(ClassProperty {
+        name: name.to_string(),
+        type_name: normalize_type(&ty),
+        line: member.start_position().row + 1,
+    })
+}
+
+fn instantiated_type(value: Option<Node>, src: &[u8]) -> Option<String> {
+    let new_expr = value.filter(|node| node.kind() == "new_expression")?;
+    let ctor = new_expr.child_by_field_name("constructor")?;
+    let text = ctor.utf8_text(src).ok()?;
+    let last = text.rsplit('.').next().unwrap_or(text);
+    last.chars()
+        .next()
+        .is_some_and(char::is_uppercase)
+        .then(|| last.to_string())
+}
+
+fn type_text(node: Option<Node>, src: &[u8]) -> Option<String> {
+    let text = node.and_then(|n| n.utf8_text(src).ok())?;
+    let trimmed = text.trim_start_matches(':').trim();
+    (!trimmed.is_empty()).then(|| trimmed.to_string())
+}
+
+fn normalize_type(text: &str) -> String {
+    text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
 /// `extends Base` + TS `implements I1, I2` — every (type-)identifier named in

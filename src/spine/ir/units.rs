@@ -74,6 +74,15 @@ pub struct ClassUnit {
     /// Concrete methods whose body is only `pass` / `raise NotImplementedError`
     /// (excludes `@abstractmethod`-decorated declarations).
     pub overrides_to_stub: Vec<String>,
+    /// Class-level declared properties with known types.
+    pub properties: Vec<ClassProperty>,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct ClassProperty {
+    pub name: String,
+    pub type_name: String,
+    pub line: usize,
 }
 
 /// Best-effort, annotation-driven type information (no full inference). Absent

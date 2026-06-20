@@ -49,6 +49,9 @@ pub struct Duplication {
     /// functions identical up to a 1:1 renaming of names/types/literals (the
     /// default matcher stays strict and only collapses function-local vars).
     pub near_miss: bool,
+    /// Report class pairs with at least this many same-name, same-type
+    /// properties. 0 disables the class-property overlap detector.
+    pub class_property_overlap_min: usize,
 }
 
 #[derive(Debug, Clone, Hash, Deserialize)]
@@ -126,6 +129,7 @@ impl Default for Config {
                 threshold: 50,
                 max_gap: 10,
                 near_miss: false,
+                class_property_overlap_min: 4,
             },
             dead_code: DeadCode {
                 entrypoints: Vec::new(),

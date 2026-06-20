@@ -34,7 +34,9 @@ pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> Anal
     }
     let mut duplication = duplication::detect(files, &config.duplication);
     for class in &mut duplication {
-        class.action = config.action.duplication;
+        if class.action != ActionLevel::Info {
+            class.action = config.action.duplication;
+        }
     }
 
     let mut smells = smells::detect(files, graph, &config.smells);

@@ -78,7 +78,7 @@ pub fn record_assignment(node: Node, src: &[u8], hints: &mut TypeHints) {
 
 /// If `right` is `Name(...)` / `mod.Name(...)` with a Capitalized callee, return
 /// that type name (the last dotted segment).
-fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<String> {
+pub(super) fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<String> {
     let call = right.filter(|r| r.kind() == "call")?;
     let func = call.child_by_field_name("function")?;
     let text = func.utf8_text(src).ok()?;
@@ -89,7 +89,7 @@ fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<String> {
     }
 }
 
-fn type_text(node: Option<Node>, src: &[u8]) -> Option<String> {
+pub(super) fn type_text(node: Option<Node>, src: &[u8]) -> Option<String> {
     node.and_then(|n| n.utf8_text(src).ok())
         .map(|s| s.trim().to_string())
         .filter(|s| !s.is_empty())

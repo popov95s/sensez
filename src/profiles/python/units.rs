@@ -4,7 +4,7 @@
 //! are not descended into (they receive their own [`FunctionUnit`] when the
 //! main traversal reaches them), so complexity isn't double-counted upward.
 
-use super::symbols;
+use super::{classunit, symbols};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use tree_sitter::Node;
 
@@ -119,6 +119,7 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
         start_line: class.start_position().row + 1,
         end_line: class.end_position().row + 1,
         bases: symbols::base_classes(class, src),
+        properties: classunit::properties(class, src),
         ..Default::default()
     };
     // An ABC/Protocol base makes the class itself abstract.
