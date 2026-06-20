@@ -3,19 +3,25 @@
 from dataclasses import dataclass, field
 
 
-@dataclass(frozen=True)
-class Run:
-    """One recorded tool run, as stored per line in results/runs.jsonl."""
+@dataclass(frozen=True, kw_only=True)
+class TargetRecord:
+    """Shared benchmark-target metadata carried by runs and dashboard rows."""
 
     target: str
     path: str
     files: int
     lines: int
+    lang: str | None = None
+
+
+@dataclass(frozen=True)
+class Run(TargetRecord):
+    """One recorded tool run, as stored per line in results/runs.jsonl."""
+
     tool: str
     pillar: str
     seconds: float
     out: str
-    lang: str = "?"
     ts: int = 0
 
 
@@ -37,8 +43,8 @@ class SensezFindings:
 class Verdict:
     """A solution's comparison against sensez for one target (pillar-specific)."""
 
-    sensez_n: object  # Sensez' count for the compared pillar
-    comp_n: object  # solution's count (int, or a string sentinel)
+    sensez_n: int  # Sensez' count for the compared pillar
+    comp_n: int | None  # solution's count, when the tool can report one
     parity: str  # human note on how the two relate
 
 
@@ -49,19 +55,14 @@ class Comp:
     tool: str
     label: str
     secs: float
-    sensez_n: object
-    comp_n: object
+    sensez_n: int
+    comp_n: int | None
     parity: str
 
 
-@dataclass
-class Row:
+@dataclass(frozen=True)
+class Row(TargetRecord):
     """A target's sensez run plus every solution comparison for it."""
 
-    target: str
-    lang: str
-    files: int
-    lines: int
-    path: str
     sensez_secs: float
     comps: list  # list[Comp]

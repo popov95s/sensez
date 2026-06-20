@@ -116,7 +116,7 @@ def _judge_symilar(f: SensezFindings, out):
     sym = symilar_count(out)
     return Verdict(
         f.dup,
-        sym if sym is not None else "DNF/0",
+        sym,
         "token-structural (rename-invariant) vs line-based — different granularity",
     )
 
@@ -126,7 +126,8 @@ def _cmp_judge(sensez_attr, note):
     to one sensez field, with a fixed caveat (counts are same-pillar, not 1:1)."""
 
     def judge(f: SensezFindings, out):
-        return Verdict(getattr(f, sensez_attr), json_finding_count(out) or "—", note)
+        count = json_finding_count(out)
+        return Verdict(getattr(f, sensez_attr), count, note)
 
     return judge
 

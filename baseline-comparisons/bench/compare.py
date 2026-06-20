@@ -22,7 +22,14 @@ def build_rows(latest, order):
                 continue
             v = comp.judge(findings, run.out)
             comps.append(
-                Comp(comp.name, comp.label, run.seconds, v.sensez_n, v.comp_n, v.parity)
+                Comp(
+                    tool=comp.name,
+                    label=comp.label,
+                    secs=run.seconds,
+                    sensez_n=v.sensez_n,
+                    comp_n=v.comp_n,
+                    parity=v.parity,
+                )
             )
         rows.append(
             Row(

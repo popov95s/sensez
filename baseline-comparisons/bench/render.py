@@ -6,14 +6,23 @@ no I/O of its own (the caller writes the returned HTML)."""
 def render_terminal(rows):
     """Print a per-target summary table to stdout."""
     for r in rows:
-        print(f"\n## {r.target}  [{r.lang}]  ({r.files} files, {r.lines:,} lines)")
+        if r.lang is None:
+            print(f"\n## {r.target}  ({r.files} files, {r.lines:,} lines)")
+        else:
+            print(f"\n## {r.target} [{r.lang}]  ({r.files} files, {r.lines:,} lines)")
         print(f"   sensez (all pillars): {r.sensez_secs:.2f}s")
         for c in r.comps:
             sx = c.secs / r.sensez_secs if r.sensez_secs else 0
-            print(
-                f"   {c.label:<18} {c.tool:<11} {c.secs:>8.2f}s  "
-                f"({sx:6.1f}x slower)  | {c.parity}"
-            )
+            if c.comp_n is None:
+                print(
+                    f"   {c.label:<18} {c.tool:<11} {c.secs:>8.2f}s  "
+                    f"({sx:6.1f}x slower)  | sensez={c.sensez_n} · {c.tool}= | {c.parity}"
+                )
+            else:
+                print(
+                    f"   {c.label:<18} {c.tool:<11} {c.secs:>8.2f}s  "
+                    f"({sx:6.1f}x slower)  | sensez={c.sensez_n} · {c.tool}={c.comp_n} | {c.parity}"
+                )
 
 
 def _bar(secs, maxs):
@@ -29,7 +38,13 @@ def _rows_html(r, maxs):
     ]
     for c in r.comps:
         sx = c.secs / r.sensez_secs if r.sensez_secs else 0
-        trs.append(f"""<tr><td>{c.tool} <span class=tag>{c.label}</span></td>
+        if c.comp_n is None:
+            trs.append(f"""<tr><td>{c.tool} <span class=tag>{c.label}</span></td>
+              <td class="num">{c.secs:.2f}s</td><td>{_bar(c.secs, maxs)}</td>
+              <td class="num spd">{sx:.1f}x</td>
+              <td class="parity">sensez={c.sensez_n} · {c.tool}<br><span class=note>{c.parity}</span></td></tr>""")
+        else:
+            trs.append(f"""<tr><td>{c.tool} <span class=tag>{c.label}</span></td>
               <td class="num">{c.secs:.2f}s</td><td>{_bar(c.secs, maxs)}</td>
               <td class="num spd">{sx:.1f}x</td>
               <td class="parity">sensez={c.sensez_n} · {c.tool}={c.comp_n}<br><span class=note>{c.parity}</span></td></tr>""")
@@ -37,7 +52,11 @@ def _rows_html(r, maxs):
 
 
 def _card_html(r, maxs):
-    return f"""<div class=card><h2>{r.target} <span class=lang>{r.lang}</span></h2>
+    if r.lang is None:
+        title = r.target
+    else:
+        title = f"{r.target} <span class=lang>{r.lang}</span>"
+    return f"""<div class=card><h2>{title}</h2>
           <div class=meta>{r.files} files · {r.lines:,} lines · <code>{r.path}</code></div>
           <table><thead><tr><th>tool</th><th>time</th><th></th><th>vs sensez</th><th>findings &amp; parity</th></tr></thead>
           <tbody>{_rows_html(r, maxs)}</tbody></table></div>"""
@@ -46,7 +65,9 @@ def _card_html(r, maxs):
 def render_html(rows):
     """Return a self-contained HTML dashboard string for `rows`."""
     maxs = max(
-        [r.sensez_secs for r in rows] + [c.secs for r in rows for c in r.comps] + [0.001]
+        [r.sensez_secs for r in rows]
+        + [c.secs for r in rows for c in r.comps]
+        + [0.001]
     )
     cards = "".join(_card_html(r, maxs) for r in rows)
     return f"""<!doctype html><html><head><meta charset=utf-8><title>sensez benchmarks</title>
