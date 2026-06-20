@@ -6,7 +6,7 @@ pub mod smells;
 mod source;
 
 pub use brainz::SelfImprovement;
-pub use model::{ActionPolicy, Boundaries, Config, DeadCode, Duplication, ForbiddenRule};
+pub use model::{ActionPolicy, Boundaries, Config, DeadCode, Duplication, ForbiddenRule, Gate};
 pub use smells::{SmellConfig, Smells};
 
 use anyhow::{Context, Result};

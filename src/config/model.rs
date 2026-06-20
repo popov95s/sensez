@@ -22,6 +22,8 @@ pub struct Config {
     /// exists; this policy decides whether a finding is informational,
     /// advisory, warning-level, or must-fix.
     pub action: ActionPolicy,
+    /// End-of-turn MCP gate behavior.
+    pub gate: Gate,
     /// Local-only self-improvement data opt-out (`[self_improvement]`). Never
     /// streamed; drives `brainz_report` and triage-based suppression.
     pub self_improvement: SelfImprovement,
@@ -100,6 +102,14 @@ pub struct ActionPolicy {
     pub smells: BTreeMap<SmellKind, ActionLevel>,
 }
 
+#[derive(Debug, Clone, Hash, Deserialize)]
+#[serde(default)]
+pub struct Gate {
+    /// Maximum times one line-anchored finding may be reported in an MCP coding
+    /// loop before the gate automatically defers it.
+    pub repeat_limit: usize,
+}
+
 impl ActionPolicy {
     pub fn for_smell(&self, kind: SmellKind, default_severity: Severity) -> ActionLevel {
         self.smells
@@ -146,6 +156,7 @@ impl Default for Config {
             },
             smells: SmellConfig::default(),
             action: ActionPolicy::default(),
+            gate: Gate::default(),
             self_improvement: SelfImprovement::default(),
             accept: BTreeMap::new(),
         }
@@ -173,6 +184,12 @@ impl Default for ActionPolicy {
             boundaries: ActionLevel::MustFix,
             smells: BTreeMap::new(),
         }
+    }
+}
+
+impl Default for Gate {
+    fn default() -> Self {
+        Gate { repeat_limit: 5 }
     }
 }
 

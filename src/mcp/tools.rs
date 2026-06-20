@@ -140,7 +140,11 @@ fn gate() -> Value {
         "description": "End-of-turn quality gate (intended for a Claude Code \
                         Stop hook, not for direct calls): diff-scoped scan of \
                         uncommitted changes; returns hook-decision JSON that \
-                        blocks at most once per turn-chain.",
+                        blocks at most once per turn-chain. Findings reported \
+                        more than [gate].repeat_limit times on the same source \
+                        lines are auto-deferred for the current coding loop; \
+                        the first auto-defer expires after three days, while a \
+                        second auto-defer for the same lines stays deferred.",
         "inputSchema": {
             "type": "object",
             "properties": {

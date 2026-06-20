@@ -101,6 +101,19 @@ fn action_policy_parses_pillars_and_smells() {
 }
 
 #[test]
+fn gate_repeat_limit_defaults_and_parses() {
+    assert_eq!(Config::default().gate.repeat_limit, 5);
+
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(dir.join("sensez.toml"), "[gate]\nrepeat_limit = 3\n").unwrap();
+
+    let cfg = Config::load(&dir).unwrap();
+    assert_eq!(cfg.gate.repeat_limit, 3);
+}
+
+#[test]
 fn signature_is_stable_and_changes_with_knobs() {
     let cfg = Config::default();
     assert_eq!(cfg.signature(), cfg.signature());

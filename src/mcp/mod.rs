@@ -5,6 +5,9 @@ mod gate;
 mod handlers;
 mod prompts;
 mod protocol;
+mod repeats;
+#[cfg(test)]
+mod repeats_tests;
 mod server;
 mod tools;
 

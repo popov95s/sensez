@@ -30,10 +30,14 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     }
 
     let start = std::time::Instant::now();
+    let gate_config = crate::config::model::Config::load(root)
+        .map(|config| config.gate)
+        .unwrap_or_default();
     let Ok(mut report) = crate::analyze_path(root, None, Some(&changed)) else {
         return Ok(allow());
     };
     crate::brainz::apply_suppressions(root, &mut report);
+    let repeats = super::repeats::suppress_repeated(root, &mut report, gate_config.repeat_limit);
     crate::brainz::rank_by_precision(root, &mut report);
     let full = serde_json::to_value(&report).unwrap_or(Value::Null);
     crate::brainz::record_scan(
@@ -69,6 +73,15 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let mut top = report;
     crate::noze::limit(&mut top, 5);
     let findings = crate::reporter::to_json(&top).unwrap_or_else(|_| "{}".to_string());
+    let deferred_note = if repeats.deferred == 0 {
+        String::new()
+    } else {
+        format!(
+            " Auto-deferred {} finding(s) already reported at least {} time(s) on the same line(s).",
+            repeats.deferred,
+            gate_config.repeat_limit
+        )
+    };
     let decision = json!({
         "decision": "block",
         "reason": format!(
@@ -77,7 +90,7 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
              pre-existing code you are deliberately not addressing is accepted \
              DEBT, not a false positive — just say so briefly to the user and \
              proceed; do not call any tool to report it (Sensez records \
-             automatically). You will be allowed to finish after this one pass.{escalation} \
+             automatically). You will be allowed to finish after this one pass.{deferred_note}{escalation} \
              Findings (top 5 per pillar): {findings}"
         ),
     });
