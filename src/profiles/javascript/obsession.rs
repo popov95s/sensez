@@ -38,8 +38,57 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         }
         "unary_expression" => record_delete(unit, node, src),
         "call_expression" => record_call(unit, node, src),
+        "binary_expression" => record_binary_fallback(unit, node, src),
+        "ternary_expression" => record_ternary_fallback(unit, node, src),
         _ => {}
     }
+}
+
+/// `value || ""` / `value ?? "?"` — the fallback is JS/TS's right operand.
+fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let is_fallback = node
+        .child_by_field_name("operator")
+        .and_then(|op| op.utf8_text(src).ok())
+        .is_some_and(|op| matches!(op, "||" | "??"));
+    if !is_fallback {
+        return;
+    }
+    let len = node
+        .child_by_field_name("right")
+        .and_then(|right| string_literal_len(right, src));
+    walk::record_magic_string_default(unit, len);
+}
+
+/// `condition ? value : "?"` — the fallback is the named `alternative` branch.
+fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let len = node
+        .child_by_field_name("alternative")
+        .and_then(|fallback| string_literal_len(fallback, src));
+    walk::record_magic_string_default(unit, len);
+}
+
+fn string_literal_len(node: Node, src: &[u8]) -> Option<usize> {
+    match node.kind() {
+        "parenthesized_expression" => node
+            .named_child(0)
+            .and_then(|child| string_literal_len(child, src)),
+        "string" => quoted_string_len(node.utf8_text(src).ok()?, ['"', '\'']),
+        "template_string" => template_string_len(node.utf8_text(src).ok()?),
+        _ => None,
+    }
+}
+
+fn quoted_string_len(text: &str, quotes: [char; 2]) -> Option<usize> {
+    let quote = text.chars().next().filter(|ch| quotes.contains(ch))?;
+    let body = text.get(quote.len_utf8()..)?;
+    Some(body.strip_suffix(quote)?.chars().count())
+}
+
+fn template_string_len(text: &str) -> Option<usize> {
+    if text.contains("${") {
+        return None;
+    }
+    Some(text.strip_prefix('`')?.strip_suffix('`')?.chars().count())
 }
 
 /// `recv["key"]` — record the distinct string-literal key per receiver.

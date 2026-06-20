@@ -70,6 +70,7 @@ impl SmellKind {
             LongFunction => ("Long Function", "Too many lines to grasp at once — extract cohesive pieces."),
             LongParameterList => ("Long Parameter List", "Too many parameters — group related ones into an object, or the function is doing too much."),
             LooseTyping => ("Loose Typing", "A public signature leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract."),
+            MagicStringDefault => ("Magic String Default", "A fallback empty or one-character string is standing in for an optional/nullable value (`or \"\"`, `|| \"?\"`) — the contract is hiding in a sentinel; prefer a nullable/optional string or a dedicated sum type."),
             MagicNumbers => ("Magic Numbers", "Unexplained numeric literals in logic — name them as constants so their intent is clear."),
             MessageChain => ("Message Chain", "A long `a.b.c.d` access chain couples the caller to a deep object graph (Law of Demeter) — ask the immediate collaborator instead."),
             MutatedParameter => ("Mutated Parameter", "The function mutates a caller's argument in place — a hidden side effect; return a new value instead."),
@@ -84,7 +85,7 @@ impl SmellKind {
 }
 
 /// All smell kinds, for `explain` (no arg) and exhaustiveness in tests.
-pub const ALL_SMELLS: [SmellKind; 25] = {
+pub const ALL_SMELLS: [SmellKind; 26] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -103,6 +104,7 @@ pub const ALL_SMELLS: [SmellKind; 25] = {
         LongFunction,
         LongParameterList,
         LooseTyping,
+        MagicStringDefault,
         MagicNumbers,
         MessageChain,
         MutatedParameter,

@@ -2,6 +2,9 @@
 //!
 //! - `loose_typing`: params/return typed as bare collections or `Any` where a
 //!   dataclass/model almost always belongs.
+//! - `magic_string_default`: fallback string literals (`or ""`, `|| "?"`,
+//!   `cond ? value : "?"`, or any other empty / 1-char sentinel) that hide
+//!   optionality behind a mandatory string contract.
 //! - `boolean_blindness`: more than `max_bool_params` bool parameters.
 //! - `tuple_packing`: position-based grouped data in returns.
 
@@ -13,10 +16,14 @@ use crate::spine::parser::{FunctionUnit, ParsedFile};
 
 pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
     for func in &file.walked.units.functions {
+        boolean_blindness(file, func, cfg, out);
+
         if cfg.loose_typing {
             loose_typing(file, func, out);
         }
-        boolean_blindness(file, func, cfg, out);
+        if cfg.magic_string_default && func.magic_string_defaults > 0 {
+            magic_string_default(file, func, out);
+        }
         if cfg.tuple_packing {
             tuple_packing(file, func, cfg, out);
         }
@@ -78,6 +85,23 @@ fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFindi
         &func.name,
         severity,
         (offenders.len() + ret.is_some() as usize) as u32,
+        0,
+    ));
+}
+
+/// Fallback string literals used to paper over optional/nullable values.
+fn magic_string_default(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFinding>) {
+    out.push(make(
+        SmellKind::MagicStringDefault,
+        format!(
+            "{} fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) — hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+            func.magic_string_defaults
+        ),
+        &file.path,
+        func.start_line,
+        &func.name,
+        Severity::Warning,
+        func.magic_string_defaults as u32,
         0,
     ));
 }

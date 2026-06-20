@@ -48,6 +48,26 @@ fn loose_typing_handles_optional_and_union() {
 }
 
 #[test]
+fn magic_string_default_flags_empty_and_short_fallbacks() {
+    let cfg = Smells::default();
+    let body = "def f(name=None, title=None, code=None):\n    a = name or \"\"\n    b = title or \"?\"\n    c = code or \"ok\"\n    return a, b, c\n";
+    let s = find(&local("msd", body, &cfg), "magic_string_default").expect("must flag");
+    assert_eq!(s.severity, Severity::Warning);
+    assert_eq!(s.metric, 2, "empty and one-char fallbacks count");
+    assert!(s.message.contains("fallback string literal"));
+    let ok = "def g(name=None):\n    return name or \"valid\"\n";
+    assert!(find(&local("msd_ok", ok, &cfg), "magic_string_default").is_none());
+}
+
+#[test]
+fn magic_string_default_flags_conditional_fallbacks_too() {
+    let cfg = Smells::default();
+    let body = "def f(name=None):\n    return name if name is not None else \"?\"\n";
+    let s = find(&local("msd_if", body, &cfg), "magic_string_default").expect("must flag");
+    assert_eq!(s.metric, 1);
+}
+
+#[test]
 fn boolean_blindness_over_threshold_only() {
     let cfg = Smells::default(); // max_bool_params = 2
     let two = "def f(a: bool, b: bool, x: str):\n    return x\n";
@@ -195,6 +215,7 @@ fn heavy_nested_function_flagged_but_thin_wrappers_pass() {
 fn discipline_toggles_disable_detectors() {
     let cfg = Smells {
         loose_typing: false,
+        magic_string_default: false,
         tuple_packing: false,
         param_mutation: false,
         literal_membership: false,

@@ -177,3 +177,10 @@ pub(crate) fn record_mutation_root(
         }
     }
 }
+
+/// Increment the magic-string-default counter for short fallback literals.
+pub(crate) fn record_magic_string_default(unit: &mut FunctionUnit, literal_len: Option<usize>) {
+    if literal_len.is_some_and(|len| len <= 1) {
+        unit.magic_string_defaults += 1;
+    }
+}

@@ -56,6 +56,9 @@ pub struct Smells {
     pub split_variable_min_assigns: usize,
     /// Type-discipline family (annotation-gated; on by default).
     pub loose_typing: bool,
+    /// Fallback empty/one-char strings used to hide optionality behind a
+    /// mandatory string contract (`or ""`, `|| "?"`).
+    pub magic_string_default: bool,
     /// Flag functions with more than this many bool-annotated params.
     pub max_bool_params: usize,
     pub tuple_packing: bool,
@@ -107,6 +110,7 @@ impl Default for Smells {
             split_variable: false,
             split_variable_min_assigns: 2,
             loose_typing: true,
+            magic_string_default: true,
             max_bool_params: 2,
             tuple_packing: true,
             max_tuple_return: 2,

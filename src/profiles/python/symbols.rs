@@ -118,12 +118,12 @@ pub fn dunder_all(node: Node, src: &[u8]) -> Option<Vec<String>> {
 }
 
 /// Extract the textual content of a string literal (without quotes/prefix).
-fn string_value(node: Node, src: &[u8]) -> Option<String> {
+pub fn string_value(node: Node, src: &[u8]) -> Option<String> {
     let mut cursor = node.walk();
     let value = node
         .named_children(&mut cursor)
         .find(|c| c.kind() == "string_content")
         .and_then(|c| c.utf8_text(src).ok())
         .map(str::to_string);
-    value
+    value.or_else(|| (node.kind() == "string").then(String::new))
 }

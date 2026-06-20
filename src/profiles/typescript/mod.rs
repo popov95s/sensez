@@ -82,7 +82,7 @@ mod tests {
     /// built-in TS default but can be re-enabled per language.
     #[test]
     fn ts_smells_fire_and_defaults_gate_eslint_owned() {
-        let src = b"export function handle(cfg: Record<string, any>, a: boolean, b: boolean, c: boolean): [string, number, boolean] {\n  if (a) { if (b) { if (c) { if (cfg) { if (a) { return [\"x\", 7, true]; } } } } }\n  return [\"y\", 8, false];\n}\nexport function pump(items: any[]): void { items.push(1); }\n";
+        let src = b"export function handle(cfg: Record<string, any>, a: boolean, b: boolean, c: boolean): [string, number, boolean] {\n  if (a) { if (b) { if (c) { if (cfg) { if (a) { return [\"x\", 7, true]; } } } } }\n  return [\"y\", 8, false];\n}\nexport function pump(items: any[]): void { items.push(1); }\nexport function coerce(name?: string): string { return name || \"\"; }\nexport function fallback(name?: string): string { return name ? name : \"?\"; }\n";
 
         let defaults = SmellConfig::default();
         let kinds = smells_for(src, defaults.for_language(Language::TypeScript));
@@ -90,6 +90,7 @@ mod tests {
         assert!(kinds.contains(&SmellKind::BooleanBlindness), "{kinds:?}");
         assert!(kinds.contains(&SmellKind::TuplePacking), "{kinds:?}");
         assert!(kinds.contains(&SmellKind::MutatedParameter), "{kinds:?}");
+        assert!(kinds.contains(&SmellKind::MagicStringDefault), "{kinds:?}");
         // ESLint/SonarJS own these — off by the TS default.
         assert!(!kinds.contains(&SmellKind::DeepNesting), "{kinds:?}");
         assert!(!kinds.contains(&SmellKind::MagicNumbers), "{kinds:?}");

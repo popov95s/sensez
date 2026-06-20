@@ -50,8 +50,55 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         "comparison_operator" if is_literal_membership(node) => {
             unit.literal_membership_tests += 1;
         }
+        "boolean_operator" => record_boolean_fallback(unit, node, src),
+        "conditional_expression" => record_conditional_fallback(unit, node, src),
         _ => {}
     }
+}
+
+/// `value or ""` / `value or "?"` — the fallback is Python's right operand.
+fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let is_or = node
+        .child_by_field_name("operator")
+        .and_then(|op| op.utf8_text(src).ok())
+        == Some("or");
+    if !is_or {
+        return;
+    }
+    let len = node
+        .child_by_field_name("right")
+        .and_then(|right| string_literal_len(right, src));
+    walk::record_magic_string_default(unit, len);
+}
+
+/// `value if condition else "?"` — Python leaves the branches unnamed, but the
+/// grammar fixes the `else` branch as the last named child.
+fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let len = node
+        .named_child(node.named_child_count().saturating_sub(1))
+        .and_then(|fallback| string_literal_len(fallback, src));
+    walk::record_magic_string_default(unit, len);
+}
+
+fn string_literal_len(node: Node, src: &[u8]) -> Option<usize> {
+    match node.kind() {
+        "parenthesized_expression" => node
+            .named_child(0)
+            .and_then(|child| string_literal_len(child, src)),
+        "string" => python_string_len(node.utf8_text(src).ok()?),
+        _ => None,
+    }
+}
+
+fn python_string_len(text: &str) -> Option<usize> {
+    let start = text.find(['"', '\''])?;
+    let quoted = &text[start..];
+    let quote = quoted.chars().next()?;
+    let triple = quoted.starts_with(&quote.to_string().repeat(3));
+    let delimiter_len = if triple { 3 } else { 1 };
+    let body = quoted.get(delimiter_len..)?;
+    let suffix = quote.to_string().repeat(delimiter_len);
+    Some(body.strip_suffix(&suffix)?.chars().count())
 }
 
 /// `recv["key"]` — record the distinct string-literal key per receiver.
