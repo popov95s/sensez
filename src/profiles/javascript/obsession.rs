@@ -53,18 +53,26 @@ fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     if !is_fallback {
         return;
     }
-    let len = node
-        .child_by_field_name("right")
-        .and_then(|right| string_literal_len(right, src));
-    walk::record_magic_string_default(unit, len);
+    let Some(right) = node.child_by_field_name("right") else {
+        return;
+    };
+    walk::record_magic_string_default(
+        unit,
+        string_literal_len(right, src),
+        right.start_position().row + 1,
+    );
 }
 
 /// `condition ? value : "?"` — the fallback is the named `alternative` branch.
 fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let len = node
-        .child_by_field_name("alternative")
-        .and_then(|fallback| string_literal_len(fallback, src));
-    walk::record_magic_string_default(unit, len);
+    let Some(fallback) = node.child_by_field_name("alternative") else {
+        return;
+    };
+    walk::record_magic_string_default(
+        unit,
+        string_literal_len(fallback, src),
+        fallback.start_position().row + 1,
+    );
 }
 
 fn string_literal_len(node: Node, src: &[u8]) -> Option<usize> {

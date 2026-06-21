@@ -57,6 +57,8 @@ pub struct FunctionUnit {
     /// mandatory string contract. Empty strings and 1-char sentinels both
     /// count (`or ""`, `|| "?"`, `cond ? value : "?"`, etc.).
     pub magic_string_defaults: usize,
+    /// Source rows for the fallback literals counted above.
+    pub magic_string_default_lines: Vec<usize>,
     /// Compact call/loop facts consumed by performance smell detectors.
     pub performance: PerformanceFacts,
     /// True if this function is defined inside another function's body

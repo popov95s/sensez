@@ -4,7 +4,6 @@ use crate::report::{ActionLevel, AnalysisReport, Confidence, Severity};
 use colored::Colorize;
 use std::fmt::Write;
 
-/// Render a report as a colored, human-readable string.
 pub fn render(report: &AnalysisReport, explain: bool) -> String {
     let mut out = String::new();
     let _ = writeln!(
@@ -134,9 +133,8 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         };
         let _ = writeln!(
             out,
-            "    [{}] [{}] {}  {} ({}) — {}",
-            action_label(finding.action),
-            severity_label(finding.severity),
+            "    {} {}  {} ({}) — {}",
+            smell_labels(finding.action, finding.severity),
             loc,
             finding.symbol,
             finding.kind,
@@ -180,9 +178,6 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         );
     }
 
-    // Legend: plain-English meaning of the categories shown above (opt-in via
-    // `--explain` so default output stays terse). The JSON `meta.glossary` is
-    // always present for programmatic/agent consumers regardless of this flag.
     if explain && !report.meta.glossary.is_empty() {
         let _ = writeln!(out, "\n{}", "What these mean".bold());
         for g in &report.meta.glossary {
@@ -220,6 +215,22 @@ fn severity_label(severity: Severity) -> colored::ColoredString {
         Severity::Critical => "critical".red(),
         Severity::Warning => "warning".yellow(),
         Severity::Info => "info".dimmed(),
+    }
+}
+
+fn severity_name(severity: Severity) -> &'static str {
+    match severity {
+        Severity::Critical => "critical",
+        Severity::Warning => "warning",
+        Severity::Info => "info",
+    }
+}
+
+fn smell_labels(action: ActionLevel, severity: Severity) -> String {
+    if action.as_str() == severity_name(severity) {
+        format!("[{}]", action_label(action))
+    } else {
+        format!("[{}] [{}]", action_label(action), severity_label(severity))
     }
 }
 

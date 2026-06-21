@@ -91,6 +91,11 @@ fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFindi
 
 /// Fallback string literals used to paper over optional/nullable values.
 fn magic_string_default(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFinding>) {
+    let line = func
+        .magic_string_default_lines
+        .first()
+        .copied()
+        .unwrap_or(func.start_line);
     out.push(make(
         SmellKind::MagicStringDefault,
         format!(
@@ -98,7 +103,7 @@ fn magic_string_default(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<Sm
             func.magic_string_defaults
         ),
         &file.path,
-        func.start_line,
+        line,
         &func.name,
         Severity::Warning,
         func.magic_string_defaults as u32,
