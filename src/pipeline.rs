@@ -12,10 +12,7 @@ use anyhow::{Context, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-/// Crawl, parse, build the graph, and run every analyzer pillar. When `diff`
-/// is set, the full report is filtered to findings the change touches.
-///
-/// `threshold` overrides the duplication threshold from `sensez.toml` when set.
+/// Crawl, parse, build the graph, run analyzers, then apply optional diff scope.
 pub fn analyze_path(
     path: &Path,
     threshold: Option<usize>,
@@ -31,15 +28,10 @@ pub fn analyze_path(
     timer.lap("crawl");
     let parsed = parser::parse_files(&discovery.files);
     timer.lap("parse");
-    // Derive entry-point modules from each present language's package manifest
-    // (Python pyproject, ...) so console-script / plugin targets aren't flagged
-    // as dead (authoritative, framework-agnostic).
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
     let mut report = noze::run(&parsed.files, &graph, &config);
-    // Unreadable walk entries + files that failed to parse: surfaced so an
-    // incomplete scan is never mistaken for a clean one.
     report.meta.issues.extend(parsed.issues);
     report
         .meta
@@ -69,8 +61,7 @@ pub fn analyze_path(
     Ok(report)
 }
 
-/// Opt-in per-phase wall-clock tracing (set `SENSEZ_TIMING=1`). A no-op otherwise,
-/// so it stays out of the hot path in normal runs. Useful for targeting perf work.
+/// Opt-in per-phase tracing (`SENSEZ_TIMING=1`).
 struct PhaseTimer {
     start: Option<std::time::Instant>,
     last: std::cell::Cell<std::time::Instant>,
@@ -99,9 +90,7 @@ impl PhaseTimer {
     }
 }
 
-/// Collect entry-point module names from the package manifest of every language
-/// present in the scan (each profile knows its own manifest, e.g. Python's
-/// `pyproject.toml`). Best-effort: a missing/invalid manifest contributes none.
+/// Best-effort manifest entry points for each language present in the scan.
 fn entry_modules(project_root: &Path, parsed: &[ParsedFile]) -> Vec<String> {
     let languages: HashSet<_> = parsed.iter().map(|f| f.language).collect();
     languages
@@ -110,8 +99,7 @@ fn entry_modules(project_root: &Path, parsed: &[ParsedFile]) -> Vec<String> {
         .collect()
 }
 
-/// Run a scan and render the report in the requested format. `max` caps each
-/// pillar to its top-ranked findings (0 = unlimited); `meta` keeps true totals.
+/// Run and render a scan. `max = 0` leaves findings uncapped.
 pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -> Result<String> {
     let mut report = analyze_path(path, threshold, None)?;
     noze::limit(&mut report, max);

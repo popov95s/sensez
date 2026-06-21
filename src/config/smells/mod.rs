@@ -1,11 +1,4 @@
 //! Per-language design-smell configuration.
-//!
-//! `[smells]` carries the shared master switch + excludes and an optional base
-//! knob overlay applied to every language; `[smells.<lang>]` tables overlay
-//! per-language knobs on top of that language's built-in [`defaults::default_for`].
-//! Resolution round-trips each language default through a `toml::Table` so a
-//! partial user table overrides only the keys it names (the rest keep the
-//! language default), without an `Option`-mirror of every field.
 
 mod defaults;
 mod knobs;
@@ -17,14 +10,10 @@ use crate::report::{ActionLevel, SmellKind};
 use serde::Deserialize;
 use std::collections::{BTreeMap, BTreeSet};
 
-/// Fully resolved smell configuration: shared gate/excludes plus one knob set
-/// per language.
 #[derive(Debug, Clone, Hash, Deserialize)]
 #[serde(try_from = "SmellsRaw")]
 pub struct SmellConfig {
-    /// Master switch for the whole pillar (shared across languages).
     pub enabled: bool,
-    /// File globs excluded from smell analysis (shared across languages).
     pub exclude: Vec<String>,
     python: Smells,
     javascript: Smells,
@@ -46,15 +35,13 @@ impl SmellConfig {
 
 impl Default for SmellConfig {
     fn default() -> Self {
-        SmellsRaw::default()
-            .try_into()
-            .expect("built-in smell defaults are valid")
+        match SmellsRaw::default().try_into() {
+            Ok(config) => config,
+            Err(err) => panic!("built-in smell defaults are invalid: {err}"),
+        }
     }
 }
 
-/// Raw `[smells]` table as written: shared `enabled`/`exclude`, the four
-/// per-language override tables, and any leftover top-level keys (the base
-/// overlay applied to every language).
 #[derive(Debug, Default, Deserialize)]
 #[serde(default)]
 struct SmellsRaw {
@@ -119,8 +106,6 @@ impl TryFrom<SmellsRaw> for SmellConfig {
     }
 }
 
-/// A uniform configuration: the same knob set for every language. Convenient
-/// when a caller has a single resolved [`Smells`] (e.g. tests, embedding APIs).
 impl From<Smells> for SmellConfig {
     fn from(s: Smells) -> Self {
         SmellConfig {
@@ -149,7 +134,9 @@ fn resolve(
     for (k, v) in base.iter().chain(over.iter()) {
         table.insert(k.clone(), v.clone());
     }
-    let mut smells: Smells = toml::Value::Table(table).try_into().unwrap_or(default);
+    let mut smells: Smells = toml::Value::Table(table)
+        .try_into()
+        .map_err(|err| format!("invalid [smells.{}]: {err}", language_label(lang)))?;
     apply_rules(&mut smells, "<base>", base_rules)?;
     apply_rules(&mut smells, language_label(lang), over_rules)?;
     Ok(smells)
