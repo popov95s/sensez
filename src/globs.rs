@@ -21,12 +21,16 @@ pub fn validate_patterns(label: &str, patterns: &[String]) -> Result<()> {
 pub fn build_globset(patterns: &[String]) -> GlobSet {
     let mut builder = GlobSet::builder();
     for pattern in patterns {
-        let glob = Glob::new(pattern).expect("glob patterns are validated during config load");
+        let glob = match Glob::new(pattern) {
+            Ok(glob) => glob,
+            Err(err) => panic!("invalid pre-validated glob {pattern:?}: {err}"),
+        };
         builder.add(glob);
     }
-    builder
-        .build()
-        .expect("validated glob patterns should compile as a set")
+    match builder.build() {
+        Ok(set) => set,
+        Err(err) => panic!("validated glob patterns failed to compile as a set: {err}"),
+    }
 }
 
 #[cfg(test)]

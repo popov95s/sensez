@@ -131,3 +131,18 @@ fn unknown_keys_fail_loudly() {
         "{err}"
     );
 }
+
+#[test]
+fn known_keys_with_wrong_types_fail_loudly() {
+    let err = toml::from_str::<SmellConfig>(
+        r#"
+            [python]
+            max_cyclomatic = "twelve"
+        "#,
+    )
+    .unwrap_err()
+    .to_string();
+
+    assert!(err.contains("invalid [smells.python]"), "{err}");
+    assert!(err.contains("max_cyclomatic"), "{err}");
+}

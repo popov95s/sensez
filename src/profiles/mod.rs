@@ -72,6 +72,7 @@ impl DeadCodeDefaults {
 }
 
 /// Result of classifying a symbol's decorator set by shape.
+#[allow(dead_code)] // used only in python, TODO: fix/reconsider
 pub enum DecoratorClass {
     /// No decorators (or the language has none).
     None,

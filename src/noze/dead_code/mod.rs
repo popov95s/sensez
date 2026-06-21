@@ -144,9 +144,10 @@ impl RuleSets {
     }
 
     fn for_language(&self, language: Language) -> &RuleSet {
-        self.by_language
-            .get(&language)
-            .expect("dead-code rules exist for every parsed language")
+        match self.by_language.get(&language) {
+            Some(rules) => rules,
+            None => panic!("dead-code rules missing for parsed language {language:?}"),
+        }
     }
 }
 

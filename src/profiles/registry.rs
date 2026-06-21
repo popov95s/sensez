@@ -39,11 +39,14 @@ pub fn parse_for_path(path: &Path) -> Option<&'static dyn ParseProfile> {
 }
 
 fn profile(language: Language) -> &'static dyn LanguageProfile {
-    PROFILES
+    match PROFILES
         .iter()
         .copied()
         .find(|p| ParseProfile::info(*p).language == language)
-        .unwrap_or_else(|| panic!("missing compiled-in profile for {language:?}"))
+    {
+        Some(profile) => profile,
+        None => panic!("missing compiled-in profile for {language:?}"),
+    }
 }
 
 pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {
