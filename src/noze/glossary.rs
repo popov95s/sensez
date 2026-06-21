@@ -55,7 +55,7 @@ impl SmellKind {
         use SmellKind::*;
         match self {
             BooleanBlindness => ("Boolean Blindness", "Bare booleans whose meaning is invisible at the call site (`f(True, False)`) — use an enum or keyword args so calls read clearly."),
-            DataClump => ("Data Clump", "The same group of values is passed together through many functions — bundle them into one object/dataclass."),
+            DataClump => ("Data Clump", "The same group of values is passed together through many functions — bundle them into one object or typed structure."),
             DeepNesting => ("Deep Nesting", "Control flow nests many levels deep, hard to follow — flatten with early returns or extracted helpers."),
             DivergentChange => ("Divergent Change", "One module gets edited for many unrelated reasons — it has too many responsibilities; split it along those axes."),
             FeatureEnvy => ("Feature Envy", "A method uses another object's data more than its own — move it onto the class that owns that data."),
@@ -63,7 +63,7 @@ impl SmellKind {
             HeavyNestedFunction => ("Heavy Nested Function", "An inner/nested function that grew large and logic-heavy — promote it to a top-level, testable function."),
             HighCognitiveComplexity => ("High Cognitive Complexity", "Hard for a human to follow — nested branches and loops weighted by depth; simplify or break it up."),
             HighComplexity => ("High Cyclomatic Complexity", "Many independent paths through the function, so it's hard to test fully — decompose it."),
-            ImplicitSchema => ("Implicit Schema", "A dict/object accessed by many string keys — an unwritten schema; model it as a dataclass/typed structure."),
+            ImplicitSchema => ("Implicit Schema", "A dict/object accessed by many string keys — an unwritten schema; model it as a typed structure."),
             InappropriateIntimacy => ("Inappropriate Intimacy", "Two classes each reach into the other's internals, so neither can change independently — narrow the shared surface or merge them."),
             LargeClass => ("Large Class", "A class with too many methods/responsibilities — split it into focused classes."),
             LiteralMembership => ("Literal Membership", "Branching on membership in a literal string list (`x in ['a','b']`) — stringly-typed categories; use an Enum."),

@@ -5,7 +5,7 @@
 //! - `implicit_schema`: one receiver subscripted with many distinct string keys.
 //! - `literal_membership`: branching on `x in ["a", "b"]` string lists.
 
-use super::make;
+use super::{make, structure_target};
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
 use crate::profiles::typevocab::is_dictish;
@@ -128,8 +128,9 @@ fn implicit_schema(
         out.push(make(
             SmellKind::ImplicitSchema,
             format!(
-                "`{recv}` accessed via {} distinct string keys — implicit schema; consider a dataclass/model",
-                keys.len()
+                "`{recv}` accessed via {} distinct string keys — implicit schema; consider {}",
+                keys.len(),
+                structure_target(file.language)
             ),
             &file.path,
             func.start_line,

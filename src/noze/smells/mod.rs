@@ -21,6 +21,7 @@ mod union_find;
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
 use crate::noze::{ActionLevel, Severity, SmellFinding, SmellKind};
+use crate::profiles::Language;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
@@ -137,6 +138,22 @@ pub(super) fn make(
         metric,
         threshold,
         reason: String::new(),
+    }
+}
+
+pub(super) fn structure_target(language: Language) -> &'static str {
+    match language {
+        Language::Python => "a dataclass or model",
+        Language::JavaScript | Language::TypeScript => "a typed object or interface",
+        Language::Rust => "a struct",
+    }
+}
+
+pub(super) fn grouped_value_target(language: Language) -> &'static str {
+    match language {
+        Language::Python => "a NamedTuple or dataclass",
+        Language::JavaScript | Language::TypeScript => "a typed object or tuple shape",
+        Language::Rust => "a struct",
     }
 }
 

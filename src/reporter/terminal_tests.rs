@@ -42,3 +42,44 @@ fn smell_output_dedupes_matching_action_and_severity() {
     assert!(text.contains("[warning] x.tsx:12"));
     assert!(!text.contains("[warning] [warning]"));
 }
+
+#[test]
+fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
+    let mut report = AnalysisReport::default();
+    report.smells.push(crate::noze::SmellFinding {
+        action: ActionLevel::Warning,
+        kind: crate::noze::SmellKind::LooseTyping,
+        message: "params [cfg] — replace loose collections with a typed object or interface".into(),
+        file: "a.ts".into(),
+        line: 4,
+        end_line: 4,
+        symbol: "one".into(),
+        severity: Severity::Warning,
+        metric: 1,
+        threshold: 0,
+        reason: String::new(),
+    });
+    report.smells.push(crate::noze::SmellFinding {
+        action: ActionLevel::Warning,
+        kind: crate::noze::SmellKind::LooseTyping,
+        message: "returns Record<string, any> — replace loose collections with a typed object or interface"
+            .into(),
+        file: "b.ts".into(),
+        line: 8,
+        end_line: 8,
+        symbol: "two".into(),
+        severity: Severity::Warning,
+        metric: 1,
+        threshold: 0,
+        reason: String::new(),
+    });
+
+    let text = render(&report, false);
+    assert_eq!(
+        text.matches("replace loose collections with a typed object or interface")
+            .count(),
+        1
+    );
+    assert!(text.contains("params [cfg]"));
+    assert!(text.contains("returns Record<string, any>"));
+}

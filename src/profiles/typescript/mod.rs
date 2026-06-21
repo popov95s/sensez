@@ -58,14 +58,14 @@ mod tests {
     use super::{TsProfile, TsxProfile};
     use crate::config::smells::{SmellConfig, Smells};
     use crate::noze::smells::detect_local;
-    use crate::noze::SmellKind;
+    use crate::noze::{SmellFinding, SmellKind};
     use crate::profiles::Language;
     use crate::spine::parser::{parse_file, parse_source, ParsedFile, StructuralToken};
     use std::fs;
     use std::path::PathBuf;
 
     /// Build a `ParsedFile` for a TS source and return the smells `cfg` produces.
-    fn smells_for(src: &[u8], cfg: &Smells) -> Vec<SmellKind> {
+    fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
         let walked = parse_source(src, 0, "m", &TsProfile).unwrap();
         let file = ParsedFile {
             path: PathBuf::from("m.ts"),
@@ -74,9 +74,10 @@ mod tests {
             walked,
         };
         detect_local(&file, cfg)
-            .into_iter()
-            .map(|f| f.kind)
-            .collect()
+    }
+
+    fn smells_for(src: &[u8], cfg: &Smells) -> Vec<SmellKind> {
+        findings_for(src, cfg).into_iter().map(|f| f.kind).collect()
     }
 
     /// The type-discipline + mutation smells fire for TypeScript via the new
@@ -107,6 +108,26 @@ mod tests {
         let kinds = smells_for(src, &enabled);
         assert!(kinds.contains(&SmellKind::DeepNesting), "{kinds:?}");
         assert!(kinds.contains(&SmellKind::MagicNumbers), "{kinds:?}");
+    }
+
+    #[test]
+    fn ts_loose_typing_uses_language_specific_suggestion() {
+        let src = b"export function f(cfg: Record<string, any>): Record<string, any> {\n  return cfg;\n}\n";
+        let findings = findings_for(src, &Smells::default());
+        let loose = findings
+            .into_iter()
+            .find(|f| f.kind == SmellKind::LooseTyping)
+            .expect("must flag loose typing");
+        assert!(
+            loose.message.contains("typed object") || loose.message.contains("interface"),
+            "{}",
+            loose.message
+        );
+        assert!(
+            !loose.message.contains("dataclass"),
+            "JS/TS wording should not mention dataclass: {}",
+            loose.message
+        );
     }
 
     /// TS type annotations/interfaces don't break structural tokenization, and

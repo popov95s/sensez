@@ -8,7 +8,7 @@
 //! - `boolean_blindness`: more than `max_bool_params` bool parameters.
 //! - `tuple_packing`: position-based grouped data in returns.
 
-use super::make;
+use super::{grouped_value_target, make, structure_target};
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
 use crate::profiles::typevocab::{base_type, is_bool_type, is_loose};
@@ -77,8 +77,9 @@ fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFindi
     out.push(make(
         SmellKind::LooseTyping,
         format!(
-            "{} — replace loose collections with a dataclass/model",
-            parts.join("; ")
+            "{} — replace loose collections with {}",
+            parts.join("; "),
+            structure_target(file.language)
         ),
         &file.path,
         func.start_line,
@@ -166,7 +167,10 @@ fn tuple_packing(
     if arity > cfg.max_tuple_return {
         out.push(make(
             SmellKind::TuplePacking,
-            format!("returns a {arity}-element tuple — positional grouped data; consider a NamedTuple/dataclass"),
+            format!(
+                "returns a {arity}-element tuple — positional grouped data; consider {}",
+                grouped_value_target(file.language)
+            ),
             &file.path,
             func.start_line,
             &func.name,

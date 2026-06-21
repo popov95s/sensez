@@ -2,6 +2,7 @@
 
 use crate::report::{ActionLevel, AnalysisReport, Confidence, Severity};
 use colored::Colorize;
+use std::collections::HashSet;
 use std::fmt::Write;
 
 pub fn render(report: &AnalysisReport, explain: bool) -> String {
@@ -125,11 +126,24 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         report.smells.len(),
         report.meta.smells_total,
     );
+    let mut seen_suggestions: HashSet<String> = HashSet::new();
     for finding in &report.smells {
         let loc = if finding.line > 0 {
             format!("{}:{}", finding.file.display(), finding.line)
         } else {
             finding.file.display().to_string()
+        };
+        let (summary, suggestion) = split_smell_message(&finding.message);
+        let rendered_message = match suggestion {
+            Some(suggestion) => {
+                let key = format!("{}::{suggestion}", finding.kind.as_str());
+                if seen_suggestions.insert(key) {
+                    finding.message.as_str()
+                } else {
+                    summary
+                }
+            }
+            None => finding.message.as_str(),
         };
         let _ = writeln!(
             out,
@@ -138,7 +152,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             loc,
             finding.symbol,
             finding.kind,
-            finding.message
+            rendered_message
         );
     }
 
@@ -231,6 +245,13 @@ fn smell_labels(action: ActionLevel, severity: Severity) -> String {
         format!("[{}]", action_label(action))
     } else {
         format!("[{}] [{}]", action_label(action), severity_label(severity))
+    }
+}
+
+fn split_smell_message(message: &str) -> (&str, Option<&str>) {
+    match message.split_once(" — ") {
+        Some((summary, suggestion)) => (summary, Some(suggestion)),
+        None => (message, None),
     }
 }
 
