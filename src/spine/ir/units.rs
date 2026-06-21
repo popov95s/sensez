@@ -2,6 +2,7 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
+use super::PerformanceFacts;
 use std::collections::{HashMap, HashSet};
 
 /// Per-function structural summary used by the design-smell pillar.
@@ -56,6 +57,8 @@ pub struct FunctionUnit {
     /// mandatory string contract. Empty strings and 1-char sentinels both
     /// count (`or ""`, `|| "?"`, `cond ? value : "?"`, etc.).
     pub magic_string_defaults: usize,
+    /// Compact call/loop facts consumed by performance smell detectors.
+    pub performance: PerformanceFacts,
     /// True if this function is defined inside another function's body
     /// (methods directly on a class are NOT nested).
     pub is_nested: bool,

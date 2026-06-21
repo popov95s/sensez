@@ -2,11 +2,10 @@
 //!
 //! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
-use super::{classunit, conditionals, symbols};
+use super::{classunit, conditionals, performance, symbols};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use tree_sitter::Node;
 
-/// Numeric literals that are never "magic".
 const ALLOWED_NUMS: [&str; 5] = ["0", "1", "2", "0.0", "1.0"];
 
 /// Build a [`FunctionUnit`] for a `function_definition` node.
@@ -23,7 +22,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         let mut acc = Acc::new(&mut unit);
         let mut cursor = body.walk();
         for child in body.named_children(&mut cursor) {
-            acc.visit(child, src, 0);
+            acc.visit(child, src, 0, 0);
         }
     }
     unit
@@ -40,13 +39,15 @@ impl<'u> Acc<'u> {
     }
 
     /// Recurse a body node at block-nesting `depth`, accumulating metrics.
-    fn visit(&mut self, node: Node, src: &[u8], depth: usize) {
+    fn visit(&mut self, node: Node, src: &[u8], depth: usize, loop_depth: usize) {
         let kind = node.kind();
         // Nested functions/lambdas get their own unit — do not descend.
         if matches!(kind, "function_definition" | "lambda") {
             return;
         }
+        let child_loop_depth = loop_depth + usize::from(performance::is_loop(kind));
         super::obsession::scan(self.unit, node, src);
+        performance::scan(&mut self.unit.performance, node, src, loop_depth);
 
         let mut child_depth = depth;
         if is_nesting(kind) {
@@ -101,7 +102,7 @@ impl<'u> Acc<'u> {
 
         let mut cursor = node.walk();
         for child in node.named_children(&mut cursor) {
-            self.visit(child, src, child_depth);
+            self.visit(child, src, child_depth, child_loop_depth);
         }
     }
 

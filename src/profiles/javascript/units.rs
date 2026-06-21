@@ -4,7 +4,7 @@
 //! [`FunctionUnit`] — and `this.<attr>` is normalized to the canonical `"self"`
 //! receiver so the language-neutral detectors work unchanged.
 
-use super::{conditionals, obsession, symbols};
+use super::{conditionals, obsession, performance, symbols};
 use crate::spine::ir::FunctionUnit;
 use tree_sitter::Node;
 
@@ -37,7 +37,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
     };
     if let Some(body) = func.child_by_field_name("body") {
         let mut acc = Acc { unit: &mut unit };
-        acc.visit(body, src, 0);
+        acc.visit(body, src, 0, 0);
     }
     // A TS tuple *return type* `(): [A, B, C]` is position-based grouped data —
     // the analog of Python's bare `return a, b, c` (JS array returns are too
@@ -92,18 +92,20 @@ struct Acc<'u> {
 
 impl Acc<'_> {
     /// Recurse a body node at block-nesting `depth`, accumulating metrics.
-    fn visit(&mut self, node: Node, src: &[u8], depth: usize) {
+    fn visit(&mut self, node: Node, src: &[u8], depth: usize, loop_depth: usize) {
         let kind = node.kind();
         if is_function(kind) {
             return; // nested function/arrow gets its own unit
         }
         obsession::scan(self.unit, node, src);
+        performance::scan(&mut self.unit.performance, node, src, loop_depth);
 
         let mut child_depth = depth;
         if is_nesting(kind) {
             child_depth = depth + 1;
             self.unit.max_nesting = self.unit.max_nesting.max(child_depth);
         }
+        let child_loop_depth = loop_depth + usize::from(performance::is_loop(kind));
         if let Some(weight) = cognitive_weight(kind, node, src, depth) {
             self.unit.cognitive += weight;
         }
@@ -129,7 +131,7 @@ impl Acc<'_> {
 
         let mut cursor = node.walk();
         for child in node.named_children(&mut cursor) {
-            self.visit(child, src, child_depth);
+            self.visit(child, src, child_depth, child_loop_depth);
         }
     }
 

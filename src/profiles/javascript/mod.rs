@@ -7,6 +7,7 @@ pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
 pub(crate) mod obsession;
+pub(crate) mod performance;
 pub(crate) mod resolve;
 pub(crate) mod roots;
 pub(crate) mod scope;

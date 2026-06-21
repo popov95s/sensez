@@ -5,12 +5,14 @@
 //! internals — which keeps the profile seam acyclic.
 
 mod import_context;
+mod performance;
 pub mod tokens;
 mod units;
 
 #[cfg(feature = "eyez")]
 use crate::eyez::RawDoc;
 pub use import_context::ImportContext;
+pub use performance::{CallFact, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
 pub use units::{ClassProperty, ClassUnit, FunctionUnit, TypeHints};

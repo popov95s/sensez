@@ -12,6 +12,7 @@ mod coupling;
 mod graphy;
 mod inherit;
 mod mutation;
+mod performance;
 mod size;
 mod structural;
 mod typing;
@@ -62,6 +63,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     inherit::detect(file, cfg, &mut out);
     typing::detect(file, cfg, &mut out);
     mutation::detect(file, cfg, &mut out);
+    performance::detect(file, cfg, &mut out);
     // Uniform per-smell on/off: drop any kind disabled for this language.
     if !cfg.disabled.is_empty() {
         out.retain(|f| !cfg.disabled.contains(&f.kind));
@@ -143,5 +145,7 @@ mod determinism_tests;
 mod discipline_tests;
 #[cfg(test)]
 mod nested_if_tests;
+#[cfg(test)]
+mod performance_tests;
 #[cfg(test)]
 mod tests;

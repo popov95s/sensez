@@ -74,10 +74,14 @@ impl SmellKind {
             MagicNumbers => ("Magic Numbers", "Unexplained numeric literals in logic — name them as constants so their intent is clear."),
             MessageChain => ("Message Chain", "A long `a.b.c.d` access chain couples the caller to a deep object graph (Law of Demeter) — ask the immediate collaborator instead."),
             MutatedParameter => ("Mutated Parameter", "The function mutates a caller's argument in place — a hidden side effect; return a new value instead."),
+            NestedLoop => ("Nested Loop", "A loop is nested directly or through a helper called inside a loop — work grows multiplicatively; combine passes or pre-index the data."),
+            NPlusOneCall => ("N+1 Loop Call", "An external-looking call runs once per loop item — prefer a bulk query/request or prefetch so work scales by batch, not item."),
             ReassignedParameter => ("Reassigned Parameter", "A parameter is rebound to a new value inside the body — confusing; use a separate local."),
             RefusedBequest => ("Refused Bequest", "A subclass inherits methods/fields it doesn't use or stubs out — the inheritance is wrong; prefer composition."),
+            RepeatedIteration => ("Repeated Iteration", "The same collection is iterated several times in one scope — fuse the passes so the data is scanned once."),
             ShotgunSurgeryHazard => ("Shotgun Surgery Hazard", "A symbol so widely depended-on that one change ripples across many modules — a blast-radius hotspot."),
             SplitVariable => ("Split Variable", "One local is reassigned to mean different things at different points — use distinct, single-purpose bindings."),
+            SortInLoop => ("Sort In Loop", "A collection is sorted inside a loop — hoist sorting or maintain ordered data to avoid repeated O(n log n) work."),
             TooManyReturns => ("Too Many Returns", "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much."),
             TuplePacking => ("Tuple Packing", "Data passed as positional tuples whose fields aren't named — use a named structure so meaning is explicit."),
             UnnecessaryNestedIf => ("Unnecessary Nested If", "An `if` whose only body is another `if`, with no else path — combine the conditions with `and`/`&&` to flatten the control flow."),
@@ -86,7 +90,7 @@ impl SmellKind {
 }
 
 /// All smell kinds, for `explain` (no arg) and exhaustiveness in tests.
-pub const ALL_SMELLS: [SmellKind; 27] = {
+pub const ALL_SMELLS: [SmellKind; 31] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -109,10 +113,14 @@ pub const ALL_SMELLS: [SmellKind; 27] = {
         MagicNumbers,
         MessageChain,
         MutatedParameter,
+        NestedLoop,
+        NPlusOneCall,
         ReassignedParameter,
         RefusedBequest,
+        RepeatedIteration,
         ShotgunSurgeryHazard,
         SplitVariable,
+        SortInLoop,
         TooManyReturns,
         TuplePacking,
         UnnecessaryNestedIf,

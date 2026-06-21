@@ -6,6 +6,7 @@ mod deadcode;
 mod imports;
 mod lexeme;
 mod obsession;
+mod performance;
 mod resolve;
 mod roots;
 mod scope;
