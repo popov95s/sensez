@@ -53,12 +53,9 @@ pub struct FunctionUnit {
     /// Count of `x in ["a", "b", ...]` membership tests against a literal
     /// collection of strings (stringly-typed category logic).
     pub literal_membership_tests: usize,
-    /// Count of fallback string literals used to hide optionality behind a
-    /// mandatory string contract. Empty strings and 1-char sentinels both
-    /// count (`or ""`, `|| "?"`, `cond ? value : "?"`, etc.).
-    pub magic_string_defaults: usize,
-    /// Source rows for the fallback literals counted above.
-    pub magic_string_default_lines: Vec<usize>,
+    /// Source rows for empty/1-char string fallback literals (`or ""`,
+    /// `|| "?"`, `cond ? value : "?"`, etc.).
+    pub short_string_fallback_lines: Vec<usize>,
     /// Compact call/loop facts consumed by performance smell detectors.
     pub performance: PerformanceFacts,
     /// True if this function is defined inside another function's body
