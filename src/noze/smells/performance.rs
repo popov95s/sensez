@@ -2,7 +2,7 @@
 
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{CallFact, FunctionUnit, PerfLine};
+use crate::spine::ir::{CallFact, FunctionUnit};
 use crate::spine::parser::ParsedFile;
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -33,25 +33,30 @@ fn direct_findings(
     functions: &BTreeMap<&str, &FunctionUnit>,
     out: &mut Vec<SmellFinding>,
 ) {
-    push_line_finding(
-        out,
-        file,
-        function,
-        SmellKind::NestedLoop,
-        &function.performance.nested_loops,
-        "nested loop multiplies work per input item",
-    );
-    push_line_finding(
-        out,
-        file,
-        function,
-        SmellKind::SortInLoop,
-        &function.performance.sorts_in_loops,
-        "sort inside a loop repeats O(n log n) work",
-    );
+    if let Some(first) = function.performance.nested_loops.first() {
+        out.push(finding(
+            SmellKind::NestedLoop,
+            file,
+            function,
+            first.line,
+            function.performance.nested_loops.len(),
+            "nested loop multiplies work per input item",
+            Severity::Warning,
+        ));
+    }
+    if let Some(first) = function.performance.sorts_in_loops.first() {
+        out.push(finding(
+            SmellKind::SortInLoop,
+            file,
+            function,
+            first.line,
+            function.performance.sorts_in_loops.len(),
+            "sort inside a loop repeats O(n log n) work",
+            Severity::Warning,
+        ));
+    }
     for calls in repeated_iterations(function).values() {
-        push_finding(
-            out,
+        out.push(finding(
             SmellKind::RepeatedIteration,
             file,
             function,
@@ -59,11 +64,10 @@ fn direct_findings(
             calls.len(),
             "same collection is iterated multiple times in this scope",
             Severity::Warning,
-        );
+        ));
     }
     for call in external_calls(&function.performance.loop_calls, imports, functions).values() {
-        push_finding(
-            out,
+        out.push(finding(
             SmellKind::NPlusOneCall,
             file,
             function,
@@ -71,7 +75,7 @@ fn direct_findings(
             1,
             "external-looking call runs once per loop iteration",
             Severity::Info,
-        );
+        ));
     }
 }
 
@@ -87,8 +91,7 @@ fn helper_findings(
             continue;
         };
         if !callee.performance.loops.is_empty() {
-            push_finding(
-                out,
+            out.push(finding(
                 SmellKind::NestedLoop,
                 file,
                 function,
@@ -96,11 +99,10 @@ fn helper_findings(
                 callee.performance.loops.len() + 1,
                 "helper called in a loop also iterates",
                 Severity::Warning,
-            );
+            ));
         }
         if !external_calls(&callee.performance.calls, imports, functions).is_empty() {
-            push_finding(
-                out,
+            out.push(finding(
                 SmellKind::NPlusOneCall,
                 file,
                 function,
@@ -108,7 +110,7 @@ fn helper_findings(
                 1,
                 "helper called in a loop performs external-looking calls",
                 Severity::Info,
-            );
+            ));
         }
     }
 }
@@ -141,60 +143,7 @@ fn external_calls<'a>(
     out
 }
 
-fn push_line_finding(
-    out: &mut Vec<SmellFinding>,
-    file: &ParsedFile,
-    function: &FunctionUnit,
-    kind: SmellKind,
-    lines: &[PerfLine],
-    reason: &str,
-) {
-    if let Some(first) = lines.first() {
-        push_finding(
-            out,
-            kind,
-            file,
-            function,
-            first.line,
-            lines.len(),
-            reason,
-            Severity::Warning,
-        );
-    }
-}
-
 #[allow(clippy::too_many_arguments)]
-fn push_finding(
-    out: &mut Vec<SmellFinding>,
-    kind: SmellKind,
-    file: &ParsedFile,
-    function: &FunctionUnit,
-    line: usize,
-    metric: usize,
-    reason: &str,
-    severity: Severity,
-) {
-    out.push(finding(
-        kind, file, function, line, metric, reason, severity,
-    ));
-}
-
-fn is_external(call: &CallFact, imports: &BTreeSet<String>) -> bool {
-    imports.contains(call.target.as_str())
-        || (!call.base.is_empty() && imports.contains(call.base.as_str()))
-        || (call.member && EXPENSIVE_METHODS.contains(&call.method.as_str()))
-}
-
-fn import_bindings(file: &ParsedFile) -> BTreeSet<String> {
-    file.walked
-        .symbols
-        .imports
-        .iter()
-        .flat_map(|import| import.bindings.iter().chain(import.imported_symbols.iter()))
-        .cloned()
-        .collect()
-}
-
 fn finding(
     kind: SmellKind,
     file: &ParsedFile,
@@ -214,4 +163,20 @@ fn finding(
         metric as u32,
         1,
     )
+}
+
+fn is_external(call: &CallFact, imports: &BTreeSet<String>) -> bool {
+    imports.contains(call.target.as_str())
+        || (!call.base.is_empty() && imports.contains(call.base.as_str()))
+        || (call.member && EXPENSIVE_METHODS.contains(&call.method.as_str()))
+}
+
+fn import_bindings(file: &ParsedFile) -> BTreeSet<String> {
+    file.walked
+        .symbols
+        .imports
+        .iter()
+        .flat_map(|import| import.bindings.iter().chain(import.imported_symbols.iter()))
+        .cloned()
+        .collect()
 }

@@ -127,7 +127,7 @@ fn boolean_blindness(
         .count();
     if bools > cfg.max_bool_params {
         out.push(make(
-        SmellKind::BooleanBlindness,
+            SmellKind::BooleanBlindness,
             format!("{bools} boolean parameters — call sites are unreadable; consider an Enum or splitting the function"),
             &file.path,
             func.start_line,
@@ -159,7 +159,7 @@ fn tuple_packing(
     let arity = func.max_tuple_return.max(annotated);
     if arity > cfg.max_tuple_return {
         out.push(make(
-        SmellKind::TuplePacking,
+            SmellKind::TuplePacking,
             format!("returns a {arity}-element tuple — positional grouped data; consider a NamedTuple/dataclass"),
             &file.path,
             func.start_line,

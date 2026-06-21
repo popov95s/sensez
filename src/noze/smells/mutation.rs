@@ -24,7 +24,7 @@ pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
         }
         if cfg.literal_membership && func.literal_membership_tests > 0 {
             out.push(make(
-        SmellKind::LiteralMembership,
+                SmellKind::LiteralMembership,
                 format!(
                     "{} membership test(s) against literal string lists — stringly-typed categories; consider an Enum",
                     func.literal_membership_tests
@@ -126,7 +126,7 @@ fn implicit_schema(
             continue;
         }
         out.push(make(
-        SmellKind::ImplicitSchema,
+            SmellKind::ImplicitSchema,
             format!(
                 "`{recv}` accessed via {} distinct string keys — implicit schema; consider a dataclass/model",
                 keys.len()
