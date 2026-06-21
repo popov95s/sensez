@@ -68,7 +68,7 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(right) = node.child_by_field_name("right") else {
         return;
     };
-    walk::record_magic_string_default(
+    walk::record_short_string_fallback(
         unit,
         string_literal_len(right, src),
         right.start_position().row + 1,
@@ -81,7 +81,7 @@ fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) 
     let Some(fallback) = node.named_child(node.named_child_count().saturating_sub(1)) else {
         return;
     };
-    walk::record_magic_string_default(
+    walk::record_short_string_fallback(
         unit,
         string_literal_len(fallback, src),
         fallback.start_position().row + 1,

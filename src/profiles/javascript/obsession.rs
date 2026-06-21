@@ -56,7 +56,7 @@ fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(right) = node.child_by_field_name("right") else {
         return;
     };
-    walk::record_magic_string_default(
+    walk::record_short_string_fallback(
         unit,
         string_literal_len(right, src),
         right.start_position().row + 1,
@@ -68,7 +68,7 @@ fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(fallback) = node.child_by_field_name("alternative") else {
         return;
     };
-    walk::record_magic_string_default(
+    walk::record_short_string_fallback(
         unit,
         string_literal_len(fallback, src),
         fallback.start_position().row + 1,

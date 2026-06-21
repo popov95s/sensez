@@ -21,7 +21,7 @@ pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
         if cfg.loose_typing {
             loose_typing(file, func, out);
         }
-        if cfg.magic_string_default && func.magic_string_defaults > 0 {
+        if cfg.magic_string_default && !func.short_string_fallback_lines.is_empty() {
             magic_string_default(file, func, out);
         }
         if cfg.tuple_packing {
@@ -92,21 +92,22 @@ fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFindi
 /// Fallback string literals used to paper over optional/nullable values.
 fn magic_string_default(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFinding>) {
     let line = func
-        .magic_string_default_lines
+        .short_string_fallback_lines
         .first()
         .copied()
         .unwrap_or(func.start_line);
+    let count = func.short_string_fallback_lines.len();
     out.push(make(
         SmellKind::MagicStringDefault,
         format!(
             "{} fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) — hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-            func.magic_string_defaults
+            count
         ),
         &file.path,
         line,
         &func.name,
         Severity::Warning,
-        func.magic_string_defaults as u32,
+        count as u32,
         0,
     ));
 }
