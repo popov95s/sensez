@@ -6,6 +6,7 @@
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
+pub(crate) mod performance;
 pub(crate) mod resolve;
 pub(crate) mod roots;
 pub(crate) mod scope;
@@ -41,6 +42,8 @@ lang_profile! {
         is_entry_file_stem: deadcode::is_entry_file_stem,
         dead_code_defaults: deadcode::defaults,
         entry_modules: deadcode::entry_modules,
+        expensive_loop_methods: performance::EXPENSIVE_LOOP_METHODS,
+        external_get_receivers: performance::EXTERNAL_GET_RECEIVERS,
         // An edge into the importer's own subtree (`use self::builder::build`,
         // façade re-exports) is containment, like `mod builder;` itself.
         is_containment: |importer: &str, target: &str| {

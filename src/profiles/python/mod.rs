@@ -43,6 +43,8 @@ lang_profile! {
         is_entry_file_stem: deadcode::is_entry_file_stem,
         dead_code_defaults: deadcode::defaults,
         entry_modules: entry_modules_from_pyproject,
+        expensive_loop_methods: performance::EXPENSIVE_LOOP_METHODS,
+        external_get_receivers: performance::EXTERNAL_GET_RECEIVERS,
         // `__init__` ↔ submodule mutual imports are real load-time hazards.
         is_containment: |_importer, _target| false,
     }

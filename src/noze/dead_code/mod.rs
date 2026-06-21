@@ -17,7 +17,7 @@ mod reachability;
 use crate::config::model::DeadCode;
 use crate::globs::build_globset;
 use crate::noze::{ActionLevel, Confidence, DeadCodeFinding, SymbolKind};
-use crate::profiles::{registry, DecoratorClass, Language};
+use crate::profiles::{registry, Language};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
@@ -65,7 +65,7 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             }
             let dclass =
                 profile.classify_decorator(node.decorators.get(symbol), &rules.entrypoints);
-            if matches!(dclass, DecoratorClass::Registration)
+            if dclass.is_registration()
                 || rules.entrypoint_names.contains(symbol.as_str())
                 || class_entrypoints.is_entrypoint(&node.file_path, symbol, kind)
                 || skip_symbol(node, profile, symbol, &inbound.used)
@@ -73,7 +73,7 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
                 continue;
             }
             let mut confidence = confidence_of(&inbound);
-            if matches!(dclass, DecoratorClass::Unknown) {
+            if dclass.is_unknown() {
                 confidence = Confidence::Low; // decorated by an unknown wrapper — uncertain
             }
             findings.push(DeadCodeFinding {

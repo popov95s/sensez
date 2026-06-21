@@ -15,6 +15,18 @@ const ITER_METHODS: [&str; 9] = [
     "findIndex",
     "forEach",
 ];
+pub(crate) const EXPENSIVE_LOOP_METHODS: &[&str] = &[
+    "all", "execute", "fetch", "fetchOne", "find", "findOne", "load", "query", "request", "save",
+];
+pub(crate) const EXTERNAL_GET_RECEIVERS: &[&str] = &[
+    "api",
+    "client",
+    "db",
+    "repo",
+    "repository",
+    "requests",
+    "session",
+];
 
 pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: usize) {
     let kind = node.kind();

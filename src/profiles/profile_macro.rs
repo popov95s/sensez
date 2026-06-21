@@ -22,6 +22,8 @@ macro_rules! lang_profile {
             is_entry_file_stem: $entry_stem:path,
             dead_code_defaults: $dead_code_defaults:path,
             entry_modules: $entry_modules:expr,
+            expensive_loop_methods: $expensive_loop_methods:path,
+            external_get_receivers: $external_get_receivers:path,
             is_containment: $containment:expr,
         }
     ) => {
@@ -116,6 +118,16 @@ macro_rules! lang_profile {
             fn entry_modules(&self, project_root: &std::path::Path) -> Vec<String> {
                 #[allow(clippy::redundant_closure_call)]
                 ($entry_modules)(project_root)
+            }
+        }
+
+        impl $crate::profiles::PerformanceProfile for $name {
+            fn is_expensive_loop_call(&self, method: &str) -> bool {
+                $expensive_loop_methods.contains(&method)
+            }
+
+            fn is_external_get_receiver(&self, base: &str) -> bool {
+                $external_get_receivers.contains(&base)
             }
         }
     };

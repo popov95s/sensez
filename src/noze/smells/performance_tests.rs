@@ -103,6 +103,25 @@ def json_finding_count(data):
 }
 
 #[test]
+fn get_receiver_heuristics_are_language_specific() {
+    let py = "\
+def f(api, ids):
+    for id in ids:
+        api.get(id)
+";
+    assert!(!has(&local("py", py), SmellKind::NPlusOneCall));
+
+    let js = "\
+export function f(api, ids) {
+  for (const id of ids) {
+    api.get(id);
+  }
+}
+";
+    assert!(has(&local("js", js), SmellKind::NPlusOneCall));
+}
+
+#[test]
 fn nested_loop_over_config_constant_is_not_flagged() {
     let src = "\
 SOLUTIONS = []

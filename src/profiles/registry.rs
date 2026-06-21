@@ -4,7 +4,9 @@
 //! enabled. The default build enables every supported profile; smaller builds
 //! can opt into individual language features.
 
-use crate::profiles::{DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile};
+use crate::profiles::{
+    DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
+};
 use std::path::Path;
 
 /// All compiled-in language profiles (one zero-sized instance each).
@@ -55,4 +57,8 @@ pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {
 
 pub fn dead_code_profile(language: Language) -> &'static dyn DeadCodeProfile {
     profile(language) as &dyn DeadCodeProfile
+}
+
+pub fn performance_profile(language: Language) -> &'static dyn PerformanceProfile {
+    profile(language) as &dyn PerformanceProfile
 }

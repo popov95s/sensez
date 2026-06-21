@@ -101,9 +101,6 @@ pub struct TypeHints {
     pub param_types: HashMap<(String, String), String>,
     /// local/global variable name → type (annotation or `x = T(...)`).
     pub var_types: HashMap<String, String>,
-    /// `self.attr` name → type (annotation or `self.attr = T(...)`).
-    #[allow(dead_code)] // used only in python, TODO: fix
-    pub attr_types: HashMap<String, String>,
     /// function name → annotated return type.
     pub return_types: HashMap<String, String>,
 }

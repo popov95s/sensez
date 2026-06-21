@@ -46,7 +46,7 @@ fn collect_params(params: Node, src: &[u8], func: &str, hints: &mut TypeHints) {
     }
 }
 
-/// Record `x: T`, `self.x: T`, `x = T(...)`, `self.x = T(...)`.
+/// Record `x: T` and `x = T(...)` local/global type hints.
 pub fn record_assignment(node: Node, src: &[u8], hints: &mut TypeHints) {
     let Some(left) = node.child_by_field_name("left") else {
         return;
@@ -58,20 +58,6 @@ pub fn record_assignment(node: Node, src: &[u8], hints: &mut TypeHints) {
     if left.kind() == "identifier" {
         if let Ok(name) = left.utf8_text(src) {
             hints.var_types.insert(name.to_string(), ty);
-        }
-    } else if left.kind() == "attribute" {
-        let is_self = left
-            .child_by_field_name("object")
-            .filter(|o| o.kind() == "identifier")
-            .and_then(|o| o.utf8_text(src).ok())
-            == Some("self");
-        if is_self {
-            if let Some(attr) = left
-                .child_by_field_name("attribute")
-                .and_then(|a| a.utf8_text(src).ok())
-            {
-                hints.attr_types.insert(attr.to_string(), ty);
-            }
         }
     }
 }

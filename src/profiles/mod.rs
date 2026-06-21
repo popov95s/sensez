@@ -71,17 +71,46 @@ impl DeadCodeDefaults {
     };
 }
 
-/// Result of classifying a symbol's decorator set by shape.
-#[allow(dead_code)] // used only in python, TODO: fix/reconsider
+/// Result of classifying a symbol's decorator set for dead-code liveness.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub enum DecoratorClass {
     /// No decorators (or the language has none).
     None,
     /// Structural/stdlib decorators only — no effect on liveness.
+    #[cfg(feature = "lang-python")]
     Neutral,
     /// Framework-registration decorator present — treat the symbol as live.
+    #[cfg(feature = "lang-python")]
     Registration,
     /// A bare unrecognized decorator — uncertain, downgrade confidence.
+    #[cfg(feature = "lang-python")]
     Unknown,
+}
+
+impl DecoratorClass {
+    pub(crate) fn is_registration(self) -> bool {
+        #[cfg(feature = "lang-python")]
+        {
+            self == Self::Registration
+        }
+        #[cfg(not(feature = "lang-python"))]
+        {
+            let _ = self;
+            false
+        }
+    }
+
+    pub(crate) fn is_unknown(self) -> bool {
+        #[cfg(feature = "lang-python")]
+        {
+            self == Self::Unknown
+        }
+        #[cfg(not(feature = "lang-python"))]
+        {
+            let _ = self;
+            false
+        }
+    }
 }
 
 pub trait ParseProfile: Send + Sync {
@@ -120,6 +149,17 @@ pub trait DeadCodeProfile: Send + Sync {
     fn entry_modules(&self, project_root: &Path) -> Vec<String>;
 }
 
-pub trait LanguageProfile: ParseProfile + ModuleProfile + DeadCodeProfile {}
+pub trait PerformanceProfile: Send + Sync {
+    fn is_expensive_loop_call(&self, method: &str) -> bool;
+    fn is_external_get_receiver(&self, base: &str) -> bool;
+}
 
-impl<T> LanguageProfile for T where T: ParseProfile + ModuleProfile + DeadCodeProfile {}
+pub trait LanguageProfile:
+    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile
+{
+}
+
+impl<T> LanguageProfile for T where
+    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile
+{
+}

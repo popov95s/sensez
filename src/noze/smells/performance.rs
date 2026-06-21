@@ -2,27 +2,10 @@
 
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::profiles::{registry, PerformanceProfile};
 use crate::spine::ir::{CallFact, FunctionUnit, PerfLine};
 use crate::spine::parser::ParsedFile;
 use std::collections::BTreeMap;
-
-const EXPENSIVE_METHODS: [&str; 12] = [
-    "all", "execute", "fetch", "fetchOne", "fetchone", "find", "findOne", "load", "query",
-    "request", "save", "select",
-];
-const EXPENSIVE_GET_RECEIVERS: [&str; 10] = [
-    // TODO: Make per language
-    "api",
-    "client",
-    "conn",
-    "connection",
-    "cursor",
-    "db",
-    "repo",
-    "repository",
-    "requests",
-    "session",
-];
 
 pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
     let functions: BTreeMap<&str, &FunctionUnit> = file
@@ -32,9 +15,10 @@ pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
         .iter()
         .map(|f| (f.name.as_str(), f))
         .collect();
+    let profile = registry::performance_profile(file.language);
     for function in &file.walked.units.functions {
-        direct_findings(file, function, &functions, out);
-        helper_findings(file, function, &functions, out);
+        direct_findings(file, function, &functions, profile, out);
+        helper_findings(file, function, &functions, profile, out);
     }
 }
 
@@ -42,6 +26,7 @@ fn direct_findings(
     file: &ParsedFile,
     function: &FunctionUnit,
     functions: &BTreeMap<&str, &FunctionUnit>,
+    profile: &dyn PerformanceProfile,
     out: &mut Vec<SmellFinding>,
 ) {
     let nested_loops = significant_loops(&function.performance.nested_loops);
@@ -78,7 +63,7 @@ fn direct_findings(
             Severity::Warning,
         ));
     }
-    for call in external_calls(&function.performance.loop_calls, functions).values() {
+    for call in external_calls(&function.performance.loop_calls, functions, profile).values() {
         out.push(finding(
             SmellKind::NPlusOneCall,
             file,
@@ -95,6 +80,7 @@ fn helper_findings(
     file: &ParsedFile,
     function: &FunctionUnit,
     functions: &BTreeMap<&str, &FunctionUnit>,
+    profile: &dyn PerformanceProfile,
     out: &mut Vec<SmellFinding>,
 ) {
     for call in &function.performance.loop_calls {
@@ -113,7 +99,7 @@ fn helper_findings(
                 Severity::Warning,
             ));
         }
-        if !external_calls(&callee.performance.calls, functions).is_empty() {
+        if !external_calls(&callee.performance.calls, functions, profile).is_empty() {
             out.push(finding(
                 SmellKind::NPlusOneCall,
                 file,
@@ -141,13 +127,14 @@ fn repeated_iterations(function: &FunctionUnit) -> BTreeMap<&str, Vec<&CallFact>
 fn external_calls<'a>(
     calls: &'a [CallFact],
     functions: &BTreeMap<&str, &FunctionUnit>,
+    profile: &dyn PerformanceProfile,
 ) -> BTreeMap<&'a str, &'a CallFact> {
     let mut out = BTreeMap::new();
     for call in calls {
         if functions.contains_key(call.target.as_str()) {
             continue;
         }
-        if is_external(call) {
+        if is_external(call, profile) {
             out.entry(call.target.as_str()).or_insert(call);
         }
     }
@@ -183,14 +170,10 @@ fn finding(
     )
 }
 
-fn is_external(call: &CallFact) -> bool {
+fn is_external(call: &CallFact, profile: &dyn PerformanceProfile) -> bool {
     call.member
-        && (EXPENSIVE_METHODS.contains(&call.method.as_str())
-            || (call.method == "get" && looks_external_receiver(&call.base)))
-}
-
-fn looks_external_receiver(base: &str) -> bool {
-    EXPENSIVE_GET_RECEIVERS.contains(&base)
+        && (profile.is_expensive_loop_call(&call.method)
+            || (call.method == "get" && profile.is_external_get_receiver(&call.base)))
 }
 
 fn is_bounded_constant(subject: &str) -> bool {

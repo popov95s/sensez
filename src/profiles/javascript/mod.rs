@@ -47,6 +47,8 @@ lang_profile! {
         dead_code_defaults: deadcode::defaults,
         // package.json bin/main derivation: deferred milestone.
         entry_modules: |_root| Vec::new(),
+        expensive_loop_methods: performance::EXPENSIVE_LOOP_METHODS,
+        external_get_receivers: performance::EXTERNAL_GET_RECEIVERS,
         is_containment: |_importer, _target| false,
     }
 }
