@@ -1,0 +1,18 @@
+{
+  "name": "sensez-darwin-x64",
+  "version": "0.1.0",
+  "description": "Sensez native binary for macOS x64",
+  "license": "MIT",
+  "os": [
+    "darwin"
+  ],
+  "cpu": [
+    "x64"
+  ],
+  "files": [
+    "bin"
+  ],
+  "publishConfig": {
+    "provenance": true
+  }
+}

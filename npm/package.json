@@ -15,6 +15,13 @@
   "files": [
     "bin"
   ],
+  "optionalDependencies": {
+    "sensez-darwin-arm64": "0.1.0",
+    "sensez-darwin-x64": "0.1.0",
+    "sensez-linux-arm64-gnu": "0.1.0",
+    "sensez-linux-x64-gnu": "0.1.0",
+    "sensez-win32-x64-msvc": "0.1.0"
+  },
   "publishConfig": {
     "provenance": true
   },

@@ -16,7 +16,8 @@ classifiers = [
 
 [tool.maturin]
 bindings = "bin"
-features = ["mcp", "eyez", "all-langs"]
+no-default-features = true
+features = ["mcp", "lang-python"]
 
 [tool.uv]
 cache-keys = [
