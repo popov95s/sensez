@@ -87,3 +87,35 @@ export function f(client, ids) {
     let findings = local("js", src);
     assert!(has(&findings, SmellKind::NPlusOneCall), "{findings:?}");
 }
+
+#[test]
+fn dict_get_over_fixed_keys_is_not_n_plus_one() {
+    let src = "\
+def json_finding_count(data):
+    if isinstance(data, dict):
+        for k in (\"total_issues\", \"findings\", \"issues\", \"results\"):
+            v = data.get(k)
+            if isinstance(v, int):
+                return v
+";
+    let findings = local("py", src);
+    assert!(!has(&findings, SmellKind::NPlusOneCall), "{findings:?}");
+}
+
+#[test]
+fn nested_loop_over_config_constant_is_not_flagged() {
+    let src = "\
+SOLUTIONS = []
+
+def build_rows(order):
+    rows = []
+    for target in order:
+        comps = []
+        for comp in SOLUTIONS:
+            comps.append(comp.name)
+        rows.append((target, comps))
+    return rows
+";
+    let findings = local("py", src);
+    assert!(!has(&findings, SmellKind::NestedLoop), "{findings:?}");
+}

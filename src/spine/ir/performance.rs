@@ -13,6 +13,7 @@ pub struct PerformanceFacts {
 #[derive(Debug, Clone, Default)]
 pub struct PerfLine {
     pub line: usize,
+    pub subject: String,
 }
 
 #[derive(Debug, Clone, Default)]

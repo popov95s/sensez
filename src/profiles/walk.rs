@@ -5,7 +5,7 @@
 //! [`Walked`] output is identical everywhere and lives here once.
 
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
-use crate::spine::ir::{bump, record_attr, FunctionUnit, SymbolKind, Walked};
+use crate::spine::ir::{bump, record_attr, FunctionUnit, PerfLine, SymbolKind, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -183,4 +183,24 @@ pub(crate) fn record_magic_string_default(unit: &mut FunctionUnit, literal_len: 
     if literal_len.is_some_and(|len| len <= 1) {
         unit.magic_string_defaults += 1;
     }
+}
+
+pub(crate) fn node_text<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
+    node.utf8_text(src).ok()
+}
+
+pub(crate) fn perf_line(node: Node, src: &[u8], subject_fields: &[&str]) -> PerfLine {
+    PerfLine {
+        line: node.start_position().row + 1,
+        subject: loop_subject(node, src, subject_fields).unwrap_or_default(),
+    }
+}
+
+fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<String> {
+    subject_fields
+        .iter()
+        .find_map(|field| node.child_by_field_name(field))
+        .filter(|n| n.kind() == "identifier")
+        .and_then(|n| node_text(n, src))
+        .map(str::to_string)
 }
