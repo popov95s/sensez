@@ -23,6 +23,7 @@ use crate::globs::build_globset;
 use crate::noze::{ActionLevel, Severity, SmellFinding, SmellKind};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
+use globset::GlobSet;
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::path::Path;
@@ -33,7 +34,7 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
     if !cfg.enabled {
         return Vec::new();
     }
-    let excluded = build_globset(&cfg.exclude);
+    let excluded = build_globset(&cfg.exclude).unwrap_or_else(|_| GlobSet::empty());
     let kept: Vec<&ParsedFile> = files
         .iter()
         .filter(|f| !excluded.is_match(&f.path))

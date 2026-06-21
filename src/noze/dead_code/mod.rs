@@ -36,15 +36,16 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
     for idx in cg.graph.node_indices() {
         let node = &cg.graph[idx];
         let profile = registry::dead_code_profile(node.language);
-        let rules = rule_sets.for_language(node.language);
+        let Some(rules) = rule_sets.for_language(node.language) else {
+            continue;
+        };
         if node.is_external || is_entry_module(node, profile, &entry_modules, &rules.entry_globs) {
             continue;
         }
         let inbound = inbound_usage(cg, idx, |source| {
             rule_sets
                 .for_language(source.language)
-                .test_source_globs
-                .is_match(&source.file_path)
+                .is_some_and(|rules| rules.test_source_globs.is_match(&source.file_path))
         });
         if inbound.star {
             continue; // `from mod import *` consumes everything
@@ -97,8 +98,7 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             findings.extend(extra::unused_methods(files, &modmap, |language, name| {
                 rule_sets
                     .for_language(language)
-                    .entrypoint_names
-                    .contains(name)
+                    .is_some_and(|rules| rules.entrypoint_names.contains(name))
             }));
         }
     }
@@ -143,11 +143,8 @@ impl RuleSets {
         Self { by_language }
     }
 
-    fn for_language(&self, language: Language) -> &RuleSet {
-        match self.by_language.get(&language) {
-            Some(rules) => rules,
-            None => panic!("dead-code rules missing for parsed language {language:?}"),
-        }
+    fn for_language(&self, language: Language) -> Option<&RuleSet> {
+        self.by_language.get(&language)
     }
 }
 
@@ -167,7 +164,7 @@ fn merged_globset(configured: &[String], defaults: &'static [&'static str]) -> G
         .map(str::to_string)
         .chain(configured.iter().cloned())
         .collect();
-    build_globset(&globs)
+    build_globset(&globs).unwrap_or_else(|_| GlobSet::empty())
 }
 
 #[cfg(test)]

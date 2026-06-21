@@ -17,7 +17,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             out,
             "{}",
             format!(
-                "⚠ {} file(s) could not be read or parsed — findings may be incomplete",
+                "⚠ {} scan issue(s) reduced fidelity — findings may be incomplete",
                 report.meta.files_skipped
             )
             .yellow()

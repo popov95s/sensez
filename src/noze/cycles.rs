@@ -21,7 +21,7 @@ use std::collections::HashMap;
 /// For each cycle we also record one import edge per module (its next hop
 /// within the cycle) with the source file/line, so the report is clickable.
 pub fn detect(cg: &CodebaseGraph, exclude: &[String]) -> Vec<CycleFinding> {
-    let excluded = build_globset(exclude);
+    let excluded = build_globset(exclude).unwrap_or_else(|_| globset::GlobSet::empty());
     let module_level = EdgeFiltered::from_fn(&cg.graph, |edge| {
         !edge.weight().is_inline && !edge.weight().is_module_decl
     });

@@ -22,6 +22,7 @@ use crate::globs::build_globset;
 use crate::noze::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::ParsedFile;
+use globset::GlobSet;
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
 
@@ -37,7 +38,7 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
         return Vec::new();
     }
     // Exclude tests/migrations from the corpus (kept in the graph elsewhere).
-    let excluded = build_globset(&config.exclude);
+    let excluded = build_globset(&config.exclude).unwrap_or_else(|_| GlobSet::empty());
     let kept: Vec<&ParsedFile> = files
         .iter()
         .filter(|f| !excluded.is_match(&f.path))

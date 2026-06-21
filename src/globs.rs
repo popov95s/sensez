@@ -17,20 +17,17 @@ pub fn validate_patterns(label: &str, patterns: &[String]) -> Result<()> {
     Ok(())
 }
 
-/// Compile already-validated `patterns` into a [`GlobSet`].
-pub fn build_globset(patterns: &[String]) -> GlobSet {
+/// Compile `patterns` into a [`GlobSet`].
+pub fn build_globset(patterns: &[String]) -> Result<GlobSet> {
     let mut builder = GlobSet::builder();
     for pattern in patterns {
-        let glob = match Glob::new(pattern) {
-            Ok(glob) => glob,
-            Err(err) => panic!("invalid pre-validated glob {pattern:?}: {err}"),
-        };
+        let glob = Glob::new(pattern)
+            .map_err(|err| anyhow!("invalid glob pattern ({pattern:?}): {err}"))?;
         builder.add(glob);
     }
-    match builder.build() {
-        Ok(set) => set,
-        Err(err) => panic!("validated glob patterns failed to compile as a set: {err}"),
-    }
+    builder
+        .build()
+        .map_err(|err| anyhow!("glob patterns failed to compile as a set: {err}"))
 }
 
 #[cfg(test)]
@@ -39,7 +36,7 @@ mod tests {
 
     #[test]
     fn valid_globs_match() {
-        let set = build_globset(&["**/tests/**".to_string()]);
+        let set = build_globset(&["**/tests/**".to_string()]).unwrap();
         assert!(set.is_match("src/tests/x.py"));
         assert!(!set.is_match("src/main.py"));
     }

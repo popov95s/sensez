@@ -55,3 +55,31 @@ fn public_scan_entry_points_work_on_a_tiny_repo() {
     assert_eq!(report.meta.mode, ReportMode::Full);
     assert_eq!(report.meta.analyzed_files, 1);
 }
+
+#[test]
+fn scan_degrades_to_defaults_when_config_is_invalid() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    fs::write(root.join("sensez.toml"), "exclude = [\"[invalid\"]\n").unwrap();
+    fs::write(root.join("demo.py"), "def add(a, b):\n    return a + b\n").unwrap();
+
+    let report = analyze_path(root, None, None).unwrap();
+    assert_eq!(report.meta.analyzed_files, 1);
+    assert!(report.meta.issues.iter().any(|issue| {
+        issue.stage == ScanStage::Config && issue.message.contains("invalid glob in exclude")
+    }));
+}
+
+#[test]
+fn scan_warns_when_pyproject_config_cannot_be_read() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path();
+    fs::write(root.join("pyproject.toml"), "[tool.sensez\n").unwrap();
+    fs::write(root.join("demo.py"), "def add(a, b):\n    return a + b\n").unwrap();
+
+    let report = analyze_path(root, None, None).unwrap();
+    assert_eq!(report.meta.analyzed_files, 1);
+    assert!(report.meta.issues.iter().any(|issue| {
+        issue.stage == ScanStage::Config && issue.message.contains("parsing pyproject.toml")
+    }));
+}

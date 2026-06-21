@@ -94,10 +94,23 @@ fn run_scan(
     max: usize,
     diff: bool,
 ) -> anyhow::Result<(String, Value)> {
-    let changed = diff
-        .then(|| crate::diff::git::changed_vs_head(path))
-        .transpose()?;
+    let (changed, diff_issue) = if diff {
+        match crate::diff::git::changed_vs_head(path) {
+            Ok(changed) => (Some(changed), None),
+            Err(err) => (None, Some(format!("{err:#}"))),
+        }
+    } else {
+        (None, None)
+    };
     let mut report = crate::analyze_path(path, threshold, changed.as_ref())?;
+    if let Some(message) = diff_issue {
+        report.meta.issues.push(crate::report::ScanIssue {
+            stage: crate::report::ScanStage::Diff,
+            file: None,
+            message,
+        });
+        report.meta.files_skipped = report.meta.issues.len();
+    }
     if diff {
         crate::brainz::apply_suppressions(path, &mut report);
     }

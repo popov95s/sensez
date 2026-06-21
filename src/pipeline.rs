@@ -18,7 +18,7 @@ pub fn analyze_path(
     threshold: Option<usize>,
     diff: Option<&ChangedLines>,
 ) -> Result<AnalysisReport> {
-    let mut config = Config::load(path).context("loading sensez.toml")?;
+    let (mut config, config_issues) = Config::load_for_scan(path);
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
@@ -32,6 +32,17 @@ pub fn analyze_path(
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
     let mut report = noze::run(&parsed.files, &graph, &config);
+    report.meta.issues.extend(config_issues);
+    report.meta.issues.extend(discovery.issues);
+    debug_assert_eq!(
+        discovery.skipped,
+        report
+            .meta
+            .issues
+            .iter()
+            .filter(|issue| issue.stage == ScanStage::Discover)
+            .count()
+    );
     report.meta.issues.extend(parsed.issues);
     report
         .meta
@@ -45,7 +56,7 @@ pub fn analyze_path(
                 dup.first_file.display()
             ),
         }));
-    report.meta.files_skipped = discovery.skipped + report.meta.issues.len();
+    report.meta.files_skipped = report.meta.issues.len();
     timer.lap("analyze");
 
     if let Some(changed) = diff {

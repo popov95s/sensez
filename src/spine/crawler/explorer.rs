@@ -3,11 +3,11 @@
 use super::generated;
 use crate::globs::build_globset;
 use crate::profiles::registry;
+use crate::report::{ScanIssue, ScanStage};
 use anyhow::{anyhow, Result};
-use ignore::{WalkBuilder, WalkState};
+use ignore::{Error as IgnoreError, WalkBuilder, WalkState};
 use std::path::{Path, PathBuf};
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{mpsc, Arc};
+use std::sync::mpsc;
 
 /// Result of a discovery walk: the source files found, plus how many entries
 /// could not be read. A non-zero `skipped` means the scan is incomplete — it
@@ -16,6 +16,7 @@ use std::sync::{mpsc, Arc};
 pub struct Discovery {
     pub files: Vec<PathBuf>,
     pub skipped: usize,
+    pub issues: Vec<ScanIssue>,
 }
 
 /// Walk `root` in parallel, returning every source file whose extension is
@@ -27,14 +28,14 @@ pub fn collect_source_files(root: &Path, exclude: &[String]) -> Result<Discovery
     if !root.exists() {
         return Err(anyhow!("path does not exist: {}", root.display()));
     }
-    let excludes = build_globset(exclude);
-    let skipped = Arc::new(AtomicUsize::new(0));
+    let excludes = build_globset(exclude)?;
 
     let (tx, rx) = mpsc::channel::<PathBuf>();
+    let (issue_tx, issue_rx) = mpsc::channel::<ScanIssue>();
     WalkBuilder::new(root).build_parallel().run(|| {
         let tx = tx.clone();
+        let issue_tx = issue_tx.clone();
         let excludes = excludes.clone();
-        let skipped = Arc::clone(&skipped);
         Box::new(move |entry| {
             match entry {
                 Ok(entry) => {
@@ -47,20 +48,24 @@ pub fn collect_source_files(root: &Path, exclude: &[String]) -> Result<Discovery
                         let _ = tx.send(entry.into_path());
                     }
                 }
-                Err(_) => {
-                    skipped.fetch_add(1, Ordering::Relaxed);
+                Err(err) => {
+                    let _ = issue_tx.send(scan_issue_from_walk_error(&err));
                 }
             }
             WalkState::Continue
         })
     });
     drop(tx);
+    drop(issue_tx);
 
     let mut files: Vec<PathBuf> = rx.into_iter().collect();
     files.sort();
+    let mut issues: Vec<ScanIssue> = issue_rx.into_iter().collect();
+    issues.sort_by(|a, b| a.file.cmp(&b.file).then_with(|| a.message.cmp(&b.message)));
     Ok(Discovery {
         files,
-        skipped: skipped.load(Ordering::Relaxed),
+        skipped: issues.len(),
+        issues,
     })
 }
 
@@ -68,6 +73,29 @@ pub fn collect_source_files(root: &Path, exclude: &[String]) -> Result<Discovery
 fn is_source_file(entry: &ignore::DirEntry) -> bool {
     entry.file_type().is_some_and(|ft| ft.is_file())
         && registry::parse_for_path(entry.path()).is_some()
+}
+
+fn scan_issue_from_walk_error(err: &IgnoreError) -> ScanIssue {
+    ScanIssue {
+        stage: ScanStage::Discover,
+        file: walk_error_path(err),
+        message: err.to_string(),
+    }
+}
+
+fn walk_error_path(err: &IgnoreError) -> Option<PathBuf> {
+    match err {
+        IgnoreError::WithPath { path, .. } => Some(path.clone()),
+        IgnoreError::WithLineNumber { err, .. } | IgnoreError::WithDepth { err, .. } => {
+            walk_error_path(err)
+        }
+        IgnoreError::Partial(errs) => errs.iter().find_map(walk_error_path),
+        IgnoreError::Loop { child, .. } => Some(child.clone()),
+        IgnoreError::Io(_)
+        | IgnoreError::Glob { .. }
+        | IgnoreError::UnrecognizedFileType(_)
+        | IgnoreError::InvalidDefinition => None,
+    }
 }
 
 #[cfg(test)]
@@ -109,5 +137,21 @@ mod tests {
     #[test]
     fn missing_path_errors() {
         assert!(collect_source_files(Path::new("/nonexistent/sensez/xyz"), &[]).is_err());
+    }
+
+    #[test]
+    fn walk_errors_become_discover_issues_with_paths() {
+        let err = IgnoreError::WithPath {
+            path: PathBuf::from("blocked.py"),
+            err: Box::new(IgnoreError::Io(std::io::Error::new(
+                std::io::ErrorKind::PermissionDenied,
+                "permission denied",
+            ))),
+        };
+
+        let issue = scan_issue_from_walk_error(&err);
+        assert_eq!(issue.stage, ScanStage::Discover);
+        assert_eq!(issue.file, Some(PathBuf::from("blocked.py")));
+        assert!(issue.message.contains("permission denied"));
     }
 }

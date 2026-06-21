@@ -104,3 +104,17 @@ fn fail_on_new_blocks_at_configured_level() {
         },
     );
 }
+
+#[test]
+fn diff_selection_degrades_to_warning_outside_git() {
+    let tmp = tempfile::tempdir().unwrap();
+    let selected = build_diff(tmp.path(), true, None);
+    assert!(selected.changed.is_none());
+    assert_eq!(selected.issues.len(), 1);
+    assert_eq!(selected.issues[0].stage, crate::report::ScanStage::Diff);
+    assert!(
+        selected.issues[0].message.contains("git rev-parse"),
+        "{:?}",
+        selected.issues[0]
+    );
+}

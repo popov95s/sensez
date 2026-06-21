@@ -9,6 +9,7 @@ pub use brainz::SelfImprovement;
 pub use model::{ActionPolicy, Boundaries, Config, DeadCode, Duplication, ForbiddenRule, Gate};
 pub use smells::{SmellConfig, Smells};
 
+use crate::report::{ScanIssue, ScanStage};
 use anyhow::{Context, Result};
 use std::path::Path;
 
@@ -65,6 +66,29 @@ impl Config {
         Ok(config)
     }
 
+    /// Load configuration for a scan. Invalid project-local config degrades to
+    /// defaults and emits structured warnings so analysis can still complete.
+    pub(crate) fn load_for_scan(project_root: &Path) -> (Config, Vec<ScanIssue>) {
+        let (source, mut issues) = source::discover_with_issues(project_root);
+        let issue_file = config_issue_file(&source, project_root);
+        let mut config = match parse_source(source) {
+            Ok(config) => config,
+            Err(err) => {
+                issues.push(config_issue(issue_file.clone(), format!("{err:#}")));
+                Config::default()
+            }
+        };
+        config.roots = config.roots.iter().map(|r| project_root.join(r)).collect();
+        config.apply_baseline_excludes();
+        if let Err(err) = config.validate_globs() {
+            issues.push(config_issue(issue_file, format!("{err:#}")));
+            config = Config::default();
+            config.roots = config.roots.iter().map(|r| project_root.join(r)).collect();
+            config.apply_baseline_excludes();
+        }
+        (config, issues)
+    }
+
     /// Merge the built-in test/migration globs into both pillars (idempotent).
     fn apply_baseline_excludes(&mut self) {
         for glob in GLOBAL_BASELINE_EXCLUDE {
@@ -90,6 +114,32 @@ impl Config {
         crate::globs::validate_patterns("dead_code.entry_points", &self.dead_code.entry_points)?;
         crate::globs::validate_patterns("smells.exclude", &self.smells.exclude)?;
         Ok(())
+    }
+}
+
+fn parse_source(source: source::Source) -> Result<Config> {
+    match source {
+        source::Source::SensezToml(text) => toml::from_str(&text).context("parsing sensez.toml"),
+        source::Source::Pyproject(table) => table
+            .try_into()
+            .context("parsing [tool.sensez] in pyproject.toml"),
+        source::Source::Defaults => Ok(Config::default()),
+    }
+}
+
+fn config_issue_file(source: &source::Source, project_root: &Path) -> Option<std::path::PathBuf> {
+    match source {
+        source::Source::SensezToml(_) => Some(project_root.join("sensez.toml")),
+        source::Source::Pyproject(_) => Some(project_root.join("pyproject.toml")),
+        source::Source::Defaults => None,
+    }
+}
+
+fn config_issue(file: Option<std::path::PathBuf>, message: String) -> ScanIssue {
+    ScanIssue {
+        stage: ScanStage::Config,
+        file,
+        message,
     }
 }
 

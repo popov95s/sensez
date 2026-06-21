@@ -127,8 +127,10 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
         println!("{}", crate::config_summary::scan(path, options.threshold)?);
         return Ok(ExitCode::SUCCESS);
     }
-    let changed = build_diff(path, options.diff, options.diff_from.as_deref())?;
-    let mut report = crate::analyze_path(path, options.threshold, changed.as_ref())?;
+    let diff = build_diff(path, options.diff, options.diff_from.as_deref());
+    let mut report = crate::analyze_path(path, options.threshold, diff.changed.as_ref())?;
+    report.meta.issues.extend(diff.issues);
+    report.meta.files_skipped = report.meta.issues.len();
     crate::output_filter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
     crate::noze::limit(&mut report, options.max);
@@ -173,25 +175,71 @@ fn report_findings(
         .chain(report.smells.iter().map(|finding| finding.action))
 }
 
+struct DiffSelection {
+    changed: Option<ChangedLines>,
+    issues: Vec<crate::report::ScanIssue>,
+}
+
 /// Resolve the optional diff source into a [`ChangedLines`] set.
-fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> Result<Option<ChangedLines>> {
+fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> DiffSelection {
     if diff {
-        return Ok(Some(crate::diff::git::changed_vs_head(path)?));
+        return match crate::diff::git::changed_vs_head(path) {
+            Ok(changed) => DiffSelection {
+                changed: Some(changed),
+                issues: Vec::new(),
+            },
+            Err(err) => DiffSelection {
+                changed: None,
+                issues: vec![diff_issue(None, format!("{err:#}"))],
+            },
+        };
     }
     if let Some(src) = diff_from {
         let text = if src == "-" {
             let mut buf = String::new();
-            std::io::stdin()
-                .read_to_string(&mut buf)
-                .context("reading unified diff from stdin")?;
-            buf
+            match std::io::stdin().read_to_string(&mut buf) {
+                Ok(_) => buf,
+                Err(err) => {
+                    return DiffSelection {
+                        changed: None,
+                        issues: vec![diff_issue(
+                            None,
+                            format!("reading unified diff from stdin: {err}"),
+                        )],
+                    };
+                }
+            }
         } else {
-            std::fs::read_to_string(src).with_context(|| format!("reading diff file {src}"))?
+            match std::fs::read_to_string(src) {
+                Ok(text) => text,
+                Err(err) => {
+                    return DiffSelection {
+                        changed: None,
+                        issues: vec![diff_issue(
+                            Some(PathBuf::from(src)),
+                            format!("reading diff file {src}: {err}"),
+                        )],
+                    };
+                }
+            }
         };
-        return Ok(Some(ChangedLines::from_unified(&text, path)));
+        return DiffSelection {
+            changed: Some(ChangedLines::from_unified(&text, path)),
+            issues: Vec::new(),
+        };
     }
-    Ok(None)
+    DiffSelection {
+        changed: None,
+        issues: Vec::new(),
+    }
 }
 
+fn diff_issue(file: Option<PathBuf>, message: String) -> crate::report::ScanIssue {
+    crate::report::ScanIssue {
+        stage: crate::report::ScanStage::Diff,
+        file,
+        message,
+    }
+}
 #[cfg(test)]
 mod tests;
