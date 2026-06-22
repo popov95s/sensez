@@ -185,9 +185,9 @@ jobs:
           - os: macos-15
             package: sensez-darwin-arm64
             binary: sense
-          - os: windows-latest
-            package: sensez-win32-x64-msvc
-            binary: sense.exe
+          # - os: windows-latest
+          #   package: sensez-win32-x64-msvc
+          #   binary: sense.exe
     steps:
       - uses: actions/checkout@v4
 
