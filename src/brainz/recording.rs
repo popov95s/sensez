@@ -1,26 +1,13 @@
 //! Event recording entry points for scans, searches, gates, and human verdicts.
 
-use super::events::{Event, Origin, Resolved};
+use super::events::{Event, Origin};
 use super::hub::{self, Baseline};
 use super::{resolve, store, triage};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::Path;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum BaselineUpdate {
-    Refresh,
-    Preserve,
-}
-
-pub fn record_scan(
-    root: &Path,
-    report: &Value,
-    baseline_update: BaselineUpdate,
-    ms: u64,
-    threshold: Option<usize>,
-    origin: Origin,
-) {
+pub fn record_scan(root: &Path, report: &Value, ms: u64, threshold: Option<usize>, origin: Origin) {
     if !hub::enabled(root) {
         return;
     }
@@ -38,31 +25,27 @@ pub fn record_scan(
         .ok()
         .map(|c| c.signature());
     let branch = hub::branch_key(root);
-    let mut resolved: BTreeMap<String, Resolved> = BTreeMap::new();
-    let mut reintroduced: BTreeMap<String, Resolved> = BTreeMap::new();
-    if baseline_update == BaselineUpdate::Refresh {
-        let current = resolve::fingerprints(report);
-        let previous = store::load_fingerprints(root, &branch);
-        let history = store::load_resolved_history(root, &branch);
-        let ignore = triage::ignored_keys(&triage::load(root));
-        let aging = resolve::age(&previous, &current, &history, hub::now(), &ignore);
-        resolved = aging.resolved;
-        reintroduced = aging.reintroduced;
-        if let Err(err) =
-            store::save_fingerprints(root, &branch, &aging.aged, &aging.history, hub::now())
-        {
-            eprintln!("[sensez metrics] saving fingerprints: {err:#}");
-        }
-        hub::set_baseline(
-            root,
-            Baseline {
-                ts: hub::now(),
-                ms,
-                threshold,
-                branch: branch.clone(),
-            },
-        );
+    let current = resolve::fingerprints(report);
+    let previous = store::load_fingerprints(root, &branch);
+    let history = store::load_resolved_history(root, &branch);
+    let ignore = triage::ignored_keys(&triage::load(root));
+    let aging = resolve::age(&previous, &current, &history, hub::now(), &ignore);
+    let resolved = aging.resolved;
+    let reintroduced = aging.reintroduced;
+    if let Err(err) =
+        store::save_fingerprints(root, &branch, &aging.aged, &aging.history, hub::now())
+    {
+        eprintln!("[sensez metrics] saving fingerprints: {err:#}");
     }
+    hub::set_baseline(
+        root,
+        Baseline {
+            ts: hub::now(),
+            ms,
+            threshold,
+            branch: branch.clone(),
+        },
+    );
     hub::push(root, move |session, branch| Event::Scan {
         ts: hub::now(),
         session,

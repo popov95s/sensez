@@ -39,16 +39,17 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     crate::brainz::apply_suppressions(root, &mut report);
     let repeats = super::repeats::suppress_repeated(root, &mut report, gate_config.repeat_limit);
     crate::brainz::rank_by_precision(root, &mut report);
-    super::handlers::suppress_scan_issues_for_llm(&mut report);
-    let full = serde_json::to_value(&report).unwrap_or(Value::Null);
-    crate::brainz::record_scan(
-        root,
-        &full,
-        crate::brainz::BaselineUpdate::Preserve,
-        start.elapsed().as_millis() as u64,
-        None,
-        crate::brainz::Origin::Gate,
-    );
+    super::scan_recording::suppress_scan_issues(&mut report);
+    let diff_report = serde_json::to_value(&report).unwrap_or(Value::Null);
+    if let Ok(snapshot) = super::scan_recording::snapshot_for_recording(root, None, &report, true) {
+        crate::brainz::record_scan(
+            root,
+            &snapshot,
+            start.elapsed().as_millis() as u64,
+            None,
+            crate::brainz::Origin::Gate,
+        );
+    }
 
     let n = report.duplication.len()
         + report.dead_code.len()
@@ -58,8 +59,8 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     if n == 0 {
         return Ok(allow());
     }
-    crate::brainz::record_gate_block(root, &full);
-    let regressed = crate::brainz::regressions(root, &full);
+    crate::brainz::record_gate_block(root, &diff_report);
+    let regressed = crate::brainz::regressions(root, &diff_report);
     let escalation = if regressed.is_empty() {
         String::new()
     } else {
@@ -132,6 +133,7 @@ fn allow() -> Value {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::process::Command;
 
     #[test]
     fn gate_degrades_open() {
@@ -160,5 +162,53 @@ mod tests {
 
         std::fs::write(&file, "x = 1\ny = 2\nz = 3\n").unwrap();
         assert_ne!(sig1, working_signature(&changed), "changes after a write");
+    }
+
+    #[test]
+    fn gate_baseline_feeds_resolved_recapture() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        if !git(root, &["init"]) {
+            return;
+        }
+        std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
+        assert!(git(root, &["add", "."]));
+        assert!(git(
+            root,
+            &[
+                "-c",
+                "user.email=sensez@example.test",
+                "-c",
+                "user.name=Sensez",
+                "commit",
+                "-m",
+                "base",
+            ],
+        ));
+        std::fs::write(root.join("added.py"), "def orphan():\n    return 1\n").unwrap();
+
+        let path = root.to_string_lossy().into_owned();
+        let resp = gate(&json!({"path": path, "stop_hook_active": false})).unwrap();
+
+        assert_eq!(resp["isError"], false);
+        assert!(root.join(".sensez/local-metrics/last-scan.json").exists());
+
+        std::fs::write(root.join("added.py"), "print('fixed')\n").unwrap();
+        crate::brainz::recapture();
+
+        let report = crate::brainz::usage_report(root);
+        assert_eq!(
+            report["all_time"]["resolved_by_detector"]["dead_code/function"]["count"], 1,
+            "fixing a gate-reported finding should be counted as resolved"
+        );
+    }
+
+    fn git(root: &std::path::Path, args: &[&str]) -> bool {
+        Command::new("git")
+            .args(args)
+            .current_dir(root)
+            .output()
+            .map(|out| out.status.success())
+            .unwrap_or(false)
     }
 }

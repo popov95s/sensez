@@ -175,8 +175,8 @@ pub fn gate_funnel(totals: &Totals) -> Value {
 /// (escaped to a later commit). `open` is the key set of the most recent full
 /// baseline; a blocked key absent from it counts as resolved.
 ///
-/// `has_baseline` prevents a false success rate: the gate never writes a
-/// baseline, so without a full scan `open` is empty and every block would look
+/// `has_baseline` prevents a false success rate: until a full background
+/// snapshot has been recorded, `open` is empty and every block would look
 /// resolved. In that case the rate is `null`, not a false 1.0.
 pub fn gate_conversion(
     blocked: &BTreeSet<String>,
@@ -191,7 +191,7 @@ pub fn gate_conversion(
         return json!({
             "blocked_findings": total,
             "conversion_rate": Value::Null,
-            "note": "no full scan recorded yet — run scan with diff=false so resolved vs. escaped can be measured",
+            "note": "no full baseline recorded yet — run noze_sniff once so resolved vs. escaped can be measured",
         });
     }
     let escaped = blocked.iter().filter(|k| open.contains(*k)).count() as u64;

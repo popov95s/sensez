@@ -69,11 +69,6 @@ fn scan_tool(args: &Value) -> ToolResult {
             crate::brainz::record_scan(
                 Path::new(path),
                 &full_report,
-                if diff {
-                    crate::brainz::BaselineUpdate::Preserve
-                } else {
-                    crate::brainz::BaselineUpdate::Refresh
-                },
                 ms,
                 threshold,
                 crate::brainz::Origin::Tool,
@@ -114,16 +109,12 @@ fn run_scan(
     if diff {
         crate::brainz::apply_suppressions(path, &mut report);
     }
-    suppress_scan_issues_for_llm(&mut report);
-    let full_report = serde_json::to_value(&report)?;
+    super::scan_recording::suppress_scan_issues(&mut report);
+    let full_report =
+        super::scan_recording::snapshot_for_recording(path, threshold, &report, diff)?;
     crate::brainz::rank_by_precision(path, &mut report);
     crate::noze::limit(&mut report, max);
     Ok((crate::reporter::to_json(&report)?, full_report))
-}
-
-pub(super) fn suppress_scan_issues_for_llm(report: &mut crate::report::AnalysisReport) {
-    report.meta.issues.clear();
-    report.meta.files_skipped = 0;
 }
 
 #[cfg(feature = "eyez")]
@@ -274,5 +265,21 @@ mod tests {
         assert!(!text.contains("\"issues\""));
         assert!(!text.contains("\"files_skipped\": 1"));
         assert!(!text.contains("syntax tree deeper than"));
+    }
+
+    #[test]
+    fn diff_scan_refreshes_metrics_baseline() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        std::fs::write(dir.join("m.py"), "def f():\n    pass\n").unwrap();
+        let path = dir.to_string_lossy().into_owned();
+
+        let req = json!({"jsonrpc": "2.0", "id": 11, "method": "tools/call", "params": {
+            "name": "noze_sniff", "arguments": {"path": path, "diff": true}
+        }});
+        let resp = handle_message(&req).unwrap();
+
+        assert_eq!(resp["result"]["isError"], false);
+        assert!(dir.join(".sensez/local-metrics/last-scan.json").exists());
     }
 }

@@ -19,7 +19,7 @@ pub use flush::flush;
 pub use ranking::{rank_by_precision, regressions};
 #[cfg(feature = "eyez")]
 pub use recording::record_search;
-pub use recording::{record_gate_block, record_scan, triage_finding, BaselineUpdate};
+pub use recording::{record_gate_block, record_scan, triage_finding};
 pub use suppression::apply_suppressions;
 pub use usage::usage_report;
 

@@ -102,14 +102,7 @@ mod tests {
 
         let text = crate::scan(&root, None, crate::reporter::Format::Json, 0).unwrap();
         let report: Value = serde_json::from_str(&text).unwrap();
-        crate::brainz::record_scan(
-            &root,
-            &report,
-            crate::brainz::BaselineUpdate::Refresh,
-            1,
-            None,
-            crate::brainz::Origin::Tool,
-        );
+        crate::brainz::record_scan(&root, &report, 1, None, crate::brainz::Origin::Tool);
 
         fs::write(
             root.join("app.py"),

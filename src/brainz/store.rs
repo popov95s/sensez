@@ -13,7 +13,7 @@ use std::path::{Path, PathBuf};
 
 /// Cap on distinct branches kept in `last-scan.json` (prune oldest by
 /// `updated`). Bounds growth across many short-lived feature branches.
-const MAX_BRANCHES: usize = 32;
+const MAX_BRANCHES: usize = 12;
 
 pub(super) fn dir(root: &Path) -> PathBuf {
     root.join(".sensez").join("local-metrics")
