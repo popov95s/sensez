@@ -3,6 +3,11 @@
   "version": "0.1.2",
   "description": "Sensez native binary for Linux x64 glibc",
   "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/popov95s/sensez.git",
+    "directory": "npm"
+  },
   "os": [
     "linux"
   ],
