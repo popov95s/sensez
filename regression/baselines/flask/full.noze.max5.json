@@ -1,0 +1,314 @@
+{
+  "boundaries": [],
+  "cycles": [
+    {
+      "action": "warning",
+      "edges": [
+        {
+          "file": "<flask>/examples/javascript/js_example/views.py",
+          "from_module": "js_example.views",
+          "line": 5,
+          "to_module": "js_example"
+        },
+        {
+          "file": "<flask>/examples/javascript/js_example/__init__.py",
+          "from_module": "js_example",
+          "line": 5,
+          "to_module": "js_example.views"
+        }
+      ],
+      "modules": [
+        "js_example.views",
+        "js_example"
+      ]
+    },
+    {
+      "action": "warning",
+      "edges": [
+        {
+          "file": "<flask>/src/flask/cli.py",
+          "from_module": "flask.cli",
+          "line": 34,
+          "to_module": "flask.app"
+        },
+        {
+          "file": "<flask>/src/flask/testing.py",
+          "from_module": "flask.testing",
+          "line": 24,
+          "to_module": "flask.app"
+        },
+        {
+          "file": "<flask>/src/flask/sansio/scaffold.py",
+          "from_module": "flask.sansio.scaffold",
+          "line": 19,
+          "to_module": "flask.templating"
+        },
+        {
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "from_module": "flask.sansio.blueprints",
+          "line": 15,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/logging.py",
+          "from_module": "flask.logging",
+          "line": 12,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/json/provider.py",
+          "from_module": "flask.json.provider",
+          "line": 16,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/ctx.py",
+          "from_module": "flask.ctx",
+          "line": 23,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/config.py",
+          "from_module": "flask.config",
+          "line": 14,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/sansio/app.py",
+          "from_module": "flask.sansio.app",
+          "line": 41,
+          "to_module": "flask.sansio.blueprints"
+        },
+        {
+          "file": "<flask>/src/flask/templating.py",
+          "from_module": "flask.templating",
+          "line": 18,
+          "to_module": "flask.sansio.scaffold"
+        },
+        {
+          "file": "<flask>/src/flask/app.py",
+          "from_module": "flask.app",
+          "line": 61,
+          "to_module": "flask.testing"
+        },
+        {
+          "file": "<flask>/src/flask/json/__init__.py",
+          "from_module": "flask.json",
+          "line": 10,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/json/tag.py",
+          "from_module": "flask.json.tag",
+          "line": 57,
+          "to_module": "flask.json"
+        },
+        {
+          "file": "<flask>/src/flask/sessions.py",
+          "from_module": "flask.sessions",
+          "line": 21,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/globals.py",
+          "from_module": "flask.globals",
+          "line": 13,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/helpers.py",
+          "from_module": "flask.helpers",
+          "line": 25,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/wrappers.py",
+          "from_module": "flask.wrappers",
+          "line": 12,
+          "to_module": "flask.helpers"
+        }
+      ],
+      "modules": [
+        "flask.cli",
+        "flask.testing",
+        "flask.sansio.scaffold",
+        "flask.sansio.blueprints",
+        "flask.logging",
+        "flask.json.provider",
+        "flask.ctx",
+        "flask.config",
+        "flask.sansio.app",
+        "flask.templating",
+        "flask.app",
+        "flask.json",
+        "flask.json.tag",
+        "flask.sessions",
+        "flask.globals",
+        "flask.helpers",
+        "flask.wrappers"
+      ]
+    }
+  ],
+  "dead_code": [
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<flask>/src/flask/debughelpers.py",
+      "kind": "class",
+      "line": 17,
+      "module": "flask.debughelpers",
+      "symbol": "UnexpectedUnicodeError"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/examples/tutorial/flaskr/__init__.py",
+      "kind": "function",
+      "line": 6,
+      "module": "flaskr",
+      "symbol": "create_app"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "class",
+      "line": 138,
+      "module": "flask.views",
+      "symbol": "MethodView"
+    }
+  ],
+  "duplication": [
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 30,
+          "file": "<flask>/src/flask/blueprints.py",
+          "start_row": 19
+        },
+        {
+          "end_row": 185,
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "start_row": 174
+        }
+      ],
+      "token_length": 57
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 321,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 310
+        },
+        {
+          "end_row": 290,
+          "file": "<flask>/src/flask/sansio/app.py",
+          "start_row": 279
+        }
+      ],
+      "token_length": 52
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 415,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 382
+        },
+        {
+          "end_row": 105,
+          "file": "<flask>/src/flask/blueprints.py",
+          "start_row": 72
+        }
+      ],
+      "token_length": 63
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 77,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 1
+        },
+        {
+          "end_row": 56,
+          "file": "<flask>/src/flask/sansio/app.py",
+          "start_row": 1
+        }
+      ],
+      "token_length": 76
+    }
+  ],
+  "meta": {
+    "analyzed_files": 83,
+    "boundaries_configured": false,
+    "boundaries_total": 0,
+    "cycles_total": 2,
+    "dead_code_total": 3,
+    "duplication_total": 4,
+    "external_edges": 334,
+    "internal_edges": 304,
+    "mode": "full",
+    "smells_total": 87,
+    "source_lines": 18417
+  },
+  "smells": [
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "god_module",
+      "message": "fan-in 6 + fan-out 33 = 39 (threshold 25)",
+      "metric": 39,
+      "severity": "Warning",
+      "symbol": "flask.app",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "high_cognitive_complexity",
+      "line": 1224,
+      "message": "cognitive complexity 23 (threshold 15)",
+      "metric": 23,
+      "severity": "Warning",
+      "symbol": "make_response",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "god_module",
+      "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
+      "metric": 35,
+      "severity": "Warning",
+      "symbol": "flask.cli",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "god_module",
+      "message": "fan-in 7 + fan-out 21 = 28 (threshold 25)",
+      "metric": 28,
+      "severity": "Warning",
+      "symbol": "flask.sansio.app",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "high_cognitive_complexity",
+      "line": 273,
+      "message": "cognitive complexity 28 (threshold 15)",
+      "metric": 28,
+      "severity": "Warning",
+      "symbol": "register",
+      "threshold": 15
+    }
+  ]
+}

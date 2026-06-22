@@ -1,0 +1,11 @@
+{
+  "events": [
+    "gate_block",
+    "scan"
+  ],
+  "files": [
+    "events.jsonl",
+    "last-scan.json",
+    "totals.json"
+  ]
+}

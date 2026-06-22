@@ -1,0 +1,107 @@
+{
+  "all_time": {
+    "config_changes": 0,
+    "est_context_bytes_saved": 0,
+    "first_searches": 0,
+    "gate_blocks": 1,
+    "outcomes": {
+      "debt:dead_code/function": 1
+    },
+    "reintroduced_by_detector": {},
+    "reported_by_detector": {
+      "cycles": 8,
+      "dead_code/class": 8,
+      "dead_code/function": 6,
+      "duplication": 16,
+      "smells/boolean_blindness": 16,
+      "smells/divergent_change": 48,
+      "smells/feature_envy": 4,
+      "smells/god_module": 12,
+      "smells/heavy_nested_function": 4,
+      "smells/high_cognitive_complexity": 32,
+      "smells/literal_membership": 20,
+      "smells/loose_typing": 112,
+      "smells/magic_string_default": 16,
+      "smells/mutated_parameter": 12,
+      "smells/n_plus_one_call": 4,
+      "smells/nested_loop": 52,
+      "smells/shotgun_surgery_hazard": 4,
+      "smells/tuple_packing": 12
+    },
+    "resolved_by_detector": {},
+    "scan_files_total": 335,
+    "scan_loc_total": 73676,
+    "scans": 4,
+    "scans_by_origin": {
+      "gate": 1,
+      "tool": 3
+    },
+    "searches": 0,
+    "searches_zero_hit": 0
+  },
+  "calibration": [],
+  "config_pressure": {
+    "changes": 0,
+    "scope": {
+      "boundary_rules": 0,
+      "duplication_exclude_globs": 8,
+      "duplication_threshold": 50,
+      "exclude_globs": 12
+    }
+  },
+  "gate_conversion": {
+    "blocked_findings": 1,
+    "conversion_rate": 1.0,
+    "resolved": 1,
+    "still_open": 0
+  },
+  "gate_funnel": {
+    "by_origin": {
+      "gate": 1,
+      "tool": 3
+    },
+    "gate_share": 0.25
+  },
+  "mean_resolution_days": {},
+  "precision_by_detector": {
+    "dead_code/function": {
+      "debt": 1,
+      "false_positive": 0,
+      "precision": 1.0,
+      "resolved": 0
+    }
+  },
+  "privacy": "local-only metrics from .sensez/local-metrics/ \u2014 never exported",
+  "recent_30d": {
+    "mean_resolution_days": {},
+    "precision_by_detector": {
+      "dead_code/function": {
+        "debt": 1,
+        "false_positive": 0,
+        "precision": 1.0,
+        "resolved": 0
+      }
+    },
+    "recidivism_by_detector": {},
+    "scans": 4
+  },
+  "recidivism_by_detector": {},
+  "search_health": {
+    "searches": 0,
+    "zero_hit": 0,
+    "zero_hit_rate": 0.0
+  },
+  "self_health": {
+    "mean_files": 83.75,
+    "scans": 4
+  },
+  "stale_findings": [],
+  "triaged": [
+    {
+      "label": "sensez_regression_fixture::sensez_regression_unused_helper (function)",
+      "note": "regression fixture",
+      "pillar": "dead_code",
+      "verdict": "debt"
+    }
+  ]
+}

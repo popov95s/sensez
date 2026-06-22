@@ -1,0 +1,109 @@
+{
+  "all_time": {
+    "config_changes": 0,
+    "est_context_bytes_saved": 0,
+    "first_searches": 0,
+    "gate_blocks": 1,
+    "outcomes": {},
+    "reintroduced_by_detector": {},
+    "reported_by_detector": {
+      "cycles": 8,
+      "dead_code/class": 20,
+      "dead_code/function": 238,
+      "duplication": 60,
+      "smells/data_clump": 12,
+      "smells/divergent_change": 48,
+      "smells/feature_envy": 28,
+      "smells/god_module": 8,
+      "smells/heavy_nested_function": 12,
+      "smells/large_class": 8,
+      "smells/loose_typing": 284,
+      "smells/magic_string_default": 268,
+      "smells/message_chain": 4,
+      "smells/mutated_parameter": 24,
+      "smells/n_plus_one_call": 4,
+      "smells/nested_loop": 180,
+      "smells/repeated_iteration": 32,
+      "smells/shotgun_surgery_hazard": 8,
+      "smells/unnecessary_nested_if": 56
+    },
+    "resolved_by_detector": {
+      "dead_code/function": {
+        "count": 1
+      }
+    },
+    "scan_files_total": 1623,
+    "scan_loc_total": 299219,
+    "scans": 4,
+    "scans_by_origin": {
+      "gate": 1,
+      "tool": 3
+    },
+    "searches": 0,
+    "searches_zero_hit": 0
+  },
+  "calibration": [],
+  "config_pressure": {
+    "changes": 0,
+    "scope": {
+      "boundary_rules": 0,
+      "duplication_exclude_globs": 8,
+      "duplication_threshold": 50,
+      "exclude_globs": 12
+    }
+  },
+  "gate_conversion": {
+    "blocked_findings": 1,
+    "conversion_rate": 1.0,
+    "resolved": 1,
+    "still_open": 0
+  },
+  "gate_funnel": {
+    "by_origin": {
+      "gate": 1,
+      "tool": 3
+    },
+    "gate_share": 0.25
+  },
+  "mean_resolution_days": {
+    "_overall": 0.0,
+    "dead_code/function": 0.0
+  },
+  "precision_by_detector": {
+    "dead_code/function": {
+      "debt": 0,
+      "false_positive": 0,
+      "precision": 1.0,
+      "resolved": 1
+    }
+  },
+  "privacy": "local-only metrics from .sensez/local-metrics/ \u2014 never exported",
+  "recent_30d": {
+    "mean_resolution_days": {
+      "_overall": 0.0,
+      "dead_code/function": 0.0
+    },
+    "precision_by_detector": {
+      "dead_code/function": {
+        "debt": 0,
+        "false_positive": 0,
+        "precision": 1.0,
+        "resolved": 1
+      }
+    },
+    "recidivism_by_detector": {},
+    "scans": 4
+  },
+  "recidivism_by_detector": {},
+  "search_health": {
+    "searches": 0,
+    "zero_hit": 0,
+    "zero_hit_rate": 0.0
+  },
+  "self_health": {
+    "mean_files": 405.75,
+    "scans": 4
+  },
+  "stale_findings": [],
+  "triaged": []
+}

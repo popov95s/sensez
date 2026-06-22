@@ -1,0 +1,131 @@
+{
+  "tools": [
+    {
+      "description": "Summarize Sensez' local-only usage metrics for a repo: this session and all-time (scans run, findings reported and later resolved, confirmed fixes, searches served, estimated context saved, stale findings awaiting human triage). Use when the user asks how Sensez helped, or before a commit.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Project root to report on",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "brainz_report"
+    },
+    {
+      "description": "Record the USER'S verdict on a finding. Call ONLY when the user explicitly classifies one \u2014 never decide on their behalf, and never call it as routine bookkeeping. Verdicts (choose by WHY, not by who wrote the code):\n\u2022 'debt' \u2014 the finding is REAL but deliberately not being fixed now: pre-existing, out of scope, or scheduled later. \"I didn't write it\" / \"it predates my change\" is DEBT, not a false positive.\n\u2022 'false_positive' \u2014 Sensez is WRONG: it is not a real issue (e.g. 'dead' code that is actually invoked dynamically). Use only when the analysis itself erred.\n\u2022 'clear' \u2014 remove a previous verdict.\nStored locally, never exported. Debt-marked findings stop being surfaced as stale; false positives feed a per-pillar accuracy signal and are excluded from resolved-value counts.",
+      "inputSchema": {
+        "properties": {
+          "match": {
+            "description": "Case-insensitive substring of the finding label (as shown in scan output / brainz_report.stale_findings)",
+            "type": "string"
+          },
+          "note": {
+            "description": "Optional one-line user rationale",
+            "type": "string"
+          },
+          "path": {
+            "description": "Project root",
+            "type": "string"
+          },
+          "pillar": {
+            "description": "duplication | dead_code | cycles | boundaries | smells",
+            "type": "string"
+          },
+          "verdict": {
+            "description": "debt | false_positive | clear",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "pillar",
+          "match",
+          "verdict"
+        ],
+        "type": "object"
+      },
+      "name": "brainz_triage"
+    },
+    {
+      "description": "Use this tool when the user explicitly asks to tune, optimize, or adjust their sensez linting and code-smell thresholds. It returns a high-level statistical summary of rule violations across the repository without flooding the context window.\n\nProtocol after invoking: analyze which rules generate the most noise based on counts; present a concise, conversational summary highlighting the top 2-3 noisy rules; offer specific adjustments to the .toml configuration file, such as raising a complexity threshold or disabling a rule; after user approval, use normal file-writing capabilities to update the configuration .toml directly.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Absolute path to the repository root",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "get_configuration_summary"
+    },
+    {
+      "description": "Define a finding category in plain English \u2014 a pillar (duplication, dead_code, cycles, boundaries) or a smell kind (e.g. inappropriate_intimacy, refused_bequest, feature_envy). Use it to explain a finding's `kind` to the user without guessing. Omit `term` to list all.",
+      "inputSchema": {
+        "properties": {
+          "term": {
+            "description": "Pillar key or smell kind; omit to list all",
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "name": "noze_explain"
+    },
+    {
+      "description": "End-of-turn quality gate (intended for a Claude Code Stop hook, not for direct calls): diff-scoped scan of uncommitted changes; returns hook-decision JSON that blocks at most twice per turn-chain. Findings reported more than [gate].repeat_limit times on the same source lines are auto-deferred for the current coding loop; the first auto-defer expires after three days, while a second auto-defer for the same lines stays deferred.",
+      "inputSchema": {
+        "properties": {
+          "path": {
+            "description": "Repository root",
+            "type": "string"
+          },
+          "stop_hook_active": {
+            "description": "Pass ${stop_hook_active} from the hook input"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "noze_gate"
+    },
+    {
+      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. After finishing an edit session, set diff=true to see only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong.",
+      "inputSchema": {
+        "properties": {
+          "diff": {
+            "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Full-graph analysis either way.",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "Cap each pillar to top-N ranked findings (0 = unlimited)",
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute path to the REPOSITORY ROOT (not a subdirectory)",
+            "type": "string"
+          },
+          "threshold": {
+            "description": "Duplication token threshold",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "name": "noze_sniff"
+    }
+  ]
+}

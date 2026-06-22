@@ -1,0 +1,36 @@
+cache_root = "/tmp/sensez-regression-targets"
+
+[[targets]]
+name = "flask"
+profile = "py"
+url = "https://github.com/pallets/flask.git"
+commit = "36e4a824f340fdee7ed50937ba8e7f6bc7d17f81"
+scenarios = ["full", "mcp", "diff", "gate", "metrics", "triage"]
+
+[[targets]]
+name = "zod"
+profile = "ts"
+url = "https://github.com/colinhacks/zod.git"
+commit = "912f0f51b0ced654d0069741e7160834dca742ee"
+scenarios = ["full", "mcp", "diff", "gate", "metrics"]
+
+[profiles.py.dead_code_fixture]
+path = "sensez_regression_fixture.py"
+symbol = "sensez_regression_unused_helper"
+detector = "dead_code/function"
+text = """
+def sensez_regression_unused_helper():
+    return 41 + 1
+"""
+fix_text = "print('fixed')\n"
+
+[profiles.ts.dead_code_fixture]
+path = "sensez-regression-fixture.ts"
+symbol = "sensezRegressionUnusedHelper"
+detector = "dead_code/function"
+text = """
+function sensezRegressionUnusedHelper(): number {
+  return 41 + 1;
+}
+"""
+fix_text = "const sensezRegressionFixture = 42;\nconsole.log(sensezRegressionFixture);\n"

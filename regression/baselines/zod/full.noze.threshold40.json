@@ -1,0 +1,4275 @@
+{
+  "boundaries": [],
+  "cycles": [
+    {
+      "action": "warning",
+      "edges": [
+        {
+          "file": "<zod>/packages/zod/src/v3/helpers/partialUtil.ts",
+          "from_module": "src/v3/helpers/partialUtil",
+          "line": 1,
+          "to_module": "src/v3/types"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/locales/en.ts",
+          "from_module": "src/v3/locales/en",
+          "line": 1,
+          "to_module": "src/v3/ZodError"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/errors.ts",
+          "from_module": "src/v3/errors",
+          "line": 2,
+          "to_module": "src/v3/locales/en"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+          "from_module": "src/v3/helpers/parseUtil",
+          "line": 3,
+          "to_module": "src/v3/locales/en"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "from_module": "src/v3/types",
+          "line": 32,
+          "to_module": "src/v3/helpers/partialUtil"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/external.ts",
+          "from_module": "src/v3/external",
+          "line": 6,
+          "to_module": "src/v3/ZodError"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/index.ts",
+          "from_module": "src/v3",
+          "line": 2,
+          "to_module": "src/v3/external"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+          "from_module": "src/v3/ZodError",
+          "line": 3,
+          "to_module": "src/v3"
+        }
+      ],
+      "modules": [
+        "src/v3/helpers/partialUtil",
+        "src/v3/locales/en",
+        "src/v3/errors",
+        "src/v3/helpers/parseUtil",
+        "src/v3/types",
+        "src/v3/external",
+        "src/v3",
+        "src/v3/ZodError"
+      ]
+    },
+    {
+      "action": "warning",
+      "edges": [
+        {
+          "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+          "from_module": "src/v4/core/regexes",
+          "line": 1,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "from_module": "src/v4/core/checks",
+          "line": 7,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+          "from_module": "src/v4/core/errors",
+          "line": 5,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/core.ts",
+          "from_module": "src/v4/core/core",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/registries.ts",
+          "from_module": "src/v4/core/registries",
+          "line": 2,
+          "to_module": "src/v4/core/schemas"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+          "from_module": "src/v4/core/json-schema-processors",
+          "line": 15,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
+          "from_module": "src/v4/core/json-schema-generator",
+          "line": 5,
+          "to_module": "src/v4/core/to-json-schema"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/api.ts",
+          "from_module": "src/v4/core/api",
+          "line": 6,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+          "from_module": "src/v4/core/parse",
+          "line": 4,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/index.ts",
+          "from_module": "src/v4/core",
+          "line": 15,
+          "to_module": "src/v4/core/json-schema-generator"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+          "from_module": "src/v4/core/to-json-schema",
+          "line": 4,
+          "to_module": "src/v4/core/schemas"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "from_module": "src/v4/core/schemas",
+          "line": 322,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/util.ts",
+          "from_module": "src/v4/core/util",
+          "line": 5,
+          "to_module": "src/v4/core/schemas"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/yo.ts",
+          "from_module": "src/v4/locales/yo",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/zh-TW.ts",
+          "from_module": "src/v4/locales/zh-TW",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/zh-CN.ts",
+          "from_module": "src/v4/locales/zh-CN",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/vi.ts",
+          "from_module": "src/v4/locales/vi",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/uz.ts",
+          "from_module": "src/v4/locales/uz",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ur.ts",
+          "from_module": "src/v4/locales/ur",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/uk.ts",
+          "from_module": "src/v4/locales/uk",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ua.ts",
+          "from_module": "src/v4/locales/ua",
+          "line": 2,
+          "to_module": "src/v4/locales/uk"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/tr.ts",
+          "from_module": "src/v4/locales/tr",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/th.ts",
+          "from_module": "src/v4/locales/th",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ta.ts",
+          "from_module": "src/v4/locales/ta",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/sv.ts",
+          "from_module": "src/v4/locales/sv",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/sl.ts",
+          "from_module": "src/v4/locales/sl",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ru.ts",
+          "from_module": "src/v4/locales/ru",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ro.ts",
+          "from_module": "src/v4/locales/ro",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/pt.ts",
+          "from_module": "src/v4/locales/pt",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/pl.ts",
+          "from_module": "src/v4/locales/pl",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ps.ts",
+          "from_module": "src/v4/locales/ps",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ota.ts",
+          "from_module": "src/v4/locales/ota",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/no.ts",
+          "from_module": "src/v4/locales/no",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
+          "from_module": "src/v4/locales/nl",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ms.ts",
+          "from_module": "src/v4/locales/ms",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/mk.ts",
+          "from_module": "src/v4/locales/mk",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
+          "from_module": "src/v4/locales/lt",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ko.ts",
+          "from_module": "src/v4/locales/ko",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/km.ts",
+          "from_module": "src/v4/locales/km",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/kh.ts",
+          "from_module": "src/v4/locales/kh",
+          "line": 2,
+          "to_module": "src/v4/locales/km"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ka.ts",
+          "from_module": "src/v4/locales/ka",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ja.ts",
+          "from_module": "src/v4/locales/ja",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/it.ts",
+          "from_module": "src/v4/locales/it",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/is.ts",
+          "from_module": "src/v4/locales/is",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/id.ts",
+          "from_module": "src/v4/locales/id",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
+          "from_module": "src/v4/locales/hy",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/hu.ts",
+          "from_module": "src/v4/locales/hu",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/hr.ts",
+          "from_module": "src/v4/locales/hr",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/he.ts",
+          "from_module": "src/v4/locales/he",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
+          "from_module": "src/v4/locales/fr-CA",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
+          "from_module": "src/v4/locales/fr",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/fi.ts",
+          "from_module": "src/v4/locales/fi",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/fa.ts",
+          "from_module": "src/v4/locales/fa",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/es.ts",
+          "from_module": "src/v4/locales/es",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/eo.ts",
+          "from_module": "src/v4/locales/eo",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/en.ts",
+          "from_module": "src/v4/locales/en",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/el.ts",
+          "from_module": "src/v4/locales/el",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/de.ts",
+          "from_module": "src/v4/locales/de",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/da.ts",
+          "from_module": "src/v4/locales/da",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/cs.ts",
+          "from_module": "src/v4/locales/cs",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ca.ts",
+          "from_module": "src/v4/locales/ca",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/bg.ts",
+          "from_module": "src/v4/locales/bg",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/be.ts",
+          "from_module": "src/v4/locales/be",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/az.ts",
+          "from_module": "src/v4/locales/az",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
+          "from_module": "src/v4/locales/ar",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/locales/index.ts",
+          "from_module": "src/v4/locales",
+          "line": 52,
+          "to_module": "src/v4/locales/yo"
+        }
+      ],
+      "modules": [
+        "src/v4/core/regexes",
+        "src/v4/core/checks",
+        "src/v4/core/errors",
+        "src/v4/core/core",
+        "src/v4/core/registries",
+        "src/v4/core/json-schema-processors",
+        "src/v4/core/json-schema-generator",
+        "src/v4/core/api",
+        "src/v4/core/parse",
+        "src/v4/core",
+        "src/v4/core/to-json-schema",
+        "src/v4/core/schemas",
+        "src/v4/core/util",
+        "src/v4/locales/yo",
+        "src/v4/locales/zh-TW",
+        "src/v4/locales/zh-CN",
+        "src/v4/locales/vi",
+        "src/v4/locales/uz",
+        "src/v4/locales/ur",
+        "src/v4/locales/uk",
+        "src/v4/locales/ua",
+        "src/v4/locales/tr",
+        "src/v4/locales/th",
+        "src/v4/locales/ta",
+        "src/v4/locales/sv",
+        "src/v4/locales/sl",
+        "src/v4/locales/ru",
+        "src/v4/locales/ro",
+        "src/v4/locales/pt",
+        "src/v4/locales/pl",
+        "src/v4/locales/ps",
+        "src/v4/locales/ota",
+        "src/v4/locales/no",
+        "src/v4/locales/nl",
+        "src/v4/locales/ms",
+        "src/v4/locales/mk",
+        "src/v4/locales/lt",
+        "src/v4/locales/ko",
+        "src/v4/locales/km",
+        "src/v4/locales/kh",
+        "src/v4/locales/ka",
+        "src/v4/locales/ja",
+        "src/v4/locales/it",
+        "src/v4/locales/is",
+        "src/v4/locales/id",
+        "src/v4/locales/hy",
+        "src/v4/locales/hu",
+        "src/v4/locales/hr",
+        "src/v4/locales/he",
+        "src/v4/locales/fr-CA",
+        "src/v4/locales/fr",
+        "src/v4/locales/fi",
+        "src/v4/locales/fa",
+        "src/v4/locales/es",
+        "src/v4/locales/eo",
+        "src/v4/locales/en",
+        "src/v4/locales/el",
+        "src/v4/locales/de",
+        "src/v4/locales/da",
+        "src/v4/locales/cs",
+        "src/v4/locales/ca",
+        "src/v4/locales/bg",
+        "src/v4/locales/be",
+        "src/v4/locales/az",
+        "src/v4/locales/ar",
+        "src/v4/locales"
+      ]
+    }
+  ],
+  "dead_code": [
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/bench/benchUtil.ts",
+      "kind": "function",
+      "line": 67,
+      "module": "benchUtil",
+      "symbol": "toFixed"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "class",
+      "line": 148,
+      "module": "metabench",
+      "symbol": "BenchmarkJS"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "class",
+      "line": 216,
+      "module": "metabench",
+      "symbol": "Mitata"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "class",
+      "line": 80,
+      "module": "metabench",
+      "symbol": "Tinybench"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v3/helpers/errorUtil.ts",
+      "kind": "function",
+      "line": 3,
+      "module": "src/v3/helpers/errorUtil",
+      "symbol": "errToObj"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v3/helpers/errorUtil.ts",
+      "kind": "function",
+      "line": 6,
+      "module": "src/v3/helpers/errorUtil",
+      "symbol": "toString"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "function",
+      "line": 10,
+      "module": "src/v4/classic/coerce",
+      "symbol": "number"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "function",
+      "line": 15,
+      "module": "src/v4/classic/coerce",
+      "symbol": "boolean"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "function",
+      "line": 20,
+      "module": "src/v4/classic/coerce",
+      "symbol": "bigint"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "function",
+      "line": 25,
+      "module": "src/v4/classic/coerce",
+      "symbol": "date"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "function",
+      "line": 5,
+      "module": "src/v4/classic/coerce",
+      "symbol": "string"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
+      "kind": "function",
+      "line": 9,
+      "module": "src/v4/locales/hy",
+      "symbol": "withDefiniteArticle"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
+      "kind": "function",
+      "line": 5,
+      "module": "src/v4/locales/lt",
+      "symbol": "capitalizeFirstCharacter"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
+      "kind": "function",
+      "line": 16,
+      "module": "src/v4/mini/iso",
+      "symbol": "datetime"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
+      "kind": "function",
+      "line": 32,
+      "module": "src/v4/mini/iso",
+      "symbol": "date"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
+      "kind": "function",
+      "line": 48,
+      "module": "src/v4/mini/iso",
+      "symbol": "time"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
+      "kind": "function",
+      "line": 64,
+      "module": "src/v4/mini/iso",
+      "symbol": "duration"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/object-creation.ts",
+      "kind": "class",
+      "line": 3,
+      "module": "object-creation",
+      "symbol": "ZodFail"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/safe.ts",
+      "kind": "class",
+      "line": 4,
+      "module": "safe",
+      "symbol": "ZodFail"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "function",
+      "line": 15,
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "Page"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "function",
+      "line": 75,
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "generateStaticParams"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "function",
+      "line": 79,
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "generateMetadata"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/layout.tsx",
+      "kind": "function",
+      "line": 68,
+      "module": "app/(doc)/layout",
+      "symbol": "Layout"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/[slug]/page.tsx",
+      "kind": "function",
+      "line": 74,
+      "module": "app/blog/[slug]/page",
+      "symbol": "generateStaticParams"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/[slug]/page.tsx",
+      "kind": "function",
+      "line": 80,
+      "module": "app/blog/[slug]/page",
+      "symbol": "generateMetadata"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/[slug]/page.tsx",
+      "kind": "function",
+      "line": 9,
+      "module": "app/blog/[slug]/page",
+      "symbol": "Page"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/layout.tsx",
+      "kind": "function",
+      "line": 5,
+      "module": "app/blog/layout",
+      "symbol": "BlogLayout"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/page.tsx",
+      "kind": "function",
+      "line": 6,
+      "module": "app/blog/page",
+      "symbol": "BlogIndexPage"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/layout.tsx",
+      "kind": "function",
+      "line": 16,
+      "module": "app/layout",
+      "symbol": "Layout"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/llms-full.txt/route.ts",
+      "kind": "function",
+      "line": 8,
+      "module": "app/llms-full.txt/route",
+      "symbol": "GET"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/llms.txt/route.ts",
+      "kind": "function",
+      "line": 40,
+      "module": "app/llms.txt/route",
+      "symbol": "GET"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/not-found.tsx",
+      "kind": "function",
+      "line": 7,
+      "module": "app/not-found",
+      "symbol": "NotFound"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/og.png/route.tsx",
+      "kind": "function",
+      "line": 15,
+      "module": "app/og.png/route",
+      "symbol": "GET"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/bronze.tsx",
+      "kind": "function",
+      "line": 1,
+      "module": "components/bronze",
+      "symbol": "Bronze"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/codec-image.tsx",
+      "kind": "function",
+      "line": 12,
+      "module": "components/codec-image",
+      "symbol": "ThemedImage"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/copy-markdown-button.tsx",
+      "kind": "function",
+      "line": 11,
+      "module": "components/copy-markdown-button",
+      "symbol": "CopyMarkdownButton"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 382,
+      "module": "components/ecosystem",
+      "symbol": "ApiLibraries"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 386,
+      "module": "components/ecosystem",
+      "symbol": "FormIntegrations"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 390,
+      "module": "components/ecosystem",
+      "symbol": "ZodToX"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 394,
+      "module": "components/ecosystem",
+      "symbol": "XToZod"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 398,
+      "module": "components/ecosystem",
+      "symbol": "MockingLibraries"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 402,
+      "module": "components/ecosystem",
+      "symbol": "PoweredByZod"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "function",
+      "line": 406,
+      "module": "components/ecosystem",
+      "symbol": "ZodUtilities"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/featured.tsx",
+      "kind": "function",
+      "line": 8,
+      "module": "components/featured",
+      "symbol": "Featured"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/gold.tsx",
+      "kind": "function",
+      "line": 11,
+      "module": "components/gold",
+      "symbol": "Gold"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/heading.tsx",
+      "kind": "function",
+      "line": 12,
+      "module": "components/heading",
+      "symbol": "Heading"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/hero-logo.tsx",
+      "kind": "function",
+      "line": 10,
+      "module": "components/hero-logo",
+      "symbol": "HeroLogo"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/if.tsx",
+      "kind": "function",
+      "line": 3,
+      "module": "components/if",
+      "symbol": "If"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/inkeep-bubble.tsx",
+      "kind": "function",
+      "line": 6,
+      "module": "components/inkeep-bubble",
+      "symbol": "InkeepBubble"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/inkeep-search.tsx",
+      "kind": "function",
+      "line": 7,
+      "module": "components/inkeep-search",
+      "symbol": "InkeepSearchBox"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/platinum.tsx",
+      "kind": "function",
+      "line": 1,
+      "module": "components/platinum",
+      "symbol": "Platinum"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/scroller.tsx",
+      "kind": "function",
+      "line": 7,
+      "module": "components/scroller",
+      "symbol": "Scroller"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/sidebar-item.tsx",
+      "kind": "function",
+      "line": 12,
+      "module": "components/sidebar-item",
+      "symbol": "SidebarItem"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/sidebar-item.tsx",
+      "kind": "function",
+      "line": 36,
+      "module": "components/sidebar-item",
+      "symbol": "SidebarSeparator"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/sidebar-logo.tsx",
+      "kind": "function",
+      "line": 6,
+      "module": "components/sidebar-logo",
+      "symbol": "SidebarLogo"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/silver.tsx",
+      "kind": "function",
+      "line": 1,
+      "module": "components/silver",
+      "symbol": "Silver"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/components/themed-image.tsx",
+      "kind": "function",
+      "line": 12,
+      "module": "components/themed-image",
+      "symbol": "ThemedImage"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/loaders/get-llm-text.ts",
+      "kind": "function",
+      "line": 14,
+      "module": "loaders/get-llm-text",
+      "symbol": "getLLMText"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/loaders/stars.ts",
+      "kind": "function",
+      "line": 4,
+      "module": "loaders/stars",
+      "symbol": "fetchStars"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Medium",
+      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
+      "kind": "function",
+      "line": 10,
+      "module": "src/v4/mini/coerce",
+      "symbol": "number"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Medium",
+      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
+      "kind": "function",
+      "line": 15,
+      "module": "src/v4/mini/coerce",
+      "symbol": "boolean"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Medium",
+      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
+      "kind": "function",
+      "line": 20,
+      "module": "src/v4/mini/coerce",
+      "symbol": "bigint"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Medium",
+      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
+      "kind": "function",
+      "line": 25,
+      "module": "src/v4/mini/coerce",
+      "symbol": "date"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Medium",
+      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
+      "kind": "function",
+      "line": 5,
+      "module": "src/v4/mini/coerce",
+      "symbol": "string"
+    }
+  ],
+  "duplication": [
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 1494,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1459
+        },
+        {
+          "end_row": 1746,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1711
+        }
+      ],
+      "token_length": 79
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 1594,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1573
+        },
+        {
+          "end_row": 1817,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1796
+        }
+      ],
+      "token_length": 65
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 1878,
+          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+          "start_row": 1861
+        },
+        {
+          "end_row": 1910,
+          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+          "start_row": 1895
+        }
+      ],
+      "token_length": 50
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 21,
+          "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
+          "start_row": 5
+        },
+        {
+          "end_row": 21,
+          "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
+          "start_row": 5
+        }
+      ],
+      "token_length": 44
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 2237,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 2218
+        },
+        {
+          "end_row": 2316,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 2297
+        }
+      ],
+      "token_length": 59
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 238,
+          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+          "start_row": 234
+        },
+        {
+          "end_row": 56,
+          "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+          "start_row": 52
+        }
+      ],
+      "token_length": 56
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 2697,
+          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+          "start_row": 2672
+        },
+        {
+          "end_row": 1848,
+          "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+          "start_row": 1825
+        }
+      ],
+      "token_length": 51
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 2925,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 2917
+        },
+        {
+          "end_row": 3003,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 2995
+        }
+      ],
+      "token_length": 42
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 306,
+          "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+          "start_row": 295
+        },
+        {
+          "end_row": 361,
+          "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+          "start_row": 349
+        }
+      ],
+      "token_length": 69
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 36,
+          "file": "<zod>/packages/docs/components/codec-image.tsx",
+          "start_row": 6
+        },
+        {
+          "end_row": 36,
+          "file": "<zod>/packages/docs/components/themed-image.tsx",
+          "start_row": 6
+        }
+      ],
+      "token_length": 47
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 3639,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 3627
+        },
+        {
+          "end_row": 3655,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 3643
+        }
+      ],
+      "token_length": 49
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 3652,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 3634
+        },
+        {
+          "end_row": 3716,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 3701
+        }
+      ],
+      "token_length": 55
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/bench/init.ts",
+          "start_row": 27
+        },
+        {
+          "end_row": 24,
+          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
+          "start_row": 14
+        },
+        {
+          "end_row": 16,
+          "file": "<zod>/packages/bench/object-moltar.ts",
+          "start_row": 6
+        }
+      ],
+      "token_length": 43
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/zod/src/v4/locales/be.ts",
+          "start_row": 5
+        },
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/zod/src/v4/locales/ru.ts",
+          "start_row": 5
+        }
+      ],
+      "token_length": 62
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 4021,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 4014
+        },
+        {
+          "end_row": 4080,
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "start_row": 4073
+        }
+      ],
+      "token_length": 59
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 43,
+          "file": "<zod>/packages/bench/ipv4-regex.ts",
+          "start_row": 18
+        },
+        {
+          "end_row": 45,
+          "file": "<zod>/packages/zod/src/v3/benchmarks/ipv4.ts",
+          "start_row": 20
+        }
+      ],
+      "token_length": 72
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 466,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 457
+        },
+        {
+          "end_row": 516,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 507
+        }
+      ],
+      "token_length": 42
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 472,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 462
+        },
+        {
+          "end_row": 626,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 616
+        }
+      ],
+      "token_length": 42
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 49,
+          "file": "<zod>/packages/bench/datetime-regex.ts",
+          "start_row": 16
+        },
+        {
+          "end_row": 49,
+          "file": "<zod>/packages/zod/src/v3/benchmarks/datetime.ts",
+          "start_row": 16
+        }
+      ],
+      "token_length": 122
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 522,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 512
+        },
+        {
+          "end_row": 677,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 667
+        }
+      ],
+      "token_length": 42
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 58,
+          "file": "<zod>/packages/bench/init.ts",
+          "start_row": 48
+        },
+        {
+          "end_row": 38,
+          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
+          "start_row": 28
+        },
+        {
+          "end_row": 30,
+          "file": "<zod>/packages/bench/object-moltar.ts",
+          "start_row": 20
+        }
+      ],
+      "token_length": 43
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 61,
+          "file": "<zod>/packages/zod/src/v4/locales/az.ts",
+          "start_row": 13
+        },
+        {
+          "end_row": 66,
+          "file": "<zod>/packages/zod/src/v4/locales/en.ts",
+          "start_row": 14
+        }
+      ],
+      "token_length": 101
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 620,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 611
+        },
+        {
+          "end_row": 671,
+          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+          "start_row": 662
+        }
+      ],
+      "token_length": 42
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 63,
+          "file": "<zod>/packages/zod/src/v4/locales/az.ts",
+          "start_row": 46
+        },
+        {
+          "end_row": 63,
+          "file": "<zod>/packages/zod/src/v4/locales/id.ts",
+          "start_row": 46
+        }
+      ],
+      "token_length": 43
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 65,
+          "file": "<zod>/packages/zod/src/v4/locales/bg.ts",
+          "start_row": 50
+        },
+        {
+          "end_row": 65,
+          "file": "<zod>/packages/zod/src/v4/locales/uk.ts",
+          "start_row": 50
+        }
+      ],
+      "token_length": 43
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 79,
+          "file": "<zod>/packages/bench/init.ts",
+          "start_row": 69
+        },
+        {
+          "end_row": 52,
+          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
+          "start_row": 42
+        },
+        {
+          "end_row": 44,
+          "file": "<zod>/packages/bench/object-moltar.ts",
+          "start_row": 34
+        }
+      ],
+      "token_length": 43
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 79,
+          "file": "<zod>/packages/zod/src/v3/benchmarks/discriminatedUnion.ts",
+          "start_row": 8
+        },
+        {
+          "end_row": 79,
+          "file": "<zod>/packages/zod/src/v3/benchmarks/union.ts",
+          "start_row": 8
+        }
+      ],
+      "token_length": 158
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 89,
+          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
+          "start_row": 14
+        },
+        {
+          "end_row": 81,
+          "file": "<zod>/packages/bench/object-moltar.ts",
+          "start_row": 6
+        }
+      ],
+      "token_length": 225
+    }
+  ],
+  "meta": {
+    "analyzed_files": 405,
+    "boundaries_configured": false,
+    "boundaries_total": 0,
+    "cycles_total": 2,
+    "dead_code_total": 64,
+    "duplication_total": 28,
+    "external_edges": 556,
+    "internal_edges": 519,
+    "mode": "full",
+    "smells_total": 244,
+    "source_lines": 74802
+  },
+  "smells": [
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/docs/app/llms.txt/route.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 6,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "stringifyTitle",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1309,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "minLength",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1319,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "maxLength",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1577,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "minValue",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1587,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "maxValue",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1601,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "isFinite",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1800,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "minValue",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1810,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "maxValue",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1966,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "minDate",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 1977,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "maxDate",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 2241,
+      "message": "2 nested if(s) can be combined with a boolean AND",
+      "metric": 2,
+      "severity": "Info",
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 3691,
+      "message": "2 nested if(s) can be combined with a boolean AND",
+      "metric": 2,
+      "severity": "Info",
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "data_clump",
+      "line": 102,
+      "message": "fields (_json, _params, _schema, ctx) recur together across 11 signatures \u2014 consider a typed object or interface",
+      "metric": 11,
+      "severity": "Info",
+      "symbol": "_json+_params+_schema+ctx",
+      "threshold": 3
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "data_clump",
+      "line": 276,
+      "message": "fields (_json, ctx, json, params, schema) recur together across 16 signatures \u2014 consider a typed object or interface",
+      "metric": 16,
+      "severity": "Info",
+      "symbol": "_json+ctx+json+params+schema",
+      "threshold": 3
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "data_clump",
+      "line": 98,
+      "message": "fields (_ctx, _params, _schema, json, schema) recur together across 6 signatures \u2014 consider a typed object or interface",
+      "metric": 6,
+      "severity": "Info",
+      "symbol": "_ctx+_params+_schema+json+schema",
+      "threshold": 3
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "n_plus_one_call",
+      "line": 3072,
+      "message": "external-looking call runs once per loop iteration; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 482,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "unnecessary_nested_if",
+      "line": 217,
+      "message": "1 nested if(s) can be combined with a boolean AND",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "extractDefs",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 284,
+      "message": "params [obj: object] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "objectClone",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1007,
+      "message": "params [mask: object] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "required",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "loose_typing",
+      "line": 969,
+      "message": "params [mask: object] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Info",
+      "symbol": "partial",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/benchUtil.ts",
+      "kind": "loose_typing",
+      "line": 23,
+      "message": "params [options: any[]]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "randomPick",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/benchUtil.ts",
+      "kind": "loose_typing",
+      "line": 27,
+      "message": "params [factory: object | (() => any)]; returns any[] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "makeData",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/key-iteration.ts",
+      "kind": "nested_loop",
+      "line": 30,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "for_in_no_symbols",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/key-iteration.ts",
+      "kind": "nested_loop",
+      "line": 35,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "reflect_no_symbols",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/key-iteration.ts",
+      "kind": "nested_loop",
+      "line": 40,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "for_in_with_symbols",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/key-iteration.ts",
+      "kind": "nested_loop",
+      "line": 45,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "reflect_with_symbols",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "god_module",
+      "message": "fan-in 29 + fan-out 6 = 35 (threshold 25)",
+      "metric": 35,
+      "severity": "Warning",
+      "symbol": "metabench",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/safe.ts",
+      "kind": "loose_typing",
+      "line": 11,
+      "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "makeSuccess",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/safe.ts",
+      "kind": "loose_typing",
+      "line": 14,
+      "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "makeFail",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "magic_string_default",
+      "line": 100,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "generateMetadata",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/app/blog/page.tsx",
+      "kind": "magic_string_default",
+      "line": 18,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/app/llms.txt/route.ts",
+      "kind": "loose_typing",
+      "line": 6,
+      "message": "params [title: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "stringifyTitle",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/app/llms.txt/route.ts",
+      "kind": "nested_loop",
+      "line": 74,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "GET",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/accordion.tsx",
+      "kind": "magic_string_default",
+      "line": 17,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/codec-image.tsx",
+      "kind": "magic_string_default",
+      "line": 14,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "ThemedImage",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/ecosystem.tsx",
+      "kind": "magic_string_default",
+      "line": 362,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/hero-logo.tsx",
+      "kind": "magic_string_default",
+      "line": 14,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "HeroLogo",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/if.tsx",
+      "kind": "loose_typing",
+      "line": 3,
+      "message": "params [props: { groupId: string; values: string[]; children: any }] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "If",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/tabs.tsx",
+      "kind": "repeated_iteration",
+      "line": 21,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/components/themed-image.tsx",
+      "kind": "magic_string_default",
+      "line": 14,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "ThemedImage",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "magic_string_default",
+      "line": 107,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "stripMdxComments",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "mutated_parameter",
+      "line": 182,
+      "message": "mutates input parameter(s) [failures] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "assertExpectedTabLabels",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "mutated_parameter",
+      "line": 201,
+      "message": "mutates input parameter(s) [failures] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "compareCodeFences",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 115,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "stripMdxComments",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 191,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "assertExpectedTabLabels",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 239,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "getEditDistance",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 36,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 46,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 67,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "extractTabsBlocks",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/content/api.test.ts",
+      "kind": "nested_loop",
+      "line": 88,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "extractTabsBlocks",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/docs/loaders/stars.ts",
+      "kind": "mutated_parameter",
+      "line": 4,
+      "message": "mutates input parameter(s) [resources] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "fetchStars",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/resolution/attw.test.ts",
+      "kind": "magic_string_default",
+      "line": 37,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 120,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 133,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 147,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 151,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 265,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "generateExtendChain",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 275,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generateExtendChain",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 336,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generateFields",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 85,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 86,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 9,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 98,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "repeated_iteration",
+      "line": 256,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "generateExtendChain",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "divergent_change",
+      "line": 194,
+      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "ZodError",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "loose_typing",
+      "line": 217,
+      "message": "params [_mapper: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "format",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "loose_typing",
+      "line": 271,
+      "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "assert",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "loose_typing",
+      "line": 298,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "flatten",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "nested_loop",
+      "line": 237,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 1369,
+      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "ZodNumber",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 158,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodType",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 1635,
+      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "ZodBigInt",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 1877,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodDate",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 2236,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodArray",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 2452,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodObject",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 3116,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodDiscriminatedUnion",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 3686,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodSet",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 3817,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "ZodFunction",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "divergent_change",
+      "line": 731,
+      "message": "class splits into 4 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "ZodString",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "feature_envy",
+      "line": 1108,
+      "message": "accesses `options` (| string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on | string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "datetime",
+      "threshold": 2
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "feature_envy",
+      "line": 176,
+      "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "_getOrReturnCtx",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "feature_envy",
+      "line": 191,
+      "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "_processInputParams",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "feature_envy",
+      "line": 2947,
+      "message": "accesses `ctx` (undefined | ParseContext) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on undefined | ParseContext",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "_parse",
+      "threshold": 2
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "feature_envy",
+      "line": 3514,
+      "message": "accesses `ctx` (undefined | ParseContext) 8\u00d7 vs. own data 3\u00d7 \u2014 behavior may belong on undefined | ParseContext",
+      "metric": 8,
+      "severity": "Warning",
+      "symbol": "_parse",
+      "threshold": 3
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "feature_envy",
+      "line": 4244,
+      "message": "accesses `ctx` (undefined | ParseContext) 6\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on undefined | ParseContext",
+      "metric": 6,
+      "severity": "Warning",
+      "symbol": "_parse",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "heavy_nested_function",
+      "line": 2951,
+      "message": "nested function inside `_parse` spans 26 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `_parse`), so extract it to module/class level",
+      "metric": 26,
+      "severity": "Warning",
+      "symbol": "handleResults",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "large_class",
+      "line": 158,
+      "message": "32 methods (threshold 20)",
+      "metric": 32,
+      "severity": "Warning",
+      "symbol": "ZodType",
+      "threshold": 20
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "large_class",
+      "line": 731,
+      "message": "49 methods (threshold 20)",
+      "metric": 49,
+      "severity": "Warning",
+      "symbol": "ZodString",
+      "threshold": 20
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 223,
+      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "parse",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 229,
+      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "safeParse",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 2424,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "deepPartialify",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 247,
+      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "\"~validate\"",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 2823,
+      "message": "params [mask: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "partial",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 2852,
+      "message": "params [mask: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "required",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 292,
+      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "parseAsync",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 298,
+      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "safeParseAsync",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 3241,
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose collections with a typed object or interface",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "mergeValues",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 3559,
+      "message": "params [first: any, second: any, third: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 3847,
+      "message": "params [returns: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "makeReturnsIssue",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 481,
+      "message": "params [def: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "default",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4908,
+      "message": "params [params: unknown, data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "cleanParams",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4915,
+      "message": "params [check: (data: any) => any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "custom",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 503,
+      "message": "params [def: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "catch",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 68,
+      "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "constructor",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "magic_string_default",
+      "line": 1355,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "floatSafeRemainder",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "magic_string_default",
+      "line": 660,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "timeRegexSource",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "magic_string_default",
+      "line": 681,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "datetimeRegex",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_loop",
+      "line": 2430,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "deepPartialify",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_loop",
+      "line": 2862,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "required",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_loop",
+      "line": 3204,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "create",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_loop",
+      "line": 3253,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "mergeValues",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_loop",
+      "line": 3270,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "mergeValues",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 380,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "convertBaseSchema",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 415,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "convertBaseSchema",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 565,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "convertSchema",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+      "kind": "repeated_iteration",
+      "line": 214,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "convertBaseSchema",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1977,
+      "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "_enum",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2035,
+      "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "literal",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2632,
+      "message": "params [fn: (data: unknown) => unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "custom",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 338,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "meta",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 57,
+      "message": "params [v: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "set",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "magic_string_default",
+      "line": 1123,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "mutated_parameter",
+      "line": 278,
+      "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "register",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "loose_typing",
+      "line": 1355,
+      "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "_enum",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "loose_typing",
+      "line": 1409,
+      "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "_literal",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "god_module",
+      "message": "fan-in 56 + fan-out 5 = 61 (threshold 25)",
+      "metric": 61,
+      "severity": "Warning",
+      "symbol": "src/v4/core/checks",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/core.ts",
+      "kind": "heavy_nested_function",
+      "line": 22,
+      "message": "nested function inside `$constructor` spans 30 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `$constructor`), so extract it to module/class level",
+      "metric": 30,
+      "severity": "Warning",
+      "symbol": "init",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
+      "kind": "divergent_change",
+      "line": 3,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "Doc",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
+      "kind": "loose_typing",
+      "line": 20,
+      "message": "params [arg: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "write",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
+      "kind": "loose_typing",
+      "line": 36,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "compile",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
+      "kind": "repeated_iteration",
+      "line": 29,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "write",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "nested_loop",
+      "line": 310,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "nested_loop",
+      "line": 367,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "nested_loop",
+      "line": 450,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "prettifyError",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "shotgun_surgery_hazard",
+      "message": "depended on by 60 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 60,
+      "severity": "Warning",
+      "symbol": "src/v4/core/errors",
+      "threshold": 60
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
+      "kind": "feature_envy",
+      "line": 83,
+      "message": "accesses `params` (JSONSchemaGeneratorConstructorParams) 9\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on JSONSchemaGeneratorConstructorParams",
+      "metric": 9,
+      "severity": "Warning",
+      "symbol": "constructor",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "loose_typing",
+      "line": 621,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "toJSONSchema",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "repeated_iteration",
+      "line": 158,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "repeated_iteration",
+      "line": 194,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+      "kind": "magic_string_default",
+      "line": 135,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+      "kind": "magic_string_default",
+      "line": 70,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1750,
+      "message": "params [input: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "handlePropertyResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1856,
+      "message": "params [proms: Promise<any>[], input: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "handleCatchall",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2495,
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose collections with a typed object or interface",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "mergeValues",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2765,
+      "message": "params [input: unknown[]] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "handleTupleResults",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 3086,
+      "message": "params [key: unknown, input: Map<any, any>] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "handleMapResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 3478,
+      "message": "params [input: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "handleOptionalResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 4122,
+      "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "handleCodecTxResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 4647,
+      "message": "params [result: unknown, input: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "handleRefineResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "magic_string_default",
+      "line": 959,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "message_chain",
+      "line": 4458,
+      "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 4
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "mutated_parameter",
+      "line": 1856,
+      "message": "mutates input parameter(s) [proms] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "handleCatchall",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 1931,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 205,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 2374,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 2391,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 2514,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "mergeValues",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 2535,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "mergeValues",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_loop",
+      "line": 2561,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "handleIntersectionResults",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "repeated_iteration",
+      "line": 2175,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "handleUnionResults",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "repeated_iteration",
+      "line": 2257,
+      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "handleExclusiveUnionResults",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 570,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "isTransforming",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 576,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "isTransforming",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 582,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "isTransforming",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 205,
+      "message": "params [_: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "assert",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 219,
+      "message": "params [value: any]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "jsonStringifyReplacer",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 238,
+      "message": "params [input: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "nullish",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 301,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "mergeDefs",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 312,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "cloneDef",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 316,
+      "message": "params [obj: any]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "getElementAtPath",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 360,
+      "message": "params [data: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "isObject",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 385,
+      "message": "params [o: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "isPlainObject",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 406,
+      "message": "params [o: any]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "shallowClone",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 414,
+      "message": "params [data: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "numKeys",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 568,
+      "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "stringifyPrimitive",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 601,
+      "message": "params [mask: Record<string, unknown>]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "pick",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 630,
+      "message": "params [mask: object]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "omit",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 659,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "extend",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 687,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "safeExtend",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 701,
+      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "merge",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 720,
+      "message": "params [mask: object | undefined]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "partial",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 772,
+      "message": "params [mask: object | undefined]; returns any \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "required",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 871,
+      "message": "params [input: any]; returns \"set\" | \"map\" | \"file\" | \"unknown\" \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "getSizableOrigin",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 879,
+      "message": "params [input: any]; returns \"array\" | \"string\" | \"unknown\" \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "getLengthableOrigin",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 885,
+      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "parsedType",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "shotgun_surgery_hazard",
+      "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 65,
+      "severity": "Warning",
+      "symbol": "src/v4/core/util",
+      "threshold": 60
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
+      "kind": "magic_string_default",
+      "line": 72,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/az.ts",
+      "kind": "magic_string_default",
+      "line": 71,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/be.ts",
+      "kind": "magic_string_default",
+      "line": 129,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/bg.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ca.ts",
+      "kind": "magic_string_default",
+      "line": 99,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/cs.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/da.ts",
+      "kind": "magic_string_default",
+      "line": 78,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/de.ts",
+      "kind": "magic_string_default",
+      "line": 73,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/el.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/en.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/eo.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/es.ts",
+      "kind": "magic_string_default",
+      "line": 96,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/fa.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/fi.ts",
+      "kind": "magic_string_default",
+      "line": 76,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
+      "kind": "magic_string_default",
+      "line": 71,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
+      "kind": "magic_string_default",
+      "line": 91,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/he.ts",
+      "kind": "magic_string_default",
+      "line": 106,
+      "message": "12 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 12,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/he.ts",
+      "kind": "magic_string_default",
+      "line": 51,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/hr.ts",
+      "kind": "magic_string_default",
+      "line": 86,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/hu.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
+      "kind": "magic_string_default",
+      "line": 117,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
+      "kind": "magic_string_default",
+      "line": 13,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "withDefiniteArticle",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/id.ts",
+      "kind": "magic_string_default",
+      "line": 72,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/is.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/it.ts",
+      "kind": "magic_string_default",
+      "line": 73,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ja.ts",
+      "kind": "magic_string_default",
+      "line": 76,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ka.ts",
+      "kind": "magic_string_default",
+      "line": 78,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/km.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ko.ts",
+      "kind": "magic_string_default",
+      "line": 76,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
+      "kind": "heavy_nested_function",
+      "line": 100,
+      "message": "nested function inside `<anon>` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `<anon>`), so extract it to module/class level",
+      "metric": 17,
+      "severity": "Warning",
+      "symbol": "getSizing",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/mk.ts",
+      "kind": "magic_string_default",
+      "line": 73,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ms.ts",
+      "kind": "magic_string_default",
+      "line": 72,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
+      "kind": "magic_string_default",
+      "line": 72,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/no.ts",
+      "kind": "magic_string_default",
+      "line": 73,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ota.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/pl.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ps.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/pt.ts",
+      "kind": "magic_string_default",
+      "line": 73,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ro.ts",
+      "kind": "magic_string_default",
+      "line": 84,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ru.ts",
+      "kind": "magic_string_default",
+      "line": 129,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/sl.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/sv.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ta.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/tr.ts",
+      "kind": "magic_string_default",
+      "line": 71,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/uk.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/ur.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/uz.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 3,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/vi.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/yo.ts",
+      "kind": "magic_string_default",
+      "line": 75,
+      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/zh-CN.ts",
+      "kind": "magic_string_default",
+      "line": 74,
+      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/zh-TW.ts",
+      "kind": "magic_string_default",
+      "line": 71,
+      "message": "5 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 5,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1295,
+      "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "_enum",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1344,
+      "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "literal",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "loose_typing",
+      "line": 821,
+      "message": "params [params: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "array",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "loose_typing",
+      "line": 927,
+      "message": "params [shape: any] \u2014 replace loose collections with a typed object or interface",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "merge",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "mutated_parameter",
+      "line": 77,
+      "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/scripts/write-stub-package-jsons.ts",
+      "kind": "magic_string_default",
+      "line": 38,
+      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "severity": "Warning",
+      "symbol": "findIndexJsFiles",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/scripts/write-stub-package-jsons.ts",
+      "kind": "nested_loop",
+      "line": 35,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "severity": "Warning",
+      "symbol": "findIndexJsFiles",
+      "threshold": 1
+    }
+  ]
+}

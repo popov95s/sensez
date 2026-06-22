@@ -1,0 +1,31 @@
+{
+  "boundaries": [],
+  "cycles": [],
+  "dead_code": [
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/sensez_regression_fixture.py",
+      "kind": "function",
+      "line": 1,
+      "module": "sensez_regression_fixture",
+      "reason": "added_unreferenced",
+      "symbol": "sensez_regression_unused_helper"
+    }
+  ],
+  "duplication": [],
+  "meta": {
+    "analyzed_files": 84,
+    "boundaries_configured": false,
+    "boundaries_total": 0,
+    "cycles_total": 2,
+    "dead_code_total": 4,
+    "duplication_total": 4,
+    "external_edges": 334,
+    "internal_edges": 304,
+    "mode": "diff",
+    "smells_total": 87,
+    "source_lines": 18420
+  },
+  "smells": []
+}
