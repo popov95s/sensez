@@ -229,4 +229,24 @@ mod tests {
         let report: Value = serde_json::from_str(text).unwrap();
         assert!(report.get("session").is_some() && report.get("all_time").is_some());
     }
+
+    #[test]
+    fn scan_tool_omits_duplicate_module_noise() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        std::fs::create_dir_all(dir.join("app")).unwrap();
+        std::fs::write(dir.join("app.py"), "def flat():\n    return 1\n").unwrap();
+        std::fs::write(dir.join("app/__init__.py"), "def pkg():\n    return 2\n").unwrap();
+        let path = dir.to_string_lossy().into_owned();
+
+        let req = json!({"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {
+            "name": "noze_sniff", "arguments": {"path": path}
+        }});
+        let resp = handle_message(&req).unwrap();
+
+        assert_eq!(resp["result"]["isError"], false);
+        let text = resp["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(!text.contains("already defined"));
+        assert!(!text.contains("\"issues\""));
+    }
 }

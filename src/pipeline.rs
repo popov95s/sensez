@@ -4,7 +4,7 @@ use crate::config::model::Config;
 use crate::diff::ChangedLines;
 use crate::noze;
 use crate::profiles::registry;
-use crate::report::{AnalysisReport, ScanIssue, ScanStage};
+use crate::report::{AnalysisReport, ScanStage};
 use crate::reporter::{self, Format};
 use crate::spine::parser::ParsedFile;
 use crate::spine::{crawler, graph, parser};
@@ -44,18 +44,6 @@ pub fn analyze_path(
             .count()
     );
     report.meta.issues.extend(parsed.issues);
-    report
-        .meta
-        .issues
-        .extend(graph.duplicate_modules.iter().map(|dup| ScanIssue {
-            stage: ScanStage::Graph,
-            file: Some(dup.duplicate_file.clone()),
-            message: format!(
-                "module `{}` already defined at {}",
-                dup.module_name,
-                dup.first_file.display()
-            ),
-        }));
     report.meta.files_skipped = report.meta.issues.len();
     timer.lap("analyze");
 
@@ -247,6 +235,29 @@ mod tests {
             "{:?}",
             report.meta.issues[0]
         );
+    }
+
+    #[test]
+    fn duplicate_module_names_stay_out_of_scan_issues() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        fs::create_dir_all(dir.join("app")).unwrap();
+        fs::write(dir.join("app.py"), "def flat():\n    return 1\n").unwrap();
+        fs::write(dir.join("app/__init__.py"), "def pkg():\n    return 2\n").unwrap();
+
+        let report = analyze_path(&dir, None, None).unwrap();
+
+        assert_eq!(report.meta.files_skipped, 0);
+        assert!(report.meta.issues.is_empty());
+        assert!(!reporter::to_json(&report)
+            .unwrap()
+            .contains("already defined"));
+        let json = scan(&dir, None, Format::Json, 0).unwrap();
+        let terminal = scan(&dir, None, Format::Terminal, 0).unwrap();
+        assert!(!json.contains("\"issues\""));
+        assert!(!json.contains("already defined"));
+        assert!(!terminal.contains("scan issue"));
+        assert!(!terminal.contains("already defined"));
     }
 
     #[test]

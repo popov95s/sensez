@@ -19,5 +19,36 @@ mod tests {
         assert!(json.contains("\"duplication\""));
         assert!(json.contains("\"dead_code\""));
         assert!(json.contains("\"boundaries\""));
+        assert!(!json.contains("\"unmatched_boundary_rules\""));
+        assert!(!json.contains("\"glossary\""));
+    }
+
+    #[test]
+    fn omits_explanatory_and_placeholder_fields() {
+        let mut report = AnalysisReport::default();
+        report.meta.glossary = vec![crate::noze::GlossaryEntry {
+            term: "god_module".into(),
+            title: "God Module".into(),
+            explanation: "explain only when requested".into(),
+        }];
+        report.smells.push(crate::noze::SmellFinding {
+            action: crate::report::ActionLevel::Warning,
+            kind: crate::noze::SmellKind::GodModule,
+            message: "fan-in + fan-out".into(),
+            file: "src/config/model.rs".into(),
+            line: 0,
+            end_line: 0,
+            symbol: "src/config/model".into(),
+            severity: crate::report::Severity::Warning,
+            metric: 26,
+            threshold: 25,
+            reason: String::new(),
+        });
+
+        let json = to_json(&report).unwrap();
+
+        assert!(!json.contains("\"glossary\""));
+        assert!(!json.contains("\"unmatched_boundary_rules\""));
+        assert!(!json.contains("\"line\": 0"));
     }
 }

@@ -1,7 +1,7 @@
 //! Assemble a [`CodebaseGraph`] from parsed files.
 
 use crate::profiles::{registry, Language};
-use crate::spine::graph::{CodebaseGraph, DuplicateModule, ModuleNode};
+use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::parser::ParsedFile;
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
@@ -23,12 +23,9 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     for file in files {
         let root = root_for(file, configured_roots, &mut root_cache);
         let name = registry::module_profile(file.language).module_name(&file.path, &root);
-        if let Some(&first_idx) = cg.name_to_index.get(&name) {
-            cg.duplicate_modules.push(DuplicateModule {
-                module_name: name,
-                first_file: cg.graph[first_idx].file_path.clone(),
-                duplicate_file: file.path.clone(),
-            });
+        if cg.name_to_index.contains_key(&name) {
+            // Same logical module identity, e.g. app.py and app/__init__.py.
+            // Keep the first node so imports remain deterministic.
             module_of.push(None);
             root_of.push(root);
             continue;

@@ -1,7 +1,6 @@
-//! Plain-English definitions for every finding category — the single source of
-//! truth for `meta.glossary` (auto-attached, present categories only), the
-//! `explain` CLI subcommand, and the MCP `explain` tool. Authored to match what
-//! sensez actually measures, so explanations never drift from the heuristics.
+//! Plain-English definitions for every finding category. These feed terminal
+//! `--explain`, the `explain` CLI subcommand, and the MCP `explain` tool, while
+//! staying out of standard JSON reports.
 
 use crate::report::{AnalysisReport, GlossaryEntry, SmellKind};
 

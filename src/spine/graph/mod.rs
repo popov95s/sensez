@@ -35,20 +35,11 @@ pub struct ModuleNode {
     pub is_external: bool,
 }
 
-/// Two files claimed the same logical module identity.
-#[derive(Debug, Clone)]
-pub struct DuplicateModule {
-    pub module_name: String,
-    pub first_file: PathBuf,
-    pub duplicate_file: PathBuf,
-}
-
 /// The directed import graph plus a module-name index.
 #[derive(Default)]
 pub struct CodebaseGraph {
     pub graph: DiGraph<ModuleNode, ImportContext>,
     pub name_to_index: HashMap<String, NodeIndex>,
-    pub duplicate_modules: Vec<DuplicateModule>,
 }
 
 #[cfg(test)]
@@ -128,7 +119,7 @@ mod tests {
     }
 
     #[test]
-    fn duplicate_module_names_are_recorded_not_silently_overwritten() {
+    fn duplicate_module_names_do_not_overwrite_first_node() {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path().to_path_buf();
         let flat = write(&dir, "app.py", "def flat():\n    return 1\n");
@@ -141,8 +132,8 @@ mod tests {
             .collect();
         let cg = build(&files, &[]);
 
-        assert_eq!(cg.duplicate_modules.len(), 1);
-        assert_eq!(cg.duplicate_modules[0].module_name, "app");
         assert_eq!(cg.name_to_index.len(), 1, "duplicate must not overwrite");
+        let app = cg.name_to_index["app"];
+        assert_eq!(cg.graph[app].file_path, flat);
     }
 }

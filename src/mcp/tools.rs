@@ -163,9 +163,7 @@ fn explain() -> Value {
                         (duplication, dead_code, cycles, boundaries) or a smell \
                         kind (e.g. inappropriate_intimacy, refused_bequest, \
                         feature_envy). Use it to explain a finding's `kind` to \
-                        the user without guessing. Omit `term` to list all. \
-                        (Each scan also returns these inline under meta.glossary \
-                        for the categories present.)",
+                        the user without guessing. Omit `term` to list all.",
         "inputSchema": {
             "type": "object",
             "properties": {
