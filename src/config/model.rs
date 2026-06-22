@@ -145,7 +145,7 @@ impl Default for ActionPolicy {
 
 impl Default for Gate {
     fn default() -> Self {
-        Gate { repeat_limit: 5 }
+        Gate { repeat_limit: 2 }
     }
 }
 

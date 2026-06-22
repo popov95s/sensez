@@ -40,6 +40,10 @@ fn flag_driven_init_writes_all_artifacts() {
         "gate runs via the warm MCP server"
     );
     assert!(stop.contains("stop_hook_active"), "soft-block escape wired");
+    assert!(
+        stop.contains("experimental stop hook"),
+        "hook setup should call out that it is experimental"
+    );
 
     assert!(fs::read_to_string(root.join(".gitignore"))
         .unwrap()

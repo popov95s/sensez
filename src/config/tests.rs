@@ -102,7 +102,7 @@ fn action_policy_parses_pillars_and_smells() {
 
 #[test]
 fn gate_repeat_limit_defaults_and_parses() {
-    assert_eq!(Config::default().gate.repeat_limit, 5);
+    assert_eq!(Config::default().gate.repeat_limit, 2);
 
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();

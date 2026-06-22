@@ -43,9 +43,11 @@ pub fn run(opts: InitOptions) -> Result<()> {
                 && !opts.yes
                 && prompts::confirm(
                     "Also check the agent's changes at the end of every turn?\n\
-                     (installs a Stop hook running a diff-scoped scan; blocks at \
-                     most once, so false positives never trap the agent)",
-                    true,
+                     (installs an experimental Stop hook running a diff-scoped scan; \
+                     noisy on short sessions or Q&A turns, so it is best for edit \
+                     turns; blocks at most twice, so false positives never trap the \
+                     agent. If disabled, the agent will still be able to use the SKILL that is configured.)",
+                    false,
                 )?)
     } else {
         if opts.gate {
@@ -113,6 +115,15 @@ pub fn run(opts: InitOptions) -> Result<()> {
     }
     if gate {
         done.push(artifacts::write_gate(&root)?);
+        eprintln!(
+            "note: Stop hook is experimental and can be noisy on short sessions \
+             or question-answering turns; it is best used on edit turns."
+        );
+        done.push(
+            "experimental Stop hook enabled: it may be noisy on short sessions \
+             or general question-answering turns; best used on edit turns."
+                .to_string(),
+        );
     }
     done.push(artifacts::ensure_gitignore(&root)?);
 

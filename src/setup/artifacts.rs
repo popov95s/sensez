@@ -209,7 +209,9 @@ pub fn write_gate(root: &Path) -> Result<String> {
         let text = e.to_string();
         text.contains("\"tool\":\"noze_gate\"") || text.contains("\"tool\":\"gate\"")
     }) {
-        return Ok("Stop-gate already installed (mcp_tool -> sense noze_gate)".into());
+        return Ok(
+            "Stop-gate already installed (experimental; mcp_tool -> sense noze_gate)".into(),
+        );
     }
     stops.push(json!({"hooks": [{
         "type": "mcp_tool",
@@ -217,12 +219,15 @@ pub fn write_gate(root: &Path) -> Result<String> {
         "tool": "noze_gate",
         "input": {"path": "${cwd}", "stop_hook_active": "${stop_hook_active}"},
         "timeout": 60,
-        "statusMessage": "sense: scanning session changes"
+        "statusMessage": "sense: experimental stop hook scanning session changes"
     }]}));
     settings["hooks"]["Stop"] = json!(stops);
     std::fs::write(&settings_path, serde_json::to_string_pretty(&settings)?)
         .with_context(|| format!("writing {}", settings_path.display()))?;
-    Ok("installed Stop-gate hook (mcp_tool -> sense noze_gate, shared session)".into())
+    Ok(
+        "installed experimental Stop-gate hook (mcp_tool -> sense noze_gate, shared session)"
+            .into(),
+    )
 }
 
 pub fn ensure_gitignore(root: &Path) -> Result<String> {
