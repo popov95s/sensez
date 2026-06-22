@@ -22,6 +22,22 @@ fn legend_is_opt_in() {
 }
 
 #[test]
+fn scan_diagnostics_are_hidden_by_default() {
+    let mut report = AnalysisReport::default();
+    report.meta.files_skipped = 1;
+    report.meta.issues.push(crate::report::ScanIssue {
+        stage: crate::report::ScanStage::Parse,
+        file: Some("broken.py".into()),
+        message: "parser detail".into(),
+    });
+
+    let text = render(&report, false);
+
+    assert!(!text.contains("scan issue"));
+    assert!(!text.contains("parser detail"));
+}
+
+#[test]
 fn smell_output_dedupes_matching_action_and_severity() {
     let mut report = AnalysisReport::default();
     report.smells.push(crate::noze::SmellFinding {

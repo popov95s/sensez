@@ -39,6 +39,7 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     crate::brainz::apply_suppressions(root, &mut report);
     let repeats = super::repeats::suppress_repeated(root, &mut report, gate_config.repeat_limit);
     crate::brainz::rank_by_precision(root, &mut report);
+    super::handlers::suppress_scan_issues_for_llm(&mut report);
     let full = serde_json::to_value(&report).unwrap_or(Value::Null);
     crate::brainz::record_scan(
         root,

@@ -114,10 +114,16 @@ fn run_scan(
     if diff {
         crate::brainz::apply_suppressions(path, &mut report);
     }
+    suppress_scan_issues_for_llm(&mut report);
     let full_report = serde_json::to_value(&report)?;
     crate::brainz::rank_by_precision(path, &mut report);
     crate::noze::limit(&mut report, max);
     Ok((crate::reporter::to_json(&report)?, full_report))
+}
+
+pub(super) fn suppress_scan_issues_for_llm(report: &mut crate::report::AnalysisReport) {
+    report.meta.issues.clear();
+    report.meta.files_skipped = 0;
 }
 
 #[cfg(feature = "eyez")]
@@ -248,5 +254,25 @@ mod tests {
         let text = resp["result"]["content"][0]["text"].as_str().unwrap();
         assert!(!text.contains("already defined"));
         assert!(!text.contains("\"issues\""));
+    }
+
+    #[test]
+    fn scan_tool_omits_scan_diagnostics() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        let deep = format!("x = {}1{}", "(".repeat(100_000), ")".repeat(100_000));
+        std::fs::write(dir.join("too_deep.py"), deep).unwrap();
+        let path = dir.to_string_lossy().into_owned();
+
+        let req = json!({"jsonrpc": "2.0", "id": 10, "method": "tools/call", "params": {
+            "name": "noze_sniff", "arguments": {"path": path}
+        }});
+        let resp = handle_message(&req).unwrap();
+
+        assert_eq!(resp["result"]["isError"], false);
+        let text = resp["result"]["content"][0]["text"].as_str().unwrap();
+        assert!(!text.contains("\"issues\""));
+        assert!(!text.contains("\"files_skipped\": 1"));
+        assert!(!text.contains("syntax tree deeper than"));
     }
 }

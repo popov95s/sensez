@@ -12,7 +12,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         "{}",
         "sensez — structural maintainability report".bold()
     );
-    if report.meta.files_skipped > 0 {
+    if report.meta.files_skipped > 0 && crate::report::scan_diagnostics_enabled() {
         let _ = writeln!(
             out,
             "{}",

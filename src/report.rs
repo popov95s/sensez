@@ -49,7 +49,8 @@ pub struct DeadCodeFinding {
     pub kind: SymbolKind,
     pub confidence: Confidence,
     pub file: PathBuf,
-    /// Source line for import/method findings; 0 when not applicable.
+    /// 1-indexed source line; 0 is an internal "unknown/not applicable" sentinel.
+    #[serde(skip_serializing_if = "line_is_unknown", default)]
     pub line: usize,
     /// Diff-mode provenance (e.g. "added_unreferenced"); empty otherwise.
     #[serde(skip_serializing_if = "String::is_empty", default)]
@@ -143,6 +144,8 @@ pub struct SmellFinding {
     pub kind: SmellKind,
     pub message: String,
     pub file: PathBuf,
+    /// 1-indexed source line; 0 is an internal "whole module/no anchor" sentinel.
+    #[serde(skip_serializing_if = "line_is_unknown", default)]
     pub line: usize,
     #[serde(skip)]
     pub(crate) end_line: usize,
@@ -202,6 +205,7 @@ pub struct ReportMeta {
     pub boundaries_configured: bool,
     pub internal_edges: usize,
     pub external_edges: usize,
+    #[serde(skip_serializing_if = "hide_scan_diagnostic_count", default)]
     pub files_skipped: usize,
     pub analyzed_files: usize,
     pub source_lines: usize,
@@ -210,10 +214,11 @@ pub struct ReportMeta {
     pub duplication_total: usize,
     pub boundaries_total: usize,
     pub smells_total: usize,
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub unmatched_boundary_rules: Vec<String>,
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(skip_serializing_if = "hide_scan_diagnostics", default)]
     pub issues: Vec<ScanIssue>,
-    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    #[serde(skip)]
     pub glossary: Vec<GlossaryEntry>,
 }
 
@@ -234,4 +239,21 @@ pub struct AnalysisReport {
     pub boundaries: Vec<BoundaryViolation>,
     pub duplication: Vec<CloneClass>,
     pub smells: Vec<SmellFinding>,
+}
+
+fn line_is_unknown(value: &usize) -> bool {
+    *value == 0
+}
+
+fn hide_scan_diagnostic_count(value: &usize) -> bool {
+    *value == 0 || !scan_diagnostics_enabled()
+}
+
+fn hide_scan_diagnostics(value: &[ScanIssue]) -> bool {
+    value.is_empty() || !scan_diagnostics_enabled()
+}
+
+pub fn scan_diagnostics_enabled() -> bool {
+    std::env::var_os("SENSEZ_SCAN_DIAGNOSTICS").is_some()
+        || std::env::var_os("SENSEZ_TIMING").is_some()
 }

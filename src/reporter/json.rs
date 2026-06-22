@@ -51,4 +51,21 @@ mod tests {
         assert!(!json.contains("\"unmatched_boundary_rules\""));
         assert!(!json.contains("\"line\": 0"));
     }
+
+    #[test]
+    fn omits_scan_diagnostics_by_default() {
+        let mut report = AnalysisReport::default();
+        report.meta.files_skipped = 1;
+        report.meta.issues.push(crate::report::ScanIssue {
+            stage: crate::report::ScanStage::Parse,
+            file: Some("broken.py".into()),
+            message: "parser detail".into(),
+        });
+
+        let json = to_json(&report).unwrap();
+
+        assert!(!json.contains("\"files_skipped\""));
+        assert!(!json.contains("\"issues\""));
+        assert!(!json.contains("parser detail"));
+    }
 }
