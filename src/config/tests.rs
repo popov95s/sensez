@@ -6,6 +6,14 @@ use super::*;
 fn defaults_when_missing() {
     let cfg = Config::load(Path::new("/nonexistent/xyz")).unwrap();
     assert_eq!(cfg.duplication.threshold, 50);
+    assert_eq!(
+        cfg.duplication.class_name_duplicates, false,
+        "same-name class duplication is disabled by default"
+    );
+    assert_eq!(
+        cfg.duplication.class_property_overlap_min, 4,
+        "class-property overlap stays enabled by default"
+    );
     assert!(
         cfg.dead_code.entrypoints.is_empty(),
         "language-specific dead-code defaults are profile-scoped, not global config"

@@ -28,6 +28,7 @@ pub struct Duplication {
     pub threshold: usize,
     pub max_gap: usize,
     pub near_miss: bool,
+    pub class_name_duplicates: bool,
     pub class_property_overlap_min: usize,
 }
 
@@ -95,6 +96,7 @@ impl Default for Config {
                 threshold: 50,
                 max_gap: 10,
                 near_miss: false,
+                class_name_duplicates: false,
                 class_property_overlap_min: 4,
             },
             dead_code: DeadCode {

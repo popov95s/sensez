@@ -56,6 +56,7 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
     }
     out.extend(class_shapes::detect(
         &kept,
+        config.class_name_duplicates,
         config.class_property_overlap_min,
     ));
     // Rank by impact: long clones with many occurrences first.

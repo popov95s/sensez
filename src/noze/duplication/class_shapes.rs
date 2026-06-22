@@ -6,9 +6,17 @@ use crate::spine::parser::{ClassProperty, ParsedFile};
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
 
-pub fn detect(files: &[&ParsedFile], min_overlap: usize) -> Vec<CloneClass> {
+pub fn detect(
+    files: &[&ParsedFile],
+    class_name_duplicates: bool,
+    min_overlap: usize,
+) -> Vec<CloneClass> {
     let classes = collect_classes(files);
-    let mut out = same_name_findings(&classes);
+    let mut out = if class_name_duplicates {
+        same_name_findings(&classes)
+    } else {
+        Vec::new()
+    }; // todo: fix
     if min_overlap > 0 {
         out.extend(property_overlap_findings(&classes, min_overlap));
     }
@@ -160,13 +168,31 @@ mod tests {
             ],
         );
         let refs: Vec<_> = files.iter().collect();
-        let findings = detect(&refs, 4);
+        let findings = detect(&refs, true, 4);
         let class_name = findings
             .iter()
             .find(|finding| finding.token_length == 0)
             .expect("same-name class finding");
         assert_eq!(class_name.action, ActionLevel::Info);
         assert_eq!(class_name.occurrences.len(), 2);
+    }
+
+    #[test]
+    fn same_class_name_is_opt_in() {
+        let tmp = tempfile::tempdir().unwrap();
+        let files = write_files(
+            tmp.path(),
+            &[
+                ("a.py", "class Customer:\n    x: int\n"),
+                ("b.py", "class Customer:\n    y: str\n"),
+            ],
+        );
+        let refs: Vec<_> = files.iter().collect();
+        let findings = detect(&refs, false, 4);
+        assert!(
+            findings.iter().all(|finding| finding.token_length != 0),
+            "same-name class finding should be disabled by default"
+        );
     }
 
     #[test]
@@ -187,10 +213,10 @@ mod tests {
         );
         let refs: Vec<_> = files.iter().collect();
         assert!(
-            detect(&refs, 5).is_empty(),
+            detect(&refs, false, 5).is_empty(),
             "four shared fields are below threshold five"
         );
-        let findings = detect(&refs, 4);
+        let findings = detect(&refs, false, 4);
         let overlap = findings
             .iter()
             .find(|finding| finding.token_length == 4)
@@ -220,7 +246,7 @@ mod tests {
         );
         let refs: Vec<_> = files.iter().collect();
         assert!(
-            detect(&refs, 4)
+            detect(&refs, false, 4)
                 .iter()
                 .any(|finding| finding.token_length == 4),
             "TS class fields with matching names/types should overlap"

@@ -238,6 +238,7 @@ fn identical_functions_are_a_clone_within_rust_only() {
         threshold: 10,
         max_gap: 0,
         near_miss: false,
+        class_name_duplicates: false,
         class_property_overlap_min: 4,
     };
     let dup = crate::noze::duplication::detect(&files, &cfg);

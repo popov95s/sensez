@@ -20,6 +20,7 @@ enabled = true
 # threshold = 50     # minimum matched token-run length to report a clone
 # max_gap = 10       # Type-3 gapped-clone stitching (0 = off)
 # near_miss = false  # consistent-rename clone detection (opt-in)
+# class_name_duplicates = false  # same-name class duplication. Can be noisy for teams that follow same patterns for business logic services, stores, etc.(opt-in)
 # class_property_overlap_min = 4  # same-name/same-type class fields (0 = off)
 
 [dead_code]
