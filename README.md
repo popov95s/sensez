@@ -205,36 +205,19 @@ threshold = 50
 [dead_code]
 entrypoint_names = ["register", "main", "setup"]
 
-[[boundaries.forbidden]]
-from = "app.domain"
-to = "app.web"
-
 [smells.rules.long_function]
 max_lines = 80
 action = "warning"
 ```
-
-That boundary rule says: domain code does not import web code. If it does, the
-import has chosen drama.
-
-## eyez
-
-`eyez` is optional doc/comment search for first-pass orientation:
-
-```bash
-sense eyez search . "where do we compute prices?"
-```
-
-It is a lead finder, not a complete code search.
 
 ## Project Anatomy
 
 - `spine`: file discovery, parsing, shared IR, and dependency graph.
 - `profiles`: language adapters for Python, JS/TS, TSX, and Rust.
 - `noze`: duplication, dead code, cycles, and design smells.
-- `bonez`: architecture boundary auditing.
+- `bonez`: architecture boundary auditing. Not yet enabled.
 - `brainz`: local-only metrics and feedback memory.
-- `eyez`: optional doc/comment search.
+- `eyez`: optional doc/comment search. Not yet enabled.
 - `mcp`: JSON-RPC/MCP surface for agent integration.
 - `reporter`: terminal and JSON output.
 - `setup`: `sense init`, starter config, MCP registration, and hook setup.
@@ -242,5 +225,4 @@ It is a lead finder, not a complete code search.
 ## Privacy
 
 Sensez does not send telemetry or source code anywhere. Local metrics stay under
-`.sensez/local-metrics/`. The optional `eyez` feature downloads an embedding
-model from HuggingFace the first time it is used; after that, indexing and search are local.
+`.sensez/local-metrics/`. 
