@@ -18,6 +18,35 @@ and the `spine` to do it fast.
 
 Supported language profiles currently include Python, JavaScript, TypeScript, and Rust (for dogfooding primarily).
 
+## Quick Start
+### Python
+```Bash
+# Run a one-off scan with uv
+uvx --from sensez sense noze .
+
+# Add as a project dev dependency; run it with `uv run sense ...`
+uv add --dev sensez
+uv run sense init
+
+# Install as a global CLI so `sense ...` works directly
+uv tool install sensez
+sense init
+```
+
+### JS/TS
+```Bash
+# Add as a dev dependency
+npm install --save-dev sensez
+# Generate a sensez.toml starter config
+npx sensez init . 
+
+# Run a one-off scan with npx
+npx sense noze .
+```
+
+`sense noze .` is the default scan, but you can also use the verbose method: `sense noze sniff .`
+
+
 ## Performance Snapshot
 
 ```mermaid
@@ -47,34 +76,6 @@ JS/TS structural dead-code and dependency findings (`0.48s`). `repowise` checks
 repo intelligence signals, including dead code (`5.75s`).
 
 `sensez` tries to lower dead code noise and allows for configuration of what gets reported. It also includes a few more Python and TS/JS opinionated smells, apart from overall structural consistency metrics.
-
-## Quick Start
-### Python
-```Bash
-# Run a one-off scan with uv
-uvx --from sensez sense noze .
-
-# Add as a project dev dependency; run it with `uv run sense ...`
-uv add --dev sensez
-uv run sense init
-
-# Install as a global CLI so `sense ...` works directly
-uv tool install sensez
-sense init
-```
-
-### JS/TS
-```Bash
-# Add as a dev dependency
-npm install --save-dev sensez
-# Generate a sensez.toml starter config
-npx sensez init . 
-
-# Run a one-off scan with npx
-npx sense noze .
-```
-
-`sense noze .` is the default scan, but you can also use the verbose method: `sense noze sniff .`
 
 ## The Problem
 
