@@ -46,7 +46,7 @@ xychart-beta
 JS/TS structural dead-code and dependency findings (`0.48s`). `repowise` checks
 repo intelligence signals, including dead code (`5.75s`).
 
-`sensez` tries to lower dead code noise and allows for configuration of what gets reported to the agent based on filter levels. It also includes a few more Python and TS/JS opinionated smells, apart from overall structural consistency metrics.
+`sensez` tries to lower dead code noise and allows for configuration of what gets reported. It also includes a few more Python and TS/JS opinionated smells, apart from overall structural consistency metrics.
 
 ## Quick Start
 ### Python
@@ -54,10 +54,13 @@ repo intelligence signals, including dead code (`5.75s`).
 # Run a one-off scan with uv
 uvx --from sensez sense noze .
 
-# Add as a dev dependency
+# Add as a project dev dependency; run it with `uv run sense ...`
 uv add --dev sensez
-# Or install using pip
-pip install sensez
+uv run sense init
+
+# Install as a global CLI so `sense ...` works directly
+uv tool install sensez
+sense init
 ```
 
 ### JS/TS
@@ -65,7 +68,7 @@ pip install sensez
 # Add as a dev dependency
 npm install --save-dev sensez
 # Generate a sensez.toml starter config
-sense init . --yes
+npx sensez init . 
 
 # Run a one-off scan with npx
 npx sense noze .
@@ -123,6 +126,11 @@ Some smell examples:
 | `feature_envy` | A method that mostly uses another object's data may belong somewhere else. |
 | `message_chain` | Long `a.b.c.d` chains couple callers to deep object plumbing. |
 | `god_module` | One module has become the place everything depends on. |
+| `magic_string_default` | Trying to lie to the type checker by adding an `\|\| ""` or `or ""` to hide a string that should be required. |
+| `split_variable` | Multiple reassignments of the same variable within the same scope. Set to 1 to keep them constant within the scope and enforce helper functions for complex assignment logic. |
+| `nested_loops` | [BETA, can be noisy] Nested iterations may blow up exponentially if not handled properly |
+| `n_plus_one_call` | [BETA, can be noisy] Making external calls 1 by 1 (e.g. to a database) instead of using a batched approach. |
+
 
 `noze` is not a formatter, linter, or type-checker. Keep using Ruff, ty, mypy,
 ESLint, TypeScript, rustc, and Clippy. `noze` sits next to them and watches the
@@ -142,11 +150,11 @@ The MCP tools are themed but explicit:
 | Tool | Use |
 |---|---|
 | `noze_sniff` | Scan the repo for smells and structure issues. |
-| `noze_gate` | End-of-turn diff gate for agent hooks. |
+| `noze_gate` | End-of-turn diff gate for agent hooks; experimental and can be noisy on short/Q&A turns. |
 | `noze_explain` | Explain a finding category. |
 | `brainz_report` | Summarize local usage and resolution metrics. |
 | `brainz_triage` | Record user-approved debt or false-positive verdicts. |
-| `eyez_search_docs` | Search docstrings/comments when `eyez` is enabled. |
+| `eyez_search_docs` | [disabled] Search docstrings/comments when `eyez` is enabled. |
 
 You can also use the `smell noze` CLI standalone in GitHub actions. 
 
