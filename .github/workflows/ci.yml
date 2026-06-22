@@ -5,7 +5,19 @@ on:
     branches:
       - main
       - master
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'src/**'
+      - 'npm/**'
+      - 'pyproject.toml'
   pull_request:
+    paths:
+      - 'Cargo.toml'
+      - 'Cargo.lock'
+      - 'src/**'
+      - 'npm/**'
+      - 'pyproject.toml'
 
 jobs:
   rust:
