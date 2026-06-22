@@ -6,8 +6,8 @@ use super::*;
 fn defaults_when_missing() {
     let cfg = Config::load(Path::new("/nonexistent/xyz")).unwrap();
     assert_eq!(cfg.duplication.threshold, 50);
-    assert_eq!(
-        cfg.duplication.class_name_duplicates, false,
+    assert!(
+        !cfg.duplication.class_name_duplicates,
         "same-name class duplication is disabled by default"
     );
     assert_eq!(
