@@ -8,7 +8,8 @@ pub use crate::spine::ir::tokens;
 #[allow(unused_imports)]
 pub use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 pub use crate::spine::ir::{
-    ClassProperty, ClassUnit, FunctionUnit, ImportContext, SymbolKind, TypeHints, Walked,
+    ClassProperty, ClassUnit, FunctionUnit, ImportContext, ImportPhase, SymbolKind, TypeHints,
+    Walked,
 };
 
 use crate::profiles::{registry, Language, ParseProfile};

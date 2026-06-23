@@ -1,6 +1,7 @@
 use super::*;
 use crate::spine::parser::parse_file;
 use std::fs;
+use std::path::Path;
 
 fn cfg() -> DeadCode {
     DeadCode {
@@ -13,6 +14,19 @@ fn cfg() -> DeadCode {
         unused_methods: false,
         unused_variables: false,
     }
+}
+
+fn dead_symbols(dir: &Path, names: &[&str]) -> Vec<(String, String)> {
+    let files: Vec<_> = names
+        .iter()
+        .enumerate()
+        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .collect();
+    let cg = crate::spine::graph::build(&files, &[]);
+    detect(&cg, &files, &cfg())
+        .iter()
+        .map(|finding| (finding.module.clone(), finding.symbol.clone()))
+        .collect()
 }
 
 #[test]
@@ -36,17 +50,7 @@ fn test_only_imports_do_not_keep_symbols_alive() {
     )
     .unwrap();
 
-    let names = ["lib.py", "tests/test_lib.py", "app.py"];
-    let files: Vec<_> = names
-        .iter()
-        .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
-        .collect();
-    let cg = crate::spine::graph::build(&files, &[]);
-    let dead: Vec<_> = detect(&cg, &files, &cfg())
-        .iter()
-        .map(|finding| (finding.module.clone(), finding.symbol.clone()))
-        .collect();
+    let dead = dead_symbols(&dir, &["lib.py", "tests/test_lib.py", "app.py"]);
 
     assert!(
         dead.contains(&("lib".into(), "only_tested".into())),
@@ -55,5 +59,33 @@ fn test_only_imports_do_not_keep_symbols_alive() {
     assert!(
         !dead.contains(&("lib".into(), "app_used".into())),
         "application imports should still keep symbols alive; got {dead:?}"
+    );
+}
+
+#[test]
+fn type_checking_imports_keep_symbols_alive() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(
+        dir.join("models.py"),
+        "class TypeOnlyModel:\n    pass\n\n\nclass RuntimeDead:\n    pass\n",
+    )
+    .unwrap();
+    fs::write(
+        dir.join("consumer.py"),
+        "from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n    from models import TypeOnlyModel\n",
+    )
+    .unwrap();
+
+    let dead = dead_symbols(&dir, &["models.py", "consumer.py"]);
+
+    assert!(
+        !dead.contains(&("models".into(), "TypeOnlyModel".into())),
+        "TYPE_CHECKING imports are real type usage; got {dead:?}"
+    );
+    assert!(
+        dead.contains(&("models".into(), "RuntimeDead".into())),
+        "other symbols in the same imported module should still be candidates; got {dead:?}"
     );
 }

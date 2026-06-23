@@ -60,7 +60,9 @@ mod tests {
     use crate::noze::smells::detect_local;
     use crate::noze::{SmellFinding, SmellKind};
     use crate::profiles::Language;
-    use crate::spine::parser::{parse_file, parse_source, ParsedFile, StructuralToken};
+    use crate::spine::parser::{
+        parse_file, parse_source, ImportPhase, ParsedFile, StructuralToken,
+    };
     use std::fs;
     use std::path::PathBuf;
 
@@ -78,6 +80,72 @@ mod tests {
 
     fn smells_for(src: &[u8], cfg: &Smells) -> Vec<SmellKind> {
         findings_for(src, cfg).into_iter().map(|f| f.kind).collect()
+    }
+
+    #[test]
+    fn import_type_is_type_only_phase() {
+        let imports = parse_source(
+            b"import type { MassiveUserClass } from './heavy_database_models';\nimport { live } from './runtime';\n",
+            0,
+            "m",
+            &TsProfile,
+        )
+        .unwrap()
+        .symbols
+        .imports;
+
+        let type_only = imports
+            .iter()
+            .find(|i| i.target_module == "./heavy_database_models")
+            .unwrap();
+        assert_eq!(type_only.phase, ImportPhase::TypeOnly);
+        assert_eq!(type_only.imported_symbols, vec!["MassiveUserClass"]);
+
+        let runtime = imports
+            .iter()
+            .find(|i| i.target_module == "./runtime")
+            .unwrap();
+        assert_eq!(runtime.phase, ImportPhase::Runtime);
+    }
+
+    #[test]
+    fn mixed_import_specifiers_track_per_binding_phase() {
+        let imports = parse_source(
+            b"import { type MassiveUserClass, connect as runtimeConnect } from './heavy_database_models';\n",
+            0,
+            "m",
+            &TsProfile,
+        )
+        .unwrap()
+        .symbols
+        .imports;
+
+        let import = imports
+            .iter()
+            .find(|i| i.target_module == "./heavy_database_models")
+            .unwrap();
+        assert_eq!(import.phase, ImportPhase::Runtime);
+        assert_eq!(import.imported_symbols, vec!["MassiveUserClass", "connect"]);
+        assert_eq!(import.bindings, vec!["MassiveUserClass", "runtimeConnect"]);
+        assert_eq!(
+            import.binding_phases,
+            vec![ImportPhase::TypeOnly, ImportPhase::Runtime]
+        );
+    }
+
+    #[test]
+    fn export_type_is_type_only_phase() {
+        let imports = parse_source(
+            b"export type { Shape } from './shape';\n",
+            0,
+            "m",
+            &TsProfile,
+        )
+        .unwrap()
+        .symbols
+        .imports;
+        assert_eq!(imports[0].phase, ImportPhase::TypeOnly);
+        assert_eq!(imports[0].target_module, "./shape");
     }
 
     /// The type-discipline + mutation smells fire for TypeScript via the new

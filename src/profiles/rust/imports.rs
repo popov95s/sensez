@@ -7,7 +7,7 @@
 //! the alias (if any) is the local binding. `pub use` re-exports are extracted
 //! identically — the re-export *edge* is what keeps the target alive.
 
-use crate::spine::ir::ImportContext;
+use crate::spine::ir::{ImportContext, ImportPhase};
 use tree_sitter::Node;
 
 /// Extract every leaf of a `use_declaration` as an [`ImportContext`].
@@ -214,8 +214,10 @@ fn context(
         target_module: target,
         imported_symbols: symbols,
         bindings,
+        binding_phases: Vec::new(),
         line: pos.row + 1,
         column: pos.column + 1,
+        phase: ImportPhase::Runtime,
         is_inline: scope.is_some(),
         is_module_decl,
         enclosing_scope: scope.map(str::to_string),

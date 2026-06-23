@@ -11,7 +11,7 @@ mod units;
 
 #[cfg(feature = "eyez")]
 use crate::eyez::RawDoc;
-pub use import_context::ImportContext;
+pub use import_context::{ImportContext, ImportPhase};
 pub use performance::{CallFact, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};

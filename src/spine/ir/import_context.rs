@@ -12,8 +12,12 @@ pub struct ImportContext {
     /// Local names this import binds into the file (alias-aware). Used for
     /// unused-import detection. `import a.b` binds `a`; `x as y` binds `y`.
     pub bindings: Vec<String>,
+    /// Per-binding phase, same order as `bindings`. Missing entries inherit
+    /// `phase` for backward-compatible internal construction.
+    pub binding_phases: Vec<ImportPhase>,
     pub line: usize,
     pub column: usize,
+    pub phase: ImportPhase,
     /// True if found inside a function/class body (not at module top level).
     pub is_inline: bool,
     /// True for a module-hierarchy declaration (Rust `mod x;`): containment,
@@ -23,4 +27,11 @@ pub struct ImportContext {
     pub is_module_decl: bool,
     /// Name of the nearest enclosing function/class, if any.
     pub enclosing_scope: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ImportPhase {
+    Runtime,
+    TypeOnly,
 }

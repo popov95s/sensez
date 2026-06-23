@@ -9,7 +9,7 @@
 use crate::noze::{ActionLevel, Confidence, DeadCodeFinding, SymbolKind};
 use crate::profiles::{registry, Language};
 use crate::spine::graph::CodebaseGraph;
-use crate::spine::parser::ParsedFile;
+use crate::spine::parser::{ImportPhase, ParsedFile};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
@@ -35,8 +35,21 @@ pub fn unused_imports(
             continue;
         }
         let module = modmap.get(&file.path).cloned().unwrap_or_default();
-        for import in file.walked.symbols.imports.iter().filter(|i| !i.is_inline) {
-            for binding in &import.bindings {
+        for import in file
+            .walked
+            .symbols
+            .imports
+            .iter()
+            .filter(|i| !i.is_inline && i.phase == ImportPhase::Runtime)
+        {
+            for (index, binding) in import.bindings.iter().enumerate() {
+                let phase = match import.binding_phases.get(index).copied() {
+                    Some(phase) => phase,
+                    None => import.phase,
+                };
+                if phase == ImportPhase::TypeOnly {
+                    continue;
+                }
                 if binding == "*" || is_referenced(&file.walked.usage.name_counts, binding) {
                     continue;
                 }
@@ -156,5 +169,61 @@ mod tests {
             !meths.contains(&"unused".to_string()),
             "unused() is called via self"
         );
+    }
+
+    #[test]
+    fn ignores_type_checking_only_imports() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("m.py"),
+            "from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n    from app.models import User\n\nimport os\n",
+        )
+        .unwrap();
+        let files = vec![parse_file(&dir.join("m.py"), 0).unwrap()];
+        let cg = crate::spine::graph::build(&files, &[]);
+        let modmap = module_map(&cg);
+
+        let imps: Vec<_> = unused_imports(&files, &modmap)
+            .iter()
+            .map(|f| f.symbol.clone())
+            .collect();
+        assert!(
+            !imps.contains(&"User".to_string()),
+            "type-checker-only imports are intentional"
+        );
+        assert!(imps.contains(&"os".to_string()), "ordinary unused import");
+    }
+
+    #[cfg(feature = "lang-typescript")]
+    #[test]
+    fn ignores_type_only_bindings_but_reports_runtime_bindings() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("consumer.ts"),
+            "import { type MassiveUserClass, connect as runtimeConnect } from './models';\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join("models.ts"),
+            "export class MassiveUserClass {}\nexport function connect(): void {}\n",
+        )
+        .unwrap();
+        let files = vec![
+            parse_file(&dir.join("consumer.ts"), 0).unwrap(),
+            parse_file(&dir.join("models.ts"), 1).unwrap(),
+        ];
+        let cg = crate::spine::graph::build(&files, &[]);
+        let modmap = module_map(&cg);
+
+        let imps: Vec<_> = unused_imports(&files, &modmap)
+            .iter()
+            .map(|f| f.symbol.clone())
+            .collect();
+        assert!(!imps.contains(&"MassiveUserClass".to_string()));
+        assert!(imps.contains(&"runtimeConnect".to_string()));
     }
 }

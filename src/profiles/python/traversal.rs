@@ -3,6 +3,7 @@
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, Scope};
+use crate::spine::ir::ImportPhase;
 use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
 use std::collections::HashSet;
@@ -27,9 +28,14 @@ fn visit(
     // Imports are extracted, never descended into (keeps the token stream clean).
     if token_map::is_import(kind) {
         let enclosing = scope.last().map(|s| s.name.as_str());
+        let phase = if is_under_type_checking_guard(node, src) {
+            ImportPhase::TypeOnly
+        } else {
+            ImportPhase::Runtime
+        };
         out.symbols
             .imports
-            .extend(imports::extract(node, src, module_name, enclosing));
+            .extend(imports::extract(node, src, module_name, enclosing, phase));
         return;
     }
 
@@ -156,6 +162,27 @@ fn credit_interpolations(node: Node, src: &[u8], out: &mut Walked) {
             _ => credit_interpolations(child, src, out),
         }
     }
+}
+
+fn is_under_type_checking_guard(node: Node, src: &[u8]) -> bool {
+    let mut parent = node.parent();
+    while let Some(ancestor) = parent {
+        if ancestor.kind() == "if_statement"
+            && ancestor
+                .child_by_field_name("condition")
+                .and_then(|n| n.utf8_text(src).ok())
+                .is_some_and(is_type_checking_condition)
+        {
+            return true;
+        }
+        parent = ancestor.parent();
+    }
+    false
+}
+
+fn is_type_checking_condition(text: &str) -> bool {
+    let condition = text.trim();
+    condition == "TYPE_CHECKING" || condition.ends_with(".TYPE_CHECKING")
 }
 
 /// Record top-level declarations and class methods.

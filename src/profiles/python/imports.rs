@@ -1,6 +1,6 @@
 //! Python import-statement extraction into the shared [`ImportContext`].
 
-use crate::spine::ir::ImportContext;
+use crate::spine::ir::{ImportContext, ImportPhase};
 use tree_sitter::Node;
 
 /// Extract zero or more imports from an `import_statement` /
@@ -10,6 +10,7 @@ pub fn extract(
     src: &[u8],
     source_module: &str,
     scope: Option<&str>,
+    phase: ImportPhase,
 ) -> Vec<ImportContext> {
     let pos = node.start_position();
     let (line, column) = (pos.row + 1, pos.column + 1);
@@ -18,8 +19,10 @@ pub fn extract(
         target_module: target,
         imported_symbols: symbols,
         bindings,
+        binding_phases: Vec::new(),
         line,
         column,
+        phase,
         is_inline: scope.is_some(),
         is_module_decl: false,
         enclosing_scope: scope.map(str::to_string),

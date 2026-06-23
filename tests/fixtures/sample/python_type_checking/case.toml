@@ -1,0 +1,15 @@
+name = "python type-checking imports"
+
+[meta]
+issues_empty = true
+min_analyzed_files = 1
+
+[[dead_code.contains]]
+module = "models"
+symbol = "RuntimeDead"
+confidence = "High"
+action = "advisory"
+
+[[dead_code.absent]]
+module = "models"
+symbol = "TypeOnlyModel"
