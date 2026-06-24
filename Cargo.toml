@@ -32,10 +32,6 @@ name = "sensez"
 name = "sensez"
 path = "src/main.rs"
 
-[[bin]]
-name = "sense"
-path = "src/bin/sense.rs"
-
 [features]
 default = ["all-langs", "mcp"]
 lang-python = ["dep:tree-sitter-python"]

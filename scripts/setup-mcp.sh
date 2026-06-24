@@ -20,7 +20,7 @@ ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
 FEATURES="${SENSEZ_FEATURES:-mcp,semantic,all-langs}"
-BIN="$ROOT/target/release/sense"
+BIN="$ROOT/target/release/sensez"
 
 # --- 0. prerequisites ----------------------------------------------------------
 if ! command -v cargo >/dev/null 2>&1; then
@@ -29,7 +29,7 @@ if ! command -v cargo >/dev/null 2>&1; then
 fi
 
 # --- 1. build the release binary ----------------------------------------------
-echo "==> Building Sensez CLI (sense, release, features: $FEATURES)"
+echo "==> Building Sensez CLI (sensez, release, features: $FEATURES)"
 cargo build --release --features "$FEATURES"
 echo "    binary: $BIN"
 
@@ -41,13 +41,13 @@ fi
 
 # --- 3. write a ready-to-use MCP server config --------------------------------
 # Project-scoped .mcp.json is picked up by Claude Code when this repo is open.
-# To use it everywhere, copy the "sense" block into your user-scope MCP config.
+# To use it everywhere, copy the "sensez" block into your user-scope MCP config.
 MCP_JSON="$ROOT/.mcp.json"
 echo "==> Writing $MCP_JSON"
 cat > "$MCP_JSON" <<JSON
 {
   "mcpServers": {
-    "sense": {
+    "sensez": {
       "command": "$BIN",
       "args": ["serve"]
     }
@@ -57,13 +57,13 @@ JSON
 
 # If the Claude CLI is available, also register at user scope (works in any repo).
 if command -v claude >/dev/null 2>&1; then
-  echo "==> Registering 'sense' with the Claude CLI (user scope)"
-  claude mcp add sense -s user -- "$BIN" serve 2>/dev/null \
+  echo "==> Registering 'sensez' with the Claude CLI (user scope)"
+  claude mcp add sensez -s user -- "$BIN" serve 2>/dev/null \
     || echo "    (already registered or add failed — see .mcp.json above)"
 else
   echo "    Claude CLI not on PATH — using project .mcp.json."
   echo "    For global use, add this to your user MCP config:"
-  echo "      \"sense\": { \"command\": \"$BIN\", \"args\": [\"serve\"] }"
+  echo "      \"sensez\": { \"command\": \"$BIN\", \"args\": [\"serve\"] }"
 fi
 
 # --- 4. pre-warm the embedding model (first run downloads weights) ------------
@@ -77,13 +77,13 @@ printf 'def warm():\n    """warm up the embedding model."""\n    return 1\n' > "
   || echo "    warmup search failed (model will download on first real use)."
 
 echo
-echo "Done. Restart Claude Code (or reload the window) to pick up the sense MCP server."
+echo "Done. Restart Claude Code (or reload the window) to pick up the sensez MCP server."
 echo "Then ask it to search docs, e.g.: search_docs path=$ROOT query=\"element comparer\""
 
 # --- 5. optional: run the server directly (stdio smoke test) ------------------
 if [ "${1:-}" = "--serve" ]; then
   echo
-  echo "==> Starting sense MCP server on stdio (Ctrl-C to stop)."
+  echo "==> Starting sensez MCP server on stdio (Ctrl-C to stop)."
   echo "    It waits for JSON-RPC on stdin; this is just a liveness check."
   exec "$BIN" serve
 fi

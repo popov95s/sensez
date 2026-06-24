@@ -40,14 +40,9 @@ function resolveBinary(target) {
   try {
     return require.resolve(`${target.packageName}/${target.binary}`);
   } catch {
-    const legacy = target.binary.replace("sensez", "sense");
-    try {
-      return require.resolve(`${target.packageName}/${legacy}`);
-    } catch {
-      fail(
-        `missing native package ${target.packageName}; reinstall sensez with optional dependencies enabled`,
-      );
-    }
+    fail(
+      `missing native package ${target.packageName}; reinstall sensez with optional dependencies enabled`,
+    );
   }
 }
 

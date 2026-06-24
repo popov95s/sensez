@@ -1,6 +1,6 @@
 //! MCP prompts: agent-agnostic slash commands carried by the server itself.
 //! Any MCP client (Claude Code, Cursor, Cline, Zed, ...) discovers these via
-//! `prompts/list`; Claude Code surfaces them as `/sense:report`-style commands.
+//! `prompts/list`; Claude Code surfaces them as `/sensez:report`-style commands.
 
 use serde_json::{json, Value};
 

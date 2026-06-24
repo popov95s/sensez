@@ -7,9 +7,9 @@ from typing import Any
 
 
 class McpClient:
-    def __init__(self, sense: Path):
+    def __init__(self, sensez: Path):
         self.proc = subprocess.Popen(
-            [str(sense), "mcp", "serve"],
+            [str(sensez), "mcp", "serve"],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,

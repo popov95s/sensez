@@ -31,7 +31,7 @@
 
 set -uo pipefail
 BC="$(cd "$(dirname "$0")" && pwd)"
-SENSEZ="$(cd "$BC/.." && pwd)/target/release/sense"
+SENSEZ="$(cd "$BC/.." && pwd)/target/release/sensez"
 THRESHOLD="${THRESHOLD:-40}"
 RUNS="${RUNS:-3}"
 SKIP="${SKIP:-}"
@@ -105,7 +105,7 @@ detect_lang() {
 # Run one solution; writes raw (JSON where supported) output to $out. Returns
 # nonzero (caller skips recording) when the tool isn't installed. Every tool is
 # pinned to a single pillar so report.py can compare it to the matching sensez
-# count; sensez still does ALL pillars in the one `sense scan` run above.
+# count; sensez still does ALL pillars in the one `sensez noze` run above.
 run_solution() { # tool path out lang  -> measured seconds on stdout, or "" if unavailable
   local tool="$1" path="$2" out="$3" lang="$4"
   case "$tool" in

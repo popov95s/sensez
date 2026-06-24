@@ -104,16 +104,16 @@ fn codex_mcp_config_uses_lowercase_table_name() {
         .map(|value| value.as_str().unwrap())
         .collect();
     assert_eq!(args, vec!["mcp", "serve"]);
-    assert!(!text.contains("[MCP_servers.sense]"));
+    assert!(!text.contains("[MCP_servers.legacy]"));
 }
 
 #[test]
-fn codex_init_is_idempotent_and_removes_legacy_mcp_table() {
+fn codex_init_is_idempotent_and_preserves_existing_mcp_table() {
     let (_tmp, root) = temp_root();
     fs::create_dir_all(root.join(".codex")).unwrap();
     fs::write(
         root.join(".codex/config.toml"),
-        "[MCP_servers.sense]\ncommand = \"/old/sense\"\nargs = [\"mcp\", \"serve\"]\n",
+        "[MCP_servers.legacy]\ncommand = \"/old/legacy\"\nargs = [\"mcp\", \"serve\"]\n",
     )
     .unwrap();
 
@@ -130,7 +130,7 @@ fn codex_init_is_idempotent_and_removes_legacy_mcp_table() {
 
     let text = fs::read_to_string(root.join(".codex/config.toml")).unwrap();
     assert_eq!(text.matches("[mcp_servers.sensez]").count(), 1);
-    assert!(!text.contains("[MCP_servers.sense]"));
+    assert!(text.contains("[MCP_servers.legacy]"));
 }
 
 #[test]
@@ -197,12 +197,12 @@ fn all_mcp_config_writers_are_idempotent() {
 }
 
 #[test]
-fn codex_legacy_cleanup_preserves_other_legacy_servers() {
+fn codex_init_preserves_other_existing_servers() {
     let (_tmp, root) = temp_root();
     fs::create_dir_all(root.join(".codex")).unwrap();
     fs::write(
         root.join(".codex/config.toml"),
-        "[MCP_servers.sense]\ncommand = \"/old/sense\"\nargs = []\n\n\
+        "[MCP_servers.legacy]\ncommand = \"/old/legacy\"\nargs = []\n\n\
          [MCP_servers.other]\ncommand = \"/bin/other\"\nargs = []\n",
     )
     .unwrap();
@@ -214,7 +214,7 @@ fn codex_legacy_cleanup_preserves_other_legacy_servers() {
     assert!(config["mcp_servers"]["sensez"].is_table());
     let legacy = config["MCP_servers"].as_table().unwrap();
     assert!(legacy["other"].is_table());
-    assert!(!legacy.contains_key("sense"));
+    assert!(legacy.contains_key("legacy"));
 }
 
 #[test]

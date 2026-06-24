@@ -143,9 +143,6 @@ fn write_mcp_json(path: &Path, sensez_bin: &str) -> Result<()> {
         .ok()
         .and_then(|t| serde_json::from_str(&t).ok())
         .unwrap_or_else(|| json!({}));
-    if let Some(servers) = config["mcpServers"].as_object_mut() {
-        servers.remove("sense");
-    }
     config["mcpServers"]["sensez"] = json!({"command": sensez_bin, "args": ["mcp", "serve"]});
     std::fs::write(path, serde_json::to_string_pretty(&config)?)
         .with_context(|| format!("writing {}", path.display()))?;
@@ -160,24 +157,11 @@ fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
     let table = config
         .as_table_mut()
         .ok_or_else(|| anyhow::anyhow!("{} must be a TOML table", path.display()))?;
-    let remove_legacy = if let Some(legacy) = table
-        .get_mut("MCP_servers")
-        .and_then(toml::Value::as_table_mut)
-    {
-        legacy.remove("sense");
-        legacy.is_empty()
-    } else {
-        false
-    };
-    if remove_legacy {
-        table.remove("MCP_servers");
-    }
     let mcp = table
         .entry("mcp_servers")
         .or_insert_with(|| toml::Value::Table(toml::map::Map::new()))
         .as_table_mut()
         .ok_or_else(|| anyhow::anyhow!("mcp_servers must be a TOML table"))?;
-    mcp.remove("sense");
     let mut sensez = toml::map::Map::new();
     sensez.insert(
         "command".to_string(),

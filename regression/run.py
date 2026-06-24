@@ -54,15 +54,15 @@ def main() -> int:
     args = parse_args()
     config = cast(RegressionConfig, tomllib.loads(CONFIG.read_text()))
     targets = select_targets(config["targets"], args)
-    sense = args.sense.resolve()
-    if not sense.exists():
-        print(f"missing release binary: {sense}", file=sys.stderr)
+    sensez = args.sensez.resolve()
+    if not sensez.exists():
+        print(f"missing release binary: {sensez}", file=sys.stderr)
         print("build it with: cargo build --release --features mcp,all-langs")
         return 2
     failures: list[str] = []
     for target in targets:
         try:
-            run_target(config, target, sense, args.accept)
+            run_target(config, target, sensez, args.accept)
         except Exception as exc:
             failures.append(f"{target['name']}: {exc}")
     if failures:
@@ -78,7 +78,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--ci", action="store_true")
     parser.add_argument("--accept", action="store_true")
-    parser.add_argument("--sense", type=Path, default=ROOT / "target/release/sensez")
+    parser.add_argument("--sensez", type=Path, default=ROOT / "target/release/sensez")
     args = parser.parse_args()
     if args.accept and args.ci and not os.getenv("SENSEZ_ACCEPT_BASELINE"):
         parser.error("--accept in CI requires SENSEZ_ACCEPT_BASELINE=1")
@@ -99,7 +99,7 @@ def select_targets(targets: list[Target], args: argparse.Namespace) -> list[Targ
     return selected
 
 
-def run_target(config: RegressionConfig, target: Target, sense: Path, accept: bool) -> None:
+def run_target(config: RegressionConfig, target: Target, sensez: Path, accept: bool) -> None:
     name = target["name"]
     print(f"== {name} ==")
     cache = ensure_cache(config["cache_root"], target)
@@ -107,8 +107,8 @@ def run_target(config: RegressionConfig, target: Target, sense: Path, accept: bo
     if out.exists():
         shutil.rmtree(out)
     out.mkdir(parents=True)
-    run_full_scans(sense, cache, target, out)
-    run_mcp_scenarios(sense, config, target, cache, out)
+    run_full_scans(sensez, cache, target, out)
+    run_mcp_scenarios(sensez, config, target, cache, out)
     baseline = BASELINES / name
     if accept:
         accept_tree(out, baseline)
@@ -154,27 +154,27 @@ def scenario_repo(cache: Path, target: Target) -> Path:
     return dest
 
 
-def run_full_scans(sense: Path, cache: Path, target: Target, out: Path) -> None:
+def run_full_scans(sensez: Path, cache: Path, target: Target, out: Path) -> None:
     repo = scenario_repo(cache, target)
     try:
-        default = run_json([sense, "noze", str(repo), "--json"], ROOT)
+        default = run_json([sensez, "noze", str(repo), "--json"], ROOT)
         dump_norm(out / "default.noze.json", default, repo, target)
-        default_capped = run_json([sense, "noze", str(repo), "--max", "5", "--json"], ROOT)
+        default_capped = run_json([sensez, "noze", str(repo), "--max", "5", "--json"], ROOT)
         dump_norm(out / "default.noze.max5.json", default_capped, repo, target)
-        full = run_json([sense, "noze", str(repo), "--all", "--json"], ROOT)
+        full = run_json([sensez, "noze", str(repo), "--all", "--json"], ROOT)
         dump_norm(out / "full.noze.json", full, repo, target)
         threshold = run_json(
-            [sense, "noze", str(repo), "--all", "--threshold", "40", "--json"], ROOT
+            [sensez, "noze", str(repo), "--all", "--threshold", "40", "--json"], ROOT
         )
         dump_norm(out / "full.noze.threshold40.json", threshold, repo, target)
-        capped = run_json([sense, "noze", str(repo), "--all", "--max", "5", "--json"], ROOT)
+        capped = run_json([sensez, "noze", str(repo), "--all", "--max", "5", "--json"], ROOT)
         dump_norm(out / "full.noze.max5.json", capped, repo, target)
     finally:
         cleanup_repo(repo)
 
 
 def run_mcp_scenarios(
-    sense: Path,
+    sensez: Path,
     config: RegressionConfig,
     target: Target,
     cache: Path,
@@ -182,7 +182,7 @@ def run_mcp_scenarios(
 ) -> None:
     repo = scenario_repo(cache, target)
     fixture = config["profiles"][target["profile"]]["dead_code_fixture"]
-    client = McpClient(sense)
+    client = McpClient(sensez)
     try:
         init = client.request("initialize")["result"]
         assert init["serverInfo"]["name"] == "sensez"

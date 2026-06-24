@@ -2,7 +2,7 @@
 name: sensez
 description: >-
   Use when checking a codebase for structural duplication, dead code candidates,
-  circular imports, boundary violations, or design smells with the `sense` CLI
+  circular imports, boundary violations, or design smells with the `sensez` CLI
   or MCP server. Use after edit turns to verify that newly written code is
   structurally correct. You can also run it on user triggers: "find duplicate code", "audit this
   project", "check dead code", "detect cycles", "enforce boundaries", "run
@@ -33,10 +33,10 @@ cargo build --release
 cargo build --release --features mcp,eyez,all-langs
 ```
 
-The binary is `./target/release/sense`. For one-off local runs:
+The binary is `./target/release/sensez`. For one-off local runs:
 
 ```bash
-cargo run --release --bin sense -- noze <path> --json
+cargo run --release --bin sensez -- noze <path> --json
 ```
 
 ## CLI
@@ -44,18 +44,18 @@ cargo run --release --bin sense -- noze <path> --json
 Use JSON for anything an agent or script will parse:
 
 ```bash
-sense noze <path> --json
-sense noze <path> --max 20 --json
-sense noze <path> --threshold 60 --json
+sensez noze <path> --json
+sensez noze <path> --max 20 --json
+sensez noze <path> --threshold 60 --json
 ```
 
 Diff-scoped mode is the right default inside an edit loop:
 
 ```bash
-sense noze . --diff --json
-git diff HEAD | sense noze . --diff-from - --json
-sense noze . --diff --fail-on-new
-sense noze . --diff --fail-on-new must_fix
+sensez noze . --diff --json
+git diff HEAD | sensez noze . --diff-from - --json
+sensez noze . --diff --fail-on-new
+sensez noze . --diff --fail-on-new must_fix
 ```
 
 `--max N` caps each pillar's returned findings while preserving true totals in
@@ -118,11 +118,11 @@ individual findings in source.
 Build with MCP support, then run:
 
 ```bash
-sense mcp serve
+sensez mcp serve
 ```
 
 The server speaks JSON-RPC over stdio. Use it when an agent will call Sensez
-repeatedly; use `sense noze --json` for one-shot checks.
+repeatedly; use `sensez noze --json` for one-shot checks.
 
 Useful tools:
 
@@ -134,9 +134,9 @@ Useful tools:
 
 ## Agent Guidance
 
-After each edit turn, run `sense noze . --diff --json` to check that the code
+After each edit turn, run `sensez noze . --diff --json` to check that the code
 just written is structurally sound. If acting as a gate, use
-`sense noze . --diff --fail-on-new must_fix` so only configured must-fix
+`sensez noze . --diff --fail-on-new must_fix` so only configured must-fix
 findings block progress. Report only findings that touch the current change
 unless the user asked for a full audit.
 
