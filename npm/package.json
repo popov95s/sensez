@@ -3,6 +3,7 @@
   "version": "0.1.4",
   "description": "Sensez CLI launcher for structural maintainability checks",
   "license": "MIT",
+  "readme": "README.md",
   "type": "module",
   "repository": {
     "type": "git",
@@ -13,7 +14,8 @@
     "sensez": "bin/sensez.js"
   },
   "files": [
-    "bin"
+    "bin",
+    "README.md"
   ],
   "optionalDependencies": {
     "sensez-darwin-arm64": "0.1.4",
@@ -26,5 +28,8 @@
   },
   "engines": {
     "node": ">=18"
+  },
+  "scripts": {
+    "prepublishOnly": "node -e \"require('node:fs').copyFileSync('../README.md','README.md')\""
   }
 }
