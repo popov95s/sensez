@@ -1,4 +1,4 @@
-//! `sense init` artifact tests (non-interactive paths only).
+//! `sensez init` artifact tests (non-interactive paths only).
 
 use super::*;
 use std::fs;
@@ -28,8 +28,8 @@ fn flag_driven_init_writes_all_artifacts() {
 
     let mcp: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(root.join(".mcp.json")).unwrap()).unwrap();
-    assert_eq!(mcp["mcpServers"]["sense"]["args"][0], "mcp");
-    assert_eq!(mcp["mcpServers"]["sense"]["args"][1], "serve");
+    assert_eq!(mcp["mcpServers"]["sensez"]["args"][0], "mcp");
+    assert_eq!(mcp["mcpServers"]["sensez"]["args"][1], "serve");
 
     let settings: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(root.join(".claude/settings.json")).unwrap())
@@ -91,13 +91,13 @@ fn codex_has_project_config_path_and_can_fallback() {
 #[test]
 fn codex_mcp_config_uses_lowercase_table_name() {
     let (_tmp, root) = temp_root();
-    artifacts::write_mcp_config(&root, "codex", "/bin/sense").unwrap();
+    artifacts::write_mcp_config(&root, "codex", "/bin/sensez").unwrap();
 
     let text = fs::read_to_string(root.join(".codex/config.toml")).unwrap();
     let config: toml::Value = toml::from_str(&text).unwrap();
-    let sense = &config["mcp_servers"]["sense"];
-    assert_eq!(sense["command"].as_str(), Some("/bin/sense"));
-    let args: Vec<_> = sense["args"]
+    let sensez = &config["mcp_servers"]["sensez"];
+    assert_eq!(sensez["command"].as_str(), Some("/bin/sensez"));
+    let args: Vec<_> = sensez["args"]
         .as_array()
         .unwrap()
         .iter()
@@ -129,7 +129,7 @@ fn codex_init_is_idempotent_and_removes_legacy_mcp_table() {
     }
 
     let text = fs::read_to_string(root.join(".codex/config.toml")).unwrap();
-    assert_eq!(text.matches("[mcp_servers.sense]").count(), 1);
+    assert_eq!(text.matches("[mcp_servers.sensez]").count(), 1);
     assert!(!text.contains("[MCP_servers.sense]"));
 }
 
@@ -157,8 +157,8 @@ fn all_mcp_config_writers_are_idempotent() {
             .unwrap(),
         }
 
-        artifacts::write_mcp_config(&root, agent.id, "/bin/sense").unwrap();
-        artifacts::write_mcp_config(&root, agent.id, "/bin/sense").unwrap();
+        artifacts::write_mcp_config(&root, agent.id, "/bin/sensez").unwrap();
+        artifacts::write_mcp_config(&root, agent.id, "/bin/sensez").unwrap();
 
         let text = fs::read_to_string(&path).unwrap();
         match path.extension().and_then(|ext| ext.to_str()) {
@@ -166,8 +166,8 @@ fn all_mcp_config_writers_are_idempotent() {
                 let config: toml::Value = toml::from_str(&text).unwrap();
                 let servers = config["mcp_servers"].as_table().unwrap();
                 assert!(
-                    servers.contains_key("sense"),
-                    "missing sense for {}",
+                    servers.contains_key("sensez"),
+                    "missing sensez for {}",
                     agent.id
                 );
                 assert!(
@@ -175,14 +175,14 @@ fn all_mcp_config_writers_are_idempotent() {
                     "dropped other for {}",
                     agent.id
                 );
-                assert_eq!(text.matches("[mcp_servers.sense]").count(), 1);
+                assert_eq!(text.matches("[mcp_servers.sensez]").count(), 1);
             }
             _ => {
                 let config: serde_json::Value = serde_json::from_str(&text).unwrap();
                 let servers = config["mcpServers"].as_object().unwrap();
                 assert!(
-                    servers.contains_key("sense"),
-                    "missing sense for {}",
+                    servers.contains_key("sensez"),
+                    "missing sensez for {}",
                     agent.id
                 );
                 assert!(
@@ -207,11 +207,11 @@ fn codex_legacy_cleanup_preserves_other_legacy_servers() {
     )
     .unwrap();
 
-    artifacts::write_mcp_config(&root, "codex", "/bin/sense").unwrap();
+    artifacts::write_mcp_config(&root, "codex", "/bin/sensez").unwrap();
 
     let text = fs::read_to_string(root.join(".codex/config.toml")).unwrap();
     let config: toml::Value = toml::from_str(&text).unwrap();
-    assert!(config["mcp_servers"]["sense"].is_table());
+    assert!(config["mcp_servers"]["sensez"].is_table());
     let legacy = config["MCP_servers"].as_table().unwrap();
     assert!(legacy["other"].is_table());
     assert!(!legacy.contains_key("sense"));

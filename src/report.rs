@@ -4,6 +4,7 @@
 
 use crate::spine::ir::SymbolKind;
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 use std::path::PathBuf;
 
 mod smell_kind;
@@ -214,6 +215,8 @@ pub struct ReportMeta {
     pub duplication_total: usize,
     pub boundaries_total: usize,
     pub smells_total: usize,
+    #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
+    pub smell_totals: BTreeMap<String, usize>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub unmatched_boundary_rules: Vec<String>,
     #[serde(skip_serializing_if = "hide_scan_diagnostics", default)]

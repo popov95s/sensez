@@ -45,8 +45,28 @@ pub fn apply(
     }
 
     report.meta.mode = crate::noze::ReportMode::Diff;
+    refresh_totals(report);
     // Re-scope the glossary to the categories that survived diff filtering.
     report.meta.glossary = crate::noze::glossary::for_report(report);
+}
+
+fn refresh_totals(report: &mut AnalysisReport) {
+    report.meta.cycles_total = report.cycles.len();
+    report.meta.dead_code_total = report.dead_code.len();
+    report.meta.boundaries_total = report.boundaries.len();
+    report.meta.duplication_total = report.duplication.len();
+    report.meta.smells_total = report.smells.len();
+    report.meta.smell_totals = smell_totals(&report.smells);
+}
+
+fn smell_totals(
+    smells: &[crate::report::SmellFinding],
+) -> std::collections::BTreeMap<String, usize> {
+    let mut totals = std::collections::BTreeMap::new();
+    for smell in smells {
+        *totals.entry(smell.kind.as_str().to_string()).or_default() += 1;
+    }
+    totals
 }
 
 fn clone_occurrence_touches_diff(class: &CloneClass, changed: &ChangedLines) -> bool {

@@ -13,6 +13,7 @@ use crate::bonez;
 use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
+use std::collections::BTreeMap;
 
 /// Run every analyzer pillar, rank findings by impact, and aggregate metadata.
 pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> AnalysisReport {
@@ -63,6 +64,7 @@ pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> Anal
             duplication_total: duplication.len(),
             boundaries_total: boundary_audit.violations.len(),
             smells_total: smells.len(),
+            smell_totals: smell_totals(&smells),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues: Vec::new(),
             glossary: Vec::new(),
@@ -75,6 +77,14 @@ pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> Anal
     };
     report.meta.glossary = glossary::for_report(&report);
     report
+}
+
+fn smell_totals(smells: &[SmellFinding]) -> BTreeMap<String, usize> {
+    let mut totals = BTreeMap::new();
+    for smell in smells {
+        *totals.entry(smell.kind.as_str().to_string()).or_default() += 1;
+    }
+    totals
 }
 
 fn apply_smell_actions(smells: &mut [SmellFinding], policy: &ActionPolicy) {

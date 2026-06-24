@@ -1,5 +1,8 @@
 //! Command-line dispatch.
 
+#[cfg(feature = "mcp")]
+mod brainz;
+mod output;
 mod spec;
 
 use crate::diff::ChangedLines;
@@ -13,16 +16,16 @@ use std::process::ExitCode;
 pub fn run() -> Result<ExitCode> {
     let cli = Cli::parse();
     match cli.command {
-        Command::Noze(args) => run_noze(args),
-        Command::Scan { path, options } => run_scan(&path, &options),
-        Command::Explain { term } => run_explain(term.as_deref()).map(|()| ExitCode::SUCCESS),
-        Command::Init {
+        Some(Command::Noze(args)) => run_noze(args),
+        Some(Command::Scan { path, options }) => run_scan(&path, &options),
+        Some(Command::Explain { term }) => run_explain(term.as_deref()).map(|()| ExitCode::SUCCESS),
+        Some(Command::Init {
             path,
             agent,
             gate,
             no_metrics,
             yes,
-        } => crate::setup::run(crate::setup::InitOptions {
+        }) => crate::setup::run(crate::setup::InitOptions {
             path,
             agent,
             gate,
@@ -31,13 +34,20 @@ pub fn run() -> Result<ExitCode> {
         })
         .map(|()| ExitCode::SUCCESS),
         #[cfg(feature = "mcp")]
-        Command::Mcp(args) => match args.action {
+        Some(Command::Mcp(args)) => match args.action {
             spec::McpAction::Serve => serve_mcp(),
         },
         #[cfg(feature = "mcp")]
-        Command::Serve => serve_mcp(),
+        Some(Command::Brainz(args)) => match args.action {
+            spec::BrainzAction::Report { path, json } => {
+                brainz::run_report(&path.unwrap_or_else(|| PathBuf::from(".")), json)
+                    .map(|()| ExitCode::SUCCESS)
+            }
+        },
+        #[cfg(feature = "mcp")]
+        Some(Command::Serve) => serve_mcp(),
         #[cfg(feature = "eyez")]
-        Command::Eyez(args) => match args.action {
+        Some(Command::Eyez(args)) => match args.action {
             spec::EyezAction::Search {
                 path,
                 query,
@@ -46,12 +56,16 @@ pub fn run() -> Result<ExitCode> {
             } => run_search(&path, &query, top_k, json).map(|()| ExitCode::SUCCESS),
         },
         #[cfg(feature = "eyez")]
-        Command::Search {
+        Some(Command::Search {
             path,
             query,
             top_k,
             json,
-        } => run_search(&path, &query, top_k, json).map(|()| ExitCode::SUCCESS),
+        }) => run_search(&path, &query, top_k, json).map(|()| ExitCode::SUCCESS),
+        None => {
+            let path = cli.path.unwrap_or_else(|| PathBuf::from("."));
+            run_scan(&path, &cli.options)
+        }
     }
 }
 
@@ -73,6 +87,7 @@ fn run_noze(args: NozeArgs) -> Result<ExitCode> {
 
 #[cfg(feature = "mcp")]
 fn serve_mcp() -> Result<ExitCode> {
+    eprintln!("sensez MCP server running on stdio");
     tokio::runtime::Runtime::new()
         .context("starting tokio runtime")?
         .block_on(crate::mcp::serve())
@@ -133,7 +148,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     report.meta.files_skipped = report.meta.issues.len();
     crate::output_filter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
-    crate::noze::limit(&mut report, options.max);
+    output::apply(&mut report, options);
 
     let output = if options.json {
         crate::reporter::to_json(&report)?

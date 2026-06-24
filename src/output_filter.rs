@@ -41,9 +41,20 @@ pub fn apply(report: &mut AnalysisReport, root: &Path, patterns: &[String]) -> R
     report.meta.boundaries_total = report.boundaries.len();
     report.meta.duplication_total = report.duplication.len();
     report.meta.smells_total = report.smells.len();
+    report.meta.smell_totals = smell_totals(&report.smells);
     report.meta.files_skipped = report.meta.issues.len();
     report.meta.glossary = crate::noze::glossary::for_report(report);
     Ok(())
+}
+
+fn smell_totals(
+    smells: &[crate::report::SmellFinding],
+) -> std::collections::BTreeMap<String, usize> {
+    let mut totals = std::collections::BTreeMap::new();
+    for smell in smells {
+        *totals.entry(smell.kind.as_str().to_string()).or_default() += 1;
+    }
+    totals
 }
 
 struct OutputPathFilter {

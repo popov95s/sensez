@@ -16,22 +16,22 @@ await run(binaryPath, process.argv.slice(2));
 function platformTarget(platform, arch) {
   if (platform === "darwin") {
     if (arch === "arm64") {
-      return { packageName: "sensez-darwin-arm64", binary: "bin/sense" };
+      return { packageName: "sensez-darwin-arm64", binary: "bin/sensez" };
     }
     if (arch === "x64") {
-      return { packageName: "sensez-darwin-x64", binary: "bin/sense" };
+      return { packageName: "sensez-darwin-x64", binary: "bin/sensez" };
     }
   }
   if (platform === "linux") {
     if (arch === "arm64") {
-      return { packageName: "sensez-linux-arm64-gnu", binary: "bin/sense" };
+      return { packageName: "sensez-linux-arm64-gnu", binary: "bin/sensez" };
     }
     if (arch === "x64") {
-      return { packageName: "sensez-linux-x64-gnu", binary: "bin/sense" };
+      return { packageName: "sensez-linux-x64-gnu", binary: "bin/sensez" };
     }
   }
   if (platform === "win32" && arch === "x64") {
-    return { packageName: "sensez-win32-x64-msvc", binary: "bin/sense.exe" };
+    return { packageName: "sensez-win32-x64-msvc", binary: "bin/sensez.exe" };
   }
   return null;
 }
@@ -40,9 +40,14 @@ function resolveBinary(target) {
   try {
     return require.resolve(`${target.packageName}/${target.binary}`);
   } catch {
-    fail(
-      `missing native package ${target.packageName}; reinstall sensez with optional dependencies enabled`,
-    );
+    const legacy = target.binary.replace("sensez", "sense");
+    try {
+      return require.resolve(`${target.packageName}/${legacy}`);
+    } catch {
+      fail(
+        `missing native package ${target.packageName}; reinstall sensez with optional dependencies enabled`,
+      );
+    }
   }
 }
 
@@ -52,7 +57,7 @@ function run(binaryPath, args) {
     child.on("error", reject);
     child.on("exit", (code, signal) => {
       if (signal) {
-        reject(new Error(`sense exited with signal ${signal}`));
+        reject(new Error(`sensez exited with signal ${signal}`));
         return;
       }
       resolve(code ?? 1);

@@ -175,19 +175,19 @@ jobs:
         include:
           - os: ubuntu-latest
             package: sensez-linux-x64-gnu
-            binary: sense
+            binary: sensez
           - os: ubuntu-24.04-arm
             package: sensez-linux-arm64-gnu
-            binary: sense
+            binary: sensez
           - os: macos-15-intel
             package: sensez-darwin-x64
-            binary: sense
+            binary: sensez
           - os: macos-15
             package: sensez-darwin-arm64
-            binary: sense
+            binary: sensez
           # - os: windows-latest
           #   package: sensez-win32-x64-msvc
-          #   binary: sense.exe
+          #   binary: sensez.exe
     steps:
       - uses: actions/checkout@v4
 
@@ -207,9 +207,9 @@ jobs:
         run: |
           pkg="dist/npm/${{ matrix.package }}"
           mkdir -p "$pkg/bin"
-          binary="target/release/sense"
+          binary="target/release/sensez"
           if [ "${{ runner.os }}" = "Windows" ]; then
-            binary="target/release/sense.exe"
+            binary="target/release/sensez.exe"
           fi
           cp "npm/platform/${{ matrix.package }}/package.json" "$pkg/package.json"
           cp LICENSE "$pkg/LICENSE"
@@ -258,8 +258,8 @@ jobs:
         run: |
           for pkg in dist/npm-packages/*; do
             [ -d "$pkg" ] || continue
-            if [ -f "$pkg/bin/sense" ]; then
-              chmod 755 "$pkg/bin/sense"
+            if [ -f "$pkg/bin/sensez" ]; then
+              chmod 755 "$pkg/bin/sensez"
             fi
             npm publish "$pkg" --provenance --access public
           done

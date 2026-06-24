@@ -6,7 +6,7 @@ const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability lay
 # type-checker (e.g. Ruff/ty for Python, ESLint/tsc for JS/TS): duplication,
 # dead code, import cycles, boundary violations, and design smells. Everything
 # sensez does is configured in this file; commented entries show the defaults.
-# Re-run `sense init` anytime.
+# Re-run `sensez init` anytime.
 
 [self_improvement]
 # sensez learns from each working session — which findings you fix, which you
@@ -133,7 +133,7 @@ pub fn write_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<St
         _ => write_mcp_json(&path, sensez_bin)?,
     }
     Ok(format!(
-        "registered Sensez MCP server as `sense` in {}",
+        "registered Sensez MCP server as `sensez` in {}",
         path.display()
     ))
 }
@@ -143,7 +143,10 @@ fn write_mcp_json(path: &Path, sensez_bin: &str) -> Result<()> {
         .ok()
         .and_then(|t| serde_json::from_str(&t).ok())
         .unwrap_or_else(|| json!({}));
-    config["mcpServers"]["sense"] = json!({"command": sensez_bin, "args": ["mcp", "serve"]});
+    if let Some(servers) = config["mcpServers"].as_object_mut() {
+        servers.remove("sense");
+    }
+    config["mcpServers"]["sensez"] = json!({"command": sensez_bin, "args": ["mcp", "serve"]});
     std::fs::write(path, serde_json::to_string_pretty(&config)?)
         .with_context(|| format!("writing {}", path.display()))?;
     Ok(())
@@ -174,19 +177,20 @@ fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
         .or_insert_with(|| toml::Value::Table(toml::map::Map::new()))
         .as_table_mut()
         .ok_or_else(|| anyhow::anyhow!("mcp_servers must be a TOML table"))?;
-    let mut sense = toml::map::Map::new();
-    sense.insert(
+    mcp.remove("sense");
+    let mut sensez = toml::map::Map::new();
+    sensez.insert(
         "command".to_string(),
         toml::Value::String(sensez_bin.to_string()),
     );
-    sense.insert(
+    sensez.insert(
         "args".to_string(),
         toml::Value::Array(vec![
             toml::Value::String("mcp".to_string()),
             toml::Value::String("serve".to_string()),
         ]),
     );
-    mcp.insert("sense".to_string(), toml::Value::Table(sense));
+    mcp.insert("sensez".to_string(), toml::Value::Table(sensez));
     std::fs::write(path, toml::to_string_pretty(&config)?)
         .with_context(|| format!("writing {}", path.display()))?;
     Ok(())
@@ -211,22 +215,22 @@ pub fn write_gate(root: &Path) -> Result<String> {
         text.contains("\"tool\":\"noze_gate\"") || text.contains("\"tool\":\"gate\"")
     }) {
         return Ok(
-            "Stop-gate already installed (experimental; mcp_tool -> sense noze_gate)".into(),
+            "Stop-gate already installed (experimental; mcp_tool -> sensez noze_gate)".into(),
         );
     }
     stops.push(json!({"hooks": [{
         "type": "mcp_tool",
-        "server": "sense",
+        "server": "sensez",
         "tool": "noze_gate",
         "input": {"path": "${cwd}", "stop_hook_active": "${stop_hook_active}"},
         "timeout": 60,
-        "statusMessage": "sense: experimental stop hook scanning session changes"
+        "statusMessage": "sensez: experimental stop hook scanning session changes"
     }]}));
     settings["hooks"]["Stop"] = json!(stops);
     std::fs::write(&settings_path, serde_json::to_string_pretty(&settings)?)
         .with_context(|| format!("writing {}", settings_path.display()))?;
     Ok(
-        "installed experimental Stop-gate hook (mcp_tool -> sense noze_gate, shared session)"
+        "installed experimental Stop-gate hook (mcp_tool -> sensez noze_gate, shared session)"
             .into(),
     )
 }

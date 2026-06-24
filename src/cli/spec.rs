@@ -5,18 +5,22 @@ use std::path::PathBuf;
 
 #[derive(Parser, Debug)]
 #[command(
-    name = "sense",
+    name = "sensez",
     version,
     about = "Sensez — the structural maintainability layer that complements your linter and type-checker",
-    long_about = "Sensez (sense) — the structural maintainability layer for your codebase.\n\n\
+    long_about = "Sensez — the structural maintainability layer for your codebase.\n\n\
         Finds the cross-file problems linters and type-checkers can't see: duplication, dead code, \
         import cycles, layering/boundary violations, and design smells. Opinionated guardrails that \
         keep a codebase coherent and maintainable as it grows.\n\n\
         Run it alongside your linter and type-checker (e.g. Ruff/ty for Python, ESLint/tsc for JS/TS), not instead of them."
 )]
 pub struct Cli {
+    /// Root directory of the target project when no subcommand is supplied.
+    pub path: Option<PathBuf>,
+    #[command(flatten)]
+    pub options: ScanOptions,
     #[command(subcommand)]
-    pub command: Command,
+    pub command: Option<Command>,
 }
 
 #[derive(Subcommand, Debug)]
@@ -43,24 +47,27 @@ pub enum Command {
     /// MCP server commands.
     #[cfg(feature = "mcp")]
     Mcp(McpArgs),
+    /// Local metrics and value reports.
+    #[cfg(feature = "mcp")]
+    Brainz(BrainzArgs),
     /// Docs/comment search commands.
     #[cfg(feature = "eyez")]
     Eyez(EyezArgs),
-    /// Legacy alias for `sense noze`.
+    /// Legacy alias for `sensez noze`.
     #[command(hide = true)]
     Scan {
         path: PathBuf,
         #[command(flatten)]
         options: ScanOptions,
     },
-    /// Legacy alias for `sense noze explain`.
+    /// Legacy alias for `sensez noze explain`.
     #[command(hide = true)]
     Explain { term: Option<String> },
-    /// Legacy alias for `sense mcp serve`.
+    /// Legacy alias for `sensez mcp serve`.
     #[cfg(feature = "mcp")]
     #[command(hide = true)]
     Serve,
-    /// Legacy alias for `sense eyez search`.
+    /// Legacy alias for `sensez eyez search`.
     #[cfg(feature = "eyez")]
     #[command(hide = true)]
     Search {
@@ -75,7 +82,7 @@ pub enum Command {
 
 #[derive(Args, Debug)]
 #[command(
-    after_help = "Examples:\n  sense noze . --diff --fail-on-new\n  sense noze . --diff --fail-on-new warning\n  sense noze . --diff --fail-on-new must_fix",
+    after_help = "Examples:\n  sensez noze . --diff --fail-on-new\n  sensez noze . --diff --fail-on-new warning\n  sensez noze . --diff --fail-on-new must_fix",
     args_conflicts_with_subcommands = true,
     subcommand_precedence_over_arg = true
 )]
@@ -90,7 +97,7 @@ pub struct NozeArgs {
 
 #[derive(Subcommand, Debug)]
 pub enum NozeAction {
-    /// Explicit alias for `sense noze [PATH]`.
+    /// Explicit alias for `sensez noze [PATH]`.
     Sniff {
         /// Root directory of the target project (default: current directory).
         path: Option<PathBuf>,
@@ -117,6 +124,27 @@ pub struct McpArgs {
 pub enum McpAction {
     /// Run the MCP (Model Context Protocol) server over stdio.
     Serve,
+}
+
+#[cfg(feature = "mcp")]
+#[derive(Args, Debug)]
+#[command(subcommand_required = true, arg_required_else_help = true)]
+pub struct BrainzArgs {
+    #[command(subcommand)]
+    pub action: BrainzAction,
+}
+
+#[cfg(feature = "mcp")]
+#[derive(Subcommand, Debug)]
+pub enum BrainzAction {
+    /// Display local-only metrics showing what Sensez helped fix.
+    Report {
+        /// Repository root (default: current directory).
+        path: Option<PathBuf>,
+        /// Emit the raw machine-readable metrics payload.
+        #[arg(long)]
+        json: bool,
+    },
 }
 
 #[cfg(feature = "eyez")]
@@ -158,8 +186,26 @@ pub struct ScanOptions {
     #[arg(long)]
     pub json: bool,
     /// Cap each pillar to its top-N ranked findings (0 = unlimited).
-    #[arg(long, default_value_t = 0)]
-    pub max: usize,
+    #[arg(long, conflicts_with = "all")]
+    pub max: Option<usize>,
+    /// Print every finding instead of the default top offenders.
+    #[arg(long)]
+    pub all: bool,
+    /// Report only duplicate-code findings.
+    #[arg(long = "duplicates")]
+    pub duplicates: bool,
+    /// Report only high-confidence dead-code findings by default.
+    #[arg(long = "dead-code")]
+    pub dead_code: bool,
+    /// Report only circular-import findings.
+    #[arg(long)]
+    pub cycles: bool,
+    /// Report only boundary violations.
+    #[arg(long)]
+    pub boundaries: bool,
+    /// Report only design-smell findings.
+    #[arg(long)]
+    pub smells: bool,
     /// Keep only output findings whose source file matches GLOB. Repeatable.
     #[arg(long = "output-glob", alias = "filter", value_name = "GLOB")]
     pub output_glob: Vec<String>,

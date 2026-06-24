@@ -45,7 +45,7 @@ fn run_summary_command(path: &str) -> anyhow::Result<String> {
     let output = Command::new(exe)
         .args(["noze", path, "--summary"])
         .output()
-        .context("running `sense noze --summary`")?;
+        .context("running `sensez noze --summary`")?;
     if !output.status.success() {
         let stderr = String::from_utf8_lossy(&output.stderr);
         anyhow::bail!("summary command failed: {stderr}");

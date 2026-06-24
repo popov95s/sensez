@@ -127,7 +127,24 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         report.meta.smells_total,
     );
     let mut seen_suggestions: HashSet<String> = HashSet::new();
+    let mut current_smell_kind = "";
     for finding in &report.smells {
+        let kind = finding.kind.as_str();
+        if kind != current_smell_kind {
+            current_smell_kind = kind;
+            let shown = report
+                .smells
+                .iter()
+                .filter(|smell| smell.kind == finding.kind)
+                .count();
+            let total = report.meta.smell_totals.get(kind).copied().unwrap_or(shown);
+            let suffix = if shown < total {
+                format!(" {}", format!("(showing top {shown})").dimmed())
+            } else {
+                String::new()
+            };
+            let _ = writeln!(out, "  {} ({}){}", kind.cyan(), total, suffix);
+        }
         let loc = if finding.line > 0 {
             format!("{}:{}", finding.file.display(), finding.line)
         } else {
@@ -147,11 +164,10 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         };
         let _ = writeln!(
             out,
-            "    {} {}  {} ({}) — {}",
+            "    {} {}  {} — {}",
             smell_labels(finding.action, finding.severity),
             loc,
             finding.symbol,
-            finding.kind,
             rendered_message
         );
     }
