@@ -48,7 +48,8 @@ fn scan() -> Value {
                         edit session, set diff=true to see only the findings \
                         YOUR uncommitted changes touch — analysis still covers \
                         the whole repo, so diff results are focused but never \
-                        wrong.",
+                        wrong. The returned JSON is compact and omits aggregate \
+                        totals; use the CLI when you need full report metadata.",
         "inputSchema": {
             "type": "object",
             "properties": {

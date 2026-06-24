@@ -75,11 +75,13 @@ fn keeps_touched_findings_and_drops_the_rest() {
             CycleFinding {
                 action: ActionLevel::Warning,
                 modules: vec!["ma".into(), "mb".into()],
+                hint: None,
                 edges: vec![],
             },
             CycleFinding {
                 action: ActionLevel::Warning,
                 modules: vec!["mc".into()],
+                hint: None,
                 edges: vec![],
             },
         ],

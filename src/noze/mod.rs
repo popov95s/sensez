@@ -19,9 +19,11 @@ use std::collections::BTreeMap;
 pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> AnalysisReport {
     let mut cycles = cycles::detect(graph, &config.smells.exclude);
     for cycle in &mut cycles {
-        cycle.action = config.action.cycles;
+        if cycle.action != ActionLevel::Info {
+            cycle.action = config.action.cycles;
+        }
     }
-    cycles.sort_by_key(|c| std::cmp::Reverse(c.modules.len()));
+    cycles.sort_by_key(|c| (action_rank(c.action), std::cmp::Reverse(c.modules.len())));
 
     let mut dead_code = dead_code::detect(graph, files, &config.dead_code);
     for finding in &mut dead_code {

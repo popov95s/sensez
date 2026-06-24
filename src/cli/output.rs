@@ -4,7 +4,8 @@ use super::spec::ScanOptions;
 use crate::report::{AnalysisReport, Confidence, SmellFinding};
 use std::collections::BTreeMap;
 
-const DEFAULT_TOP: usize = 10;
+const DEFAULT_PILLAR_TOP: usize = 5;
+const DEFAULT_SMELL_KIND_TOP: usize = 3;
 
 pub fn apply(report: &mut AnalysisReport, options: &ScanOptions) {
     apply_pillar_filter(report, options);
@@ -17,9 +18,13 @@ pub fn apply(report: &mut AnalysisReport, options: &ScanOptions) {
     report.meta.smell_totals = smell_totals(&report.smells);
 
     if !options.all {
-        limit_top(report, options.max.unwrap_or(DEFAULT_TOP));
+        limit_top(
+            report,
+            options.max.unwrap_or(DEFAULT_PILLAR_TOP),
+            options.max.unwrap_or(DEFAULT_SMELL_KIND_TOP),
+        );
     } else if let Some(max) = options.max {
-        limit_top(report, max);
+        limit_top(report, max, max);
     }
     report.meta.glossary = crate::noze::glossary::for_report(report);
 }
@@ -58,15 +63,19 @@ fn refresh_totals(report: &mut AnalysisReport) {
     report.meta.smells_total = report.smells.len();
 }
 
-fn limit_top(report: &mut AnalysisReport, max: usize) {
-    if max == 0 {
+fn limit_top(report: &mut AnalysisReport, pillar_max: usize, smell_kind_max: usize) {
+    if pillar_max == 0 && smell_kind_max == 0 {
         return;
     }
-    report.cycles.truncate(max);
-    report.dead_code.truncate(max);
-    report.boundaries.truncate(max);
-    report.duplication.truncate(max);
-    limit_smells_by_kind(&mut report.smells, max);
+    if pillar_max > 0 {
+        report.cycles.truncate(pillar_max);
+        report.dead_code.truncate(pillar_max);
+        report.boundaries.truncate(pillar_max);
+        report.duplication.truncate(pillar_max);
+    }
+    if smell_kind_max > 0 {
+        limit_smells_by_kind(&mut report.smells, smell_kind_max);
+    }
 }
 
 fn limit_smells_by_kind(smells: &mut Vec<SmellFinding>, max: usize) {

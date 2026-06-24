@@ -64,6 +64,9 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
                 edge.to_module
             );
         }
+        if let Some(hint) = &cycle.hint {
+            let _ = writeln!(out, "        {}", hint.dimmed());
+        }
     }
 
     section(

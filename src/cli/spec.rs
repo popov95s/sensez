@@ -186,7 +186,7 @@ pub struct ScanOptions {
     #[arg(long)]
     pub json: bool,
     /// Cap each pillar to its top-N ranked findings (0 = unlimited).
-    #[arg(long, conflicts_with = "all")]
+    #[arg(long)]
     pub max: Option<usize>,
     /// Print every finding instead of the default top offenders.
     #[arg(long)]

@@ -1,8 +1,23 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
 import json
 from pathlib import Path
-from typing import Any
+from typing import NamedTuple
+
+
+JsonValue = None | bool | int | float | str | list["JsonValue"] | dict[str, "JsonValue"]
+
+
+class CycleSortKey(NamedTuple):
+    rank: int
+    size: int
+    stable: str
+
+
+@dataclass(frozen=True)
+class RootVariants:
+    values: tuple[str, ...]
 
 
 VOLATILE_KEYS = {
@@ -23,18 +38,22 @@ VOLATILE_KEYS = {
 }
 
 
-def load_json(path: Path) -> Any:
+def load_json(path: Path) -> JsonValue:
     text = path.read_text()
     return json.loads(text)
 
 
-def normalize_artifact(value: Any, target_root: Path, target_name: str) -> Any:
-    return _normalize(value, _root_variants(target_root), target_name)
+def normalize_artifact(
+    value: JsonValue, target_root: Path, target_name: str
+) -> JsonValue:
+    return _normalize(
+        value, RootVariants(tuple(_root_variants(target_root))), target_name
+    )
 
 
-def _normalize(value: Any, roots: list[str], target_name: str) -> Any:
+def _normalize(value: JsonValue, roots: RootVariants, target_name: str) -> JsonValue:
     if isinstance(value, dict):
-        out: dict[str, Any] = {}
+        out: dict[str, JsonValue] = {}
         for key, item in value.items():
             if key in VOLATILE_KEYS:
                 continue
@@ -57,32 +76,53 @@ def _root_variants(root: Path) -> list[str]:
     return sorted(values, key=len, reverse=True)
 
 
-def _normalize_string(text: str, roots: list[str], target_name: str) -> str:
-    for root_text in roots:
+def _normalize_string(text: str, roots: RootVariants, target_name: str) -> str:
+    for root_text in roots.values:
         if root_text in text:
             text = text.replace(root_text, f"<{target_name}>")
     return text
 
 
-def _sort_known(obj: dict[str, Any]) -> dict[str, Any]:
-    for key in ("duplication", "dead_code", "cycles", "boundaries", "smells"):
-        if isinstance(obj.get(key), list):
-            obj[key] = sorted(obj[key], key=_stable_json)
-    if isinstance(obj.get("tools"), list):
-        obj["tools"] = sorted(obj["tools"], key=lambda item: item.get("name", ""))
-    return {key: obj[key] for key in sorted(obj)}
+def _sort_known(obj: dict[str, JsonValue]) -> dict[str, JsonValue]:
+    out = dict(obj)
+    for key in ("duplication", "dead_code", "boundaries", "smells"):
+        if isinstance(out.get(key), list):
+            out[key] = sorted(out[key], key=_stable_json)
+    if isinstance(out.get("cycles"), list):
+        out["cycles"] = sorted(out["cycles"], key=_cycle_key)
+    if isinstance(out.get("tools"), list):
+        out["tools"] = sorted(
+            out["tools"],
+            key=lambda item: item.get("name", "") if isinstance(item, dict) else "",
+        )
+    return {key: out[key] for key in sorted(out)}
 
 
-def _stable_json(value: Any) -> str:
+def _cycle_key(value: JsonValue) -> CycleSortKey:
+    if not isinstance(value, dict):
+        return CycleSortKey(99, 0, _stable_json(value))
+    action = value.get("action")
+    modules = value.get("modules")
+    size = len(modules) if isinstance(modules, list) else 0
+    rank = {"must_fix": 0, "warning": 1, "advisory": 2, "info": 3}.get(action, 99)
+    return CycleSortKey(rank, -size, _stable_json(value))
+
+
+def _stable_json(value: JsonValue) -> str:
     return json.dumps(value, sort_keys=True, separators=(",", ":"))
 
 
-def dump_json(path: Path, value: Any) -> None:
+def dump_json(path: Path, value: JsonValue) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n")
 
 
-def normalize_file(source: Path, dest: Path, target_root: Path, target_name: str) -> None:
+def normalize_file(
+    source: Path,
+    dest: Path,
+    target_root: Path,
+    target_name: str,
+) -> None:
     dump_json(dest, normalize_artifact(load_json(source), target_root, target_name))
 
 

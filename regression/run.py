@@ -9,7 +9,7 @@ import sys
 import tempfile
 import tomllib
 from pathlib import Path
-from typing import Any
+from typing import NotRequired, Sequence, TypedDict, cast
 
 from .analyze import accept_tree, compare_tree
 from .mcp_client import McpClient, text_json
@@ -20,11 +20,39 @@ ROOT = Path(__file__).resolve().parents[1]
 CONFIG = ROOT / "regression" / "targets.toml"
 RESULTS = ROOT / "regression" / "results"
 BASELINES = ROOT / "regression" / "baselines"
+CommandArg = str | Path | int
+
+
+class Target(TypedDict):
+    name: str
+    profile: str
+    url: str
+    commit: str
+    scenarios: list[str]
+    setup: NotRequired[list[str]]
+
+
+class DeadCodeFixture(TypedDict):
+    path: str
+    symbol: str
+    detector: str
+    text: str
+    fix_text: str
+
+
+class ProfileConfig(TypedDict):
+    dead_code_fixture: DeadCodeFixture
+
+
+class RegressionConfig(TypedDict):
+    cache_root: str
+    targets: list[Target]
+    profiles: dict[str, ProfileConfig]
 
 
 def main() -> int:
     args = parse_args()
-    config = tomllib.loads(CONFIG.read_text())
+    config = cast(RegressionConfig, tomllib.loads(CONFIG.read_text()))
     targets = select_targets(config["targets"], args)
     sense = args.sense.resolve()
     if not sense.exists():
@@ -50,14 +78,14 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--ci", action="store_true")
     parser.add_argument("--accept", action="store_true")
-    parser.add_argument("--sense", type=Path, default=ROOT / "target/release/sense")
+    parser.add_argument("--sense", type=Path, default=ROOT / "target/release/sensez")
     args = parser.parse_args()
     if args.accept and args.ci and not os.getenv("SENSEZ_ACCEPT_BASELINE"):
         parser.error("--accept in CI requires SENSEZ_ACCEPT_BASELINE=1")
     return args
 
 
-def select_targets(targets: list[dict[str, Any]], args: argparse.Namespace) -> list[dict[str, Any]]:
+def select_targets(targets: list[Target], args: argparse.Namespace) -> list[Target]:
     if args.all or (not args.target and not args.profile):
         return targets
     names = set(args.target)
@@ -71,7 +99,7 @@ def select_targets(targets: list[dict[str, Any]], args: argparse.Namespace) -> l
     return selected
 
 
-def run_target(config: dict[str, Any], target: dict[str, Any], sense: Path, accept: bool) -> None:
+def run_target(config: RegressionConfig, target: Target, sense: Path, accept: bool) -> None:
     name = target["name"]
     print(f"== {name} ==")
     cache = ensure_cache(config["cache_root"], target)
@@ -91,7 +119,7 @@ def run_target(config: dict[str, Any], target: dict[str, Any], sense: Path, acce
         raise RuntimeError("\n\n".join(failures))
 
 
-def ensure_cache(root_text: str, target: dict[str, Any]) -> Path:
+def ensure_cache(root_text: str, target: Target) -> Path:
     root = Path(root_text)
     root.mkdir(parents=True, exist_ok=True)
     dest = root / target["name"]
@@ -110,7 +138,7 @@ def ensure_cache(root_text: str, target: dict[str, Any]) -> Path:
     return dest
 
 
-def scenario_repo(cache: Path, target: dict[str, Any]) -> Path:
+def scenario_repo(cache: Path, target: Target) -> Path:
     name = target["name"]
     tmp = Path(tempfile.mkdtemp(prefix=f"sensez-{name}-"))
     dest = tmp / name
@@ -126,14 +154,20 @@ def scenario_repo(cache: Path, target: dict[str, Any]) -> Path:
     return dest
 
 
-def run_full_scans(sense: Path, cache: Path, target: dict[str, Any], out: Path) -> None:
+def run_full_scans(sense: Path, cache: Path, target: Target, out: Path) -> None:
     repo = scenario_repo(cache, target)
     try:
-        full = run_json([sense, "noze", str(repo), "--json"], ROOT)
+        default = run_json([sense, "noze", str(repo), "--json"], ROOT)
+        dump_norm(out / "default.noze.json", default, repo, target)
+        default_capped = run_json([sense, "noze", str(repo), "--max", "5", "--json"], ROOT)
+        dump_norm(out / "default.noze.max5.json", default_capped, repo, target)
+        full = run_json([sense, "noze", str(repo), "--all", "--json"], ROOT)
         dump_norm(out / "full.noze.json", full, repo, target)
-        threshold = run_json([sense, "noze", str(repo), "--threshold", "40", "--json"], ROOT)
+        threshold = run_json(
+            [sense, "noze", str(repo), "--all", "--threshold", "40", "--json"], ROOT
+        )
         dump_norm(out / "full.noze.threshold40.json", threshold, repo, target)
-        capped = run_json([sense, "noze", str(repo), "--max", "5", "--json"], ROOT)
+        capped = run_json([sense, "noze", str(repo), "--all", "--max", "5", "--json"], ROOT)
         dump_norm(out / "full.noze.max5.json", capped, repo, target)
     finally:
         cleanup_repo(repo)
@@ -141,8 +175,8 @@ def run_full_scans(sense: Path, cache: Path, target: dict[str, Any], out: Path) 
 
 def run_mcp_scenarios(
     sense: Path,
-    config: dict[str, Any],
-    target: dict[str, Any],
+    config: RegressionConfig,
+    target: Target,
     cache: Path,
     out: Path,
 ) -> None:
@@ -183,7 +217,7 @@ def cleanup_repo(repo: Path) -> None:
     shutil.rmtree(repo.parent, ignore_errors=True)
 
 
-def triage(client: McpClient, repo: Path, fixture: dict[str, Any]) -> None:
+def triage(client: McpClient, repo: Path, fixture: DeadCodeFixture) -> None:
     client.call_tool(
         "brainz_triage",
         {
@@ -196,7 +230,7 @@ def triage(client: McpClient, repo: Path, fixture: dict[str, Any]) -> None:
     )
 
 
-def apply_fixture(repo: Path, fixture: dict[str, Any], text: str) -> None:
+def apply_fixture(repo: Path, fixture: DeadCodeFixture, text: str) -> None:
     path = repo / fixture["path"]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
@@ -213,16 +247,16 @@ def dump_metrics_schema(path: Path, repo: Path) -> None:
     dump_json(path, {"files": files, "events": sorted(set(events))})
 
 
-def dump_norm(path: Path, value: Any, repo: Path, target: dict[str, Any]) -> None:
+def dump_norm(path: Path, value: object, repo: Path, target: Target) -> None:
     dump_json(path, normalize_artifact(value, repo, target["name"]))
 
 
-def run_json(cmd: list[Any], cwd: Path) -> Any:
+def run_json(cmd: Sequence[CommandArg], cwd: Path) -> object:
     output = run(cmd, cwd, capture=True)
     return json.loads(output)
 
 
-def run(cmd: list[Any], cwd: Path, capture: bool = False, check: bool = True) -> str:
+def run(cmd: Sequence[CommandArg], cwd: Path, capture: bool = False, check: bool = True) -> str:
     text_cmd = [str(part) for part in cmd]
     proc = subprocess.run(
         text_cmd,

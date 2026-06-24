@@ -72,9 +72,7 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
         )
     };
 
-    let mut top = report;
-    crate::noze::limit(&mut top, 5);
-    let findings = crate::reporter::to_json(&top).unwrap_or_else(|_| "{}".to_string());
+    let findings = finding_summary(&report, 5);
     let deferred_note = if repeats.deferred == 0 {
         String::new()
     } else {
@@ -87,19 +85,68 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let decision = json!({
         "decision": "block",
         "reason": format!(
-            "sensez diff-scan: {n} finding(s) touch code this session changed. Fix \
-             the ones your change introduced or worsened. A finding in \
-             pre-existing code you are deliberately not addressing is accepted \
-             DEBT, not a false positive — just say so briefly to the user and \
-             proceed; do not call any tool to report it (Sensez records \
-             automatically). You will be allowed to finish after this one pass.{deferred_note}{escalation} \
-             Findings (top 5 per pillar): {findings}"
+            "sensez gate: {n} diff finding(s) need attention. Fix findings your \
+             change introduced or worsened; briefly note intentional debt and \
+             continue. The gate will not keep blocking the same unchanged work.{deferred_note}{escalation} \
+             Top findings: {findings}"
         ),
     });
     Ok(super::handlers::text_result(decision.to_string(), false))
 }
 
-fn working_signature(changed: &crate::diff::ChangedLines) -> u64 {
+fn finding_summary(report: &crate::report::AnalysisReport, max: usize) -> String {
+    let mut items = Vec::new();
+    items.extend(report.dead_code.iter().map(|finding| {
+        format!(
+            "dead_code/{} {}::{} {}:{}",
+            finding.kind,
+            finding.module,
+            finding.symbol,
+            finding.file.display(),
+            finding.line
+        )
+    }));
+    items.extend(
+        report
+            .cycles
+            .iter()
+            .map(|finding| format!("cycle {}", finding.modules.join(" -> "))),
+    );
+    items.extend(report.boundaries.iter().map(|finding| {
+        format!(
+            "boundary {} -> {} {}:{}",
+            finding.from_module,
+            finding.to_module,
+            finding.file.display(),
+            finding.line
+        )
+    }));
+    items.extend(report.duplication.iter().map(|finding| {
+        let locations = finding
+            .occurrences
+            .iter()
+            .map(|occ| format!("{}:{}", occ.file.display(), occ.start_row))
+            .collect::<Vec<_>>()
+            .join(", ");
+        format!(
+            "duplication {} token(s) at {locations}",
+            finding.token_length
+        )
+    }));
+    items.extend(report.smells.iter().map(|finding| {
+        format!(
+            "smell/{} {} {}:{}",
+            finding.kind,
+            finding.symbol,
+            finding.file.display(),
+            finding.line
+        )
+    }));
+    items.truncate(max);
+    items.join("; ")
+}
+
+pub(super) fn working_signature(changed: &crate::diff::ChangedLines) -> u64 {
     use std::hash::{Hash, Hasher};
     let mut paths: Vec<&Path> = changed.paths().collect();
     paths.sort_unstable();
@@ -128,87 +175,4 @@ fn hook_already_blocked(args: &Value) -> bool {
 
 fn allow() -> Value {
     super::handlers::text_result("{}".to_string(), false)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::process::Command;
-
-    #[test]
-    fn gate_degrades_open() {
-        let tmp = tempfile::tempdir().unwrap();
-        let dir = tmp.path().to_path_buf();
-        std::fs::create_dir_all(&dir).unwrap();
-        let path = dir.to_string_lossy().into_owned();
-
-        let resp = gate(&json!({"path": path, "stop_hook_active": false})).unwrap();
-        assert_eq!(resp["content"][0]["text"], "{}", "non-git repo -> allow");
-
-        let resp = gate(&json!({"path": path, "stop_hook_active": "true"})).unwrap();
-        assert_eq!(resp["content"][0]["text"], "{}", "second stop -> allow");
-    }
-
-    #[test]
-    fn signature_tracks_writes() {
-        let tmp = tempfile::tempdir().unwrap();
-        let file = tmp.path().join("a.py");
-        std::fs::write(&file, "x = 1\n").unwrap();
-        let mut changed = crate::diff::ChangedLines::default();
-        changed.add_full_file(&file);
-
-        let sig1 = working_signature(&changed);
-        assert_eq!(sig1, working_signature(&changed), "stable when untouched");
-
-        std::fs::write(&file, "x = 1\ny = 2\nz = 3\n").unwrap();
-        assert_ne!(sig1, working_signature(&changed), "changes after a write");
-    }
-
-    #[test]
-    fn gate_baseline_feeds_resolved_recapture() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        if !git(root, &["init"]) {
-            return;
-        }
-        std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
-        assert!(git(root, &["add", "."]));
-        assert!(git(
-            root,
-            &[
-                "-c",
-                "user.email=sensez@example.test",
-                "-c",
-                "user.name=Sensez",
-                "commit",
-                "-m",
-                "base",
-            ],
-        ));
-        std::fs::write(root.join("added.py"), "def orphan():\n    return 1\n").unwrap();
-
-        let path = root.to_string_lossy().into_owned();
-        let resp = gate(&json!({"path": path, "stop_hook_active": false})).unwrap();
-
-        assert_eq!(resp["isError"], false);
-        assert!(root.join(".sensez/local-metrics/last-scan.json").exists());
-
-        std::fs::write(root.join("added.py"), "print('fixed')\n").unwrap();
-        crate::brainz::recapture();
-
-        let report = crate::brainz::usage_report(root);
-        assert_eq!(
-            report["all_time"]["resolved_by_detector"]["dead_code/function"]["count"], 1,
-            "fixing a gate-reported finding should be counted as resolved"
-        );
-    }
-
-    fn git(root: &std::path::Path, args: &[&str]) -> bool {
-        Command::new("git")
-            .args(args)
-            .current_dir(root)
-            .output()
-            .map(|out| out.status.success())
-            .unwrap_or(false)
-    }
 }

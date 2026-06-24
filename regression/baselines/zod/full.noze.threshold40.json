@@ -2,70 +2,7 @@
   "boundaries": [],
   "cycles": [
     {
-      "action": "warning",
-      "edges": [
-        {
-          "file": "<zod>/packages/zod/src/v3/helpers/partialUtil.ts",
-          "from_module": "src/v3/helpers/partialUtil",
-          "line": 1,
-          "to_module": "src/v3/types"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/locales/en.ts",
-          "from_module": "src/v3/locales/en",
-          "line": 1,
-          "to_module": "src/v3/ZodError"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/errors.ts",
-          "from_module": "src/v3/errors",
-          "line": 2,
-          "to_module": "src/v3/locales/en"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
-          "from_module": "src/v3/helpers/parseUtil",
-          "line": 3,
-          "to_module": "src/v3/locales/en"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/types.ts",
-          "from_module": "src/v3/types",
-          "line": 32,
-          "to_module": "src/v3/helpers/partialUtil"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/external.ts",
-          "from_module": "src/v3/external",
-          "line": 6,
-          "to_module": "src/v3/ZodError"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/index.ts",
-          "from_module": "src/v3",
-          "line": 2,
-          "to_module": "src/v3/external"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/ZodError.ts",
-          "from_module": "src/v3/ZodError",
-          "line": 3,
-          "to_module": "src/v3"
-        }
-      ],
-      "modules": [
-        "src/v3/helpers/partialUtil",
-        "src/v3/locales/en",
-        "src/v3/errors",
-        "src/v3/helpers/parseUtil",
-        "src/v3/types",
-        "src/v3/external",
-        "src/v3",
-        "src/v3/ZodError"
-      ]
-    },
-    {
-      "action": "warning",
+      "action": "info",
       "edges": [
         {
           "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
@@ -464,6 +401,7 @@
           "to_module": "src/v4/locales/yo"
         }
       ],
+      "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
       "modules": [
         "src/v4/core/regexes",
         "src/v4/core/checks",
@@ -531,6 +469,70 @@
         "src/v4/locales/az",
         "src/v4/locales/ar",
         "src/v4/locales"
+      ]
+    },
+    {
+      "action": "info",
+      "edges": [
+        {
+          "file": "<zod>/packages/zod/src/v3/helpers/partialUtil.ts",
+          "from_module": "src/v3/helpers/partialUtil",
+          "line": 1,
+          "to_module": "src/v3/types"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/locales/en.ts",
+          "from_module": "src/v3/locales/en",
+          "line": 1,
+          "to_module": "src/v3/ZodError"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/errors.ts",
+          "from_module": "src/v3/errors",
+          "line": 2,
+          "to_module": "src/v3/locales/en"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+          "from_module": "src/v3/helpers/parseUtil",
+          "line": 3,
+          "to_module": "src/v3/locales/en"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "from_module": "src/v3/types",
+          "line": 32,
+          "to_module": "src/v3/helpers/partialUtil"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/external.ts",
+          "from_module": "src/v3/external",
+          "line": 6,
+          "to_module": "src/v3/ZodError"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/index.ts",
+          "from_module": "src/v3",
+          "line": 2,
+          "to_module": "src/v3/external"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+          "from_module": "src/v3/ZodError",
+          "line": 3,
+          "to_module": "src/v3"
+        }
+      ],
+      "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
+      "modules": [
+        "src/v3/helpers/partialUtil",
+        "src/v3/locales/en",
+        "src/v3/errors",
+        "src/v3/helpers/parseUtil",
+        "src/v3/types",
+        "src/v3/external",
+        "src/v3",
+        "src/v3/ZodError"
       ]
     }
   ],
@@ -1587,6 +1589,23 @@
     "external_edges": 556,
     "internal_edges": 519,
     "mode": "full",
+    "smell_totals": {
+      "data_clump": 3,
+      "divergent_change": 12,
+      "feature_envy": 7,
+      "god_module": 2,
+      "heavy_nested_function": 3,
+      "large_class": 2,
+      "loose_typing": 71,
+      "magic_string_default": 67,
+      "message_chain": 1,
+      "mutated_parameter": 6,
+      "n_plus_one_call": 1,
+      "nested_loop": 45,
+      "repeated_iteration": 8,
+      "shotgun_surgery_hazard": 2,
+      "unnecessary_nested_if": 14
+    },
     "smells_total": 244,
     "source_lines": 74802
   },

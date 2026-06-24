@@ -23,7 +23,7 @@
       ]
     },
     {
-      "action": "warning",
+      "action": "info",
       "edges": [
         {
           "file": "<flask>/src/flask/cli.py",
@@ -128,6 +128,7 @@
           "to_module": "flask.helpers"
         }
       ],
+      "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
       "modules": [
         "flask.cli",
         "flask.testing",
@@ -270,6 +271,22 @@
     "external_edges": 334,
     "internal_edges": 304,
     "mode": "full",
+    "smell_totals": {
+      "boolean_blindness": 4,
+      "divergent_change": 12,
+      "feature_envy": 1,
+      "god_module": 3,
+      "heavy_nested_function": 1,
+      "high_cognitive_complexity": 8,
+      "literal_membership": 5,
+      "loose_typing": 28,
+      "magic_string_default": 4,
+      "mutated_parameter": 3,
+      "n_plus_one_call": 1,
+      "nested_loop": 13,
+      "shotgun_surgery_hazard": 1,
+      "tuple_packing": 3
+    },
     "smells_total": 87,
     "source_lines": 18417
   },

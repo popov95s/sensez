@@ -159,24 +159,6 @@
       "line": 17,
       "module": "flask.debughelpers",
       "symbol": "UnexpectedUnicodeError"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Low",
-      "file": "<flask>/examples/tutorial/flaskr/__init__.py",
-      "kind": "function",
-      "line": 6,
-      "module": "flaskr",
-      "symbol": "create_app"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Low",
-      "file": "<flask>/src/flask/views.py",
-      "kind": "class",
-      "line": 138,
-      "module": "flask.views",
-      "symbol": "MethodView"
     }
   ],
   "duplication": [
@@ -250,7 +232,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 3,
+    "dead_code_total": 1,
     "duplication_total": 4,
     "external_edges": 334,
     "internal_edges": 304,
@@ -318,28 +300,6 @@
       "severity": "Info",
       "symbol": "_load_plugin_commands",
       "threshold": 1
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/helpers.py",
-      "kind": "literal_membership",
-      "line": 28,
-      "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
-      "metric": 1,
-      "severity": "Info",
-      "symbol": "get_debug_flag",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/helpers.py",
-      "kind": "literal_membership",
-      "line": 36,
-      "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
-      "metric": 1,
-      "severity": "Info",
-      "symbol": "get_load_dotenv",
-      "threshold": 0
     },
     {
       "action": "advisory",
@@ -540,28 +500,6 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
-      "kind": "high_cognitive_complexity",
-      "line": 120,
-      "message": "cognitive complexity 19 (threshold 15)",
-      "metric": 19,
-      "severity": "Warning",
-      "symbol": "find_app_by_string",
-      "threshold": 15
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "high_cognitive_complexity",
-      "line": 41,
-      "message": "cognitive complexity 20 (threshold 15)",
-      "metric": 20,
-      "severity": "Warning",
-      "symbol": "find_best_app",
-      "threshold": 15
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/cli.py",
       "kind": "magic_string_default",
       "line": 1081,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
@@ -585,45 +523,12 @@
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "nested_loop",
-      "line": 352,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 2,
-      "severity": "Warning",
-      "symbol": "load_app",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "nested_loop",
       "line": 77,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
       "severity": "Warning",
       "symbol": "find_best_app",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/config.py",
-      "kind": "loose_typing",
-      "line": 323,
-      "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "severity": "Warning",
-      "symbol": "get_namespace",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/config.py",
-      "kind": "loose_typing",
-      "line": 94,
-      "message": "params [defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "severity": "Warning",
-      "symbol": "__init__",
-      "threshold": 0
     },
     {
       "action": "warning",
@@ -660,17 +565,6 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "boolean_blindness",
-      "line": 279,
-      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
-      "metric": 3,
-      "severity": "Warning",
-      "symbol": "__init__",
-      "threshold": 2
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/app.py",
       "kind": "divergent_change",
       "line": 59,
       "message": "class splits into 10 cohesion clusters (low LCOM) \u2014 prone to divergent change",
@@ -688,17 +582,6 @@
       "severity": "Warning",
       "symbol": "flask.sansio.app",
       "threshold": 25
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "nested_loop",
-      "line": 880,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 2,
-      "severity": "Warning",
-      "symbol": "_find_error_handler",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -725,17 +608,6 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/sansio/blueprints.py",
-      "kind": "magic_string_default",
-      "line": 308,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "severity": "Warning",
-      "symbol": "register",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/blueprints.py",
       "kind": "mutated_parameter",
       "line": 380,
       "message": "mutates input parameter(s) [parent_dict] \u2014 caller-visible side effect; return a new value instead",
@@ -743,17 +615,6 @@
       "severity": "Warning",
       "symbol": "extend",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/scaffold.py",
-      "kind": "divergent_change",
-      "line": 52,
-      "message": "class splits into 6 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 6,
-      "severity": "Warning",
-      "symbol": "Scaffold",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -765,17 +626,6 @@
       "severity": "Warning",
       "symbol": "_request_from_builder_args",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/wrappers.py",
-      "kind": "divergent_change",
-      "line": 18,
-      "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 7,
-      "severity": "Warning",
-      "symbol": "Request",
-      "threshold": 1
     }
   ]
 }

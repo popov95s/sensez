@@ -20,7 +20,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
     if !interactive && opts.agent.is_none() && !opts.yes {
         bail!(
             "no TTY and no flags — run interactively, or pass e.g. \
-             `sense init --agent claude-code --gate --yes` (see --help)"
+             `sensez init --agent claude-code --gate --yes` (see --help)"
         );
     }
 
@@ -99,7 +99,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
         Some(agents::AgentKind::Other)
     ) {
         done.push(
-            "any MCP client works: speak JSON-RPC over stdio to `sense mcp serve` \
+            "any MCP client works: speak JSON-RPC over stdio to `sensez mcp serve` \
              (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)"
                 .to_string(),
         );
@@ -107,7 +107,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
         done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
     } else {
         done.push(
-            "no MCP config path is known for this agent yet; use `sense mcp serve` from your agent's MCP settings".to_string(),
+            "no MCP config path is known for this agent yet; use `sensez mcp serve` from your agent's MCP settings".to_string(),
         );
     }
     if let Some(msg) = skills::install(&root, &agent)? {
@@ -164,7 +164,7 @@ fn resolve_root(path: Option<&Path>) -> Result<PathBuf> {
             eprintln!(
                 "note: {} is a subdirectory of the repository at {} — Sensez' \
                  graph analysis is only correct over the full repo; consider \
-                 running `sense init {}` instead.",
+                 running `sensez init {}` instead.",
                 root.display(),
                 repo.display(),
                 repo.display()

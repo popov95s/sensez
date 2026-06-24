@@ -159,24 +159,6 @@
       "line": 17,
       "module": "flask.debughelpers",
       "symbol": "UnexpectedUnicodeError"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Low",
-      "file": "<flask>/examples/tutorial/flaskr/__init__.py",
-      "kind": "function",
-      "line": 6,
-      "module": "flaskr",
-      "symbol": "create_app"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Low",
-      "file": "<flask>/src/flask/views.py",
-      "kind": "class",
-      "line": 138,
-      "module": "flask.views",
-      "symbol": "MethodView"
     }
   ],
   "duplication": [
@@ -250,7 +232,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 3,
+    "dead_code_total": 1,
     "duplication_total": 4,
     "external_edges": 334,
     "internal_edges": 304,

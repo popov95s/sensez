@@ -121,6 +121,47 @@ fn pillar_filter_keeps_only_requested_findings() {
 }
 
 #[test]
+fn default_output_caps_pillars_at_five_and_smells_at_three_per_kind() {
+    let mut report = AnalysisReport::default();
+    for line in 1..=6 {
+        report.cycles.push(CycleFinding {
+            action: ActionLevel::Warning,
+            modules: vec![format!("a{line}"), format!("b{line}")],
+            hint: None,
+            edges: vec![CycleEdge {
+                from_module: format!("a{line}"),
+                to_module: format!("b{line}"),
+                file: PathBuf::from("a.py"),
+                line,
+            }],
+        });
+    }
+    for line in 1..=4 {
+        report.smells.push(SmellFinding {
+            action: ActionLevel::Warning,
+            kind: SmellKind::LooseTyping,
+            message: String::new(),
+            file: PathBuf::from("a.py"),
+            line,
+            end_line: line,
+            symbol: format!("f{line}"),
+            severity: Severity::Warning,
+            metric: line as u32,
+            threshold: 0,
+            reason: String::new(),
+        });
+    }
+    let options = scan_options();
+
+    output::apply(&mut report, &options);
+
+    assert_eq!(report.cycles.len(), 5);
+    assert_eq!(report.smells.len(), 3);
+    assert_eq!(report.meta.cycles_total, 6);
+    assert_eq!(report.meta.smell_totals["loose_typing"], 4);
+}
+
+#[test]
 fn fail_on_new_blocks_at_configured_level() {
     let mut report = AnalysisReport {
         meta: ReportMeta {
@@ -153,6 +194,7 @@ fn fail_on_new_blocks_at_configured_level() {
         CycleFinding {
             action: ActionLevel::Advisory,
             modules: vec![],
+            hint: None,
             edges: vec![CycleEdge {
                 from_module: String::new(),
                 to_module: String::new(),
@@ -201,6 +243,26 @@ fn dead(symbol: &str, confidence: Confidence) -> DeadCodeFinding {
         file: PathBuf::from("a.py"),
         line: 1,
         reason: String::new(),
+    }
+}
+
+fn scan_options() -> spec::ScanOptions {
+    spec::ScanOptions {
+        threshold: None,
+        summary: false,
+        json: false,
+        max: None,
+        all: false,
+        duplicates: false,
+        dead_code: false,
+        cycles: false,
+        boundaries: false,
+        smells: false,
+        output_glob: Vec::new(),
+        diff: false,
+        diff_from: None,
+        fail_on_new: None,
+        explain: false,
     }
 }
 

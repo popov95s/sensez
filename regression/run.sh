@@ -2,4 +2,4 @@
 set -euo pipefail
 
 cd "$(dirname "$0")/.."
-uv run python -m regression.run "$@"
+uv run --no-project python -m regression.run "$@"

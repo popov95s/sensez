@@ -15,6 +15,8 @@ pub use smell_kind::SmellKind;
 pub struct CycleFinding {
     pub action: ActionLevel,
     pub modules: Vec<String>,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
+    pub hint: Option<String>,
     /// One import edge per module in the cycle (the "next hop"), with the
     /// source file/line so each is clickable.
     pub edges: Vec<CycleEdge>,

@@ -114,7 +114,8 @@ fn run_scan(
         super::scan_recording::snapshot_for_recording(path, threshold, &report, diff)?;
     crate::brainz::rank_by_precision(path, &mut report);
     crate::noze::limit(&mut report, max);
-    Ok((crate::reporter::to_json(&report)?, full_report))
+    let compact = super::compact::tool_report(report);
+    Ok((serde_json::to_string_pretty(&compact)?, full_report))
 }
 
 #[cfg(feature = "eyez")]
@@ -245,6 +246,11 @@ mod tests {
         let text = resp["result"]["content"][0]["text"].as_str().unwrap();
         assert!(!text.contains("already defined"));
         assert!(!text.contains("\"issues\""));
+        assert!(!text.contains("_total"));
+        assert!(!text.contains("\"analyzed_files\""));
+        assert!(!text.contains("\"internal_edges\""));
+        assert!(!text.contains("\"external_edges\""));
+        assert!(!text.contains("\"source_lines\""));
     }
 
     #[test]
