@@ -22,15 +22,15 @@ Supported language profiles currently include Python, JavaScript, TypeScript, an
 ### Python
 ```Bash
 # Run a one-off scan with uv
-uvx --from sensez sense noze .
+uvx --from sensez sensez noze .
 
-# Add as a project dev dependency; run it with `uv run sense ...`
+# Add as a project dev dependency; run it with `uv run sensez ...`
 uv add --dev sensez
-uv run sense init
+uv run sensez init
 
-# Install as a global CLI so `sense ...` works directly
+# Install as a global CLI so `sensez ...` works directly
 uv tool install sensez
-sense init
+sensez init
 ```
 
 ### JS/TS
@@ -41,11 +41,11 @@ npm install --save-dev sensez
 npx sensez init . 
 
 # Run a one-off scan with npx
-npx sense noze .
+npx sensez noze .
 ```
 
-`sense noze .` is the default scan, but you can also use the verbose method: `sense noze sniff .`
-
+`sensez .` and `sensez noze .` both run the default scan. The verbose form is
+still available as `sensez noze sniff .`.
 
 ## Performance Snapshot
 
@@ -137,13 +137,25 @@ Some smell examples:
 ESLint, TypeScript, rustc, and Clippy. `noze` sits next to them and watches the
 repo-level shape.
 
+The default report is intentionally fixable in one screen: each pillar shows
+only its top 5 offenders, each smell kind shows its own total plus top 3
+examples, and dead-code output includes high-confidence findings only. Use
+`--all` to print every finding, or `--max N` to choose a different cap.
+
+For CI, filter to the pillars you care about:
+
+```bash
+sensez noze . --duplicates
+sensez noze . --duplicates --dead-code --json
+```
+
 ## MCP
 
 MCP is the default integration path for agents. Use it when Sensez should run
 repeatedly during a coding session instead of shelling out for one-off scans.
 
 ```bash
-sense mcp serve
+sensez mcp serve
 ```
 
 The MCP tools are themed but explicit:
@@ -157,12 +169,17 @@ The MCP tools are themed but explicit:
 | `brainz_triage` | Record user-approved debt or false-positive verdicts. |
 | `eyez_search_docs` | [disabled] Search docstrings/comments when `eyez` is enabled. |
 
-You can also use the `smell noze` CLI standalone in GitHub actions. 
+You can also use the `sensez noze` CLI standalone in GitHub Actions.
 
 ## brainz
 
 `brainz` is local-only memory. It records scans, gate blocks, triage decisions,
 resolved findings, regressions, detector precision, and usage reports.
+
+```bash
+sensez brainz report .
+sensez brainz report . --json
+```
 
 Everything stays under:
 
@@ -183,7 +200,7 @@ Sensez reads `sensez.toml` from the project root, or `[tool.sensez]` from
 `pyproject.toml` when `sensez.toml` is absent.
 
 ```bash
-sense init . --yes
+sensez init . --yes
 ```
 
 Main knobs:
@@ -220,7 +237,7 @@ action = "warning"
 - `eyez`: optional doc/comment search. Not yet enabled.
 - `mcp`: JSON-RPC/MCP surface for agent integration.
 - `reporter`: terminal and JSON output.
-- `setup`: `sense init`, starter config, MCP registration, and hook setup.
+- `setup`: `sensez init`, starter config, MCP registration, and hook setup.
 
 ## Privacy
 

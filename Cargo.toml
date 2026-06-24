@@ -4,7 +4,7 @@ version = "0.1.3"
 edition = "2021"
 license = "MIT"
 description = "Sensez — the structural maintainability layer that complements your linter and type-checker"
-default-run = "sense"
+default-run = "sensez"
 readme = "README.md"
 documentation = "https://docs.rs/sensez"
 keywords = ["architecture", "dead-code", "duplication", "code-quality", "tree-sitter"]
@@ -29,11 +29,15 @@ debug = 0
 name = "sensez"
 
 [[bin]]
-name = "sense"
+name = "sensez"
 path = "src/main.rs"
 
+[[bin]]
+name = "sense"
+path = "src/bin/sense.rs"
+
 [features]
-default = ["all-langs"]
+default = ["all-langs", "mcp"]
 lang-python = ["dep:tree-sitter-python"]
 lang-javascript = ["dep:tree-sitter-javascript"]
 # TypeScript reuses the JavaScript walker helpers, so it implies lang-javascript.
