@@ -21,6 +21,9 @@ on:
 jobs:
   guard:
     runs-on: ubuntu-latest
+    outputs:
+      base_version: ${{ steps.versions.outputs.base_version }}
+      release_version: ${{ steps.versions.outputs.release_version }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -38,14 +41,28 @@ jobs:
             v*) echo "Pass the version without a leading v." >&2; exit 1 ;;
           esac
 
+      - name: Compute release version
+        id: versions
+        shell: bash
+        run: |
+          base_version="${{ inputs.version }}"
+          if [ "${{ inputs.target }}" = "testpypi" ]; then
+            suffix="$(python -c 'import secrets; print(secrets.token_hex(4))')"
+            release_version="${base_version}+testpypi.${suffix}"
+          else
+            release_version="$base_version"
+          fi
+          printf 'base_version=%s\n' "$base_version" >> "$GITHUB_OUTPUT"
+          printf 'release_version=%s\n' "$release_version" >> "$GITHUB_OUTPUT"
+
       - name: Verify package versions
         env:
-          RELEASE_VERSION: ${{ inputs.version }}
+          BASE_VERSION: ${{ steps.versions.outputs.base_version }}
           RELEASE_TARGET: ${{ inputs.target }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
-          const wanted = process.env.RELEASE_VERSION;
+          const wanted = process.env.BASE_VERSION;
           const target = process.env.RELEASE_TARGET;
           const cargo = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
           const pyproject = fs.readFileSync('pyproject.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
@@ -128,6 +145,24 @@ jobs:
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
+
+      - name: Stamp TestPyPI version
+        env:
+          RELEASE_VERSION: ${{ needs.guard.outputs.release_version }}
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import os
+          import re
+
+          version = os.environ["RELEASE_VERSION"]
+          for path_text in ("Cargo.toml", "pyproject.toml"):
+              path = Path(path_text)
+              text = path.read_text()
+              text = re.sub(r'(?m)^version\s*=\s*"[^"]+"$', f'version = "{version}"', text, count=1)
+              path.write_text(text)
+          PY
 
       - name: Build Python + MCP wheel
         uses: PyO3/maturin-action@v1
