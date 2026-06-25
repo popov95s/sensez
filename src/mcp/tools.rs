@@ -44,19 +44,21 @@ fn scan() -> Value {
                         subdirectory yields false positives. It is fast (<1s on \
                         300k lines), so never scope it down for speed. Fixes \
                         you apply to reported findings are detected \
-                        automatically on later rescans. After finishing an \
-                        edit session, set diff=true to see only the findings \
-                        YOUR uncommitted changes touch — analysis still covers \
-                        the whole repo, so diff results are focused but never \
-                        wrong. The returned JSON is compact and omits aggregate \
-                        totals; use the CLI when you need full report metadata.",
+                        automatically on later rescans. By default, results \
+                        are diff-focused to show only the findings YOUR \
+                        uncommitted changes touch — analysis still covers the \
+                        whole repo, so diff results are focused but never \
+                        wrong. Pass diff=false for an explicit full-repository \
+                        audit. The returned JSON is compact and omits \
+                        aggregate totals; use the CLI when you need full \
+                        report metadata.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Absolute path to the REPOSITORY ROOT (not a subdirectory)"},
                 "threshold": {"type": "integer", "description": "Duplication token threshold"},
                 "limit": {"type": "integer", "description": "Cap each pillar to top-N ranked findings (0 = unlimited)"},
-                "diff": {"type": "boolean", "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Full-graph analysis either way."}
+                "diff": {"type": "boolean", "default": true, "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Defaults to true; pass false for a full-repository report. Full-graph analysis either way."}
             },
             "required": ["path"]
         }

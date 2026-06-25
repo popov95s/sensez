@@ -59,7 +59,7 @@ fn scan_tool(args: &Value) -> ToolResult {
         .and_then(Value::as_u64)
         .map(|t| t as usize);
     let max = args.get("limit").and_then(Value::as_u64).unwrap_or(0) as usize;
-    let diff = args.get("diff").and_then(Value::as_bool).unwrap_or(false);
+    let diff = scan_diff_arg(args);
 
     match run_scan(Path::new(path), threshold, max, diff) {
         Ok((text, _snapshot)) => {
@@ -71,6 +71,10 @@ fn scan_tool(args: &Value) -> ToolResult {
         }
         Err(err) => Ok(text_result(format!("{err:#}"), true)),
     }
+}
+
+fn scan_diff_arg(args: &Value) -> bool {
+    args.get("diff").and_then(Value::as_bool).unwrap_or(true)
 }
 
 fn run_scan(
@@ -238,6 +242,13 @@ mod tests {
         assert!(!text.contains("\"issues\""));
         assert!(!text.contains("\"files_skipped\": 1"));
         assert!(!text.contains("syntax tree deeper than"));
+    }
+
+    #[test]
+    fn scan_tool_defaults_to_diff_mode() {
+        assert!(super::scan_diff_arg(&json!({})));
+        assert!(super::scan_diff_arg(&json!({"diff": true})));
+        assert!(!super::scan_diff_arg(&json!({"diff": false})));
     }
 
     #[test]
