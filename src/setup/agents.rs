@@ -57,7 +57,7 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "opencode",
         label: "OpenCode",
         mcp_relpath: Some(".opencode/mcp.json"),
-        skill_relpath: None,
+        skill_relpath: Some(".opencode/skills/sensez"),
         supports_hooks: false,
     },
     AgentSpec {
