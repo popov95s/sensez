@@ -1,4 +1,4 @@
-use crate::noze::{
+use crate::report::{
     AnalysisReport, BoundaryViolation, CloneClass, CycleFinding, DeadCodeFinding, SmellFinding,
 };
 use std::collections::{HashMap, HashSet};

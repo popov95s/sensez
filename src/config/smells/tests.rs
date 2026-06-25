@@ -2,7 +2,7 @@
 //! `[smells]` base keys + `[smells.<lang>]` tables overlay on top.
 
 use super::SmellConfig;
-use crate::noze::{ActionLevel, SmellKind};
+use crate::report::{ActionLevel, SmellKind};
 use crate::spine::ir::Language;
 
 /// The built-in defaults differ: TS enables `large_class` and disables the

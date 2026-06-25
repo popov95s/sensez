@@ -6,7 +6,7 @@
 //! type-discipline smells.
 
 use super::knobs::Smells;
-use crate::noze::SmellKind;
+use crate::report::SmellKind;
 use crate::spine::ir::Language;
 
 /// The built-in default knob set for `lang`, before any `sensez.toml` overlay.

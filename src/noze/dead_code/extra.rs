@@ -6,7 +6,8 @@
 //! Low confidence because cross-file attribute access (`obj.method()`) cannot
 //! be seen statically.
 
-use crate::noze::{ActionLevel, Confidence, DeadCodeFinding, SymbolKind};
+use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
+use crate::spine::parser::SymbolKind;
 use crate::profiles::registry;
 use crate::spine::ir::Language;
 use crate::spine::graph::CodebaseGraph;

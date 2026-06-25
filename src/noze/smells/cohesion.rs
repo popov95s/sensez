@@ -12,7 +12,7 @@
 use super::make;
 use super::union_find::{find, union};
 use super::SmellContext;
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionMetrics};
 use std::collections::HashMap;
 

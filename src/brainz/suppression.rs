@@ -5,7 +5,7 @@ use super::triage;
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
-pub fn apply_suppressions(root: &Path, report: &mut crate::noze::AnalysisReport) {
+pub fn apply_suppressions(root: &Path, report: &mut crate::report::AnalysisReport) {
     let triaged = triage::load(root);
     let accept = crate::config::model::Config::load(root)
         .map(|c| c.accept)

@@ -1,8 +1,9 @@
 use super::*;
-use crate::noze::{
+use crate::report::{
     ActionLevel, AnalysisReport, BoundaryViolation, CloneOccurrence, Confidence, CycleFinding,
-    DeadCodeFinding, ReportMode, Severity, SmellFinding, SmellKind, SymbolKind,
+    DeadCodeFinding, ReportMode, Severity, SmellFinding, SmellKind,
 };
+use crate::spine::parser::SymbolKind;
 use std::path::Path;
 
 fn dead(file: &str, line: usize) -> DeadCodeFinding {

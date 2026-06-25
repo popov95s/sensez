@@ -149,7 +149,7 @@ mod tests {
         changed.add(&dir.join("touched.py"), 1, 2);
 
         let report = analyze_path(&dir, None, Some(&changed)).unwrap();
-        assert_eq!(report.meta.mode, crate::noze::ReportMode::Diff);
+        assert_eq!(report.meta.mode, crate::report::ReportMode::Diff);
         let dead: Vec<_> = report.dead_code.iter().map(|f| f.symbol.as_str()).collect();
         assert!(dead.contains(&"unused_here"), "touched file's finding kept");
         assert!(
@@ -168,7 +168,7 @@ mod tests {
     /// Pinned on synthetic code (NOT from any real repo).
     #[test]
     fn diff_smell_scoping_covers_the_function_body() {
-        use crate::noze::SmellKind;
+        use crate::report::SmellKind;
 
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path().to_path_buf();
@@ -269,7 +269,7 @@ mod tests {
 
     #[test]
     fn action_policy_is_applied_to_pillars_and_smells() {
-        use crate::noze::SmellKind;
+        use crate::report::SmellKind;
 
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path().to_path_buf();

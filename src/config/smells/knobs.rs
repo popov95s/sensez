@@ -1,6 +1,6 @@
 //! Per-language smell thresholds and toggles.
 
-use crate::noze::{ActionLevel, SmellKind};
+use crate::report::{ActionLevel, SmellKind};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 

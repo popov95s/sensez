@@ -1,6 +1,6 @@
 //! Class-shape duplication: same names and overlapping typed properties.
 
-use crate::noze::{ActionLevel, CloneClass, CloneOccurrence};
+use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::ir::Language;
 use crate::spine::parser::{ClassProperty, ParsedFile};
 use std::collections::{BTreeMap, BTreeSet};

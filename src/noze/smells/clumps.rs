@@ -10,7 +10,7 @@
 use super::union_find::{find, union};
 use super::{make, structure_target};
 use crate::config::smells::{SmellConfig, Smells};
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::parser::ParsedFile;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;

@@ -19,7 +19,7 @@ pub fn regressions(root: &Path, report: &Value) -> Vec<String> {
         .collect()
 }
 
-pub fn rank_by_precision(root: &Path, report: &mut crate::noze::AnalysisReport) {
+pub fn rank_by_precision(root: &Path, report: &mut crate::report::AnalysisReport) {
     let noisy = noisy_detectors(root);
     if noisy.is_empty() {
         return;

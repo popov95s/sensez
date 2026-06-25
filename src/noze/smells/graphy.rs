@@ -6,7 +6,7 @@
 
 use super::make;
 use crate::config::smells::{SmellConfig, Smells};
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::profiles::registry;
 use crate::spine::graph::CodebaseGraph;
 use petgraph::visit::EdgeRef;

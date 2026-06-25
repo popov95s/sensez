@@ -7,7 +7,7 @@
 //! ordinal) while keeping operators and control-flow structure verbatim. Two
 //! functions share a key iff a consistent rename maps one onto the other.
 
-use crate::noze::{ActionLevel, CloneClass, CloneOccurrence};
+use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::ParsedFile;
 use std::collections::HashMap;

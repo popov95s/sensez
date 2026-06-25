@@ -6,8 +6,10 @@ pub mod duplication;
 pub mod glossary;
 pub mod smells;
 
-pub use crate::report::*;
-pub use crate::spine::parser::SymbolKind;
+use crate::report::{
+    ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, Severity, SmellFinding,
+};
+use crate::spine::parser::SymbolKind;
 
 use crate::bonez;
 use crate::config::model::{ActionPolicy, Config};

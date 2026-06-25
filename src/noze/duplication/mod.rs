@@ -19,7 +19,7 @@ mod test_support;
 
 use crate::config::model::Duplication;
 use crate::globs::build_globset;
-use crate::noze::{ActionLevel, CloneClass, CloneOccurrence};
+use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;

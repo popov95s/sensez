@@ -1,7 +1,7 @@
 use super::detect;
 use super::test_support::write_files;
 use crate::config::model::Duplication;
-use crate::noze::CloneClass;
+use crate::report::CloneClass;
 
 /// Config with the given threshold, no excludes, no gap stitching.
 fn cfg(threshold: usize) -> Duplication {

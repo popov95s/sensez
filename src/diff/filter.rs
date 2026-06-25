@@ -2,7 +2,7 @@
 //! attaching provenance an agent can act on.
 
 use super::ChangedLines;
-use crate::noze::{
+use crate::report::{
     AnalysisReport, BoundaryViolation, CloneClass, CycleFinding, DeadCodeFinding, SmellFinding,
 };
 use std::collections::HashMap;
@@ -44,7 +44,7 @@ pub fn apply(
         finding.reason = "introduced_or_touched".to_string();
     }
 
-    report.meta.mode = crate::noze::ReportMode::Diff;
+    report.meta.mode = crate::report::ReportMode::Diff;
     refresh_totals(report);
     // Re-scope the glossary to the categories that survived diff filtering.
     report.meta.glossary = crate::noze::glossary::for_report(report);

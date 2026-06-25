@@ -16,7 +16,8 @@ mod reachability;
 
 use crate::config::model::DeadCode;
 use crate::globs::build_globset;
-use crate::noze::{ActionLevel, Confidence, DeadCodeFinding, SymbolKind};
+use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
+use crate::spine::parser::SymbolKind;
 use crate::profiles::registry;
 use crate::spine::ir::Language;
 use crate::spine::graph::CodebaseGraph;

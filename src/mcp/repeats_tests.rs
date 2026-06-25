@@ -1,5 +1,5 @@
 use super::repeats::{suppress_repeated, suppress_repeated_at, DEFER_EXPIRY_SECS};
-use crate::noze::{ActionLevel, AnalysisReport, Severity, SmellFinding, SmellKind};
+use crate::report::{ActionLevel, AnalysisReport, Severity, SmellFinding, SmellKind};
 use std::path::Path;
 
 #[test]

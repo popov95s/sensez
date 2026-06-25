@@ -158,7 +158,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     println!("{output}");
 
     if let Some(level) = options.fail_on_new {
-        if report.meta.mode == crate::noze::ReportMode::Diff
+        if report.meta.mode == crate::report::ReportMode::Diff
             && report_meets_fail_level(&report, level)
         {
             return Ok(ExitCode::FAILURE);

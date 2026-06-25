@@ -6,7 +6,7 @@
 use super::make;
 use super::SmellContext;
 use crate::config::smells::Smells;
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionMetrics, TypeHints};
 use std::collections::{HashMap, HashSet};
 

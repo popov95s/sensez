@@ -1,7 +1,7 @@
 //! Pillar 3: circular-import detection via Tarjan's SCC algorithm.
 
 use crate::globs::build_globset;
-use crate::noze::{ActionLevel, CycleEdge, CycleFinding};
+use crate::report::{ActionLevel, CycleEdge, CycleFinding};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::ImportPhase;
 use petgraph::algo::tarjan_scc;
