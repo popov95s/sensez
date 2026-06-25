@@ -1,4 +1,4 @@
-use super::gate::{gate, working_signature};
+use super::gate::gate;
 use serde_json::{json, Value};
 use std::process::Command;
 
@@ -24,11 +24,11 @@ fn signature_tracks_writes() {
     let mut changed = crate::diff::ChangedLines::default();
     changed.add_full_file(&file);
 
-    let sig1 = working_signature(&changed);
-    assert_eq!(sig1, working_signature(&changed), "stable when untouched");
+    let sig1 = changed.signature();
+    assert_eq!(sig1, changed.signature(), "stable when untouched");
 
     std::fs::write(&file, "x = 1\ny = 2\nz = 3\n").unwrap();
-    assert_ne!(sig1, working_signature(&changed), "changes after a write");
+    assert_ne!(sig1, changed.signature(), "changes after a write");
 }
 
 #[test]

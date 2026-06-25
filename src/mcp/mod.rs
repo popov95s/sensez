@@ -11,6 +11,7 @@ mod protocol;
 mod repeats;
 #[cfg(test)]
 mod repeats_tests;
+mod scan;
 mod scan_recording;
 mod server;
 mod tools;

@@ -4,7 +4,6 @@ use anyhow::Context;
 use serde_json::{json, Value};
 use std::path::Path;
 use std::process::Command;
-use std::time::Instant;
 
 pub(super) type ToolResult = Result<Value, (i64, String)>;
 
@@ -62,17 +61,8 @@ fn scan_tool(args: &Value) -> ToolResult {
     let max = args.get("limit").and_then(Value::as_u64).unwrap_or(0) as usize;
     let diff = args.get("diff").and_then(Value::as_bool).unwrap_or(false);
 
-    let start = Instant::now();
     match run_scan(Path::new(path), threshold, max, diff) {
-        Ok((text, full_report)) => {
-            let ms = start.elapsed().as_millis() as u64;
-            crate::brainz::record_scan(
-                Path::new(path),
-                &full_report,
-                ms,
-                threshold,
-                crate::brainz::Origin::Tool,
-            );
+        Ok((text, _snapshot)) => {
             let mut content = vec![json!({"type": "text", "text": text})];
             if let Some(warning) = super::tools::scope_warning(Path::new(path)) {
                 content.insert(0, json!({"type": "text", "text": warning}));
@@ -89,33 +79,10 @@ fn run_scan(
     max: usize,
     diff: bool,
 ) -> anyhow::Result<(String, Value)> {
-    let (changed, diff_issue) = if diff {
-        match crate::diff::git::changed_vs_head(path) {
-            Ok(changed) => (Some(changed), None),
-            Err(err) => (None, Some(format!("{err:#}"))),
-        }
-    } else {
-        (None, None)
-    };
-    let mut report = crate::analyze_path(path, threshold, changed.as_ref())?;
-    if let Some(message) = diff_issue {
-        report.meta.issues.push(crate::report::ScanIssue {
-            stage: crate::report::ScanStage::Diff,
-            file: None,
-            message,
-        });
-        report.meta.files_skipped = report.meta.issues.len();
-    }
-    if diff {
-        crate::brainz::apply_suppressions(path, &mut report);
-    }
-    super::scan_recording::suppress_scan_issues(&mut report);
-    let full_report =
-        super::scan_recording::snapshot_for_recording(path, threshold, &report, diff)?;
-    crate::brainz::rank_by_precision(path, &mut report);
-    crate::noze::limit(&mut report, max);
+    let (report, snapshot) =
+        super::scan::run_and_record(path, threshold, max, diff, crate::brainz::Origin::Tool)?;
     let compact = super::compact::tool_report(report);
-    Ok((serde_json::to_string_pretty(&compact)?, full_report))
+    Ok((serde_json::to_string_pretty(&compact)?, snapshot))
 }
 
 #[cfg(feature = "eyez")]

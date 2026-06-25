@@ -246,6 +246,56 @@ pub struct AnalysisReport {
     pub smells: Vec<SmellFinding>,
 }
 
+impl AnalysisReport {
+    /// One-line per finding up to `max`, joined by `"; "`. The shape is
+    /// `pillar/<kind> <symbol-or-module> <file>:<line>` and is what the
+    /// `noze_gate` end-of-turn hook relays to the agent. The order is
+    /// dead-code → cycles → boundaries → duplication → smells; findings
+    /// are not pre-sorted by impact, so the caller is expected to either
+    /// cap the report (via `noze::limit`) first or pass a `max` that
+    /// matches the pillar order they want.
+    pub fn top_n_summary(&self, max: usize) -> String {
+        let mut items = Vec::new();
+        items.extend(self.dead_code.iter().map(|f| {
+            format!(
+                "dead_code/{} {}::{} {}:{}",
+                f.kind, f.module, f.symbol, f.file.display(), f.line
+            )
+        }));
+        items.extend(
+            self.cycles
+                .iter()
+                .map(|f| format!("cycle {}", f.modules.join(" -> "))),
+        );
+        items.extend(self.boundaries.iter().map(|f| {
+            format!(
+                "boundary {} -> {} {}:{}",
+                f.from_module,
+                f.to_module,
+                f.file.display(),
+                f.line
+            )
+        }));
+        items.extend(self.duplication.iter().map(|f| {
+            let locations = f
+                .occurrences
+                .iter()
+                .map(|o| format!("{}:{}", o.file.display(), o.start_row))
+                .collect::<Vec<_>>()
+                .join(", ");
+            format!("duplication {} token(s) at {locations}", f.token_length)
+        }));
+        items.extend(self.smells.iter().map(|f| {
+            format!(
+                "smell/{} {} {}:{}",
+                f.kind, f.symbol, f.file.display(), f.line
+            )
+        }));
+        items.truncate(max);
+        items.join("; ")
+    }
+}
+
 fn line_is_unknown(value: &usize) -> bool {
     *value == 0
 }

@@ -63,10 +63,38 @@ impl ChangedLines {
     pub fn paths(&self) -> impl Iterator<Item = &Path> {
         self.files.keys().map(PathBuf::as_path)
     }
+
+    pub fn signature(&self) -> u64 {
+        use std::hash::Hasher;
+        let mut paths: Vec<&Path> = self.files.keys().map(PathBuf::as_path).collect();
+        paths.sort_unstable();
+        let mut hasher = rustc_hash::FxHasher::default();
+        for path in paths {
+            hash_path_into(path, &mut hasher);
+        }
+        hasher.finish()
+    }
 }
 
 /// Canonicalize when possible so relative/absolute paths compare equal; fall
 /// back to the path as-given (e.g. for paths that don't exist on disk).
 fn canon(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
+}
+
+fn hash_path_into<H: std::hash::Hasher>(path: &Path, hasher: &mut H) {
+    use std::hash::Hash;
+    use std::time::UNIX_EPOCH;
+    path.hash(hasher);
+    let Ok(meta) = std::fs::metadata(path) else {
+        return;
+    };
+    meta.len().hash(hasher);
+    let Ok(modified) = meta.modified() else {
+        return;
+    };
+    let Ok(duration) = modified.duration_since(UNIX_EPOCH) else {
+        return;
+    };
+    duration.as_nanos().hash(hasher);
 }
