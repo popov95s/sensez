@@ -9,7 +9,7 @@
 //!
 //! [`registry`]: crate::profiles::registry
 
-use crate::profiles::Language;
+use crate::spine::ir::Language;
 
 // ---- shared lexical helpers (used by every language's vocab) ----------------
 

@@ -21,7 +21,7 @@ mod union_find;
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
 use crate::noze::{ActionLevel, Severity, SmellFinding, SmellKind};
-use crate::profiles::Language;
+use crate::spine::ir::Language;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::{FunctionMetrics, TypeHints};
 use crate::spine::parser::ParsedFile;

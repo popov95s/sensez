@@ -11,7 +11,8 @@ pub use crate::spine::ir::{
     ClassProperty, FunctionUnit, ImportContext, ImportPhase, SymbolKind, Walked,
 };
 
-use crate::profiles::{registry, Language, ParseProfile};
+use crate::profiles::{registry, ParseProfile};
+use crate::spine::ir::Language;
 use crate::report::{ScanIssue, ScanStage};
 use anyhow::{anyhow, Context, Result};
 use rayon::prelude::*;

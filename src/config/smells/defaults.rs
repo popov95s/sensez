@@ -7,7 +7,7 @@
 
 use super::knobs::Smells;
 use crate::noze::SmellKind;
-use crate::profiles::Language;
+use crate::spine::ir::Language;
 
 /// The built-in default knob set for `lang`, before any `sensez.toml` overlay.
 pub fn default_for(lang: Language) -> Smells {

@@ -1,6 +1,7 @@
 //! Assemble a [`CodebaseGraph`] from parsed files.
 
-use crate::profiles::{registry, Language};
+use crate::profiles::registry;
+use crate::spine::ir::Language;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::parser::ParsedFile;
 use petgraph::graph::NodeIndex;

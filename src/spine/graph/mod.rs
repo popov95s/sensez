@@ -5,7 +5,7 @@ mod builder;
 
 pub use builder::build;
 
-use crate::profiles::Language;
+use crate::spine::ir::Language;
 use crate::spine::parser::ImportContext;
 use crate::spine::parser::SymbolKind;
 use petgraph::graph::{DiGraph, NodeIndex};

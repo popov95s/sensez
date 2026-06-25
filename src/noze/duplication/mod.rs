@@ -44,7 +44,7 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
         .filter(|f| !excluded.is_match(&f.path))
         .collect();
 
-    let mut by_language: BTreeMap<crate::profiles::Language, Vec<&ParsedFile>> = BTreeMap::new();
+    let mut by_language: BTreeMap<crate::spine::ir::Language, Vec<&ParsedFile>> = BTreeMap::new();
     for file in &kept {
         by_language.entry(file.language).or_default().push(*file);
     }

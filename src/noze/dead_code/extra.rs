@@ -7,7 +7,8 @@
 //! be seen statically.
 
 use crate::noze::{ActionLevel, Confidence, DeadCodeFinding, SymbolKind};
-use crate::profiles::{registry, Language};
+use crate::profiles::registry;
+use crate::spine::ir::Language;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::{ImportPhase, ParsedFile};
 use std::collections::HashMap;

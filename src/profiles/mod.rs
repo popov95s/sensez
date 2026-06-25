@@ -23,18 +23,9 @@ pub mod rust;
 #[cfg(feature = "lang-typescript")]
 pub mod typescript;
 
-use crate::spine::ir::{ImportContext, Walked};
+use crate::spine::ir::{ImportContext, Language, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
-
-/// Stable identity of a supported language.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize)]
-pub enum Language {
-    Python,
-    JavaScript,
-    TypeScript,
-    Rust,
-}
 
 /// Pure-data facts about a language. Cheap to reference; drives crawler
 /// discovery and config defaults.

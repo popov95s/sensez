@@ -157,7 +157,7 @@ mod tests {
     use crate::config::smells::{SmellConfig, Smells};
     use crate::noze::smells::detect_local;
     use crate::noze::{SmellFinding, SmellKind};
-    use crate::profiles::Language;
+    use crate::spine::ir::Language;
     use crate::spine::parser::{
         parse_file, parse_source, ImportPhase, ParsedFile, StructuralToken,
     };

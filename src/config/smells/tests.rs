@@ -3,7 +3,7 @@
 
 use super::SmellConfig;
 use crate::noze::{ActionLevel, SmellKind};
-use crate::profiles::Language;
+use crate::spine::ir::Language;
 
 /// The built-in defaults differ: TS enables `large_class` and disables the
 /// ESLint/SonarJS-owned always-on smells; Python keeps the bare baseline.
