@@ -6,6 +6,7 @@
 use super::events::Event;
 use super::{aging, fingerprint, hub, store};
 use std::path::Path;
+use std::sync::{Mutex, OnceLock};
 use std::time::UNIX_EPOCH;
 
 /// Skip auto-rescans for repos whose original scan was slower than this —
@@ -14,6 +15,12 @@ const MAX_RESCAN_MS: u64 = 3_000;
 
 /// Re-derive resolved findings for every changed, cheap-to-scan repo.
 pub(super) fn run() {
+    static RECAPTURE_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+    let _guard = RECAPTURE_LOCK
+        .get_or_init(|| Mutex::new(()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner());
+
     for (root, base) in hub::baselines() {
         if base.ms > MAX_RESCAN_MS || !changed_since(&root, base.ts) {
             continue;
