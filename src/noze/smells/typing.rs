@@ -10,7 +10,7 @@
 
 use super::{grouped_value_target, make, structure_target, SmellContext};
 use crate::config::smells::Smells;
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::profiles::typevocab::{base_type, is_bool_type, is_loose};
 use crate::spine::ir::FunctionMetrics;
 

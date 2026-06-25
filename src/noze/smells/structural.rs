@@ -3,7 +3,7 @@
 
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionMetrics;
 
 pub fn detect(

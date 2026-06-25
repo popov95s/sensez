@@ -2,7 +2,7 @@
 
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
-use crate::noze::{Severity, SmellFinding, SmellKind};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::profiles::{registry, PerformanceProfile};
 use crate::spine::ir::{CallFact, FunctionMetrics, PerfLine};
 use std::collections::BTreeMap;

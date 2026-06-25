@@ -1,6 +1,6 @@
 use super::detect_local;
 use crate::config::smells::Smells;
-use crate::noze::{SmellFinding, SmellKind};
+use crate::report::{SmellFinding, SmellKind};
 use crate::spine::parser::parse_file;
 use std::fs;
 

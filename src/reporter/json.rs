@@ -26,14 +26,14 @@ mod tests {
     #[test]
     fn omits_explanatory_and_placeholder_fields() {
         let mut report = AnalysisReport::default();
-        report.meta.glossary = vec![crate::noze::GlossaryEntry {
+        report.meta.glossary = vec![crate::report::GlossaryEntry {
             term: "god_module".into(),
             title: "God Module".into(),
             explanation: "explain only when requested".into(),
         }];
-        report.smells.push(crate::noze::SmellFinding {
+        report.smells.push(crate::report::SmellFinding {
             action: crate::report::ActionLevel::Warning,
-            kind: crate::noze::SmellKind::GodModule,
+            kind: crate::report::SmellKind::GodModule,
             message: "fan-in + fan-out".into(),
             file: "src/config/model.rs".into(),
             line: 0,

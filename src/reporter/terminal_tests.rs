@@ -12,7 +12,7 @@ fn renders_section_headers() {
 #[test]
 fn legend_is_opt_in() {
     let mut report = AnalysisReport::default();
-    report.meta.glossary = vec![crate::noze::GlossaryEntry {
+    report.meta.glossary = vec![crate::report::GlossaryEntry {
         term: "cycles".into(),
         title: "Import Cycle".into(),
         explanation: "modules import each other".into(),
@@ -40,9 +40,9 @@ fn scan_diagnostics_are_hidden_by_default() {
 #[test]
 fn smell_output_dedupes_matching_action_and_severity() {
     let mut report = AnalysisReport::default();
-    report.smells.push(crate::noze::SmellFinding {
+    report.smells.push(crate::report::SmellFinding {
         action: ActionLevel::Warning,
-        kind: crate::noze::SmellKind::MagicStringDefault,
+        kind: crate::report::SmellKind::MagicStringDefault,
         message: "sentinel".into(),
         file: "x.tsx".into(),
         line: 12,
@@ -62,9 +62,9 @@ fn smell_output_dedupes_matching_action_and_severity() {
 #[test]
 fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
     let mut report = AnalysisReport::default();
-    report.smells.push(crate::noze::SmellFinding {
+    report.smells.push(crate::report::SmellFinding {
         action: ActionLevel::Warning,
-        kind: crate::noze::SmellKind::LooseTyping,
+        kind: crate::report::SmellKind::LooseTyping,
         message: "params [cfg] — replace loose collections with a typed object or interface".into(),
         file: "a.ts".into(),
         line: 4,
@@ -75,9 +75,9 @@ fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
         threshold: 0,
         reason: String::new(),
     });
-    report.smells.push(crate::noze::SmellFinding {
+    report.smells.push(crate::report::SmellFinding {
         action: ActionLevel::Warning,
-        kind: crate::noze::SmellKind::LooseTyping,
+        kind: crate::report::SmellKind::LooseTyping,
         message: "returns Record<string, any> — replace loose collections with a typed object or interface"
             .into(),
         file: "b.ts".into(),
