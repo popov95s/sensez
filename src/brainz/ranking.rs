@@ -1,6 +1,7 @@
 //! Precision-aware presentation ranking for findings.
 
-use super::{hub, report, resolve, store};
+use super::fingerprint::{self, Print};
+use super::{hub, report, store};
 use serde_json::Value;
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -10,7 +11,7 @@ pub fn regressions(root: &Path, report: &Value) -> Vec<String> {
     if history.is_empty() {
         return Vec::new();
     }
-    resolve::fingerprints(report)
+    fingerprint::fingerprints(report)
         .values()
         .flatten()
         .filter(|p| history.contains_key(&format!("{:x}", p.hash)))
@@ -26,7 +27,7 @@ pub fn rank_by_precision(root: &Path, report: &mut crate::noze::AnalysisReport) 
     let Ok(value) = serde_json::to_value(&*report) else {
         return;
     };
-    let prints = resolve::fingerprints(&value);
+    let prints = fingerprint::fingerprints(&value);
     demote_noisy(&mut report.cycles, prints.get("cycles"), &noisy);
     demote_noisy(&mut report.dead_code, prints.get("dead_code"), &noisy);
     demote_noisy(&mut report.boundaries, prints.get("boundaries"), &noisy);
@@ -42,7 +43,7 @@ fn noisy_detectors(root: &Path) -> BTreeSet<String> {
 
 fn demote_noisy<T>(
     items: &mut Vec<T>,
-    prints: Option<&Vec<resolve::Print>>,
+    prints: Option<&Vec<Print>>,
     noisy: &BTreeSet<String>,
 ) {
     let Some(prints) = prints else {
@@ -70,7 +71,6 @@ mod tests {
 
     #[test]
     fn demote_noisy_sinks_low_precision_keeping_order() {
-        use resolve::Print;
         let print = |hash, detector: &str| Print {
             hash,
             label: String::new(),

@@ -1,7 +1,9 @@
 //! Assembly of the `brainz_report` payload from stored metrics.
 
 use super::events::{Event, Totals};
-use super::{flush, hub, report, resolve, store, triage};
+use super::fingerprint::Aged;
+use super::staleness::stale_entries;
+use super::{flush, hub, report, store, triage};
 use serde_json::{json, Value};
 use std::collections::BTreeSet;
 use std::path::Path;
@@ -21,7 +23,7 @@ fn recent_window(events: &[Event]) -> (u64, Totals) {
 
 fn gate_block_sets(
     events: &[Event],
-    baseline: resolve::Aged,
+    baseline: Aged,
     branch: &str,
 ) -> (BTreeSet<String>, BTreeSet<String>) {
     let blocked = events
@@ -83,7 +85,7 @@ pub fn usage_report(root: &Path) -> Value {
         },
         "all_time": totals,
         "branch": branch.clone(),
-        "stale_findings": resolve::stale_entries(
+        "stale_findings": stale_entries(
             &store::load_fingerprints(root, &branch), hub::now(), &triage::ignored_keys(&triaged))
             .into_iter()
             .map(|(pillar, _, label, days)| json!({

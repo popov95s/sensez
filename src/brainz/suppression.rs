@@ -1,6 +1,7 @@
 //! Suppress findings that the user or repository config has already accepted.
 
-use super::{resolve, triage};
+use super::fingerprint::{self, Print};
+use super::triage;
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
@@ -16,7 +17,7 @@ pub fn apply_suppressions(root: &Path, report: &mut crate::noze::AnalysisReport)
     let Ok(value) = serde_json::to_value(&*report) else {
         return;
     };
-    let prints = resolve::fingerprints(&value);
+    let prints = fingerprint::fingerprints(&value);
     let ctx = Suppress {
         ignore: &ignore,
         accept: &accept,
@@ -49,7 +50,7 @@ struct Suppress<'a> {
 }
 
 impl Suppress<'_> {
-    fn hides(&self, print: &resolve::Print, pillar: &str) -> bool {
+    fn hides(&self, print: &Print, pillar: &str) -> bool {
         if self.ignore.contains(&format!("{:x}", print.hash)) {
             return true;
         }
@@ -64,7 +65,7 @@ impl Suppress<'_> {
 
 fn retain_allowed<T>(
     items: &mut Vec<T>,
-    prints: Option<&Vec<resolve::Print>>,
+    prints: Option<&Vec<Print>>,
     pillar: &str,
     ctx: &Suppress,
 ) {

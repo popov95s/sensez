@@ -3,7 +3,7 @@
 //! no network, no exporters.
 
 use super::events::{Event, Totals};
-use super::resolve::{Aged, ResolvedHistory};
+use super::fingerprint::{Aged, ResolvedHistory};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -228,7 +228,7 @@ mod tests {
             "dead_code".into(),
             BTreeMap::from([(
                 "7".to_string(),
-                crate::brainz::resolve::AgedEntry {
+                crate::brainz::fingerprint::AgedEntry {
                     first_seen: 1,
                     label: "x".into(),
                     detector: "dead_code/function".into(),
@@ -237,7 +237,7 @@ mod tests {
         )]);
         let history: ResolvedHistory = BTreeMap::from([(
             "dead".to_string(),
-            crate::brainz::resolve::ResolvedRecord {
+            crate::brainz::fingerprint::ResolvedRecord {
                 detector: "dead_code/function".into(),
                 resolved_ts: 5,
             },
@@ -256,7 +256,7 @@ mod tests {
             "dead_code".into(),
             BTreeMap::from([(
                 "abc".to_string(),
-                crate::brainz::resolve::AgedEntry {
+                crate::brainz::fingerprint::AgedEntry {
                     first_seen: 1,
                     label: "main-only".into(),
                     detector: "dead_code/function".into(),

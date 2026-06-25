@@ -2,7 +2,7 @@
 
 use super::events::{Event, Origin};
 use super::hub::{self, Baseline};
-use super::{resolve, store, triage};
+use super::{aging, fingerprint, store, triage};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -11,7 +11,7 @@ pub fn record_scan(root: &Path, report: &Value, ms: u64, threshold: Option<usize
     if !hub::enabled(root) {
         return;
     }
-    let reported = resolve::detector_counts(report);
+    let reported = fingerprint::detector_counts(report);
     let meta_u64 = |key: &str| {
         report
             .get("meta")
@@ -25,11 +25,11 @@ pub fn record_scan(root: &Path, report: &Value, ms: u64, threshold: Option<usize
         .ok()
         .map(|c| c.signature());
     let branch = hub::branch_key(root);
-    let current = resolve::fingerprints(report);
+    let current = fingerprint::fingerprints(report);
     let previous = store::load_fingerprints(root, &branch);
     let history = store::load_resolved_history(root, &branch);
     let ignore = triage::ignored_keys(&triage::load(root));
-    let aging = resolve::age(&previous, &current, &history, hub::now(), &ignore);
+    let aging = aging::age(&previous, &current, &history, hub::now(), &ignore);
     let resolved = aging.resolved;
     let reintroduced = aging.reintroduced;
     if let Err(err) =
@@ -108,7 +108,7 @@ pub fn record_search(
 }
 
 pub fn record_gate_block(root: &Path, report: &Value) {
-    let fingerprints: Vec<String> = resolve::fingerprints(report)
+    let fingerprints: Vec<String> = fingerprint::fingerprints(report)
         .values()
         .flatten()
         .map(|p| format!("{:x}", p.hash))

@@ -118,7 +118,7 @@ pub fn ignored_keys(triage: &Triage) -> std::collections::HashSet<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::brainz::resolve::{Aged, AgedEntry};
+    use crate::brainz::fingerprint::{Aged, AgedEntry};
 
     #[test]
     fn mark_matches_by_label_and_clears() {

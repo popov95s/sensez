@@ -1,14 +1,16 @@
 //! Records how the MCP server is used and how often its findings lead to real
 //! fixes. Everything stays on disk under each repo's `.sensez/local-metrics/`.
 
+mod aging;
 mod events;
+mod fingerprint;
 mod flush;
 mod hub;
 mod ranking;
 mod recapture;
 mod recording;
 mod report;
-mod resolve;
+mod staleness;
 mod store;
 mod suppression;
 mod triage;

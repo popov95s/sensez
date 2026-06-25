@@ -4,7 +4,7 @@
 //! findings that vanished. Runs on the periodic flush tick and at shutdown.
 
 use super::events::Event;
-use super::{hub, resolve, store};
+use super::{aging, fingerprint, hub, store};
 use std::path::Path;
 use std::time::UNIX_EPOCH;
 
@@ -41,10 +41,10 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>) {
     if previous.is_empty() {
         return;
     }
-    let current = resolve::fingerprints(&json);
+    let current = fingerprint::fingerprints(&json);
     let history = store::load_resolved_history(root, branch);
     let ignore = super::triage::ignored_keys(&super::triage::load(root));
-    let aging = resolve::age(&previous, &current, &history, hub::now(), &ignore);
+    let aging = aging::age(&previous, &current, &history, hub::now(), &ignore);
     if let Err(err) =
         store::save_fingerprints(root, branch, &aging.aged, &aging.history, hub::now())
     {
