@@ -3,30 +3,19 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
-fn last_gated() -> &'static Mutex<HashMap<PathBuf, u64>> {
+fn last_blocked() -> &'static Mutex<HashMap<PathBuf, u64>> {
     static MAP: OnceLock<Mutex<HashMap<PathBuf, u64>>> = OnceLock::new();
     MAP.get_or_init(|| Mutex::new(HashMap::new()))
 }
 
 pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let path = super::handlers::required_str(args, "path")?;
-    if hook_already_blocked(args) {
-        return Ok(allow());
-    }
     let root = Path::new(path);
     let Ok(changed) = crate::diff::git::changed_vs_head(root) else {
         return Ok(allow());
     };
     if changed.is_empty() {
         return Ok(allow());
-    }
-    let sig = changed.signature();
-    {
-        let mut map = last_gated().lock().unwrap_or_else(|e| e.into_inner());
-        if map.get(root) == Some(&sig) {
-            return Ok(allow());
-        }
-        map.insert(root.to_path_buf(), sig);
     }
 
     let gate_config = crate::config::model::Config::load(root)
@@ -50,6 +39,15 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
         + report.smells.len();
     if n == 0 {
         return Ok(allow());
+    }
+
+    let sig = report.finding_signature();
+    {
+        let mut map = last_blocked().lock().unwrap_or_else(|e| e.into_inner());
+        if map.get(root) == Some(&sig) {
+            return Ok(allow());
+        }
+        map.insert(root.to_path_buf(), sig);
     }
 
     let diff_report = serde_json::to_value(&report).unwrap_or(Value::Null);
@@ -86,14 +84,6 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
         ),
     });
     Ok(super::handlers::text_result(decision.to_string(), false))
-}
-
-fn hook_already_blocked(args: &Value) -> bool {
-    match args.get("stop_hook_active") {
-        Some(Value::Bool(b)) => *b,
-        Some(Value::String(s)) => s == "true",
-        _ => false,
-    }
 }
 
 fn allow() -> Value {
