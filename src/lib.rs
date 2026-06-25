@@ -1,5 +1,4 @@
 #![doc = include_str!("../README.md")]
-#![warn(rust_2018_idioms)]
 
 // Keep the crate root thin: it wires modules together and re-exports the
 // intentionally public surface for CLI and library entry points.

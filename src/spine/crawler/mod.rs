@@ -4,7 +4,7 @@
 mod explorer;
 mod generated;
 
-pub use explorer::{collect_source_files, Discovery};
+pub use explorer::Discovery;
 
 use anyhow::Result;
 use std::path::Path;

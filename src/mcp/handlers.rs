@@ -4,6 +4,8 @@ use anyhow::Context;
 use serde_json::{json, Value};
 use std::path::Path;
 use std::process::Command;
+#[cfg(feature = "eyez")]
+use std::time::Instant;
 
 pub(super) type ToolResult = Result<Value, (i64, String)>;
 
@@ -395,7 +397,6 @@ mod tests {
     /// Owns the TempDir so the directory stays alive for the test body.
     struct TestRepo {
         _tmp: tempfile::TempDir,
-        root: std::path::PathBuf,
         file: std::path::PathBuf,
         path: String,
     }
@@ -408,9 +409,8 @@ mod tests {
         }
         Some(TestRepo {
             _tmp: tmp,
-            file: root.join(scratch),
             path: root.to_string_lossy().into_owned(),
-            root,
+            file: root.join(scratch),
         })
     }
 

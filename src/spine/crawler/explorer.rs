@@ -18,11 +18,6 @@ pub struct Discovery {
     pub issues: Vec<ScanIssue>,
 }
 
-/// Per-entry predicate: should this path be kept as a source file? Generic
-/// (not a trait object) so callers can pass any `Fn(&Path) -> bool + Send +
-/// Sync` closure without an indirection.
-pub type SourceFilter<F> = F;
-
 /// Walk `root` in parallel, returning every regular file for which
 /// `is_source_file` returns `true`, minus any `exclude`-glob match.
 ///
@@ -47,7 +42,6 @@ where
         let tx = tx.clone();
         let issue_tx = issue_tx.clone();
         let excludes = excludes.clone();
-        let is_source_file = is_source_file;
         Box::new(move |entry| {
             match entry {
                 Ok(entry) => {
