@@ -9,6 +9,14 @@ use super::ChangedLines;
 use anyhow::{anyhow, Context, Result};
 use std::path::{Path, PathBuf};
 use std::process::Command;
+use std::time::Duration;
+use wait_timeout::ChildExt;
+
+/// Per-invocation wall-clock cap on the `git` subprocess. Long enough for any
+/// reasonable local operation (`diff`/`ls-files` on a large repo finishes in
+/// well under a second), short enough that a hung `git` on a network mount
+/// or a misbehaving hook does not stall the scan.
+const GIT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Working-tree changes vs `HEAD`, including untracked source files.
 pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
@@ -47,11 +55,7 @@ fn untracked_sources(root: &Path) -> Result<Vec<PathBuf>> {
 /// git is unavailable. Used to key local metrics so resolved-tracking never
 /// cross-diffs findings between branches.
 pub fn current_branch(path: &Path) -> Option<String> {
-    let output = Command::new("git")
-        .args(["rev-parse", "--abbrev-ref", "HEAD"])
-        .current_dir(path)
-        .output()
-        .ok()?;
+    let output = run_with_timeout(Command::new("git").args(["rev-parse", "--abbrev-ref", "HEAD"]), path).ok()?;
     if !output.status.success() {
         return None;
     }
@@ -65,10 +69,7 @@ pub fn current_branch(path: &Path) -> Option<String> {
 }
 
 fn run(args: &[&str], cwd: &Path) -> Result<String> {
-    let output = Command::new("git")
-        .args(args)
-        .current_dir(cwd)
-        .output()
+    let output = run_with_timeout(Command::new("git").args(args), cwd)
         .context("failed to run `git` (is it installed and on PATH?)")?;
     if !output.status.success() {
         return Err(anyhow!(
@@ -78,6 +79,50 @@ fn run(args: &[&str], cwd: &Path) -> Result<String> {
         ));
     }
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
+}
+
+/// Spawn `cmd` (already configured with args + current_dir) and wait up to
+/// [`GIT_TIMEOUT`] for completion. On timeout the child is killed and the
+/// function returns an error rather than blocking indefinitely.
+///
+/// We use a `Stdio::piped` redirect for both streams so we can read them
+/// *after* the child exits; if we let the child inherit the parent's stdio,
+/// a child that fills its pipe would block on write and the timeout would
+/// never fire (the kernel would block the child, but `wait_timeout` only
+/// ticks against wall-clock).
+fn run_with_timeout(cmd: &mut Command, cwd: &Path) -> std::io::Result<std::process::Output> {
+    use std::io::Read;
+    use std::process::Stdio;
+    cmd.current_dir(cwd);
+    cmd.stdout(Stdio::piped());
+    cmd.stderr(Stdio::piped());
+    let mut child = cmd.spawn()?;
+    match child.wait_timeout(GIT_TIMEOUT) {
+        Ok(Some(status)) => {
+            let mut stdout = Vec::new();
+            if let Some(mut pipe) = child.stdout.take() {
+                pipe.read_to_end(&mut stdout)?;
+            }
+            let mut stderr = Vec::new();
+            if let Some(mut pipe) = child.stderr.take() {
+                pipe.read_to_end(&mut stderr)?;
+            }
+            Ok(std::process::Output {
+                status,
+                stdout,
+                stderr,
+            })
+        }
+        Ok(None) => {
+            let _ = child.kill();
+            let _ = child.wait();
+            Err(std::io::Error::new(
+                std::io::ErrorKind::TimedOut,
+                format!("`git` exceeded {GIT_TIMEOUT:?}"),
+            ))
+        }
+        Err(err) => Err(err),
+    }
 }
 
 #[cfg(test)]
