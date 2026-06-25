@@ -10,7 +10,6 @@ pub(crate) mod conditionals;
 pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
-pub(crate) mod profile_macro;
 pub mod registry;
 pub mod typevocab;
 pub(crate) mod walk;
@@ -61,7 +60,9 @@ pub struct DeadCodeDefaults {
 }
 
 impl DeadCodeDefaults {
-    #[cfg(feature = "lang-rust")]
+    /// An all-empty `DeadCodeDefaults` — for profiles that don't override any
+    /// convention (JS/TS today, anything new in the future). Spread it with
+    /// `..DeadCodeDefaults::EMPTY` and only fill the fields that differ.
     pub const EMPTY: DeadCodeDefaults = DeadCodeDefaults {
         entrypoints: &[],
         entrypoint_names: &[],
@@ -77,39 +78,20 @@ pub enum DecoratorClass {
     /// No decorators (or the language has none).
     None,
     /// Structural/stdlib decorators only — no effect on liveness.
-    #[cfg(feature = "lang-python")]
     Neutral,
     /// Framework-registration decorator present — treat the symbol as live.
-    #[cfg(feature = "lang-python")]
     Registration,
     /// A bare unrecognized decorator — uncertain, downgrade confidence.
-    #[cfg(feature = "lang-python")]
     Unknown,
 }
 
 impl DecoratorClass {
     pub(crate) fn is_registration(self) -> bool {
-        #[cfg(feature = "lang-python")]
-        {
-            self == Self::Registration
-        }
-        #[cfg(not(feature = "lang-python"))]
-        {
-            let _ = self;
-            false
-        }
+        matches!(self, Self::Registration)
     }
 
     pub(crate) fn is_unknown(self) -> bool {
-        #[cfg(feature = "lang-python")]
-        {
-            self == Self::Unknown
-        }
-        #[cfg(not(feature = "lang-python"))]
-        {
-            let _ = self;
-            false
-        }
+        matches!(self, Self::Unknown)
     }
 }
 
@@ -143,6 +125,19 @@ pub trait DeadCodeProfile: Send + Sync {
         paths: Option<&Vec<String>>,
         user_entrypoints: &HashSet<String>,
     ) -> DecoratorClass;
+    /// True when `symbol` is *uninteresting* dead code by language convention
+    /// (underscore-prefix in Python/Rust, `test_` prefix in Python, etc.) and
+    /// should be skipped from dead-code findings. **The exact meaning is
+    /// per-language**:
+    ///
+    /// - Python: `_<name>` or `test_<name>` (private/test).
+    /// - Rust: `<name>` starting with `_` (intentionally unused binding).
+    /// - JS/TS: never — no enforced convention.
+    ///
+    /// Reaching this method from a smell detector means a symbol the
+    /// reachability pass already failed to credit through the import graph;
+    /// the language convention decides whether to *suppress* that finding
+    /// entirely (true) or surface it at the default confidence (false).
     fn is_conventionally_private(&self, symbol: &str) -> bool;
     fn is_entry_file_stem(&self, stem: &str) -> bool;
     fn dead_code_defaults(&self) -> DeadCodeDefaults;
