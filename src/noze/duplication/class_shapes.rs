@@ -16,7 +16,7 @@ pub fn detect(
         same_name_findings(&classes)
     } else {
         Vec::new()
-    }; // todo: fix
+    };
     if min_overlap > 0 {
         out.extend(property_overlap_findings(&classes, min_overlap));
     }

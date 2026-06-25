@@ -8,8 +8,7 @@ pub use crate::spine::ir::tokens;
 #[allow(unused_imports)]
 pub use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 pub use crate::spine::ir::{
-    ClassProperty, ClassUnit, FunctionUnit, ImportContext, ImportPhase, SymbolKind, TypeHints,
-    Walked,
+    ClassProperty, FunctionUnit, ImportContext, ImportPhase, SymbolKind, Walked,
 };
 
 use crate::profiles::{registry, Language, ParseProfile};
@@ -124,6 +123,12 @@ pub fn parse_source(
 
 /// Iterative (cursor-based, no recursion) tree depth, capped at `limit + 1`
 /// so adversarial input can't make the measurement itself expensive.
+///
+/// Returns the maximum depth of any node. **The root counts as depth 1** —
+/// `tree_depth(leaf, 100)` returns `1` for a single-node tree and `2` for a
+/// flat `program` with one child, matching the convention tree-sitter uses
+/// for `Node::descendant_count`/`Tree::root_node`. Callers comparing against
+/// `MAX_TREE_DEPTH` should treat the root as the first level.
 fn tree_depth(root: tree_sitter::Node, limit: usize) -> usize {
     let mut cursor = root.walk();
     let mut depth = 0usize;

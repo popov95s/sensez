@@ -2,7 +2,7 @@
 //! extracts imports/declarations while tracking a lexical scope stack.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
-use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, Scope};
+use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope};
 use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
 use std::collections::HashSet;
@@ -25,14 +25,13 @@ fn visit(
     let kind = node.kind();
 
     // ES imports / re-exports: extracted, not descended into.
-    if token_map_is_import(kind) {
+    if imports::is_import_statement(kind) {
         let enclosing = scope.last().map(|s| s.name.as_str());
         let ctxs = imports::extract(node, src, module_name, enclosing);
         if !ctxs.is_empty() {
             out.symbols.imports.extend(ctxs);
             return;
         }
-        // `export const x = …` (no source) falls through to record the decl.
     }
 
     // CommonJS / dynamic `require("…")` / `import("…")`: record an edge, but
@@ -116,11 +115,6 @@ fn visit(
     }
 }
 
-/// Statements carrying a module specifier (handled like Python imports).
-fn token_map_is_import(kind: &str) -> bool {
-    imports::is_import_statement(kind)
-}
-
 /// Per-unit structural summaries + type hints for the design-smell pillar.
 /// `scope` still reflects the *enclosing* scope here (the current node is pushed
 /// afterward), so a function directly inside a class is a method and a function
@@ -156,9 +150,7 @@ fn record_units(node: Node, src: &[u8], kind: &str, scope: &[Scope], out: &mut W
 fn record_declarations(node: Node, src: &[u8], kind: &str, scope: &[Scope], out: &mut Walked) {
     if kind == "method_definition" && scope.last().is_some_and(|s| s.is_class) {
         if let Some(name) = symbols::def_name(node, src) {
-            out.symbols
-                .methods
-                .push((name, node.start_position().row + 1));
+            register_method(out, name, node.start_position().row + 1);
         }
     }
 

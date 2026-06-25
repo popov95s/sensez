@@ -2,7 +2,7 @@
 
 use crate::report::{ActionLevel, AnalysisReport, Confidence, Severity};
 use colored::Colorize;
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 
 pub fn render(report: &AnalysisReport, explain: bool) -> String {
@@ -131,15 +131,18 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
     );
     let mut seen_suggestions: HashSet<String> = HashSet::new();
     let mut current_smell_kind = "";
+    let shown_by_kind: HashMap<&str, usize> = {
+        let mut counts: HashMap<&str, usize> = HashMap::new();
+        for smell in &report.smells {
+            *counts.entry(smell.kind.as_str()).or_insert(0) += 1;
+        }
+        counts
+    };
     for finding in &report.smells {
         let kind = finding.kind.as_str();
         if kind != current_smell_kind {
             current_smell_kind = kind;
-            let shown = report
-                .smells
-                .iter()
-                .filter(|smell| smell.kind == finding.kind)
-                .count();
+            let shown = shown_by_kind.get(kind).copied().unwrap_or(0);
             let total = report.meta.smell_totals.get(kind).copied().unwrap_or(shown);
             let suffix = if shown < total {
                 format!(" {}", format!("(showing top {shown})").dimmed())

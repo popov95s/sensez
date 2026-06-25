@@ -118,7 +118,9 @@ fn node_matches(matcher: &Matcher, node: &ModuleNode) -> bool {
 /// dotted module/import target even when it didn't resolve to a file on disk).
 fn matches_name(matcher: &Matcher, name: &str) -> bool {
     match matcher {
-        Matcher::Prefix(prefix) => name == *prefix || name.starts_with(&format!("{prefix}.")),
+        Matcher::Prefix(prefix) => name
+            .strip_prefix(prefix.as_str())
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with('.')),
         Matcher::Glob(set) => {
             set.is_match(Path::new(name)) || set.is_match(Path::new(&name.replace('.', "/")))
         }

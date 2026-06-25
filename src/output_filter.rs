@@ -81,25 +81,34 @@ impl OutputPathFilter {
     }
 
     fn matches(&self, path: &Path) -> bool {
-        self.glob_matches(path)
-            || path
-                .strip_prefix(&self.root)
-                .ok()
-                .is_some_and(|relative| self.glob_matches(relative))
-            || self.component_patterns.iter().any(|pattern| {
-                path.components()
-                    .any(|component| component.as_os_str().to_str() == Some(pattern.as_str()))
-                    || path.strip_prefix(&self.root).ok().is_some_and(|relative| {
-                        relative.components().any(|component| {
-                            component.as_os_str().to_str() == Some(pattern.as_str())
-                        })
-                    })
-            })
+        self.glob_matches(path) || self.component_matches(path)
     }
 
     fn glob_matches(&self, path: &Path) -> bool {
-        self.globs.is_match(path)
+        if self.globs.is_match(path) {
+            return true;
+        }
+        path.strip_prefix(&self.root)
+            .ok()
+            .is_some_and(|relative| self.globs.is_match(relative))
     }
+
+    fn component_matches(&self, path: &Path) -> bool {
+        self.component_patterns
+            .iter()
+            .any(|pattern| path_has_component(path, pattern) || relative_has_component(path, &self.root, pattern))
+    }
+}
+
+fn path_has_component(path: &Path, pattern: &str) -> bool {
+    path.components()
+        .any(|c| c.as_os_str() == pattern)
+}
+
+fn relative_has_component(path: &Path, root: &Path, pattern: &str) -> bool {
+    path.strip_prefix(root)
+        .ok()
+        .is_some_and(|relative| path_has_component(relative, pattern))
 }
 
 fn is_single_literal_component(pattern: &str) -> bool {

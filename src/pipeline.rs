@@ -22,7 +22,7 @@ pub fn analyze_path(
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
-    let timer = PhaseTimer::start();
+    let mut timer = PhaseTimer::start();
     let discovery = crawler::discover(path, &config.exclude)
         .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
@@ -48,13 +48,16 @@ pub fn analyze_path(
     timer.lap("analyze");
 
     if let Some(changed) = diff {
-        let module_files: HashMap<String, PathBuf> = graph
-            .graph
-            .node_indices()
-            .map(|i| &graph.graph[i])
-            .filter(|n| !n.is_external)
-            .map(|n| (n.module_name.clone(), n.file_path.clone()))
-            .collect();
+        let mut module_files: HashMap<String, PathBuf> = HashMap::new();
+        for idx in graph.graph.node_indices() {
+            let n = &graph.graph[idx];
+            if n.is_external {
+                continue;
+            }
+            module_files
+                .entry(n.module_name.clone())
+                .or_insert_with(|| n.file_path.clone());
+        }
         crate::diff::apply(&mut report, changed, &module_files);
     }
     Ok(report)
@@ -62,30 +65,32 @@ pub fn analyze_path(
 
 /// Opt-in per-phase tracing (`SENSEZ_TIMING=1`).
 struct PhaseTimer {
-    start: Option<std::time::Instant>,
-    last: std::cell::Cell<std::time::Instant>,
+    enabled: bool,
+    start: std::time::Instant,
+    last: std::time::Instant,
 }
 
 impl PhaseTimer {
     fn start() -> Self {
-        let on = std::env::var_os("SENSEZ_TIMING").is_some();
         let now = std::time::Instant::now();
-        PhaseTimer {
-            start: on.then_some(now),
-            last: std::cell::Cell::new(now),
+        Self {
+            enabled: std::env::var_os("SENSEZ_TIMING").is_some(),
+            start: now,
+            last: now,
         }
     }
 
-    fn lap(&self, label: &str) {
-        if let Some(start) = self.start {
-            let now = std::time::Instant::now();
-            eprintln!(
-                "[timing] {label:<8} {:>7.1}ms  (cumulative {:.1}ms)",
-                (now - self.last.get()).as_secs_f64() * 1e3,
-                (now - start).as_secs_f64() * 1e3,
-            );
-            self.last.set(now);
+    fn lap(&mut self, label: &str) {
+        if !self.enabled {
+            return;
         }
+        let now = std::time::Instant::now();
+        eprintln!(
+            "[timing] {label:<8} {:>7.1}ms  (cumulative {:.1}ms)",
+            (now - self.last).as_secs_f64() * 1e3,
+            (now - self.start).as_secs_f64() * 1e3,
+        );
+        self.last = now;
     }
 }
 
