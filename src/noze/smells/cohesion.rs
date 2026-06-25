@@ -11,9 +11,9 @@
 
 use super::make;
 use super::union_find::{find, union};
-use crate::config::smells::Smells;
+use super::SmellContext;
 use crate::noze::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::{ClassUnit, ParsedFile};
+use crate::spine::ir::{ClassUnit, FunctionMetrics};
 use std::collections::HashMap;
 
 /// Minimum instance-stateful methods before LCOM is meaningful. With one or
@@ -22,13 +22,18 @@ use std::collections::HashMap;
 /// does "the methods split into islands" carry a divergent-change signal.
 const MIN_STATEFUL_METHODS: usize = 3;
 
-pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
-    for class in &file.walked.units.classes {
-        divergent_change(class, file, out);
+pub fn detect(
+    ctx: &SmellContext<'_>,
+    _metrics: &[FunctionMetrics],
+    classes: &[ClassUnit],
+    out: &mut Vec<SmellFinding>,
+) {
+    for class in classes {
+        divergent_change(ctx, class, out);
     }
 }
 
-fn divergent_change(class: &ClassUnit, file: &ParsedFile, out: &mut Vec<SmellFinding>) {
+fn divergent_change(ctx: &SmellContext<'_>, class: &ClassUnit, out: &mut Vec<SmellFinding>) {
     // Data classes (Pydantic / settings / enums) hold fields, not behavior.
     if class.bases.iter().any(|b| is_data_base(b)) {
         return;
@@ -53,7 +58,7 @@ fn divergent_change(class: &ClassUnit, file: &ParsedFile, out: &mut Vec<SmellFin
                 "class splits into {components} cohesion clusters (low LCOM) — \
                  prone to divergent change"
             ),
-            &file.path,
+            ctx.path,
             class.start_line,
             &class.name,
             Severity::Warning,

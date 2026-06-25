@@ -5,13 +5,18 @@
 //! base-method comparison is a future refinement (the import graph carries the
 //! edge); this conservative form flags clear stub-heavy overrides.
 
-use super::make;
+use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::ParsedFile;
+use crate::spine::ir::ClassUnit;
 
-pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
-    for class in &file.walked.units.classes {
+pub fn detect(
+    ctx: &SmellContext<'_>,
+    classes: &[ClassUnit],
+    _cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    for class in classes {
         // No bases, or the class is itself abstract (an ABC declaring abstract
         // methods is correct, not a refused bequest).
         if class.bases.is_empty() || class.is_abstract {
@@ -28,7 +33,7 @@ pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
                      despite inheriting {} — refused bequest",
                     class.bases.join(", ")
                 ),
-                &file.path,
+                ctx.path,
                 class.start_line,
                 &class.name,
                 Severity::Warning,

@@ -4,10 +4,22 @@
 //! annotation, no obvious instantiation) the smell is skipped — we never guess.
 
 use super::make;
+use super::SmellContext;
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::{ParsedFile, TypeHints};
-use std::collections::HashSet;
+use crate::spine::ir::{FunctionMetrics, TypeHints};
+use std::collections::{HashMap, HashSet};
+
+/// Per-file view of cross-function facts only Feature Envy /
+/// Inappropriate Intimacy read. Bundled so neither smell has to reach back
+/// into the full `ParsedFile` just to fetch a usage table.
+pub(super) struct UsageFacts {
+    /// Base identifier → distinct attribute names accessed on it
+    /// (`obj.attr` per function, unioned file-wide). Consumed by
+    /// Inappropriate Intimacy to flag a non-`self` receiver reaching into
+    /// the private members of a class defined in this file.
+    pub attribute_accesses: HashMap<String, HashSet<String>>,
+}
 
 /// Minimum external member touches before envy is worth reporting. One or two
 /// touches of another object is ordinary collaboration; three+ dereferences of
@@ -16,19 +28,26 @@ use std::collections::HashSet;
 /// flag every delegating wrapper.
 const ENVY_FLOOR: usize = 3;
 
-pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
-    feature_envy(file, out);
-    inappropriate_intimacy(file, out);
+pub fn detect(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionMetrics],
+    usage: &UsageFacts,
+    locals: &HashSet<&str>,
+    _cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    feature_envy(ctx, metrics, out);
+    inappropriate_intimacy(ctx, usage, locals, out);
 }
 
-fn feature_envy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
-    for func in &file.walked.units.functions {
+fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionMetrics], out: &mut Vec<SmellFinding>) {
+    for m in metrics {
         // Feature envy is about a *method* neglecting its own object's data. Free
         // functions (endpoints, helpers) have no "own data", so they can't envy.
-        if !func.is_method {
+        if !m.is_method {
             continue;
         }
-        let self_uses = func.receiver_access.get("self").copied().unwrap_or(0);
+        let self_uses = m.receiver_access.get("self").copied().unwrap_or(0);
         if self_uses == 0 {
             continue; // a method that never touches self has no own data to neglect
         }
@@ -37,7 +56,7 @@ fn feature_envy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
         // HashMap, and a bare `max_by_key` would otherwise return whichever tied
         // receiver iteration yields last — which, combined with the type-resolve
         // gate below, made the finding flip on/off run to run.
-        let envied = func
+        let envied = m
             .receiver_access
             .iter()
             .filter(|(r, _)| r.as_str() != "self")
@@ -50,7 +69,7 @@ fn feature_envy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
             continue;
         }
         // Resolve the receiver's type; skip if unknown (precision over recall).
-        let Some(ty) = resolve_type(&func.name, receiver, &file.walked.units.type_hints) else {
+        let Some(ty) = resolve_type(&m.name, receiver, ctx.type_hints) else {
             continue;
         };
         out.push(make(
@@ -59,9 +78,9 @@ fn feature_envy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
                 "accesses `{receiver}` ({ty}) {count}× vs. own data {self_uses}× — \
                  behavior may belong on {ty}"
             ),
-            &file.path,
-            func.start_line,
-            &func.name,
+            ctx.path,
+            m.start_line,
+            &m.name,
             Severity::Warning,
             count as u32,
             self_uses as u32,
@@ -69,19 +88,17 @@ fn feature_envy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
     }
 }
 
-fn inappropriate_intimacy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
-    let locals: HashSet<&str> = file
-        .walked
-        .units
-        .classes
-        .iter()
-        .map(|c| c.name.as_str())
-        .collect();
-    for (base, attrs) in &file.walked.usage.attribute_accesses {
+fn inappropriate_intimacy(
+    ctx: &SmellContext<'_>,
+    usage: &UsageFacts,
+    locals: &HashSet<&str>,
+    out: &mut Vec<SmellFinding>,
+) {
+    for (base, attrs) in &usage.attribute_accesses {
         if base == "self" {
             continue;
         }
-        let Some(ty) = file.walked.units.type_hints.var_types.get(base) else {
+        let Some(ty) = ctx.type_hints.var_types.get(base) else {
             continue;
         };
         if !locals.contains(ty.as_str()) {
@@ -98,9 +115,9 @@ fn inappropriate_intimacy(file: &ParsedFile, out: &mut Vec<SmellFinding>) {
                 SmellKind::InappropriateIntimacy,
                 format!(
                     "`{base}` ({ty}) reaches into private member(s): {}",
-                    join(&privates)
+                    privates.join(", ")
                 ),
-                &file.path,
+                ctx.path,
                 0,
                 base,
                 Severity::Info,
@@ -118,8 +135,4 @@ fn resolve_type(func: &str, name: &str, hints: &TypeHints) -> Option<String> {
         .get(&(func.to_string(), name.to_string()))
         .or_else(|| hints.var_types.get(name))
         .cloned()
-}
-
-fn join(items: &[&str]) -> String {
-    items.join(", ")
 }

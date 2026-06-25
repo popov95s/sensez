@@ -23,11 +23,33 @@ use crate::globs::build_globset;
 use crate::noze::{ActionLevel, Severity, SmellFinding, SmellKind};
 use crate::profiles::Language;
 use crate::spine::graph::CodebaseGraph;
+use crate::spine::ir::{FunctionMetrics, TypeHints};
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
 use rayon::prelude::*;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::path::Path;
+
+/// Per-file context every smell detector needs: the path (for finding
+/// anchors), the language (for type-vocab + structure-target messages), and
+/// the type-hint table (for type-assisted smells). Bundling these into one
+/// struct trims the per-detector argument list and makes it clear that
+/// "function-local" detectors do not, in fact, get access to the graph.
+pub(super) struct SmellContext<'a> {
+    pub path: &'a Path,
+    pub language: Language,
+    pub type_hints: &'a TypeHints,
+}
+
+impl<'a> SmellContext<'a> {
+    pub fn from_file(file: &'a ParsedFile) -> Self {
+        Self {
+            path: &file.path,
+            language: file.language,
+            type_hints: &file.walked.units.type_hints,
+        }
+    }
+}
 
 /// Detect every enabled smell across the corpus. Each file is analyzed with the
 /// knob set resolved for its language ([`SmellConfig::for_language`]).
@@ -56,16 +78,30 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
 /// using the already-resolved per-language knob set. This is the set a future
 /// live/in-editor mode would run per buffer.
 pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
+    let ctx = SmellContext::from_file(file);
+    let metrics: Vec<FunctionMetrics> = file
+        .walked
+        .units
+        .functions
+        .iter()
+        .map(FunctionMetrics::from)
+        .collect();
+
     let mut out = Vec::new();
-    complexity::detect(file, cfg, &mut out);
-    size::detect(file, cfg, &mut out);
-    structural::detect(file, cfg, &mut out);
-    cohesion::detect(file, cfg, &mut out);
-    coupling::detect(file, cfg, &mut out);
-    inherit::detect(file, cfg, &mut out);
-    typing::detect(file, cfg, &mut out);
-    mutation::detect(file, cfg, &mut out);
-    performance::detect(file, cfg, &mut out);
+    let classes = file.walked.units.classes.as_slice();
+    let usage = coupling::UsageFacts {
+        attribute_accesses: file.walked.usage.attribute_accesses.clone(),
+    };
+    let locals: HashSet<&str> = classes.iter().map(|c| c.name.as_str()).collect();
+    complexity::detect(&ctx, &metrics, cfg, &mut out);
+    size::detect(&ctx, &metrics, cfg, classes, &mut out);
+    structural::detect(&ctx, &metrics, cfg, &mut out);
+    cohesion::detect(&ctx, &metrics, classes, &mut out);
+    coupling::detect(&ctx, &metrics, &usage, &locals, cfg, &mut out);
+    inherit::detect(&ctx, classes, cfg, &mut out);
+    typing::detect(&ctx, &metrics, cfg, &mut out);
+    mutation::detect(&ctx, &metrics, cfg, &mut out);
+    performance::detect(&ctx, &metrics, cfg, &mut out);
     // Uniform per-smell on/off: drop any kind disabled for this language.
     if !cfg.disabled.is_empty() {
         out.retain(|f| !cfg.disabled.contains(&f.kind));
@@ -99,7 +135,6 @@ fn apply_rule_actions(findings: &mut [SmellFinding], files: &[&ParsedFile], cfg:
 /// body-aware `--diff` scoping. A finding whose anchor matches no unit keeps
 /// `end_line == line` (single-line scope).
 fn fill_spans(file: &ParsedFile, out: &mut [SmellFinding]) {
-    use std::collections::HashMap;
     let mut span: HashMap<usize, usize> = HashMap::new();
     for f in &file.walked.units.functions {
         span.insert(f.start_line, f.end_line);

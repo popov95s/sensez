@@ -15,7 +15,7 @@ pub use import_context::{ImportContext, ImportPhase};
 pub use performance::{CallFact, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
-pub use units::{ClassProperty, ClassUnit, FunctionUnit, TypeHints};
+pub use units::{ClassProperty, ClassUnit, FunctionMetrics, FunctionUnit, TypeHints};
 
 use std::collections::{HashMap, HashSet};
 

@@ -65,6 +65,85 @@ pub struct FunctionUnit {
     pub parent: String,
 }
 
+/// A smell-detector view of one function: the aggregated metrics + the anchor
+/// data (name, line range) needed to build a [`SmellFinding`]. Built from a
+/// [`FunctionUnit`] via [`From`], so detectors work against a fixed type
+/// instead of reaching into the language-neutral IR's full field set.
+#[derive(Debug, Clone, Default)]
+pub struct FunctionMetrics {
+    // Anchor info — needed to make a `SmellFinding`.
+    pub name: String,
+    pub start_line: usize,
+    pub end_line: usize,
+    pub param_names: Vec<String>,
+
+    // Categorization — the smell layer routes "is this a method?" and "is
+    // this nested?" off the same flags the walker fills.
+    pub is_method: bool,
+    pub is_nested: bool,
+    pub parent: String,
+
+    // Complexity
+    pub max_nesting: usize,
+    pub return_count: usize,
+    pub branch_count: usize,
+    pub collapsible_nested_ifs: usize,
+    pub cognitive: usize,
+
+    // Size / shape
+    pub max_tuple_return: usize,
+    pub magic_numbers: usize,
+
+    // Coupling
+    pub max_chain_depth: usize,
+    pub receiver_access: HashMap<String, usize>,
+    pub str_keys: HashMap<String, HashSet<String>>,
+
+    // Mutation
+    pub mutated_names: HashSet<String>,
+    pub attr_mutated_names: HashSet<String>,
+    pub literal_membership_tests: usize,
+    pub local_reassigns: HashMap<String, usize>,
+    pub short_string_fallback_lines: Vec<usize>,
+
+    // Performance
+    pub performance: PerformanceFacts,
+}
+
+impl From<&FunctionUnit> for FunctionMetrics {
+    fn from(f: &FunctionUnit) -> Self {
+        // Cloning the maps/sets is a small, fixed per-function cost (one
+        // smell pass per file, the smell layer already owns the rest of the
+        // file's work). We pay it once per function to give the detectors
+        // an immutable, owned view that doesn't borrow from the parser IR.
+        Self {
+            name: f.name.clone(),
+            start_line: f.start_line,
+            end_line: f.end_line,
+            param_names: f.param_names.clone(),
+            is_method: f.is_method,
+            is_nested: f.is_nested,
+            parent: f.parent.clone(),
+            max_nesting: f.max_nesting,
+            return_count: f.return_count,
+            branch_count: f.branch_count,
+            collapsible_nested_ifs: f.collapsible_nested_ifs,
+            cognitive: f.cognitive,
+            max_tuple_return: f.max_tuple_return,
+            magic_numbers: f.magic_numbers,
+            max_chain_depth: f.max_chain_depth,
+            receiver_access: f.receiver_access.clone(),
+            str_keys: f.str_keys.clone(),
+            mutated_names: f.mutated_names.clone(),
+            attr_mutated_names: f.attr_mutated_names.clone(),
+            literal_membership_tests: f.literal_membership_tests,
+            local_reassigns: f.local_reassigns.clone(),
+            short_string_fallback_lines: f.short_string_fallback_lines.clone(),
+            performance: f.performance.clone(),
+        }
+    }
+}
+
 /// Per-class structural summary used by the design-smell pillar.
 #[derive(Debug, Clone, Default)]
 pub struct ClassUnit {

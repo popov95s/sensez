@@ -1,13 +1,18 @@
 //! Cyclomatic and cognitive complexity per function.
 
-use super::make;
+use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::ParsedFile;
+use crate::spine::ir::FunctionMetrics;
 
-pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
-    for func in &file.walked.units.functions {
-        let cyclomatic = func.branch_count + 1;
+pub fn detect(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionMetrics],
+    cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    for m in metrics {
+        let cyclomatic = m.branch_count + 1;
         if cfg.cyclomatic_complexity && cyclomatic > cfg.max_cyclomatic {
             let sev = if cyclomatic > cfg.max_cyclomatic * 2 {
                 Severity::Critical
@@ -20,16 +25,16 @@ pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
                     "cyclomatic complexity {cyclomatic} (threshold {})",
                     cfg.max_cyclomatic
                 ),
-                &file.path,
-                func.start_line,
-                &func.name,
+                ctx.path,
+                m.start_line,
+                &m.name,
                 sev,
                 cyclomatic as u32,
                 cfg.max_cyclomatic as u32,
             ));
         }
-        if func.cognitive > cfg.max_cognitive {
-            let sev = if func.cognitive > cfg.max_cognitive * 2 {
+        if m.cognitive > cfg.max_cognitive {
+            let sev = if m.cognitive > cfg.max_cognitive * 2 {
                 Severity::Critical
             } else {
                 Severity::Warning
@@ -38,13 +43,13 @@ pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
                 SmellKind::HighCognitiveComplexity,
                 format!(
                     "cognitive complexity {} (threshold {})",
-                    func.cognitive, cfg.max_cognitive
+                    m.cognitive, cfg.max_cognitive
                 ),
-                &file.path,
-                func.start_line,
-                &func.name,
+                ctx.path,
+                m.start_line,
+                &m.name,
                 sev,
-                func.cognitive as u32,
+                m.cognitive as u32,
                 cfg.max_cognitive as u32,
             ));
         }

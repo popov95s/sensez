@@ -8,55 +8,56 @@
 //! - `boolean_blindness`: more than `max_bool_params` bool parameters.
 //! - `tuple_packing`: position-based grouped data in returns.
 
-use super::{grouped_value_target, make, structure_target};
+use super::{grouped_value_target, make, structure_target, SmellContext};
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
 use crate::profiles::typevocab::{base_type, is_bool_type, is_loose};
-use crate::spine::parser::{FunctionUnit, ParsedFile};
+use crate::spine::ir::FunctionMetrics;
 
-pub fn detect(file: &ParsedFile, cfg: &Smells, out: &mut Vec<SmellFinding>) {
-    for func in &file.walked.units.functions {
-        boolean_blindness(file, func, cfg, out);
+pub fn detect(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionMetrics],
+    cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    for m in metrics {
+        boolean_blindness(ctx, m, cfg, out);
 
         if cfg.loose_typing {
-            loose_typing(file, func, out);
+            loose_typing(ctx, m, out);
         }
-        if cfg.magic_string_default && !func.short_string_fallback_lines.is_empty() {
-            magic_string_default(file, func, out);
+        if cfg.magic_string_default && !m.short_string_fallback_lines.is_empty() {
+            magic_string_default(ctx, m, out);
         }
         if cfg.tuple_packing {
-            tuple_packing(file, func, cfg, out);
+            tuple_packing(ctx, m, cfg, out);
         }
     }
 }
 
 /// One finding per function listing every loosely-typed param (and the return).
-fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFinding>) {
+fn loose_typing(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<SmellFinding>) {
     let mut offenders: Vec<String> = Vec::new();
-    for p in &func.param_names {
+    for p in &m.param_names {
         if matches!(p.as_str(), "self" | "cls" | "args" | "kwargs") {
             continue;
         }
-        if let Some(ty) = file
-            .walked
-            .units
+        if let Some(ty) = ctx
             .type_hints
             .param_types
-            .get(&(func.name.clone(), p.clone()))
+            .get(&(m.name.clone(), p.clone()))
         {
-            if is_loose(file.language, ty) {
+            if is_loose(ctx.language, ty) {
                 offenders.push(format!("{p}: {ty}"));
             }
         }
     }
     // Tuple returns are tuple_packing's finding — don't double-report here.
-    let ret = file
-        .walked
-        .units
+    let ret = ctx
         .type_hints
         .return_types
-        .get(&func.name)
-        .filter(|ty| is_loose(file.language, ty) && !matches!(base_type(ty), "tuple" | "Tuple"));
+        .get(&m.name)
+        .filter(|ty| is_loose(ctx.language, ty) && !matches!(base_type(ty), "tuple" | "Tuple"));
     if offenders.is_empty() && ret.is_none() {
         return;
     }
@@ -79,11 +80,11 @@ fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFindi
         format!(
             "{} — replace loose collections with {}",
             parts.join("; "),
-            structure_target(file.language)
+            structure_target(ctx.language)
         ),
-        &file.path,
-        func.start_line,
-        &func.name,
+        ctx.path,
+        m.start_line,
+        &m.name,
         severity,
         (offenders.len() + ret.is_some() as usize) as u32,
         0,
@@ -91,22 +92,22 @@ fn loose_typing(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFindi
 }
 
 /// Fallback string literals used to paper over optional/nullable values.
-fn magic_string_default(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<SmellFinding>) {
-    let line = func
+fn magic_string_default(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<SmellFinding>) {
+    let line = m
         .short_string_fallback_lines
         .first()
         .copied()
-        .unwrap_or(func.start_line);
-    let count = func.short_string_fallback_lines.len();
+        .unwrap_or(m.start_line);
+    let count = m.short_string_fallback_lines.len();
     out.push(make(
         SmellKind::MagicStringDefault,
         format!(
             "{} fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) — hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
             count
         ),
-        &file.path,
+        ctx.path,
         line,
-        &func.name,
+        &m.name,
         Severity::Warning,
         count as u32,
         0,
@@ -115,30 +116,24 @@ fn magic_string_default(file: &ParsedFile, func: &FunctionUnit, out: &mut Vec<Sm
 
 /// More than `max_bool_params` bool-annotated parameters.
 fn boolean_blindness(
-    file: &ParsedFile,
-    func: &FunctionUnit,
+    ctx: &SmellContext<'_>,
+    m: &FunctionMetrics,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
-    let bools = func
+    let bools = m
         .param_names
         .iter()
-        .filter_map(|p| {
-            file.walked
-                .units
-                .type_hints
-                .param_types
-                .get(&(func.name.clone(), p.clone()))
-        })
-        .filter(|ty| is_bool_type(file.language, ty))
+        .filter_map(|p| ctx.type_hints.param_types.get(&(m.name.clone(), p.clone())))
+        .filter(|ty| is_bool_type(ctx.language, ty))
         .count();
     if bools > cfg.max_bool_params {
         out.push(make(
             SmellKind::BooleanBlindness,
             format!("{bools} boolean parameters — call sites are unreadable; consider an Enum or splitting the function"),
-            &file.path,
-            func.start_line,
-            &func.name,
+            ctx.path,
+            m.start_line,
+            &m.name,
             Severity::Warning,
             bools as u32,
             cfg.max_bool_params as u32,
@@ -149,31 +144,29 @@ fn boolean_blindness(
 /// Bare tuple returns (`return a, b, c`) or `tuple[...]` return annotations
 /// wider than `max_tuple_return` — position-based grouped data.
 fn tuple_packing(
-    file: &ParsedFile,
-    func: &FunctionUnit,
+    ctx: &SmellContext<'_>,
+    m: &FunctionMetrics,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
-    let annotated = file
-        .walked
-        .units
+    let annotated = ctx
         .type_hints
         .return_types
-        .get(&func.name)
+        .get(&m.name)
         .filter(|ty| matches!(base_type(ty), "tuple" | "Tuple"))
         .map(|ty| tuple_arity(ty))
         .unwrap_or(0);
-    let arity = func.max_tuple_return.max(annotated);
+    let arity = m.max_tuple_return.max(annotated);
     if arity > cfg.max_tuple_return {
         out.push(make(
             SmellKind::TuplePacking,
             format!(
                 "returns a {arity}-element tuple — positional grouped data; consider {}",
-                grouped_value_target(file.language)
+                grouped_value_target(ctx.language)
             ),
-            &file.path,
-            func.start_line,
-            &func.name,
+            ctx.path,
+            m.start_line,
+            &m.name,
             Severity::Info,
             arity as u32,
             cfg.max_tuple_return as u32,

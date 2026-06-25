@@ -1,73 +1,77 @@
 //! Performance-oriented local smells.
 
+use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::noze::{Severity, SmellFinding, SmellKind};
 use crate::profiles::{registry, PerformanceProfile};
-use crate::spine::ir::{CallFact, FunctionUnit, PerfLine};
-use crate::spine::parser::ParsedFile;
+use crate::spine::ir::{CallFact, FunctionMetrics, PerfLine};
 use std::collections::BTreeMap;
 
-pub fn detect(file: &ParsedFile, _cfg: &Smells, out: &mut Vec<SmellFinding>) {
-    let functions: BTreeMap<&str, &FunctionUnit> = file
-        .walked
-        .units
-        .functions
-        .iter()
-        .map(|f| (f.name.as_str(), f))
-        .collect();
-    let profile = registry::performance_profile(file.language);
-    for function in &file.walked.units.functions {
-        direct_findings(file, function, &functions, profile, out);
-        helper_findings(file, function, &functions, profile, out);
+pub fn detect(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionMetrics],
+    _cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    // Performance smells need to look up callees by name to attribute
+    // helper-in-loop work to the caller, so we keep a per-name view of the
+    // metrics by name. The map is name → *metrics*, not name → *unit*, but
+    // the only field read for the lookup is `performance`.
+    let functions: BTreeMap<&str, &FunctionMetrics> =
+        metrics.iter().map(|m| (m.name.as_str(), m)).collect();
+    let profile = registry::performance_profile(ctx.language);
+    for m in metrics {
+        direct_findings(ctx, m, &functions, profile, out);
+        helper_findings(ctx, m, &functions, profile, out);
     }
 }
 
 fn direct_findings(
-    file: &ParsedFile,
-    function: &FunctionUnit,
-    functions: &BTreeMap<&str, &FunctionUnit>,
+    ctx: &SmellContext<'_>,
+    m: &FunctionMetrics,
+    functions: &BTreeMap<&str, &FunctionMetrics>,
     profile: &dyn PerformanceProfile,
     out: &mut Vec<SmellFinding>,
 ) {
-    let nested_loops = significant_loops(&function.performance.nested_loops);
+    let nested_loops = significant_loops(&m.performance.nested_loops);
     if let Some(first) = nested_loops.first() {
         out.push(finding(
             SmellKind::NestedLoop,
-            file,
-            function,
+            ctx,
+            m,
             first.line,
             nested_loops.len(),
             "nested loop multiplies work per input item",
             Severity::Warning,
         ));
     }
-    if let Some(first) = function.performance.sorts_in_loops.first() {
+    if let Some(first) = m.performance.sorts_in_loops.first() {
         out.push(finding(
             SmellKind::SortInLoop,
-            file,
-            function,
+            ctx,
+            m,
             first.line,
-            function.performance.sorts_in_loops.len(),
+            m.performance.sorts_in_loops.len(),
             "sort inside a loop repeats O(n log n) work",
             Severity::Warning,
         ));
     }
-    for calls in repeated_iterations(function).values() {
+    for calls in repeated_iterations(m).values() {
         out.push(finding(
             SmellKind::RepeatedIteration,
-            file,
-            function,
+            ctx,
+            m,
             calls[0].line,
             calls.len(),
             "same collection is iterated multiple times in this scope",
             Severity::Warning,
         ));
     }
-    for call in external_calls(&function.performance.loop_calls, functions, profile).values() {
+    for call in external_calls(&m.performance.loop_calls, functions, profile).values() {
         out.push(finding(
             SmellKind::NPlusOneCall,
-            file,
-            function,
+            ctx,
+            m,
             call.line,
             1,
             "external-looking call runs once per loop iteration",
@@ -77,13 +81,13 @@ fn direct_findings(
 }
 
 fn helper_findings(
-    file: &ParsedFile,
-    function: &FunctionUnit,
-    functions: &BTreeMap<&str, &FunctionUnit>,
+    ctx: &SmellContext<'_>,
+    m: &FunctionMetrics,
+    functions: &BTreeMap<&str, &FunctionMetrics>,
     profile: &dyn PerformanceProfile,
     out: &mut Vec<SmellFinding>,
 ) {
-    for call in &function.performance.loop_calls {
+    for call in &m.performance.loop_calls {
         let Some(callee) = functions.get(call.target.as_str()).copied() else {
             continue;
         };
@@ -91,8 +95,8 @@ fn helper_findings(
         if !callee_loops.is_empty() {
             out.push(finding(
                 SmellKind::NestedLoop,
-                file,
-                function,
+                ctx,
+                m,
                 call.line,
                 callee_loops.len() + 1,
                 "helper called in a loop also iterates",
@@ -102,8 +106,8 @@ fn helper_findings(
         if !external_calls(&callee.performance.calls, functions, profile).is_empty() {
             out.push(finding(
                 SmellKind::NPlusOneCall,
-                file,
-                function,
+                ctx,
+                m,
                 call.line,
                 1,
                 "helper called in a loop performs external-looking calls",
@@ -113,9 +117,9 @@ fn helper_findings(
     }
 }
 
-fn repeated_iterations(function: &FunctionUnit) -> BTreeMap<&str, Vec<&CallFact>> {
+fn repeated_iterations(m: &FunctionMetrics) -> BTreeMap<&str, Vec<&CallFact>> {
     let mut by_base: BTreeMap<&str, Vec<&CallFact>> = BTreeMap::new();
-    for call in &function.performance.iteration_calls {
+    for call in &m.performance.iteration_calls {
         if !call.base.is_empty() {
             by_base.entry(call.base.as_str()).or_default().push(call);
         }
@@ -126,7 +130,7 @@ fn repeated_iterations(function: &FunctionUnit) -> BTreeMap<&str, Vec<&CallFact>
 
 fn external_calls<'a>(
     calls: &'a [CallFact],
-    functions: &BTreeMap<&str, &FunctionUnit>,
+    functions: &BTreeMap<&str, &FunctionMetrics>,
     profile: &dyn PerformanceProfile,
 ) -> BTreeMap<&'a str, &'a CallFact> {
     let mut out = BTreeMap::new();
@@ -151,19 +155,19 @@ fn significant_loops(loops: &[PerfLine]) -> Vec<&PerfLine> {
 #[allow(clippy::too_many_arguments)]
 fn finding(
     kind: SmellKind,
-    file: &ParsedFile,
-    function: &FunctionUnit,
+    ctx: &SmellContext<'_>,
+    m: &FunctionMetrics,
     line: usize,
     metric: usize,
     reason: &str,
     severity: Severity,
 ) -> SmellFinding {
-    super::make(
+    make(
         kind,
         format!("{reason}; combine the work or use a bulk operation."),
-        &file.path,
+        ctx.path,
         line,
-        &function.name,
+        &m.name,
         severity,
         metric as u32,
         1,
