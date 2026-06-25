@@ -5,53 +5,151 @@
 //! to no structural token). TS decorators are a deferred enhancement.
 
 use crate::profiles::javascript::{deadcode, performance, resolve, roots, traversal};
-use crate::profiles::profile_macro::lang_profile;
-use crate::profiles::Language;
+use crate::profiles::{
+    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+};
+use crate::spine::ir::{ImportContext, Walked};
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 
-macro_rules! ts_profile {
-    ($(#[$doc:meta])* $name:ident, $info:ident, $extensions:expr, $grammar:expr) => {
-        lang_profile! {
-            $(#[$doc])*
-            pub struct $name {
-                info: $info,
-                language: Language::TypeScript,
-                extensions: $extensions,
-                grammar: $grammar,
-                walk: traversal::walk,
-                root_for: roots::root_for,
-                module_name: roots::module_name,
-                is_package_index: roots::is_package_index,
-                containing_package: resolve::containing_package,
-                resolve_target: |import, _pkg, file, root| resolve::resolve_target(import, file, root),
-                submodule_candidate: |_target, _symbol| None,
-                decorators: false,
-                classify_decorator: deadcode::classify,
-                is_conventionally_private: deadcode::is_conventionally_private,
-                is_entry_file_stem: deadcode::is_entry_file_stem,
-                dead_code_defaults: deadcode::typescript_defaults,
-                entry_modules: |_root| Vec::new(),
-                expensive_loop_methods: performance::EXPENSIVE_LOOP_METHODS,
-                external_get_receivers: performance::EXTERNAL_GET_RECEIVERS,
-                is_containment: |_importer, _target| false,
+static TS_INFO: LanguageInfo = LanguageInfo {
+    language: Language::TypeScript,
+    extensions: &["ts"],
+};
+
+static TSX_INFO: LanguageInfo = LanguageInfo {
+    language: Language::TypeScript,
+    extensions: &["tsx"],
+};
+
+/// The TypeScript language profile (zero-sized).
+pub struct TsProfile;
+
+impl ParseProfile for TsProfile {
+    fn info(&self) -> &'static LanguageInfo {
+        &TS_INFO
+    }
+
+    fn ts_language(&self) -> tree_sitter::Language {
+        tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
+    }
+
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: u32,
+        module_name: &str,
+    ) -> Walked {
+        traversal::walk(root, src, file_id, module_name)
+    }
+}
+
+/// The TSX language profile (zero-sized).
+pub struct TsxProfile;
+
+impl ParseProfile for TsxProfile {
+    fn info(&self) -> &'static LanguageInfo {
+        &TSX_INFO
+    }
+
+    fn ts_language(&self) -> tree_sitter::Language {
+        tree_sitter_typescript::LANGUAGE_TSX.into()
+    }
+
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: u32,
+        module_name: &str,
+    ) -> Walked {
+        traversal::walk(root, src, file_id, module_name)
+    }
+}
+
+// TS and TSX share everything except the language info and the underlying
+// tree-sitter grammar, so the rest of the trait impls are identical and
+// delegated to a single generic helper. The macro equivalent used to
+// duplicate this; the duplication is gone.
+macro_rules! impl_ts_traits {
+    ($name:ident) => {
+        impl ModuleProfile for $name {
+            fn root_for(&self, file: &Path) -> PathBuf {
+                roots::root_for(file)
+            }
+
+            fn module_name(&self, file: &Path, root: &Path) -> String {
+                roots::module_name(file, root)
+            }
+
+            fn is_package_index(&self, file: &Path) -> bool {
+                roots::is_package_index(file)
+            }
+
+            fn containing_package(&self, module_name: &str, is_index: bool) -> String {
+                resolve::containing_package(module_name, is_index)
+            }
+
+            fn resolve_target(
+                &self,
+                import: &ImportContext,
+                _importer_package: &str,
+                file: &Path,
+                root: &Path,
+            ) -> String {
+                resolve::resolve_target(import, file, root)
+            }
+
+            fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {
+                None
+            }
+
+            fn is_containment(&self, _importer: &str, _target: &str) -> bool {
+                false
+            }
+        }
+
+        impl DeadCodeProfile for $name {
+            fn classify_decorator(
+                &self,
+                paths: Option<&Vec<String>>,
+                user_entrypoints: &HashSet<String>,
+            ) -> crate::profiles::DecoratorClass {
+                deadcode::classify(paths, user_entrypoints)
+            }
+
+            fn is_conventionally_private(&self, symbol: &str) -> bool {
+                deadcode::is_conventionally_private(symbol)
+            }
+
+            fn is_entry_file_stem(&self, stem: &str) -> bool {
+                deadcode::is_entry_file_stem(stem)
+            }
+
+            fn dead_code_defaults(&self) -> crate::profiles::DeadCodeDefaults {
+                deadcode::typescript_defaults()
+            }
+
+            fn entry_modules(&self, _project_root: &Path) -> Vec<String> {
+                Vec::new()
+            }
+        }
+
+        impl PerformanceProfile for $name {
+            fn is_expensive_loop_call(&self, method: &str) -> bool {
+                performance::EXPENSIVE_LOOP_METHODS.contains(&method)
+            }
+
+            fn is_external_get_receiver(&self, base: &str) -> bool {
+                performance::EXTERNAL_GET_RECEIVERS.contains(&base)
             }
         }
     };
 }
 
-ts_profile!(
-    #[doc = "The TypeScript language profile (zero-sized)."]
-    TsProfile,
-    TS_INFO,
-    &["ts"],
-    tree_sitter_typescript::LANGUAGE_TYPESCRIPT
-);
-ts_profile!(
-    #[doc = "The TSX language profile (zero-sized)."]
-    TsxProfile,
-    TSX_INFO,
-    &["tsx"],
-    tree_sitter_typescript::LANGUAGE_TSX
-);
+impl_ts_traits!(TsProfile);
+impl_ts_traits!(TsxProfile);
 
 #[cfg(test)]
 mod tests {

@@ -17,36 +17,113 @@ mod typehints;
 pub(crate) mod typevocab;
 mod units;
 
-use crate::profiles::profile_macro::lang_profile;
-use crate::profiles::Language;
-use std::path::Path;
+use crate::profiles::{
+    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+};
+use crate::spine::ir::{ImportContext, Walked};
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
 
-lang_profile! {
-    /// The Python language profile (zero-sized).
-    pub struct PythonProfile {
-        info: INFO,
-        language: Language::Python,
-        extensions: &["py", "pyi"],
-        grammar: tree_sitter_python::LANGUAGE,
-        walk: traversal::walk,
-        root_for: roots::root_for,
-        module_name: roots::module_name,
-        is_package_index: roots::is_package_index,
-        containing_package: resolve::containing_package,
+/// The Python language profile (zero-sized).
+pub struct PythonProfile;
+
+static PYTHON_INFO: LanguageInfo = LanguageInfo {
+    language: Language::Python,
+    extensions: &["py", "pyi"],
+};
+
+impl ParseProfile for PythonProfile {
+    fn info(&self) -> &'static LanguageInfo {
+        &PYTHON_INFO
+    }
+
+    fn ts_language(&self) -> tree_sitter::Language {
+        tree_sitter_python::LANGUAGE.into()
+    }
+
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: u32,
+        module_name: &str,
+    ) -> Walked {
+        traversal::walk(root, src, file_id, module_name)
+    }
+}
+
+impl ModuleProfile for PythonProfile {
+    fn root_for(&self, file: &Path) -> PathBuf {
+        roots::root_for(file)
+    }
+
+    fn module_name(&self, file: &Path, root: &Path) -> String {
+        roots::module_name(file, root)
+    }
+
+    fn is_package_index(&self, file: &Path) -> bool {
+        roots::is_package_index(file)
+    }
+
+    fn containing_package(&self, module_name: &str, is_index: bool) -> String {
+        resolve::containing_package(module_name, is_index)
+    }
+
+    fn resolve_target(
+        &self,
+        import: &ImportContext,
+        importer_package: &str,
+        _importer_file: &Path,
+        _root: &Path,
+    ) -> String {
         // Dotted-package semantics: resolution needs only the importer's package.
-        resolve_target: |import, pkg, _file, _root| resolve::resolve_target(import, pkg),
+        resolve::resolve_target(import, importer_package)
+    }
+
+    fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String> {
         // `from pkg import name` — `pkg.name` may be a submodule.
-        submodule_candidate: |target, symbol| Some(format!("{target}.{symbol}")),
-        decorators: true,
-        classify_decorator: deadcode::classify,
-        is_conventionally_private: deadcode::is_conventionally_private,
-        is_entry_file_stem: deadcode::is_entry_file_stem,
-        dead_code_defaults: deadcode::defaults,
-        entry_modules: entry_modules_from_pyproject,
-        expensive_loop_methods: performance::EXPENSIVE_LOOP_METHODS,
-        external_get_receivers: performance::EXTERNAL_GET_RECEIVERS,
+        Some(format!("{target}.{symbol}"))
+    }
+
+    fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         // `__init__` ↔ submodule mutual imports are real load-time hazards.
-        is_containment: |_importer, _target| false,
+        false
+    }
+}
+
+impl DeadCodeProfile for PythonProfile {
+    fn classify_decorator(
+        &self,
+        paths: Option<&Vec<String>>,
+        user_entrypoints: &HashSet<String>,
+    ) -> crate::profiles::DecoratorClass {
+        deadcode::classify(paths, user_entrypoints)
+    }
+
+    fn is_conventionally_private(&self, symbol: &str) -> bool {
+        deadcode::is_conventionally_private(symbol)
+    }
+
+    fn is_entry_file_stem(&self, stem: &str) -> bool {
+        deadcode::is_entry_file_stem(stem)
+    }
+
+    fn dead_code_defaults(&self) -> crate::profiles::DeadCodeDefaults {
+        deadcode::defaults()
+    }
+
+    fn entry_modules(&self, project_root: &Path) -> Vec<String> {
+        entry_modules_from_pyproject(project_root)
+    }
+}
+
+impl PerformanceProfile for PythonProfile {
+    fn is_expensive_loop_call(&self, method: &str) -> bool {
+        performance::EXPENSIVE_LOOP_METHODS.contains(&method)
+    }
+
+    fn is_external_get_receiver(&self, base: &str) -> bool {
+        performance::EXTERNAL_GET_RECEIVERS.contains(&base)
     }
 }
 
