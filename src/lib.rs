@@ -18,7 +18,6 @@ mod globs;
 #[cfg(feature = "mcp")]
 mod mcp;
 mod noze;
-mod output_filter;
 mod pipeline;
 mod profiles;
 pub mod report;

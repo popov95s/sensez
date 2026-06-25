@@ -1,12 +1,20 @@
 //! Presentation-only report filtering. This never changes scan scope: analyzers
 //! run over the full project first, then the rendered/serialized report is
 //! narrowed to findings whose source paths match the requested globs.
+//!
+//! Sits in `reporter` (not its own module) because every other type here is
+//! a view over [`crate::report::AnalysisReport`] and the filter is just
+//! another one — same data, narrower slice.
 
 use crate::report::AnalysisReport;
 use anyhow::Result;
 use globset::{Glob, GlobSet};
 use std::path::{Path, PathBuf};
 
+/// Drop findings from `report` whose source paths do not match any
+/// `--output-glob` pattern. Updates the per-pillar totals and the derived
+/// `smell_totals` / `glossary` so the rendered report stays internally
+/// consistent.
 pub fn apply(report: &mut AnalysisReport, root: &Path, patterns: &[String]) -> Result<()> {
     if patterns.is_empty() {
         return Ok(());
@@ -80,10 +88,17 @@ impl OutputPathFilter {
         })
     }
 
+    /// A path matches when **any** of the three strategies below hits. The
+    /// strategies are intentionally split (vs. one nested-closure soup) so
+    /// each rule is independently testable and so new strategies — e.g. a
+    /// case-insensitive variant — can be slotted in without a rewrite.
     fn matches(&self, path: &Path) -> bool {
         self.glob_matches(path) || self.component_matches(path)
     }
 
+    /// Strategy 1: glob match against either the path as-given or its
+    /// root-relative form. Catches the common "package-relative" case where
+    /// `--output-glob` is written the way the user thinks of the repo.
     fn glob_matches(&self, path: &Path) -> bool {
         if self.globs.is_match(path) {
             return true;
@@ -93,10 +108,15 @@ impl OutputPathFilter {
             .is_some_and(|relative| self.globs.is_match(relative))
     }
 
+    /// Strategy 2: literal path-component match. `--output-glob packages`
+    /// (no metacharacters) matches any path that has `packages` as a
+    /// directory component, so it lines up with how developers point at a
+    /// directory rather than writing `**/packages/**`.
     fn component_matches(&self, path: &Path) -> bool {
-        self.component_patterns
-            .iter()
-            .any(|pattern| path_has_component(path, pattern) || relative_has_component(path, &self.root, pattern))
+        self.component_patterns.iter().any(|pattern| {
+            path_has_component(path, pattern)
+                || relative_has_component(path, &self.root, pattern)
+        })
     }
 }
 
@@ -120,7 +140,7 @@ mod tests {
     use super::*;
     use crate::report::{
         ActionLevel, AnalysisReport, BoundaryViolation, CloneClass, CloneOccurrence, Confidence,
-        DeadCodeFinding, ReportMode, Severity, SmellFinding, SmellKind,
+        DeadCodeFinding, ReportMeta, ReportMode, Severity, SmellFinding, SmellKind,
     };
     use crate::spine::ir::SymbolKind;
 
@@ -138,7 +158,7 @@ mod tests {
                 clone_class(&["/repo/packages/a.py", "/repo/shared/copy.py"]),
                 clone_class(&["/repo/services/b.py", "/repo/shared/other.py"]),
             ],
-            meta: crate::report::ReportMeta {
+            meta: ReportMeta {
                 mode: ReportMode::Full,
                 dead_code_total: 2,
                 smells_total: 2,

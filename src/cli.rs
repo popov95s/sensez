@@ -146,7 +146,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     let mut report = crate::analyze_path(path, options.threshold, diff.changed.as_ref())?;
     report.meta.issues.extend(diff.issues);
     report.meta.files_skipped = report.meta.issues.len();
-    crate::output_filter::apply(&mut report, path, &options.output_glob)
+    crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
     output::apply(&mut report, options);
 
