@@ -55,7 +55,11 @@ fn untracked_sources(root: &Path) -> Result<Vec<PathBuf>> {
 /// git is unavailable. Used to key local metrics so resolved-tracking never
 /// cross-diffs findings between branches.
 pub fn current_branch(path: &Path) -> Option<String> {
-    let output = run_with_timeout(Command::new("git").args(["rev-parse", "--abbrev-ref", "HEAD"]), path).ok()?;
+    let output = run_with_timeout(
+        Command::new("git").args(["rev-parse", "--abbrev-ref", "HEAD"]),
+        path,
+    )
+    .ok()?;
     if !output.status.success() {
         return None;
     }

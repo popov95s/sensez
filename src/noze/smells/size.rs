@@ -28,9 +28,7 @@ pub fn detect(
             ));
         }
         // A nested def carrying real logic is hidden inside its parent.
-        if cfg.max_nested_function_lines > 0
-            && m.is_nested
-            && lines > cfg.max_nested_function_lines
+        if cfg.max_nested_function_lines > 0 && m.is_nested && lines > cfg.max_nested_function_lines
         {
             out.push(make(
                 SmellKind::HeavyNestedFunction,

@@ -41,11 +41,7 @@ fn noisy_detectors(root: &Path) -> BTreeSet<String> {
     })
 }
 
-fn demote_noisy<T>(
-    items: &mut Vec<T>,
-    prints: Option<&Vec<Print>>,
-    noisy: &BTreeSet<String>,
-) {
+fn demote_noisy<T>(items: &mut Vec<T>, prints: Option<&Vec<Print>>, noisy: &BTreeSet<String>) {
     let Some(prints) = prints else {
         return;
     };

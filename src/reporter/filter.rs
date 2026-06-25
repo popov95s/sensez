@@ -114,15 +114,13 @@ impl OutputPathFilter {
     /// directory rather than writing `**/packages/**`.
     fn component_matches(&self, path: &Path) -> bool {
         self.component_patterns.iter().any(|pattern| {
-            path_has_component(path, pattern)
-                || relative_has_component(path, &self.root, pattern)
+            path_has_component(path, pattern) || relative_has_component(path, &self.root, pattern)
         })
     }
 }
 
 fn path_has_component(path: &Path, pattern: &str) -> bool {
-    path.components()
-        .any(|c| c.as_os_str() == pattern)
+    path.components().any(|c| c.as_os_str() == pattern)
 }
 
 fn relative_has_component(path: &Path, root: &Path, pattern: &str) -> bool {

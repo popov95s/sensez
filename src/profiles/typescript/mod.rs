@@ -34,13 +34,7 @@ impl ParseProfile for TsProfile {
         tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into()
     }
 
-    fn walk(
-        &self,
-        root: tree_sitter::Node,
-        src: &[u8],
-        file_id: u32,
-        module_name: &str,
-    ) -> Walked {
+    fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         traversal::walk(root, src, file_id, module_name)
     }
 }
@@ -57,13 +51,7 @@ impl ParseProfile for TsxProfile {
         tree_sitter_typescript::LANGUAGE_TSX.into()
     }
 
-    fn walk(
-        &self,
-        root: tree_sitter::Node,
-        src: &[u8],
-        file_id: u32,
-        module_name: &str,
-    ) -> Walked {
+    fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         traversal::walk(root, src, file_id, module_name)
     }
 }

@@ -34,12 +34,17 @@ fn signature_tracks_writes() {
 
 #[test]
 fn gate_baseline_feeds_resolved_recapture() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
 
     let resp = gate(&json!({"path": repo.path, "stop_hook_active": false})).unwrap();
     assert_eq!(resp["isError"], false);
-    assert!(repo.root.join(".sensez/local-metrics/last-scan.json").exists());
+    assert!(repo
+        .root
+        .join(".sensez/local-metrics/last-scan.json")
+        .exists());
 
     std::fs::write(&repo.file, "print('fixed')\n").unwrap();
     crate::brainz::recapture();
@@ -53,7 +58,9 @@ fn gate_baseline_feeds_resolved_recapture() {
 
 #[test]
 fn gate_allows_same_unchanged_work_after_one_block() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
 
     let first = gate(&json!({"path": repo.path})).unwrap();
@@ -65,7 +72,9 @@ fn gate_allows_same_unchanged_work_after_one_block() {
 
 #[test]
 fn gate_reblocks_when_agent_fixes_then_introduces_again() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
 
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
     let first = gate(&json!({"path": repo.path})).unwrap();
@@ -88,7 +97,9 @@ fn gate_reblocks_when_agent_fixes_then_introduces_again() {
 /// to a new line counts as a different complaint and re-blocks.
 #[test]
 fn gate_signature_changes_when_line_moves() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
 
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
     assert_block(&gate(&json!({"path": repo.path})).unwrap());
@@ -102,7 +113,9 @@ fn gate_signature_changes_when_line_moves() {
 /// one block per turn.
 #[test]
 fn gate_block_count_tracks_signature_changes() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
 
     let blocks = |content: &str| {
         std::fs::write(&repo.file, content).unwrap();
@@ -121,7 +134,10 @@ fn gate_block_count_tracks_signature_changes() {
     // Blocks fire only on intro and line-move (different signatures).
     assert_eq!(blocks("def orphan():\n    return 1\n"), 1);
     assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
-    assert_eq!(blocks("def orphan():\n    return 1\n# trailing comment\n"), 0);
+    assert_eq!(
+        blocks("def orphan():\n    return 1\n# trailing comment\n"),
+        0
+    );
     assert_eq!(blocks("print('fixed')\n"), 0);
     assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
     assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 1);
@@ -132,7 +148,9 @@ fn gate_block_count_tracks_signature_changes() {
 /// content unchanged, the gate blocks exactly once and then allows.
 #[test]
 fn gate_blocks_unchanged_finding_only_once() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
 
     let first = gate(&json!({"path": repo.path})).unwrap();
@@ -141,8 +159,7 @@ fn gate_blocks_unchanged_finding_only_once() {
     for _ in 0..5 {
         let resp = gate(&json!({"path": repo.path})).unwrap();
         assert_eq!(
-            resp["content"][0]["text"],
-            "{}",
+            resp["content"][0]["text"], "{}",
             "unchanged content must not re-block"
         );
     }
@@ -151,7 +168,9 @@ fn gate_blocks_unchanged_finding_only_once() {
 /// `usage_report` totals must reflect what the gate actually saw.
 #[test]
 fn brainz_totals_track_reported_count() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
     std::fs::write(
         &repo.file,
         "def a():\n    return 1\n\ndef b():\n    return 2\n\nprint('x')\n",
@@ -180,8 +199,7 @@ fn brainz_totals_track_reported_count() {
 
     let report = crate::brainz::usage_report(&repo.root);
     assert_eq!(
-        report["all_time"]["resolved_by_detector"]["dead_code/function"]["count"],
-        1,
+        report["all_time"]["resolved_by_detector"]["dead_code/function"]["count"], 1,
         "the deleted orphan is banked as resolved"
     );
 }
@@ -190,7 +208,9 @@ fn brainz_totals_track_reported_count() {
 /// counts the reappearance as a reintroduction.
 #[test]
 fn brainz_records_fix_and_reintroduction() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
 
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
     let first = gate(&json!({"path": repo.path})).unwrap();
@@ -201,13 +221,11 @@ fn brainz_records_fix_and_reintroduction() {
 
     let report = crate::brainz::usage_report(&repo.root);
     assert_eq!(
-        report["all_time"]["resolved_by_detector"]["dead_code/function"]["count"],
-        1,
+        report["all_time"]["resolved_by_detector"]["dead_code/function"]["count"], 1,
         "fix is recorded as resolved"
     );
     assert_eq!(
-        report["all_time"]["reintroduced_by_detector"]["dead_code/function"]
-            .get("count"),
+        report["all_time"]["reintroduced_by_detector"]["dead_code/function"].get("count"),
         None,
         "no reintroduction yet"
     );
@@ -217,8 +235,7 @@ fn brainz_records_fix_and_reintroduction() {
 
     let report = crate::brainz::usage_report(&repo.root);
     assert_eq!(
-        report["all_time"]["reintroduced_by_detector"]["dead_code/function"]["count"],
-        1,
+        report["all_time"]["reintroduced_by_detector"]["dead_code/function"]["count"], 1,
         "reintroduction is recorded"
     );
 }
@@ -227,7 +244,9 @@ fn brainz_records_fix_and_reintroduction() {
 /// block reason names the deferred count.
 #[test]
 fn gate_block_message_mentions_deferred_repeats() {
-    let Some(repo) = fresh_repo("added.py") else { return };
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
 
     // Turn 1: one orphan, fresh — block, no deferral.
     std::fs::write(&repo.file, "def a():\n    return 1\n\nprint('x')\n").unwrap();
@@ -288,16 +307,22 @@ fn gate_deferred_finding_resurfaces_after_expiry() {
     let expiry = 11 + DEFER_EXPIRY_SECS;
     let mut resurface = smell_report(&file, 1);
     let outcome = suppress_repeated_at(root, &mut resurface, 1, expiry);
-    assert_eq!(outcome.deferred, 0, "expired defer does not count as deferred");
-    assert_eq!(resurface.smells.len(), 1, "finding resurfaces for re-evaluation");
+    assert_eq!(
+        outcome.deferred, 0,
+        "expired defer does not count as deferred"
+    );
+    assert_eq!(
+        resurface.smells.len(),
+        1,
+        "finding resurfaces for re-evaluation"
+    );
 
     let mut second_defer = smell_report(&file, 1);
     let outcome = suppress_repeated_at(root, &mut second_defer, 1, expiry + 1);
     assert_eq!(outcome.deferred, 1);
 
     let mut much_later = smell_report(&file, 1);
-    let outcome =
-        suppress_repeated_at(root, &mut much_later, 1, expiry + DEFER_EXPIRY_SECS * 10);
+    let outcome = suppress_repeated_at(root, &mut much_later, 1, expiry + DEFER_EXPIRY_SECS * 10);
     assert_eq!(outcome.deferred, 1, "second defer is permanent");
     assert!(much_later.smells.is_empty());
 }

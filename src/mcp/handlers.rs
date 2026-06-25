@@ -164,6 +164,7 @@ fn usage_report(args: &Value) -> ToolResult {
 mod tests {
     use super::super::protocol::handle_message;
     use serde_json::{json, Value};
+    use std::process::Command;
 
     #[test]
     fn tools_list_includes_metrics_tools() {
@@ -265,5 +266,184 @@ mod tests {
 
         assert_eq!(resp["result"]["isError"], false);
         assert!(dir.join(".sensez/local-metrics/last-scan.json").exists());
+    }
+
+    /// `noze_sniff` must land a Scan event in brainz with the report's
+    /// detector counts. Without this, the precision/recidivism signals
+    /// would be starved of their numerator.
+    #[test]
+    fn noze_sniff_populates_reported_counts() {
+        let Some(repo) = fresh_repo("m.py") else {
+            return;
+        };
+        std::fs::write(
+            &repo.file,
+            "def orphan():\n    return 1\n\ndef used():\n    return 2\n\nprint(used())\n",
+        )
+        .unwrap();
+
+        let resp = call_tool("noze_sniff", json!({"path": repo.path}));
+        assert_eq!(resp["isError"], false);
+
+        let report = brainz_report_for(&repo.path);
+        assert_eq!(
+            report["all_time"]["scans"], 1,
+            "noze_sniff must record a scan"
+        );
+        assert_eq!(
+            report["all_time"]["scans_by_origin"]["tool"], 1,
+            "noze_sniff scans are tagged with the tool origin"
+        );
+        assert!(
+            report["all_time"]["reported_by_detector"]["dead_code/function"]
+                .as_u64()
+                .unwrap_or(0)
+                >= 1,
+            "noze_sniff must populate reported_by_detector: {}",
+            report["all_time"]["reported_by_detector"]
+        );
+    }
+
+    /// `noze_gate` must also record a Scan event (the gate sees the
+    /// same findings the tool would) and a GateBlock event when it
+    /// blocks. A regression that drops either would silently zero out
+    /// the gate-funnel / conversion signals.
+    #[test]
+    fn noze_gate_populates_scan_and_block_metrics() {
+        let Some(repo) = fresh_repo("added.py") else {
+            return;
+        };
+        std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
+
+        let resp = call_tool("noze_gate", json!({"path": repo.path}));
+        assert_eq!(resp["isError"], false);
+        assert_block_decision(&resp);
+
+        let report = brainz_report_for(&repo.path);
+        assert_eq!(
+            report["all_time"]["scans"], 1,
+            "noze_gate must record a scan"
+        );
+        assert_eq!(
+            report["all_time"]["scans_by_origin"]["gate"], 1,
+            "noze_gate scans are tagged with the gate origin"
+        );
+        assert!(
+            report["all_time"]["reported_by_detector"]["dead_code/function"]
+                .as_u64()
+                .unwrap_or(0)
+                >= 1,
+            "noze_gate must populate reported_by_detector: {}",
+            report["all_time"]["reported_by_detector"]
+        );
+        assert_eq!(
+            report["all_time"]["gate_blocks"], 1,
+            "a blocking gate call must record one block"
+        );
+    }
+
+    /// When the gate allows because there is nothing to nag about
+    /// (no diff vs. head), the gate short-circuits before the scan
+    /// runs. The metrics counters stay at zero — fingerprinting
+    /// something identical to the last scan would be wasted I/O.
+    #[test]
+    fn noze_gate_skips_scan_when_nothing_changed() {
+        let Some(repo) = fresh_repo("added.py") else {
+            return;
+        };
+        // No edits — the gate will allow.
+
+        let resp = call_tool("noze_gate", json!({"path": repo.path}));
+        assert_eq!(resp["isError"], false);
+        assert!(
+            resp["content"][0]["text"].as_str() == Some("{}"),
+            "clean gate call must allow: {resp:?}"
+        );
+
+        let report = brainz_report_for(&repo.path);
+        assert_eq!(
+            report["all_time"]["scans"], 0,
+            "no scan runs when the diff is empty"
+        );
+        assert_eq!(report["all_time"]["gate_blocks"], 0, "no block was issued");
+    }
+
+    fn call_tool(name: &str, args: Value) -> Value {
+        handle_message(&json!({
+            "jsonrpc": "2.0", "id": 99, "method": "tools/call",
+            "params": {"name": name, "arguments": args},
+        }))
+        .unwrap()["result"]
+            .clone()
+    }
+
+    fn assert_block_decision(resp: &Value) {
+        let text = resp["content"][0]["text"].as_str().unwrap();
+        let decision: Value = serde_json::from_str(text).unwrap();
+        assert_eq!(
+            decision["decision"], "block",
+            "expected a block, got {text}"
+        );
+    }
+
+    fn brainz_report_for(path: &str) -> Value {
+        let resp = call_tool("brainz_report", json!({"path": path}));
+        let text = resp["content"][0]["text"].as_str().unwrap();
+        serde_json::from_str(text).unwrap()
+    }
+
+    /// Owns the TempDir so the directory stays alive for the test body.
+    struct TestRepo {
+        _tmp: tempfile::TempDir,
+        root: std::path::PathBuf,
+        file: std::path::PathBuf,
+        path: String,
+    }
+
+    fn fresh_repo(scratch: &str) -> Option<TestRepo> {
+        let tmp = tempfile::tempdir().ok()?;
+        let root = tmp.path().to_path_buf();
+        if !init_repo(&root) {
+            return None;
+        }
+        Some(TestRepo {
+            _tmp: tmp,
+            file: root.join(scratch),
+            path: root.to_string_lossy().into_owned(),
+            root,
+        })
+    }
+
+    fn init_repo(root: &std::path::Path) -> bool {
+        if !Command::new("git")
+            .args(["init"])
+            .current_dir(root)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
+        {
+            return false;
+        }
+        std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
+        let ok = Command::new("git")
+            .args(["add", "."])
+            .current_dir(root)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false);
+        ok && Command::new("git")
+            .args([
+                "-c",
+                "user.email=sensez@example.test",
+                "-c",
+                "user.name=Sensez",
+                "commit",
+                "-m",
+                "base",
+            ])
+            .current_dir(root)
+            .output()
+            .map(|o| o.status.success())
+            .unwrap_or(false)
     }
 }

@@ -2,7 +2,9 @@
 //! extracts imports/declarations while tracking an explicit lexical scope stack.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
-use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope};
+use crate::profiles::walk::{
+    self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
+};
 use crate::spine::ir::ImportPhase;
 use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;

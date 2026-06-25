@@ -10,16 +10,12 @@ use anyhow::Result;
 use std::path::Path;
 
 /// Discover source files under `root`, respecting `.gitignore` and skipping
-/// any path matching one of the `exclude` globs. Dependency injection allows the caller to provide 
+/// any path matching one of the `exclude` globs. Dependency injection allows the caller to provide
 /// a language-specific predicate for whether a file is a source file, so that the crawler can be used for any language without having to know about it.
 ///
 /// Unreadable entries are counted in [`Discovery::skipped`], never dropped
 /// silently.
-pub fn discover<F>(
-    root: &Path,
-    exclude: &[String],
-    is_source_file: &F,
-) -> Result<Discovery>
+pub fn discover<F>(root: &Path, exclude: &[String], is_source_file: &F) -> Result<Discovery>
 where
     F: Fn(&Path) -> bool + Send + Sync,
 {

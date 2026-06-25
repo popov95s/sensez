@@ -1,7 +1,7 @@
 //! Reachability/usage evidence used to decide and rank dead-code candidates.
 
-use crate::report::Confidence;
 use crate::profiles::DeadCodeProfile;
+use crate::report::Confidence;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use globset::GlobSet;
 use petgraph::graph::NodeIndex;

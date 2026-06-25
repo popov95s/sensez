@@ -10,8 +10,8 @@
 
 use super::{grouped_value_target, make, structure_target, SmellContext};
 use crate::config::smells::Smells;
-use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::profiles::typevocab::{base_type, is_bool_type, is_loose};
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionMetrics;
 
 pub fn detect(
@@ -42,11 +42,7 @@ fn loose_typing(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<Smell
         if matches!(p.as_str(), "self" | "cls" | "args" | "kwargs") {
             continue;
         }
-        if let Some(ty) = ctx
-            .type_hints
-            .param_types
-            .get(&(m.name.clone(), p.clone()))
-        {
+        if let Some(ty) = ctx.type_hints.param_types.get(&(m.name.clone(), p.clone())) {
             if is_loose(ctx.language, ty) {
                 offenders.push(format!("{p}: {ty}"));
             }

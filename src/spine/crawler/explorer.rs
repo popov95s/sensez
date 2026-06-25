@@ -137,8 +137,7 @@ mod tests {
         assert!(!names.iter().any(|n| n.ends_with(".txt")));
 
         // exclude glob drops matching files from discovery
-        let filtered =
-            collect_source_files(&dir, &["**/pkg/**".to_string()], &is_python).unwrap();
+        let filtered = collect_source_files(&dir, &["**/pkg/**".to_string()], &is_python).unwrap();
         let fnames: Vec<_> = filtered
             .files
             .iter()
@@ -150,7 +149,9 @@ mod tests {
 
     #[test]
     fn missing_path_errors() {
-        assert!(collect_source_files(Path::new("/nonexistent/sensez/xyz"), &[], &is_python).is_err());
+        assert!(
+            collect_source_files(Path::new("/nonexistent/sensez/xyz"), &[], &is_python).is_err()
+        );
     }
 
     #[test]

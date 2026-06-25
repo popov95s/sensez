@@ -2,7 +2,9 @@
 //! extracts imports/declarations while tracking a lexical scope stack.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map};
-use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope};
+use crate::profiles::walk::{
+    self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
+};
 use crate::spine::ir::{record_attr, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;

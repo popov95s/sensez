@@ -36,7 +36,10 @@ fn deep_nesting(
     if m.max_nesting > cfg.max_nesting {
         out.push(make(
             SmellKind::DeepNesting,
-            format!("nesting depth {} (threshold {})", m.max_nesting, cfg.max_nesting),
+            format!(
+                "nesting depth {} (threshold {})",
+                m.max_nesting, cfg.max_nesting
+            ),
             ctx.path,
             m.start_line,
             &m.name,
@@ -127,11 +130,7 @@ fn message_chains(
     }
 }
 
-fn unnecessary_nested_if(
-    ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
-    out: &mut Vec<SmellFinding>,
-) {
+fn unnecessary_nested_if(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<SmellFinding>) {
     if m.collapsible_nested_ifs > 0 {
         out.push(make(
             SmellKind::UnnecessaryNestedIf,

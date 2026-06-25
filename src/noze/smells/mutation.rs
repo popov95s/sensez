@@ -7,8 +7,8 @@
 
 use super::{make, structure_target, SmellContext};
 use crate::config::smells::Smells;
-use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::profiles::typevocab::is_dictish;
+use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionMetrics;
 
 pub fn detect(

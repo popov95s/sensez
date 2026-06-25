@@ -12,8 +12,8 @@ pub use crate::spine::ir::{
 };
 
 use crate::profiles::{registry, ParseProfile};
-use crate::spine::ir::Language;
 use crate::report::{ScanIssue, ScanStage};
+use crate::spine::ir::Language;
 use anyhow::{anyhow, Context, Result};
 use rayon::prelude::*;
 use std::fs;

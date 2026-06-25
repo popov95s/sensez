@@ -16,12 +16,12 @@ mod reachability;
 
 use crate::config::model::DeadCode;
 use crate::globs::build_globset;
-use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
-use crate::spine::parser::SymbolKind;
 use crate::profiles::registry;
-use crate::spine::ir::Language;
+use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
 use crate::spine::graph::CodebaseGraph;
+use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;
+use crate::spine::parser::SymbolKind;
 use globset::GlobSet;
 use reachability::{confidence_of, inbound_usage, is_entry_module, skip_symbol};
 use std::collections::BTreeMap;
