@@ -131,6 +131,10 @@ pub(crate) fn declare(out: &mut Walked, name: String, kind: SymbolKind, line: us
     out.symbols.declared.push(name);
 }
 
+pub(crate) fn register_method(out: &mut Walked, name: String, line: usize) {
+    out.symbols.methods.push((name, line));
+}
+
 /// Post-pass (Python/JS/TS): fill each class's `method_attr_use` (method name →
 /// `self`/`this` attr set) from the `self_attrs` each method collected during
 /// its own body walk — avoiding a second per-method walk. A method is

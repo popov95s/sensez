@@ -2,7 +2,7 @@
 //! extracts imports/declarations while tracking a lexical scope stack.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map};
-use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, Scope};
+use crate::profiles::walk::{self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope};
 use crate::spine::ir::{record_attr, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
@@ -142,9 +142,7 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, scope: &[Scope], out:
     if kind == "function_item" && scope.last().is_some_and(|s| s.is_class) {
         if symbols::is_pub(node) {
             if let Some(name) = symbols::def_name(node, src) {
-                out.symbols
-                    .methods
-                    .push((name, node.start_position().row + 1));
+                register_method(out, name, node.start_position().row + 1);
             }
         }
         return;
