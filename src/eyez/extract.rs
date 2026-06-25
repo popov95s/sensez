@@ -24,9 +24,11 @@ pub struct Doc {
 /// Discover, parse, and flatten every file's docs under `root`.
 pub fn collect(root: &Path) -> Result<Vec<Doc>> {
     let config = Config::load(root).context("loading sensez.toml")?;
-    let files = crawler::discover(root, &config.exclude)
-        .with_context(|| format!("crawling {}", root.display()))?
-        .files;
+    let files = crawler::discover(root, &config.exclude, &|p| {
+        crate::profiles::registry::parse_for_path(p).is_some()
+    })
+    .with_context(|| format!("crawling {}", root.display()))?
+    .files;
     let parsed = parser::parse_files(&files);
     Ok(parsed.files.iter().flat_map(docs_of).collect())
 }

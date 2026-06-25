@@ -4,15 +4,24 @@
 mod explorer;
 mod generated;
 
-pub use explorer::Discovery;
+pub use explorer::{collect_source_files, Discovery};
 
 use anyhow::Result;
 use std::path::Path;
 
-/// Discover all supported-language source files under `root`, respecting
-/// `.gitignore` and skipping any path matching one of the `exclude` globs.
+/// Discover source files under `root`, respecting `.gitignore` and skipping
+/// any path matching one of the `exclude` globs. Dependency injection allows the caller to provide 
+/// a language-specific predicate for whether a file is a source file, so that the crawler can be used for any language without having to know about it.
+///
 /// Unreadable entries are counted in [`Discovery::skipped`], never dropped
 /// silently.
-pub fn discover(root: &Path, exclude: &[String]) -> Result<Discovery> {
-    explorer::collect_source_files(root, exclude)
+pub fn discover<F>(
+    root: &Path,
+    exclude: &[String],
+    is_source_file: &F,
+) -> Result<Discovery>
+where
+    F: Fn(&Path) -> bool + Send + Sync,
+{
+    explorer::collect_source_files(root, exclude, is_source_file)
 }

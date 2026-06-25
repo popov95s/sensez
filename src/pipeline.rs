@@ -23,8 +23,10 @@ pub fn analyze_path(
         config.duplication.threshold = value;
     }
     let mut timer = PhaseTimer::start();
-    let discovery = crawler::discover(path, &config.exclude)
-        .with_context(|| format!("crawling {}", path.display()))?;
+    let discovery = crawler::discover(path, &config.exclude, &|p| {
+        crate::profiles::registry::parse_for_path(p).is_some()
+    })
+    .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
     let parsed = parser::parse_files(&discovery.files);
     timer.lap("parse");

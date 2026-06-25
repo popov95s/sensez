@@ -2,7 +2,6 @@
 
 use super::generated;
 use crate::globs::build_globset;
-use crate::profiles::registry;
 use crate::report::{ScanIssue, ScanStage};
 use anyhow::{anyhow, Result};
 use ignore::{Error as IgnoreError, WalkBuilder, WalkState};
@@ -19,12 +18,24 @@ pub struct Discovery {
     pub issues: Vec<ScanIssue>,
 }
 
-/// Walk `root` in parallel, returning every source file whose extension is
-/// claimed by a compiled-in language profile, minus any `exclude`-glob match.
+/// Per-entry predicate: should this path be kept as a source file? Generic
+/// (not a trait object) so callers can pass any `Fn(&Path) -> bool + Send +
+/// Sync` closure without an indirection.
+pub type SourceFilter<F> = F;
+
+/// Walk `root` in parallel, returning every regular file for which
+/// `is_source_file` returns `true`, minus any `exclude`-glob match.
 ///
 /// `.gitignore`, `.ignore`, and hidden-file rules are respected by default.
 /// I/O errors on individual entries are counted, not silently dropped.
-pub fn collect_source_files(root: &Path, exclude: &[String]) -> Result<Discovery> {
+pub fn collect_source_files<F>(
+    root: &Path,
+    exclude: &[String],
+    is_source_file: &F,
+) -> Result<Discovery>
+where
+    F: Fn(&Path) -> bool + Send + Sync,
+{
     if !root.exists() {
         return Err(anyhow!("path does not exist: {}", root.display()));
     }
@@ -36,11 +47,13 @@ pub fn collect_source_files(root: &Path, exclude: &[String]) -> Result<Discovery
         let tx = tx.clone();
         let issue_tx = issue_tx.clone();
         let excludes = excludes.clone();
+        let is_source_file = is_source_file;
         Box::new(move |entry| {
             match entry {
                 Ok(entry) => {
                     let path = entry.path();
-                    if is_source_file(&entry)
+                    if entry.file_type().is_some_and(|ft| ft.is_file())
+                        && is_source_file(path)
                         && !excludes.is_match(path)
                         && !generated::is_generated_or_data_source(path)
                     {
@@ -67,12 +80,6 @@ pub fn collect_source_files(root: &Path, exclude: &[String]) -> Result<Discovery
         skipped: issues.len(),
         issues,
     })
-}
-
-/// True for regular files whose extension a language profile claims.
-fn is_source_file(entry: &ignore::DirEntry) -> bool {
-    entry.file_type().is_some_and(|ft| ft.is_file())
-        && registry::parse_for_path(entry.path()).is_some()
 }
 
 fn scan_issue_from_walk_error(err: &IgnoreError) -> ScanIssue {
@@ -103,6 +110,12 @@ mod tests {
     use super::*;
     use std::fs;
 
+    /// Test predicate: keep `.py` files only. Stand-in for what production
+    /// callers build from `profiles::registry::parse_for_path`.
+    fn is_python(path: &Path) -> bool {
+        path.extension().is_some_and(|e| e == "py")
+    }
+
     #[test]
     fn finds_py_files_and_skips_others() {
         let tmp = tempfile::tempdir().unwrap();
@@ -112,7 +125,7 @@ mod tests {
         fs::write(dir.join("pkg/b.py"), "y = 2\n").unwrap();
         fs::write(dir.join("notes.txt"), "ignore me\n").unwrap();
 
-        let found = collect_source_files(&dir, &[]).unwrap();
+        let found = collect_source_files(&dir, &[], &is_python).unwrap();
         assert_eq!(found.skipped, 0, "readable tree skips nothing");
         let names: Vec<_> = found
             .files
@@ -124,7 +137,8 @@ mod tests {
         assert!(!names.iter().any(|n| n.ends_with(".txt")));
 
         // exclude glob drops matching files from discovery
-        let filtered = collect_source_files(&dir, &["**/pkg/**".to_string()]).unwrap();
+        let filtered =
+            collect_source_files(&dir, &["**/pkg/**".to_string()], &is_python).unwrap();
         let fnames: Vec<_> = filtered
             .files
             .iter()
@@ -136,7 +150,7 @@ mod tests {
 
     #[test]
     fn missing_path_errors() {
-        assert!(collect_source_files(Path::new("/nonexistent/sensez/xyz"), &[]).is_err());
+        assert!(collect_source_files(Path::new("/nonexistent/sensez/xyz"), &[], &is_python).is_err());
     }
 
     #[test]

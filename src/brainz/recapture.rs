@@ -70,9 +70,11 @@ fn changed_since(root: &Path, ts: u64) -> bool {
     let exclude = crate::config::model::Config::load(root)
         .map(|c| c.exclude)
         .unwrap_or_default();
-    let files = crate::spine::crawler::discover(root, &exclude)
-        .unwrap_or_default()
-        .files;
+    let files = crate::spine::crawler::discover(root, &exclude, &|p| {
+        crate::profiles::registry::parse_for_path(p).is_some()
+    })
+    .unwrap_or_default()
+    .files;
     files.iter().any(|file| {
         std::fs::metadata(file)
             .and_then(|m| m.modified())
