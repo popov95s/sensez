@@ -35,10 +35,11 @@ pub async fn serve() -> Result<()> {
             _ = &mut shutdown => break Ok(()),  // Ctrl-C / SIGTERM
         }
     };
-    // Graceful shutdown: one last automatic fix-recapture pass (bounded by the
-    // cheap-scan guard), then persist buffered metrics — even when the
-    // transport errored.
-    crate::brainz::recapture();
+    // Graceful shutdown: just persist buffered metrics. We deliberately do
+    // *not* run a final recapture here — the periodic tick already covers
+    // in-session fixes, and a shutdown-time recapture would do an O(repo)
+    // cheap-scan guard walk under SIGTERM pressure. If the client cleanly
+    // disconnects mid-session, the last periodic flush is fresh enough.
     crate::brainz::flush();
     served
 }
