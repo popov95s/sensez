@@ -47,7 +47,7 @@ jobs:
         run: |
           base_version="${{ inputs.version }}"
           if [ "${{ inputs.target }}" = "testpypi" ]; then
-            release_version="$(python -c 'import os; print("{}.dev{}{:02d}".format(os.environ["BASE_VERSION"], int(os.environ["GITHUB_RUN_NUMBER"]), int(os.environ["GITHUB_RUN_ATTEMPT"])))')"
+            release_version="$(python3 -c 'import os; print("{}.dev{}{:02d}".format(os.environ["BASE_VERSION"], int(os.environ["GITHUB_RUN_NUMBER"]), int(os.environ["GITHUB_RUN_ATTEMPT"])))')"
           else
             release_version="$base_version"
           fi
@@ -152,7 +152,7 @@ jobs:
           RELEASE_VERSION: ${{ needs.guard.outputs.release_version }}
         shell: bash
         run: |
-          python - <<'PY'
+          python3 - <<'PY'
           from pathlib import Path
           import os
           import re
