@@ -1,0 +1,8 @@
+[project]
+name = "sensez-action"
+version = "0.1.0"
+description = "GitHub Action wrapper for Sensez duplication annotations"
+requires-python = ">=3.9"
+
+[tool.uv]
+package = false

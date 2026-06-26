@@ -1,0 +1,57 @@
+name: Sensez
+description: Structural duplication checks for pull requests.
+author: Sensez
+
+inputs:
+  path:
+    description: Repository-relative path to scan.
+    required: false
+    default: "."
+  version:
+    description: Sensez PyPI version to run, or "latest".
+    required: false
+    default: "latest"
+  threshold:
+    description: Minimum structural-token run length for duplication detection.
+    required: false
+    default: ""
+  with-comments:
+    description: Post inline pull-request review comments in addition to annotations.
+    required: false
+    default: "false"
+  fail-on-new:
+    description: >
+      Optional action level that fails the job when matched. One of must_fix,
+      warning, advisory, info.
+    required: false
+    default: ""
+  level:
+    description: Annotation level for non-blocking feedback. One of notice, warning, error.
+    required: false
+    default: "warning"
+
+runs:
+  using: composite
+  steps:
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: "3.x"
+
+    - name: Set up uv
+      uses: astral-sh/setup-uv@v6
+
+    - name: Run Sensez
+      shell: bash
+      env:
+        INPUT_PATH: ${{ inputs.path }}
+        INPUT_VERSION: ${{ inputs.version }}
+        INPUT_THRESHOLD: ${{ inputs.threshold }}
+        INPUT_WITH_COMMENTS: ${{ inputs.with-comments }}
+        INPUT_FAIL_ON_NEW: ${{ inputs.fail-on-new }}
+        INPUT_LEVEL: ${{ inputs.level }}
+        SENSEZ_WORKSPACE: ${{ github.workspace }}
+        GITHUB_TOKEN: ${{ github.token }}
+      run: |
+        cd "$GITHUB_ACTION_PATH/action"
+        uv run python -m sensez_action
