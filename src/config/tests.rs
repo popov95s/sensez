@@ -15,8 +15,40 @@ fn defaults_when_missing() {
         "class-property overlap stays enabled by default"
     );
     assert!(
+        !cfg.duplication.semantic.enabled,
+        "semantic duplication stays opt-in until the detector is enabled"
+    );
+    assert!(
+        cfg.duplication.semantic.comment_required,
+        "comment-backed semantic duplication requires comments by default"
+    );
+    assert!(
         cfg.dead_code.entrypoints.is_empty(),
         "language-specific dead-code defaults are profile-scoped, not global config"
+    );
+}
+
+#[test]
+fn semantic_duplication_config_parses() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    std::fs::create_dir_all(&dir).unwrap();
+    std::fs::write(
+        dir.join("sensez.toml"),
+        "[duplication.semantic]\n\
+         enabled = true\n\
+         min_shape_score = 84\n\
+         comment_boost_score = 91\n",
+    )
+    .unwrap();
+
+    let cfg = Config::load(&dir).unwrap();
+    assert!(cfg.duplication.semantic.enabled);
+    assert_eq!(cfg.duplication.semantic.min_shape_score, 84);
+    assert_eq!(cfg.duplication.semantic.comment_boost_score, 91);
+    assert!(
+        cfg.duplication.semantic.comment_required,
+        "omitting comment_required keeps the safe default"
     );
 }
 

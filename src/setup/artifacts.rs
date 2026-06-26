@@ -22,6 +22,12 @@ enabled = true
 # near_miss = false  # consistent-rename clone detection (opt-in)
 # class_name_duplicates = false  # same-name class duplication. Can be noisy for teams that follow same patterns for business logic services, stores, etc.(opt-in)
 # class_property_overlap_min = 4  # same-name/same-type class fields (0 = off)
+#
+# [duplication.semantic]  # opt-in, requires the `eyez` feature
+# enabled = false
+# min_shape_score = 82       # structural candidate gate, as a 0-100 score
+# comment_boost_score = 85   # doc/comment embedding score needed to promote
+# comment_required = true    # default: semantic findings need comments/docstrings
 
 [dead_code]
 # unused_imports = false

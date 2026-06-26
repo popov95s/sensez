@@ -9,7 +9,7 @@ use anyhow::{anyhow, Result};
 use model2vec_rs::model::StaticModel;
 
 /// HuggingFace repo id for the default static retrieval model.
-const MODEL_ID: &str = "minishlab/potion-retrieval-32M";
+pub(crate) const MODEL_ID: &str = "minishlab/potion-retrieval-32M";
 
 /// Loaded embedding model. Cheap to call; load once and reuse.
 pub struct Embedder {
@@ -22,6 +22,10 @@ impl Embedder {
         let model = StaticModel::from_pretrained(MODEL_ID, None, Some(true), None)
             .map_err(|e| anyhow!("loading Model2Vec model {MODEL_ID}: {e}"))?;
         Ok(Embedder { model })
+    }
+
+    pub fn model_id(&self) -> &'static str {
+        MODEL_ID
     }
 
     /// Embed many texts. Empty input yields an empty result (no model call).

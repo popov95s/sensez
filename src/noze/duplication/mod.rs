@@ -14,6 +14,8 @@ mod clones;
 mod flatten;
 mod gapped;
 mod near_miss;
+#[cfg(feature = "eyez")]
+mod semantic;
 #[cfg(test)]
 mod test_support;
 
@@ -129,6 +131,22 @@ fn detect_partition(
                 ..class
             });
         }
+    }
+
+    #[cfg(feature = "eyez")]
+    for class in semantic::detect(kept, &config.semantic) {
+        let occ = suppress_overlaps(class.occurrences);
+        if occ.len() < 2 {
+            continue;
+        }
+        if !seen.insert(dedup_key(&occ, class.token_length)) {
+            continue;
+        }
+        out.push(CloneClass {
+            action: ActionLevel::Advisory,
+            occurrences: occ,
+            ..class
+        });
     }
 }
 

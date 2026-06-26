@@ -20,6 +20,7 @@ const CACHE_REL: &str = ".sensez/eyez-cache.bin";
 /// The persisted index: `docs[i]` is described by `vectors[i]` (kept 1:1).
 #[derive(Default, Serialize, Deserialize)]
 pub struct SystemCache {
+    pub model_id: String,
     pub docs: Vec<CachedDoc>,
     pub vectors: Vec<Vec<f32>>,
 }
@@ -47,6 +48,12 @@ pub fn load(root: &Path) -> SystemCache {
 impl SystemCache {
     /// Diff `docs` against the cache by content key and embed only the misses.
     pub fn refresh(&mut self, docs: &[Doc], embedder: &Embedder) -> Result<()> {
+        if self.model_id != embedder.model_id() {
+            self.docs.clear();
+            self.vectors.clear();
+            self.model_id = embedder.model_id().to_string();
+        }
+
         // Cached key -> vector. Both sides are rebuilt below, so the old
         // entries are MOVED out, never cloned (vectors can be MBs in total).
         let mut have: HashMap<u64, Vec<f32>> = std::mem::take(&mut self.docs)
@@ -132,6 +139,21 @@ mod tests {
         }
     }
 
+    fn cache_with_doc() -> SystemCache {
+        SystemCache {
+            model_id: "old-model".to_string(),
+            docs: vec![CachedDoc {
+                key: 1,
+                file: "m.py".to_string(),
+                line: 1,
+                symbol_path: "m::f".to_string(),
+                kind: DocKind::Docstring,
+                text: "Add one.".to_string(),
+            }],
+            vectors: vec![vec![1.0]],
+        }
+    }
+
     /// A changed key (edited text) is a cache miss; an unchanged key is reused.
     #[test]
     fn key_changes_only_on_content_change() {
@@ -142,5 +164,18 @@ mod tests {
         assert_eq!(key(&a), key(&same));
         assert_ne!(key(&a), key(&edited), "text edit must change the key");
         assert_ne!(key(&a), key(&moved), "symbol move must change the key");
+    }
+
+    #[test]
+    fn model_change_requires_reindex() {
+        let mut cache = cache_with_doc();
+        if cache.model_id != crate::eyez::embed::MODEL_ID {
+            cache.docs.clear();
+            cache.vectors.clear();
+            cache.model_id = crate::eyez::embed::MODEL_ID.to_string();
+        }
+        assert!(cache.docs.is_empty());
+        assert!(cache.vectors.is_empty());
+        assert_eq!(cache.model_id, crate::eyez::embed::MODEL_ID);
     }
 }

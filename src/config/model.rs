@@ -28,8 +28,18 @@ pub struct Duplication {
     pub threshold: usize,
     pub max_gap: usize,
     pub near_miss: bool,
+    pub semantic: SemanticDuplication,
     pub class_name_duplicates: bool,
     pub class_property_overlap_min: usize,
+}
+
+#[derive(Debug, Clone, Hash, Deserialize)]
+#[serde(default)]
+pub struct SemanticDuplication {
+    pub enabled: bool,
+    pub min_shape_score: u8,
+    pub comment_boost_score: u8,
+    pub comment_required: bool,
 }
 
 #[derive(Debug, Clone, Hash, Deserialize)]
@@ -96,6 +106,7 @@ impl Default for Config {
                 threshold: 50,
                 max_gap: 10,
                 near_miss: false,
+                semantic: SemanticDuplication::default(),
                 class_name_duplicates: false,
                 class_property_overlap_min: 4,
             },
@@ -124,6 +135,17 @@ impl Default for Config {
 impl Default for Duplication {
     fn default() -> Self {
         Config::default().duplication
+    }
+}
+
+impl Default for SemanticDuplication {
+    fn default() -> Self {
+        SemanticDuplication {
+            enabled: false,
+            min_shape_score: 82,
+            comment_boost_score: 85,
+            comment_required: true,
+        }
     }
 }
 

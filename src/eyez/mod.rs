@@ -7,7 +7,7 @@ mod cache;
 pub(crate) mod capture;
 mod docs;
 mod embed;
-mod extract;
+pub(crate) mod extract;
 mod search;
 
 pub use docs::{DocKind, RawDoc};
@@ -20,6 +20,10 @@ use std::path::Path;
 pub struct Index {
     embedder: embed::Embedder,
     cache: cache::SystemCache,
+}
+
+pub(crate) fn embed_texts(texts: &[String]) -> anyhow::Result<Vec<Vec<f32>>> {
+    Ok(embed::Embedder::load()?.embed(texts))
 }
 
 impl Index {

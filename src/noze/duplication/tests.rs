@@ -9,9 +9,7 @@ fn cfg(threshold: usize) -> Duplication {
         exclude: vec![],
         threshold,
         max_gap: 0,
-        near_miss: false,
-        class_name_duplicates: false,
-        class_property_overlap_min: 4,
+        ..Default::default()
     }
 }
 
@@ -174,9 +172,7 @@ fn exclude_globs_drop_matches() {
         exclude: vec!["**/tests/**".to_string()],
         threshold: 8,
         max_gap: 0,
-        near_miss: false,
-        class_name_duplicates: false,
-        class_property_overlap_min: 4,
+        ..Default::default()
     };
     assert!(detect(&files, &excluded).is_empty(), "tests excluded");
 }
