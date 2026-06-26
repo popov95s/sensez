@@ -21,11 +21,10 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let gate_config = crate::config::model::Config::load(root)
         .map(|config| config.gate)
         .unwrap_or_default();
-    let Ok((mut report, _snapshot)) =
-        super::scan::run_and_record(root, None, 0, true, crate::brainz::Origin::Gate)
-    else {
+    let Ok((mut report, snapshot, elapsed)) = super::scan::diff(root, None, 0) else {
         return Ok(allow());
     };
+    crate::brainz::record_scan(root, &snapshot, elapsed, None, crate::brainz::Origin::Gate);
 
     // The auto-defer UX is gate-specific; it sees the post-processed
     // report (already ranked + issues-cleared) and drops any finding

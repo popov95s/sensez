@@ -1,0 +1,470 @@
+{
+  "boundaries": [],
+  "cycles": [
+    {
+      "action": "warning",
+      "edges": [
+        {
+          "file": "<flask>/examples/javascript/js_example/views.py",
+          "from_module": "js_example.views",
+          "line": 5,
+          "to_module": "js_example"
+        },
+        {
+          "file": "<flask>/examples/javascript/js_example/__init__.py",
+          "from_module": "js_example",
+          "line": 5,
+          "to_module": "js_example.views"
+        }
+      ],
+      "modules": [
+        "js_example.views",
+        "js_example"
+      ]
+    },
+    {
+      "action": "info",
+      "edges": [
+        {
+          "file": "<flask>/src/flask/cli.py",
+          "from_module": "flask.cli",
+          "line": 34,
+          "to_module": "flask.app"
+        },
+        {
+          "file": "<flask>/src/flask/testing.py",
+          "from_module": "flask.testing",
+          "line": 24,
+          "to_module": "flask.app"
+        },
+        {
+          "file": "<flask>/src/flask/sansio/scaffold.py",
+          "from_module": "flask.sansio.scaffold",
+          "line": 19,
+          "to_module": "flask.templating"
+        },
+        {
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "from_module": "flask.sansio.blueprints",
+          "line": 15,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/logging.py",
+          "from_module": "flask.logging",
+          "line": 12,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/json/provider.py",
+          "from_module": "flask.json.provider",
+          "line": 16,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/ctx.py",
+          "from_module": "flask.ctx",
+          "line": 23,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/config.py",
+          "from_module": "flask.config",
+          "line": 14,
+          "to_module": "flask.sansio.app"
+        },
+        {
+          "file": "<flask>/src/flask/sansio/app.py",
+          "from_module": "flask.sansio.app",
+          "line": 41,
+          "to_module": "flask.sansio.blueprints"
+        },
+        {
+          "file": "<flask>/src/flask/templating.py",
+          "from_module": "flask.templating",
+          "line": 18,
+          "to_module": "flask.sansio.scaffold"
+        },
+        {
+          "file": "<flask>/src/flask/app.py",
+          "from_module": "flask.app",
+          "line": 61,
+          "to_module": "flask.testing"
+        },
+        {
+          "file": "<flask>/src/flask/json/__init__.py",
+          "from_module": "flask.json",
+          "line": 10,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/json/tag.py",
+          "from_module": "flask.json.tag",
+          "line": 57,
+          "to_module": "flask.json"
+        },
+        {
+          "file": "<flask>/src/flask/sessions.py",
+          "from_module": "flask.sessions",
+          "line": 21,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/globals.py",
+          "from_module": "flask.globals",
+          "line": 13,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/helpers.py",
+          "from_module": "flask.helpers",
+          "line": 25,
+          "to_module": "flask.wrappers"
+        },
+        {
+          "file": "<flask>/src/flask/wrappers.py",
+          "from_module": "flask.wrappers",
+          "line": 12,
+          "to_module": "flask.helpers"
+        }
+      ],
+      "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
+      "modules": [
+        "flask.cli",
+        "flask.testing",
+        "flask.sansio.scaffold",
+        "flask.sansio.blueprints",
+        "flask.logging",
+        "flask.json.provider",
+        "flask.ctx",
+        "flask.config",
+        "flask.sansio.app",
+        "flask.templating",
+        "flask.app",
+        "flask.json",
+        "flask.json.tag",
+        "flask.sessions",
+        "flask.globals",
+        "flask.helpers",
+        "flask.wrappers"
+      ]
+    }
+  ],
+  "dead_code": [
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<flask>/src/flask/debughelpers.py",
+      "kind": "class",
+      "line": 17,
+      "module": "flask.debughelpers",
+      "symbol": "UnexpectedUnicodeError"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/examples/tutorial/flaskr/__init__.py",
+      "kind": "function",
+      "line": 6,
+      "module": "flaskr",
+      "symbol": "create_app"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "class",
+      "line": 138,
+      "module": "flask.views",
+      "symbol": "MethodView"
+    }
+  ],
+  "duplication": [
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 30,
+          "file": "<flask>/src/flask/blueprints.py",
+          "start_row": 19
+        },
+        {
+          "end_row": 185,
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "start_row": 174
+        }
+      ],
+      "token_length": 57
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 321,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 310
+        },
+        {
+          "end_row": 290,
+          "file": "<flask>/src/flask/sansio/app.py",
+          "start_row": 279
+        }
+      ],
+      "token_length": 52
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 415,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 382
+        },
+        {
+          "end_row": 105,
+          "file": "<flask>/src/flask/blueprints.py",
+          "start_row": 72
+        }
+      ],
+      "token_length": 63
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 77,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 1
+        },
+        {
+          "end_row": 56,
+          "file": "<flask>/src/flask/sansio/app.py",
+          "start_row": 1
+        }
+      ],
+      "token_length": 76
+    }
+  ],
+  "meta": {
+    "boundaries_configured": false,
+    "mode": "full"
+  },
+  "smells": [
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "divergent_change",
+      "line": 109,
+      "message": "class splits into 8 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 8,
+      "severity": "Warning",
+      "symbol": "Flask",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "feature_envy",
+      "line": 562,
+      "message": "accesses `request` (Request) 4\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on Request",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "raise_routing_exception",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "god_module",
+      "message": "fan-in 6 + fan-out 33 = 39 (threshold 25)",
+      "metric": 39,
+      "severity": "Warning",
+      "symbol": "flask.app",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "high_cognitive_complexity",
+      "line": 1102,
+      "message": "cognitive complexity 20 (threshold 15)",
+      "metric": 20,
+      "severity": "Warning",
+      "symbol": "url_for",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "high_cognitive_complexity",
+      "line": 1224,
+      "message": "cognitive complexity 23 (threshold 15)",
+      "metric": 23,
+      "severity": "Warning",
+      "symbol": "make_response",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "high_cognitive_complexity",
+      "line": 1366,
+      "message": "cognitive complexity 16 (threshold 15)",
+      "metric": 16,
+      "severity": "Warning",
+      "symbol": "preprocess_request",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "boolean_blindness",
+      "line": 563,
+      "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "metric": 4,
+      "severity": "Warning",
+      "symbol": "__init__",
+      "threshold": 2
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "god_module",
+      "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
+      "metric": 35,
+      "severity": "Warning",
+      "symbol": "flask.cli",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "high_cognitive_complexity",
+      "line": 1061,
+      "message": "cognitive complexity 17 (threshold 15)",
+      "metric": 17,
+      "severity": "Warning",
+      "symbol": "routes_command",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "high_cognitive_complexity",
+      "line": 120,
+      "message": "cognitive complexity 19 (threshold 15)",
+      "metric": 19,
+      "severity": "Warning",
+      "symbol": "find_app_by_string",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "high_cognitive_complexity",
+      "line": 41,
+      "message": "cognitive complexity 20 (threshold 15)",
+      "metric": 20,
+      "severity": "Warning",
+      "symbol": "find_best_app",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "high_cognitive_complexity",
+      "line": 698,
+      "message": "cognitive complexity 18 (threshold 15)",
+      "metric": 18,
+      "severity": "Warning",
+      "symbol": "load_dotenv",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/globals.py",
+      "kind": "shotgun_surgery_hazard",
+      "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 16,
+      "severity": "Warning",
+      "symbol": "flask.globals",
+      "threshold": 12
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "heavy_nested_function",
+      "line": 126,
+      "message": "nested function inside `stream_with_context` spans 16 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `stream_with_context`), so extract it to module/class level",
+      "metric": 16,
+      "severity": "Warning",
+      "symbol": "generator",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "divergent_change",
+      "line": 59,
+      "message": "class splits into 10 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 10,
+      "severity": "Warning",
+      "symbol": "App",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "god_module",
+      "message": "fan-in 7 + fan-out 21 = 28 (threshold 25)",
+      "metric": 28,
+      "severity": "Warning",
+      "symbol": "flask.sansio.app",
+      "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "divergent_change",
+      "line": 119,
+      "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 7,
+      "severity": "Warning",
+      "symbol": "Blueprint",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "high_cognitive_complexity",
+      "line": 273,
+      "message": "cognitive complexity 28 (threshold 15)",
+      "metric": 28,
+      "severity": "Warning",
+      "symbol": "register",
+      "threshold": 15
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "divergent_change",
+      "line": 52,
+      "message": "class splits into 6 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 6,
+      "severity": "Warning",
+      "symbol": "Scaffold",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "divergent_change",
+      "line": 18,
+      "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 7,
+      "severity": "Warning",
+      "symbol": "Request",
+      "threshold": 1
+    }
+  ]
+}

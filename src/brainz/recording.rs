@@ -6,8 +6,15 @@ use super::{aging, fingerprint, store, triage};
 use serde_json::Value;
 use std::collections::BTreeMap;
 use std::path::Path;
+use std::time::Duration;
 
-pub fn record_scan(root: &Path, report: &Value, ms: u64, threshold: Option<usize>, origin: Origin) {
+pub fn record_scan(
+    root: &Path,
+    report: &Value,
+    elapsed: Duration,
+    threshold: Option<usize>,
+    origin: Origin,
+) {
     if !hub::enabled(root) {
         return;
     }
@@ -41,7 +48,7 @@ pub fn record_scan(root: &Path, report: &Value, ms: u64, threshold: Option<usize
         root,
         Baseline {
             ts: hub::now(),
-            ms,
+            ms: elapsed.as_millis() as u64,
             threshold,
             branch: branch.clone(),
         },
@@ -50,7 +57,7 @@ pub fn record_scan(root: &Path, report: &Value, ms: u64, threshold: Option<usize
         ts: hub::now(),
         session,
         branch,
-        ms,
+        ms: elapsed.as_millis() as u64,
         origin,
         reported,
         resolved,

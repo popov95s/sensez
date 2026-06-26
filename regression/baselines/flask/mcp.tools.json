@@ -100,11 +100,12 @@
       "name": "noze_gate"
     },
     {
-      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. After finishing an edit session, set diff=true to see only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong. The returned JSON is compact and omits aggregate totals; use the CLI when you need full report metadata.",
+      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. By default, results are diff-focused to show only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong. Pass diff=false for an explicit full-repository audit. The returned JSON is compact and omits aggregate totals; use the CLI when you need full report metadata.",
       "inputSchema": {
         "properties": {
           "diff": {
-            "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Full-graph analysis either way.",
+            "default": true,
+            "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Defaults to true; pass false for a full-repository report. Full-graph analysis either way.",
             "type": "boolean"
           },
           "limit": {

@@ -99,7 +99,7 @@ mod tests {
 
         let text = crate::scan(root, None, crate::reporter::Format::Json, 0).unwrap();
         let baseline: Value = serde_json::from_str(&text).unwrap();
-        record_scan(root, &baseline, 1, None, Origin::Tool);
+        record_scan(root, &baseline, std::time::Duration::from_millis(1), None, Origin::Tool);
         triage_finding(root, "dead_code", "orphan_two", "false_positive", None).unwrap();
 
         let mut report = crate::analyze_path(root, None, None).unwrap();

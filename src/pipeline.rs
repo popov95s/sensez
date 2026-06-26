@@ -12,7 +12,9 @@ use anyhow::{Context, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
-/// Crawl, parse, build the graph, run analyzers, then apply optional diff scope.
+/// Crawl, parse, build the graph, run analyzers, apply triaged suppressions
+/// and precision ranking, then apply optional diff scope. The brainz
+/// coupling for filtering lives here — callers just get a filtered report.
 pub fn analyze_path(
     path: &Path,
     threshold: Option<usize>,
@@ -34,6 +36,8 @@ pub fn analyze_path(
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
     let mut report = noze::run(&parsed.files, &graph, &config);
+    crate::brainz::apply_suppressions(path, &mut report);
+    crate::brainz::rank_by_precision(path, &mut report);
     report.meta.issues.extend(config_issues);
     report.meta.issues.extend(discovery.issues);
     debug_assert_eq!(

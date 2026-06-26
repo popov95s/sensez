@@ -1,6 +1,7 @@
 //! Tool-call handlers for the MCP surface.
 
 use anyhow::Context;
+use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::Path;
 use std::process::Command;
@@ -55,18 +56,13 @@ fn run_summary_command(path: &str) -> anyhow::Result<String> {
 }
 
 fn scan_tool(args: &Value) -> ToolResult {
-    let path = required_str(args, "path")?;
-    let threshold = args
-        .get("threshold")
-        .and_then(Value::as_u64)
-        .map(|t| t as usize);
-    let max = args.get("limit").and_then(Value::as_u64).unwrap_or(0) as usize;
-    let diff = scan_diff_arg(args);
+    let args: ScanArgs = serde_json::from_value(args.clone())
+        .map_err(|e| (-32602, format!("invalid arguments: {e}")))?;
 
-    match run_scan(Path::new(path), threshold, max, diff) {
+    match run_scan(Path::new(&args.path), &args) {
         Ok((text, _snapshot)) => {
             let mut content = vec![json!({"type": "text", "text": text})];
-            if let Some(warning) = super::tools::scope_warning(Path::new(path)) {
+            if let Some(warning) = super::tools::scope_warning(Path::new(&args.path)) {
                 content.insert(0, json!({"type": "text", "text": warning}));
             }
             Ok(json!({"content": content, "isError": false}))
@@ -75,18 +71,52 @@ fn scan_tool(args: &Value) -> ToolResult {
     }
 }
 
-fn scan_diff_arg(args: &Value) -> bool {
-    args.get("diff").and_then(Value::as_bool).unwrap_or(true)
+#[derive(Debug, Deserialize)]
+#[serde(default)]
+struct ScanArgs {
+    /// Repository path to scan.
+    path: String,
+    /// Override the duplication token threshold for this scan.
+    threshold: Option<usize>,
+    /// Per-pillar cap on returned findings (`0` = no cap).
+    limit: usize,
+    /// Scope the scan to the diff vs. HEAD (`true` is the agent-friendly
+    /// default; pass `false` for a full scan).
+    diff: bool,
+    /// `false` for a shape-only call (e.g. an agent-facing limited
+    /// preview) that should not record into brainz.
+    record: bool,
 }
 
-fn run_scan(
-    path: &Path,
-    threshold: Option<usize>,
-    max: usize,
-    diff: bool,
-) -> anyhow::Result<(String, Value)> {
-    let (report, snapshot) =
-        super::scan::run_and_record(path, threshold, max, diff, crate::brainz::Origin::Tool)?;
+impl Default for ScanArgs {
+    fn default() -> Self {
+        Self {
+            path: String::new(),
+            threshold: None,
+            limit: 0,
+            diff: true,
+            record: true,
+        }
+    }
+}
+
+fn run_scan(path: &Path, args: &ScanArgs) -> anyhow::Result<(String, Value)> {
+    // Scan first; the caller decides whether to record. Keeps the scan
+    // pipeline independent of the metrics layer.
+    let (report, snapshot, elapsed) = if args.diff {
+        super::scan::diff(path, args.threshold, args.limit)?
+    } else {
+        super::scan::full(path, args.threshold, args.limit)?
+    };
+    if args.record {
+        crate::brainz::record_scan(
+            path,
+            &snapshot,
+            elapsed,
+            args.threshold,
+            crate::brainz::Origin::Tool,
+        );
+    }
     let compact = super::compact::tool_report(report);
     Ok((serde_json::to_string_pretty(&compact)?, snapshot))
 }
@@ -165,6 +195,7 @@ fn usage_report(args: &Value) -> ToolResult {
 #[cfg(test)]
 mod tests {
     use super::super::protocol::handle_message;
+    use super::ScanArgs;
     use serde_json::{json, Value};
     use std::process::Command;
 
@@ -248,10 +279,23 @@ mod tests {
     }
 
     #[test]
-    fn scan_tool_defaults_to_diff_mode() {
-        assert!(super::scan_diff_arg(&json!({})));
-        assert!(super::scan_diff_arg(&json!({"diff": true})));
-        assert!(!super::scan_diff_arg(&json!({"diff": false})));
+    fn scan_args_defaults_to_diff_mode() {
+        // The typed struct is the schema — defaults live in `Default` impl,
+        // not buried in a `Value::get` chain. Empty args, explicit
+        // `true`, and explicit `false` all deserialize to the right
+        // `diff`/`record` booleans.
+        let from_empty: ScanArgs = serde_json::from_value(json!({})).unwrap();
+        assert!(from_empty.path.is_empty());
+        assert_eq!(from_empty.threshold, None);
+        assert_eq!(from_empty.limit, 0);
+        assert!(from_empty.diff);
+        assert!(from_empty.record);
+
+        let from_true: ScanArgs = serde_json::from_value(json!({"diff": true})).unwrap();
+        assert!(from_true.diff);
+
+        let from_false: ScanArgs = serde_json::from_value(json!({"diff": false})).unwrap();
+        assert!(!from_false.diff);
     }
 
     #[test]

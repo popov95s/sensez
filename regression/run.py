@@ -188,25 +188,74 @@ def run_mcp_scenarios(
         assert init["serverInfo"]["name"] == "sensez"
         tools = client.request("tools/list")["result"]
         dump_norm(out / "mcp.tools.json", tools, repo, target)
-        scan = text_json(client.call_tool("noze_sniff", {"path": str(repo), "limit": 20}))
+        # The "full" scan feeds brainz metrics — no per-pillar cap, so the
+        # `reported_by_detector` counts every detector that fired.
+        scan = text_json(
+            client.call_tool("noze_sniff", {"path": str(repo), "diff": False})
+        )
         dump_norm(out / "mcp.full.noze.json", scan, repo, target)
+        # The "limited" scan is the agent-facing shape: per-pillar cap so
+        # the response stays small enough for the model's context window.
+        # `record: false` keeps it out of `reported_by_detector` so the
+        # shape preview doesn't double-count.
+        limited = text_json(
+            client.call_tool(
+                "noze_sniff",
+                {"path": str(repo), "limit": 20, "diff": False, "record": False},
+            )
+        )
+        dump_norm(out / "mcp.limited.noze.json", limited, repo, target)
         report = text_json(client.call_tool("brainz_report", {"path": str(repo)}))
         dump_norm(out / "brainz.after-full.json", report, repo, target)
+        assert_brainz_totals_reported(report, target["name"])
         apply_fixture(repo, fixture, fixture["text"])
         diff = text_json(client.call_tool("noze_sniff", {"path": str(repo), "diff": True}))
         dump_norm(out / "diff.noze.json", diff, repo, target)
         gate = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
         dump_norm(out / "gate.block.json", gate, repo, target)
+        assert_gate_blocks(gate, target["name"])
+        # Second gate call with the same content: the signature dedups
+        # against the last block, so the gate allows without the host
+        # needing to set `stop_hook_active`. This is the agent-friendly
+        # UX: one block per real complaint, not one per turn.
+        allow_same = text_json(
+            client.call_tool("noze_gate", {"path": str(repo)})
+        )
+        dump_norm(out / "gate.allow-same-content.json", allow_same, repo, target)
+        assert_gate_allows(allow_same, "signature dedup")
         allow = text_json(
             client.call_tool("noze_gate", {"path": str(repo), "stop_hook_active": True})
         )
         dump_norm(out / "gate.allow.json", allow, repo, target)
-        if "triage" in target.get("scenarios", []):
-            triage(client, repo, fixture)
+        assert_gate_allows(allow, "stop_hook_active")
+        # Fix / reintroduction must run BEFORE the triage scenario: a
+        # "debt" triage masks the disappearance from the resolved tally
+        # (intentional debt is not a fix). The order is: fix → scan →
+        # reintroduce → scan, with assertions after each brainz report.
         apply_fixture(repo, fixture, fixture["fix_text"])
         client.call_tool("noze_sniff", {"path": str(repo), "limit": 20})
         fixed = text_json(client.call_tool("brainz_report", {"path": str(repo)}))
         dump_norm(out / "brainz.after-gate-fix.json", fixed, repo, target)
+        assert_finding_resolved(fixed, fixture["detector"], target["name"])
+        # Reintroduce the same fixture: the next scan should count it as
+        # a reintroduction (previously-resolved fingerprint came back).
+        apply_fixture(repo, fixture, fixture["text"])
+        client.call_tool("noze_sniff", {"path": str(repo), "limit": 20})
+        reintroduced = text_json(client.call_tool("brainz_report", {"path": str(repo)}))
+        dump_norm(out / "brainz.after-reintro.json", reintroduced, repo, target)
+        assert_finding_reintroduced(
+            reintroduced, fixture["detector"], target["name"]
+        )
+        if "triage" in target.get("scenarios", []):
+            triage(client, repo, fixture)
+        # Past `repeat_limit`, the finding is auto-deferred and the gate
+        # allows (the report has zero findings after suppression). The
+        # agent already saw the block on the first call; nagging again
+        # would be a no-op. Run this last so the auto-deferral does not
+        # mask the fix / reintroduction flows above.
+        deferred = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        dump_norm(out / "gate.defer.json", deferred, repo, target)
+        assert_gate_allows(deferred, "auto-deferred past repeat_limit")
         dump_metrics_schema(out / "metrics-files.schema.json", repo)
     finally:
         client.close()
@@ -215,6 +264,88 @@ def run_mcp_scenarios(
 
 def cleanup_repo(repo: Path) -> None:
     shutil.rmtree(repo.parent, ignore_errors=True)
+
+
+def assert_brainz_totals_reported(report: object, target_name: str) -> None:
+    """The brainz report must carry non-zero reported counts for the
+    detectors that fire on a real repo. A regression that drops the
+    counters (or the scan that fills them) would silently break the
+    report's totals.
+    """
+    reported = _json_path(report, ("all_time", "reported_by_detector"))
+    if not isinstance(reported, dict) or not reported:
+        raise AssertionError(
+            f"{target_name}: brainz report has empty reported_by_detector"
+        )
+    non_zero = {
+        detector: count
+        for detector, count in reported.items()
+        if isinstance(count, int) and count > 0
+    }
+    if not non_zero:
+        raise AssertionError(
+            f"{target_name}: no detector reported any findings: {reported}"
+        )
+
+
+def assert_gate_blocks(response: object, target_name: str) -> None:
+    """A gate response that the baseline calls a `block` must really
+    carry `decision == block`. Catches a regression where the gate
+    silently allows on a finding that should nag the agent.
+    """
+    decision = _json_path(response, ("decision",))
+    if decision != "block":
+        raise AssertionError(
+            f"{target_name}: gate expected to block, got {response!r}"
+        )
+
+
+def assert_gate_allows(response: object, reason: str) -> None:
+    """A gate response that the baseline calls an `allow` must be the
+    empty-JSON `{}` payload (or at least not a block). Catches a
+    regression where the gate re-blocks on unchanged content.
+    """
+    if response != {} and _json_path(response, ("decision",)) == "block":
+        raise AssertionError(f"gate expected to allow ({reason}), got {response!r}")
+
+
+def assert_finding_resolved(report: object, detector: str, target_name: str) -> None:
+    """After the agent fixes a finding, the brainz totals must count it
+    as resolved under the fixture's detector. A regression where the
+    fix-recapture loop stops banking resolutions would silently inflate
+    recidivism and starve precision of its denominator.
+    """
+    resolved = _json_path(report, ("all_time", "resolved_by_detector", detector))
+    count = resolved.get("count") if isinstance(resolved, dict) else None
+    if not isinstance(count, int) or count < 1:
+        raise AssertionError(
+            f"{target_name}: expected {detector} to be resolved, got {resolved!r}"
+        )
+
+
+def assert_finding_reintroduced(report: object, detector: str, target_name: str) -> None:
+    """After the agent reintroduces a previously-fixed finding, the
+    brainz totals must count it as a reintroduction. A regression here
+    would silently drop the recidivism signal and let noisy detectors
+    skate past calibration.
+    """
+    reintroduced = _json_path(
+        report, ("all_time", "reintroduced_by_detector", detector)
+    )
+    count = reintroduced.get("count") if isinstance(reintroduced, dict) else None
+    if not isinstance(count, int) or count < 1:
+        raise AssertionError(
+            f"{target_name}: expected {detector} to be reintroduced, got {reintroduced!r}"
+        )
+
+
+def _json_path(value: object, keys: tuple[str, ...]) -> object:
+    current = value
+    for key in keys:
+        if not isinstance(current, dict) or key not in current:
+            return None
+        current = current[key]
+    return current
 
 
 def triage(client: McpClient, repo: Path, fixture: DeadCodeFixture) -> None:

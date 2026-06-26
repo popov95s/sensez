@@ -209,12 +209,7 @@ impl Totals {
                     .scans_by_origin
                     .entry(origin.as_str().to_string())
                     .or_default() += 1;
-                for (detector, n) in reported {
-                    *self
-                        .reported_by_detector
-                        .entry(detector.clone())
-                        .or_default() += n;
-                }
+                self.reported_by_detector = reported.clone();
                 if let Some(hash) = config_hash {
                     if self.last_config_hash.is_some_and(|prev| prev != *hash) {
                         self.config_changes += 1;

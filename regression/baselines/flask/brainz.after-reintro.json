@@ -5,11 +5,15 @@
     "first_searches": 0,
     "gate_blocks": 1,
     "outcomes": {},
-    "reintroduced_by_detector": {},
+    "reintroduced_by_detector": {
+      "dead_code/function": {
+        "count": 1
+      }
+    },
     "reported_by_detector": {
       "cycles": 2,
       "dead_code/class": 2,
-      "dead_code/function": 1,
+      "dead_code/function": 2,
       "duplication": 4,
       "smells/boolean_blindness": 4,
       "smells/divergent_change": 12,
@@ -31,12 +35,12 @@
         "count": 1
       }
     },
-    "scan_files_total": 503,
-    "scan_loc_total": 110516,
-    "scans": 6,
+    "scan_files_total": 587,
+    "scan_loc_total": 128936,
+    "scans": 7,
     "scans_by_origin": {
       "gate": 3,
-      "tool": 3
+      "tool": 4
     },
     "searches": 0,
     "searches_zero_hit": 0
@@ -53,16 +57,16 @@
   },
   "gate_conversion": {
     "blocked_findings": 1,
-    "conversion_rate": 1.0,
-    "resolved": 1,
-    "still_open": 0
+    "conversion_rate": 0.0,
+    "resolved": 0,
+    "still_open": 1
   },
   "gate_funnel": {
     "by_origin": {
       "gate": 3,
-      "tool": 3
+      "tool": 4
     },
-    "gate_share": 0.5
+    "gate_share": 0.43
   },
   "mean_resolution_days": {
     "_overall": 0.0,
@@ -90,18 +94,32 @@
         "resolved": 1
       }
     },
-    "recidivism_by_detector": {},
-    "scans": 6
+    "recidivism_by_detector": {
+      "dead_code/function": {
+        "mean_days_until_recurrence": 0.0,
+        "rate": 1.0,
+        "reintroduced": 1,
+        "resolved": 1
+      }
+    },
+    "scans": 7
   },
-  "recidivism_by_detector": {},
+  "recidivism_by_detector": {
+    "dead_code/function": {
+      "mean_days_until_recurrence": 0.0,
+      "rate": 1.0,
+      "reintroduced": 1,
+      "resolved": 1
+    }
+  },
   "search_health": {
     "searches": 0,
     "zero_hit": 0,
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 83.83,
-    "scans": 6
+    "mean_files": 83.86,
+    "scans": 7
   },
   "stale_findings": [],
   "triaged": []
