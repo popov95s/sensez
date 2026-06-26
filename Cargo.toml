@@ -11,6 +11,7 @@ keywords = ["architecture", "dead-code", "duplication", "code-quality", "tree-si
 categories = ["command-line-utilities", "development-tools"]
 exclude = [
     "baseline-comparisons/**",
+    "action/**",
     "specs/**",
     ".github/**",
     "CLAUDE.md",
