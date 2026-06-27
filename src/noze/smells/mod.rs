@@ -101,7 +101,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     inherit::detect(&ctx, classes, cfg, &mut out);
     typing::detect(&ctx, &metrics, cfg, &mut out);
     mutation::detect(&ctx, &metrics, cfg, &mut out);
-    performance::detect(&ctx, &metrics, cfg, &mut out);
+    out.extend(performance::detect(&ctx, &metrics, cfg));
     // Uniform per-smell on/off: drop any kind disabled for this language.
     if !cfg.disabled.is_empty() {
         out.retain(|f| !cfg.disabled.contains(&f.kind));

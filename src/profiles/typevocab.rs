@@ -42,6 +42,7 @@ pub(crate) fn has_domain_type(annotation: &str, builtins: &[&str]) -> bool {
 
 /// True when the annotation is a loose collection / escape hatch with no domain
 /// type anywhere inside it. Routed to the language's own vocabulary.
+#[allow(unreachable_patterns)]
 pub fn is_loose(lang: Language, annotation: &str) -> bool {
     match lang {
         #[cfg(feature = "lang-python")]
@@ -50,11 +51,14 @@ pub fn is_loose(lang: Language, annotation: &str) -> bool {
         Language::JavaScript | Language::TypeScript => {
             crate::profiles::javascript::typevocab::is_loose(annotation)
         }
+        #[cfg(feature = "lang-rust")]
+        Language::Rust => crate::profiles::rust::typevocab::is_loose(annotation),
         _ => false,
     }
 }
 
 /// The language's boolean type name (Python `bool`, TS `boolean`).
+#[allow(unreachable_patterns)]
 pub fn is_bool_type(lang: Language, annotation: &str) -> bool {
     match lang {
         #[cfg(feature = "lang-python")]
@@ -63,12 +67,15 @@ pub fn is_bool_type(lang: Language, annotation: &str) -> bool {
         Language::JavaScript | Language::TypeScript => {
             crate::profiles::javascript::typevocab::is_bool(annotation)
         }
+        #[cfg(feature = "lang-rust")]
+        Language::Rust => crate::profiles::rust::typevocab::is_bool(annotation),
         _ => false,
     }
 }
 
 /// A dict/record-shaped (or `Any`-ish) annotation — a receiver that might carry
 /// an implicit schema. Non-dict annotated receivers (DataFrame, ndarray) skip.
+#[allow(unreachable_patterns)]
 pub fn is_dictish(lang: Language, annotation: &str) -> bool {
     match lang {
         #[cfg(feature = "lang-python")]
@@ -77,6 +84,8 @@ pub fn is_dictish(lang: Language, annotation: &str) -> bool {
         Language::JavaScript | Language::TypeScript => {
             crate::profiles::javascript::typevocab::is_dictish(annotation)
         }
+        #[cfg(feature = "lang-rust")]
+        Language::Rust => crate::profiles::rust::typevocab::is_dictish(annotation),
         _ => false,
     }
 }

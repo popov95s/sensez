@@ -11,8 +11,7 @@ pub fn detect(
     ctx: &SmellContext<'_>,
     metrics: &[FunctionMetrics],
     _cfg: &Smells,
-    out: &mut Vec<SmellFinding>,
-) {
+) -> Vec<SmellFinding> {
     // Performance smells need to look up callees by name to attribute
     // helper-in-loop work to the caller, so we keep a per-name view of the
     // metrics by name. The map is name → *metrics*, not name → *unit*, but
@@ -20,10 +19,14 @@ pub fn detect(
     let functions: BTreeMap<&str, &FunctionMetrics> =
         metrics.iter().map(|m| (m.name.as_str(), m)).collect();
     let profile = registry::performance_profile(ctx.language);
-    for m in metrics {
-        direct_findings(ctx, m, &functions, profile, out);
-        helper_findings(ctx, m, &functions, profile, out);
-    }
+    metrics
+        .iter()
+        .flat_map(|m| {
+            let mut findings = direct_findings(ctx, m, &functions, profile);
+            findings.extend(helper_findings(ctx, m, &functions, profile));
+            findings
+        })
+        .collect()
 }
 
 fn direct_findings(
@@ -31,8 +34,8 @@ fn direct_findings(
     m: &FunctionMetrics,
     functions: &BTreeMap<&str, &FunctionMetrics>,
     profile: &dyn PerformanceProfile,
-    out: &mut Vec<SmellFinding>,
-) {
+) -> Vec<SmellFinding> {
+    let mut out = Vec::new();
     let nested_loops = significant_loops(&m.performance.nested_loops);
     if let Some(first) = nested_loops.first() {
         out.push(finding(
@@ -78,6 +81,7 @@ fn direct_findings(
             Severity::Info,
         ));
     }
+    out
 }
 
 fn helper_findings(
@@ -85,9 +89,12 @@ fn helper_findings(
     m: &FunctionMetrics,
     functions: &BTreeMap<&str, &FunctionMetrics>,
     profile: &dyn PerformanceProfile,
-    out: &mut Vec<SmellFinding>,
-) {
+) -> Vec<SmellFinding> {
+    let mut out = Vec::new();
     for call in &m.performance.loop_calls {
+        if call.target == m.name {
+            continue;
+        }
         let Some(callee) = functions.get(call.target.as_str()).copied() else {
             continue;
         };
@@ -115,6 +122,7 @@ fn helper_findings(
             ));
         }
     }
+    out
 }
 
 fn repeated_iterations(m: &FunctionMetrics) -> BTreeMap<&str, Vec<&CallFact>> {

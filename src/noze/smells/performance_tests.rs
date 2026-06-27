@@ -72,6 +72,21 @@ def f(groups):
 }
 
 #[test]
+fn recursive_tree_walk_is_not_helper_nested_loop() {
+    let src = "\
+fn visit(items: &[u32]) {
+    for item in items {
+        if *item > 0 {
+            visit(items);
+        }
+    }
+}
+";
+    let findings = local("rs", src);
+    assert!(!has(&findings, SmellKind::NestedLoop), "{findings:?}");
+}
+
+#[test]
 fn loop_calling_helper_with_external_call_is_n_plus_one() {
     let src = "\
 function load(client, id) {
