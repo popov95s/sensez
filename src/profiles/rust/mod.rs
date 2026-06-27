@@ -1,7 +1,7 @@
 //! Scope matches the JS/TS profiles: structural pillars (duplication, cycles,
-//! boundaries) plus graph-based dead code for `pub` items (rustc's `dead_code`
-//! lint already owns private ones). Per-function smell units are a deferred
-//! milestone, as for JS/TS.
+//! boundaries), graph-based dead code for `pub` items (rustc's `dead_code` lint
+//! already owns private ones), and Rust-native unit extraction for smells that
+//! complement Clippy instead of re-reporting its local style lints.
 
 pub(crate) mod deadcode;
 pub(crate) mod imports;
@@ -13,9 +13,14 @@ pub(crate) mod scope;
 pub(crate) mod symbols;
 pub(crate) mod tokens;
 pub(crate) mod traversal;
+pub(crate) mod typevocab;
+mod unit_helpers;
+pub(crate) mod units;
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod units_tests;
 
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,

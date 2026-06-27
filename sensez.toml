@@ -45,6 +45,84 @@ unused_imports = false    # flag imports whose bound name is never used in-file
 unused_methods = false    # flag class methods never referenced in their module
 unused_variables = false  # flag unused module-level variables
 
+[smells]
+exclude = ["**/tests/**", "**/*_tests.rs", "**/tests.rs"]
+
+[smells.rust.rules.god_module]
+min_fan = 30
+action = "must_fix"
+
+[smells.rust.rules.shotgun_surgery_hazard]
+min_blast = 36
+action = "must_fix"
+
+[smells.rust.rules.data_clump]
+min_fields = 4
+min_occurrences = 3
+action = "must_fix"
+
+[smells.rust.rules.boolean_blindness]
+max_bool_params = 2
+action = "must_fix"
+
+[smells.rust.rules.tuple_packing]
+max_tuple_return = 2
+action = "must_fix"
+
+[smells.rust.rules.implicit_schema]
+min_keys = 4
+action = "must_fix"
+
+[smells.rust.rules.literal_membership]
+action = "must_fix"
+
+[smells.rust.rules.mutated_parameter]
+action = "must_fix"
+
+[smells.rust.rules.reassigned_parameter]
+enabled = true
+action = "must_fix"
+
+[smells.rust.rules.split_variable]
+min_assigns = 2
+action = "must_fix"
+
+[smells.rust.rules.loose_typing]
+enabled = false
+
+[smells.rust.rules.high_complexity]
+enabled = false
+
+[smells.rust.rules.high_cognitive_complexity]
+enabled = false
+
+[smells.rust.rules.long_function]
+enabled = false
+
+[smells.rust.rules.long_parameter_list]
+enabled = false
+
+[smells.rust.rules.too_many_returns]
+enabled = false
+
+[smells.rust.rules.deep_nesting]
+enabled = false
+
+[smells.rust.rules.magic_numbers]
+enabled = false
+
+[smells.rust.rules.repeated_iteration]
+action = "must_fix"
+
+[smells.rust.rules.sort_in_loop]
+action = "must_fix"
+
+[smells.rust.rules.nested_loop]
+action = "must_fix"
+
+[smells.rust.rules.n_plus_one_call]
+action = "must_fix"
+
 # Boundary auditor: forbidden import edges. Each rule forbids any module
 # matching `from` from importing any module matching `to`.
 #
