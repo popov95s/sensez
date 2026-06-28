@@ -257,7 +257,6 @@
       "line": 109,
       "message": "class splits into 8 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 8,
-      "severity": "Warning",
       "symbol": "Flask",
       "threshold": 1
     },
@@ -268,7 +267,6 @@
       "line": 562,
       "message": "accesses `request` (Request) 4\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on Request",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "raise_routing_exception",
       "threshold": 1
     },
@@ -278,7 +276,6 @@
       "kind": "god_module",
       "message": "fan-in 6 + fan-out 33 = 39 (threshold 25)",
       "metric": 39,
-      "severity": "Warning",
       "symbol": "flask.app",
       "threshold": 25
     },
@@ -289,7 +286,6 @@
       "line": 1102,
       "message": "cognitive complexity 20 (threshold 15)",
       "metric": 20,
-      "severity": "Warning",
       "symbol": "url_for",
       "threshold": 15
     },
@@ -300,7 +296,6 @@
       "line": 1224,
       "message": "cognitive complexity 23 (threshold 15)",
       "metric": 23,
-      "severity": "Warning",
       "symbol": "make_response",
       "threshold": 15
     },
@@ -311,7 +306,6 @@
       "line": 1366,
       "message": "cognitive complexity 16 (threshold 15)",
       "metric": 16,
-      "severity": "Warning",
       "symbol": "preprocess_request",
       "threshold": 15
     },
@@ -322,7 +316,6 @@
       "line": 563,
       "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 2
     },
@@ -332,7 +325,6 @@
       "kind": "god_module",
       "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
       "metric": 35,
-      "severity": "Warning",
       "symbol": "flask.cli",
       "threshold": 25
     },
@@ -343,7 +335,6 @@
       "line": 1061,
       "message": "cognitive complexity 17 (threshold 15)",
       "metric": 17,
-      "severity": "Warning",
       "symbol": "routes_command",
       "threshold": 15
     },
@@ -354,7 +345,6 @@
       "line": 120,
       "message": "cognitive complexity 19 (threshold 15)",
       "metric": 19,
-      "severity": "Warning",
       "symbol": "find_app_by_string",
       "threshold": 15
     },
@@ -365,7 +355,6 @@
       "line": 41,
       "message": "cognitive complexity 20 (threshold 15)",
       "metric": 20,
-      "severity": "Warning",
       "symbol": "find_best_app",
       "threshold": 15
     },
@@ -376,7 +365,6 @@
       "line": 698,
       "message": "cognitive complexity 18 (threshold 15)",
       "metric": 18,
-      "severity": "Warning",
       "symbol": "load_dotenv",
       "threshold": 15
     },
@@ -386,7 +374,6 @@
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
       "metric": 16,
-      "severity": "Warning",
       "symbol": "flask.globals",
       "threshold": 12
     },
@@ -397,7 +384,6 @@
       "line": 126,
       "message": "nested function inside `stream_with_context` spans 16 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `stream_with_context`), so extract it to module/class level",
       "metric": 16,
-      "severity": "Warning",
       "symbol": "generator",
       "threshold": 15
     },
@@ -408,7 +394,6 @@
       "line": 59,
       "message": "class splits into 10 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 10,
-      "severity": "Warning",
       "symbol": "App",
       "threshold": 1
     },
@@ -418,7 +403,6 @@
       "kind": "god_module",
       "message": "fan-in 7 + fan-out 21 = 28 (threshold 25)",
       "metric": 28,
-      "severity": "Warning",
       "symbol": "flask.sansio.app",
       "threshold": 25
     },
@@ -429,7 +413,6 @@
       "line": 119,
       "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 7,
-      "severity": "Warning",
       "symbol": "Blueprint",
       "threshold": 1
     },
@@ -440,7 +423,6 @@
       "line": 273,
       "message": "cognitive complexity 28 (threshold 15)",
       "metric": 28,
-      "severity": "Warning",
       "symbol": "register",
       "threshold": 15
     },
@@ -451,7 +433,6 @@
       "line": 52,
       "message": "class splits into 6 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 6,
-      "severity": "Warning",
       "symbol": "Scaffold",
       "threshold": 1
     },
@@ -462,7 +443,6 @@
       "line": 18,
       "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 7,
-      "severity": "Warning",
       "symbol": "Request",
       "threshold": 1
     }

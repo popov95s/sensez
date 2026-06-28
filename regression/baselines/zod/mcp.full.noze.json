@@ -1368,7 +1368,6 @@
       "line": 6,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "stringifyTitle",
       "threshold": 0
     },
@@ -1379,7 +1378,6 @@
       "line": 1309,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "minLength",
       "threshold": 0
     },
@@ -1390,7 +1388,6 @@
       "line": 1319,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "maxLength",
       "threshold": 0
     },
@@ -1401,7 +1398,6 @@
       "line": 1577,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "minValue",
       "threshold": 0
     },
@@ -1412,7 +1408,6 @@
       "line": 1587,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "maxValue",
       "threshold": 0
     },
@@ -1423,7 +1418,6 @@
       "line": 1601,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "isFinite",
       "threshold": 0
     },
@@ -1434,7 +1428,6 @@
       "line": 1800,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "minValue",
       "threshold": 0
     },
@@ -1445,7 +1438,6 @@
       "line": 1810,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "maxValue",
       "threshold": 0
     },
@@ -1456,7 +1448,6 @@
       "line": 1966,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "minDate",
       "threshold": 0
     },
@@ -1467,7 +1458,6 @@
       "line": 1977,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "maxDate",
       "threshold": 0
     },
@@ -1478,7 +1468,6 @@
       "line": 2241,
       "message": "2 nested if(s) can be combined with a boolean AND",
       "metric": 2,
-      "severity": "Info",
       "symbol": "_parse",
       "threshold": 0
     },
@@ -1489,7 +1478,6 @@
       "line": 3691,
       "message": "2 nested if(s) can be combined with a boolean AND",
       "metric": 2,
-      "severity": "Info",
       "symbol": "_parse",
       "threshold": 0
     },
@@ -1500,7 +1488,6 @@
       "line": 102,
       "message": "fields (_json, _params, _schema, ctx) recur together across 11 signatures \u2014 consider a typed object or interface",
       "metric": 11,
-      "severity": "Info",
       "symbol": "_json+_params+_schema+ctx",
       "threshold": 3
     },
@@ -1511,7 +1498,6 @@
       "line": 276,
       "message": "fields (_json, ctx, json, params, schema) recur together across 16 signatures \u2014 consider a typed object or interface",
       "metric": 16,
-      "severity": "Info",
       "symbol": "_json+ctx+json+params+schema",
       "threshold": 3
     },
@@ -1522,7 +1508,6 @@
       "line": 98,
       "message": "fields (_ctx, _params, _schema, json, schema) recur together across 6 signatures \u2014 consider a typed object or interface",
       "metric": 6,
-      "severity": "Info",
       "symbol": "_ctx+_params+_schema+json+schema",
       "threshold": 3
     },
@@ -1533,7 +1518,6 @@
       "line": 3072,
       "message": "external-looking call runs once per loop iteration; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Info",
       "symbol": "",
       "threshold": 1
     },
@@ -1544,7 +1528,6 @@
       "line": 482,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "",
       "threshold": 0
     },
@@ -1555,7 +1538,6 @@
       "line": 217,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "severity": "Info",
       "symbol": "extractDefs",
       "threshold": 0
     },
@@ -1566,7 +1548,6 @@
       "line": 284,
       "message": "params [obj: object] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Info",
       "symbol": "objectClone",
       "threshold": 0
     },
@@ -1577,7 +1558,6 @@
       "line": 1007,
       "message": "params [mask: object] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Info",
       "symbol": "required",
       "threshold": 0
     },
@@ -1588,7 +1568,6 @@
       "line": 969,
       "message": "params [mask: object] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Info",
       "symbol": "partial",
       "threshold": 0
     },
@@ -1599,7 +1578,6 @@
       "line": 23,
       "message": "params [options: any[]]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "randomPick",
       "threshold": 0
     },
@@ -1610,7 +1588,6 @@
       "line": 27,
       "message": "params [factory: object | (() => any)]; returns any[] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "makeData",
       "threshold": 0
     },
@@ -1621,7 +1598,6 @@
       "line": 30,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "for_in_no_symbols",
       "threshold": 1
     },
@@ -1632,7 +1608,6 @@
       "line": 35,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "reflect_no_symbols",
       "threshold": 1
     },
@@ -1643,7 +1618,6 @@
       "line": 40,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "for_in_with_symbols",
       "threshold": 1
     },
@@ -1654,7 +1628,6 @@
       "line": 45,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "reflect_with_symbols",
       "threshold": 1
     },
@@ -1664,7 +1637,6 @@
       "kind": "god_module",
       "message": "fan-in 29 + fan-out 6 = 35 (threshold 25)",
       "metric": 35,
-      "severity": "Warning",
       "symbol": "metabench",
       "threshold": 25
     },
@@ -1675,7 +1647,6 @@
       "line": 11,
       "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "makeSuccess",
       "threshold": 0
     },
@@ -1686,7 +1657,6 @@
       "line": 14,
       "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "makeFail",
       "threshold": 0
     },
@@ -1697,7 +1667,6 @@
       "line": 100,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "generateMetadata",
       "threshold": 0
     },
@@ -1708,7 +1677,6 @@
       "line": 18,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -1719,7 +1687,6 @@
       "line": 6,
       "message": "params [title: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "stringifyTitle",
       "threshold": 0
     },
@@ -1730,7 +1697,6 @@
       "line": 74,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "GET",
       "threshold": 1
     },
@@ -1741,7 +1707,6 @@
       "line": 17,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -1752,7 +1717,6 @@
       "line": 14,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "ThemedImage",
       "threshold": 0
     },
@@ -1763,7 +1727,6 @@
       "line": 362,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -1774,7 +1737,6 @@
       "line": 14,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "HeroLogo",
       "threshold": 0
     },
@@ -1785,7 +1747,6 @@
       "line": 3,
       "message": "params [props: { groupId: string; values: string[]; children: any }] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "If",
       "threshold": 0
     },
@@ -1796,7 +1757,6 @@
       "line": 21,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -1807,7 +1767,6 @@
       "line": 14,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "ThemedImage",
       "threshold": 0
     },
@@ -1818,7 +1777,6 @@
       "line": 107,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "stripMdxComments",
       "threshold": 0
     },
@@ -1829,7 +1787,6 @@
       "line": 182,
       "message": "mutates input parameter(s) [failures] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "assertExpectedTabLabels",
       "threshold": 0
     },
@@ -1840,7 +1797,6 @@
       "line": 201,
       "message": "mutates input parameter(s) [failures] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "compareCodeFences",
       "threshold": 0
     },
@@ -1851,7 +1807,6 @@
       "line": 115,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "stripMdxComments",
       "threshold": 1
     },
@@ -1862,7 +1817,6 @@
       "line": 191,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "assertExpectedTabLabels",
       "threshold": 1
     },
@@ -1873,7 +1827,6 @@
       "line": 239,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "getEditDistance",
       "threshold": 1
     },
@@ -1884,7 +1837,6 @@
       "line": 36,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -1895,7 +1847,6 @@
       "line": 46,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -1906,7 +1857,6 @@
       "line": 67,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "extractTabsBlocks",
       "threshold": 1
     },
@@ -1917,7 +1867,6 @@
       "line": 88,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "extractTabsBlocks",
       "threshold": 1
     },
@@ -1928,7 +1877,6 @@
       "line": 4,
       "message": "mutates input parameter(s) [resources] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "fetchStars",
       "threshold": 0
     },
@@ -1939,7 +1887,6 @@
       "line": 37,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -1950,7 +1897,6 @@
       "line": 120,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -1961,7 +1907,6 @@
       "line": 133,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -1972,7 +1917,6 @@
       "line": 147,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -1983,7 +1927,6 @@
       "line": 151,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -1994,7 +1937,6 @@
       "line": 265,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "generateExtendChain",
       "threshold": 1
     },
@@ -2005,7 +1947,6 @@
       "line": 275,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generateExtendChain",
       "threshold": 1
     },
@@ -2016,7 +1957,6 @@
       "line": 336,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generateFields",
       "threshold": 1
     },
@@ -2027,7 +1967,6 @@
       "line": 85,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -2038,7 +1977,6 @@
       "line": 86,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 9,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -2049,7 +1987,6 @@
       "line": 98,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -2060,7 +1997,6 @@
       "line": 256,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "generateExtendChain",
       "threshold": 1
     },
@@ -2071,7 +2007,6 @@
       "line": 194,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "ZodError",
       "threshold": 1
     },
@@ -2082,7 +2017,6 @@
       "line": 217,
       "message": "params [_mapper: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "format",
       "threshold": 0
     },
@@ -2093,7 +2027,6 @@
       "line": 271,
       "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "assert",
       "threshold": 0
     },
@@ -2104,7 +2037,6 @@
       "line": 298,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "flatten",
       "threshold": 0
     },
@@ -2115,7 +2047,6 @@
       "line": 237,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -2126,7 +2057,6 @@
       "line": 1369,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "ZodNumber",
       "threshold": 1
     },
@@ -2137,7 +2067,6 @@
       "line": 158,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodType",
       "threshold": 1
     },
@@ -2148,7 +2077,6 @@
       "line": 1635,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "ZodBigInt",
       "threshold": 1
     },
@@ -2159,7 +2087,6 @@
       "line": 1877,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodDate",
       "threshold": 1
     },
@@ -2170,7 +2097,6 @@
       "line": 2236,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodArray",
       "threshold": 1
     },
@@ -2181,7 +2107,6 @@
       "line": 2452,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodObject",
       "threshold": 1
     },
@@ -2192,7 +2117,6 @@
       "line": 3116,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodDiscriminatedUnion",
       "threshold": 1
     },
@@ -2203,7 +2127,6 @@
       "line": 3686,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodSet",
       "threshold": 1
     },
@@ -2214,7 +2137,6 @@
       "line": 3817,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "ZodFunction",
       "threshold": 1
     },
@@ -2225,7 +2147,6 @@
       "line": 731,
       "message": "class splits into 4 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "ZodString",
       "threshold": 1
     },
@@ -2236,7 +2157,6 @@
       "line": 1108,
       "message": "accesses `options` (| string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on | string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "datetime",
       "threshold": 2
     },
@@ -2247,7 +2167,6 @@
       "line": 176,
       "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "_getOrReturnCtx",
       "threshold": 1
     },
@@ -2258,7 +2177,6 @@
       "line": 191,
       "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "_processInputParams",
       "threshold": 1
     },
@@ -2269,7 +2187,6 @@
       "line": 2947,
       "message": "accesses `ctx` (undefined | ParseContext) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on undefined | ParseContext",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "_parse",
       "threshold": 2
     },
@@ -2280,7 +2197,6 @@
       "line": 3514,
       "message": "accesses `ctx` (undefined | ParseContext) 8\u00d7 vs. own data 3\u00d7 \u2014 behavior may belong on undefined | ParseContext",
       "metric": 8,
-      "severity": "Warning",
       "symbol": "_parse",
       "threshold": 3
     },
@@ -2291,7 +2207,6 @@
       "line": 4244,
       "message": "accesses `ctx` (undefined | ParseContext) 6\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on undefined | ParseContext",
       "metric": 6,
-      "severity": "Warning",
       "symbol": "_parse",
       "threshold": 1
     },
@@ -2302,7 +2217,6 @@
       "line": 2951,
       "message": "nested function inside `_parse` spans 26 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `_parse`), so extract it to module/class level",
       "metric": 26,
-      "severity": "Warning",
       "symbol": "handleResults",
       "threshold": 15
     },
@@ -2313,7 +2227,6 @@
       "line": 158,
       "message": "32 methods (threshold 20)",
       "metric": 32,
-      "severity": "Warning",
       "symbol": "ZodType",
       "threshold": 20
     },
@@ -2324,7 +2237,6 @@
       "line": 731,
       "message": "49 methods (threshold 20)",
       "metric": 49,
-      "severity": "Warning",
       "symbol": "ZodString",
       "threshold": 20
     },
@@ -2335,7 +2247,6 @@
       "line": 223,
       "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "parse",
       "threshold": 0
     },
@@ -2346,7 +2257,6 @@
       "line": 229,
       "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "safeParse",
       "threshold": 0
     },
@@ -2357,7 +2267,6 @@
       "line": 2424,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "deepPartialify",
       "threshold": 0
     },
@@ -2368,7 +2277,6 @@
       "line": 247,
       "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "\"~validate\"",
       "threshold": 0
     },
@@ -2379,7 +2287,6 @@
       "line": 2823,
       "message": "params [mask: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "partial",
       "threshold": 0
     },
@@ -2390,7 +2297,6 @@
       "line": 2852,
       "message": "params [mask: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "required",
       "threshold": 0
     },
@@ -2401,7 +2307,6 @@
       "line": 292,
       "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "parseAsync",
       "threshold": 0
     },
@@ -2412,7 +2317,6 @@
       "line": 298,
       "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "safeParseAsync",
       "threshold": 0
     },
@@ -2423,7 +2327,6 @@
       "line": 3241,
       "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose collections with a typed object or interface",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "mergeValues",
       "threshold": 0
     },
@@ -2434,7 +2337,6 @@
       "line": 3559,
       "message": "params [first: any, second: any, third: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "create",
       "threshold": 0
     },
@@ -2445,7 +2347,6 @@
       "line": 3847,
       "message": "params [returns: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "makeReturnsIssue",
       "threshold": 0
     },
@@ -2456,7 +2357,6 @@
       "line": 481,
       "message": "params [def: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "default",
       "threshold": 0
     },
@@ -2467,7 +2367,6 @@
       "line": 4908,
       "message": "params [params: unknown, data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "cleanParams",
       "threshold": 0
     },
@@ -2478,7 +2377,6 @@
       "line": 4915,
       "message": "params [check: (data: any) => any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "custom",
       "threshold": 0
     },
@@ -2489,7 +2387,6 @@
       "line": 503,
       "message": "params [def: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "catch",
       "threshold": 0
     },
@@ -2500,7 +2397,6 @@
       "line": 68,
       "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "constructor",
       "threshold": 0
     },
@@ -2511,7 +2407,6 @@
       "line": 1355,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "floatSafeRemainder",
       "threshold": 0
     },
@@ -2522,7 +2417,6 @@
       "line": 660,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "timeRegexSource",
       "threshold": 0
     },
@@ -2533,20 +2427,8 @@
       "line": 681,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "datetimeRegex",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "nested_loop",
-      "line": 2430,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 2,
-      "severity": "Warning",
-      "symbol": "deepPartialify",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -2555,7 +2437,6 @@
       "line": 2862,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "required",
       "threshold": 1
     },
@@ -2566,30 +2447,7 @@
       "line": 3204,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "create",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "nested_loop",
-      "line": 3253,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 3,
-      "severity": "Warning",
-      "symbol": "mergeValues",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "nested_loop",
-      "line": 3270,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 3,
-      "severity": "Warning",
-      "symbol": "mergeValues",
       "threshold": 1
     },
     {
@@ -2599,7 +2457,6 @@
       "line": 380,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "convertBaseSchema",
       "threshold": 1
     },
@@ -2610,19 +2467,7 @@
       "line": 415,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "convertBaseSchema",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
-      "kind": "nested_loop",
-      "line": 565,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 5,
-      "severity": "Warning",
-      "symbol": "convertSchema",
       "threshold": 1
     },
     {
@@ -2632,7 +2477,6 @@
       "line": 214,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "convertBaseSchema",
       "threshold": 1
     },
@@ -2643,7 +2487,6 @@
       "line": 1977,
       "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_enum",
       "threshold": 0
     },
@@ -2654,7 +2497,6 @@
       "line": 2035,
       "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "literal",
       "threshold": 0
     },
@@ -2665,7 +2507,6 @@
       "line": 2632,
       "message": "params [fn: (data: unknown) => unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "custom",
       "threshold": 0
     },
@@ -2676,7 +2517,6 @@
       "line": 338,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "meta",
       "threshold": 0
     },
@@ -2687,7 +2527,6 @@
       "line": 57,
       "message": "params [v: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "set",
       "threshold": 0
     },
@@ -2698,7 +2537,6 @@
       "line": 1123,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -2709,7 +2547,6 @@
       "line": 278,
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "register",
       "threshold": 0
     },
@@ -2720,7 +2557,6 @@
       "line": 1355,
       "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_enum",
       "threshold": 0
     },
@@ -2731,7 +2567,6 @@
       "line": 1409,
       "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "_literal",
       "threshold": 0
     },
@@ -2741,7 +2576,6 @@
       "kind": "god_module",
       "message": "fan-in 56 + fan-out 5 = 61 (threshold 25)",
       "metric": 61,
-      "severity": "Warning",
       "symbol": "src/v4/core/checks",
       "threshold": 25
     },
@@ -2752,7 +2586,6 @@
       "line": 22,
       "message": "nested function inside `$constructor` spans 30 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `$constructor`), so extract it to module/class level",
       "metric": 30,
-      "severity": "Warning",
       "symbol": "init",
       "threshold": 15
     },
@@ -2763,7 +2596,6 @@
       "line": 3,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "Doc",
       "threshold": 1
     },
@@ -2774,7 +2606,6 @@
       "line": 20,
       "message": "params [arg: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "write",
       "threshold": 0
     },
@@ -2785,7 +2616,6 @@
       "line": 36,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "compile",
       "threshold": 0
     },
@@ -2796,7 +2626,6 @@
       "line": 29,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "write",
       "threshold": 1
     },
@@ -2807,7 +2636,6 @@
       "line": 310,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -2818,7 +2646,6 @@
       "line": 367,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -2829,7 +2656,6 @@
       "line": 450,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "prettifyError",
       "threshold": 1
     },
@@ -2839,7 +2665,6 @@
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 60 distinct modules \u2014 a change here scatters edits widely",
       "metric": 60,
-      "severity": "Warning",
       "symbol": "src/v4/core/errors",
       "threshold": 60
     },
@@ -2850,7 +2675,6 @@
       "line": 83,
       "message": "accesses `params` (JSONSchemaGeneratorConstructorParams) 9\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on JSONSchemaGeneratorConstructorParams",
       "metric": 9,
-      "severity": "Warning",
       "symbol": "constructor",
       "threshold": 1
     },
@@ -2861,7 +2685,6 @@
       "line": 621,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "toJSONSchema",
       "threshold": 0
     },
@@ -2872,7 +2695,6 @@
       "line": 158,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -2883,7 +2705,6 @@
       "line": 194,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -2894,7 +2715,6 @@
       "line": 135,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -2905,7 +2725,6 @@
       "line": 70,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -2916,7 +2735,6 @@
       "line": 1750,
       "message": "params [input: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "handlePropertyResult",
       "threshold": 0
     },
@@ -2927,7 +2745,6 @@
       "line": 1856,
       "message": "params [proms: Promise<any>[], input: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "handleCatchall",
       "threshold": 0
     },
@@ -2938,7 +2755,6 @@
       "line": 2495,
       "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose collections with a typed object or interface",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "mergeValues",
       "threshold": 0
     },
@@ -2949,7 +2765,6 @@
       "line": 2765,
       "message": "params [input: unknown[]] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "handleTupleResults",
       "threshold": 0
     },
@@ -2960,7 +2775,6 @@
       "line": 3086,
       "message": "params [key: unknown, input: Map<any, any>] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "handleMapResult",
       "threshold": 0
     },
@@ -2971,7 +2785,6 @@
       "line": 3478,
       "message": "params [input: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "handleOptionalResult",
       "threshold": 0
     },
@@ -2982,7 +2795,6 @@
       "line": 4122,
       "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "handleCodecTxResult",
       "threshold": 0
     },
@@ -2993,7 +2805,6 @@
       "line": 4647,
       "message": "params [result: unknown, input: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "handleRefineResult",
       "threshold": 0
     },
@@ -3004,7 +2815,6 @@
       "line": 959,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3015,7 +2825,6 @@
       "line": 4458,
       "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 4
     },
@@ -3026,7 +2835,6 @@
       "line": 1856,
       "message": "mutates input parameter(s) [proms] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "handleCatchall",
       "threshold": 0
     },
@@ -3037,7 +2845,6 @@
       "line": 1931,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -3048,7 +2855,6 @@
       "line": 205,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -3059,7 +2865,6 @@
       "line": 2374,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 1
     },
@@ -3070,30 +2875,7 @@
       "line": 2391,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "nested_loop",
-      "line": 2514,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 3,
-      "severity": "Warning",
-      "symbol": "mergeValues",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "nested_loop",
-      "line": 2535,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 3,
-      "severity": "Warning",
-      "symbol": "mergeValues",
       "threshold": 1
     },
     {
@@ -3103,7 +2885,6 @@
       "line": 2561,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "handleIntersectionResults",
       "threshold": 1
     },
@@ -3114,7 +2895,6 @@
       "line": 2175,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "handleUnionResults",
       "threshold": 1
     },
@@ -3125,41 +2905,7 @@
       "line": 2257,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "handleExclusiveUnionResults",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
-      "kind": "nested_loop",
-      "line": 570,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 4,
-      "severity": "Warning",
-      "symbol": "isTransforming",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
-      "kind": "nested_loop",
-      "line": 576,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 4,
-      "severity": "Warning",
-      "symbol": "isTransforming",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
-      "kind": "nested_loop",
-      "line": 582,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 4,
-      "severity": "Warning",
-      "symbol": "isTransforming",
       "threshold": 1
     },
     {
@@ -3169,7 +2915,6 @@
       "line": 205,
       "message": "params [_: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "assert",
       "threshold": 0
     },
@@ -3180,7 +2925,6 @@
       "line": 219,
       "message": "params [value: any]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "jsonStringifyReplacer",
       "threshold": 0
     },
@@ -3191,7 +2935,6 @@
       "line": 238,
       "message": "params [input: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "nullish",
       "threshold": 0
     },
@@ -3202,7 +2945,6 @@
       "line": 301,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "mergeDefs",
       "threshold": 0
     },
@@ -3213,7 +2955,6 @@
       "line": 312,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "cloneDef",
       "threshold": 0
     },
@@ -3224,7 +2965,6 @@
       "line": 316,
       "message": "params [obj: any]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "getElementAtPath",
       "threshold": 0
     },
@@ -3235,7 +2975,6 @@
       "line": 360,
       "message": "params [data: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "isObject",
       "threshold": 0
     },
@@ -3246,7 +2985,6 @@
       "line": 385,
       "message": "params [o: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "isPlainObject",
       "threshold": 0
     },
@@ -3257,7 +2995,6 @@
       "line": 406,
       "message": "params [o: any]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "shallowClone",
       "threshold": 0
     },
@@ -3268,7 +3005,6 @@
       "line": 414,
       "message": "params [data: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "numKeys",
       "threshold": 0
     },
@@ -3279,7 +3015,6 @@
       "line": 568,
       "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "stringifyPrimitive",
       "threshold": 0
     },
@@ -3290,7 +3025,6 @@
       "line": 601,
       "message": "params [mask: Record<string, unknown>]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "pick",
       "threshold": 0
     },
@@ -3301,7 +3035,6 @@
       "line": 630,
       "message": "params [mask: object]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "omit",
       "threshold": 0
     },
@@ -3312,7 +3045,6 @@
       "line": 659,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "extend",
       "threshold": 0
     },
@@ -3323,7 +3055,6 @@
       "line": 687,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "safeExtend",
       "threshold": 0
     },
@@ -3334,7 +3065,6 @@
       "line": 701,
       "message": "returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "merge",
       "threshold": 0
     },
@@ -3345,7 +3075,6 @@
       "line": 720,
       "message": "params [mask: object | undefined]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "partial",
       "threshold": 0
     },
@@ -3356,7 +3085,6 @@
       "line": 772,
       "message": "params [mask: object | undefined]; returns any \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "required",
       "threshold": 0
     },
@@ -3367,7 +3095,6 @@
       "line": 871,
       "message": "params [input: any]; returns \"set\" | \"map\" | \"file\" | \"unknown\" \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "getSizableOrigin",
       "threshold": 0
     },
@@ -3378,7 +3105,6 @@
       "line": 879,
       "message": "params [input: any]; returns \"array\" | \"string\" | \"unknown\" \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "getLengthableOrigin",
       "threshold": 0
     },
@@ -3389,7 +3115,6 @@
       "line": 885,
       "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "parsedType",
       "threshold": 0
     },
@@ -3399,7 +3124,6 @@
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
       "metric": 65,
-      "severity": "Warning",
       "symbol": "src/v4/core/util",
       "threshold": 60
     },
@@ -3410,7 +3134,6 @@
       "line": 72,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3421,7 +3144,6 @@
       "line": 71,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3432,7 +3154,6 @@
       "line": 129,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3443,7 +3164,6 @@
       "line": 74,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3454,7 +3174,6 @@
       "line": 99,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3465,7 +3184,6 @@
       "line": 75,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3476,7 +3194,6 @@
       "line": 78,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3487,7 +3204,6 @@
       "line": 73,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3498,7 +3214,6 @@
       "line": 75,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3509,7 +3224,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3520,7 +3234,6 @@
       "line": 75,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3531,7 +3244,6 @@
       "line": 96,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3542,7 +3254,6 @@
       "line": 75,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3553,7 +3264,6 @@
       "line": 76,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3564,7 +3274,6 @@
       "line": 71,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3575,7 +3284,6 @@
       "line": 91,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3586,7 +3294,6 @@
       "line": 106,
       "message": "12 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 12,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3597,7 +3304,6 @@
       "line": 51,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3608,7 +3314,6 @@
       "line": 86,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3619,7 +3324,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3630,7 +3334,6 @@
       "line": 117,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3641,7 +3344,6 @@
       "line": 13,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "withDefiniteArticle",
       "threshold": 0
     },
@@ -3652,7 +3354,6 @@
       "line": 72,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3663,7 +3364,6 @@
       "line": 74,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3674,7 +3374,6 @@
       "line": 73,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3685,7 +3384,6 @@
       "line": 76,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3696,7 +3394,6 @@
       "line": 78,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3707,7 +3404,6 @@
       "line": 74,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3718,7 +3414,6 @@
       "line": 76,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3729,7 +3424,6 @@
       "line": 100,
       "message": "nested function inside `<anon>` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `<anon>`), so extract it to module/class level",
       "metric": 17,
-      "severity": "Warning",
       "symbol": "getSizing",
       "threshold": 15
     },
@@ -3740,7 +3434,6 @@
       "line": 73,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3751,7 +3444,6 @@
       "line": 72,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3762,7 +3454,6 @@
       "line": 72,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3773,7 +3464,6 @@
       "line": 73,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3784,7 +3474,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3795,7 +3484,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3806,7 +3494,6 @@
       "line": 75,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3817,7 +3504,6 @@
       "line": 73,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3828,7 +3514,6 @@
       "line": 84,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3839,7 +3524,6 @@
       "line": 129,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3850,7 +3534,6 @@
       "line": 74,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3861,7 +3544,6 @@
       "line": 74,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3872,7 +3554,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3883,7 +3564,6 @@
       "line": 71,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3894,7 +3574,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3905,7 +3584,6 @@
       "line": 74,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3916,7 +3594,6 @@
       "line": 75,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3927,7 +3604,6 @@
       "line": 74,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3938,7 +3614,6 @@
       "line": 75,
       "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3949,7 +3624,6 @@
       "line": 74,
       "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3960,7 +3634,6 @@
       "line": 71,
       "message": "5 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -3971,7 +3644,6 @@
       "line": 1295,
       "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_enum",
       "threshold": 0
     },
@@ -3982,7 +3654,6 @@
       "line": 1344,
       "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "literal",
       "threshold": 0
     },
@@ -3993,7 +3664,6 @@
       "line": 821,
       "message": "params [params: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "array",
       "threshold": 0
     },
@@ -4004,7 +3674,6 @@
       "line": 927,
       "message": "params [shape: any] \u2014 replace loose collections with a typed object or interface",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "merge",
       "threshold": 0
     },
@@ -4015,7 +3684,6 @@
       "line": 77,
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -4026,20 +3694,8 @@
       "line": 38,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "findIndexJsFiles",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/scripts/write-stub-package-jsons.ts",
-      "kind": "nested_loop",
-      "line": 35,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 2,
-      "severity": "Warning",
-      "symbol": "findIndexJsFiles",
-      "threshold": 1
     }
   ]
 }

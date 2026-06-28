@@ -298,7 +298,6 @@
       "line": 11,
       "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "result",
       "threshold": 0
     },
@@ -309,7 +308,6 @@
       "line": 22,
       "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "add",
       "threshold": 0
     },
@@ -320,7 +318,6 @@
       "line": 30,
       "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "block",
       "threshold": 0
     },
@@ -331,7 +328,6 @@
       "line": 36,
       "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "process",
       "threshold": 0
     },
@@ -342,7 +338,6 @@
       "line": 414,
       "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
-      "severity": "Info",
       "symbol": "open_resource",
       "threshold": 0
     },
@@ -353,7 +348,6 @@
       "line": 562,
       "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
-      "severity": "Info",
       "symbol": "raise_routing_exception",
       "threshold": 0
     },
@@ -364,7 +358,6 @@
       "line": 104,
       "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
-      "severity": "Info",
       "symbol": "open_resource",
       "threshold": 0
     },
@@ -375,7 +368,6 @@
       "line": 636,
       "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "list_commands",
       "threshold": 0
     },
@@ -386,7 +378,6 @@
       "line": 678,
       "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "parse_args",
       "threshold": 0
     },
@@ -397,7 +388,6 @@
       "line": 935,
       "message": "params [extra_files: list[str] | None, exclude_patterns: list[str] | None] \u2014 replace loose collections with a dataclass or model",
       "metric": 2,
-      "severity": "Info",
       "symbol": "run_command",
       "threshold": 0
     },
@@ -408,7 +398,6 @@
       "line": 605,
       "message": "external-looking call runs once per loop iteration; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Info",
       "symbol": "_load_plugin_commands",
       "threshold": 1
     },
@@ -419,7 +408,6 @@
       "line": 28,
       "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
-      "severity": "Info",
       "symbol": "get_debug_flag",
       "threshold": 0
     },
@@ -430,7 +418,6 @@
       "line": 36,
       "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
-      "severity": "Info",
       "symbol": "get_load_dotenv",
       "threshold": 0
     },
@@ -441,7 +428,6 @@
       "line": 360,
       "message": "returns list[str] | list[tuple[str, str]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "get_flashed_messages",
       "threshold": 0
     },
@@ -452,7 +438,6 @@
       "line": 645,
       "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "_split_blueprint_path",
       "threshold": 0
     },
@@ -463,7 +448,6 @@
       "line": 868,
       "message": "params [blueprints: list[str]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "_find_error_handler",
       "threshold": 0
     },
@@ -474,7 +458,6 @@
       "line": 108,
       "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "list_templates",
       "threshold": 0
     },
@@ -485,7 +468,6 @@
       "line": 57,
       "message": "returns a 3-element tuple \u2014 positional grouped data; consider a NamedTuple or dataclass",
       "metric": 3,
-      "severity": "Info",
       "symbol": "get_source",
       "threshold": 2
     },
@@ -496,7 +478,6 @@
       "line": 64,
       "message": "returns a 3-element tuple \u2014 positional grouped data; consider a NamedTuple or dataclass",
       "metric": 3,
-      "severity": "Info",
       "symbol": "_get_source_explained",
       "threshold": 2
     },
@@ -507,7 +488,6 @@
       "line": 88,
       "message": "returns a 3-element tuple \u2014 positional grouped data; consider a NamedTuple or dataclass",
       "metric": 3,
-      "severity": "Info",
       "symbol": "_get_source_fast",
       "threshold": 2
     },
@@ -518,7 +498,6 @@
       "line": 181,
       "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Info",
       "symbol": "blueprints",
       "threshold": 0
     },
@@ -529,7 +508,6 @@
       "line": 310,
       "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 2
     },
@@ -540,7 +518,6 @@
       "line": 109,
       "message": "class splits into 8 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 8,
-      "severity": "Warning",
       "symbol": "Flask",
       "threshold": 1
     },
@@ -551,7 +528,6 @@
       "line": 562,
       "message": "accesses `request` (Request) 4\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on Request",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "raise_routing_exception",
       "threshold": 1
     },
@@ -561,7 +537,6 @@
       "kind": "god_module",
       "message": "fan-in 6 + fan-out 33 = 39 (threshold 25)",
       "metric": 39,
-      "severity": "Warning",
       "symbol": "flask.app",
       "threshold": 25
     },
@@ -572,7 +547,6 @@
       "line": 1102,
       "message": "cognitive complexity 20 (threshold 15)",
       "metric": 20,
-      "severity": "Warning",
       "symbol": "url_for",
       "threshold": 15
     },
@@ -583,7 +557,6 @@
       "line": 1224,
       "message": "cognitive complexity 23 (threshold 15)",
       "metric": 23,
-      "severity": "Warning",
       "symbol": "make_response",
       "threshold": 15
     },
@@ -594,7 +567,6 @@
       "line": 1366,
       "message": "cognitive complexity 16 (threshold 15)",
       "metric": 16,
-      "severity": "Warning",
       "symbol": "preprocess_request",
       "threshold": 15
     },
@@ -605,7 +577,6 @@
       "line": 590,
       "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "update_template_context",
       "threshold": 0
     },
@@ -616,7 +587,6 @@
       "line": 620,
       "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "make_shell_context",
       "threshold": 0
     },
@@ -627,7 +597,6 @@
       "line": 546,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "create_url_adapter",
       "threshold": 0
     },
@@ -638,7 +607,6 @@
       "line": 590,
       "message": "mutates input parameter(s) [context] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "update_template_context",
       "threshold": 0
     },
@@ -649,7 +617,6 @@
       "line": 1381,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "preprocess_request",
       "threshold": 1
     },
@@ -660,7 +627,6 @@
       "line": 1412,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "process_response",
       "threshold": 1
     },
@@ -671,7 +637,6 @@
       "line": 1444,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "do_teardown_request",
       "threshold": 1
     },
@@ -682,7 +647,6 @@
       "line": 615,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "update_template_context",
       "threshold": 1
     },
@@ -693,7 +657,6 @@
       "line": 18,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "Blueprint",
       "threshold": 1
     },
@@ -704,7 +667,6 @@
       "line": 19,
       "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 0
     },
@@ -715,7 +677,6 @@
       "line": 563,
       "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
       "metric": 4,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 2
     },
@@ -726,7 +687,6 @@
       "line": 935,
       "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "run_command",
       "threshold": 2
     },
@@ -737,7 +697,6 @@
       "line": 531,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "FlaskGroup",
       "threshold": 1
     },
@@ -747,7 +706,6 @@
       "kind": "god_module",
       "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
       "metric": 35,
-      "severity": "Warning",
       "symbol": "flask.cli",
       "threshold": 25
     },
@@ -758,7 +716,6 @@
       "line": 1061,
       "message": "cognitive complexity 17 (threshold 15)",
       "metric": 17,
-      "severity": "Warning",
       "symbol": "routes_command",
       "threshold": 15
     },
@@ -769,7 +726,6 @@
       "line": 120,
       "message": "cognitive complexity 19 (threshold 15)",
       "metric": 19,
-      "severity": "Warning",
       "symbol": "find_app_by_string",
       "threshold": 15
     },
@@ -780,7 +736,6 @@
       "line": 41,
       "message": "cognitive complexity 20 (threshold 15)",
       "metric": 20,
-      "severity": "Warning",
       "symbol": "find_best_app",
       "threshold": 15
     },
@@ -791,7 +746,6 @@
       "line": 698,
       "message": "cognitive complexity 18 (threshold 15)",
       "metric": 18,
-      "severity": "Warning",
       "symbol": "load_dotenv",
       "threshold": 15
     },
@@ -802,7 +756,6 @@
       "line": 1081,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "routes_command",
       "threshold": 0
     },
@@ -813,7 +766,6 @@
       "line": 481,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_set_debug",
       "threshold": 0
     },
@@ -824,7 +776,6 @@
       "line": 352,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "load_app",
       "threshold": 1
     },
@@ -835,7 +786,6 @@
       "line": 77,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "find_best_app",
       "threshold": 1
     },
@@ -846,7 +796,6 @@
       "line": 50,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "Config",
       "threshold": 1
     },
@@ -857,7 +806,6 @@
       "line": 323,
       "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "get_namespace",
       "threshold": 0
     },
@@ -868,7 +816,6 @@
       "line": 94,
       "message": "params [defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 0
     },
@@ -879,7 +826,6 @@
       "line": 176,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "from_prefixed_env",
       "threshold": 1
     },
@@ -890,7 +836,6 @@
       "line": 260,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "AppContext",
       "threshold": 1
     },
@@ -901,7 +846,6 @@
       "line": 116,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_dump_loader_info",
       "threshold": 1
     },
@@ -912,7 +856,6 @@
       "line": 153,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "explain_template_loading_attempts",
       "threshold": 1
     },
@@ -923,7 +866,6 @@
       "line": 153,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "explain_template_loading_attempts",
       "threshold": 1
     },
@@ -933,7 +875,6 @@
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
       "metric": 16,
-      "severity": "Warning",
       "symbol": "flask.globals",
       "threshold": 12
     },
@@ -944,7 +885,6 @@
       "line": 126,
       "message": "nested function inside `stream_with_context` spans 16 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `stream_with_context`), so extract it to module/class level",
       "metric": 16,
-      "severity": "Warning",
       "symbol": "generator",
       "threshold": 15
     },
@@ -955,7 +895,6 @@
       "line": 402,
       "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_prepare_send_file_kwargs",
       "threshold": 0
     },
@@ -966,7 +905,6 @@
       "line": 19,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "JSONProvider",
       "threshold": 1
     },
@@ -977,7 +915,6 @@
       "line": 219,
       "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "TaggedJSONSerializer",
       "threshold": 1
     },
@@ -988,7 +925,6 @@
       "line": 297,
       "message": "params [value: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "untag",
       "threshold": 0
     },
@@ -999,7 +935,6 @@
       "line": 279,
       "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
       "metric": 3,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 2
     },
@@ -1010,7 +945,6 @@
       "line": 59,
       "message": "class splits into 10 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 10,
-      "severity": "Warning",
       "symbol": "App",
       "threshold": 1
     },
@@ -1020,7 +954,6 @@
       "kind": "god_module",
       "message": "fan-in 7 + fan-out 21 = 28 (threshold 25)",
       "metric": 28,
-      "severity": "Warning",
       "symbol": "flask.sansio.app",
       "threshold": 25
     },
@@ -1031,7 +964,6 @@
       "line": 960,
       "message": "params [values: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "inject_url_defaults",
       "threshold": 0
     },
@@ -1042,7 +974,6 @@
       "line": 981,
       "message": "params [values: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "handle_url_build_error",
       "threshold": 0
     },
@@ -1053,7 +984,6 @@
       "line": 880,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "_find_error_handler",
       "threshold": 1
     },
@@ -1064,7 +994,6 @@
       "line": 978,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "inject_url_defaults",
       "threshold": 1
     },
@@ -1075,7 +1004,6 @@
       "line": 119,
       "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 7,
-      "severity": "Warning",
       "symbol": "Blueprint",
       "threshold": 1
     },
@@ -1086,7 +1014,6 @@
       "line": 273,
       "message": "cognitive complexity 28 (threshold 15)",
       "metric": 28,
-      "severity": "Warning",
       "symbol": "register",
       "threshold": 15
     },
@@ -1097,7 +1024,6 @@
       "line": 174,
       "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "__init__",
       "threshold": 0
     },
@@ -1108,7 +1034,6 @@
       "line": 246,
       "message": "params [options: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "make_setup_state",
       "threshold": 0
     },
@@ -1119,7 +1044,6 @@
       "line": 273,
       "message": "params [options: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "register",
       "threshold": 0
     },
@@ -1130,7 +1054,6 @@
       "line": 308,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "register",
       "threshold": 0
     },
@@ -1141,7 +1064,6 @@
       "line": 380,
       "message": "mutates input parameter(s) [parent_dict] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "extend",
       "threshold": 0
     },
@@ -1152,7 +1074,6 @@
       "line": 52,
       "message": "class splits into 6 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 6,
-      "severity": "Warning",
       "symbol": "Scaffold",
       "threshold": 1
     },
@@ -1163,7 +1084,6 @@
       "line": 284,
       "message": "params [options: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_method_route",
       "threshold": 0
     },
@@ -1174,7 +1094,6 @@
       "line": 284,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
-      "severity": "Warning",
       "symbol": "SecureCookieSessionInterface",
       "threshold": 1
     },
@@ -1185,7 +1104,6 @@
       "line": 123,
       "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_render",
       "threshold": 0
     },
@@ -1196,7 +1114,6 @@
       "line": 163,
       "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_stream",
       "threshold": 0
     },
@@ -1207,7 +1124,6 @@
       "line": 21,
       "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_default_template_ctx_processor",
       "threshold": 0
     },
@@ -1218,7 +1134,6 @@
       "line": 117,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "list_templates",
       "threshold": 1
     },
@@ -1229,7 +1144,6 @@
       "line": 193,
       "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
-      "severity": "Warning",
       "symbol": "_request_from_builder_args",
       "threshold": 0
     },
@@ -1240,7 +1154,6 @@
       "line": 18,
       "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 7,
-      "severity": "Warning",
       "symbol": "Request",
       "threshold": 1
     }

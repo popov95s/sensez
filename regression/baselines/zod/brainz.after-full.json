@@ -22,7 +22,7 @@
       "smells/message_chain": 1,
       "smells/mutated_parameter": 6,
       "smells/n_plus_one_call": 1,
-      "smells/nested_loop": 45,
+      "smells/nested_loop": 35,
       "smells/repeated_iteration": 8,
       "smells/shotgun_surgery_hazard": 2,
       "smells/unnecessary_nested_if": 14

@@ -971,7 +971,6 @@
       "kind": "god_module",
       "message": "fan-in 29 + fan-out 6 = 35 (threshold 25)",
       "metric": 35,
-      "severity": "Warning",
       "symbol": "metabench",
       "threshold": 25
     },
@@ -982,7 +981,6 @@
       "line": 86,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 9,
-      "severity": "Warning",
       "symbol": "generate",
       "threshold": 1
     },
@@ -993,7 +991,6 @@
       "line": 1108,
       "message": "accesses `options` (| string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on | string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "datetime",
       "threshold": 2
     },
@@ -1004,7 +1001,6 @@
       "line": 176,
       "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "_getOrReturnCtx",
       "threshold": 1
     },
@@ -1015,7 +1011,6 @@
       "line": 191,
       "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "_processInputParams",
       "threshold": 1
     },
@@ -1026,7 +1021,6 @@
       "line": 2947,
       "message": "accesses `ctx` (undefined | ParseContext) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on undefined | ParseContext",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "_parse",
       "threshold": 2
     },
@@ -1037,7 +1031,6 @@
       "line": 3514,
       "message": "accesses `ctx` (undefined | ParseContext) 8\u00d7 vs. own data 3\u00d7 \u2014 behavior may belong on undefined | ParseContext",
       "metric": 8,
-      "severity": "Warning",
       "symbol": "_parse",
       "threshold": 3
     },
@@ -1048,7 +1041,6 @@
       "line": 4244,
       "message": "accesses `ctx` (undefined | ParseContext) 6\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on undefined | ParseContext",
       "metric": 6,
-      "severity": "Warning",
       "symbol": "_parse",
       "threshold": 1
     },
@@ -1059,7 +1051,6 @@
       "line": 2951,
       "message": "nested function inside `_parse` spans 26 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `_parse`), so extract it to module/class level",
       "metric": 26,
-      "severity": "Warning",
       "symbol": "handleResults",
       "threshold": 15
     },
@@ -1070,7 +1061,6 @@
       "line": 158,
       "message": "32 methods (threshold 20)",
       "metric": 32,
-      "severity": "Warning",
       "symbol": "ZodType",
       "threshold": 20
     },
@@ -1081,7 +1071,6 @@
       "line": 731,
       "message": "49 methods (threshold 20)",
       "metric": 49,
-      "severity": "Warning",
       "symbol": "ZodString",
       "threshold": 20
     },
@@ -1092,7 +1081,6 @@
       "line": 380,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "convertBaseSchema",
       "threshold": 1
     },
@@ -1103,7 +1091,6 @@
       "line": 415,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 5,
-      "severity": "Warning",
       "symbol": "convertBaseSchema",
       "threshold": 1
     },
@@ -1113,7 +1100,6 @@
       "kind": "god_module",
       "message": "fan-in 56 + fan-out 5 = 61 (threshold 25)",
       "metric": 61,
-      "severity": "Warning",
       "symbol": "src/v4/core/checks",
       "threshold": 25
     },
@@ -1124,7 +1110,6 @@
       "line": 22,
       "message": "nested function inside `$constructor` spans 30 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `$constructor`), so extract it to module/class level",
       "metric": 30,
-      "severity": "Warning",
       "symbol": "init",
       "threshold": 15
     },
@@ -1134,7 +1119,6 @@
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 60 distinct modules \u2014 a change here scatters edits widely",
       "metric": 60,
-      "severity": "Warning",
       "symbol": "src/v4/core/errors",
       "threshold": 60
     },
@@ -1145,7 +1129,6 @@
       "line": 83,
       "message": "accesses `params` (JSONSchemaGeneratorConstructorParams) 9\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on JSONSchemaGeneratorConstructorParams",
       "metric": 9,
-      "severity": "Warning",
       "symbol": "constructor",
       "threshold": 1
     },
@@ -1155,7 +1138,6 @@
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
       "metric": 65,
-      "severity": "Warning",
       "symbol": "src/v4/core/util",
       "threshold": 60
     },
@@ -1166,7 +1148,6 @@
       "line": 106,
       "message": "12 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 12,
-      "severity": "Warning",
       "symbol": "",
       "threshold": 0
     },
@@ -1177,7 +1158,6 @@
       "line": 100,
       "message": "nested function inside `<anon>` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `<anon>`), so extract it to module/class level",
       "metric": 17,
-      "severity": "Warning",
       "symbol": "getSizing",
       "threshold": 15
     }
