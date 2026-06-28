@@ -153,6 +153,7 @@ pub struct SmellFinding {
     #[serde(skip)]
     pub(crate) end_line: usize,
     pub symbol: String,
+    #[serde(skip)]
     pub severity: Severity,
     pub metric: u32,
     pub threshold: u32,

@@ -50,6 +50,8 @@ mod tests {
         assert!(!json.contains("\"glossary\""));
         assert!(!json.contains("\"unmatched_boundary_rules\""));
         assert!(!json.contains("\"line\": 0"));
+        assert!(json.contains("\"action\": \"warning\""));
+        assert!(!json.contains("\"severity\""));
     }
 
     #[test]
