@@ -1,4 +1,5 @@
 use super::*;
+use crate::report::{ActionLevel, Severity};
 
 #[test]
 fn renders_section_headers() {
@@ -38,7 +39,7 @@ fn scan_diagnostics_are_hidden_by_default() {
 }
 
 #[test]
-fn smell_output_dedupes_matching_action_and_severity() {
+fn smell_output_shows_only_action_label() {
     let mut report = AnalysisReport::default();
     report.smells.push(crate::report::SmellFinding {
         action: ActionLevel::Warning,
@@ -53,10 +54,25 @@ fn smell_output_dedupes_matching_action_and_severity() {
         threshold: 0,
         reason: String::new(),
     });
+    report.smells.push(crate::report::SmellFinding {
+        action: ActionLevel::MustFix,
+        kind: crate::report::SmellKind::MagicNumbers,
+        message: "threshold".into(),
+        file: "y.tsx".into(),
+        line: 20,
+        end_line: 20,
+        symbol: "Widget".into(),
+        severity: Severity::Info,
+        metric: 1,
+        threshold: 0,
+        reason: String::new(),
+    });
 
     let text = render(&report, false);
     assert!(text.contains("[warning] x.tsx:12"));
+    assert!(text.contains("[must_fix] y.tsx:20"));
     assert!(!text.contains("[warning] [warning]"));
+    assert!(!text.contains("[must_fix] [info]"));
 }
 
 #[test]

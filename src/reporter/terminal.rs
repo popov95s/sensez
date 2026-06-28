@@ -1,6 +1,6 @@
 //! Human-readable colored terminal renderer (a view over [`AnalysisReport`]).
 
-use crate::report::{ActionLevel, AnalysisReport, Confidence, Severity};
+use crate::report::{ActionLevel, AnalysisReport, Confidence};
 use colored::Colorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -106,16 +106,12 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         report.meta.dead_code_total,
     );
     for finding in &report.dead_code {
-        let loc = if finding.line > 0 {
-            format!("{}:{}", finding.file.display(), finding.line)
-        } else {
-            finding.file.display().to_string()
-        };
+        let dead_loc = location(&finding.file, finding.line);
         let _ = writeln!(
             out,
             "    [{}] {}  {}::{} ({}) [{}]",
             action_label(finding.action),
-            loc,
+            dead_loc,
             finding.module,
             finding.symbol,
             finding.kind,
@@ -130,7 +126,6 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         report.meta.smells_total,
     );
     let mut seen_suggestions: HashSet<String> = HashSet::new();
-    let mut current_smell_kind = "";
     let shown_by_kind: HashMap<&str, usize> = {
         let mut counts: HashMap<&str, usize> = HashMap::new();
         for smell in &report.smells {
@@ -138,10 +133,10 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
         counts
     };
-    for finding in &report.smells {
+    for (index, finding) in report.smells.iter().enumerate() {
         let kind = finding.kind.as_str();
-        if kind != current_smell_kind {
-            current_smell_kind = kind;
+        let starts_kind = index == 0 || report.smells[index - 1].kind != finding.kind;
+        if starts_kind {
             let shown = shown_by_kind.get(kind).copied().unwrap_or(0);
             let total = report.meta.smell_totals.get(kind).copied().unwrap_or(shown);
             let suffix = if shown < total {
@@ -151,11 +146,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             };
             let _ = writeln!(out, "  {} ({}){}", kind.cyan(), total, suffix);
         }
-        let loc = if finding.line > 0 {
-            format!("{}:{}", finding.file.display(), finding.line)
-        } else {
-            finding.file.display().to_string()
-        };
+        let smell_loc = location(&finding.file, finding.line);
         let (summary, suggestion) = split_smell_message(&finding.message);
         let rendered_message = match suggestion {
             Some(suggestion) => {
@@ -170,9 +161,9 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         };
         let _ = writeln!(
             out,
-            "    {} {}  {} — {}",
-            smell_labels(finding.action, finding.severity),
-            loc,
+            "    [{}] {}  {} — {}",
+            action_label(finding.action),
+            smell_loc,
             finding.symbol,
             rendered_message
         );
@@ -246,27 +237,11 @@ fn confidence_label(confidence: Confidence) -> colored::ColoredString {
     }
 }
 
-fn severity_label(severity: Severity) -> colored::ColoredString {
-    match severity {
-        Severity::Critical => "critical".red(),
-        Severity::Warning => "warning".yellow(),
-        Severity::Info => "info".dimmed(),
-    }
-}
-
-fn severity_name(severity: Severity) -> &'static str {
-    match severity {
-        Severity::Critical => "critical",
-        Severity::Warning => "warning",
-        Severity::Info => "info",
-    }
-}
-
-fn smell_labels(action: ActionLevel, severity: Severity) -> String {
-    if action.as_str() == severity_name(severity) {
-        format!("[{}]", action_label(action))
+fn location(file: &std::path::Path, line: usize) -> String {
+    if line > 0 {
+        format!("{}:{}", file.display(), line)
     } else {
-        format!("[{}] [{}]", action_label(action), severity_label(severity))
+        file.display().to_string()
     }
 }
 
