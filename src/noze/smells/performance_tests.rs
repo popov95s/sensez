@@ -25,7 +25,7 @@ def f(db, ids, xs):
         for x in xs:
             rows.append(x)
         rows.sort()
-        db.get(id)
+        db.fetch(id)
     if any(xs):
         return sum(xs)
 ";
@@ -118,7 +118,7 @@ def json_finding_count(data):
 }
 
 #[test]
-fn get_receiver_heuristics_are_language_specific() {
+fn plain_get_is_not_an_external_loop_call() {
     let py = "\
 def f(api, ids):
     for id in ids:
@@ -133,7 +133,16 @@ export function f(api, ids) {
   }
 }
 ";
-    assert!(has(&local("js", js), SmellKind::NPlusOneCall));
+    assert!(!has(&local("js", js), SmellKind::NPlusOneCall));
+
+    let rs = "\
+fn f(map: &std::collections::HashMap<u32, u32>, ids: &[u32]) {
+    for id in ids {
+        let _ = map.get(id);
+    }
+}
+";
+    assert!(!has(&local("rs", rs), SmellKind::NPlusOneCall));
 }
 
 #[test]

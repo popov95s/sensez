@@ -18,13 +18,14 @@ pub(super) struct ClassEntrypoints {
 impl ClassEntrypoints {
     pub(super) fn from_files(files: &[ParsedFile], root_bases: &[String]) -> Self {
         let mut classes_by_file = HashMap::new();
+        let configured_bases = root_bases;
 
         for file in files {
             let defaults = registry::dead_code_profile(file.language).dead_code_defaults();
-            if root_bases.is_empty() && defaults.entrypoint_bases.is_empty() {
+            if configured_bases.is_empty() && defaults.entrypoint_bases.is_empty() {
                 continue;
             }
-            let root_bases = merged_bases(root_bases, defaults.entrypoint_bases);
+            let live_bases = merged_bases(configured_bases, defaults.entrypoint_bases);
             let class_bases: HashMap<&str, Vec<String>> = file
                 .walked
                 .units
@@ -32,7 +33,7 @@ impl ClassEntrypoints {
                 .iter()
                 .map(|class| (class.name.as_str(), class.bases.clone()))
                 .collect();
-            let live = dynamic_classes(&class_bases, &root_bases);
+            let live = dynamic_classes(&class_bases, &live_bases);
             if !live.is_empty() {
                 classes_by_file.insert(file.path.clone(), live);
             }
@@ -64,23 +65,29 @@ fn dynamic_classes(
     root_bases: &HashSet<&str>,
 ) -> HashSet<String> {
     let mut live = HashSet::new();
-    let mut changed = true;
-    while changed {
-        changed = false;
-        for (class, bases) in class_bases {
-            if live.contains(*class) {
-                continue;
-            }
-            if bases
-                .iter()
-                .any(|base| is_dynamic_base(base, &live, root_bases))
-            {
-                live.insert((*class).to_string());
-                changed = true;
-            }
+    while add_dynamic_classes(class_bases, root_bases, &mut live) {}
+    live
+}
+
+fn add_dynamic_classes(
+    class_bases: &HashMap<&str, Vec<String>>,
+    root_bases: &HashSet<&str>,
+    live: &mut HashSet<String>,
+) -> bool {
+    let mut added = false;
+    for (class, bases) in class_bases {
+        if live.contains(*class) {
+            continue;
+        }
+        if bases
+            .iter()
+            .any(|base| is_dynamic_base(base, live, root_bases))
+        {
+            live.insert((*class).to_string());
+            added = true;
         }
     }
-    live
+    added
 }
 
 fn is_dynamic_base(base: &str, live: &HashSet<String>, root_bases: &HashSet<&str>) -> bool {

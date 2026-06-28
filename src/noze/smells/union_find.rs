@@ -4,12 +4,13 @@
 //! without union-by-rank is plenty.
 
 /// Root of `x`, compressing the path as it walks.
-pub(super) fn find(parent: &mut [usize], mut x: usize) -> usize {
-    while parent[x] != x {
-        parent[x] = parent[parent[x]];
-        x = parent[x];
+pub(super) fn find(parent: &mut [usize], x: usize) -> usize {
+    let mut node = x;
+    while parent[node] != node {
+        parent[node] = parent[parent[node]];
+        node = parent[node];
     }
-    x
+    node
 }
 
 /// Merge the components containing `a` and `b`.

@@ -18,15 +18,15 @@ pub fn prompts_list() -> Value {
 }
 
 pub fn prompts_get(params: Option<&Value>) -> Result<Value, (i64, String)> {
-    let params = params.ok_or((-32602, "missing params".to_string()))?;
-    let name = params
+    let request = params.ok_or((-32602, "missing params".to_string()))?;
+    let name = request
         .get("name")
         .and_then(Value::as_str)
         .unwrap_or_default();
     if name != "report" {
         return Err((-32602, format!("unknown prompt: {name}")));
     }
-    let path = params
+    let path = request
         .get("arguments")
         .and_then(|a| a.get("path"))
         .and_then(Value::as_str)

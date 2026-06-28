@@ -56,13 +56,13 @@ fn run_summary_command(path: &str) -> anyhow::Result<String> {
 }
 
 fn scan_tool(args: &Value) -> ToolResult {
-    let args: ScanArgs = serde_json::from_value(args.clone())
+    let scan_args: ScanArgs = serde_json::from_value(args.clone())
         .map_err(|e| (-32602, format!("invalid arguments: {e}")))?;
 
-    match run_scan(Path::new(&args.path), &args) {
+    match run_scan(Path::new(&scan_args.path), &scan_args) {
         Ok((text, _snapshot)) => {
             let mut content = vec![json!({"type": "text", "text": text})];
-            if let Some(warning) = super::tools::scope_warning(Path::new(&args.path)) {
+            if let Some(warning) = super::tools::scope_warning(Path::new(&scan_args.path)) {
                 content.insert(0, json!({"type": "text", "text": warning}));
             }
             Ok(json!({"content": content, "isError": false}))

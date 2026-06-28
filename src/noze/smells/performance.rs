@@ -183,9 +183,7 @@ fn finding(
 }
 
 fn is_external(call: &CallFact, profile: &dyn PerformanceProfile) -> bool {
-    call.member
-        && (profile.is_expensive_loop_call(&call.method)
-            || (call.method == "get" && profile.is_external_get_receiver(&call.base)))
+    call.member && profile.is_expensive_loop_call(&call.method)
 }
 
 fn is_bounded_constant(subject: &str) -> bool {

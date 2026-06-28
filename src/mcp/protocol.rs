@@ -36,12 +36,12 @@ fn initialize_result() -> Value {
 }
 
 fn handle_tool_call(params: Option<&Value>) -> ToolResult {
-    let params = params.ok_or((-32602, "missing params".to_string()))?;
-    let name = params
+    let request = params.ok_or((-32602, "missing params".to_string()))?;
+    let name = request
         .get("name")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    let args = params
+    let args = request
         .get("arguments")
         .cloned()
         .unwrap_or_else(|| json!({}));

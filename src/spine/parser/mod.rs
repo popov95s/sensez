@@ -132,16 +132,11 @@ pub fn parse_source(
 /// `MAX_TREE_DEPTH` should treat the root as the first level.
 fn tree_depth(root: tree_sitter::Node, limit: usize) -> usize {
     let mut cursor = root.walk();
-    let mut depth = 0usize;
-    let mut max_depth = 0usize;
+    let mut depth = TreeDepth::default();
     loop {
         if cursor.goto_first_child() {
-            depth += 1;
-            if depth > max_depth {
-                max_depth = depth;
-                if max_depth > limit {
-                    return max_depth;
-                }
+            if depth.descend() > limit {
+                return depth.max();
             }
             continue;
         }
@@ -150,10 +145,32 @@ fn tree_depth(root: tree_sitter::Node, limit: usize) -> usize {
                 break;
             }
             if !cursor.goto_parent() {
-                return max_depth;
+                return depth.max();
             }
-            depth -= 1;
+            depth.ascend();
         }
+    }
+}
+
+#[derive(Default)]
+struct TreeDepth {
+    current: usize,
+    max: usize,
+}
+
+impl TreeDepth {
+    fn descend(&mut self) -> usize {
+        self.current += 1;
+        self.max = self.max.max(self.current);
+        self.max
+    }
+
+    fn ascend(&mut self) {
+        self.current = self.current.saturating_sub(1);
+    }
+
+    fn max(&self) -> usize {
+        self.max
     }
 }
 

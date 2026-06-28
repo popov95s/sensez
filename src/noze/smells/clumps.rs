@@ -40,14 +40,7 @@ fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     let mut seeds: BTreeMap<Vec<String>, Seed> = BTreeMap::new();
 
     for (fn_id, func) in file.walked.units.functions.iter().enumerate() {
-        let mut params: Vec<String> = func
-            .param_names
-            .iter()
-            .filter(|p| !matches!(p.as_str(), "self" | "cls"))
-            .cloned()
-            .collect();
-        params.sort();
-        params.dedup();
+        let mut params = sorted_params(&func.param_names);
         params.truncate(MAX_PARAMS_CONSIDERED);
         if params.len() < size {
             continue;
@@ -94,6 +87,17 @@ fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
             )
         })
         .collect()
+}
+
+fn sorted_params(names: &[String]) -> Vec<String> {
+    let mut params: Vec<String> = names
+        .iter()
+        .filter(|p| !matches!(p.as_str(), "self" | "cls"))
+        .cloned()
+        .collect();
+    params.sort();
+    params.dedup();
+    params
 }
 
 struct Group {

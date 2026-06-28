@@ -104,12 +104,7 @@ fn inappropriate_intimacy(
         if !locals.contains(ty.as_str()) {
             continue; // only flag intimacy with a class defined in this module
         }
-        let mut privates: Vec<&str> = attrs
-            .iter()
-            .filter(|a| a.starts_with('_') && !a.starts_with("__"))
-            .map(String::as_str)
-            .collect();
-        privates.sort(); // attrs is a HashSet — sort for a stable message string
+        let privates = private_attrs(attrs);
         if !privates.is_empty() {
             out.push(make(
                 SmellKind::InappropriateIntimacy,
@@ -126,6 +121,16 @@ fn inappropriate_intimacy(
             ));
         }
     }
+}
+
+fn private_attrs(attrs: &std::collections::HashSet<String>) -> Vec<&str> {
+    let mut privates: Vec<&str> = attrs
+        .iter()
+        .filter(|a| a.starts_with('_') && !a.starts_with("__"))
+        .map(String::as_str)
+        .collect();
+    privates.sort_unstable();
+    privates
 }
 
 /// Resolve `name` within `func`: a typed parameter first, else a typed/instantiated variable.

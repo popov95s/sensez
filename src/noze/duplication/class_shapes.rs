@@ -36,6 +36,14 @@ struct PropertyKey {
     type_name: String,
 }
 
+#[derive(PartialEq, Eq, PartialOrd, Ord)]
+struct PairKey {
+    left_file: PathBuf,
+    left_row: usize,
+    right_file: PathBuf,
+    right_row: usize,
+}
+
 fn collect_classes(files: &[&ParsedFile]) -> Vec<ClassShape> {
     let mut out = Vec::new();
     for file in files {
@@ -142,13 +150,23 @@ fn distinct_locations(group: &[&ClassShape]) -> usize {
         .len()
 }
 
-fn pair_key(left: &ClassShape, right: &ClassShape) -> (PathBuf, usize, PathBuf, usize) {
+fn pair_key(left: &ClassShape, right: &ClassShape) -> PairKey {
     let a = (left.occurrence.file.clone(), left.occurrence.start_row);
     let b = (right.occurrence.file.clone(), right.occurrence.start_row);
     if a <= b {
-        (a.0, a.1, b.0, b.1)
+        PairKey {
+            left_file: a.0,
+            left_row: a.1,
+            right_file: b.0,
+            right_row: b.1,
+        }
     } else {
-        (b.0, b.1, a.0, a.1)
+        PairKey {
+            left_file: b.0,
+            left_row: b.1,
+            right_file: a.0,
+            right_row: a.1,
+        }
     }
 }
 

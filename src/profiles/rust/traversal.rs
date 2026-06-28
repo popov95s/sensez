@@ -23,13 +23,20 @@ fn visit(
     fn_bounds: &mut Vec<HashSet<String>>,
     out: &mut Walked,
 ) {
-    let mut state = RustWalkState { scope, fn_bounds };
+    let mut state = RustWalkState {
+        scope,
+        fn_bounds,
+        test_depth: 0,
+        next_is_cfg_test: false,
+    };
     visit_node(node, src, file_id, module_name, &mut state, out);
 }
 
 struct RustWalkState<'a> {
     scope: &'a mut Vec<Scope>,
     fn_bounds: &'a mut Vec<HashSet<String>>,
+    test_depth: usize,
+    next_is_cfg_test: bool,
 }
 
 fn visit_node(
@@ -64,8 +71,14 @@ fn visit_node(
 
     // Attributes (`#[derive(…)]`, `#![…]`) are metadata, not logic.
     if kind == "attribute_item" || kind == "inner_attribute_item" {
+        if is_cfg_test_text(node, src) {
+            state.next_is_cfg_test = true;
+        }
         return;
     }
+
+    let cfg_test_here = state.next_is_cfg_test || has_cfg_test_attr(node, src);
+    state.next_is_cfg_test = false;
 
     // Comments never map to a structural token, so capturing their text for the
     // eyez index cannot affect duplication.
@@ -126,7 +139,14 @@ fn visit_node(
     }
 
     record_declarations(node, src, kind, state.scope, out);
-    record_units(node, src, kind, state.scope, out);
+    record_units(
+        node,
+        src,
+        kind,
+        state.scope,
+        state.test_depth > 0 || cfg_test_here,
+        out,
+    );
 
     if token_map::is_leaf(kind) {
         return;
@@ -143,12 +163,19 @@ fn visit_node(
     if opened_fn {
         state.fn_bounds.push(scope::bound_names(node, src));
     }
+    let opened_test_scope = kind == "mod_item" && cfg_test_here;
+    if opened_test_scope {
+        state.test_depth += 1;
+    }
 
     let mut child_cursor = node.walk();
     for child in node.named_children(&mut child_cursor) {
         visit_node(child, src, file_id, module_name, state, out);
     }
 
+    if opened_test_scope {
+        state.test_depth = state.test_depth.saturating_sub(1);
+    }
     if opened_fn {
         state.fn_bounds.pop();
     }
@@ -179,11 +206,37 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, scope: &[Scope], out:
     }
 }
 
-fn record_units(node: Node, src: &[u8], kind: &str, scope: &[Scope], out: &mut Walked) {
-    if kind != "function_item" {
+fn record_units(
+    node: Node,
+    src: &[u8],
+    kind: &str,
+    scope: &[Scope],
+    in_test_scope: bool,
+    out: &mut Walked,
+) {
+    if kind != "function_item" || in_test_scope {
         return;
     }
     let is_method = scope.last().is_some_and(|s| s.is_class);
     let unit = units::analyze_function(node, src, is_method, &mut out.units.type_hints);
     out.units.functions.push(unit);
+}
+
+fn has_cfg_test_attr(node: Node, src: &[u8]) -> bool {
+    let mut cursor = node.walk();
+    let found = node
+        .children(&mut cursor)
+        .take_while(|child| matches!(child.kind(), "attribute_item" | "inner_attribute_item"))
+        .filter_map(|child| child.utf8_text(src).ok())
+        .any(text_is_cfg_test);
+    found
+}
+
+fn is_cfg_test_text(node: Node, src: &[u8]) -> bool {
+    node.utf8_text(src).ok().is_some_and(text_is_cfg_test)
+}
+
+fn text_is_cfg_test(text: &str) -> bool {
+    let normalized: String = text.chars().filter(|ch| !ch.is_whitespace()).collect();
+    normalized.starts_with("#[cfg(") && normalized.contains("test")
 }

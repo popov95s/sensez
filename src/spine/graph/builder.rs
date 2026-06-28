@@ -126,9 +126,14 @@ fn add_import_edges(
                 .bindings
                 .get(i)
                 .map_or(symbol.as_str(), String::as_str);
-            let dst = node_for_target(cg, src_lang, &submodule);
-            let ctx = qualified_import(import, &submodule, attrs.get(binding));
-            add_edge(cg, dst, ctx);
+            add_qualified_edge(
+                cg,
+                &add_edge,
+                src_lang,
+                import,
+                &submodule,
+                attrs.get(binding),
+            );
         } else {
             package_symbols.push(symbol.clone());
         }
@@ -136,16 +141,38 @@ fn add_import_edges(
     // Plain `import x` / `import x as y`: credit attrs accessed via the bound name.
     if import.imported_symbols.is_empty() {
         let used = import.bindings.first().and_then(|b| attrs.get(b));
-        let dst = node_for_target(cg, src_lang, target);
-        let ctx = qualified_import(import, target, used);
-        add_edge(cg, dst, ctx);
+        add_qualified_edge(cg, &add_edge, src_lang, import, target, used);
     } else if !package_symbols.is_empty() {
-        let dst = node_for_target(cg, src_lang, target);
-        let mut ctx = import.clone();
-        ctx.target_module = target.to_string();
-        ctx.imported_symbols = package_symbols;
-        add_edge(cg, dst, ctx);
+        add_package_edge(cg, &add_edge, src_lang, import, target, package_symbols);
     }
+}
+
+fn add_qualified_edge(
+    cg: &mut CodebaseGraph,
+    add_edge: &impl Fn(&mut CodebaseGraph, NodeIndex, crate::spine::parser::ImportContext),
+    src_lang: Language,
+    import: &crate::spine::parser::ImportContext,
+    target: &str,
+    used: Option<&HashSet<String>>,
+) {
+    let dst = node_for_target(cg, src_lang, target);
+    let ctx = qualified_import(import, target, used);
+    add_edge(cg, dst, ctx);
+}
+
+fn add_package_edge(
+    cg: &mut CodebaseGraph,
+    add_edge: &impl Fn(&mut CodebaseGraph, NodeIndex, crate::spine::parser::ImportContext),
+    src_lang: Language,
+    import: &crate::spine::parser::ImportContext,
+    target: &str,
+    package_symbols: Vec<String>,
+) {
+    let dst = node_for_target(cg, src_lang, target);
+    let mut ctx = import.clone();
+    ctx.target_module = target.to_string();
+    ctx.imported_symbols = package_symbols;
+    add_edge(cg, dst, ctx);
 }
 
 /// An edge to `module` whose used symbols are the attributes accessed on the

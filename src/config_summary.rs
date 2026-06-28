@@ -25,9 +25,8 @@ struct RuleSummary {
 
 impl RuleSummary {
     fn new(rule_id: impl Into<String>, current_threshold: Value, config_path: &str) -> Self {
-        let rule_id = rule_id.into();
         RuleSummary {
-            rule_id,
+            rule_id: rule_id.into(),
             count: 0,
             current_threshold,
             config_path: config_path.to_string(),
@@ -195,9 +194,9 @@ fn relative_path(root: &Path, file: &Path) -> PathBuf {
         .unwrap_or_else(|_| file.to_path_buf())
 }
 
-fn remove_empty(rule_id: &str, by_rule: &mut BTreeMap<String, RuleSummary>) {
-    if by_rule.get(rule_id).is_some_and(|rule| rule.count == 0) {
-        by_rule.remove(rule_id);
+fn remove_empty(rule_id: &str, rules: &mut BTreeMap<String, RuleSummary>) {
+    if rules.get(rule_id).is_some_and(|rule| rule.count == 0) {
+        rules.remove(rule_id);
     }
 }
 

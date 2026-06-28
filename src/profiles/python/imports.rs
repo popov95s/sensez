@@ -33,11 +33,23 @@ pub fn extract(
             .into_iter()
             .map(|(target, bound)| base(target, Vec::new(), vec![bound]))
             .collect(),
-        "import_from_statement" => {
-            let (target, symbols, bindings) = from_import(node, src);
-            vec![base(target, symbols, bindings)]
-        }
+        "import_from_statement" => vec![from_import(node, src).into_context(base)],
         _ => Vec::new(),
+    }
+}
+
+struct FromImport {
+    target: String,
+    symbols: Vec<String>,
+    bindings: Vec<String>,
+}
+
+impl FromImport {
+    fn into_context(
+        self,
+        base: impl FnOnce(String, Vec<String>, Vec<String>) -> ImportContext,
+    ) -> ImportContext {
+        base(self.target, self.symbols, self.bindings)
     }
 }
 
@@ -67,7 +79,7 @@ fn import_targets(node: Node, src: &[u8]) -> Vec<(String, String)> {
 }
 
 /// `from mod import a, b as c` → ("mod", ["a","b"], ["a","c"]). `*` → symbol "*".
-fn from_import(node: Node, src: &[u8]) -> (String, Vec<String>, Vec<String>) {
+fn from_import(node: Node, src: &[u8]) -> FromImport {
     let target = node
         .child_by_field_name("module_name")
         .and_then(|n| text(n, src))
@@ -98,7 +110,11 @@ fn from_import(node: Node, src: &[u8]) -> (String, Vec<String>, Vec<String>) {
             _ => {}
         }
     }
-    (target, symbols, bindings)
+    FromImport {
+        target,
+        symbols,
+        bindings,
+    }
 }
 
 fn top_component(module: &str) -> String {

@@ -15,16 +15,12 @@ pub(super) fn resolve_config(raw: SmellsRaw) -> Result<super::SmellConfig, Strin
     let (javascript, javascript_rules) = split_rules("javascript", &raw.javascript)?;
     let (typescript, typescript_rules) = split_rules("typescript", &raw.typescript)?;
     let (rust, rust_rules) = split_rules("rust", &raw.rust)?;
-    let problems: Vec<String> = [
-        validate_keys("<base>", &raw.base),
-        validate_keys("python", &python),
-        validate_keys("javascript", &javascript),
-        validate_keys("typescript", &typescript),
-        validate_keys("rust", &rust),
-    ]
-    .into_iter()
-    .filter_map(Result::err)
-    .collect();
+    let mut problems = Vec::new();
+    collect_problem(&mut problems, validate_keys("<base>", &raw.base));
+    collect_problem(&mut problems, validate_keys("python", &python));
+    collect_problem(&mut problems, validate_keys("javascript", &javascript));
+    collect_problem(&mut problems, validate_keys("typescript", &typescript));
+    collect_problem(&mut problems, validate_keys("rust", &rust));
     if !problems.is_empty() {
         return Err(problems.join("; "));
     }
@@ -54,6 +50,12 @@ pub(super) fn resolve_config(raw: SmellsRaw) -> Result<super::SmellConfig, Strin
         )?,
         rust: resolve(Language::Rust, &raw.base, &rust, &raw.rules, &rust_rules)?,
     })
+}
+
+fn collect_problem(problems: &mut Vec<String>, result: Result<(), String>) {
+    if let Err(problem) = result {
+        problems.push(problem);
+    }
 }
 
 /// Resolve one language's [`Smells`]: start from the per-language defaults,

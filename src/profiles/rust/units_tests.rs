@@ -95,3 +95,28 @@ fn sort_pairs(groups: &mut [Vec<i32>]) {
     assert_eq!(f.performance.nested_loops.len(), 1);
     assert_eq!(f.performance.sorts_in_loops.len(), 1);
 }
+
+#[test]
+fn skips_units_inside_cfg_test_scopes() {
+    let w = walked(
+        r#"
+fn production(items: &[u32]) -> usize {
+    items.len()
+}
+
+#[cfg(test)]
+mod tests {
+    fn noisy(value: usize) -> (usize, usize, usize) {
+        (value, value, value)
+    }
+}
+
+#[cfg(test)]
+fn helper_only_for_tests(value: usize) -> (usize, usize, usize) {
+    (value, value, value)
+}
+"#,
+    );
+    let names: Vec<_> = w.units.functions.iter().map(|f| f.name.as_str()).collect();
+    assert_eq!(names, vec!["production"]);
+}

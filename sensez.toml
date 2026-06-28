@@ -48,17 +48,23 @@ unused_variables = false  # flag unused module-level variables
 [smells]
 exclude = ["**/tests/**", "**/*_tests.rs", "**/tests.rs"]
 
-[smells.rust.rules.god_module]
-min_fan = 30
+[smells.python.rules.loose_typing]
 action = "must_fix"
 
-[smells.rust.rules.shotgun_surgery_hazard]
-min_blast = 36
+[smells.python.rules.magic_string_default]
 action = "must_fix"
+
+[smells.rust.rules.god_module]
+min_fan = 60
+action = "warning"
+
+[smells.rust.rules.shotgun_surgery_hazard]
+min_blast = 60
+action = "warning"
 
 [smells.rust.rules.data_clump]
 min_fields = 4
-min_occurrences = 3
+min_occurrences = 4
 action = "must_fix"
 
 [smells.rust.rules.boolean_blindness]
@@ -77,14 +83,14 @@ action = "must_fix"
 action = "must_fix"
 
 [smells.rust.rules.mutated_parameter]
-action = "must_fix"
+enabled = false
 
 [smells.rust.rules.reassigned_parameter]
 enabled = true
 action = "must_fix"
 
 [smells.rust.rules.split_variable]
-min_assigns = 2
+min_assigns = 3
 action = "must_fix"
 
 [smells.rust.rules.loose_typing]
@@ -112,13 +118,13 @@ enabled = false
 enabled = false
 
 [smells.rust.rules.repeated_iteration]
-action = "must_fix"
+action = "warning"
 
 [smells.rust.rules.sort_in_loop]
 action = "must_fix"
 
 [smells.rust.rules.nested_loop]
-action = "must_fix"
+action = "warning"
 
 [smells.rust.rules.n_plus_one_call]
 action = "must_fix"

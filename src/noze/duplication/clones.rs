@@ -29,28 +29,56 @@ pub fn extract(master: &Master, threshold: usize) -> Vec<RawGroup> {
     // run is merely the tail of a longer clone reported one offset earlier, so
     // emitting it would fragment one logical clone into many overlapping ones.
     let mut groups = Vec::new();
-    let mut r = 1;
-    while r < n {
-        if lcp[r] < threshold {
-            r += 1;
-            continue;
-        }
-        let lo = r - 1;
-        let mut min_len = lcp[r];
-        while r + 1 < n && lcp[r + 1] >= threshold {
-            r += 1;
-            min_len = min_len.min(lcp[r]);
-        }
-        let positions = &sa[lo..=r];
+    let mut scan = LcpRunScan::new(n);
+    while let Some(run) = scan.next_run(&lcp, threshold) {
+        let positions = &sa[run.lo..=run.hi];
         if is_left_maximal(&master.text, positions) {
             groups.push(RawGroup {
-                len: min_len,
+                len: run.min_len,
                 positions: positions.to_vec(),
             });
         }
-        r += 1;
     }
     groups
+}
+
+struct LcpRun {
+    lo: usize,
+    hi: usize,
+    min_len: usize,
+}
+
+struct LcpRunScan {
+    len: usize,
+    cursor: usize,
+}
+
+impl LcpRunScan {
+    fn new(len: usize) -> Self {
+        Self { len, cursor: 1 }
+    }
+
+    fn next_run(&mut self, lcp: &[usize], threshold: usize) -> Option<LcpRun> {
+        while self.cursor < self.len && lcp[self.cursor] < threshold {
+            self.cursor += 1;
+        }
+        if self.cursor >= self.len {
+            return None;
+        }
+        let lo = self.cursor - 1;
+        let mut min_len = lcp[self.cursor];
+        while self.cursor + 1 < self.len && lcp[self.cursor + 1] >= threshold {
+            self.cursor += 1;
+            min_len = min_len.min(lcp[self.cursor]);
+        }
+        let run = LcpRun {
+            lo,
+            hi: self.cursor,
+            min_len,
+        };
+        self.cursor += 1;
+        Some(run)
+    }
 }
 
 /// A run is left-maximal unless all its occurrences share the same preceding
@@ -76,20 +104,42 @@ fn kasai(text: &[usize], sa: &[usize]) -> Vec<usize> {
         rank[p] = r;
     }
     let mut lcp = vec![0usize; n];
-    let mut h = 0usize;
+    let mut scan = PrefixScan::default();
     for p in 0..n {
         if rank[p] == 0 {
-            h = 0;
+            scan.reset();
             continue;
         }
         let pred = sa[rank[p] - 1];
-        while p + h < n && pred + h < n && text[p + h] == text[pred + h] {
-            h += 1;
-        }
-        lcp[rank[p]] = h;
-        h = h.saturating_sub(1);
+        lcp[rank[p]] = scan.common_len(text, p, pred);
+        scan.step();
     }
     lcp
+}
+
+#[derive(Default)]
+struct PrefixScan {
+    len: usize,
+}
+
+impl PrefixScan {
+    fn reset(&mut self) {
+        self.len = 0;
+    }
+
+    fn common_len(&mut self, text: &[usize], left: usize, right: usize) -> usize {
+        while left + self.len < text.len()
+            && right + self.len < text.len()
+            && text[left + self.len] == text[right + self.len]
+        {
+            self.len += 1;
+        }
+        self.len
+    }
+
+    fn step(&mut self) {
+        self.len = self.len.saturating_sub(1);
+    }
 }
 
 #[cfg(test)]

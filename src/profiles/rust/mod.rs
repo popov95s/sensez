@@ -123,8 +123,4 @@ impl PerformanceProfile for RustProfile {
     fn is_expensive_loop_call(&self, method: &str) -> bool {
         performance::EXPENSIVE_LOOP_METHODS.contains(&method)
     }
-
-    fn is_external_get_receiver(&self, base: &str) -> bool {
-        performance::EXTERNAL_GET_RECEIVERS.contains(&base)
-    }
 }

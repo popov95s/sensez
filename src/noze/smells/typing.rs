@@ -187,15 +187,34 @@ fn tuple_arity(annotation: &str) -> usize {
     if body.is_empty() {
         return 0;
     }
-    let mut depth = 0usize;
+    let mut depth = BracketDepth::default();
     let mut count = 1usize;
     for c in body.chars() {
         match c {
-            '[' | '(' => depth += 1,
-            ']' | ')' => depth = depth.saturating_sub(1),
-            ',' if depth == 0 => count += 1,
+            '[' | '(' => depth.open(),
+            ']' | ')' => depth.close(),
+            ',' if depth.is_top_level() => count += 1,
             _ => {}
         }
     }
     count
+}
+
+#[derive(Default)]
+struct BracketDepth {
+    value: usize,
+}
+
+impl BracketDepth {
+    fn open(&mut self) {
+        self.value += 1;
+    }
+
+    fn close(&mut self) {
+        self.value = self.value.saturating_sub(1);
+    }
+
+    fn is_top_level(&self) -> bool {
+        self.value == 0
+    }
 }

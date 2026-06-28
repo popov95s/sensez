@@ -32,6 +32,14 @@ struct Candidate {
     shape_score: f32,
 }
 
+#[derive(PartialEq, Eq, Hash)]
+struct PairKey {
+    left_file: PathBuf,
+    left_row: usize,
+    right_file: PathBuf,
+    right_row: usize,
+}
+
 pub fn detect(files: &[&ParsedFile], config: &SemanticDuplication) -> Vec<CloneClass> {
     if !config.enabled {
         return Vec::new();
@@ -241,12 +249,22 @@ fn occurrence(unit: &Unit) -> CloneOccurrence {
     }
 }
 
-fn pair_key(left: &Unit, right: &Unit) -> (PathBuf, usize, PathBuf, usize) {
+fn pair_key(left: &Unit, right: &Unit) -> PairKey {
     let a = (left.file.clone(), left.start);
     let b = (right.file.clone(), right.start);
     if a <= b {
-        (a.0, a.1, b.0, b.1)
+        PairKey {
+            left_file: a.0,
+            left_row: a.1,
+            right_file: b.0,
+            right_row: b.1,
+        }
     } else {
-        (b.0, b.1, a.0, a.1)
+        PairKey {
+            left_file: b.0,
+            left_row: b.1,
+            right_file: a.0,
+            right_row: a.1,
+        }
     }
 }

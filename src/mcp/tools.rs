@@ -9,20 +9,14 @@ use serde_json::{json, Value};
 
 pub fn tools_list() -> Value {
     #[cfg(feature = "eyez")]
-    let tools = {
-        let mut tools = vec![
-            scan(),
-            configuration_summary(),
-            gate(),
-            explain(),
-            triage_finding(),
-            usage_report(),
-        ];
-        tools.insert(1, search_docs());
-        tools
-    };
+    let tools = tool_values(Some(search_docs()));
     #[cfg(not(feature = "eyez"))]
-    let tools = vec![
+    let tools = tool_values(None);
+    json!({ "tools": tools })
+}
+
+fn tool_values(search: Option<Value>) -> Vec<Value> {
+    let mut tools = vec![
         scan(),
         configuration_summary(),
         gate(),
@@ -30,7 +24,10 @@ pub fn tools_list() -> Value {
         triage_finding(),
         usage_report(),
     ];
-    json!({ "tools": tools })
+    if let Some(search) = search {
+        tools.insert(1, search);
+    }
+    tools
 }
 
 fn scan() -> Value {
@@ -120,18 +117,21 @@ fn search_docs() -> Value {
 /// If `path` sits inside a larger repository, a warning the agent will relay:
 /// partial scans produce false dead-code positives and miss cross-module issues.
 pub fn scope_warning(path: &std::path::Path) -> Option<String> {
-    let path = path.canonicalize().ok()?;
-    if path.join(".git").exists() {
+    let scanned_path = path.canonicalize().ok()?;
+    if scanned_path.join(".git").exists() {
         return None; // already the repo root
     }
-    let root = path.ancestors().skip(1).find(|a| a.join(".git").exists())?;
+    let root = scanned_path
+        .ancestors()
+        .skip(1)
+        .find(|a| a.join(".git").exists())?;
     Some(format!(
         "WARNING: '{}' is a subdirectory of the repository at '{}'. Dead-code, \
          cycle, and boundary analysis are only correct over the full import graph \
          — findings below may include false dead-code positives and miss \
          cross-module issues. Rerun with path='{}' unless a partial view is \
          intentional.",
-        path.display(),
+        scanned_path.display(),
         root.display(),
         root.display()
     ))

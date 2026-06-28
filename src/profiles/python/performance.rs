@@ -9,17 +9,6 @@ const ITER_METHODS: [&str; 4] = ["count", "index", "copy", "join"];
 pub(crate) const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "all", "execute", "fetch", "fetchone", "find", "load", "query", "request", "save", "select",
 ];
-pub(crate) const EXTERNAL_GET_RECEIVERS: &[&str] = &[
-    "conn",
-    "connection",
-    "cursor",
-    "db",
-    "repo",
-    "repository",
-    "requests",
-    "session",
-];
-
 pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: usize) {
     let kind = node.kind();
     if is_loop(kind) {

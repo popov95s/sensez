@@ -66,12 +66,12 @@ pub fn defaults() -> DeadCodeDefaults {
 
 /// Classify decorator dotted-paths (e.g. `["app.get"]`, `["functools.lru_cache"]`).
 pub fn classify(paths: Option<&Vec<String>>, user_entrypoints: &HashSet<String>) -> DecoratorClass {
-    let paths = match paths {
+    let decorator_paths = match paths {
         Some(p) if !p.is_empty() => p,
         _ => return DecoratorClass::None,
     };
     let mut unknown = false;
-    for path in paths {
+    for path in decorator_paths {
         let trailing = path.rsplit('.').next().unwrap_or(path);
         let head = path.split('.').next().unwrap_or(path);
         let is_attr = path.contains('.');

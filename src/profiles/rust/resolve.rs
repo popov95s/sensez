@@ -37,18 +37,7 @@ pub fn resolve_target(import: &ImportContext, importer_file: &Path, root: &Path)
     match first {
         "crate" => join_key(src_key(importer_file, root), &rest),
         "self" => join_key(roots::module_name(importer_file, root), &rest),
-        "super" => {
-            let mut module = roots::module_name(importer_file, root);
-            let mut rest = rest.as_slice();
-            loop {
-                module = containing_package(&module, false);
-                match rest.first() {
-                    Some(&"super") => rest = &rest[1..],
-                    _ => break,
-                }
-            }
-            join_key(module, rest)
-        }
+        "super" => resolve_super(importer_file, root, &rest),
         name if Some(name) == package_name(root).as_deref() => {
             join_key(src_key(importer_file, root), &rest)
         }
@@ -62,6 +51,33 @@ pub fn resolve_target(import: &ImportContext, importer_file: &Path, root: &Path)
                 return join_key(join_key(module, &[name]), &rest);
             }
             target.clone() // `std::…` / third-party crate → external node
+        }
+    }
+}
+
+fn resolve_super(importer_file: &Path, root: &Path, rest: &[&str]) -> String {
+    let mut state = SuperPath::new(roots::module_name(importer_file, root), rest);
+    while state.consume_super() {}
+    join_key(state.module, state.rest)
+}
+
+struct SuperPath<'a> {
+    module: String,
+    rest: &'a [&'a str],
+}
+
+impl<'a> SuperPath<'a> {
+    fn new(module: String, rest: &'a [&'a str]) -> Self {
+        Self { module, rest }
+    }
+
+    fn consume_super(&mut self) -> bool {
+        self.module = containing_package(&self.module, false);
+        if matches!(self.rest.first(), Some(&"super")) {
+            self.rest = &self.rest[1..];
+            true
+        } else {
+            false
         }
     }
 }

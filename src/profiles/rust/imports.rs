@@ -123,11 +123,11 @@ fn flatten(
             }
         }
         "scoped_identifier" => {
-            let depth = push_path(node.child_by_field_name("path"), src, prefix);
-            if let Some(name) = node.child_by_field_name("name") {
-                flatten(name, src, prefix, emit);
-            }
-            prefix.truncate(prefix.len() - depth);
+            with_path_prefix(prefix, node.child_by_field_name("path"), src, |prefix| {
+                if let Some(name) = node.child_by_field_name("name") {
+                    flatten(name, src, prefix, emit);
+                }
+            });
         }
         "use_as_clause" => {
             let alias = node
@@ -135,18 +135,18 @@ fn flatten(
                 .and_then(|a| a.utf8_text(src).ok())
                 .map(str::to_string);
             if let Some(path) = node.child_by_field_name("path") {
-                let depth = push_path(path.child_by_field_name("path"), src, prefix);
                 let name = leaf_text(path, src);
-                emit(prefix, Leaf::Named { name, alias });
-                prefix.truncate(prefix.len() - depth);
+                with_path_prefix(prefix, path.child_by_field_name("path"), src, |prefix| {
+                    emit(prefix, Leaf::Named { name, alias });
+                });
             }
         }
         "scoped_use_list" => {
-            let depth = push_path(node.child_by_field_name("path"), src, prefix);
-            if let Some(list) = node.child_by_field_name("list") {
-                flatten(list, src, prefix, emit);
-            }
-            prefix.truncate(prefix.len() - depth);
+            with_path_prefix(prefix, node.child_by_field_name("path"), src, |prefix| {
+                if let Some(list) = node.child_by_field_name("list") {
+                    flatten(list, src, prefix, emit);
+                }
+            });
         }
         "use_list" => {
             let mut cursor = node.walk();
@@ -155,12 +155,25 @@ fn flatten(
             }
         }
         "use_wildcard" => {
-            let depth = push_path(node.named_child(0), src, prefix);
-            emit(prefix, Leaf::Wildcard);
-            prefix.truncate(prefix.len() - depth);
+            with_path_prefix(prefix, node.named_child(0), src, |prefix| {
+                emit(prefix, Leaf::Wildcard);
+            });
         }
         _ => {}
     }
+}
+
+fn with_path_prefix<R>(
+    prefix: &mut Vec<String>,
+    path: Option<Node>,
+    src: &[u8],
+    f: impl FnOnce(&mut Vec<String>) -> R,
+) -> R {
+    let len = prefix.len();
+    push_path(path, src, prefix);
+    let result = f(prefix);
+    prefix.truncate(len);
+    result
 }
 
 /// Append a (possibly scoped) path's segments to `prefix`; returns how many

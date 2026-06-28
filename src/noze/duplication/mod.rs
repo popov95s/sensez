@@ -93,22 +93,22 @@ fn detect_partition(
     let clusters = gapped::stitch(groups, &master.spans, config.max_gap);
 
     for cluster in clusters {
-        let occ: Vec<CloneOccurrence> = cluster
+        let cluster_occurrences: Vec<CloneOccurrence> = cluster
             .occ
             .iter()
             .filter_map(|&(start, end)| occurrence(kept, &master.spans, start, end))
             .collect();
-        let occ = suppress_overlaps(occ);
-        if occ.len() < 2 {
+        let cluster_occurrences = suppress_overlaps(cluster_occurrences);
+        if cluster_occurrences.len() < 2 {
             continue; // a clone needs >= 2 distinct, non-overlapping locations
         }
-        if !seen.insert(dedup_key(&occ, cluster.matched)) {
+        if !seen.insert(dedup_key(&cluster_occurrences, cluster.matched)) {
             continue;
         }
         out.push(CloneClass {
             action: ActionLevel::Advisory,
             token_length: cluster.matched,
-            occurrences: occ,
+            occurrences: cluster_occurrences,
             hint: None,
         });
     }
@@ -118,16 +118,16 @@ fn detect_partition(
     // doesn't double-report.
     if config.near_miss {
         for class in near_miss::detect(kept, config.threshold) {
-            let occ = suppress_overlaps(class.occurrences);
-            if occ.len() < 2 {
+            let near_miss_occurrences = suppress_overlaps(class.occurrences);
+            if near_miss_occurrences.len() < 2 {
                 continue;
             }
-            if !seen.insert(dedup_key(&occ, class.token_length)) {
+            if !seen.insert(dedup_key(&near_miss_occurrences, class.token_length)) {
                 continue;
             }
             out.push(CloneClass {
                 action: ActionLevel::Advisory,
-                occurrences: occ,
+                occurrences: near_miss_occurrences,
                 ..class
             });
         }
@@ -135,16 +135,16 @@ fn detect_partition(
 
     #[cfg(feature = "eyez")]
     for class in semantic::detect(kept, &config.semantic) {
-        let occ = suppress_overlaps(class.occurrences);
-        if occ.len() < 2 {
+        let semantic_occurrences = suppress_overlaps(class.occurrences);
+        if semantic_occurrences.len() < 2 {
             continue;
         }
-        if !seen.insert(dedup_key(&occ, class.token_length)) {
+        if !seen.insert(dedup_key(&semantic_occurrences, class.token_length)) {
             continue;
         }
         out.push(CloneClass {
             action: ActionLevel::Advisory,
-            occurrences: occ,
+            occurrences: semantic_occurrences,
             ..class
         });
     }

@@ -137,7 +137,6 @@ pub trait DeadCodeProfile: Send + Sync {
 
 pub trait PerformanceProfile: Send + Sync {
     fn is_expensive_loop_call(&self, method: &str) -> bool;
-    fn is_external_get_receiver(&self, base: &str) -> bool;
 }
 
 pub trait LanguageProfile:
