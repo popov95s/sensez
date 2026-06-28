@@ -111,16 +111,23 @@ pub(super) fn session_searches(root: &Path) -> u64 {
     hub().repos.get(root).map_or(0, |r| r.session.searches)
 }
 
-pub(super) fn session_snapshot(root: &Path) -> (String, u64, Totals) {
+pub(super) struct SessionSnapshot {
+    pub session_id: String,
+    pub started: u64,
+    pub totals: Totals,
+}
+
+pub(super) fn session_snapshot(root: &Path) -> SessionSnapshot {
     let hub = hub();
-    (
-        hub.session_id.clone(),
-        hub.started,
-        hub.repos
+    SessionSnapshot {
+        session_id: hub.session_id.clone(),
+        started: hub.started,
+        totals: hub
+            .repos
             .get(root)
             .map(|r| r.session.clone())
             .unwrap_or_default(),
-    )
+    }
 }
 
 pub(super) fn cached_noisy(

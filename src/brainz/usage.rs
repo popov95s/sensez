@@ -59,13 +59,13 @@ pub fn usage_report(root: &Path) -> Value {
     let (blocked, open) =
         gate_block_sets(&events, store::load_fingerprints(root, &branch), &branch);
     let has_baseline = store::has_baseline(root, &branch);
-    let (session_id, started, session) = hub::session_snapshot(root);
+    let session = hub::session_snapshot(root);
     json!({
         "privacy": "local-only metrics from .sensez/local-metrics/ — never exported",
         "session": {
-            "id": session_id,
-            "started_unix": started,
-            "totals": session,
+            "id": session.session_id,
+            "started_unix": session.started,
+            "totals": session.totals,
         },
         "precision_by_detector": report::precision_by_detector(&totals),
         "mean_resolution_days": report::mean_resolution_days(&totals.resolved_by_detector),

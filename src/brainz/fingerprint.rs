@@ -62,14 +62,14 @@ pub fn fingerprints(report: &Value) -> Prints {
                     findings
                         .iter()
                         .map(|finding| {
-                            let (hash, label, sub) = key_fn(finding);
-                            let detector = match sub {
+                            let key = key_fn(finding);
+                            let detector = match key.sub_kind {
                                 Some(kind) if !kind.is_empty() => format!("{pillar}/{kind}"),
                                 _ => pillar.to_string(),
                             };
                             Print {
-                                hash,
-                                label,
+                                hash: key.hash,
+                                label: key.label,
                                 detector,
                             }
                         })
@@ -93,9 +93,15 @@ pub fn detector_counts(report: &Value) -> BTreeMap<String, u64> {
     counts
 }
 
-/// `(content hash, human label, detector sub-kind)`. `None` sub-kind means the
-/// pillar has no finer detector (the detector id is then just the pillar).
-type KeyFn = fn(&Value) -> (u64, String, Option<String>);
+/// Stable identity fields for one finding. `None` sub-kind means the pillar has
+/// no finer detector (the detector id is then just the pillar).
+struct FingerprintKey {
+    hash: u64,
+    label: String,
+    sub_kind: Option<String>,
+}
+
+type KeyFn = fn(&Value) -> FingerprintKey;
 
 const PILLARS: [(&str, KeyFn); 5] = [
     ("cycles", cycle_key),
@@ -118,48 +124,52 @@ fn field<'v>(finding: &'v Value, key: &str) -> &'v str {
 }
 
 /// Identity: the set of modules in the cycle (order-independent).
-fn cycle_key(finding: &Value) -> (u64, String, Option<String>) {
+fn cycle_key(finding: &Value) -> FingerprintKey {
     let mut modules: Vec<&str> = finding
         .get("modules")
         .and_then(Value::as_array)
         .map(|m| m.iter().filter_map(Value::as_str).collect())
         .unwrap_or_default();
     modules.sort_unstable();
-    (hash_parts(&modules), modules.join(" ↔ "), None)
+    FingerprintKey {
+        hash: hash_parts(&modules),
+        label: modules.join(" ↔ "),
+        sub_kind: None,
+    }
 }
 
 /// Identity: which symbol in which module (confidence may legitimately change).
 /// Detector sub-kind is the symbol kind (function / class / method / import).
-fn dead_code_key(finding: &Value) -> (u64, String, Option<String>) {
+fn dead_code_key(finding: &Value) -> FingerprintKey {
     let (module, symbol, kind) = (
         field(finding, "module"),
         field(finding, "symbol"),
         field(finding, "kind"),
     );
-    (
-        hash_parts(&[module, symbol, kind]),
-        format!("{module}::{symbol} ({kind})"),
-        Some(kind.to_string()),
-    )
+    FingerprintKey {
+        hash: hash_parts(&[module, symbol, kind]),
+        label: format!("{module}::{symbol} ({kind})"),
+        sub_kind: Some(kind.to_string()),
+    }
 }
 
 /// Identity: the forbidden edge and the rule that forbids it.
-fn boundary_key(finding: &Value) -> (u64, String, Option<String>) {
+fn boundary_key(finding: &Value) -> FingerprintKey {
     let (from, to, rule) = (
         field(finding, "from_module"),
         field(finding, "to_module"),
         field(finding, "rule"),
     );
-    (
-        hash_parts(&[from, to, rule]),
-        format!("{from} → {to} ({rule})"),
-        None,
-    )
+    FingerprintKey {
+        hash: hash_parts(&[from, to, rule]),
+        label: format!("{from} → {to} ({rule})"),
+        sub_kind: None,
+    }
 }
 
 /// Identity: the sorted set of files the clone class spans plus its arity.
 /// Rows shift on every edit, so they are deliberately excluded.
-fn clone_key(finding: &Value) -> (u64, String, Option<String>) {
+fn clone_key(finding: &Value) -> FingerprintKey {
     let mut files: Vec<&str> = finding
         .get("occurrences")
         .and_then(Value::as_array)
@@ -170,22 +180,26 @@ fn clone_key(finding: &Value) -> (u64, String, Option<String>) {
     files.dedup();
     let label = format!("clone x{arity}: {}", files.join(" + "));
     files.push(&arity);
-    (hash_parts(&files), label, None)
+    FingerprintKey {
+        hash: hash_parts(&files),
+        label,
+        sub_kind: None,
+    }
 }
 
 /// Identity: smell kind on a symbol in a file (metric value may fluctuate).
 /// Detector sub-kind is the smell kind (long_function / god_module / …).
-fn smell_key(finding: &Value) -> (u64, String, Option<String>) {
+fn smell_key(finding: &Value) -> FingerprintKey {
     let (kind, file, symbol) = (
         field(finding, "kind"),
         field(finding, "file"),
         field(finding, "symbol"),
     );
-    (
-        hash_parts(&[kind, file, symbol]),
-        format!("{kind} @ {file}::{symbol}"),
-        Some(kind.to_string()),
-    )
+    FingerprintKey {
+        hash: hash_parts(&[kind, file, symbol]),
+        label: format!("{kind} @ {file}::{symbol}"),
+        sub_kind: Some(kind.to_string()),
+    }
 }
 
 #[cfg(test)]
@@ -197,7 +211,7 @@ mod tests {
     fn cycle_identity_ignores_module_order() {
         let a = cycle_key(&json!({"modules": ["x", "y"]}));
         let b = cycle_key(&json!({"modules": ["y", "x"]}));
-        assert_eq!(a.0, b.0);
-        assert_eq!(a.2, None, "cycles have no detector sub-kind");
+        assert_eq!(a.hash, b.hash);
+        assert_eq!(a.sub_kind, None, "cycles have no detector sub-kind");
     }
 }

@@ -40,7 +40,7 @@ pub fn age(
     let mut resolved: BTreeMap<String, Resolved> = BTreeMap::new();
     let mut reintroduced: BTreeMap<String, Resolved> = BTreeMap::new();
     // Expire records too old to count as a reintroduction, then mutate as we go.
-    let mut history: ResolvedHistory = history
+    let mut active_history: ResolvedHistory = history
         .iter()
         .filter(|(_, r)| now.saturating_sub(r.resolved_ts) <= REINTRO_WINDOW_SECS)
         .map(|(k, r)| (k.clone(), r.clone()))
@@ -53,7 +53,7 @@ pub fn age(
             // A previously-resolved fingerprint that is present again: the fix
             // did not hold. Count it (with how long it stayed dead) and drop it
             // from history (active once more).
-            if let Some(rec) = history.remove(&key) {
+            if let Some(rec) = active_history.remove(&key) {
                 let tally = reintroduced.entry(print.detector.clone()).or_default();
                 tally.count += 1;
                 tally.secs_total += now.saturating_sub(rec.resolved_ts);
@@ -80,7 +80,7 @@ pub fn age(
                 tally.count += 1;
                 tally.secs_total += now.saturating_sub(gone.first_seen);
                 // Bank it so a later reappearance is caught as a reintroduction.
-                history.insert(
+                active_history.insert(
                     key.clone(),
                     ResolvedRecord {
                         detector: gone.detector.clone(),
@@ -95,7 +95,7 @@ pub fn age(
         aged,
         resolved,
         reintroduced,
-        history,
+        history: active_history,
     }
 }
 
