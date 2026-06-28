@@ -7,7 +7,7 @@ import shutil
 from pathlib import Path
 
 
-def compare_tree(results: Path, baselines: Path) -> list[str]:
+def compare_tree(results: Path, baselines: Path) -> tuple[str, ...]:
     failures: list[str] = []
     for result in sorted(results.rglob("*.json")):
         rel = result.relative_to(results)
@@ -21,7 +21,7 @@ def compare_tree(results: Path, baselines: Path) -> list[str]:
         rel = baseline.relative_to(baselines)
         if not (results / rel).exists():
             failures.append(f"missing result for baseline: {rel}")
-    return failures
+    return tuple(failures)
 
 
 def accept_tree(results: Path, baselines: Path) -> None:

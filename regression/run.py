@@ -50,6 +50,11 @@ class RegressionConfig(TypedDict):
     profiles: dict[str, ProfileConfig]
 
 
+@dataclass(frozen=True)
+class JsonPath:
+    segments: tuple[str, ...]
+
+
 def main() -> int:
     args = parse_args()
     config = cast(RegressionConfig, tomllib.loads(CONFIG.read_text()))
@@ -305,7 +310,7 @@ def assert_gate_allows(response: object, reason: str) -> None:
     empty-JSON `{}` payload (or at least not a block). Catches a
     regression where the gate re-blocks on unchanged content.
     """
-    if response != {} and _json_path(response, ("decision",)) == "block":
+    if response != {} and _json_path(response, JsonPath(("decision",))) == "block":
         raise AssertionError(f"gate expected to allow ({reason}), got {response!r}")
 
 
@@ -315,7 +320,9 @@ def assert_finding_resolved(report: object, detector: str, target_name: str) -> 
     fix-recapture loop stops banking resolutions would silently inflate
     recidivism and starve precision of its denominator.
     """
-    resolved = _json_path(report, ("all_time", "resolved_by_detector", detector))
+    resolved = _json_path(
+        report, JsonPath(("all_time", "resolved_by_detector", detector))
+    )
     count = resolved.get("count") if isinstance(resolved, dict) else None
     if not isinstance(count, int) or count < 1:
         raise AssertionError(
@@ -330,7 +337,7 @@ def assert_finding_reintroduced(report: object, detector: str, target_name: str)
     skate past calibration.
     """
     reintroduced = _json_path(
-        report, ("all_time", "reintroduced_by_detector", detector)
+        report, JsonPath(("all_time", "reintroduced_by_detector", detector))
     )
     count = reintroduced.get("count") if isinstance(reintroduced, dict) else None
     if not isinstance(count, int) or count < 1:
@@ -339,9 +346,9 @@ def assert_finding_reintroduced(report: object, detector: str, target_name: str)
         )
 
 
-def _json_path(value: object, keys: tuple[str, ...]) -> object:
+def _json_path(value: object, keys: JsonPath) -> object:
     current = value
-    for key in keys:
+    for key in keys.segments:
         if not isinstance(current, dict) or key not in current:
             return None
         current = current[key]
@@ -384,10 +391,17 @@ def dump_norm(path: Path, value: object, repo: Path, target: Target) -> None:
 
 def run_json(cmd: Sequence[CommandArg], cwd: Path) -> object:
     output = run(cmd, cwd, capture=True)
+    if output is None:
+        raise RuntimeError("command produced no output")
     return json.loads(output)
 
 
-def run(cmd: Sequence[CommandArg], cwd: Path, capture: bool = False, check: bool = True) -> str:
+def run(
+    cmd: Sequence[CommandArg],
+    cwd: Path,
+    capture: bool = False,
+    check: bool = True,
+) -> str | None:
     text_cmd = [str(part) for part in cmd]
     proc = subprocess.run(
         text_cmd,
@@ -400,7 +414,7 @@ def run(cmd: Sequence[CommandArg], cwd: Path, capture: bool = False, check: bool
         raise RuntimeError(
             f"command failed ({proc.returncode}): {' '.join(text_cmd)}\n{proc.stderr}"
         )
-    return proc.stdout or ""
+    return proc.stdout
 
 
 if __name__ == "__main__":

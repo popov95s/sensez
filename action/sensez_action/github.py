@@ -4,12 +4,23 @@ import json
 import urllib.error
 import urllib.parse
 import urllib.request
-from typing import Any
+from dataclasses import dataclass
 from typing import Optional
+from typing import cast
+
+JsonObject = dict[str, object]
 
 
 class GitHubError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class LinkHeaders:
+    values: dict[str, str]
+
+    def get(self, key: str) -> str | None:
+        return self.values.get(key)
 
 
 class GitHubClient:
@@ -18,30 +29,30 @@ class GitHubClient:
         self.repository = repository
         self.token = token
 
-    def get(self, path: str) -> Any:
+    def get(self, path: str) -> object:
         return self._request("GET", path)
 
-    def post(self, path: str, data: dict[str, Any]) -> Any:
+    def post(self, path: str, data: JsonObject) -> object:
         return self._request("POST", path, data)
 
-    def paged(self, path: str) -> list[dict[str, Any]]:
-        items: list[dict[str, Any]] = []
+    def paged(self, path: str) -> list[JsonObject]:
+        items: list[JsonObject] = []
         next_path = path
         while next_path:
             response, links = self._request_with_links("GET", next_path)
-            items.extend(response)
+            items.extend(_as_object_list(response))
             next_path = links.get("next")
         return items
 
     def _request(
-        self, method: str, path: str, data: Optional[dict[str, Any]] = None
-    ) -> Any:
+        self, method: str, path: str, data: Optional[JsonObject] = None
+    ) -> object:
         response, _ = self._request_with_links(method, path, data)
         return response
 
     def _request_with_links(
-        self, method: str, path: str, data: Optional[dict[str, Any]] = None
-    ) -> tuple[Any, dict[str, str]]:
+        self, method: str, path: str, data: Optional[JsonObject] = None
+    ) -> tuple[object, LinkHeaders]:
         url = self._url(path)
         body = json.dumps(data).encode("utf-8") if data is not None else None
         request = urllib.request.Request(url, data=body, method=method)
@@ -68,7 +79,7 @@ class GitHubClient:
         return f"{self.api_url}/repos/{self.repository}/{path.lstrip('/')}"
 
 
-def _parse_link_header(value: str) -> dict[str, str]:
+def _parse_link_header(value: str) -> LinkHeaders:
     links: dict[str, str] = {}
     for part in value.split(","):
         section = part.strip()
@@ -79,4 +90,15 @@ def _parse_link_header(value: str) -> dict[str, str]:
         url = url_part.strip().removeprefix("<").removesuffix(">")
         if rel and url:
             links[rel] = url
-    return links
+    return LinkHeaders(links)
+
+
+def _as_object_list(value: object) -> list[JsonObject]:
+    if not isinstance(value, list):
+        raise GitHubError("GitHub API returned a non-list response for a paged request")
+    objects: list[JsonObject] = []
+    for item in value:
+        if not isinstance(item, dict):
+            raise GitHubError("GitHub API returned a non-object item in a paged response")
+        objects.append(cast(JsonObject, item))
+    return objects

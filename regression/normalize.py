@@ -66,14 +66,14 @@ def _normalize(value: JsonValue, roots: RootVariants, target_name: str) -> JsonV
     return value
 
 
-def _root_variants(root: Path) -> list[str]:
+def _root_variants(root: Path) -> tuple[str, ...]:
     values = {str(root), str(root.resolve())}
     for value in list(values):
         if value.startswith("/private/var/"):
             values.add(value.replace("/private/var/", "/var/", 1))
         elif value.startswith("/var/"):
             values.add(value.replace("/var/", "/private/var/", 1))
-    return sorted(values, key=len, reverse=True)
+    return tuple(sorted(values, key=len, reverse=True))
 
 
 def _normalize_string(text: str, roots: RootVariants, target_name: str) -> str:

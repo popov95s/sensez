@@ -3,7 +3,8 @@ from __future__ import annotations
 import json
 import subprocess
 from pathlib import Path
-from typing import Any
+
+JsonObject = dict[str, object]
 
 
 class McpClient:
@@ -22,11 +23,14 @@ class McpClient:
             self.proc.stdin.close()
         self.proc.wait(timeout=30)
         if self.proc.returncode != 0:
-            stderr = self.proc.stderr.read() if self.proc.stderr else ""
-            raise RuntimeError(f"MCP server exited {self.proc.returncode}: {stderr}")
+            stderr = self._stderr_text()
+            message = f"MCP server exited {self.proc.returncode}"
+            if stderr:
+                message = f"{message}: {stderr}"
+            raise RuntimeError(message)
 
-    def request(self, method: str, params: dict[str, Any] | None = None) -> Any:
-        msg: dict[str, Any] = {
+    def request(self, method: str, params: JsonObject | None = None) -> JsonObject:
+        msg: JsonObject = {
             "jsonrpc": "2.0",
             "id": self.next_id,
             "method": method,
@@ -36,27 +40,37 @@ class McpClient:
             msg["params"] = params
         return self._send(msg)
 
-    def call_tool(self, name: str, arguments: dict[str, Any]) -> Any:
+    def call_tool(self, name: str, arguments: JsonObject) -> JsonObject:
         return self.request(
             "tools/call",
             {"name": name, "arguments": arguments},
         )["result"]
 
-    def _send(self, msg: dict[str, Any]) -> Any:
+    def _send(self, msg: JsonObject) -> JsonObject:
         if not self.proc.stdin or not self.proc.stdout:
             raise RuntimeError("MCP process pipes are closed")
         self.proc.stdin.write(json.dumps(msg) + "\n")
         self.proc.stdin.flush()
         line = self.proc.stdout.readline()
         if not line:
-            stderr = self.proc.stderr.read() if self.proc.stderr else ""
-            raise RuntimeError(f"MCP server closed stdout: {stderr}")
+            stderr = self._stderr_text()
+            message = "MCP server closed stdout"
+            if stderr:
+                message = f"{message}: {stderr}"
+            raise RuntimeError(message)
         resp = json.loads(line)
+        if not isinstance(resp, dict):
+            raise RuntimeError("MCP server returned a non-object response")
         if "error" in resp:
-            raise RuntimeError(resp["error"])
+            raise RuntimeError(str(resp["error"]))
         return resp
 
+    def _stderr_text(self) -> str | None:
+        if self.proc.stderr is None:
+            return None
+        return self.proc.stderr.read()
 
-def text_json(result: Any) -> Any:
+
+def text_json(result: JsonObject) -> object:
     text = result["content"][0]["text"]
     return json.loads(text)

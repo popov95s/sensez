@@ -16,7 +16,7 @@ class DiffTests(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(added_lines(patch), [3, 5])
+        self.assertEqual(added_lines(patch), (3, 5))
 
     def test_parses_changed_lines_from_git_diff(self) -> None:
         diff = "\n".join(
@@ -30,4 +30,4 @@ class DiffTests(unittest.TestCase):
             ]
         )
 
-        self.assertEqual(changed_lines_from_git_diff(diff), {"src/a.py": {2, 3}})
+        self.assertEqual(changed_lines_from_git_diff(diff), {"src/a.py": (2, 3)})

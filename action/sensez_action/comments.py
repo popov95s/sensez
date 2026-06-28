@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from dataclasses import dataclass
+from typing import Optional
+
 from .config import Config
 from .context import pull_request_from_event
 from .diff import changed_lines_from_files
@@ -9,6 +12,22 @@ from .github import GitHubClient, GitHubError
 
 class CommentError(Exception):
     pass
+
+
+@dataclass(frozen=True)
+class CommentMarkers:
+    values: frozenset[str]
+
+    def __contains__(self, marker: object) -> bool:
+        return isinstance(marker, str) and marker in self.values
+
+
+@dataclass(frozen=True)
+class ChangedLineSet:
+    values: frozenset[int]
+
+    def __contains__(self, line: object) -> bool:
+        return isinstance(line, int) and line in self.values
 
 
 def post_comments(findings: list[Finding], config: Config) -> None:
@@ -25,7 +44,10 @@ def post_comments(findings: list[Finding], config: Config) -> None:
         changed = changed_lines_from_files(files)
         existing = _existing_markers(client, pull.number)
         for finding in findings:
-            line = _comment_line(finding, changed.get(finding.file, set()))
+            line = _comment_line(
+                finding,
+                ChangedLineSet(frozenset(changed.get(finding.file, ()))),
+            )
             if line is None or finding.marker in existing:
                 continue
             client.post(
@@ -41,20 +63,19 @@ def post_comments(findings: list[Finding], config: Config) -> None:
     except GitHubError as error:
         raise CommentError(str(error)) from error
 
-def _existing_markers(client: GitHubClient, pull_number: int) -> set[str]:
+
+def _existing_markers(client: GitHubClient, pull_number: int) -> CommentMarkers:
     comments = client.paged(f"pulls/{pull_number}/comments?per_page=100")
-    return {
-        marker
+    markers = frozenset(
+        line.strip()
         for comment in comments
-        for marker in _markers_in(comment.get("body", ""))
-    }
+        for line in str(comment.get("body", "")).splitlines()
+        if line.strip().startswith("<!-- sensez:")
+    )
+    return CommentMarkers(markers)
 
 
-def _markers_in(body: str) -> list[str]:
-    return [line.strip() for line in body.splitlines() if line.strip().startswith("<!-- sensez:")]
-
-
-def _comment_line(finding: Finding, changed: set[int]) -> Optional[int]:
+def _comment_line(finding: Finding, changed: ChangedLineSet) -> Optional[int]:
     for line in range(finding.start_line, finding.end_line + 1):
         if line in changed:
             return line
