@@ -51,4 +51,4 @@ jobs:
         run: cargo test --all-features
 
       - name: Dogfood
-        run: cargo run -- noze . --diff --fail-on-new must_fix
+        run: cargo run -- noze . --fail-on-new must_fix
