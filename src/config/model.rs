@@ -119,7 +119,7 @@ impl Default for Config {
                 entry_modules: Vec::new(),
                 unused_imports: false,
                 unused_methods: false,
-                unused_properties: false,
+                unused_properties: true,
                 unused_variables: false,
             },
             boundaries: Boundaries {

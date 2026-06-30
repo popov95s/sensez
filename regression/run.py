@@ -31,7 +31,6 @@ entry_points = [
 ]
 unused_imports = true
 unused_methods = true
-unused_properties = true
 unused_variables = true
 """
 

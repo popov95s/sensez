@@ -113,7 +113,7 @@ fn flags_unused_functions_only_by_default() {
 }
 
 #[test]
-fn unused_properties_are_opt_in_dead_code() {
+fn unused_properties_are_default_dead_code() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     fs::create_dir_all(&dir).unwrap();
@@ -126,19 +126,20 @@ fn unused_properties_are_opt_in_dead_code() {
     let files = vec![parse_file(&dir.join("model.py"), 0).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
 
-    let off: Vec<_> = detect(&cg, &files, &cfg())
-        .iter()
-        .map(|f| f.symbol.clone())
-        .collect();
-    assert!(!off.contains(&"User.stale".to_string()));
-
-    let mut on = cfg();
-    on.unused_properties = true;
-    let dead: Vec<_> = detect(&cg, &files, &on)
+    let default = crate::config::model::Config::default().dead_code;
+    let dead: Vec<_> = detect(&cg, &files, &default)
         .iter()
         .map(|f| (f.symbol.clone(), f.kind))
         .collect();
     assert!(dead.contains(&("User.stale".to_string(), SymbolKind::Property)));
+
+    let mut off = default;
+    off.unused_properties = false;
+    let opted_out: Vec<_> = detect(&cg, &files, &off)
+        .iter()
+        .map(|f| f.symbol.clone())
+        .collect();
+    assert!(!opted_out.contains(&"User.stale".to_string()));
 }
 
 /// Python profile defaults treat alembic migrations and test files as entry

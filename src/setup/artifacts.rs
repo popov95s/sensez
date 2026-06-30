@@ -32,7 +32,7 @@ enabled = true
 [dead_code]
 # unused_imports = false
 # unused_methods = false
-# unused_properties = false
+# unused_properties = true
 # unused_variables = false
 # entrypoints = []       # user-added decorator names; profile defaults are language-scoped
 # entrypoint_names = []  # user-added dynamic function/class names
