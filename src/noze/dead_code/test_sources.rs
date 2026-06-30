@@ -12,6 +12,7 @@ fn cfg() -> DeadCode {
         entry_modules: vec![],
         unused_imports: false,
         unused_methods: false,
+        unused_properties: false,
         unused_variables: false,
     }
 }
@@ -88,4 +89,99 @@ fn type_checking_imports_keep_symbols_alive() {
         dead.contains(&("models".into(), "RuntimeDead".into())),
         "other symbols in the same imported module should still be candidates; got {dead:?}"
     );
+}
+
+#[test]
+fn test_sources_do_not_emit_dead_code_findings() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    fs::create_dir_all(dir.join("tests")).unwrap();
+    fs::write(
+        dir.join("prod.py"),
+        "def production_dead():\n    return 1\n",
+    )
+    .unwrap();
+    fs::write(
+        dir.join("tests/test_helpers.py"),
+        "import os\n\nclass Helper:\n    stale: str\n\n    def orphan(self):\n        return 1\n\n\ndef test_helper():\n    return Helper()\n",
+    )
+    .unwrap();
+
+    let files = vec![
+        parse_file(&dir.join("prod.py"), 0).unwrap(),
+        parse_file(&dir.join("tests/test_helpers.py"), 1).unwrap(),
+    ];
+    let cg = crate::spine::graph::build(&files, &[]);
+    let mut config = cfg();
+    config.unused_imports = true;
+    config.unused_methods = true;
+    config.unused_properties = true;
+
+    let dead: Vec<_> = detect(&cg, &files, &config)
+        .iter()
+        .map(|finding| finding.symbol.clone())
+        .collect();
+
+    assert!(dead.contains(&"production_dead".to_string()));
+    assert!(
+        !dead.iter().any(|symbol| is_test_only_symbol(symbol)),
+        "test/spec files should not emit dead-code findings; got {dead:?}"
+    );
+}
+
+#[test]
+fn entry_point_files_do_not_emit_dead_code_findings() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(
+        dir.join("public_api.py"),
+        "import os\n\nPUBLIC_CONST = 1\n\nclass PublicApi:\n    stale: str\n\n    def extension_hook(self):\n        return 1\n\n\ndef extension_fn():\n    return PublicApi()\n",
+    )
+    .unwrap();
+    fs::write(
+        dir.join("internal.py"),
+        "def internal_dead():\n    return 1\n",
+    )
+    .unwrap();
+
+    let files = vec![
+        parse_file(&dir.join("public_api.py"), 0).unwrap(),
+        parse_file(&dir.join("internal.py"), 1).unwrap(),
+    ];
+    let cg = crate::spine::graph::build(&files, &[]);
+    let mut config = cfg();
+    config.entry_points = vec!["**/public_api.py".to_string()];
+    config.unused_imports = true;
+    config.unused_methods = true;
+    config.unused_properties = true;
+    config.unused_variables = true;
+
+    let dead: Vec<_> = detect(&cg, &files, &config)
+        .iter()
+        .map(|finding| finding.symbol.clone())
+        .collect();
+
+    assert!(dead.contains(&"internal_dead".to_string()));
+    assert!(
+        !dead.iter().any(|symbol| is_public_api_symbol(symbol)),
+        "entry-point files should not emit dead-code findings; got {dead:?}"
+    );
+}
+
+fn is_test_only_symbol(symbol: &str) -> bool {
+    symbol == "os"
+        || symbol == "Helper"
+        || symbol == "Helper.stale"
+        || symbol == "orphan"
+        || symbol == "test_helper"
+}
+
+fn is_public_api_symbol(symbol: &str) -> bool {
+    symbol == "os"
+        || symbol == "PUBLIC_CONST"
+        || symbol == "PublicApi"
+        || symbol == "PublicApi.stale"
+        || symbol == "extension_hook"
+        || symbol == "extension_fn"
 }

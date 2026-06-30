@@ -154,11 +154,236 @@
     {
       "action": "advisory",
       "confidence": "High",
+      "file": "<flask>/src/flask/blueprints.py",
+      "kind": "import",
+      "line": 11,
+      "module": "flask.blueprints",
+      "symbol": "BlueprintSetupState"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
       "file": "<flask>/src/flask/debughelpers.py",
       "kind": "class",
       "line": 17,
       "module": "flask.debughelpers",
       "symbol": "UnexpectedUnicodeError"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<flask>/src/flask/typing.py",
+      "kind": "variable",
+      "line": 54,
+      "module": "flask.typing",
+      "symbol": "BeforeFirstRequestCallable"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 14,
+      "module": "docs.conf",
+      "symbol": "default_role"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 15,
+      "module": "docs.conf",
+      "symbol": "extensions"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 23,
+      "module": "docs.conf",
+      "symbol": "autodoc_member_order"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 24,
+      "module": "docs.conf",
+      "symbol": "autodoc_typehints"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 25,
+      "module": "docs.conf",
+      "symbol": "autodoc_preserve_defaults"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 26,
+      "module": "docs.conf",
+      "symbol": "extlinks"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 31,
+      "module": "docs.conf",
+      "symbol": "intersphinx_mapping"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 44,
+      "module": "docs.conf",
+      "symbol": "html_theme"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 45,
+      "module": "docs.conf",
+      "symbol": "html_theme_options"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 46,
+      "module": "docs.conf",
+      "symbol": "html_context"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 55,
+      "module": "docs.conf",
+      "symbol": "html_sidebars"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 59,
+      "module": "docs.conf",
+      "symbol": "singlehtml_sidebars"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 60,
+      "module": "docs.conf",
+      "symbol": "html_static_path"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 61,
+      "module": "docs.conf",
+      "symbol": "html_favicon"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 62,
+      "module": "docs.conf",
+      "symbol": "html_logo"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 63,
+      "module": "docs.conf",
+      "symbol": "html_title"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 64,
+      "module": "docs.conf",
+      "symbol": "html_show_sourcelink"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 66,
+      "module": "docs.conf",
+      "symbol": "gettext_uuid"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 67,
+      "module": "docs.conf",
+      "symbol": "gettext_compact"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 7,
+      "module": "docs.conf",
+      "symbol": "project"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 8,
+      "module": "docs.conf",
+      "symbol": "copyright"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 9,
+      "module": "docs.conf",
+      "symbol": "author"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/examples/celery/make_celery.py",
+      "kind": "variable",
+      "line": 4,
+      "module": "make_celery",
+      "symbol": "celery_app"
     },
     {
       "action": "advisory",
@@ -172,11 +397,614 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<flask>/src/flask/blueprints.py",
+      "kind": "method",
+      "line": 104,
+      "module": "flask.blueprints",
+      "symbol": "open_resource"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/blueprints.py",
+      "kind": "method",
+      "line": 82,
+      "module": "flask.blueprints",
+      "symbol": "send_static_file"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "method",
+      "line": 102,
+      "module": "flask.config",
+      "symbol": "from_envvar"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "method",
+      "line": 126,
+      "module": "flask.config",
+      "symbol": "from_prefixed_env"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "method",
+      "line": 256,
+      "module": "flask.config",
+      "symbol": "from_file"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "method",
+      "line": 323,
+      "module": "flask.config",
+      "symbol": "get_namespace"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "method",
+      "line": 340,
+      "module": "flask.ctx",
+      "symbol": "from_environ"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/globals.py",
+      "kind": "method",
+      "line": 18,
+      "module": "flask.globals",
+      "symbol": "_get_current_object"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "method",
+      "line": 676,
+      "module": "flask.helpers",
+      "symbol": "raise_any"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "method",
+      "line": 49,
+      "module": "flask.json.provider",
+      "symbol": "dump"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "method",
+      "line": 67,
+      "module": "flask.json.provider",
+      "symbol": "load"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 410,
+      "module": "flask.sansio.app",
+      "symbol": "_check_setup_finished"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 440,
+      "module": "flask.sansio.app",
+      "symbol": "logger"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 520,
+      "module": "flask.sansio.app",
+      "symbol": "create_global_jinja_loader"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 533,
+      "module": "flask.sansio.app",
+      "symbol": "select_jinja_autoescape"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 570,
+      "module": "flask.sansio.app",
+      "symbol": "register_blueprint"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 597,
+      "module": "flask.sansio.app",
+      "symbol": "iter_blueprints"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 605,
+      "module": "flask.sansio.app",
+      "symbol": "add_url_rule"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 827,
+      "module": "flask.sansio.app",
+      "symbol": "teardown_appcontext"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 858,
+      "module": "flask.sansio.app",
+      "symbol": "shell_context_processor"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 868,
+      "module": "flask.sansio.app",
+      "symbol": "_find_error_handler"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 893,
+      "module": "flask.sansio.app",
+      "symbol": "trap_http_exception"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 939,
+      "module": "flask.sansio.app",
+      "symbol": "redirect"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 960,
+      "module": "flask.sansio.app",
+      "symbol": "inject_url_defaults"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "method",
+      "line": 981,
+      "module": "flask.sansio.app",
+      "symbol": "handle_url_build_error"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 205,
+      "module": "flask.sansio.app",
+      "symbol": "App.testing"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 213,
+      "module": "flask.sansio.app",
+      "symbol": "App.secret_key"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 222,
+      "module": "flask.sansio.app",
+      "symbol": "App.permanent_session_lifetime"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 248,
+      "module": "flask.sansio.app",
+      "symbol": "App.jinja_options"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 266,
+      "module": "flask.sansio.app",
+      "symbol": "App.test_client_class"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 274,
+      "module": "flask.sansio.app",
+      "symbol": "App.test_cli_runner_class"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "property",
+      "line": 928,
+      "module": "flask.sansio.app",
+      "symbol": "App.should_ignore_error"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 213,
+      "module": "flask.sansio.blueprints",
+      "symbol": "_check_setup_finished"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 256,
+      "module": "flask.sansio.blueprints",
+      "symbol": "register_blueprint"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 614,
+      "module": "flask.sansio.blueprints",
+      "symbol": "before_app_request"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 624,
+      "module": "flask.sansio.blueprints",
+      "symbol": "after_app_request"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 634,
+      "module": "flask.sansio.blueprints",
+      "symbol": "teardown_app_request"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 644,
+      "module": "flask.sansio.blueprints",
+      "symbol": "app_context_processor"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 656,
+      "module": "flask.sansio.blueprints",
+      "symbol": "app_errorhandler"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 673,
+      "module": "flask.sansio.blueprints",
+      "symbol": "app_url_value_preprocessor"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "method",
+      "line": 685,
+      "module": "flask.sansio.blueprints",
+      "symbol": "app_url_defaults"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 241,
+      "module": "flask.sansio.scaffold",
+      "symbol": "has_static_folder"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 272,
+      "module": "flask.sansio.scaffold",
+      "symbol": "jinja_loader"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 296,
+      "module": "flask.sansio.scaffold",
+      "symbol": "get"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 304,
+      "module": "flask.sansio.scaffold",
+      "symbol": "post"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 312,
+      "module": "flask.sansio.scaffold",
+      "symbol": "put"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 320,
+      "module": "flask.sansio.scaffold",
+      "symbol": "delete"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 328,
+      "module": "flask.sansio.scaffold",
+      "symbol": "patch"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 460,
+      "module": "flask.sansio.scaffold",
+      "symbol": "before_request"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 487,
+      "module": "flask.sansio.scaffold",
+      "symbol": "after_request"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 508,
+      "module": "flask.sansio.scaffold",
+      "symbol": "teardown_request"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 542,
+      "module": "flask.sansio.scaffold",
+      "symbol": "context_processor"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 559,
+      "module": "flask.sansio.scaffold",
+      "symbol": "url_value_preprocessor"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 584,
+      "module": "flask.sansio.scaffold",
+      "symbol": "url_defaults"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "method",
+      "line": 598,
+      "module": "flask.sansio.scaffold",
+      "symbol": "errorhandler"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "property",
+      "line": 70,
+      "module": "flask.sansio.scaffold",
+      "symbol": "Scaffold.cli"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sessions.py",
+      "kind": "method",
+      "line": 150,
+      "module": "flask.sessions",
+      "symbol": "make_null_session"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/sessions.py",
+      "kind": "method",
+      "line": 162,
+      "module": "flask.sessions",
+      "symbol": "is_null_session"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "method",
+      "line": 136,
+      "module": "flask.testing",
+      "symbol": "session_transaction"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "method",
+      "line": 88,
+      "module": "flask.testing",
+      "symbol": "json_dumps"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<flask>/src/flask/views.py",
       "kind": "class",
       "line": 138,
       "module": "flask.views",
       "symbol": "MethodView"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "method",
+      "line": 86,
+      "module": "flask.views",
+      "symbol": "as_view"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "variable",
+      "line": 9,
+      "module": "flask.views",
+      "symbol": "F"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "method",
+      "line": 181,
+      "module": "flask.wrappers",
+      "symbol": "blueprints"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "property",
+      "line": 240,
+      "module": "flask.wrappers",
+      "symbol": "Response.default_mimetype"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "property",
+      "line": 31,
+      "module": "flask.wrappers",
+      "symbol": "Request.json_module"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "property",
+      "line": 47,
+      "module": "flask.wrappers",
+      "symbol": "Request.view_args"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "property",
+      "line": 53,
+      "module": "flask.wrappers",
+      "symbol": "Request.routing_exception"
     }
   ],
   "duplication": [
@@ -266,7 +1094,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 3,
+    "dead_code_total": 95,
     "duplication_total": 5,
     "external_edges": 334,
     "internal_edges": 304,

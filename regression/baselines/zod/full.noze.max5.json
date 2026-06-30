@@ -576,11 +576,11 @@
     {
       "action": "advisory",
       "confidence": "High",
-      "file": "<zod>/packages/zod/src/v3/helpers/errorUtil.ts",
-      "kind": "function",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "import",
       "line": 3,
-      "module": "src/v3/helpers/errorUtil",
-      "symbol": "errToObj"
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "Tabs"
     }
   ],
   "duplication": [
@@ -670,7 +670,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 64,
+    "dead_code_total": 84,
     "duplication_total": 15,
     "external_edges": 556,
     "internal_edges": 519,

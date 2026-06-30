@@ -154,11 +154,29 @@
     {
       "action": "advisory",
       "confidence": "High",
+      "file": "<flask>/src/flask/blueprints.py",
+      "kind": "import",
+      "line": 11,
+      "module": "flask.blueprints",
+      "symbol": "BlueprintSetupState"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
       "file": "<flask>/src/flask/debughelpers.py",
       "kind": "class",
       "line": 17,
       "module": "flask.debughelpers",
       "symbol": "UnexpectedUnicodeError"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<flask>/src/flask/typing.py",
+      "kind": "variable",
+      "line": 54,
+      "module": "flask.typing",
+      "symbol": "BeforeFirstRequestCallable"
     }
   ],
   "duplication": [
@@ -232,7 +250,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 1,
+    "dead_code_total": 3,
     "duplication_total": 4,
     "external_edges": 334,
     "internal_edges": 304,

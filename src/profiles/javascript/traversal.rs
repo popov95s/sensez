@@ -3,7 +3,7 @@
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::walk::{
-    self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
+    self, credit_attr, credit_name, credit_string, declare, emit_mapped, register_method, Scope,
 };
 use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
@@ -75,6 +75,11 @@ fn visit(
     if kind == "identifier" {
         credit_name(out, node, src);
     }
+    if kind == "string" {
+        if let Some(value) = quoted_string_value(node, src) {
+            credit_string(out, value);
+        }
+    }
     // `obj.attr` member access per base identifier (attribute-access crediting).
     if kind == "member_expression" {
         credit_attr(out, node, src, "object", "property");
@@ -115,6 +120,13 @@ fn visit(
     if opened {
         scope.pop();
     }
+}
+
+fn quoted_string_value(node: Node, src: &[u8]) -> Option<String> {
+    let text = node.utf8_text(src).ok()?.trim();
+    let quote = text.chars().next().filter(|ch| matches!(ch, '"' | '\''))?;
+    let body = text.get(quote.len_utf8()..)?;
+    Some(body.strip_suffix(quote).unwrap_or(body).to_string())
 }
 
 /// Per-unit structural summaries + type hints for the design-smell pillar.

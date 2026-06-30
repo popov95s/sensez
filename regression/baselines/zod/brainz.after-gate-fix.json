@@ -9,7 +9,10 @@
     "reported_by_detector": {
       "cycles": 2,
       "dead_code/class": 5,
-      "dead_code/function": 59,
+      "dead_code/function": 41,
+      "dead_code/import": 3,
+      "dead_code/method": 8,
+      "dead_code/variable": 27,
       "duplication": 15,
       "smells/data_clump": 3,
       "smells/divergent_change": 12,

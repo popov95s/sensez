@@ -32,6 +32,7 @@ enabled = true
 [dead_code]
 # unused_imports = false
 # unused_methods = false
+# unused_properties = false
 # unused_variables = false
 # entrypoints = []       # user-added decorator names; profile defaults are language-scoped
 # entrypoint_names = []  # user-added dynamic function/class names
@@ -136,6 +137,7 @@ pub fn write_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<St
     }
     match path.extension().and_then(|ext| ext.to_str()) {
         Some("toml") => write_mcp_toml(&path, sensez_bin)?,
+        Some("jsonc") => write_mcp_jsonc(&path, sensez_bin)?,
         _ => write_mcp_json(&path, sensez_bin)?,
     }
     Ok(format!(
@@ -150,6 +152,26 @@ fn write_mcp_json(path: &Path, sensez_bin: &str) -> Result<()> {
         .and_then(|t| serde_json::from_str(&t).ok())
         .unwrap_or_else(|| json!({}));
     config["mcpServers"]["sensez"] = json!({"command": sensez_bin, "args": ["mcp", "serve"]});
+    std::fs::write(path, serde_json::to_string_pretty(&config)?)
+        .with_context(|| format!("writing {}", path.display()))?;
+    Ok(())
+}
+
+fn write_mcp_jsonc(path: &Path, sensez_bin: &str) -> Result<()> {
+    let mut config: Value = std::fs::read_to_string(path)
+        .ok()
+        .and_then(|t| serde_json::from_str(&t).ok())
+        .unwrap_or_else(|| {
+            json!({
+                "$schema": "https://opencode.ai/config.json",
+                "mcp": {}
+            })
+        });
+    config["mcp"]["sensez"] = json!({
+        "type": "local",
+        "command": [sensez_bin, "mcp", "serve"],
+        "enabled": true
+    });
     std::fs::write(path, serde_json::to_string_pretty(&config)?)
         .with_context(|| format!("writing {}", path.display()))?;
     Ok(())

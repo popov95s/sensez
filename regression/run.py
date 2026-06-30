@@ -8,8 +8,9 @@ import subprocess
 import sys
 import tempfile
 import tomllib
+from dataclasses import dataclass
 from pathlib import Path
-from typing import NotRequired, Sequence, TypedDict, cast
+from typing import NotRequired, Sequence, TypeAlias, TypedDict, cast
 
 from .analyze import accept_tree, compare_tree
 from .mcp_client import McpClient, text_json
@@ -21,6 +22,18 @@ CONFIG = ROOT / "regression" / "targets.toml"
 RESULTS = ROOT / "regression" / "results"
 BASELINES = ROOT / "regression" / "baselines"
 CommandArg = str | Path | int
+JsonPathLike: TypeAlias = "JsonPath | tuple[str, ...]"
+REGRESSION_SENSEZ_TOML = """\
+[dead_code]
+entry_points = [
+  "**/packages/zod/**",
+  "**/src/flask/app.py",
+]
+unused_imports = true
+unused_methods = true
+unused_properties = true
+unused_variables = true
+"""
 
 
 class Target(TypedDict):
@@ -156,7 +169,12 @@ def scenario_repo(cache: Path, target: Target) -> Path:
             shutil.copytree(cached_modules, dest / "node_modules", symlinks=True)
         else:
             run(target["setup"], dest)
+    write_regression_config(dest)
     return dest
+
+
+def write_regression_config(repo: Path) -> None:
+    (repo / "sensez.toml").write_text(REGRESSION_SENSEZ_TOML)
 
 
 def run_full_scans(sensez: Path, cache: Path, target: Target, out: Path) -> None:
@@ -346,9 +364,10 @@ def assert_finding_reintroduced(report: object, detector: str, target_name: str)
         )
 
 
-def _json_path(value: object, keys: JsonPath) -> object:
+def _json_path(value: object, keys: JsonPathLike) -> object:
     current = value
-    for key in keys.segments:
+    segments = keys.segments if isinstance(keys, JsonPath) else keys
+    for key in segments:
         if not isinstance(current, dict) or key not in current:
             return None
         current = current[key]

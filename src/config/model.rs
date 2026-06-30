@@ -53,6 +53,7 @@ pub struct DeadCode {
     pub entry_modules: Vec<String>,
     pub unused_imports: bool,
     pub unused_methods: bool,
+    pub unused_properties: bool,
     pub unused_variables: bool,
 }
 
@@ -118,6 +119,7 @@ impl Default for Config {
                 entry_modules: Vec::new(),
                 unused_imports: false,
                 unused_methods: false,
+                unused_properties: false,
                 unused_variables: false,
             },
             boundaries: Boundaries {

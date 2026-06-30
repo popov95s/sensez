@@ -32,6 +32,7 @@ pub enum SymbolKind {
     Variable,
     Method,
     Import,
+    Property,
 }
 
 impl SymbolKind {
@@ -43,6 +44,7 @@ impl SymbolKind {
             SymbolKind::Variable => "variable",
             SymbolKind::Method => "method",
             SymbolKind::Import => "import",
+            SymbolKind::Property => "property",
         }
     }
 }
@@ -78,6 +80,7 @@ pub struct SymbolFacts {
 pub struct UsageFacts {
     pub name_counts: HashMap<String, usize>,
     pub attribute_accesses: HashMap<String, HashSet<String>>,
+    pub string_literals: HashSet<String>,
 }
 
 #[derive(Debug, Default)]

@@ -10,6 +10,7 @@ mod cli;
 pub mod config;
 mod config_summary;
 mod diff;
+pub mod docs;
 mod dotdir;
 #[cfg(feature = "eyez")]
 mod eyez;

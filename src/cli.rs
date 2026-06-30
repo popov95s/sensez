@@ -3,7 +3,7 @@
 #[cfg(feature = "mcp")]
 mod brainz;
 mod output;
-mod spec;
+pub(crate) mod spec;
 
 use crate::diff::ChangedLines;
 use anyhow::{Context, Result};

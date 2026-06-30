@@ -11,6 +11,7 @@ fn cfg() -> DeadCode {
         entry_modules: vec![],
         unused_imports: false,
         unused_methods: false,
+        unused_properties: false,
         unused_variables: false,
     }
 }
@@ -109,6 +110,35 @@ fn flags_unused_functions_only_by_default() {
         .map(|f| f.symbol.clone())
         .collect();
     assert!(dead2.contains(&"DEAD_CONST".to_string()));
+}
+
+#[test]
+fn unused_properties_are_opt_in_dead_code() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    fs::create_dir_all(&dir).unwrap();
+    fs::write(
+        dir.join("model.py"),
+        "class User:\n    name: str\n    stale: str\n\n    def label(self):\n        return self.name\n",
+    )
+    .unwrap();
+
+    let files = vec![parse_file(&dir.join("model.py"), 0).unwrap()];
+    let cg = crate::spine::graph::build(&files, &[]);
+
+    let off: Vec<_> = detect(&cg, &files, &cfg())
+        .iter()
+        .map(|f| f.symbol.clone())
+        .collect();
+    assert!(!off.contains(&"User.stale".to_string()));
+
+    let mut on = cfg();
+    on.unused_properties = true;
+    let dead: Vec<_> = detect(&cg, &files, &on)
+        .iter()
+        .map(|f| (f.symbol.clone(), f.kind))
+        .collect();
+    assert!(dead.contains(&("User.stale".to_string(), SymbolKind::Property)));
 }
 
 /// Python profile defaults treat alembic migrations and test files as entry

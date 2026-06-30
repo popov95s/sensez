@@ -576,119 +576,83 @@
     {
       "action": "advisory",
       "confidence": "High",
-      "file": "<zod>/packages/zod/src/v3/helpers/errorUtil.ts",
-      "kind": "function",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "import",
       "line": 3,
-      "module": "src/v3/helpers/errorUtil",
-      "symbol": "errToObj"
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "Tabs"
     },
     {
       "action": "advisory",
       "confidence": "High",
-      "file": "<zod>/packages/zod/src/v3/helpers/errorUtil.ts",
-      "kind": "function",
-      "line": 6,
-      "module": "src/v3/helpers/errorUtil",
-      "symbol": "toString"
+      "file": "<zod>/packages/treeshake/rollup.config.js",
+      "kind": "import",
+      "line": 5,
+      "module": "rollup.config",
+      "symbol": "bundleSize"
     },
     {
       "action": "advisory",
       "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
-      "kind": "function",
+      "file": "<zod>/scripts/check-versions.ts",
+      "kind": "import",
+      "line": 4,
+      "module": "scripts/check-versions",
+      "symbol": "version"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "method",
       "line": 10,
-      "module": "src/v4/classic/coerce",
-      "symbol": "number"
+      "module": "instanceof",
+      "symbol": "constructor"
     },
     {
       "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
-      "kind": "function",
-      "line": 15,
-      "module": "src/v4/classic/coerce",
-      "symbol": "boolean"
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "method",
+      "line": 150,
+      "module": "metabench",
+      "symbol": "run"
     },
     {
       "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
-      "kind": "function",
-      "line": 20,
-      "module": "src/v4/classic/coerce",
-      "symbol": "bigint"
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "method",
+      "line": 218,
+      "module": "metabench",
+      "symbol": "run"
     },
     {
       "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
-      "kind": "function",
-      "line": 25,
-      "module": "src/v4/classic/coerce",
-      "symbol": "date"
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "method",
+      "line": 68,
+      "module": "metabench",
+      "symbol": "constructor"
     },
     {
       "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
-      "kind": "function",
-      "line": 5,
-      "module": "src/v4/classic/coerce",
-      "symbol": "string"
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "method",
+      "line": 74,
+      "module": "metabench",
+      "symbol": "add"
     },
     {
       "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
-      "kind": "function",
-      "line": 9,
-      "module": "src/v4/locales/hy",
-      "symbol": "withDefiniteArticle"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
-      "kind": "function",
-      "line": 5,
-      "module": "src/v4/locales/lt",
-      "symbol": "capitalizeFirstCharacter"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
-      "kind": "function",
-      "line": 16,
-      "module": "src/v4/mini/iso",
-      "symbol": "datetime"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
-      "kind": "function",
-      "line": 32,
-      "module": "src/v4/mini/iso",
-      "symbol": "date"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
-      "kind": "function",
-      "line": 48,
-      "module": "src/v4/mini/iso",
-      "symbol": "time"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/zod/src/v4/mini/iso.ts",
-      "kind": "function",
-      "line": 64,
-      "module": "src/v4/mini/iso",
-      "symbol": "duration"
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "method",
+      "line": 82,
+      "module": "metabench",
+      "symbol": "run"
     },
     {
       "action": "advisory",
@@ -702,11 +666,29 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<zod>/packages/bench/object-creation.ts",
+      "kind": "method",
+      "line": 5,
+      "module": "object-creation",
+      "symbol": "constructor"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<zod>/packages/bench/safe.ts",
       "kind": "class",
       "line": 4,
       "module": "safe",
       "symbol": "ZodFail"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/bench/safe.ts",
+      "kind": "method",
+      "line": 6,
+      "module": "safe",
+      "symbol": "constructor"
     },
     {
       "action": "advisory",
@@ -738,11 +720,38 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "variable",
+      "line": 12,
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "revalidate"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
+      "kind": "variable",
+      "line": 13,
+      "module": "app/(doc)/[[...slug]]/page",
+      "symbol": "dynamic"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<zod>/packages/docs/app/(doc)/layout.tsx",
       "kind": "function",
       "line": 68,
       "module": "app/(doc)/layout",
       "symbol": "Layout"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/(doc)/layout.tsx",
+      "kind": "variable",
+      "line": 9,
+      "module": "app/(doc)/layout",
+      "symbol": "dynamic"
     },
     {
       "action": "advisory",
@@ -774,6 +783,15 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/[slug]/page.tsx",
+      "kind": "variable",
+      "line": 7,
+      "module": "app/blog/[slug]/page",
+      "symbol": "revalidate"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<zod>/packages/docs/app/blog/layout.tsx",
       "kind": "function",
       "line": 5,
@@ -788,6 +806,24 @@
       "line": 6,
       "module": "app/blog/page",
       "symbol": "BlogIndexPage"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/blog/page.tsx",
+      "kind": "variable",
+      "line": 4,
+      "module": "app/blog/page",
+      "symbol": "revalidate"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/layout.config.tsx",
+      "kind": "variable",
+      "line": 19,
+      "module": "app/layout.config",
+      "symbol": "baseOptions"
     },
     {
       "action": "advisory",
@@ -810,11 +846,29 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<zod>/packages/docs/app/llms-full.txt/route.ts",
+      "kind": "variable",
+      "line": 6,
+      "module": "app/llms-full.txt/route",
+      "symbol": "revalidate"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<zod>/packages/docs/app/llms.txt/route.ts",
       "kind": "function",
       "line": 40,
       "module": "app/llms.txt/route",
       "symbol": "GET"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/llms.txt/route.ts",
+      "kind": "variable",
+      "line": 4,
+      "module": "app/llms.txt/route",
+      "symbol": "revalidate"
     },
     {
       "action": "advisory",
@@ -828,11 +882,29 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<zod>/packages/docs/app/not-found.tsx",
+      "kind": "variable",
+      "line": 5,
+      "module": "app/not-found",
+      "symbol": "metadata"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<zod>/packages/docs/app/og.png/route.tsx",
       "kind": "function",
       "line": 15,
       "module": "app/og.png/route",
       "symbol": "GET"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/app/og.png/route.tsx",
+      "kind": "variable",
+      "line": 6,
+      "module": "app/og.png/route",
+      "symbol": "config"
     },
     {
       "action": "advisory",
@@ -1062,6 +1134,24 @@
     {
       "action": "advisory",
       "confidence": "Low",
+      "file": "<zod>/packages/docs/loaders/source.ts",
+      "kind": "variable",
+      "line": 23,
+      "module": "loaders/source",
+      "symbol": "blog"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/loaders/source.ts",
+      "kind": "variable",
+      "line": 9,
+      "module": "loaders/source",
+      "symbol": "source"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
       "file": "<zod>/packages/docs/loaders/stars.ts",
       "kind": "function",
       "line": 4,
@@ -1070,48 +1160,138 @@
     },
     {
       "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
-      "kind": "function",
-      "line": 10,
-      "module": "src/v4/mini/coerce",
-      "symbol": "number"
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/loaders/stars.ts",
+      "kind": "variable",
+      "line": 1,
+      "module": "loaders/stars",
+      "symbol": "GITHUB_TOKEN"
     },
     {
       "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
-      "kind": "function",
-      "line": 15,
-      "module": "src/v4/mini/coerce",
-      "symbol": "boolean"
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/pages/api/_og.tsx",
+      "kind": "variable",
+      "line": 6,
+      "module": "pages/api/_og",
+      "symbol": "config"
     },
     {
       "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
-      "kind": "function",
-      "line": 20,
-      "module": "src/v4/mini/coerce",
-      "symbol": "bigint"
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/source.config.ts",
+      "kind": "variable",
+      "line": 3,
+      "module": "source.config",
+      "symbol": "docs"
     },
     {
       "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
-      "kind": "function",
-      "line": 25,
-      "module": "src/v4/mini/coerce",
-      "symbol": "date"
+      "confidence": "Low",
+      "file": "<zod>/packages/docs/source.config.ts",
+      "kind": "variable",
+      "line": 8,
+      "module": "source.config",
+      "symbol": "blogPosts"
     },
     {
       "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/zod/src/v4/mini/coerce.ts",
-      "kind": "function",
-      "line": 5,
-      "module": "src/v4/mini/coerce",
-      "symbol": "string"
+      "confidence": "Low",
+      "file": "<zod>/packages/integration/fixtures/drizzle-zod/index.ts",
+      "kind": "variable",
+      "line": 19,
+      "module": "fixtures/drizzle-zod",
+      "symbol": "schema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/integration/fixtures/internal-types/index.ts",
+      "kind": "variable",
+      "line": 45,
+      "module": "fixtures/internal-types",
+      "symbol": "_refinedSchema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/integration/fixtures/internal-types/index.ts",
+      "kind": "variable",
+      "line": 46,
+      "module": "fixtures/internal-types",
+      "symbol": "_transformedSchema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/integration/fixtures/internal-types/index.ts",
+      "kind": "variable",
+      "line": 47,
+      "module": "fixtures/internal-types",
+      "symbol": "_pipedSchema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/integration/fixtures/internal-types/index.ts",
+      "kind": "variable",
+      "line": 50,
+      "module": "fixtures/internal-types",
+      "symbol": "_optionalSchema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/treeshake/zod-full.ts",
+      "kind": "variable",
+      "line": 3,
+      "module": "zod-full",
+      "symbol": "schema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/treeshake/zod-mini-full.ts",
+      "kind": "variable",
+      "line": 3,
+      "module": "zod-mini-full",
+      "symbol": "schema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/treeshake/zod3-full.ts",
+      "kind": "variable",
+      "line": 3,
+      "module": "zod3-full",
+      "symbol": "schema"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/tsc/bisect.ts",
+      "kind": "variable",
+      "line": 58,
+      "module": "bisect",
+      "symbol": "time"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/tsc/bisect.ts",
+      "kind": "variable",
+      "line": 59,
+      "module": "bisect",
+      "symbol": "instantiations"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<zod>/packages/tsc/bisect.ts",
+      "kind": "variable",
+      "line": 60,
+      "module": "bisect",
+      "symbol": "memory"
     }
   ],
   "duplication": [
@@ -1584,7 +1764,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 64,
+    "dead_code_total": 84,
     "duplication_total": 28,
     "external_edges": 556,
     "internal_edges": 519,

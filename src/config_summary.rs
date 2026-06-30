@@ -91,6 +91,7 @@ fn add_dead_code(
     let threshold = json!({
         "unused_imports": config.dead_code.unused_imports,
         "unused_methods": config.dead_code.unused_methods,
+        "unused_properties": config.dead_code.unused_properties,
         "unused_variables": config.dead_code.unused_variables
     });
     let rule = by_rule

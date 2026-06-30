@@ -80,6 +80,10 @@ fn interactive_agent_catalog_includes_more_modern_agents() {
         agents::find("codex").unwrap().mcp_relpath,
         Some(".codex/config.toml")
     );
+    assert_eq!(
+        agents::find("opencode").unwrap().mcp_relpath,
+        Some("opencode.jsonc")
+    );
 }
 
 #[test]
@@ -150,6 +154,11 @@ fn all_mcp_config_writers_are_idempotent() {
                 "[mcp_servers.other]\ncommand = \"/bin/other\"\nargs = []\n",
             )
             .unwrap(),
+            Some("jsonc") => fs::write(
+                &path,
+                r#"{"$schema":"https://opencode.ai/config.json","mcp":{"other":{"type":"local","command":["/bin/other"],"enabled":true}}}"#,
+            )
+            .unwrap(),
             _ => fs::write(
                 &path,
                 r#"{"mcpServers":{"other":{"command":"/bin/other","args":[]}}}"#,
@@ -176,6 +185,21 @@ fn all_mcp_config_writers_are_idempotent() {
                     agent.id
                 );
                 assert_eq!(text.matches("[mcp_servers.sensez]").count(), 1);
+            }
+            Some("jsonc") => {
+                let config: serde_json::Value = serde_json::from_str(&text).unwrap();
+                let servers = config["mcp"].as_object().unwrap();
+                assert!(
+                    servers.contains_key("sensez"),
+                    "missing sensez for {}",
+                    agent.id
+                );
+                assert!(
+                    servers.contains_key("other"),
+                    "dropped other for {}",
+                    agent.id
+                );
+                assert_eq!(servers.len(), 2, "duplicate server for {}", agent.id);
             }
             _ => {
                 let config: serde_json::Value = serde_json::from_str(&text).unwrap();

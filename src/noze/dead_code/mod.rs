@@ -26,6 +26,7 @@ use globset::GlobSet;
 use reachability::{confidence_of, inbound_usage, is_entry_module, skip_symbol};
 use std::collections::BTreeMap;
 use std::collections::HashSet;
+use std::path::Path;
 
 /// Find unreferenced symbols across the codebase.
 pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Vec<DeadCodeFinding> {
@@ -42,6 +43,9 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             continue;
         };
         if node.is_external || is_entry_module(node, profile, &entry_modules, &rules.entry_globs) {
+            continue;
+        }
+        if rules.test_source_globs.is_match(&node.file_path) {
             continue;
         }
         let inbound = inbound_usage(cg, idx, |source| {
@@ -91,17 +95,27 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
         }
     }
 
-    if config.unused_imports || config.unused_methods {
+    if config.unused_imports || config.unused_methods || config.unused_properties {
         let modmap = extra::module_map(cg);
+        let production_files = files
+            .iter()
+            .filter(|file| !rule_sets.is_ignored_source(file.language, &file.path));
         if config.unused_imports {
-            findings.extend(extra::unused_imports(files, &modmap));
+            findings.extend(extra::unused_imports(production_files.clone(), &modmap));
         }
         if config.unused_methods {
-            findings.extend(extra::unused_methods(files, &modmap, |language, name| {
-                rule_sets
-                    .for_language(language)
-                    .is_some_and(|rules| rules.entrypoint_names.contains(name))
-            }));
+            findings.extend(extra::unused_methods(
+                production_files.clone(),
+                &modmap,
+                |language, name| {
+                    rule_sets
+                        .for_language(language)
+                        .is_some_and(|rules| rules.entrypoint_names.contains(name))
+                },
+            ));
+        }
+        if config.unused_properties {
+            findings.extend(extra::unused_properties(production_files, &modmap));
         }
     }
     findings
@@ -147,6 +161,12 @@ impl RuleSets {
 
     fn for_language(&self, language: Language) -> Option<&RuleSet> {
         self.by_language.get(&language)
+    }
+
+    fn is_ignored_source(&self, language: Language, path: &Path) -> bool {
+        self.for_language(language).is_some_and(|rules| {
+            rules.test_source_globs.is_match(path) || rules.entry_globs.is_match(path)
+        })
     }
 }
 

@@ -154,6 +154,15 @@
     {
       "action": "advisory",
       "confidence": "High",
+      "file": "<flask>/src/flask/blueprints.py",
+      "kind": "import",
+      "line": 11,
+      "module": "flask.blueprints",
+      "symbol": "BlueprintSetupState"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
       "file": "<flask>/src/flask/debughelpers.py",
       "kind": "class",
       "line": 17,
@@ -162,21 +171,165 @@
     },
     {
       "action": "advisory",
-      "confidence": "Low",
-      "file": "<flask>/examples/tutorial/flaskr/__init__.py",
-      "kind": "function",
-      "line": 6,
-      "module": "flaskr",
-      "symbol": "create_app"
+      "confidence": "High",
+      "file": "<flask>/src/flask/typing.py",
+      "kind": "variable",
+      "line": 54,
+      "module": "flask.typing",
+      "symbol": "BeforeFirstRequestCallable"
     },
     {
       "action": "advisory",
       "confidence": "Low",
-      "file": "<flask>/src/flask/views.py",
-      "kind": "class",
-      "line": 138,
-      "module": "flask.views",
-      "symbol": "MethodView"
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 14,
+      "module": "docs.conf",
+      "symbol": "default_role"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 15,
+      "module": "docs.conf",
+      "symbol": "extensions"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 23,
+      "module": "docs.conf",
+      "symbol": "autodoc_member_order"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 24,
+      "module": "docs.conf",
+      "symbol": "autodoc_typehints"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 25,
+      "module": "docs.conf",
+      "symbol": "autodoc_preserve_defaults"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 26,
+      "module": "docs.conf",
+      "symbol": "extlinks"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 31,
+      "module": "docs.conf",
+      "symbol": "intersphinx_mapping"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 44,
+      "module": "docs.conf",
+      "symbol": "html_theme"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 45,
+      "module": "docs.conf",
+      "symbol": "html_theme_options"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 46,
+      "module": "docs.conf",
+      "symbol": "html_context"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 55,
+      "module": "docs.conf",
+      "symbol": "html_sidebars"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 59,
+      "module": "docs.conf",
+      "symbol": "singlehtml_sidebars"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 60,
+      "module": "docs.conf",
+      "symbol": "html_static_path"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 61,
+      "module": "docs.conf",
+      "symbol": "html_favicon"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 7,
+      "module": "docs.conf",
+      "symbol": "project"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 8,
+      "module": "docs.conf",
+      "symbol": "copyright"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Low",
+      "file": "<flask>/docs/conf.py",
+      "kind": "variable",
+      "line": 9,
+      "module": "docs.conf",
+      "symbol": "author"
     }
   ],
   "duplication": [

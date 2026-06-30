@@ -95,6 +95,12 @@ pub(crate) fn credit_attr(
     }
 }
 
+pub(crate) fn credit_string(out: &mut Walked, value: String) {
+    if !value.is_empty() {
+        out.usage.string_literals.insert(value);
+    }
+}
+
 /// Map a node to its structural token (per-grammar `map_kind`) and, when it
 /// is significant, emit it with its lexeme code (per-language `code`).
 pub(crate) fn emit_mapped(

@@ -56,7 +56,7 @@ pub const AGENTS: &[AgentSpec] = &[
         kind: AgentKind::OpenCode,
         id: "opencode",
         label: "OpenCode",
-        mcp_relpath: Some(".opencode/mcp.json"),
+        mcp_relpath: Some("opencode.jsonc"),
         skill_relpath: Some(".opencode/skills/sensez"),
         supports_hooks: false,
     },

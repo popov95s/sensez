@@ -6,6 +6,8 @@
 //! Low confidence because cross-file attribute access (`obj.method()`) cannot
 //! be seen statically.
 
+mod properties;
+
 use crate::profiles::registry;
 use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
 use crate::spine::graph::CodebaseGraph;
@@ -14,6 +16,8 @@ use crate::spine::parser::SymbolKind;
 use crate::spine::parser::{ImportPhase, ParsedFile};
 use std::collections::HashMap;
 use std::path::PathBuf;
+
+pub use properties::unused_properties;
 
 /// Map each internal file path to its resolved dotted module name.
 pub fn module_map(cg: &CodebaseGraph) -> HashMap<PathBuf, String> {
@@ -27,8 +31,8 @@ pub fn module_map(cg: &CodebaseGraph) -> HashMap<PathBuf, String> {
 
 /// Imports whose bound name is never referenced in the file. `__init__.py` is
 /// skipped (its imports are typically intentional re-exports).
-pub fn unused_imports(
-    files: &[ParsedFile],
+pub fn unused_imports<'a>(
+    files: impl IntoIterator<Item = &'a ParsedFile>,
     modmap: &HashMap<PathBuf, String>,
 ) -> Vec<DeadCodeFinding> {
     let mut findings = Vec::new();
@@ -82,8 +86,8 @@ pub fn unused_imports(
 
 /// Methods never referenced within their own module. Dunders and configured
 /// entrypoint names are excluded; results are Low confidence.
-pub fn unused_methods(
-    files: &[ParsedFile],
+pub fn unused_methods<'a>(
+    files: impl IntoIterator<Item = &'a ParsedFile>,
     modmap: &HashMap<PathBuf, String>,
     is_entrypoint_name: impl Fn(Language, &str) -> bool,
 ) -> Vec<DeadCodeFinding> {

@@ -3,7 +3,7 @@
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::walk::{
-    self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
+    self, credit_attr, credit_name, credit_string, declare, emit_mapped, register_method, Scope,
 };
 use crate::spine::ir::ImportPhase;
 use crate::spine::ir::SymbolKind;
@@ -88,6 +88,9 @@ fn visit(
     // isn't flagged dead — but emit no tokens (string internals must stay out
     // of the duplication stream, and `is_leaf` still stops normal descent).
     if kind == "string" || kind == "concatenated_string" {
+        if let Some(value) = symbols::string_value(node, src) {
+            credit_string(out, value);
+        }
         credit_interpolations(node, src, out);
     }
 
