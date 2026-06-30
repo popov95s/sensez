@@ -1,6 +1,6 @@
 {
   "name": "sensez",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "Sensez CLI launcher for structural maintainability checks",
   "license": "MIT",
   "readme": "README.md",
@@ -18,10 +18,10 @@
     "README.md"
   ],
   "optionalDependencies": {
-    "sensez-darwin-arm64": "0.1.5",
-    "sensez-darwin-x64": "0.1.5",
-    "sensez-linux-arm64-gnu": "0.1.5",
-    "sensez-linux-x64-gnu": "0.1.5"
+    "sensez-darwin-arm64": "0.1.6",
+    "sensez-darwin-x64": "0.1.6",
+    "sensez-linux-arm64-gnu": "0.1.6",
+    "sensez-linux-x64-gnu": "0.1.6"
   },
   "publishConfig": {
     "provenance": true
