@@ -3,10 +3,20 @@ use crate::spine::parser::parse_file;
 use std::fs;
 
 fn symbols(src: &str) -> Vec<String> {
+    symbols_for(&[("m.py", src)])
+}
+
+fn symbols_for(sources: &[(&str, &str)]) -> Vec<String> {
     let tmp = tempfile::tempdir().unwrap();
-    let file = tmp.path().join("m.py");
-    fs::write(&file, src).unwrap();
-    let files = vec![parse_file(&file, 0).unwrap()];
+    let files: Vec<_> = sources
+        .iter()
+        .enumerate()
+        .map(|(index, (name, src))| {
+            let file = tmp.path().join(name);
+            fs::write(&file, src).unwrap();
+            parse_file(&file, index as u32).unwrap()
+        })
+        .collect();
     unused_properties(&files, &HashMap::new())
         .iter()
         .map(|f| f.symbol.clone())
@@ -51,6 +61,40 @@ fn constructed_instance_attribute_access_keeps_property_live() {
         "class Foo:\n    a: int\n    b: int\n\n\
          instance_1 = Foo()\nvalue = instance_1.a\n",
     );
+
+    assert_eq!(found, vec!["Foo.b"]);
+}
+
+#[test]
+fn cross_file_typed_function_access_keeps_property_live() {
+    let found = symbols_for(&[
+        ("models.py", "class Foo:\n    a: int\n    b: int\n"),
+        (
+            "service.py",
+            "from models import Foo\n\n\
+             def use_foo(foo: Foo):\n    return foo.a\n",
+        ),
+        (
+            "main.py",
+            "from models import Foo\nfrom service import use_foo\n\n\
+             instance_1 = Foo()\nresult = use_foo(instance_1)\n",
+        ),
+    ]);
+
+    assert_eq!(found, vec!["Foo.b"]);
+}
+
+#[test]
+fn cross_file_untyped_function_access_keeps_property_live() {
+    let found = symbols_for(&[
+        ("models.py", "class Foo:\n    a: int\n    b: int\n"),
+        ("service.py", "def use_foo(foo):\n    return foo.a\n"),
+        (
+            "main.py",
+            "from models import Foo\nfrom service import use_foo\n\n\
+             instance_1 = Foo()\nresult = use_foo(instance_1)\n",
+        ),
+    ]);
 
     assert_eq!(found, vec!["Foo.b"]);
 }

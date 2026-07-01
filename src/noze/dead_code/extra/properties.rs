@@ -15,25 +15,23 @@ pub fn unused_properties<'a>(
     files: impl IntoIterator<Item = &'a ParsedFile>,
     modmap: &HashMap<PathBuf, String>,
 ) -> Vec<DeadCodeFinding> {
-    files
-        .into_iter()
-        .flat_map(|file| unused_properties_in_file(file, modmap))
+    let parsed_files: Vec<&ParsedFile> = files.into_iter().collect();
+    let usage = ProjectUsage::from_files(&parsed_files);
+    parsed_files
+        .iter()
+        .flat_map(|file| unused_properties_in_file(file, modmap, &usage))
         .collect()
 }
 
 fn unused_properties_in_file(
     file: &ParsedFile,
     modmap: &HashMap<PathBuf, String>,
+    usage: &ProjectUsage,
 ) -> Vec<DeadCodeFinding> {
     let module = modmap.get(&file.path).cloned().unwrap_or_default();
-    let class_names = class_names(file);
-    let receivers = typed_receivers(file, &class_names);
-    let untyped_attrs = untyped_attribute_names(file, &receivers);
 
     reportable_classes(file)
-        .flat_map(|class| {
-            dead_properties_for_class(file, &module, &receivers, &untyped_attrs, class)
-        })
+        .flat_map(|class| dead_properties_for_class(file, &module, usage, class))
         .collect()
 }
 
@@ -48,35 +46,22 @@ fn reportable_classes(file: &ParsedFile) -> impl Iterator<Item = &ClassUnit> {
 fn dead_properties_for_class(
     file: &ParsedFile,
     module: &str,
-    receivers: &HashMap<&str, &str>,
-    untyped_attrs: &HashSet<&str>,
+    usage: &ProjectUsage,
     class: &ClassUnit,
 ) -> Vec<DeadCodeFinding> {
     class
         .properties
         .iter()
-        .filter(|property| property_is_dead(file, receivers, untyped_attrs, class, property))
+        .filter(|property| property_is_dead(usage, class, property))
         .map(|property| finding(file, module, class, property))
         .collect()
 }
 
-fn property_is_dead(
-    file: &ParsedFile,
-    receivers: &HashMap<&str, &str>,
-    untyped_attrs: &HashSet<&str>,
-    class: &ClassUnit,
-    property: &ClassProperty,
-) -> bool {
+fn property_is_dead(usage: &ProjectUsage, class: &ClassUnit, property: &ClassProperty) -> bool {
     !property.name.starts_with('_')
         && !class_manages_all_fields(class)
         && !is_framework_managed_property(property)
-        && !property_is_live(
-            file,
-            receivers,
-            untyped_attrs,
-            class,
-            property.name.as_str(),
-        )
+        && !property_is_live(usage, class, property.name.as_str())
 }
 
 fn finding(
@@ -97,29 +82,17 @@ fn finding(
     }
 }
 
-fn class_names(file: &ParsedFile) -> HashSet<&str> {
-    file.walked
-        .units
-        .classes
-        .iter()
-        .map(|class| class.name.as_str())
-        .collect()
-}
-
-fn typed_receivers<'a>(
-    file: &'a ParsedFile,
-    class_names: &HashSet<&'a str>,
-) -> HashMap<&'a str, &'a str> {
+fn typed_receivers(file: &ParsedFile, class_names: &HashSet<String>) -> HashMap<String, String> {
     let hints = type_hints(file);
     let mut out = HashMap::new();
     for (name, ty) in &hints.var_types {
         if let Some((name, class)) = receiver_class(name, ty, class_names) {
-            out.insert(name, class);
+            out.insert(name.to_string(), class);
         }
     }
     for ((_, name), ty) in &hints.param_types {
         if let Some((name, class)) = receiver_class(name, ty, class_names) {
-            out.insert(name, class);
+            out.insert(name.to_string(), class);
         }
     }
     out
@@ -131,14 +104,13 @@ fn type_hints(file: &ParsedFile) -> &TypeHints {
 
 fn receiver_class<'a>(
     name: &'a str,
-    ty: &'a str,
-    class_names: &HashSet<&'a str>,
-) -> Option<(&'a str, &'a str)> {
+    ty: &str,
+    class_names: &HashSet<String>,
+) -> Option<(&'a str, String)> {
     class_names
         .iter()
-        .copied()
         .find(|class| type_mentions_class(ty, class))
-        .map(|class| (name, class))
+        .map(|class| (name, class.clone()))
 }
 
 fn type_mentions_class(ty: &str, class: &str) -> bool {
@@ -146,63 +118,99 @@ fn type_mentions_class(ty: &str, class: &str) -> bool {
         .any(|part| part.trim_matches('?') == class)
 }
 
-fn untyped_attribute_names<'a>(
-    file: &'a ParsedFile,
-    receivers: &HashMap<&str, &str>,
-) -> HashSet<&'a str> {
+fn untyped_attribute_names(
+    file: &ParsedFile,
+    receivers: &HashMap<String, String>,
+) -> HashSet<String> {
     file.walked
         .usage
         .attribute_accesses
         .iter()
         .filter(|(base, _)| !receivers.contains_key(base.as_str()))
-        .flat_map(|(_, attrs)| attrs.iter().map(String::as_str))
+        .flat_map(|(_, attrs)| attrs.iter().cloned())
         .collect()
 }
 
-fn property_is_live(
-    file: &ParsedFile,
-    receivers: &HashMap<&str, &str>,
-    untyped_attrs: &HashSet<&str>,
-    class: &ClassUnit,
-    property: &str,
-) -> bool {
+fn property_is_live(usage: &ProjectUsage, class: &ClassUnit, property: &str) -> bool {
     class
         .method_attr_use
         .values()
         .any(|attrs| attrs.contains(property))
-        || typed_receiver_uses_property(file, receivers, class.name.as_str(), property)
-        || returned_value_uses_property(file, class.name.as_str(), property)
-        || untyped_attrs.contains(property)
-        || file.walked.usage.chained_attribute_names.contains(property)
-        || file.walked.usage.string_literals.contains(property)
+        || usage
+            .typed_property_uses
+            .contains(&(class.name.clone(), property.to_string()))
+        || usage
+            .returned_property_uses
+            .contains(&(class.name.clone(), property.to_string()))
+        || usage.untyped_attrs.contains(property)
+        || usage.chained_attrs.contains(property)
+        || usage.string_literals.contains(property)
 }
 
-fn typed_receiver_uses_property(
-    file: &ParsedFile,
-    receivers: &HashMap<&str, &str>,
-    class_name: &str,
-    property: &str,
-) -> bool {
-    file.walked
-        .usage
-        .attribute_accesses
-        .iter()
-        .filter(|(base, _)| receivers.get(base.as_str()) == Some(&class_name))
-        .any(|(_, attrs)| attrs.contains(property))
+#[derive(Default)]
+struct ProjectUsage {
+    typed_property_uses: HashSet<(String, String)>,
+    returned_property_uses: HashSet<(String, String)>,
+    untyped_attrs: HashSet<String>,
+    chained_attrs: HashSet<String>,
+    string_literals: HashSet<String>,
 }
 
-fn returned_value_uses_property(file: &ParsedFile, class_name: &str, property: &str) -> bool {
-    file.walked
-        .usage
-        .call_result_attribute_accesses
+impl ProjectUsage {
+    fn from_files(files: &[&ParsedFile]) -> Self {
+        let class_names = project_class_names(files);
+        let mut usage = Self::default();
+        for file in files {
+            let receivers = typed_receivers(file, &class_names);
+            usage
+                .untyped_attrs
+                .extend(untyped_attribute_names(file, &receivers));
+            usage
+                .chained_attrs
+                .extend(file.walked.usage.chained_attribute_names.iter().cloned());
+            usage
+                .string_literals
+                .extend(file.walked.usage.string_literals.iter().cloned());
+            usage.collect_typed_property_uses(file, &receivers);
+            usage.collect_returned_property_uses(file, &class_names);
+        }
+        usage
+    }
+
+    fn collect_typed_property_uses(
+        &mut self,
+        file: &ParsedFile,
+        receivers: &HashMap<String, String>,
+    ) {
+        for (base, attrs) in &file.walked.usage.attribute_accesses {
+            if let Some(class) = receivers.get(base) {
+                self.typed_property_uses
+                    .extend(attrs.iter().map(|attr| (class.clone(), attr.clone())));
+            }
+        }
+    }
+
+    fn collect_returned_property_uses(&mut self, file: &ParsedFile, class_names: &HashSet<String>) {
+        for (function, attrs) in &file.walked.usage.call_result_attribute_accesses {
+            if let Some(ty) = type_hints(file).return_types.get(function) {
+                for class in class_names
+                    .iter()
+                    .filter(|class| type_mentions_class(ty, class))
+                {
+                    self.returned_property_uses
+                        .extend(attrs.iter().map(|attr| (class.clone(), attr.clone())));
+                }
+            }
+        }
+    }
+}
+
+fn project_class_names(files: &[&ParsedFile]) -> HashSet<String> {
+    files
         .iter()
-        .any(|(function, attrs)| {
-            attrs.contains(property)
-                && type_hints(file)
-                    .return_types
-                    .get(function)
-                    .is_some_and(|ty| type_mentions_class(ty, class_name))
-        })
+        .flat_map(|file| file.walked.units.classes.iter())
+        .map(|class| class.name.clone())
+        .collect()
 }
 
 fn class_manages_all_fields(class: &ClassUnit) -> bool {
