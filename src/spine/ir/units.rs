@@ -169,6 +169,7 @@ pub struct ClassUnit {
 pub struct ClassProperty {
     pub name: String,
     pub type_name: String,
+    pub initializer_type: Option<String>,
     pub line: usize,
 }
 

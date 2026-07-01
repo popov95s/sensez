@@ -56,11 +56,13 @@ fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
                     .chars()
                     .all(|c| c == '_' || c == '$' || c.is_alphanumeric())
         })?;
-    let ty = type_text(member.child_by_field_name("type"), src)
-        .or_else(|| instantiated_type(member.child_by_field_name("value"), src))?;
+    let initializer_type = instantiated_type(member.child_by_field_name("value"), src);
+    let ty =
+        type_text(member.child_by_field_name("type"), src).or_else(|| initializer_type.clone())?;
     Some(ClassProperty {
         name: name.to_string(),
         type_name: normalize_type(&ty),
+        initializer_type,
         line: member.start_position().row + 1,
     })
 }

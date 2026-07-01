@@ -6,8 +6,8 @@ use crate::profiles::walk::{
     self, credit_attr, credit_name, credit_string, declare, emit_mapped, register_method, Scope,
 };
 use crate::spine::ir::ImportPhase;
-use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
+use crate::spine::ir::{record_attr, SymbolKind};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -81,6 +81,7 @@ fn visit(
     }
     if kind == "attribute" {
         credit_attr(out, node, src, "object", "attribute");
+        credit_call_result_attr(out, node, src);
     }
 
     // f-string interpolations hold real expressions. Credit identifier and
@@ -150,6 +151,37 @@ fn visit(
     }
     if opened {
         scope.pop();
+    }
+}
+
+fn credit_call_result_attr(out: &mut Walked, node: Node, src: &[u8]) {
+    let Some(attr) = node
+        .child_by_field_name("attribute")
+        .and_then(|n| n.utf8_text(src).ok())
+    else {
+        return;
+    };
+    let Some(call) = node
+        .child_by_field_name("object")
+        .filter(|object| object.kind() == "call")
+    else {
+        return;
+    };
+    let Some(func) = call
+        .child_by_field_name("function")
+        .and_then(|func| callable_name(func, src))
+    else {
+        return;
+    };
+    record_attr(&mut out.usage.call_result_attribute_accesses, func, attr);
+}
+
+fn callable_name<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
+    let text = node.utf8_text(src).ok()?;
+    match node.kind() {
+        "identifier" => Some(text),
+        "attribute" => text.rsplit('.').next(),
+        _ => None,
     }
 }
 

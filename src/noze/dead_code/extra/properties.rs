@@ -42,7 +42,7 @@ fn reportable_classes(file: &ParsedFile) -> impl Iterator<Item = &ClassUnit> {
         .units
         .classes
         .iter()
-        .filter(|class| !class.properties.is_empty() && !schema_like(class))
+        .filter(|class| !class.properties.is_empty())
 }
 
 fn dead_properties_for_class(
@@ -68,6 +68,8 @@ fn property_is_dead(
     property: &ClassProperty,
 ) -> bool {
     !property.name.starts_with('_')
+        && !class_manages_all_fields(class)
+        && !is_framework_managed_property(property)
         && !property_is_live(
             file,
             receivers,
@@ -169,6 +171,7 @@ fn property_is_live(
         .values()
         .any(|attrs| attrs.contains(property))
         || typed_receiver_uses_property(file, receivers, class.name.as_str(), property)
+        || returned_value_uses_property(file, class.name.as_str(), property)
         || untyped_attrs.contains(property)
         || file.walked.usage.string_literals.contains(property)
 }
@@ -187,53 +190,57 @@ fn typed_receiver_uses_property(
         .any(|(_, attrs)| attrs.contains(property))
 }
 
-fn schema_like(class: &ClassUnit) -> bool {
-    class.bases.iter().any(|base| {
-        matches!(
-            base.rsplit('.').next(),
-            Some("BaseModel" | "Model" | "Serializer" | "Schema" | "TypedDict")
-        )
-    })
+fn returned_value_uses_property(file: &ParsedFile, class_name: &str, property: &str) -> bool {
+    file.walked
+        .usage
+        .call_result_attribute_accesses
+        .iter()
+        .any(|(function, attrs)| {
+            attrs.contains(property)
+                && type_hints(file)
+                    .return_types
+                    .get(function)
+                    .is_some_and(|ty| type_mentions_class(ty, class_name))
+        })
+}
+
+fn class_manages_all_fields(class: &ClassUnit) -> bool {
+    class
+        .bases
+        .iter()
+        .any(|base| is_external_field_container(base.as_str()))
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::spine::parser::parse_file;
-    use std::fs;
+#[path = "properties_tests.rs"]
+mod tests;
 
-    #[test]
-    fn reports_only_properties_without_class_aware_liveness() {
-        let tmp = tempfile::tempdir().unwrap();
-        let dir = tmp.path();
-        fs::write(
-            dir.join("m.py"),
-            "class User:\n    name: str\n    label: str\n    dead: bool\n\n    def title(self):\n        return self.name\n\n\ndef render(user: User):\n    return user.label\n",
-        )
-        .unwrap();
-        let files = vec![parse_file(&dir.join("m.py"), 0).unwrap()];
-        let findings = unused_properties(&files, &HashMap::new());
-        let symbols: Vec<_> = findings.iter().map(|f| f.symbol.as_str()).collect();
+fn is_external_field_container(base: &str) -> bool {
+    matches!(
+        short_name(base),
+        "BaseSettings" | "NamedTuple" | "TypedDict"
+    )
+}
 
-        assert_eq!(symbols, vec!["User.dead"]);
-        assert_eq!(findings[0].kind, SymbolKind::Property);
-    }
+fn is_framework_managed_property(property: &ClassProperty) -> bool {
+    schema_type_parts(&property.type_name).any(is_schema_field_type)
+        || property
+            .initializer_type
+            .as_deref()
+            .is_some_and(|ty| schema_type_parts(ty).any(is_schema_field_type))
+}
 
-    #[test]
-    fn string_literals_keep_dynamic_property_uses_alive() {
-        let tmp = tempfile::tempdir().unwrap();
-        let dir = tmp.path();
-        fs::write(
-            dir.join("m.py"),
-            "class User:\n    dynamic: str\n    stale: str\n\n\ndef read(user):\n    return getattr(user, \"dynamic\")\n",
-        )
-        .unwrap();
-        let files = vec![parse_file(&dir.join("m.py"), 0).unwrap()];
-        let symbols: Vec<_> = unused_properties(&files, &HashMap::new())
-            .iter()
-            .map(|f| f.symbol.clone())
-            .collect();
+fn schema_type_parts(text: &str) -> impl Iterator<Item = &str> {
+    text.split(['[', ']', ',', ' ', '|', '.'])
+}
 
-        assert_eq!(symbols, vec!["User.stale"]);
-    }
+fn is_schema_field_type(part: &str) -> bool {
+    matches!(
+        part.trim(),
+        "Column" | "Field" | "Mapped" | "Relationship" | "relationship"
+    )
+}
+
+fn short_name(name: &str) -> &str {
+    name.rsplit('.').next().unwrap_or(name)
 }

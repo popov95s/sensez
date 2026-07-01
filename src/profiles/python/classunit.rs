@@ -30,13 +30,14 @@ fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
         .utf8_text(src)
         .ok()
         .filter(|name| name.chars().all(|c| c == '_' || c.is_alphanumeric()))?;
-    let ty =
-        super::typehints::type_text(assignment.child_by_field_name("type"), src).or_else(|| {
-            super::typehints::instantiated_type(assignment.child_by_field_name("right"), src)
-        })?;
+    let initializer_type =
+        super::typehints::instantiated_type(assignment.child_by_field_name("right"), src);
+    let ty = super::typehints::type_text(assignment.child_by_field_name("type"), src)
+        .or_else(|| initializer_type.clone())?;
     Some(ClassProperty {
         name: name.to_string(),
         type_name: normalize_type(&ty),
+        initializer_type,
         line: assignment.start_position().row + 1,
     })
 }
