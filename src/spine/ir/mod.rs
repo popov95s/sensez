@@ -80,6 +80,7 @@ pub struct SymbolFacts {
 pub struct UsageFacts {
     pub name_counts: HashMap<String, usize>,
     pub attribute_accesses: HashMap<String, HashSet<String>>,
+    pub attribute_path_accesses: HashMap<String, HashSet<String>>,
     pub call_result_attribute_accesses: HashMap<String, HashSet<String>>,
     pub string_literals: HashSet<String>,
     pub chained_attribute_names: HashSet<String>,

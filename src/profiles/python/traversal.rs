@@ -115,7 +115,9 @@ fn visit(
     // Type hints are collected inline; pruned subtrees contain no annotations.
     match kind {
         "function_definition" => typehints::record_function(node, src, &mut out.units.type_hints),
-        "assignment" => typehints::record_assignment(node, src, &mut out.units.type_hints),
+        "assignment" if !scope.last().is_some_and(|s| s.is_class) => {
+            typehints::record_assignment(node, src, &mut out.units.type_hints)
+        }
         _ => {}
     }
 

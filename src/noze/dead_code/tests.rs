@@ -142,14 +142,16 @@ fn unused_properties_are_default_dead_code() {
     assert!(!opted_out.contains(&"User.stale".to_string()));
 }
 
-/// Python profile defaults treat alembic migrations and test files as entry
-/// points: their symbols aren't flagged dead (external runners call them), but
-/// real dead code elsewhere still is.
+/// Python profile defaults treat alembic migrations, docs/examples, and test
+/// files as entry points: their symbols aren't flagged dead (external runners
+/// call them), but real dead code elsewhere still is.
 #[test]
 fn alembic_and_tests_excluded_by_default() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     fs::create_dir_all(dir.join("alembic/versions")).unwrap();
+    fs::create_dir_all(dir.join("docs_src/tutorial")).unwrap();
+    fs::create_dir_all(dir.join("examples")).unwrap();
     fs::create_dir_all(dir.join("tests")).unwrap();
     fs::write(
         dir.join("alembic/versions/0001_init.py"),
@@ -161,10 +163,22 @@ fn alembic_and_tests_excluded_by_default() {
         "def make_fixture():\n    return 1\n",
     )
     .unwrap();
+    fs::write(
+        dir.join("docs_src/tutorial/sample.py"),
+        "def docs_dead():\n    return 1\n",
+    )
+    .unwrap();
+    fs::write(
+        dir.join("examples/sample.py"),
+        "def example_dead():\n    return 1\n",
+    )
+    .unwrap();
     fs::write(dir.join("app.py"), "def really_dead():\n    return 1\n").unwrap();
 
     let names = [
         "alembic/versions/0001_init.py",
+        "docs_src/tutorial/sample.py",
+        "examples/sample.py",
         "tests/helpers.py",
         "app.py",
     ];
@@ -187,6 +201,14 @@ fn alembic_and_tests_excluded_by_default() {
     assert!(
         !dead.contains(&"make_fixture".to_string()),
         "tests excluded by default"
+    );
+    assert!(
+        !dead.contains(&"docs_dead".to_string()),
+        "docs excluded by default"
+    );
+    assert!(
+        !dead.contains(&"example_dead".to_string()),
+        "examples excluded by default"
     );
     assert!(
         dead.contains(&"really_dead".to_string()),

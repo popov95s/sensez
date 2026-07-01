@@ -3,6 +3,7 @@
 mod classunit;
 mod conditionals;
 mod deadcode;
+mod generated;
 mod imports;
 mod lexeme;
 mod obsession;
@@ -20,7 +21,7 @@ mod units;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
 };
-use crate::spine::ir::{ImportContext, Walked};
+use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -43,6 +44,10 @@ impl ParseProfile for PythonProfile {
 
     fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         traversal::walk(root, src, file_id, module_name)
+    }
+
+    fn is_generated_or_data_source(&self, path: &Path) -> bool {
+        generated::is_generated_or_data_source(path)
     }
 }
 
@@ -100,6 +105,22 @@ impl DeadCodeProfile for PythonProfile {
 
     fn is_entry_file_stem(&self, stem: &str) -> bool {
         deadcode::is_entry_file_stem(stem)
+    }
+
+    fn manages_class_properties(
+        &self,
+        class: &ClassUnit,
+        decorators: Option<&Vec<String>>,
+    ) -> bool {
+        deadcode::manages_class_properties(class, decorators)
+    }
+
+    fn manages_property(&self, property: &ClassProperty) -> bool {
+        deadcode::manages_property(property)
+    }
+
+    fn requires_property_usage_evidence(&self, class: &ClassUnit) -> bool {
+        deadcode::requires_property_usage_evidence(class)
     }
 
     fn dead_code_defaults(&self) -> crate::profiles::DeadCodeDefaults {

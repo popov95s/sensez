@@ -66,6 +66,49 @@ fn constructed_instance_attribute_access_keeps_property_live() {
 }
 
 #[test]
+fn basemodel_instance_attribute_access_keeps_only_accessed_property_live() {
+    let found = symbols(
+        "from pydantic import BaseModel\n\n\
+         class Foo(BaseModel):\n    a: int\n    b: int\n\n\
+         s = Foo(2)\ntest = s.a\n",
+    );
+
+    assert_eq!(found, vec!["Foo.b"]);
+}
+
+#[test]
+fn basemodel_schema_without_in_repo_usage_does_not_report_fields() {
+    let found = symbols(
+        "from pydantic import BaseModel\n\n\
+         class Foo(BaseModel):\n    a: int\n    b: int\n",
+    );
+
+    assert_eq!(found, Vec::<String>::new());
+}
+
+#[test]
+fn basemodel_field_annotations_do_not_count_as_usage_evidence() {
+    let found = symbols(
+        "from pydantic import BaseModel\n\n\
+         class Child(BaseModel):\n    value: int\n\n\
+         class Parent(BaseModel):\n    child: Child\n",
+    );
+
+    assert_eq!(found, Vec::<String>::new());
+}
+
+#[test]
+fn basemodel_construction_alone_does_not_report_schema_fields() {
+    let found = symbols(
+        "from pydantic import BaseModel\n\n\
+         class Foo(BaseModel):\n    a: int\n    b: int\n\n\
+         value = Foo(a=1, b=2)\n",
+    );
+
+    assert_eq!(found, Vec::<String>::new());
+}
+
+#[test]
 fn cross_file_typed_function_access_keeps_property_live() {
     let found = symbols_for(&[
         ("models.py", "class Foo:\n    a: int\n    b: int\n"),
@@ -100,6 +143,17 @@ fn cross_file_untyped_function_access_keeps_property_live() {
 }
 
 #[test]
+fn untyped_attribute_access_does_not_keep_duplicate_property_names_live() {
+    let found = symbols(
+        "class Foo:\n    a: int\n    b: int\n\n\
+         class Bar:\n    a: int\n\n\
+         def read(value):\n    return value.a\n",
+    );
+
+    assert_eq!(found, vec!["Foo.a", "Foo.b", "Bar.a"]);
+}
+
+#[test]
 fn constructor_with_keyword_args_still_infers_type_for_receiver() {
     let found = symbols(
         "class Foo:\n    a: int\n    b: int\n\n\
@@ -109,9 +163,26 @@ fn constructor_with_keyword_args_still_infers_type_for_receiver() {
     assert_eq!(found, vec!["Foo.b"]);
 }
 
-// ---------------------------------------------------------------------------
-// Attribute passed as function argument (typed receiver path)
-// ---------------------------------------------------------------------------
+#[test]
+fn base_class_property_access_keeps_subclass_override_live() {
+    let found = symbols(
+        "class Base:\n    setting: dict\n\n\
+         class Child(Base):\n    setting: dict\n    stale: str\n\n\
+         cmd: Base = Child()\nvalue = cmd.setting\n",
+    );
+
+    assert_eq!(found, vec!["Child.stale"]);
+}
+
+#[test]
+fn typed_instance_attribute_chain_keeps_property_live() {
+    let found = symbols(
+        "class Key:\n    name: str\n    stale: str\n\n\
+         class Other:\n    name: str\n\n\
+         class Holder:\n    def __init__(self):\n        self.model: Key = Key()\n    def read(self):\n        return self.model.name\n",
+    );
+    assert_eq!(found, vec!["Key.stale", "Other.name"]);
+}
 
 #[test]
 fn attribute_passed_as_function_argument_keeps_property_live() {
@@ -135,15 +206,10 @@ fn attribute_used_in_conditional_keeps_property_live() {
     assert_eq!(found, vec!["Foo.dead"]);
 }
 
-// ---------------------------------------------------------------------------
-// Chained attribute access (w.inner.a — the `a` leaf)
-// ---------------------------------------------------------------------------
-
 #[test]
 fn chained_attr_access_as_only_use_keeps_leaf_property_live() {
     let found = symbols(
-        "from dataclasses import dataclass\n\n\
-         @dataclass\nclass Foo:\n    a: int\n    b: str\n\n\
+        "class Foo:\n    a: int\n    b: str\n\n\
          class Wrapper:\n    inner: Foo\n\n\
          fee = Foo(a=2, b='x')\n\
          w = Wrapper(inner=fee)\n\
@@ -172,10 +238,6 @@ fn chained_attr_alongside_direct_access_both_keep_property_live() {
     assert_eq!(found, Vec::<String>::new());
 }
 
-// ---------------------------------------------------------------------------
-// Deeply nested object passing and chained access
-// ---------------------------------------------------------------------------
-
 #[test]
 fn triple_nested_chained_access_keeps_leaf_live() {
     let found = symbols(
@@ -191,12 +253,8 @@ fn triple_nested_chained_access_keeps_leaf_live() {
     assert_eq!(found, Vec::<String>::new());
 }
 
-// ---------------------------------------------------------------------------
-// Framework-managed fields (should suppress, not candidate)
-// ---------------------------------------------------------------------------
-
 #[test]
-fn framework_managed_fields_are_skipped_but_basemodel_plain_fields_remain_candidates() {
+fn framework_managed_fields_and_unused_basemodel_schemas_are_skipped() {
     let found = symbols(
         "from pydantic import BaseModel, BaseSettings\n\
          from sqlalchemy.orm import DeclarativeBase, Mapped, mapped_column\n\n\
@@ -206,12 +264,11 @@ fn framework_managed_fields_are_skipped_but_basemodel_plain_fields_remain_candid
          class User(Base):\n    id: Mapped[int] = mapped_column(primary_key=True)\n    email: Mapped[str]\n\n\
          class Plain:\n    stale: str\n",
     );
-
-    assert_eq!(found, vec!["Payload.user_id", "Plain.stale"]);
+    assert_eq!(found, vec!["Plain.stale"]);
 }
 
 #[test]
-fn dataclass_and_attrs_plain_fields_remain_candidates() {
+fn dataclass_and_attrs_plain_fields_are_skipped() {
     let found = symbols(
         "from dataclasses import dataclass\nimport attrs\n\n\
          @dataclass\nclass UserDto:\n    name: str\n    email: str\n\n\
@@ -219,15 +276,7 @@ fn dataclass_and_attrs_plain_fields_remain_candidates() {
          class Plain:\n    stale: str\n",
     );
 
-    assert_eq!(
-        found,
-        vec![
-            "UserDto.name",
-            "UserDto.email",
-            "AttrDto.token",
-            "Plain.stale"
-        ]
-    );
+    assert_eq!(found, vec!["Plain.stale"]);
 }
 
 #[test]
@@ -241,6 +290,11 @@ fn orm_and_pydantic_field_constructors_suppress_only_those_fields() {
 
     assert_eq!(
         found,
-        vec!["ApiShape.retries", "LegacyTable.name", "Plain.stale"]
+        vec![
+            "ApiShape.public_name",
+            "ApiShape.retries",
+            "LegacyTable.name",
+            "Plain.stale"
+        ]
     );
 }

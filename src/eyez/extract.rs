@@ -74,7 +74,7 @@ pub fn bundles_with_file_context(docs: &[Doc]) -> Vec<CommentBundle> {
 pub fn collect(root: &Path) -> Result<Vec<Doc>> {
     let config = Config::load(root).context("loading sensez.toml")?;
     let files = crawler::discover(root, &config.exclude, &|p| {
-        crate::profiles::registry::parse_for_path(p).is_some()
+        crate::profiles::registry::should_parse_path(p)
     })
     .with_context(|| format!("crawling {}", root.display()))?
     .files;

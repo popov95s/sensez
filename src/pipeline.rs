@@ -26,7 +26,7 @@ pub fn analyze_path(
     }
     let mut timer = PhaseTimer::start();
     let discovery = crawler::discover(path, &config.exclude, &|p| {
-        crate::profiles::registry::parse_for_path(p).is_some()
+        crate::profiles::registry::should_parse_path(p)
     })
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");

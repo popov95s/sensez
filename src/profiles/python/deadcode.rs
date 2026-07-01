@@ -12,6 +12,7 @@
 //!   `@my_wrapper`). ⇒ downgrade.
 
 use crate::profiles::{DeadCodeDefaults, DecoratorClass};
+use crate::spine::ir::{ClassProperty, ClassUnit};
 use std::collections::HashSet;
 
 const NEUTRAL_BASES: &[&str] = &[
@@ -47,6 +48,10 @@ pub fn defaults() -> DeadCodeDefaults {
         entrypoint_bases: &["AppConfig"],
         entry_points: &[
             "**/alembic/**",
+            "**/docs/**",
+            "**/docs_src/**",
+            "**/examples/**",
+            "**/example/**",
             "**/migrations/**",
             "**/tests/**",
             "**/test/**",
@@ -55,6 +60,10 @@ pub fn defaults() -> DeadCodeDefaults {
             "**/*_test.py",
         ],
         test_sources: &[
+            "**/docs/**",
+            "**/docs_src/**",
+            "**/examples/**",
+            "**/example/**",
             "**/tests/**",
             "**/test/**",
             "**/conftest.py",
@@ -106,6 +115,68 @@ pub fn is_entry_file_stem(stem: &str) -> bool {
     stem == "__main__"
 }
 
+pub fn manages_class_properties(class: &ClassUnit, decorators: Option<&Vec<String>>) -> bool {
+    class
+        .bases
+        .iter()
+        .any(|base| is_external_field_container(base))
+        || decorators.is_some_and(|paths| paths.iter().any(|d| is_data_class_decorator(d)))
+}
+
+pub fn manages_property(property: &ClassProperty) -> bool {
+    property.name == "model_config"
+        || schema_type_parts(&property.type_name).any(is_schema_field_type)
+        || property
+            .initializer_type
+            .as_deref()
+            .is_some_and(|ty| schema_type_parts(ty).any(is_schema_field_type))
+}
+
+pub fn requires_property_usage_evidence(class: &ClassUnit) -> bool {
+    class.bases.iter().any(|base| {
+        matches!(
+            short_name(base),
+            "BaseModel" | "GenericModel" | "BaseModelWithConfig"
+        )
+    })
+}
+
+fn is_external_field_container(base: &str) -> bool {
+    matches!(
+        short_name(base),
+        "BaseConfig"
+            | "BaseSettings"
+            | "Model"
+            | "Serializer"
+            | "Schema"
+            | "NamedTuple"
+            | "TypedDict"
+            | "Enum"
+    )
+}
+
+fn is_data_class_decorator(path: &str) -> bool {
+    matches!(
+        short_name(path),
+        "dataclass" | "define" | "frozen" | "s" | "mutable" | "immutable"
+    )
+}
+
+fn schema_type_parts(text: &str) -> impl Iterator<Item = &str> {
+    text.split(['[', ']', ',', ' ', '|', '.'])
+}
+
+fn is_schema_field_type(part: &str) -> bool {
+    matches!(
+        part.trim(),
+        "Column" | "Mapped" | "Relationship" | "relationship"
+    )
+}
+
+fn short_name(name: &str) -> &str {
+    name.rsplit('.').next().unwrap_or(name)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -151,5 +222,20 @@ mod tests {
             DecoratorClass::Unknown
         ));
         assert!(matches!(classify(None, &eps()), DecoratorClass::None));
+    }
+
+    #[test]
+    fn pydantic_config_members_are_framework_managed() {
+        let property = ClassProperty {
+            name: "model_config".to_string(),
+            ..ClassProperty::default()
+        };
+        let class = ClassUnit {
+            bases: vec!["pydantic.BaseConfig".to_string()],
+            ..ClassUnit::default()
+        };
+
+        assert!(manages_property(&property));
+        assert!(manages_class_properties(&class, None));
     }
 }

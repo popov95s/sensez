@@ -181,6 +181,8 @@ pub struct TypeHints {
     pub param_types: HashMap<(String, String), String>,
     /// local/global variable name → type (annotation or `x = T(...)`).
     pub var_types: HashMap<String, String>,
+    /// attribute path → type (for example, `self.model: ApiModel`).
+    pub attr_types: HashMap<String, String>,
     /// function name → annotated return type.
     pub return_types: HashMap<String, String>,
 }

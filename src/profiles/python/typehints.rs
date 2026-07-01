@@ -59,6 +59,10 @@ pub fn record_assignment(node: Node, src: &[u8], hints: &mut TypeHints) {
         if let Ok(name) = left.utf8_text(src) {
             hints.var_types.insert(name.to_string(), ty);
         }
+    } else if left.kind() == "attribute" {
+        if let Ok(name) = left.utf8_text(src) {
+            hints.attr_types.insert(name.to_string(), ty);
+        }
     }
 }
 

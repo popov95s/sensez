@@ -23,7 +23,7 @@ pub mod rust;
 #[cfg(feature = "lang-typescript")]
 pub mod typescript;
 
-use crate::spine::ir::{ImportContext, Language, Walked};
+use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -90,6 +90,9 @@ pub trait ParseProfile: Send + Sync {
     fn info(&self) -> &'static LanguageInfo;
     fn ts_language(&self) -> tree_sitter::Language;
     fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked;
+    fn is_generated_or_data_source(&self, _path: &Path) -> bool {
+        false
+    }
 }
 
 pub trait ModuleProfile: Send + Sync {
@@ -131,6 +134,19 @@ pub trait DeadCodeProfile: Send + Sync {
     /// entirely (true) or surface it at the default confidence (false).
     fn is_conventionally_private(&self, symbol: &str) -> bool;
     fn is_entry_file_stem(&self, stem: &str) -> bool;
+    fn manages_class_properties(
+        &self,
+        _class: &ClassUnit,
+        _decorators: Option<&Vec<String>>,
+    ) -> bool {
+        false
+    }
+    fn manages_property(&self, _property: &ClassProperty) -> bool {
+        false
+    }
+    fn requires_property_usage_evidence(&self, _class: &ClassUnit) -> bool {
+        false
+    }
     fn dead_code_defaults(&self) -> DeadCodeDefaults;
     fn entry_modules(&self, project_root: &Path) -> Vec<String>;
 }

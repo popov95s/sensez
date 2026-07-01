@@ -93,6 +93,9 @@ pub(crate) fn credit_attr(
         record_attr(&mut out.usage.attribute_accesses, base, attr);
         return;
     }
+    if let Some(base) = named_child_text(node, src, base_field) {
+        record_attr(&mut out.usage.attribute_path_accesses, base, attr);
+    }
     out.usage.chained_attribute_names.insert(attr.to_string());
 }
 

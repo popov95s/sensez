@@ -2,7 +2,6 @@
 //! while honoring `.gitignore` rules via the `ignore` crate.
 
 mod explorer;
-mod generated;
 
 pub use explorer::Discovery;
 

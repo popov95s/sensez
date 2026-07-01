@@ -108,7 +108,7 @@ fn changed_since(root: &Path, ts: u64) -> bool {
         .map(|c| c.exclude)
         .unwrap_or_default();
     let files = crate::spine::crawler::discover(root, &exclude, &|p| {
-        crate::profiles::registry::parse_for_path(p).is_some()
+        crate::profiles::registry::should_parse_path(p)
     })
     .unwrap_or_default()
     .files;

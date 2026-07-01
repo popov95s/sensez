@@ -1,6 +1,5 @@
 //! Parallel source discovery using the `ignore` crate's threaded walker.
 
-use super::generated;
 use crate::globs::build_globset;
 use crate::report::{ScanIssue, ScanStage};
 use anyhow::{anyhow, Result};
@@ -49,7 +48,6 @@ where
                     if entry.file_type().is_some_and(|ft| ft.is_file())
                         && is_source_file(path)
                         && !excludes.is_match(path)
-                        && !generated::is_generated_or_data_source(path)
                     {
                         // Receiver lives until the walk completes; ignore send races.
                         let _ = tx.send(entry.into_path());
