@@ -2,6 +2,10 @@ name: Sensez - Code Quality Feedback
 description: Structural duplication checks for pull requests.
 author: Sensez
 
+branding:
+  icon: eye
+  color: orange
+
 inputs:
   path:
     description: Repository-relative path to scan.
