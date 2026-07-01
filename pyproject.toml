@@ -18,6 +18,25 @@ classifiers = [
 bindings = "bin"
 no-default-features = true
 features = ["mcp", "lang-python"]
+exclude = [
+    "docs/**",
+    "evals/**",
+    "regression/**",
+    "skills/**",
+    "specs/**",
+    "scripts/**",
+    "bin/**",
+    "npm/**",
+    ".codex/**",
+    ".opencode/**",
+    ".sensez/**",
+    "target/**",
+    "mkdocs.yml",
+    "CLAUDE.md",
+    "AGENTS.md",
+    "action.yml",
+    "sensez.toml",
+]
 
 [tool.uv]
 cache-keys = [
