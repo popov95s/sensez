@@ -55,6 +55,7 @@
       "exclude_globs": 12
     }
   },
+  "fix_reintroductions_by_detector": {},
   "gate_conversion": {
     "blocked_findings": 1,
     "conversion_rate": 1.0,
@@ -82,6 +83,7 @@
   },
   "privacy": "local-only metrics from .sensez/local-metrics/ \u2014 never exported",
   "recent_30d": {
+    "fix_reintroductions_by_detector": {},
     "mean_resolution_days": {
       "_overall": 0.0,
       "dead_code/function": 0.0
@@ -94,10 +96,8 @@
         "resolved": 1
       }
     },
-    "recidivism_by_detector": {},
     "scans": 6
   },
-  "recidivism_by_detector": {},
   "search_health": {
     "searches": 0,
     "zero_hit": 0,

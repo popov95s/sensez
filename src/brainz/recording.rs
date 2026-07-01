@@ -36,25 +36,24 @@ pub fn record_scan(
     let previous = store::load_fingerprints(root, &branch);
     let history = store::load_resolved_history(root, &branch);
     let ignore = triage::ignored_keys(&triage::load(root));
-    let aging = aging::age(&previous, &current, &history, hub::now(), &ignore);
+    let now = hub::now();
+    let aging = aging::age(&previous, &current, &history, now, &ignore);
     let resolved = aging.resolved;
     let reintroduced = aging.reintroduced;
-    if let Err(err) =
-        store::save_fingerprints(root, &branch, &aging.aged, &aging.history, hub::now())
-    {
+    if let Err(err) = store::save_fingerprints(root, &branch, &aging.aged, &aging.history, now) {
         eprintln!("[sensez metrics] saving fingerprints: {err:#}");
     }
     hub::set_baseline(
         root,
         Baseline {
-            ts: hub::now(),
+            ts: now,
             ms: elapsed.as_millis() as u64,
             threshold,
             branch: branch.clone(),
         },
     );
     hub::push(root, move |session, branch| Event::Scan {
-        ts: hub::now(),
+        ts: now,
         session,
         branch,
         ms: elapsed.as_millis() as u64,

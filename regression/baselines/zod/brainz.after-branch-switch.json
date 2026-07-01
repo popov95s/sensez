@@ -39,12 +39,12 @@
         "count": 1
       }
     },
-    "scan_files_total": 2841,
-    "scan_loc_total": 523637,
-    "scans": 7,
+    "scan_files_total": 4465,
+    "scan_loc_total": 822861,
+    "scans": 11,
     "scans_by_origin": {
-      "gate": 3,
-      "tool": 4
+      "gate": 4,
+      "tool": 7
     },
     "searches": 0,
     "searches_zero_hit": 0
@@ -68,17 +68,14 @@
     }
   },
   "gate_conversion": {
-    "blocked_findings": 1,
-    "conversion_rate": 0.0,
-    "resolved": 0,
-    "still_open": 1
+    "blocked_findings": 0
   },
   "gate_funnel": {
     "by_origin": {
-      "gate": 3,
-      "tool": 4
+      "gate": 4,
+      "tool": 7
     },
-    "gate_share": 0.43
+    "gate_share": 0.36
   },
   "mean_resolution_days": {
     "_overall": 0.0,
@@ -114,7 +111,7 @@
         "resolved": 1
       }
     },
-    "scans": 7
+    "scans": 11
   },
   "search_health": {
     "searches": 0,
@@ -122,8 +119,8 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 405.86,
-    "scans": 7
+    "mean_files": 405.91,
+    "scans": 11
   },
   "stale_findings": [],
   "triaged": []

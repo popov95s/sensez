@@ -6,7 +6,7 @@ use super::fingerprint::{Aged, AgedEntry, Prints, ResolvedHistory, ResolvedRecor
 use std::collections::{BTreeMap, HashSet};
 
 /// A finding can be reintroduced within this window of being resolved; after
-/// it, the resolved record expires (a months-later recurrence is noise, and the
+/// it, the resolved record expires (a months-later reappearance is noise, and the
 /// set must stay bounded). 30 days.
 pub const REINTRO_WINDOW_SECS: u64 = 30 * 86_400;
 

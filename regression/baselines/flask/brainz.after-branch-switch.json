@@ -4,7 +4,9 @@
     "est_context_bytes_saved": 0,
     "first_searches": 0,
     "gate_blocks": 1,
-    "outcomes": {},
+    "outcomes": {
+      "debt:dead_code/function": 1
+    },
     "reintroduced_by_detector": {
       "dead_code/function": {
         "count": 1
@@ -12,39 +14,39 @@
     },
     "reported_by_detector": {
       "cycles": 2,
-      "dead_code/class": 5,
-      "dead_code/function": 42,
-      "dead_code/import": 3,
-      "dead_code/method": 8,
-      "dead_code/variable": 27,
-      "duplication": 15,
-      "smells/data_clump": 3,
+      "dead_code/class": 2,
+      "dead_code/function": 1,
+      "dead_code/import": 1,
+      "dead_code/method": 54,
+      "dead_code/property": 12,
+      "dead_code/variable": 25,
+      "duplication": 4,
+      "smells/boolean_blindness": 4,
       "smells/divergent_change": 12,
-      "smells/feature_envy": 7,
-      "smells/god_module": 2,
-      "smells/heavy_nested_function": 3,
-      "smells/large_class": 2,
-      "smells/loose_typing": 71,
-      "smells/magic_string_default": 67,
-      "smells/message_chain": 1,
-      "smells/mutated_parameter": 6,
+      "smells/feature_envy": 1,
+      "smells/god_module": 3,
+      "smells/heavy_nested_function": 1,
+      "smells/high_cognitive_complexity": 8,
+      "smells/literal_membership": 5,
+      "smells/loose_typing": 28,
+      "smells/magic_string_default": 4,
+      "smells/mutated_parameter": 3,
       "smells/n_plus_one_call": 1,
-      "smells/nested_loop": 35,
-      "smells/repeated_iteration": 8,
-      "smells/shotgun_surgery_hazard": 2,
-      "smells/unnecessary_nested_if": 14
+      "smells/nested_loop": 13,
+      "smells/shotgun_surgery_hazard": 1,
+      "smells/tuple_packing": 3
     },
     "resolved_by_detector": {
       "dead_code/function": {
         "count": 1
       }
     },
-    "scan_files_total": 2841,
-    "scan_loc_total": 523637,
-    "scans": 7,
+    "scan_files_total": 923,
+    "scan_loc_total": 202616,
+    "scans": 11,
     "scans_by_origin": {
-      "gate": 3,
-      "tool": 4
+      "gate": 4,
+      "tool": 7
     },
     "searches": 0,
     "searches_zero_hit": 0
@@ -68,17 +70,14 @@
     }
   },
   "gate_conversion": {
-    "blocked_findings": 1,
-    "conversion_rate": 0.0,
-    "resolved": 0,
-    "still_open": 1
+    "blocked_findings": 0
   },
   "gate_funnel": {
     "by_origin": {
-      "gate": 3,
-      "tool": 4
+      "gate": 4,
+      "tool": 7
     },
-    "gate_share": 0.43
+    "gate_share": 0.36
   },
   "mean_resolution_days": {
     "_overall": 0.0,
@@ -86,7 +85,7 @@
   },
   "precision_by_detector": {
     "dead_code/function": {
-      "debt": 0,
+      "debt": 1,
       "false_positive": 0,
       "precision": 1.0,
       "resolved": 1
@@ -108,13 +107,13 @@
     },
     "precision_by_detector": {
       "dead_code/function": {
-        "debt": 0,
+        "debt": 1,
         "false_positive": 0,
         "precision": 1.0,
         "resolved": 1
       }
     },
-    "scans": 7
+    "scans": 11
   },
   "search_health": {
     "searches": 0,
@@ -122,9 +121,16 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 405.86,
-    "scans": 7
+    "mean_files": 83.91,
+    "scans": 11
   },
   "stale_findings": [],
-  "triaged": []
+  "triaged": [
+    {
+      "label": "sensez_regression_fixture::sensez_regression_unused_helper (function)",
+      "note": "regression fixture",
+      "pillar": "dead_code",
+      "verdict": "debt"
+    }
+  ]
 }

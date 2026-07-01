@@ -3,44 +3,22 @@
     "config_changes": 0,
     "est_context_bytes_saved": 0,
     "first_searches": 0,
-    "gate_blocks": 1,
+    "gate_blocks": 0,
     "outcomes": {},
     "reintroduced_by_detector": {},
     "reported_by_detector": {
-      "cycles": 2,
-      "dead_code/class": 5,
-      "dead_code/function": 41,
-      "dead_code/import": 3,
-      "dead_code/method": 8,
-      "dead_code/variable": 27,
-      "duplication": 15,
-      "smells/data_clump": 3,
-      "smells/divergent_change": 12,
-      "smells/feature_envy": 7,
-      "smells/god_module": 2,
-      "smells/heavy_nested_function": 3,
-      "smells/large_class": 2,
-      "smells/loose_typing": 71,
-      "smells/magic_string_default": 67,
-      "smells/message_chain": 1,
-      "smells/mutated_parameter": 6,
-      "smells/n_plus_one_call": 1,
-      "smells/nested_loop": 35,
-      "smells/repeated_iteration": 8,
-      "smells/shotgun_surgery_hazard": 2,
-      "smells/unnecessary_nested_if": 14
+      "dead_code/function": 1
     },
     "resolved_by_detector": {
       "dead_code/function": {
         "count": 1
       }
     },
-    "scan_files_total": 2435,
-    "scan_loc_total": 448831,
-    "scans": 6,
+    "scan_files_total": 7,
+    "scan_loc_total": 16,
+    "scans": 4,
     "scans_by_origin": {
-      "gate": 3,
-      "tool": 3
+      "tool": 4
     },
     "searches": 0,
     "searches_zero_hit": 0
@@ -57,17 +35,13 @@
   },
   "fix_reintroductions_by_detector": {},
   "gate_conversion": {
-    "blocked_findings": 1,
-    "conversion_rate": 1.0,
-    "resolved": 1,
-    "still_open": 0
+    "blocked_findings": 0
   },
   "gate_funnel": {
     "by_origin": {
-      "gate": 3,
-      "tool": 3
+      "tool": 4
     },
-    "gate_share": 0.5
+    "gate_share": 0.0
   },
   "mean_resolution_days": {
     "_overall": 0.0,
@@ -96,7 +70,7 @@
         "resolved": 1
       }
     },
-    "scans": 6
+    "scans": 4
   },
   "search_health": {
     "searches": 0,
@@ -104,8 +78,8 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 405.83,
-    "scans": 6
+    "mean_files": 1.75,
+    "scans": 4
   },
   "stale_findings": [],
   "triaged": []

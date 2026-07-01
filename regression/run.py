@@ -13,6 +13,15 @@ from pathlib import Path
 from typing import NotRequired, Sequence, TypeAlias, TypedDict, cast
 
 from .analyze import accept_tree, compare_tree
+from .brainz_regressions import (
+    BranchCase,
+    assert_colleague_main_issue_is_not_reintroduced,
+    assert_exact_transition_count,
+    assert_reported_stable_across_branch_switches,
+    assert_return_to_fixed_branch_stays_resolved,
+    assert_same_branch_revert_is_reintroduced,
+    branch_metric_repo,
+)
 from .mcp_client import McpClient, text_json
 from .normalize import dump_json, normalize_artifact
 
@@ -126,6 +135,7 @@ def run_target(config: RegressionConfig, target: Target, sensez: Path, accept: b
     out.mkdir(parents=True)
     run_full_scans(sensez, cache, target, out)
     run_mcp_scenarios(sensez, config, target, cache, out)
+    run_branch_metric_scenarios(sensez, config, target, out)
     baseline = BASELINES / name
     if accept:
         accept_tree(out, baseline)
@@ -259,6 +269,13 @@ def run_mcp_scenarios(
         fixed = text_json(client.call_tool("brainz_report", {"path": str(repo)}))
         dump_norm(out / "brainz.after-gate-fix.json", fixed, repo, target)
         assert_finding_resolved(fixed, fixture["detector"], target["name"])
+        assert_exact_transition_count(
+            fixed,
+            fixture["detector"],
+            target["name"],
+            resolved=1,
+            reintroduced=0,
+        )
         # Reintroduce the same fixture: the next scan should count it as
         # a reintroduction (previously-resolved fingerprint came back).
         apply_fixture(repo, fixture, fixture["text"])
@@ -267,6 +284,13 @@ def run_mcp_scenarios(
         dump_norm(out / "brainz.after-reintro.json", reintroduced, repo, target)
         assert_finding_reintroduced(
             reintroduced, fixture["detector"], target["name"]
+        )
+        assert_exact_transition_count(
+            reintroduced,
+            fixture["detector"],
+            target["name"],
+            resolved=1,
+            reintroduced=1,
         )
         if "triage" in target.get("scenarios", []):
             triage(client, repo, fixture)
@@ -279,6 +303,62 @@ def run_mcp_scenarios(
         dump_norm(out / "gate.defer.json", deferred, repo, target)
         assert_gate_allows(deferred, "auto-deferred past repeat_limit")
         dump_metrics_schema(out / "metrics-files.schema.json", repo)
+        branch_switch = assert_reported_stable_across_branch_switches(
+            client, repo, target["name"]
+        )
+        dump_norm(out / "brainz.after-branch-switch.json", branch_switch, repo, target)
+    finally:
+        client.close()
+        cleanup_repo(repo)
+
+
+def run_branch_metric_scenarios(
+    sensez: Path,
+    config: RegressionConfig,
+    target: Target,
+    out: Path,
+) -> None:
+    fixture = config["profiles"][target["profile"]]["dead_code_fixture"]
+    run_branch_metric_case(
+        sensez,
+        target,
+        fixture,
+        out,
+        "brainz.branch-colleague-main.json",
+        assert_colleague_main_issue_is_not_reintroduced,
+    )
+    run_branch_metric_case(
+        sensez,
+        target,
+        fixture,
+        out,
+        "brainz.branch-return-feature-fixed.json",
+        assert_return_to_fixed_branch_stays_resolved,
+    )
+    run_branch_metric_case(
+        sensez,
+        target,
+        fixture,
+        out,
+        "brainz.branch-same-branch-revert.json",
+        assert_same_branch_revert_is_reintroduced,
+    )
+
+
+def run_branch_metric_case(
+    sensez: Path,
+    target: Target,
+    fixture: DeadCodeFixture,
+    out: Path,
+    artifact: str,
+    scenario,
+) -> None:
+    repo = branch_metric_repo(target["name"], fixture)
+    client = McpClient(sensez)
+    try:
+        client.request("initialize")
+        report = scenario(BranchCase(client, repo, fixture, target["name"]))
+        dump_norm(out / artifact, report, repo, target)
     finally:
         client.close()
         cleanup_repo(repo)
@@ -334,8 +414,8 @@ def assert_gate_allows(response: object, reason: str) -> None:
 def assert_finding_resolved(report: object, detector: str, target_name: str) -> None:
     """After the agent fixes a finding, the brainz totals must count it
     as resolved under the fixture's detector. A regression where the
-    fix-recapture loop stops banking resolutions would silently inflate
-    recidivism and starve precision of its denominator.
+    fix-recapture loop stops banking resolutions would distort fix
+    reintroduction tracking and starve precision of its denominator.
     """
     resolved = _json_path(
         report, JsonPath(("all_time", "resolved_by_detector", detector))
@@ -350,7 +430,7 @@ def assert_finding_resolved(report: object, detector: str, target_name: str) -> 
 def assert_finding_reintroduced(report: object, detector: str, target_name: str) -> None:
     """After the agent reintroduces a previously-fixed finding, the
     brainz totals must count it as a reintroduction. A regression here
-    would silently drop the recidivism signal and let noisy detectors
+    would silently drop the fix reintroduction signal and let noisy detectors
     skate past calibration.
     """
     reintroduced = _json_path(

@@ -3,6 +3,7 @@
 //! no network, no exporters.
 
 use super::events::{Event, Totals};
+use super::file_lock;
 use super::fingerprint::{Aged, ResolvedHistory};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
@@ -134,6 +135,14 @@ pub fn has_baseline(root: &Path, branch: &str) -> bool {
     load_baselines(root).branches.contains_key(branch)
 }
 
+/// Last persisted update time for `branch`, if a baseline exists.
+pub fn branch_updated(root: &Path, branch: &str) -> Option<u64> {
+    load_baselines(root)
+        .branches
+        .get(branch)
+        .map(|entry| entry.updated)
+}
+
 /// Load the fingerprints recorded by the previous full scan **on `branch`**
 /// (empty when none — e.g. the first scan on a freshly checked-out branch).
 pub fn load_fingerprints(root: &Path, branch: &str) -> Aged {
@@ -163,8 +172,38 @@ pub fn save_fingerprints(
     history: &ResolvedHistory,
     now: u64,
 ) -> Result<()> {
+    let _lock = file_lock::acquire(root, "last-scan.lock")?;
+    save_fingerprints_locked(root, branch, prints, history, now, None).map(|_| ())
+}
+
+pub fn save_fingerprints_if_current(
+    root: &Path,
+    branch: &str,
+    expected_updated: u64,
+    prints: &Aged,
+    history: &ResolvedHistory,
+    now: u64,
+) -> Result<bool> {
+    let _lock = file_lock::acquire(root, "last-scan.lock")?;
+    save_fingerprints_locked(root, branch, prints, history, now, Some(expected_updated))
+}
+
+fn save_fingerprints_locked(
+    root: &Path,
+    branch: &str,
+    prints: &Aged,
+    history: &ResolvedHistory,
+    now: u64,
+    expected_updated: Option<u64>,
+) -> Result<bool> {
     let d = crate::dotdir::ensure(root, Some("local-metrics"))?;
     let mut all = load_baselines(root);
+    if let Some(expected) = expected_updated {
+        let current = all.branches.get(branch).map(|entry| entry.updated);
+        if current != Some(expected) {
+            return Ok(false);
+        }
+    }
     all.branches.insert(
         branch.to_string(),
         BranchEntry {
@@ -189,85 +228,5 @@ pub fn save_fingerprints(
     }
     let json = serde_json::to_vec(&all).context("serializing fingerprints")?;
     fs::write(d.join("last-scan.json"), json).context("writing last-scan.json")?;
-    Ok(())
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use std::collections::BTreeMap;
-
-    #[test]
-    fn totals_and_events_roundtrip() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path().to_path_buf();
-        fs::create_dir_all(&root).unwrap();
-
-        assert_eq!(load_totals(&root).scans, 0, "missing file -> defaults");
-
-        let mut totals = Totals::default();
-        let event = Event::Outcome {
-            ts: 1,
-            session: "s".into(),
-            branch: "main".into(),
-            pillar: "smells".into(),
-            action: "fixed".into(),
-            count: 1,
-            detail: Some("renamed god module".into()),
-        };
-        totals.absorb(&event);
-        save_totals(&root, &totals).unwrap();
-        append_events(&root, std::slice::from_ref(&event)).unwrap();
-        append_events(&root, &[event]).unwrap();
-
-        assert_eq!(load_totals(&root).outcomes["fixed:smells"], 1);
-        let log = fs::read_to_string(root.join(".sensez/local-metrics/events.jsonl")).unwrap();
-        assert_eq!(log.lines().count(), 2, "appends accumulate");
-
-        let prints: Aged = BTreeMap::from([(
-            "dead_code".into(),
-            BTreeMap::from([(
-                "7".to_string(),
-                crate::brainz::fingerprint::AgedEntry {
-                    first_seen: 1,
-                    label: "x".into(),
-                    detector: "dead_code/function".into(),
-                },
-            )]),
-        )]);
-        let history: ResolvedHistory = BTreeMap::from([(
-            "dead".to_string(),
-            crate::brainz::fingerprint::ResolvedRecord {
-                detector: "dead_code/function".into(),
-                resolved_ts: 5,
-            },
-        )]);
-        save_fingerprints(&root, "main", &prints, &history, 10).unwrap();
-        assert_eq!(load_fingerprints(&root, "main"), prints);
-        assert_eq!(load_resolved_history(&root, "main"), history);
-    }
-
-    /// Each branch keeps an independent baseline; a different branch reads empty.
-    #[test]
-    fn fingerprints_are_isolated_per_branch() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path().to_path_buf();
-        let prints: Aged = BTreeMap::from([(
-            "dead_code".into(),
-            BTreeMap::from([(
-                "abc".to_string(),
-                crate::brainz::fingerprint::AgedEntry {
-                    first_seen: 1,
-                    label: "main-only".into(),
-                    detector: "dead_code/function".into(),
-                },
-            )]),
-        )]);
-        save_fingerprints(&root, "main", &prints, &ResolvedHistory::new(), 1).unwrap();
-        assert_eq!(load_fingerprints(&root, "main"), prints);
-        assert!(
-            load_fingerprints(&root, "feature").is_empty(),
-            "a different branch must not see main's baseline"
-        );
-    }
+    Ok(true)
 }

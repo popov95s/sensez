@@ -3,6 +3,7 @@
 
 mod aging;
 mod events;
+mod file_lock;
 mod fingerprint;
 mod flush;
 mod hub;
@@ -12,6 +13,8 @@ mod recording;
 mod report;
 mod staleness;
 mod store;
+#[cfg(test)]
+mod store_tests;
 mod suppression;
 mod triage;
 mod usage;

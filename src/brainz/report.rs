@@ -223,11 +223,11 @@ fn ratio(numerator: u64, denominator: u64) -> f64 {
     }
 }
 
-/// Recidivism per detector: findings that were fixed and later came back. Each
-/// entry pairs the reintroduction count with how many fixes that detector saw,
-/// so `rate` reads as "share of fixes that did not stick" — a hotspot signal
-/// that the rule isn't landing (a different intervention than re-reporting).
-pub fn recidivism_by_detector(totals: &Totals) -> Value {
+/// Fix reintroductions per detector: findings that were fixed and later came
+/// back. Each entry pairs the reintroduction count with how many fixes that
+/// detector saw, so `rate` reads as "share of fixes that did not stick" — a
+/// hotspot signal that the rule isn't landing.
+pub fn fix_reintroductions_by_detector(totals: &Totals) -> Value {
     let mut out = serde_json::Map::new();
     for (detector, reintro) in &totals.reintroduced_by_detector {
         if reintro.count == 0 {
@@ -244,7 +244,7 @@ pub fn recidivism_by_detector(totals: &Totals) -> Value {
                 "resolved": resolved,
                 "rate": ratio(reintro.count, resolved),
                 // Mean days a fix held before the finding came back.
-                "mean_days_until_recurrence": round2(reintro.secs_total as f64 / reintro.count as f64 / DAY),
+                "mean_days_until_reintroduced": round2(reintro.secs_total as f64 / reintro.count as f64 / DAY),
             }),
         );
     }
@@ -308,7 +308,7 @@ mod tests {
         t.scans_by_origin.insert("tool".into(), 1);
         t.searches = 4;
         t.searches_zero_hit = 1;
-        // 2 of dead_code/function's 3 fixes came back → recidivism rate 0.67,
+        // 2 of dead_code/function's 3 fixes came back → reintroduction rate 0.67,
         // each having held for 5 days on average (2 * 5 days summed).
         t.reintroduced_by_detector.insert(
             "dead_code/function".into(),
@@ -350,12 +350,12 @@ mod tests {
     }
 
     #[test]
-    fn recidivism_pairs_reintroductions_with_fixes() {
-        let r = recidivism_by_detector(&totals());
+    fn fix_reintroductions_pair_reintroductions_with_fixes() {
+        let r = fix_reintroductions_by_detector(&totals());
         assert_eq!(r["dead_code/function"]["reintroduced"], 2);
         assert_eq!(r["dead_code/function"]["resolved"], 3);
         assert_eq!(r["dead_code/function"]["rate"], 0.67);
-        assert_eq!(r["dead_code/function"]["mean_days_until_recurrence"], 5.0);
+        assert_eq!(r["dead_code/function"]["mean_days_until_reintroduced"], 5.0);
         // god_module had no reintroductions → absent.
         assert!(r.get("smells/god_module").is_none());
     }
@@ -427,7 +427,7 @@ mod tests {
         let t = Totals::default();
         assert_eq!(precision_by_detector(&t), json!({}));
         assert_eq!(mean_resolution_days(&t.resolved_by_detector), json!({}));
-        assert_eq!(recidivism_by_detector(&t), json!({}));
+        assert_eq!(fix_reintroductions_by_detector(&t), json!({}));
         assert_eq!(search_health(&t)["zero_hit_rate"], 0.0);
         assert_eq!(self_health(&t)["ms_per_kfile"], 0.0);
     }

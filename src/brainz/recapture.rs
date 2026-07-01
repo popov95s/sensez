@@ -29,11 +29,23 @@ pub(super) fn run() {
         if hub::branch_key(&root) != base.branch {
             continue;
         }
-        recapture(&root, &base.branch, base.threshold);
+        if branch_changed_since_baseline(&root, &base.branch, base.ts) {
+            hub::mark_rescanned(&root);
+            continue;
+        }
+        recapture(&root, &base.branch, base.threshold, base.ts);
     }
 }
 
-fn recapture(root: &Path, branch: &str, threshold: Option<usize>) {
+fn branch_changed_since_baseline(root: &Path, branch: &str, baseline_ts: u64) -> bool {
+    store::branch_updated(root, branch).is_some_and(|updated| updated != baseline_ts)
+}
+
+fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u64) {
+    if branch_changed_since_baseline(root, branch, baseline_ts) {
+        hub::mark_rescanned(root);
+        return;
+    }
     let report = match crate::analyze_path(root, threshold, None) {
         Ok(report) => report,
         Err(err) => {
@@ -44,6 +56,10 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>) {
     let Ok(json) = serde_json::to_value(&report) else {
         return;
     };
+    if branch_changed_since_baseline(root, branch, baseline_ts) {
+        hub::mark_rescanned(root);
+        return;
+    }
     let previous = store::load_fingerprints(root, branch);
     if previous.is_empty() {
         return;
@@ -51,17 +67,31 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>) {
     let current = fingerprint::fingerprints(&json);
     let history = store::load_resolved_history(root, branch);
     let ignore = super::triage::ignored_keys(&super::triage::load(root));
-    let aging = aging::age(&previous, &current, &history, hub::now(), &ignore);
-    if let Err(err) =
-        store::save_fingerprints(root, branch, &aging.aged, &aging.history, hub::now())
-    {
-        eprintln!("[sensez metrics] saving fingerprints: {err:#}");
+    let now = hub::now();
+    let aging = aging::age(&previous, &current, &history, now, &ignore);
+    match store::save_fingerprints_if_current(
+        root,
+        branch,
+        baseline_ts,
+        &aging.aged,
+        &aging.history,
+        now,
+    ) {
+        Ok(true) => {}
+        Ok(false) => {
+            hub::mark_rescanned(root);
+            return;
+        }
+        Err(err) => {
+            eprintln!("[sensez metrics] saving fingerprints: {err:#}");
+            return;
+        }
     }
     hub::mark_rescanned(root);
     let (resolved, reintroduced) = (aging.resolved, aging.reintroduced);
     if !resolved.is_empty() || !reintroduced.is_empty() {
         hub::push(root, move |session, branch| Event::AutoResolve {
-            ts: hub::now(),
+            ts: now,
             session,
             branch,
             resolved,
@@ -93,6 +123,7 @@ fn changed_since(root: &Path, ts: u64) -> bool {
 
 #[cfg(test)]
 mod tests {
+    use crate::brainz::fingerprint::{Aged, ResolvedHistory};
     use serde_json::Value;
     use std::fs;
 
@@ -130,6 +161,46 @@ mod tests {
         assert_eq!(
             totals["all_time"]["resolved_by_detector"]["dead_code/function"]["count"], 1,
             "auto-recapture must record the deleted orphan as resolved"
+        );
+    }
+
+    #[test]
+    fn stale_recapture_baseline_is_a_noop() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().to_path_buf();
+        fs::create_dir_all(&root).unwrap();
+        fs::write(root.join("app.py"), "def orphan():\n    return 1\n").unwrap();
+
+        let text = crate::scan(&root, None, crate::reporter::Format::Json, 0).unwrap();
+        let report: Value = serde_json::from_str(&text).unwrap();
+        crate::brainz::record_scan(
+            &root,
+            &report,
+            std::time::Duration::from_millis(1),
+            None,
+            crate::brainz::Origin::Tool,
+        );
+        crate::brainz::flush();
+
+        super::store::save_fingerprints(&root, "", &Aged::new(), &ResolvedHistory::new(), u64::MAX)
+            .unwrap();
+
+        super::recapture(&root, "", None, 1);
+
+        let report = crate::brainz::usage_report(&root);
+        assert!(
+            report["all_time"]["resolved_by_detector"]
+                .as_object()
+                .unwrap()
+                .is_empty(),
+            "a stale process must not resolve from an obsolete baseline"
+        );
+        assert!(
+            report["all_time"]["reintroduced_by_detector"]
+                .as_object()
+                .unwrap()
+                .is_empty(),
+            "a stale process must not reintroduce from an obsolete baseline"
         );
     }
 }

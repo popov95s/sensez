@@ -59,6 +59,14 @@
       "exclude_globs": 12
     }
   },
+  "fix_reintroductions_by_detector": {
+    "dead_code/function": {
+      "mean_days_until_reintroduced": 0.0,
+      "rate": 1.0,
+      "reintroduced": 1,
+      "resolved": 1
+    }
+  },
   "gate_conversion": {
     "blocked_findings": 1,
     "conversion_rate": 0.0,
@@ -86,6 +94,14 @@
   },
   "privacy": "local-only metrics from .sensez/local-metrics/ \u2014 never exported",
   "recent_30d": {
+    "fix_reintroductions_by_detector": {
+      "dead_code/function": {
+        "mean_days_until_reintroduced": 0.0,
+        "rate": 1.0,
+        "reintroduced": 1,
+        "resolved": 1
+      }
+    },
     "mean_resolution_days": {
       "_overall": 0.0,
       "dead_code/function": 0.0
@@ -98,23 +114,7 @@
         "resolved": 1
       }
     },
-    "recidivism_by_detector": {
-      "dead_code/function": {
-        "mean_days_until_recurrence": 0.0,
-        "rate": 1.0,
-        "reintroduced": 1,
-        "resolved": 1
-      }
-    },
     "scans": 7
-  },
-  "recidivism_by_detector": {
-    "dead_code/function": {
-      "mean_days_until_recurrence": 0.0,
-      "rate": 1.0,
-      "reintroduced": 1,
-      "resolved": 1
-    }
   },
   "search_health": {
     "searches": 0,

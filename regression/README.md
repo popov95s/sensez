@@ -257,6 +257,17 @@ Required calls per target:
 5. `tools/call brainz_report`
    - Assert the response is JSON text with `session` and `all_time`.
    - Compare selected metric fields after normalization.
+   - Switch from branch A to branch B and back with no source changes; assert
+     `reported_by_detector` remains the latest current finding set rather than
+     accumulating once per scan or branch switch.
+   - Run a separate team-branch workflow where a feature branch fixes a finding,
+     then `main` independently introduces the same fixture issue; assert
+     `resolved_by_detector` keeps the feature fix and `reintroduced_by_detector`
+     does not increase for the `main` change.
+   - Return to the fixed feature branch after observing unfixed `main`; assert
+     the feature branch remains clean and the lifecycle counters do not change.
+   - Revert a fix on the same branch; assert that this contrast case increments
+     `reintroduced_by_detector` exactly once.
 
 The MCP suite should also send EOF and wait for the process to exit. This
 exercises final metric flush and `recapture()` on shutdown.
@@ -353,6 +364,8 @@ Totals assertions:
 - `scans` increases after `noze_sniff` and `noze_gate`.
 - `scans_by_origin.tool` and `scans_by_origin.gate` reflect the scenario.
 - `reported_by_detector` contains stable detector keys for the target.
+- `reported_by_detector` is unchanged by no-op branch switches and repeated
+  full scans of the same source tree.
 - `scan_ms_total`, `scan_files_total`, and `scan_loc_total` are positive.
 - `gate_blocks` increases only on blocking gate calls.
 - `config_changes` remains zero unless the scenario intentionally changes
@@ -362,7 +375,16 @@ Derived `brainz_report` assertions:
 
 - `precision_by_detector` appears only after fixes or triage produce evidence.
 - `mean_resolution_days` is present after a finding is resolved.
-- `recidivism_by_detector` is empty in the default run.
+- `fix_reintroductions_by_detector` is empty in the default run.
+- Fix and reintroduction fixture flows count exactly one resolved transition
+  and exactly one reintroduced transition; repeated observation must not inflate
+  either counter.
+- A finding fixed on one branch and independently introduced on another branch
+  is not a reintroduction; branch-local history, not same-function coincidence,
+  drives fix reintroductions.
+- Returning to a fixed branch after visiting an unfixed branch is stable: no
+  fresh resolve or reintroduce event is emitted.
+- Reverting the fix on the same branch is a real reintroduction and counts once.
 - `gate_funnel.by_origin` includes tool and gate counts.
 - `gate_conversion.conversion_rate` is `null` before a full baseline exists and
   numeric afterward.

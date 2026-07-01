@@ -158,11 +158,11 @@ pub struct Totals {
     pub outcomes: BTreeMap<String, u64>,
     /// Sum of (referenced file bytes − returned snippet bytes) over searches.
     pub est_context_bytes_saved: u64,
-    /// Detector (`pillar/<kind>`) → findings reported across all scans.
+    /// Detector (`pillar/<kind>`) → findings reported by the latest scan.
     pub reported_by_detector: BTreeMap<String, u64>,
     /// Detector → resolved count + summed time-to-resolution (seconds).
     pub resolved_by_detector: BTreeMap<String, Resolved>,
-    /// Detector → previously-resolved findings that came back (recidivism),
+    /// Detector → previously-resolved findings that came back,
     /// with the summed interval they stayed resolved.
     pub reintroduced_by_detector: BTreeMap<String, Resolved>,
     /// Scan origin (`tool` | `gate` | `cli`) → scans recorded.

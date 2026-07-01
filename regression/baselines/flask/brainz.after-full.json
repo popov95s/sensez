@@ -50,6 +50,7 @@
       "exclude_globs": 12
     }
   },
+  "fix_reintroductions_by_detector": {},
   "gate_conversion": {
     "blocked_findings": 0
   },
@@ -63,12 +64,11 @@
   "precision_by_detector": {},
   "privacy": "local-only metrics from .sensez/local-metrics/ \u2014 never exported",
   "recent_30d": {
+    "fix_reintroductions_by_detector": {},
     "mean_resolution_days": {},
     "precision_by_detector": {},
-    "recidivism_by_detector": {},
     "scans": 1
   },
-  "recidivism_by_detector": {},
   "search_health": {
     "searches": 0,
     "zero_hit": 0,
