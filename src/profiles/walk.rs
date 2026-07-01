@@ -73,9 +73,11 @@ pub(crate) fn credit_name(out: &mut Walked, node: Node, src: &[u8]) {
     }
 }
 
-/// Record member access on a plain-identifier base (`obj.attr`, `mod::item`)
-/// so usage can be credited to whatever the base name was bound to. The field
-/// names are per-grammar (`object`/`attribute`, `object`/`property`,
+/// Record member access (`obj.attr`, `mod::item`, `a.b.c`). When the base is
+/// a plain identifier the access is credited directly for typed-receiver
+/// tracking; otherwise the leaf attribute name is captured for heuristics
+/// (e.g. `x.inner.a` credits `inner → x` and records the leaf `a`).
+/// The field names are per-grammar (`object`/`attribute`, `object`/`property`,
 /// `value`/`field`, `path`/`name`).
 pub(crate) fn credit_attr(
     out: &mut Walked,
@@ -84,15 +86,27 @@ pub(crate) fn credit_attr(
     base_field: &str,
     attr_field: &str,
 ) {
-    if let (Some(attr), Some(base)) = (
-        node.child_by_field_name(attr_field)
-            .and_then(|n| n.utf8_text(src).ok()),
-        node.child_by_field_name(base_field)
-            .filter(|o| o.kind() == "identifier")
-            .and_then(|o| o.utf8_text(src).ok()),
-    ) {
+    let Some(attr) = named_child_text(node, src, attr_field) else {
+        return;
+    };
+    if let Some(base) = ident_child_text(node, src, base_field) {
         record_attr(&mut out.usage.attribute_accesses, base, attr);
+        return;
     }
+    out.usage.chained_attribute_names.insert(attr.to_string());
+}
+
+fn named_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'a str> {
+    node.child_by_field_name(field)
+        .and_then(|n| n.utf8_text(src).ok())
+}
+
+fn ident_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'a str> {
+    let child = node.child_by_field_name(field)?;
+    if child.kind() != "identifier" {
+        return None;
+    }
+    child.utf8_text(src).ok()
 }
 
 pub(crate) fn credit_string(out: &mut Walked, value: String) {

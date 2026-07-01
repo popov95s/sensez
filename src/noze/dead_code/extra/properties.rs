@@ -173,6 +173,7 @@ fn property_is_live(
         || typed_receiver_uses_property(file, receivers, class.name.as_str(), property)
         || returned_value_uses_property(file, class.name.as_str(), property)
         || untyped_attrs.contains(property)
+        || file.walked.usage.chained_attribute_names.contains(property)
         || file.walked.usage.string_literals.contains(property)
 }
 

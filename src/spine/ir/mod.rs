@@ -82,6 +82,7 @@ pub struct UsageFacts {
     pub attribute_accesses: HashMap<String, HashSet<String>>,
     pub call_result_attribute_accesses: HashMap<String, HashSet<String>>,
     pub string_literals: HashSet<String>,
+    pub chained_attribute_names: HashSet<String>,
 }
 
 #[derive(Debug, Default)]
