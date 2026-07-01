@@ -315,7 +315,7 @@ mod tests {
     }
 
     /// `noze_sniff` must land a Scan event in brainz with the report's
-    /// detector counts. Without this, the precision/recidivism signals
+    /// detector counts. Without this, the precision/fix reintroduction signals
     /// would be starved of their numerator.
     #[test]
     fn noze_sniff_populates_reported_counts() {

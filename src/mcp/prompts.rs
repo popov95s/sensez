@@ -42,7 +42,7 @@ pub fn prompts_get(params: Option<&Value>) -> Result<Value, (i64, String)> {
          searches served (note first_searches), est_context_bytes_saved as ~tokens \
          (bytes/4), then scans run (scans_by_origin). Call out two trust signals if \
          non-trivial: precision_by_detector (detectors with low precision are noisy) \
-         and recidivism_by_detector (fixes that didn't stick — likely hotspots). \
+         and fix_reintroductions_by_detector (fixes that didn't stick — likely hotspots). \
          Keep it to a short paragraph plus a small table; if everything is zero, say \
          Sensez wasn't used — don't pad.\n\
          3. If brainz_report lists stale_findings, show them to the user and ASK \
