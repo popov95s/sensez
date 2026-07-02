@@ -93,6 +93,25 @@ pub(crate) fn credit_attr(
         record_attr(&mut out.usage.attribute_accesses, base, attr);
         return;
     }
+    out.usage.chained_attribute_names.insert(attr.to_string());
+}
+
+/// Record member access and preserve non-identifier base paths for languages
+/// whose type hints can attach to attribute paths (Python: `self.model: T`).
+pub(crate) fn credit_attr_with_base_path(
+    out: &mut Walked,
+    node: Node,
+    src: &[u8],
+    base_field: &str,
+    attr_field: &str,
+) {
+    let Some(attr) = named_child_text(node, src, attr_field) else {
+        return;
+    };
+    if let Some(base) = ident_child_text(node, src, base_field) {
+        record_attr(&mut out.usage.attribute_accesses, base, attr);
+        return;
+    }
     if let Some(base) = named_child_text(node, src, base_field) {
         record_attr(&mut out.usage.attribute_path_accesses, base, attr);
     }

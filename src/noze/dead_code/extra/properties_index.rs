@@ -6,6 +6,7 @@ use std::collections::{HashMap, HashSet};
 pub(super) struct ClassIndex {
     names: HashMap<String, String>,
     bases: HashMap<String, Vec<String>>,
+    children: HashMap<String, Vec<String>>,
 }
 
 impl ClassIndex {
@@ -21,13 +22,10 @@ impl ClassIndex {
     }
 
     fn collect_descendants(&self, class: &str, seen: &mut HashSet<String>, out: &mut Vec<String>) {
-        for (candidate, bases) in &self.bases {
-            if !bases
-                .iter()
-                .any(|base| type_parts(base).any(|part| part == class))
-            {
-                continue;
-            }
+        let Some(children) = self.children.get(class) else {
+            return;
+        };
+        for candidate in children {
             if seen.insert(candidate.clone()) {
                 out.push(candidate.clone());
                 self.collect_descendants(candidate, seen, out);
@@ -44,6 +42,7 @@ pub(super) fn project_class_index(files: &[&ParsedFile]) -> ClassIndex {
     {
         add_class(&mut index, class);
     }
+    index.children = child_index(&index);
     index
 }
 
@@ -62,6 +61,23 @@ pub(super) fn type_parts(text: &str) -> impl Iterator<Item = &str> {
     text.split(|ch: char| !(ch == '.' || ch == '_' || ch == '$' || ch.is_alphanumeric()))
         .flat_map(|part| part.rsplit('.'))
         .filter(|part| !part.is_empty())
+}
+
+fn child_index(index: &ClassIndex) -> HashMap<String, Vec<String>> {
+    let mut children: HashMap<String, Vec<String>> = HashMap::new();
+    for (class, bases) in &index.bases {
+        for base in bases {
+            for part in type_parts(base) {
+                if index.names.contains_key(part) {
+                    children
+                        .entry(part.to_string())
+                        .or_default()
+                        .push(class.clone());
+                }
+            }
+        }
+    }
+    children
 }
 
 #[cfg(test)]

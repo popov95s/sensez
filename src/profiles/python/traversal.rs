@@ -3,7 +3,8 @@
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::walk::{
-    self, credit_attr, credit_name, credit_string, declare, emit_mapped, register_method, Scope,
+    self, credit_attr_with_base_path, credit_name, credit_string, declare, emit_mapped,
+    register_method, Scope,
 };
 use crate::spine::ir::ImportPhase;
 use crate::spine::ir::Walked;
@@ -80,7 +81,7 @@ fn visit(
         credit_name(out, node, src);
     }
     if kind == "attribute" {
-        credit_attr(out, node, src, "object", "attribute");
+        credit_attr_with_base_path(out, node, src, "object", "attribute");
         credit_call_result_attr(out, node, src);
     }
 
@@ -195,7 +196,7 @@ fn credit_interpolations(node: Node, src: &[u8], out: &mut Walked) {
         match child.kind() {
             "identifier" => credit_name(out, child, src),
             "attribute" => {
-                credit_attr(out, child, src, "object", "attribute");
+                credit_attr_with_base_path(out, child, src, "object", "attribute");
                 credit_interpolations(child, src, out);
             }
             _ => credit_interpolations(child, src, out),
