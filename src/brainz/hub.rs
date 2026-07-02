@@ -69,15 +69,19 @@ pub(super) fn enabled(root: &Path) -> bool {
     state.enabled.unwrap_or(true)
 }
 
-pub(super) fn branch_key(root: &Path) -> String {
-    crate::diff::git::current_branch(root).unwrap_or_default()
+pub(super) fn branch_key(root: &Path) -> Option<String> {
+    crate::diff::git::current_branch(root)
+}
+
+pub(super) fn branch_label(root: &Path) -> String {
+    branch_key(root).unwrap_or_else(|| "unbranched".to_string())
 }
 
 pub(super) fn push(root: &Path, build: impl FnOnce(String, String) -> Event) {
     if !enabled(root) {
         return;
     }
-    let branch = branch_key(root);
+    let branch = branch_label(root);
     let session = hub().session_id.clone();
     let event = build(session, branch);
     let mut hub = hub();

@@ -43,7 +43,7 @@ pub(super) fn suppress_repeated_at(
     limit: usize,
     now: u64,
 ) -> RepeatOutcome {
-    let branch = crate::diff::git::current_branch(root).unwrap_or_default();
+    let branch = crate::diff::git::current_branch(root).unwrap_or_else(|| "unbranched".into());
     let repo = (canon(root), branch);
     let active = active_keys(report);
     let mut states = states().lock().unwrap_or_else(|e| e.into_inner());

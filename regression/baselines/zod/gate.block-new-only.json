@@ -1,0 +1,4 @@
+{
+  "decision": "block",
+  "reason": "sensez gate: 1 diff finding(s) need attention. Fix findings your change introduced or worsened; briefly note intentional debt and continue. The gate will not keep blocking the same unchanged work. Top findings: dead_code/function sensez-regression-fixture_extra::sensezNewGateHelper <zod>/sensez-regression-fixture_extra.ts:1"
+}

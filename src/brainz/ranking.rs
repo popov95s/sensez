@@ -7,7 +7,10 @@ use std::collections::BTreeSet;
 use std::path::Path;
 
 pub fn regressions(root: &Path, report: &Value) -> Vec<String> {
-    let history = store::load_resolved_history(root, &hub::branch_key(root));
+    let Some(branch) = hub::branch_key(root) else {
+        return Vec::new();
+    };
+    let history = store::load_resolved_history(root, &branch);
     if history.is_empty() {
         return Vec::new();
     }

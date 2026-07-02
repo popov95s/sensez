@@ -4,6 +4,8 @@
 mod compact;
 mod gate;
 #[cfg(test)]
+mod gate_regression_tests;
+#[cfg(test)]
 mod gate_tests;
 mod handlers;
 mod prompts;

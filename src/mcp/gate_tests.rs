@@ -85,18 +85,16 @@ fn gate_reblocks_when_agent_fixes_then_introduces_again() {
     let after_fix = gate(&json!({"path": repo.path})).unwrap();
     assert_eq!(after_fix["content"][0]["text"], "{}");
 
-    // Reintroduce: same (file, line, symbol) as the first call, so the
-    // signature dedups to allow — the agent already saw this complaint.
+    // Reintroduce: same identity as the first call, so the gate allows it.
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
     let again = gate(&json!({"path": repo.path})).unwrap();
     assert_eq!(again["content"][0]["text"], "{}");
 }
 
-/// Dedup is over the finding signature (file+line+kind), not over the
-/// host's `stop_hook_active` flag. A content edit that moves a finding
-/// to a new line counts as a different complaint and re-blocks.
+/// Dedup is over the finding identity, not line position. A content edit that
+/// only moves a known finding does not create a new gate complaint.
 #[test]
-fn gate_signature_changes_when_line_moves() {
+fn gate_identity_survives_line_moves() {
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -105,14 +103,14 @@ fn gate_signature_changes_when_line_moves() {
     assert_block(&gate(&json!({"path": repo.path})).unwrap());
 
     std::fs::write(&repo.file, "# new comment\ndef orphan():\n    return 1\n").unwrap();
-    assert_block(&gate(&json!({"path": repo.path})).unwrap());
+    let moved = gate(&json!({"path": repo.path})).unwrap();
+    assert_eq!(moved["content"][0]["text"], "{}");
 }
 
-/// Across many calls the gate blocks exactly when the complaint set
-/// differs from the previous call — one block per real change, not
-/// one block per turn.
+/// Across many calls the gate blocks exactly when a new finding identity
+/// appears — one block per new complaint, not one block per turn.
 #[test]
-fn gate_block_count_tracks_signature_changes() {
+fn gate_block_count_tracks_new_identities() {
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -131,7 +129,7 @@ fn gate_block_count_tracks_signature_changes() {
     };
 
     // Sequence: intro → same → trailing comment → fix → reintro → line-move → same.
-    // Blocks fire only on intro and line-move (different signatures).
+    // Blocks fire only on the first unseen identity.
     assert_eq!(blocks("def orphan():\n    return 1\n"), 1);
     assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
     assert_eq!(
@@ -140,7 +138,7 @@ fn gate_block_count_tracks_signature_changes() {
     );
     assert_eq!(blocks("print('fixed')\n"), 0);
     assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
-    assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 1);
+    assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 0);
     assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 0);
 }
 

@@ -51,14 +51,18 @@ pub fn usage_report(root: &Path) -> Value {
     }
     flush::flush();
     let triaged = triage::load(root);
-    let branch = hub::branch_key(root);
+    let branch = hub::branch_label(root);
     let totals = store::load_totals(root);
     let config = crate::config::model::Config::load(root).unwrap_or_default();
     let events = store::load_events(root);
     let (recent_since, recent) = recent_window(&events);
-    let (blocked, open) =
-        gate_block_sets(&events, store::load_fingerprints(root, &branch), &branch);
-    let has_baseline = store::has_baseline(root, &branch);
+    let baseline = hub::branch_key(root)
+        .map(|key| store::load_fingerprints(root, &key))
+        .unwrap_or_default();
+    let has_baseline = hub::branch_key(root)
+        .map(|key| store::has_baseline(root, &key))
+        .unwrap_or(false);
+    let (blocked, open) = gate_block_sets(&events, baseline.clone(), &branch);
     let session = hub::session_snapshot(root);
     json!({
         "privacy": "local-only metrics from .sensez/local-metrics/ — never exported",
@@ -86,7 +90,7 @@ pub fn usage_report(root: &Path) -> Value {
         "all_time": totals,
         "branch": branch.clone(),
         "stale_findings": stale_entries(
-            &store::load_fingerprints(root, &branch), hub::now(), &triage::ignored_keys(&triaged))
+            &baseline, hub::now(), &triage::ignored_keys(&triaged))
             .into_iter()
             .map(|(pillar, _, label, days)| json!({
                 "pillar": pillar, "finding": label, "days_unresolved": days

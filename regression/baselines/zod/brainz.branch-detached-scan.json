@@ -6,34 +6,13 @@
     "gate_blocks": 0,
     "outcomes": {},
     "reintroduced_by_detector": {},
-    "reported_by_detector": {
-      "cycles": 2,
-      "dead_code/class": 2,
-      "dead_code/import": 1,
-      "dead_code/method": 54,
-      "dead_code/variable": 2,
-      "duplication": 4,
-      "smells/boolean_blindness": 4,
-      "smells/divergent_change": 12,
-      "smells/feature_envy": 1,
-      "smells/god_module": 3,
-      "smells/heavy_nested_function": 1,
-      "smells/high_cognitive_complexity": 8,
-      "smells/literal_membership": 5,
-      "smells/loose_typing": 28,
-      "smells/magic_string_default": 4,
-      "smells/mutated_parameter": 3,
-      "smells/n_plus_one_call": 1,
-      "smells/nested_loop": 13,
-      "smells/shotgun_surgery_hazard": 1,
-      "smells/tuple_packing": 3
-    },
+    "reported_by_detector": {},
     "resolved_by_detector": {},
-    "scan_files_total": 83,
-    "scan_loc_total": 18417,
-    "scans": 1,
+    "scan_files_total": 4,
+    "scan_loc_total": 13,
+    "scans": 2,
     "scans_by_origin": {
-      "tool": 1
+      "tool": 2
     },
     "searches": 0,
     "searches_zero_hit": 0
@@ -54,7 +33,7 @@
   },
   "gate_funnel": {
     "by_origin": {
-      "tool": 1
+      "tool": 2
     },
     "gate_share": 0.0
   },
@@ -65,7 +44,7 @@
     "fix_reintroductions_by_detector": {},
     "mean_resolution_days": {},
     "precision_by_detector": {},
-    "scans": 1
+    "scans": 2
   },
   "search_health": {
     "searches": 0,
@@ -73,8 +52,8 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 83.0,
-    "scans": 1
+    "mean_files": 2.0,
+    "scans": 2
   },
   "stale_findings": [],
   "triaged": []

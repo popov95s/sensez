@@ -149,6 +149,26 @@ def assert_same_branch_revert_is_reintroduced(case: BranchCase) -> object:
     return reverted
 
 
+def assert_detached_scan_does_not_change_transitions(case: BranchCase) -> object:
+    _git(case.repo, "checkout", "-B", "main")
+    _apply_fixture(case.repo, case.fixture, case.fixture["text"])
+    _commit_all(case.repo, "introduce fixture issue")
+    _scan_full(case.client, case.repo)
+
+    _git(case.repo, "checkout", "--detach")
+    _apply_fixture(case.repo, case.fixture, case.fixture["fix_text"])
+    _scan_full(case.client, case.repo)
+    detached = _brainz_report(case.client, case.repo)
+    assert_exact_transition_count(
+        detached,
+        case.fixture["detector"],
+        case.target_name,
+        resolved=0,
+        reintroduced=0,
+    )
+    return detached
+
+
 def _introduce_and_fix_on_current_branch(case: BranchCase) -> None:
     _apply_fixture(case.repo, case.fixture, case.fixture["text"])
     _commit_all(case.repo, "introduce fixture issue")

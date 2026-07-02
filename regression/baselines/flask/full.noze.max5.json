@@ -181,20 +181,20 @@
     {
       "action": "advisory",
       "confidence": "Low",
-      "file": "<flask>/docs/conf.py",
-      "kind": "variable",
-      "line": 7,
-      "module": "docs.conf",
-      "symbol": "project"
+      "file": "<flask>/src/flask/views.py",
+      "kind": "class",
+      "line": 138,
+      "module": "flask.views",
+      "symbol": "MethodView"
     },
     {
       "action": "advisory",
       "confidence": "Low",
-      "file": "<flask>/docs/conf.py",
+      "file": "<flask>/src/flask/views.py",
       "kind": "variable",
-      "line": 8,
-      "module": "docs.conf",
-      "symbol": "copyright"
+      "line": 9,
+      "module": "flask.views",
+      "symbol": "F"
     }
   ],
   "duplication": [
@@ -268,7 +268,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 95,
+    "dead_code_total": 59,
     "duplication_total": 4,
     "external_edges": 334,
     "internal_edges": 304,

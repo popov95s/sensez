@@ -16,6 +16,7 @@ from .analyze import accept_tree, compare_tree
 from .brainz_regressions import (
     BranchCase,
     assert_colleague_main_issue_is_not_reintroduced,
+    assert_detached_scan_does_not_change_transitions,
     assert_exact_transition_count,
     assert_reported_stable_across_branch_switches,
     assert_return_to_fixed_branch_stays_resolved,
@@ -83,7 +84,7 @@ def main() -> int:
     sensez = args.sensez.resolve()
     if not sensez.exists():
         print(f"missing release binary: {sensez}", file=sys.stderr)
-        print("build it with: cargo build --release --features mcp,all-langs")
+        print("build it with: cargo build --release --all-features")
         return 2
     failures: list[str] = []
     for target in targets:
@@ -135,6 +136,7 @@ def run_target(config: RegressionConfig, target: Target, sensez: Path, accept: b
     out.mkdir(parents=True)
     run_full_scans(sensez, cache, target, out)
     run_mcp_scenarios(sensez, config, target, cache, out)
+    run_gate_reblock_scenario(sensez, config, target, cache, out)
     run_branch_metric_scenarios(sensez, config, target, out)
     baseline = BASELINES / name
     if accept:
@@ -172,6 +174,7 @@ def scenario_repo(cache: Path, target: Target) -> Path:
     run(["git", "clone", "--local", str(cache), str(dest)], ROOT)
     head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=cache, text=True).strip()
     run(["git", "checkout", "--force", head], dest)
+    run(["git", "checkout", "-B", "sensez-regression-worktree"], dest)
     if target.get("setup"):
         cached_modules = cache / "node_modules"
         if cached_modules.exists():
@@ -343,6 +346,42 @@ def run_branch_metric_scenarios(
         "brainz.branch-same-branch-revert.json",
         assert_same_branch_revert_is_reintroduced,
     )
+    run_branch_metric_case(
+        sensez,
+        target,
+        fixture,
+        out,
+        "brainz.branch-detached-scan.json",
+        assert_detached_scan_does_not_change_transitions,
+    )
+
+
+def run_gate_reblock_scenario(
+    sensez: Path,
+    config: RegressionConfig,
+    target: Target,
+    cache: Path,
+    out: Path,
+) -> None:
+    repo = scenario_repo(cache, target)
+    fixture = config["profiles"][target["profile"]]["dead_code_fixture"]
+    client = McpClient(sensez)
+    try:
+        client.request("initialize")
+        apply_fixture(repo, fixture, fixture["text"])
+        first = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        assert_gate_blocks(first, target["name"])
+
+        extra_symbol = extra_symbol_for(fixture)
+        extra_fixture = extra_dead_code_fixture(fixture, extra_symbol)
+        apply_fixture(repo, extra_fixture, extra_fixture["text"])
+        second = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        dump_norm(out / "gate.block-new-only.json", second, repo, target)
+        assert_gate_blocks(second, target["name"])
+        assert_gate_mentions_new_only(second, extra_symbol, fixture["symbol"], target["name"])
+    finally:
+        client.close()
+        cleanup_repo(repo)
 
 
 def run_branch_metric_case(
@@ -411,6 +450,23 @@ def assert_gate_allows(response: object, reason: str) -> None:
         raise AssertionError(f"gate expected to allow ({reason}), got {response!r}")
 
 
+def assert_gate_mentions_new_only(
+    response: object,
+    new_symbol: str,
+    old_symbol: str,
+    target_name: str,
+) -> None:
+    reason = _json_path(response, ("reason",))
+    if not isinstance(reason, str):
+        raise AssertionError(f"{target_name}: missing gate reason in {response!r}")
+    if "1 diff finding(s)" not in reason:
+        raise AssertionError(f"{target_name}: expected one new gate finding: {reason}")
+    if new_symbol not in reason:
+        raise AssertionError(f"{target_name}: new finding missing from gate reason: {reason}")
+    if old_symbol in reason:
+        raise AssertionError(f"{target_name}: unchanged finding was re-listed: {reason}")
+
+
 def assert_finding_resolved(report: object, detector: str, target_name: str) -> None:
     """After the agent fixes a finding, the brainz totals must count it
     as resolved under the fixture's detector. A regression where the
@@ -470,6 +526,28 @@ def apply_fixture(repo: Path, fixture: DeadCodeFixture, text: str) -> None:
     path = repo / fixture["path"]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
+
+
+def extra_dead_code_fixture(fixture: DeadCodeFixture, symbol: str) -> DeadCodeFixture:
+    path = Path(fixture["path"])
+    extra_path = path.with_name(f"{path.stem}_extra{path.suffix}")
+    if path.suffix == ".ts":
+        text = f"function {symbol}(): number {{\n  return 84;\n}}\n"
+    else:
+        text = f"def {symbol}():\n    return 84\n"
+    return {
+        "path": str(extra_path),
+        "symbol": symbol,
+        "detector": fixture["detector"],
+        "text": text,
+        "fix_text": "",
+    }
+
+
+def extra_symbol_for(fixture: DeadCodeFixture) -> str:
+    if Path(fixture["path"]).suffix == ".ts":
+        return "sensezNewGateHelper"
+    return "sensez_new_gate_helper"
 
 
 def dump_metrics_schema(path: Path, repo: Path) -> None:

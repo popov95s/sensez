@@ -86,11 +86,15 @@ mod tests {
     use crate::brainz::{record_scan, triage_finding, Origin};
     use serde_json::Value;
     use std::fs;
+    use std::process::Command;
 
     #[test]
     fn triaged_finding_is_suppressed_others_kept() {
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path();
+        if !init_repo(root) {
+            return;
+        }
         fs::write(
             root.join("m.py"),
             "def orphan():\n    return 1\n\n\ndef orphan_two():\n    return 2\n",
@@ -119,6 +123,40 @@ mod tests {
             !symbols.contains(&"orphan_two"),
             "triaged finding suppressed: {symbols:?}"
         );
+    }
+
+    fn init_repo(root: &Path) -> bool {
+        let initialized = Command::new("git")
+            .arg("init")
+            .current_dir(root)
+            .output()
+            .map(|out| out.status.success())
+            .unwrap_or(false);
+        if !initialized {
+            return false;
+        }
+        fs::write(root.join("base.py"), "print('base')\n").unwrap();
+        let added = Command::new("git")
+            .args(["add", "."])
+            .current_dir(root)
+            .output()
+            .map(|out| out.status.success())
+            .unwrap_or(false);
+        added
+            && Command::new("git")
+                .args([
+                    "-c",
+                    "user.email=sensez@example.test",
+                    "-c",
+                    "user.name=Sensez",
+                    "commit",
+                    "-m",
+                    "base",
+                ])
+                .current_dir(root)
+                .output()
+                .map(|out| out.status.success())
+                .unwrap_or(false)
     }
 
     #[test]

@@ -1,12 +1,5 @@
 use serde_json::{json, Value};
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock};
-
-fn last_blocked() -> &'static Mutex<HashMap<PathBuf, u64>> {
-    static MAP: OnceLock<Mutex<HashMap<PathBuf, u64>>> = OnceLock::new();
-    MAP.get_or_init(|| Mutex::new(HashMap::new()))
-}
+use std::path::Path;
 
 pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let path = super::handlers::required_str(args, "path")?;
@@ -31,26 +24,14 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     // that has been reported on the same lines too many times.
     let repeats = super::repeats::suppress_repeated(root, &mut report, gate_config.repeat_limit);
 
-    let n = report.duplication.len()
-        + report.dead_code.len()
-        + report.cycles.len()
-        + report.boundaries.len()
-        + report.smells.len();
+    let n = crate::brainz::retain_unseen_gate_findings(root, &mut report);
     if n == 0 {
         return Ok(allow());
     }
 
-    let sig = report.finding_signature();
-    {
-        let mut map = last_blocked().lock().unwrap_or_else(|e| e.into_inner());
-        if map.get(root) == Some(&sig) {
-            return Ok(allow());
-        }
-        map.insert(root.to_path_buf(), sig);
-    }
-
     let diff_report = serde_json::to_value(&report).unwrap_or(Value::Null);
     crate::brainz::record_gate_block(root, &diff_report);
+    crate::brainz::flush();
     let regressed = crate::brainz::regressions(root, &diff_report);
     let escalation = if regressed.is_empty() {
         String::new()

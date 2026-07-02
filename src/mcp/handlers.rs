@@ -300,18 +300,20 @@ mod tests {
 
     #[test]
     fn diff_scan_refreshes_metrics_baseline() {
-        let tmp = tempfile::tempdir().unwrap();
-        let dir = tmp.path().to_path_buf();
-        std::fs::write(dir.join("m.py"), "def f():\n    pass\n").unwrap();
-        let path = dir.to_string_lossy().into_owned();
+        let Some(repo) = fresh_repo("m.py") else {
+            return;
+        };
+        std::fs::write(&repo.file, "def f():\n    pass\n").unwrap();
 
         let req = json!({"jsonrpc": "2.0", "id": 11, "method": "tools/call", "params": {
-            "name": "noze_sniff", "arguments": {"path": path, "diff": true}
+            "name": "noze_sniff", "arguments": {"path": repo.path, "diff": true}
         }});
         let resp = handle_message(&req).unwrap();
 
         assert_eq!(resp["result"]["isError"], false);
-        assert!(dir.join(".sensez/local-metrics/last-scan.json").exists());
+        assert!(std::path::Path::new(&repo.path)
+            .join(".sensez/local-metrics/last-scan.json")
+            .exists());
     }
 
     /// `noze_sniff` must land a Scan event in brainz with the report's
