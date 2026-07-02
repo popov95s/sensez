@@ -27,6 +27,7 @@ pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> Anal
     cycles.sort_by_key(|c| (action_rank(c.action), std::cmp::Reverse(c.modules.len())));
 
     let mut dead_code = dead_code::detect(graph, files, &config.dead_code);
+    dead_code.retain(|finding| finding.confidence != Confidence::Low);
     for finding in &mut dead_code {
         finding.action = config.action.dead_code;
     }

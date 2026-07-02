@@ -8,8 +8,8 @@
     "reintroduced_by_detector": {},
     "reported_by_detector": {},
     "resolved_by_detector": {},
-    "scan_files_total": 4,
-    "scan_loc_total": 9,
+    "scan_files_total": 6,
+    "scan_loc_total": 17,
     "scans": 2,
     "scans_by_origin": {
       "tool": 2
@@ -52,7 +52,7 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 2.0,
+    "mean_files": 3.0,
     "scans": 2
   },
   "stale_findings": [],

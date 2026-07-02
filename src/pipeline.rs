@@ -140,17 +140,28 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let dir = tmp.path().to_path_buf();
         fs::create_dir_all(&dir).unwrap();
-        // Two modules, each with an unreferenced top-level function.
-        fs::write(dir.join("touched.py"), "def unused_here():\n    return 1\n").unwrap();
+        // One imported module with an unreferenced top-level function, plus an
+        // untouched module. The import gives the touched module enough usage
+        // evidence to report its unused symbol.
+        fs::write(
+            dir.join("touched.py"),
+            "def used_here():\n    return 0\n\n\ndef unused_here():\n    return 1\n",
+        )
+        .unwrap();
         fs::write(
             dir.join("other.py"),
             "def unused_elsewhere():\n    return 2\n",
         )
         .unwrap();
+        fs::write(
+            dir.join("consumer.py"),
+            "from touched import used_here\n\nprint(used_here())\n",
+        )
+        .unwrap();
 
         // Pretend only touched.py (its def line) was changed.
         let mut changed = ChangedLines::default();
-        changed.add(&dir.join("touched.py"), 1, 2);
+        changed.add(&dir.join("touched.py"), 5, 6);
 
         let report = analyze_path(&dir, None, Some(&changed)).unwrap();
         assert_eq!(report.meta.mode, crate::report::ReportMode::Diff);
@@ -286,9 +297,10 @@ mod tests {
         .unwrap();
         fs::write(
             dir.join("m.py"),
-            "def unused_long():\n    x = 1\n    y = 2\n    z = 3\n    return x + y + z\n",
+            "def live():\n    return 0\n\n\ndef unused_long():\n    x = 1\n    y = 2\n    z = 3\n    return x + y + z\n",
         )
         .unwrap();
+        fs::write(dir.join("consumer.py"), "from m import live\n\nlive()\n").unwrap();
 
         let report = analyze_path(&dir, None, None).unwrap();
         let dead = report

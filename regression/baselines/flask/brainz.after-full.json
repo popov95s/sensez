@@ -8,10 +8,9 @@
     "reintroduced_by_detector": {},
     "reported_by_detector": {
       "cycles": 2,
-      "dead_code/class": 2,
+      "dead_code/class": 1,
       "dead_code/import": 1,
-      "dead_code/method": 54,
-      "dead_code/variable": 2,
+      "dead_code/variable": 1,
       "duplication": 4,
       "smells/boolean_blindness": 4,
       "smells/divergent_change": 12,

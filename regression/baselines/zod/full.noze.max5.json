@@ -670,7 +670,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 84,
+    "dead_code_total": 7,
     "duplication_total": 15,
     "external_edges": 556,
     "internal_edges": 519,

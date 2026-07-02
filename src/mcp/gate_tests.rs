@@ -372,7 +372,7 @@ struct TestRepo {
 fn fresh_repo(scratch: &str) -> Option<TestRepo> {
     let tmp = tempfile::tempdir().ok()?;
     let root = tmp.path().to_path_buf();
-    if !init_repo(&root) {
+    if !init_repo(&root, scratch) {
         return None;
     }
     Some(TestRepo {
@@ -383,11 +383,16 @@ fn fresh_repo(scratch: &str) -> Option<TestRepo> {
     })
 }
 
-fn init_repo(root: &Path) -> bool {
+fn init_repo(root: &Path, scratch: &str) -> bool {
     if !git(root, &["init"]) {
         return false;
     }
-    std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
+    let module = scratch.strip_suffix(".py").unwrap_or("added");
+    std::fs::write(
+        root.join("base.py"),
+        format!("from {module} import live\n\nprint(live())\n"),
+    )
+    .unwrap();
     git(root, &["add", "."])
         && git(
             root,

@@ -4,7 +4,7 @@
   "dead_code": [
     {
       "action": "advisory",
-      "confidence": "Low",
+      "confidence": "High",
       "file": "<flask>/sensez_regression_fixture.py",
       "kind": "function",
       "line": 1,

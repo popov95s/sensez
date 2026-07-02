@@ -12,11 +12,9 @@
     },
     "reported_by_detector": {
       "cycles": 2,
-      "dead_code/class": 5,
-      "dead_code/function": 42,
+      "dead_code/class": 3,
+      "dead_code/function": 2,
       "dead_code/import": 3,
-      "dead_code/method": 8,
-      "dead_code/variable": 27,
       "duplication": 15,
       "smells/data_clump": 3,
       "smells/divergent_change": 12,
@@ -39,8 +37,8 @@
         "count": 1
       }
     },
-    "scan_files_total": 4465,
-    "scan_loc_total": 822861,
+    "scan_files_total": 4475,
+    "scan_loc_total": 822891,
     "scans": 11,
     "scans_by_origin": {
       "gate": 4,
@@ -119,7 +117,7 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 405.91,
+    "mean_files": 406.82,
     "scans": 11
   },
   "stale_findings": [],

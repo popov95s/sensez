@@ -450,7 +450,7 @@ mod tests {
     fn fresh_repo(scratch: &str) -> Option<TestRepo> {
         let tmp = tempfile::tempdir().ok()?;
         let root = tmp.path().to_path_buf();
-        if !init_repo(&root) {
+        if !init_repo(&root, scratch) {
             return None;
         }
         Some(TestRepo {
@@ -460,7 +460,7 @@ mod tests {
         })
     }
 
-    fn init_repo(root: &std::path::Path) -> bool {
+    fn init_repo(root: &std::path::Path, scratch: &str) -> bool {
         if !Command::new("git")
             .args(["init"])
             .current_dir(root)
@@ -470,7 +470,12 @@ mod tests {
         {
             return false;
         }
-        std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
+        let module = scratch.strip_suffix(".py").unwrap_or("m");
+        std::fs::write(
+            root.join("base.py"),
+            format!("from {module} import live\n\nprint(live())\n"),
+        )
+        .unwrap();
         let ok = Command::new("git")
             .args(["add", "."])
             .current_dir(root)

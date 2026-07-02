@@ -53,10 +53,11 @@ fn pillar_flags_can_be_combined() {
 }
 
 #[test]
-fn default_output_keeps_high_confidence_dead_code_only() {
+fn default_output_drops_low_confidence_dead_code() {
     let mut report = AnalysisReport::default();
     report.dead_code.push(dead("sure", Confidence::High));
     report.dead_code.push(dead("maybe", Confidence::Medium));
+    report.dead_code.push(dead("guess", Confidence::Low));
     let options = spec::ScanOptions {
         threshold: None,
         summary: false,
@@ -77,9 +78,10 @@ fn default_output_keeps_high_confidence_dead_code_only() {
 
     output::apply(&mut report, &options);
 
-    assert_eq!(report.dead_code.len(), 1);
+    assert_eq!(report.dead_code.len(), 2);
     assert_eq!(report.dead_code[0].symbol, "sure");
-    assert_eq!(report.meta.dead_code_total, 1);
+    assert_eq!(report.dead_code[1].symbol, "maybe");
+    assert_eq!(report.meta.dead_code_total, 2);
 }
 
 #[test]

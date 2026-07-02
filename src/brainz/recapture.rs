@@ -144,6 +144,7 @@ mod tests {
             "def used():\n    return 1\n\ndef orphan():\n    return 2\n\nprint(used())\n",
         )
         .unwrap();
+        fs::write(root.join("consumer.py"), "from app import used\n\nused()\n").unwrap();
 
         let text = crate::scan(&root, None, crate::reporter::Format::Json, 0).unwrap();
         let report: Value = serde_json::from_str(&text).unwrap();
@@ -177,7 +178,12 @@ mod tests {
         let Some(branch) = init_repo(&root) else {
             return;
         };
-        fs::write(root.join("app.py"), "def orphan():\n    return 1\n").unwrap();
+        fs::write(
+            root.join("app.py"),
+            "def used():\n    return 0\n\n\ndef orphan():\n    return 1\n",
+        )
+        .unwrap();
+        fs::write(root.join("consumer.py"), "from app import used\n\nused()\n").unwrap();
 
         let text = crate::scan(&root, None, crate::reporter::Format::Json, 0).unwrap();
         let report: Value = serde_json::from_str(&text).unwrap();

@@ -9,11 +9,9 @@ const DEFAULT_SMELL_KIND_TOP: usize = 3;
 
 pub fn apply(report: &mut AnalysisReport, options: &ScanOptions) {
     apply_pillar_filter(report, options);
-    if !options.all {
-        report
-            .dead_code
-            .retain(|finding| finding.confidence == Confidence::High);
-    }
+    report
+        .dead_code
+        .retain(|finding| finding.confidence != Confidence::Low);
     refresh_totals(report);
     report.meta.smell_totals = smell_totals(&report.smells);
 

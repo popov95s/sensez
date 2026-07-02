@@ -12,8 +12,8 @@
         "count": 1
       }
     },
-    "scan_files_total": 9,
-    "scan_loc_total": 20,
+    "scan_files_total": 13,
+    "scan_loc_total": 36,
     "scans": 5,
     "scans_by_origin": {
       "tool": 5
@@ -76,7 +76,7 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 1.8,
+    "mean_files": 2.6,
     "scans": 5
   },
   "stale_findings": [],

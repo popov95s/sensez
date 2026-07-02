@@ -9,10 +9,19 @@ fn gate_blocks_only_new_finding_identities_after_prior_block() {
         return;
     };
     std::fs::create_dir_all(&repo.dir).unwrap();
+    std::fs::write(repo.dir.join("__init__.py"), "").unwrap();
     let left = repo.dir.join("left.py");
     let right = repo.dir.join("right.py");
-    std::fs::write(&left, "def alpha():\n    return 1\n").unwrap();
-    std::fs::write(&right, "def steady():\n    return 2\n").unwrap();
+    std::fs::write(
+        &left,
+        "def live_left():\n    return 0\n\n\ndef alpha():\n    return 1\n",
+    )
+    .unwrap();
+    std::fs::write(
+        &right,
+        "def live_right():\n    return 0\n\n\ndef steady():\n    return 2\n",
+    )
+    .unwrap();
 
     let first = block_reason(&gate(&json!({"path": repo.path})).unwrap());
     assert!(
@@ -22,7 +31,7 @@ fn gate_blocks_only_new_finding_identities_after_prior_block() {
 
     std::fs::write(
         &left,
-        "def alpha():\n    return 1\n\n\ndef fresh():\n    return 3\n",
+        "def live_left():\n    return 0\n\n\ndef alpha():\n    return 1\n\n\ndef fresh():\n    return 3\n",
     )
     .unwrap();
 
@@ -63,7 +72,11 @@ fn init_repo(root: &Path) -> bool {
     if !git(root, &["init"]) {
         return false;
     }
-    std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
+    std::fs::write(
+        root.join("base.py"),
+        "from work.left import live_left\nfrom work.right import live_right\n\nprint(live_left(), live_right())\n",
+    )
+    .unwrap();
     git(root, &["add", "."])
         && git(
             root,

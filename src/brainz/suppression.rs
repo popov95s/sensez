@@ -97,9 +97,10 @@ mod tests {
         }
         fs::write(
             root.join("m.py"),
-            "def orphan():\n    return 1\n\n\ndef orphan_two():\n    return 2\n",
+            "def live():\n    return 0\n\n\ndef orphan():\n    return 1\n\n\ndef orphan_two():\n    return 2\n",
         )
         .unwrap();
+        fs::write(root.join("consumer.py"), "from m import live\n\nlive()\n").unwrap();
 
         let text = crate::scan(root, None, crate::reporter::Format::Json, 0).unwrap();
         let baseline: Value = serde_json::from_str(&text).unwrap();
@@ -165,9 +166,10 @@ mod tests {
         let root = tmp.path();
         fs::write(
             root.join("m.py"),
-            "def orphan():\n    return 1\n\n\ndef keeper():\n    return 2\n",
+            "def live():\n    return 0\n\n\ndef orphan():\n    return 1\n\n\ndef keeper():\n    return 2\n",
         )
         .unwrap();
+        fs::write(root.join("consumer.py"), "from m import live\n\nlive()\n").unwrap();
         fs::write(
             root.join("sensez.toml"),
             "[accept]\ndead_code = [\"m::orphan\"]\n",

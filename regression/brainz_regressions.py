@@ -279,6 +279,7 @@ def _apply_fixture(repo: Path, fixture, text: str) -> None:
     path = repo / fixture["path"]
     path.parent.mkdir(parents=True, exist_ok=True)
     path.write_text(text)
+    _write_fixture_consumer(repo, fixture)
 
 
 def _write_base_source(repo: Path, fixture) -> None:
@@ -289,3 +290,20 @@ def _write_base_source(repo: Path, fixture) -> None:
         )
     else:
         (repo / "base.py").write_text("print('base')\n")
+
+
+def _write_fixture_consumer(repo: Path, fixture) -> None:
+    path = Path(fixture["path"])
+    if path.suffix == ".ts":
+        live = "sensezRegressionLiveHelper"
+        consumer = path.with_name(f"{path.stem}-consumer{path.suffix}")
+        module = f"./{path.with_suffix('').name}"
+        text = f'import {{ {live} }} from "{module}";\nconsole.log({live});\n'
+    else:
+        live = "sensez_regression_live_helper"
+        consumer = path.with_name(f"{path.stem}_consumer{path.suffix}")
+        module = path.with_suffix("").as_posix().replace("/", ".")
+        text = f"from {module} import {live}\n\nprint({live}())\n"
+    target = repo / consumer
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(text)
