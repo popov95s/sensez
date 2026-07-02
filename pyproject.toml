@@ -4,7 +4,7 @@ build-backend = "maturin"
 
 [project]
 name = "sensez"
-version = "0.1.6"
+version = "0.1.7"
 description = "Sensez CLI and MCP server for structural maintainability checks"
 requires-python = ">=3.9"
 readme = "README.md"
