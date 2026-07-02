@@ -113,7 +113,7 @@ fn flags_unused_functions_only_by_default() {
 }
 
 #[test]
-fn unused_properties_are_default_dead_code() {
+fn unused_properties_are_opt_in_dead_code() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     fs::create_dir_all(&dir).unwrap();
@@ -131,15 +131,15 @@ fn unused_properties_are_default_dead_code() {
         .iter()
         .map(|f| (f.symbol.clone(), f.kind))
         .collect();
-    assert!(dead.contains(&("User.stale".to_string(), SymbolKind::Property)));
+    assert!(!dead.contains(&("User.stale".to_string(), SymbolKind::Property)));
 
-    let mut off = default;
-    off.unused_properties = false;
-    let opted_out: Vec<_> = detect(&cg, &files, &off)
+    let mut on = default;
+    on.unused_properties = true;
+    let opted_in: Vec<_> = detect(&cg, &files, &on)
         .iter()
         .map(|f| f.symbol.clone())
         .collect();
-    assert!(!opted_out.contains(&"User.stale".to_string()));
+    assert!(opted_in.contains(&"User.stale".to_string()));
 }
 
 /// Python profile defaults treat alembic migrations, docs/examples, and test
