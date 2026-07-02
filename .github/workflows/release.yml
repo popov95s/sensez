@@ -17,6 +17,9 @@ on:
           - pypi
           - npm
           - release
+  push:
+    tags:
+      - 'v[0-9]+.[0-9]+.[0-9]+*'
 
 jobs:
   guard:
@@ -24,6 +27,7 @@ jobs:
     outputs:
       base_version: ${{ steps.versions.outputs.base_version }}
       release_version: ${{ steps.versions.outputs.release_version }}
+      target: ${{ steps.resolve.outputs.target }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -35,18 +39,24 @@ jobs:
             exit 1
           fi
 
-      - name: Verify version format
+      - name: Resolve inputs
+        id: resolve
+        shell: bash
         run: |
-          case "${{ inputs.version }}" in
-            v*) echo "Pass the version without a leading v." >&2; exit 1 ;;
-          esac
+          if [ "${{ github.event_name }}" = "push" ]; then
+            printf 'target=release\n' >> "$GITHUB_OUTPUT"
+            printf 'version=%s\n' "$(echo '${{ github.ref_name }}' | sed 's/^v//')" >> "$GITHUB_OUTPUT"
+          else
+            printf 'target=%s\n' "${{ inputs.target }}" >> "$GITHUB_OUTPUT"
+            printf 'version=%s\n' "${{ inputs.version }}" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Compute release version
         id: versions
         shell: bash
         run: |
-          base_version="${{ inputs.version }}"
-          if [ "${{ inputs.target }}" = "testpypi" ]; then
+          base_version="${{ steps.resolve.outputs.version }}"
+          if [ "${{ steps.resolve.outputs.target }}" = "testpypi" ]; then
             release_version="$(python3 -c 'import os; print("{}-dev{}{:02d}".format(os.environ["BASE_VERSION"], int(os.environ["GITHUB_RUN_NUMBER"]), int(os.environ["GITHUB_RUN_ATTEMPT"])))')"
           else
             release_version="$base_version"
@@ -54,12 +64,12 @@ jobs:
           printf 'base_version=%s\n' "$base_version" >> "$GITHUB_OUTPUT"
           printf 'release_version=%s\n' "$release_version" >> "$GITHUB_OUTPUT"
         env:
-          BASE_VERSION: ${{ inputs.version }}
+          BASE_VERSION: ${{ steps.resolve.outputs.version }}
 
       - name: Verify package versions
         env:
           BASE_VERSION: ${{ steps.versions.outputs.base_version }}
-          RELEASE_TARGET: ${{ inputs.target }}
+          RELEASE_TARGET: ${{ steps.resolve.outputs.target }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
@@ -85,7 +95,7 @@ jobs:
 
   build-pypi-wheels:
     needs: guard
-    if: ${{ inputs.target == 'pypi' || inputs.target == 'release' }}
+    if: ${{ needs.guard.outputs.target == 'pypi' || needs.guard.outputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -120,7 +130,7 @@ jobs:
 
   publish-pypi:
     needs: build-pypi-wheels
-    if: ${{ inputs.target == 'pypi' || inputs.target == 'release' }}
+    if: ${{ needs.guard.outputs.target == 'pypi' || needs.guard.outputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
       name: pypi
@@ -142,7 +152,7 @@ jobs:
 
   build-testpypi-wheels:
     needs: guard
-    if: ${{ inputs.target == 'testpypi' }}
+    if: ${{ needs.guard.outputs.target == 'testpypi' }}
     runs-on: macos-15
     steps:
       - uses: actions/checkout@v4
@@ -180,7 +190,7 @@ jobs:
 
   publish-testpypi:
     needs: build-testpypi-wheels
-    if: ${{ inputs.target == 'testpypi' }}
+    if: ${{ needs.guard.outputs.target == 'testpypi' }}
     runs-on: ubuntu-latest
     environment:
       name: testpypi
@@ -203,7 +213,7 @@ jobs:
 
   build-npm-packages:
     needs: guard
-    if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
+    if: ${{ needs.guard.outputs.target == 'npm' || needs.guard.outputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
     strategy:
       fail-fast: false
@@ -263,7 +273,7 @@ jobs:
 
   publish-npm:
     needs: build-npm-packages
-    if: ${{ inputs.target == 'npm' || inputs.target == 'release' }}
+    if: ${{ needs.guard.outputs.target == 'npm' || needs.guard.outputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
       name: npm
