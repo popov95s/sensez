@@ -137,6 +137,7 @@ def run_target(config: RegressionConfig, target: Target, sensez: Path, accept: b
     run_full_scans(sensez, cache, target, out)
     run_mcp_scenarios(sensez, config, target, cache, out)
     run_gate_reblock_scenario(sensez, config, target, cache, out)
+    run_gate_detached_scenario(sensez, config, target, cache, out)
     run_branch_metric_scenarios(sensez, config, target, out)
     baseline = BASELINES / name
     if accept:
@@ -379,6 +380,37 @@ def run_gate_reblock_scenario(
         dump_norm(out / "gate.block-new-only.json", second, repo, target)
         assert_gate_blocks(second, target["name"])
         assert_gate_mentions_new_only(second, extra_symbol, fixture["symbol"], target["name"])
+    finally:
+        client.close()
+        cleanup_repo(repo)
+
+
+def run_gate_detached_scenario(
+    sensez: Path,
+    config: RegressionConfig,
+    target: Target,
+    cache: Path,
+    out: Path,
+) -> None:
+    repo = scenario_repo(cache, target)
+    fixture = config["profiles"][target["profile"]]["dead_code_fixture"]
+    client = McpClient(sensez)
+    try:
+        client.request("initialize")
+        apply_fixture(repo, fixture, fixture["text"])
+        first = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        assert_gate_blocks(first, target["name"])
+        same_branch = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        assert_gate_allows(same_branch, "same branch")
+
+        run(["git", "checkout", "--detach"], repo)
+        detached = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        dump_norm(out / "gate.allow-detached.json", detached, repo, target)
+        assert_gate_allows(detached, "detached HEAD")
+
+        run(["git", "checkout", "sensez-regression-worktree"], repo)
+        attached = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
+        assert_gate_allows(attached, "reattached branch")
     finally:
         client.close()
         cleanup_repo(repo)

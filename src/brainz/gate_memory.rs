@@ -1,7 +1,7 @@
 //! Remember which finding identities have already blocked the gate.
 
 use super::events::Event;
-use super::{fingerprint, hub, store};
+use super::{fingerprint, store};
 use crate::report::AnalysisReport;
 use std::collections::BTreeSet;
 
@@ -24,15 +24,10 @@ pub fn retain_unseen_gate_findings(root: &std::path::Path, report: &mut Analysis
 }
 
 fn blocked_fingerprints(root: &std::path::Path) -> BTreeSet<String> {
-    let branch = hub::branch_label(root);
     store::load_events(root)
         .into_iter()
         .filter_map(|event| match event {
-            Event::GateBlock {
-                branch: event_branch,
-                fingerprints,
-                ..
-            } if event_branch == branch => Some(fingerprints),
+            Event::GateBlock { fingerprints, .. } => Some(fingerprints),
             _ => None,
         })
         .flatten()

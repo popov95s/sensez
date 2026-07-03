@@ -42,6 +42,33 @@ fn gate_blocks_only_new_finding_identities_after_prior_block() {
     );
 }
 
+#[test]
+fn gate_keeps_prior_block_memory_when_head_is_detached() {
+    let Some(repo) = fresh_repo("work") else {
+        return;
+    };
+    std::fs::create_dir_all(&repo.dir).unwrap();
+    std::fs::write(repo.dir.join("__init__.py"), "").unwrap();
+    std::fs::write(
+        repo.dir.join("left.py"),
+        "def live_left():\n    return 0\n\n\ndef alpha():\n    return 1\n",
+    )
+    .unwrap();
+
+    let first = gate(&json!({"path": repo.path})).unwrap();
+    assert_block(&first);
+    let second = gate(&json!({"path": repo.path})).unwrap();
+    assert_allow(&second);
+
+    assert!(git(&repo.root, &["checkout", "--detach"]));
+    let detached = gate(&json!({"path": repo.path})).unwrap();
+    assert_allow(&detached);
+
+    assert!(git(&repo.root, &["checkout", "master"]) || git(&repo.root, &["checkout", "main"]));
+    let attached = gate(&json!({"path": repo.path})).unwrap();
+    assert_allow(&attached);
+}
+
 fn block_reason(resp: &Value) -> String {
     let text = resp["content"][0]["text"].as_str().unwrap();
     let decision: Value = serde_json::from_str(text).unwrap();
@@ -49,8 +76,19 @@ fn block_reason(resp: &Value) -> String {
     decision["reason"].as_str().unwrap().to_string()
 }
 
+fn assert_block(resp: &Value) {
+    let text = resp["content"][0]["text"].as_str().unwrap();
+    let decision: Value = serde_json::from_str(text).unwrap();
+    assert_eq!(decision["decision"], "block", "expected block: {text}");
+}
+
+fn assert_allow(resp: &Value) {
+    assert_eq!(resp["content"][0]["text"], "{}");
+}
+
 struct TestRepo {
     _tmp: tempfile::TempDir,
+    root: PathBuf,
     dir: PathBuf,
     path: String,
 }
@@ -63,6 +101,7 @@ fn fresh_repo(child: &str) -> Option<TestRepo> {
     }
     Some(TestRepo {
         _tmp: tmp,
+        root: root.clone(),
         dir: root.join(child),
         path: root.to_string_lossy().into_owned(),
     })
