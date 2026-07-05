@@ -2650,7 +2650,7 @@ wheels = [
 
 [[package]]
 name = "sensez"
-version = "0.1.5"
+version = "0.1.9"
 source = { editable = "." }
 
 [[package]]
