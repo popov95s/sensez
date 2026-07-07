@@ -1,0 +1,1 @@
+[{"target": "django", "mean_s": 1.32, "stddev_s": 0.021, "runs": 5, "commit": "2d4add1"}, {"target": "zod", "mean_s": 0.192, "stddev_s": 0.007, "runs": 5, "commit": "ca42965"}]
