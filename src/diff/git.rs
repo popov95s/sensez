@@ -23,7 +23,7 @@ pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
     let root = run(&["rev-parse", "--show-toplevel"], scan_path)?;
     let root = Path::new(root.trim());
 
-    let diff = run(&["diff", "--unified=0", "HEAD"], scan_path)?;
+    let diff = run(&["diff", "--unified=0", "HEAD"], root)?;
     let mut changed = ChangedLines::from_unified(&diff, root);
 
     for file in untracked_sources(root)? {
@@ -32,18 +32,12 @@ pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
     Ok(changed)
 }
 
-/// Absolute paths of every untracked file git would add (honoring
-/// `.gitignore`) that sensez can parse. Uses `ls-files --others`, which lists
-/// files *individually* — unlike `status --porcelain`, it expands a wholly-new
-/// directory into its files instead of collapsing it to one `dir/` entry (the
-/// bug that hid brand-new packages from `--diff`). Run from `root` so paths are
-/// repo-root-relative regardless of the caller's cwd. Filters by the language
-/// registry, so untracked `.js`/`.ts` are included and non-source files aren't.
 fn untracked_sources(root: &Path) -> Result<Vec<PathBuf>> {
-    let listing = run(&["ls-files", "--others", "--exclude-standard"], root)?;
+    let listing = run(&["status", "--porcelain", "--untracked-files=all"], root)?;
     Ok(listing
         .lines()
-        .map(str::trim)
+        .filter(|line| line.starts_with("?? "))
+        .map(|line| line.trim_start_matches("?? ").trim())
         .filter(|rel| !rel.is_empty())
         .map(|rel| root.join(rel))
         .filter(|abs| crate::profiles::registry::parse_for_path(abs).is_some())
@@ -134,11 +128,6 @@ mod tests {
     use super::*;
     use std::fs;
 
-    /// A brand-new untracked directory must be expanded to its individual
-    /// source files (the bug: `status --porcelain` collapsed it to one `dir/`
-    /// entry, so `--diff` saw none of the code). JS is included; non-source is
-    /// not. Uses only `git init` (no add/commit needed — `ls-files --others`
-    /// lists untracked files without a HEAD).
     #[test]
     fn untracked_directory_is_expanded_to_source_files() {
         let tmp = tempfile::tempdir().unwrap();
@@ -175,6 +164,63 @@ mod tests {
         assert!(
             names.contains(&"b.ts".to_string()),
             "untracked .ts included: {names:?}"
+        );
+    }
+
+    #[test]
+    fn diff_is_fast_with_large_gitignored_footprint() {
+        use std::time::Instant;
+
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let git = |args: &[&str]| {
+            Command::new("git")
+                .args(args)
+                .current_dir(root)
+                .output()
+                .expect("git must be available")
+        };
+        git(&["init"]);
+        git(&["config", "user.email", "test@test"]);
+        git(&["config", "user.name", "test"]);
+
+        fs::write(root.join(".gitignore"), ".venv/\nnode_modules/\n").unwrap();
+        fs::write(root.join("seed.py"), "# seed\n").unwrap();
+        git(&["add", "."]);
+        git(&["commit", "-m", "seed"]);
+
+        let venv1 = root.join(".venv/lib/python3.11/site-packages");
+        let venv2 = root.join("node_modules/pkg/dist");
+        fs::create_dir_all(&venv1).unwrap();
+        fs::create_dir_all(&venv2).unwrap();
+        for i in 0..500 {
+            fs::write(venv1.join(format!("mod{i}.py")), format!("# {i}\n")).unwrap();
+        }
+        for i in 0..500 {
+            fs::write(venv2.join(format!("chunk{i}.js")), format!("// {i}\n")).unwrap();
+        }
+
+        fs::write(root.join("app.py"), "def main():\n    return 42\n").unwrap();
+
+        let start = Instant::now();
+        let changed = changed_vs_head(root).unwrap();
+        let elapsed = start.elapsed();
+
+        assert!(
+            elapsed.as_secs() < 2,
+            "diff must complete in < 2 s, took {elapsed:.2?}"
+        );
+        assert!(
+            changed.touches_file(&root.join("app.py")),
+            "untracked file must appear"
+        );
+        assert!(
+            !changed.paths().any(|p| p.starts_with(&venv1)),
+            "no files from .venv should appear"
+        );
+        assert!(
+            !changed.paths().any(|p| p.starts_with(&venv2)),
+            "no files from node_modules should appear"
         );
     }
 }
