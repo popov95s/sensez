@@ -1,0 +1,53 @@
+site_name: sensez
+site_description: Structural maintainability docs for the Sensez CLI and MCP server.
+theme:
+  name: material
+  logo: assets/favicon.svg
+  favicon: assets/favicon.svg
+  palette:
+    - scheme: default
+      primary: black
+      accent: orange
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - scheme: slate
+      primary: black
+      accent: orange
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  features:
+    - navigation.indexes
+    - navigation.sections
+    - content.code.copy
+    - search.highlight
+    - search.suggest
+extra_css:
+  - stylesheets/brand.css
+extra_javascript:
+  - javascripts/findings-tabs.js
+extra:
+  version:
+    provider: mike
+plugins:
+  - search
+markdown_extensions:
+  - admonition
+  - pymdownx.details
+  - pymdownx.superfences
+  - pymdownx.tabbed:
+      alternate_style: true
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Reference:
+      - CLI: reference/cli.md
+      - Findings: reference/findings.md
+      - Configuration: reference/configuration.md
+      - Local Metrics: local-metrics.md
+  - Usage:
+      - MCP and Agents: usage/mcp-and-agents.md
+      - GitHub Action: usage/github-action.md
+  - Contributing:
+      - Maintaining Docs: contributing/docs.md

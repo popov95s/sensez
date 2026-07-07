@@ -13,6 +13,56 @@ set dotenv-load := false
 default:
     @just --list
 
+# --- Docs ------------------------------------------------------------------
+
+# Regenerate the reference pages derived from the Rust source of truth.
+docs-generate:
+    python3 docs/generate.py
+
+# Format and enforce multiline trailing commas in Python docs examples.
+docs-examples-ruff:
+    uv run --with ruff ruff format --no-cache docs/examples
+    uv run --with ruff ruff check --no-cache --select COM812 docs/examples
+
+# Format and enforce multiline trailing commas in TypeScript docs examples.
+docs-examples-eslint:
+    npm --prefix docs/examples install
+    npm --prefix docs/examples run format
+    npm --prefix docs/examples run check
+
+# Build the MkDocs site locally.
+docs-build:
+    python3 docs/generate.py
+    uv run --with ruff ruff format --no-cache --check docs/examples
+    uv run --with ruff ruff check --no-cache --select COM812 docs/examples
+    npm --prefix docs/examples install
+    npm --prefix docs/examples run check
+    NO_MKDOCS_2_WARNING=1 uv run --with mkdocs-material --with mike mkdocs build --strict
+
+# Build a local mike version without pushing it.
+docs-version version:
+    python3 docs/generate.py
+    NO_MKDOCS_2_WARNING=1 uv run --with mkdocs-material --with mike mike deploy --update-aliases "{{version}}" latest
+
+# Serve the MkDocs site locally.
+docs-serve:
+    python3 docs/generate.py
+    NO_MKDOCS_2_WARNING=1 uv run --with mkdocs-material --with mike mkdocs serve
+
+# Serve the versioned docs tree locally after `just docs-version <version>`.
+docs-version-serve:
+    uv run --with mkdocs-material --with mike mike serve
+
+# --- Benchmarks -------------------------------------------------------------
+
+# Run timed benchmarks against pinned repos and compare to baseline.
+bench:
+    ./benchmarks/run.sh
+
+# Run benchmarks and overwrite the baseline file (commit afterwards).
+bench-update:
+    SENSEZ_WRITE_BASELINE=1 ./benchmarks/run.sh
+
 # --- Versioning ------------------------------------------------------------
 
 # Verify every version field agrees with Cargo.toml. Mirrors the guard job in

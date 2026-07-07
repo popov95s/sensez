@@ -313,3 +313,68 @@ jobs:
       - name: Publish wrapper package
         working-directory: npm
         run: npm publish --provenance --access public
+
+  publish-docs:
+    needs:
+      - guard
+      - publish-pypi
+      - publish-npm
+    if: ${{ always() && needs.guard.outputs.target == 'release' && needs.publish-pypi.result == 'success' && needs.publish-npm.result == 'success' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Build sensez binary
+        run: cargo build
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: docs/examples/package-lock.json
+
+      - name: Install docs example JS tooling
+        run: npm ci
+        working-directory: docs/examples
+
+      - name: Generate docs reference
+        run: uv run docs/generate.py
+
+      - name: Verify docs reference is current
+        run: git diff --exit-code -- docs/reference/findings.md
+
+      - name: Verify docs examples
+        run: uv run docs/verify_examples.py
+
+      - name: Verify docs examples formatting
+        run: |
+          uv run --with ruff ruff format --no-cache --check docs/examples
+          uv run --with ruff ruff check --no-cache --select COM812 docs/examples
+          npm --prefix docs/examples run check
+
+      - name: Deploy versioned docs
+        env:
+          DOCS_VERSION: ${{ needs.guard.outputs.base_version }}
+          NO_MKDOCS_2_WARNING: "1"
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          uv run --with mkdocs-material --with mike mike deploy --push --update-aliases "$DOCS_VERSION" latest
+          uv run --with mkdocs-material --with mike mike set-default --push latest

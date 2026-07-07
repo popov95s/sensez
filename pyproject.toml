@@ -6,7 +6,7 @@ build-backend = "maturin"
 name = "sensez"
 version = "0.1.9"
 description = "Sensez CLI and MCP server for structural maintainability checks"
-requires-python = ">=3.9"
+requires-python = ">=3.11"
 readme = "README.md"
 keywords = ["architecture", "dead-code", "duplication", "code-quality"]
 classifiers = [

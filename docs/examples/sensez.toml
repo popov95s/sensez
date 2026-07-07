@@ -1,0 +1,91 @@
+# Docs-example configuration for Sensez.
+#
+# This single file turns ON every Sensez pillar (duplication, dead code, import
+# cycles, boundary violations) and every design-smell detector, with
+# deliberately aggressive thresholds so a tiny example file is enough for the
+# named finding to fire.
+#
+# `docs/verify_examples.py` copies each `docs/examples/<kind>/` folder into a
+# temporary scan root alongside this file, runs `sensez noze`, and asserts:
+#   - `example.{py,ts}` triggers the named finding (collateral findings allowed).
+#   - `fixed.{py,ts}` triggers no finding from any pillar.
+#
+# `<kind>` is either a smell kind snake_case name (`boolean_blindness`, ...) or
+# one of the pillar keys (`cycles`, `dead_code`, `boundaries`, `duplication`).
+
+roots = []
+exclude = []
+
+# Duplication: low threshold so a handful of repeated lines is enough to fire.
+[duplication]
+threshold = 25
+max_gap = 0
+exclude = []
+
+# Dead code: fixed.* are treated as out-of-graph entry points so the verifier's
+# "fixed.{py,ts} emits nothing" contract holds for this pillar. Opt-in expanded
+# categories stay off — none of the example files rely on them.
+[dead_code]
+entry_points = ["**/fixed.py", "**/fixed.ts"]
+unused_imports = false
+unused_methods = false
+unused_variables = false
+
+# Boundary rule exercised by `docs/examples/boundaries/`. Path globs are robust
+# to namespace layouts and to TS module paths, so the same rule works for both
+# example languages.
+[[boundaries.forbidden]]
+from = "**/boundaries/api/**"
+to = "**/boundaries/db/**"
+
+# Design smells: every detector enabled, every threshold tuned small so the
+# smallest example still fires. These knobs apply uniformly to every language.
+[smells]
+enabled = true
+exclude = []
+max_cyclomatic = 5
+max_cognitive = 5
+max_function_lines = 12
+max_nesting = 2
+max_params = 3
+max_returns = 4
+max_class_methods = 3
+max_chain_depth = 2
+data_clump_min_fields = 3
+data_clump_min_occurrences = 2
+god_module_fan = 4
+shotgun_blast_threshold = 5
+split_variable_min_assigns = 3
+max_bool_params = 1
+max_tuple_return = 2
+implicit_schema_min_keys = 3
+max_nested_function_lines = 4
+magic_numbers = true
+cyclomatic_complexity = true
+long_function = true
+large_class = true
+long_parameter_list = true
+too_many_returns = true
+split_variable = true
+loose_typing = true
+magic_string_default = true
+tuple_packing = true
+param_mutation = true
+param_reassignment = true
+literal_membership = true
+
+# Per-language defaults disable a couple of heuristic smells on JS/TS
+# (high_cognitive_complexity, deep_nesting) because ESLint/SonarJS own them,
+# and Python has none on by default. The docs want every smell documented in
+# every language, so wipe both per-language disabled lists.
+[smells.python]
+disabled = []
+
+[smells.typescript]
+disabled = []
+
+[smells.javascript]
+disabled = []
+
+[smells.rust]
+disabled = []

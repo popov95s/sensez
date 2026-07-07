@@ -19,7 +19,7 @@ false-positive verdict).
 | File | Contents | Growth bound |
 | --- | --- | --- |
 | `events.jsonl` | Append-only event log (one JSON object per line). The source of truth; everything else is derived. | Compacted on flush once it passes **4 MB**, keeping a **45-day** window. |
-| `totals.json` | All-time aggregates, rebuilt by folding events. | Bounded — keys are a finite `pillar/<detector>` space. |
+| `totals.json` | Aggregates rebuilt by folding events. Most fields are all-time; `reported_by_detector` is the latest scan's current finding set. | Bounded — keys are a finite `pillar/<detector>` space. |
 | `last-scan.json` | Per-branch fingerprint baseline + resolved-history (for reintroduction detection). | Capped at **32 branches** (LRU); resolved-history entries expire after **30 days**. |
 | `triage.json` | The user's debt / false-positive verdicts, keyed by finding fingerprint. | Grows only on explicit user verdicts. |
 
@@ -32,7 +32,7 @@ without sub-kinds (`cycles`, `boundaries`, `duplication`).
 ## Events (`events.jsonl`)
 
 - **`scan`** — a scan ran. Carries `origin` (`tool` | `gate` | `cli`), per-detector
-  `reported` counts, per-detector `resolved` (findings that vanished since the
+  `reported` counts for that scan, per-detector `resolved` (findings that vanished since the
   last full scan, with summed time-to-resolution), `reintroduced` (previously
   resolved findings that came back, with summed interval), `files`/`loc` (size),
   and a `config_hash`.
@@ -49,11 +49,15 @@ without sub-kinds (`cycles`, `boundaries`, `duplication`).
 
 Backed by `totals.json` plus read-time derivations (`brainz::report`):
 
+- **`all_time.reported_by_detector`** — the latest persisted scan's current
+  per-detector finding counts. Re-scanning unchanged code or switching away and
+  back to the same branch must not inflate it as a lifetime counter.
+
 - **`precision_by_detector`** — `(resolved + debt) / (resolved + debt + false_positive)`,
   with raw counts so a low-sample rate isn't mistaken for a confident one.
 - **`mean_resolution_days`** — per detector + `_overall`; how fast findings get fixed.
-- **`recidivism_by_detector`** — fixes that didn't stick: reintroductions,
-  recurrence rate, and mean days a fix held.
+- **`fix_reintroductions_by_detector`** — fixes that didn't stick:
+  reintroduction count, reintroduction rate, and mean days a fix held.
 - **`gate_funnel`** — scans by origin and the gate's share (edit-time enforcement).
 - **`gate_conversion`** — of findings the gate blocked, how many were fixed vs.
   escaped open. `conversion_rate` is `null` until a full scan exists to measure
