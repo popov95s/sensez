@@ -10,7 +10,8 @@ from pathlib import Path
 
 from finding_groups import grouped_smells
 from finding_types import Smell, SmellTerm
-from tuning import parse_rule_knobs, render_tuning
+from rust_metadata import parse_rule_knobs
+from tuning import render_tuning
 
 ROOT = Path(__file__).resolve().parents[1]
 GLOSSARY_RS = ROOT / "src/noze/glossary.rs"

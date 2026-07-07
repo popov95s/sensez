@@ -14,7 +14,7 @@ stages per language suffix:
 
 Run via uv with no project install: ``uv run docs/verify_examples.py``.
 ``SENSEZ_BIN`` overrides the binary; rebuilt from source if missing. This
-script is the docs CD gate (see ``.github/workflows/docs.yml``).
+script is the docs CD gate (see ``.github/workflows/ci.yml``).
 """
 
 from __future__ import annotations
