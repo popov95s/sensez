@@ -17,12 +17,12 @@ default:
 
 # Regenerate the reference pages derived from the Rust source of truth.
 docs-generate:
-    uv run docs/generate.py
+    uv run --no-project docs/generate.py
 
 # Format and enforce multiline trailing commas in Python docs examples.
 docs-examples-ruff:
-    uv run --with ruff ruff format --no-cache docs/examples
-    uv run --with ruff ruff check --no-cache --select COM812 docs/examples
+    uv run --no-project --with ruff ruff format --no-cache docs/examples
+    uv run --no-project --with ruff ruff check --no-cache --select COM812 docs/examples
 
 # Format and enforce multiline trailing commas in TypeScript docs examples.
 docs-examples-eslint:
@@ -32,26 +32,26 @@ docs-examples-eslint:
 
 # Build the MkDocs site locally.
 docs-build:
-    uv run docs/generate.py
-    uv run --with ruff ruff format --no-cache --check docs/examples
-    uv run --with ruff ruff check --no-cache --select COM812 docs/examples
+    uv run --no-project docs/generate.py
+    uv run --no-project --with ruff ruff format --no-cache --check docs/examples
+    uv run --no-project --with ruff ruff check --no-cache --select COM812 docs/examples
     npm --prefix docs/examples install
     npm --prefix docs/examples run check
-    NO_MKDOCS_2_WARNING=1 uv run --with mkdocs-material --with mike mkdocs build --strict
+    NO_MKDOCS_2_WARNING=1 uv run --no-project --with mkdocs-material --with mike mkdocs build --strict
 
 # Build a local mike version without pushing it.
 docs-version version:
-    uv run docs/generate.py
-    NO_MKDOCS_2_WARNING=1 uv run --with mkdocs-material --with mike mike deploy --update-aliases "{{version}}" latest
+    uv run --no-project docs/generate.py
+    NO_MKDOCS_2_WARNING=1 uv run --no-project --with mkdocs-material --with mike mike deploy --update-aliases "{{version}}" latest
 
 # Serve the MkDocs site locally.
 docs-serve:
-    uv run docs/generate.py
-    NO_MKDOCS_2_WARNING=1 uv run --with mkdocs-material --with mike mkdocs serve
+    uv run --no-project docs/generate.py
+    NO_MKDOCS_2_WARNING=1 uv run --no-project --with mkdocs-material --with mike mkdocs serve
 
 # Serve the versioned docs tree locally after `just docs-version <version>`.
 docs-version-serve:
-    uv run --with mkdocs-material --with mike mike serve
+    uv run --no-project --with mkdocs-material --with mike mike serve
 
 # --- Benchmarks -------------------------------------------------------------
 

@@ -1,5 +1,7 @@
 site_name: sensez
 site_description: Structural maintainability docs for the Sensez CLI and MCP server.
+exclude_docs: |
+  examples/**
 theme:
   name: material
   logo: assets/favicon.svg

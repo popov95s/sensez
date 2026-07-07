@@ -90,13 +90,13 @@ jobs:
       - name: Run tests
         run: cargo test --all-features
 
-      - name: Dogfood
+      - name: Dogfood and build debug binary
         # Builds target/debug/sensez in this job; docs example verification
         # reuses that binary instead of rebuilding it in a separate workflow.
         run: cargo run -- noze . --fail-on-new must_fix
 
       - name: Generate docs reference
-        run: uv run docs/generate.py
+        run: uv run --no-project docs/generate.py
 
       - name: Verify docs reference is current
         run: git diff --exit-code -- docs/reference/findings.md
@@ -104,18 +104,18 @@ jobs:
       - name: Verify docs examples against sensez
         # Drives the local debug binary: for each docs/examples/<kind>/ folder
         # bad stage must produce the named finding and fixed.* must be clean.
-        run: uv run docs/verify_examples.py
+        run: uv run --no-project docs/verify_examples.py
 
       - name: Verify docs examples formatting
         run: |
-          uv run --with ruff ruff format --no-cache --check docs/examples
-          uv run --with ruff ruff check --no-cache --select COM812 docs/examples
+          uv run --no-project --with ruff ruff format --no-cache --check docs/examples
+          uv run --no-project --with ruff ruff check --no-cache --select COM812 docs/examples
           npm --prefix docs/examples run check
 
       - name: Build docs site
         env:
           NO_MKDOCS_2_WARNING: "1"
-        run: uv run --with mkdocs-material --with mike mkdocs build --strict
+        run: uv run --no-project --with mkdocs-material --with mike mkdocs build --strict
 
       - name: Build sensez (release)
         run: cargo build --release --features all-langs
@@ -130,4 +130,4 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          uv run --with mkdocs-material --with mike mike deploy --push --update-aliases dev
+          uv run --no-project --with mkdocs-material --with mike mike deploy --push --update-aliases dev

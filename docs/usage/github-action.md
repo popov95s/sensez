@@ -4,8 +4,10 @@ The GitHub Action is the PR-facing wrapper for Sensez's feedback.
 It is useful when you want structural review comments or annotations without
 requiring every contributor to install Sensez locally.
 
-The canonical action docs live in [`action/README.md`](../../action/README.md),
-and the exact inputs are defined in [`action.yml`](../../action.yml).
+The canonical action docs live in
+[`action/README.md`](https://github.com/popov95s/sensez/blob/main/action/README.md),
+and the exact inputs are defined in
+[`action.yml`](https://github.com/popov95s/sensez/blob/main/action.yml).
 
 ## What It Does
 
