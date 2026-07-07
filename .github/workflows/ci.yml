@@ -76,18 +76,6 @@ jobs:
       - name: Dogfood
         run: cargo run -- noze . --fail-on-new must_fix
 
-  benchmark:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
-
-      - name: Cache cargo artifacts
-        uses: Swatinem/rust-cache@v2
-
       - name: Build sensez (release)
         run: cargo build --release --features all-langs
 
