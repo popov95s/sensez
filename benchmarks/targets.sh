@@ -38,9 +38,9 @@ clone_at() {
 }
 
 clone_targets() {
-  clone_at django \
-    https://github.com/django/django.git \
-    5.1.4
+  clone_at flask \
+    https://github.com/pallets/flask.git \
+    3.0.3
 
   clone_at zod \
     https://github.com/colinhacks/zod.git \
@@ -48,6 +48,6 @@ clone_targets() {
 }
 
 TARGETS=(
-  "django"
+  "flask"
   "zod"
 )
