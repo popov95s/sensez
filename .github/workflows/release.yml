@@ -319,7 +319,7 @@ jobs:
       - guard
       - publish-pypi
       - publish-npm
-    if: ${{ always() && needs.guard.outputs.target == 'release' && needs.publish-pypi.result == 'success' && needs.publish-npm.result == 'success' }}
+    if: ${{ always() && ((needs.guard.outputs.target == 'release' && needs.publish-pypi.result == 'success' && needs.publish-npm.result == 'success') || (needs.guard.outputs.target == 'pypi' && needs.publish-pypi.result == 'success')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
