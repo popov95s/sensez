@@ -9,6 +9,7 @@ mod docs;
 mod embed;
 pub(crate) mod extract;
 mod search;
+pub(crate) mod semantic_cache;
 
 pub use docs::{DocKind, RawDoc};
 pub use search::SearchHit;
@@ -22,8 +23,35 @@ pub struct Index {
     cache: cache::SystemCache,
 }
 
+pub(crate) struct ReindexReport {
+    pub docs: usize,
+    pub semantic_warmed: bool,
+}
+
 pub(crate) fn embed_texts(texts: &[String]) -> anyhow::Result<Vec<Vec<f32>>> {
     Ok(embed::Embedder::load()?.embed(texts))
+}
+
+pub(crate) fn semantic_vectors(
+    root: &Path,
+    inputs: &[semantic_cache::BundleInput],
+) -> anyhow::Result<Vec<Vec<f32>>> {
+    semantic_cache::vectors(root, inputs)
+}
+
+pub(crate) fn reindex(root: &Path, force: bool, semantic: bool) -> Result<ReindexReport> {
+    if force {
+        cache::clear(root)?;
+        semantic_cache::clear(root)?;
+    }
+    let index = Index::open(root)?;
+    if semantic {
+        let _ = crate::analyze_path(root, None, None)?;
+    }
+    Ok(ReindexReport {
+        docs: index.len(),
+        semantic_warmed: semantic,
+    })
 }
 
 impl Index {

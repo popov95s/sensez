@@ -14,11 +14,31 @@ pub fn retain_unseen_gate_findings(root: &std::path::Path, report: &mut Analysis
         return finding_count(report);
     };
     let prints = fingerprint::fingerprints(&value);
-    retain_unblocked(&mut report.cycles, prints.get("cycles"), &blocked);
-    retain_unblocked(&mut report.dead_code, prints.get("dead_code"), &blocked);
-    retain_unblocked(&mut report.boundaries, prints.get("boundaries"), &blocked);
-    retain_unblocked(&mut report.duplication, prints.get("duplication"), &blocked);
-    retain_unblocked(&mut report.smells, prints.get("smells"), &blocked);
+    retain_unblocked(
+        &mut report.cycles,
+        prints.get(&fingerprint::Namespace::Cycles),
+        &blocked,
+    );
+    retain_unblocked(
+        &mut report.dead_code,
+        prints.get(&fingerprint::Namespace::DeadCode),
+        &blocked,
+    );
+    retain_unblocked(
+        &mut report.boundaries,
+        prints.get(&fingerprint::Namespace::Boundaries),
+        &blocked,
+    );
+    retain_unblocked(
+        &mut report.duplication,
+        prints.get(&fingerprint::Namespace::Duplication),
+        &blocked,
+    );
+    retain_unblocked(
+        &mut report.smells,
+        prints.get(&fingerprint::Namespace::Smells),
+        &blocked,
+    );
     report.meta.glossary = crate::noze::glossary::for_report(report);
     finding_count(report)
 }
@@ -46,7 +66,7 @@ fn retain_unblocked<T>(
     items.retain(|_| {
         let keep = prints
             .get(i)
-            .map(|p| !blocked.contains(&format!("{:x}", p.hash)))
+            .map(|p| !blocked.contains(&p.key()))
             .unwrap_or(true);
         i += 1;
         keep

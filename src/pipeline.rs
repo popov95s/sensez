@@ -35,7 +35,7 @@ pub fn analyze_path(
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
-    let mut report = noze::run(&parsed.files, &graph, &config);
+    let mut report = noze::run_with_root(&parsed.files, &graph, &config, Some(path));
     crate::brainz::apply_suppressions(path, &mut report);
     crate::brainz::rank_by_precision(path, &mut report);
     report.meta.issues.extend(config_issues);

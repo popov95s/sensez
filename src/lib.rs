@@ -10,10 +10,10 @@ mod cli;
 pub mod config;
 mod config_summary;
 mod diff;
-pub mod docs;
 mod dotdir;
 #[cfg(feature = "eyez")]
 mod eyez;
+pub mod fingerprints;
 mod globs;
 #[cfg(feature = "mcp")]
 mod mcp;

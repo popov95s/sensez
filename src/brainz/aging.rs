@@ -49,12 +49,12 @@ pub fn age(
         let old = prev.get(pillar);
         let mut entry = BTreeMap::new();
         for print in prints {
-            let key = format!("{:x}", print.hash);
+            let key = print.key();
             // A previously-resolved fingerprint that is present again: the fix
             // did not hold. Count it (with how long it stayed dead) and drop it
             // from history (active once more).
             if let Some(rec) = active_history.remove(&key) {
-                let tally = reintroduced.entry(print.detector.clone()).or_default();
+                let tally = reintroduced.entry(print.class.to_string()).or_default();
                 tally.count += 1;
                 tally.secs_total += now.saturating_sub(rec.resolved_ts);
             }
@@ -67,7 +67,7 @@ pub fn age(
                 AgedEntry {
                     first_seen,
                     label: print.label.clone(),
-                    detector: print.detector.clone(),
+                    class: print.class.clone(),
                 },
             );
         }
@@ -76,20 +76,20 @@ pub fn age(
                 if entry.contains_key(key) || ignore.contains(key) {
                     continue;
                 }
-                let tally = resolved.entry(gone.detector.clone()).or_default();
+                let tally = resolved.entry(gone.class.to_string()).or_default();
                 tally.count += 1;
                 tally.secs_total += now.saturating_sub(gone.first_seen);
                 // Bank it so a later reappearance is caught as a reintroduction.
                 active_history.insert(
                     key.clone(),
                     ResolvedRecord {
-                        detector: gone.detector.clone(),
+                        class: gone.class.clone(),
                         resolved_ts: now,
                     },
                 );
             }
         }
-        aged.insert(pillar.clone(), entry);
+        aged.insert(*pillar, entry);
     }
     Aging {
         aged,

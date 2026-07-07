@@ -171,6 +171,17 @@ pub enum EyezAction {
         #[arg(long)]
         json: bool,
     },
+    /// Refresh eyez caches for the repository.
+    Reindex {
+        /// Root directory of the target project.
+        path: PathBuf,
+        /// Delete existing eyez caches before rebuilding.
+        #[arg(long)]
+        force: bool,
+        /// Also warm semantic-duplication bundles when configured.
+        #[arg(long)]
+        semantic: bool,
+    },
 }
 
 /// Flags shared by every scan invocation.

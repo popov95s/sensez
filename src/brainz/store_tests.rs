@@ -1,5 +1,5 @@
 use super::events::{Event, Totals};
-use super::fingerprint::{Aged, ResolvedHistory};
+use super::fingerprint::{Aged, AgedEntry, Detector, Label, Namespace, ResolvedHistory};
 use super::store::*;
 use std::collections::BTreeMap;
 use std::fs;
@@ -32,20 +32,20 @@ fn totals_and_events_roundtrip() {
     assert_eq!(log.lines().count(), 2, "appends accumulate");
 
     let prints: Aged = BTreeMap::from([(
-        "dead_code".into(),
+        Namespace::DeadCode,
         BTreeMap::from([(
             "7".to_string(),
-            super::fingerprint::AgedEntry {
+            AgedEntry {
                 first_seen: 1,
-                label: "x".into(),
-                detector: "dead_code/function".into(),
+                label: dead_label("x"),
+                class: dead_function(),
             },
         )]),
     )]);
     let history: ResolvedHistory = BTreeMap::from([(
         "dead".to_string(),
         super::fingerprint::ResolvedRecord {
-            detector: "dead_code/function".into(),
+            class: dead_function(),
             resolved_ts: 5,
         },
     )]);
@@ -59,13 +59,13 @@ fn fingerprints_are_isolated_per_branch() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path().to_path_buf();
     let prints: Aged = BTreeMap::from([(
-        "dead_code".into(),
+        Namespace::DeadCode,
         BTreeMap::from([(
             "abc".to_string(),
-            super::fingerprint::AgedEntry {
+            AgedEntry {
                 first_seen: 1,
-                label: "main-only".into(),
-                detector: "dead_code/function".into(),
+                label: dead_label("main-only"),
+                class: dead_function(),
             },
         )]),
     )]);
@@ -75,4 +75,18 @@ fn fingerprints_are_isolated_per_branch() {
         load_fingerprints(&root, "feature").is_empty(),
         "a different branch must not see main's baseline"
     );
+}
+
+fn dead_function() -> Detector {
+    Detector::DeadCode {
+        symbol_kind: "function".to_string(),
+    }
+}
+
+fn dead_label(symbol: &str) -> Label {
+    Label::DeadCode {
+        module: "app".to_string(),
+        symbol: symbol.to_string(),
+        symbol_kind: "function".to_string(),
+    }
 }

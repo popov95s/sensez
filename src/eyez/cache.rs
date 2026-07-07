@@ -9,9 +9,11 @@
 use super::embed::Embedder;
 use super::extract::Doc;
 use crate::eyez::DocKind;
+use crate::fingerprints::{self, Fingerprint};
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::{HashMap, HashSet};
+use std::fmt::{Display, Formatter};
 use std::path::Path;
 
 /// Cache location relative to the project root.
@@ -36,6 +38,34 @@ pub struct CachedDoc {
     pub text: String,
 }
 
+pub type DocFingerprint = Fingerprint<Namespace, Label, Class>;
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord)]
+pub enum Namespace {
+    Doc,
+}
+
+#[derive(Debug, Clone, PartialEq, Eq)]
+pub struct Label {
+    pub file: String,
+    pub symbol_path: String,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum Class {
+    Comment,
+    Docstring,
+}
+
+impl Display for Class {
+    fn fmt(&self, f: &mut Formatter<'_>) -> std::fmt::Result {
+        match self {
+            Class::Comment => f.write_str("eyez/comment"),
+            Class::Docstring => f.write_str("eyez/docstring"),
+        }
+    }
+}
+
 /// Hydrate the cache from disk; a missing/corrupt file yields an empty cache.
 pub fn load(root: &Path) -> SystemCache {
     let path = root.join(CACHE_REL);
@@ -43,6 +73,19 @@ pub fn load(root: &Path) -> SystemCache {
         .ok()
         .and_then(|bytes| postcard::from_bytes(&bytes).ok())
         .unwrap_or_default()
+}
+
+pub fn clear(root: &Path) -> Result<()> {
+    remove_file(root, CACHE_REL)
+}
+
+pub(crate) fn remove_file(root: &Path, rel: &str) -> Result<()> {
+    let path = root.join(rel);
+    match std::fs::remove_file(&path) {
+        Ok(()) => Ok(()),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(()),
+        Err(err) => Err(err).with_context(|| format!("removing {}", path.display())),
+    }
 }
 
 impl SystemCache {
@@ -116,13 +159,28 @@ impl SystemCache {
 /// distinct results (and only re-embeds a doc whose *text* actually changed —
 /// the line moving within a file does not change the key).
 pub fn key(d: &Doc) -> u64 {
-    use std::hash::{Hash, Hasher};
-    let mut h = rustc_hash::FxHasher::default();
-    d.file.to_string_lossy().hash(&mut h);
-    d.symbol_path.hash(&mut h);
-    (d.kind as u8).hash(&mut h);
-    d.text.hash(&mut h);
-    h.finish()
+    fingerprint(d).hash
+}
+
+pub fn fingerprint(d: &Doc) -> DocFingerprint {
+    let file = d.file.to_string_lossy().into_owned();
+    let class = match d.kind {
+        DocKind::Comment => Class::Comment,
+        DocKind::Docstring => Class::Docstring,
+    };
+    let kind = match class {
+        Class::Comment => "comment",
+        Class::Docstring => "docstring",
+    };
+    Fingerprint::identity(
+        fingerprints::hash_parts(&[&file, &d.symbol_path, kind, &d.text]),
+        Namespace::Doc,
+        Label {
+            file,
+            symbol_path: d.symbol_path.clone(),
+        },
+        class,
+    )
 }
 
 #[cfg(test)]

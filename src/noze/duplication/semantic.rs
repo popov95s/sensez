@@ -6,14 +6,19 @@
 //! at proving code equivalence, so exact/near-miss clone detection remains the
 //! high-confidence core.
 
+mod keying;
+
 use crate::config::model::SemanticDuplication;
 use crate::eyez;
+use crate::eyez::semantic_cache::BundleInput;
 use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::{FunctionUnit, ParsedFile};
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
+
+use keying::{bundle_key, file_hash, pair_key};
 
 const MIN_TOKENS: usize = 20;
 
@@ -22,6 +27,7 @@ struct Unit {
     start: usize,
     end: usize,
     tokens: usize,
+    key: u64,
     shape: BTreeMap<StructuralToken, usize>,
     comment: String,
 }
@@ -32,19 +38,15 @@ struct Candidate {
     shape_score: f32,
 }
 
-#[derive(PartialEq, Eq, Hash)]
-struct PairKey {
-    left_file: PathBuf,
-    left_row: usize,
-    right_file: PathBuf,
-    right_row: usize,
-}
-
-pub fn detect(files: &[&ParsedFile], config: &SemanticDuplication) -> Vec<CloneClass> {
+pub fn detect(
+    files: &[&ParsedFile],
+    config: &SemanticDuplication,
+    root: Option<&Path>,
+) -> Vec<CloneClass> {
     if !config.enabled {
         return Vec::new();
     }
-    let units = collect_units(files);
+    let units = collect_units(files, config.comment_required);
     if units.len() < 2 {
         return Vec::new();
     }
@@ -52,26 +54,36 @@ pub fn detect(files: &[&ParsedFile], config: &SemanticDuplication) -> Vec<CloneC
     if candidates.is_empty() {
         return Vec::new();
     }
-    let texts: Vec<String> = units.iter().map(|u| u.comment.clone()).collect();
-    let Ok(vectors) = eyez::embed_texts(&texts) else {
+    let Ok(vectors) = vectors_for(root, &units) else {
         return Vec::new();
     };
     findings(units, candidates, &vectors, config.comment_boost_score)
 }
 
-fn collect_units(files: &[&ParsedFile]) -> Vec<Unit> {
+fn collect_units(files: &[&ParsedFile], comment_required: bool) -> Vec<Unit> {
     let mut out = Vec::new();
     for file in files {
+        let file_hash = file_hash(&file.path);
         let comments = comment_bundles(file);
         for func in top_level_functions(file) {
-            if let Some(comment) = comment_for(&comments, func) {
+            if let Some((symbol_path, comment)) = comment_for(&comments, func, comment_required) {
                 let (tokens, shape) = function_shape(file, func);
                 if tokens >= MIN_TOKENS {
+                    let key = bundle_key(
+                        file_hash,
+                        &file.path,
+                        &symbol_path,
+                        func,
+                        tokens,
+                        &shape,
+                        &comment,
+                    );
                     out.push(Unit {
                         file: file.path.clone(),
                         start: func.start_line,
                         end: func.end_line,
                         tokens,
+                        key,
                         shape,
                         comment,
                     });
@@ -105,13 +117,21 @@ fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, String> {
         .collect()
 }
 
-fn comment_for(comments: &FxHashMap<String, String>, func: &FunctionUnit) -> Option<String> {
-    comments
+fn comment_for(
+    comments: &FxHashMap<String, String>,
+    func: &FunctionUnit,
+    comment_required: bool,
+) -> Option<(String, String)> {
+    let commented = comments
         .iter()
         .filter(|(symbol, _)| last_segment(symbol) == func.name)
-        .map(|(_, text)| text.trim())
-        .find(|text| text.split_whitespace().count() >= 5)
-        .map(ToOwned::to_owned)
+        .map(|(symbol, text)| (symbol.as_str(), text.trim()))
+        .find(|(_, text)| text.split_whitespace().count() >= 5)
+        .map(|(symbol, text)| (symbol.to_owned(), text.to_owned()));
+    if commented.is_some() || comment_required {
+        return commented;
+    }
+    Some((func.name.clone(), format!("function {}", func.name)))
 }
 
 fn last_segment(symbol: &str) -> &str {
@@ -170,6 +190,23 @@ fn candidate_pairs(units: &[Unit], min_shape_score: u8) -> Vec<Candidate> {
         }
     }
     out
+}
+
+fn vectors_for(root: Option<&Path>, units: &[Unit]) -> anyhow::Result<Vec<Vec<f32>>> {
+    let mut inputs = Vec::with_capacity(units.len());
+    let mut texts = Vec::with_capacity(units.len());
+    for unit in units {
+        let text = unit.comment.clone();
+        inputs.push(BundleInput {
+            key: unit.key,
+            text: text.clone(),
+        });
+        texts.push(text);
+    }
+    match root {
+        Some(root) => eyez::semantic_vectors(root, &inputs),
+        None => eyez::embed_texts(&texts),
+    }
 }
 
 fn findings(
@@ -246,25 +283,5 @@ fn occurrence(unit: &Unit) -> CloneOccurrence {
         file: unit.file.clone(),
         start_row: unit.start,
         end_row: unit.end,
-    }
-}
-
-fn pair_key(left: &Unit, right: &Unit) -> PairKey {
-    let a = (left.file.clone(), left.start);
-    let b = (right.file.clone(), right.start);
-    if a <= b {
-        PairKey {
-            left_file: a.0,
-            left_row: a.1,
-            right_file: b.0,
-            right_row: b.1,
-        }
-    } else {
-        PairKey {
-            left_file: b.0,
-            left_row: b.1,
-            right_file: a.0,
-            right_row: a.1,
-        }
     }
 }

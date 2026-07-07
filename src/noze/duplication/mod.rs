@@ -27,6 +27,7 @@ use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
+use std::path::Path;
 
 /// Detect duplication per the config (path excludes, threshold, gap stitching).
 ///
@@ -35,7 +36,16 @@ use std::collections::BTreeMap;
 /// function of the same control-flow shape match as a "clone". Detecting within
 /// each language cohort keeps clones meaningful and lets each partition map its
 /// occurrences back through its own file slice.
+#[allow(dead_code)]
 pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
+    detect_with_root(files, config, None)
+}
+
+pub fn detect_with_root(
+    files: &[ParsedFile],
+    config: &Duplication,
+    root: Option<&Path>,
+) -> Vec<CloneClass> {
     if files.is_empty() || config.threshold == 0 {
         return Vec::new();
     }
@@ -51,11 +61,10 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
         by_language.entry(file.language).or_default().push(*file);
     }
 
-    let mut seen: FxHashSet<u64> = FxHashSet::default();
-    let mut out: Vec<CloneClass> = Vec::new();
-    for partition in by_language.values() {
-        detect_partition(partition, config, &mut seen, &mut out);
-    }
+    let mut out: Vec<CloneClass> = by_language
+        .values()
+        .flat_map(|partition| detect_partition(partition, config, root))
+        .collect();
     out.extend(class_shapes::detect(
         &kept,
         config.class_name_duplicates,
@@ -80,14 +89,14 @@ fn action_rank(level: ActionLevel) -> u8 {
     }
 }
 
-/// Run the suffix-array clone pipeline over one single-language file cohort,
-/// appending de-duplicated clone classes to `out`.
+/// Run the suffix-array clone pipeline over one single-language file cohort.
 fn detect_partition(
     kept: &[&ParsedFile],
     config: &Duplication,
-    seen: &mut FxHashSet<u64>,
-    out: &mut Vec<CloneClass>,
-) {
+    _root: Option<&Path>,
+) -> Vec<CloneClass> {
+    let mut seen: FxHashSet<u64> = FxHashSet::default();
+    let mut out: Vec<CloneClass> = Vec::new();
     let master = flatten::build(kept);
     let groups = clones::extract(&master, config.threshold);
     let clusters = gapped::stitch(groups, &master.spans, config.max_gap);
@@ -134,7 +143,7 @@ fn detect_partition(
     }
 
     #[cfg(feature = "eyez")]
-    for class in semantic::detect(kept, &config.semantic) {
+    for class in semantic::detect(kept, &config.semantic, _root) {
         let semantic_occurrences = suppress_overlaps(class.occurrences);
         if semantic_occurrences.len() < 2 {
             continue;
@@ -148,6 +157,8 @@ fn detect_partition(
             ..class
         });
     }
+
+    out
 }
 
 /// Map a master-buffer token range `[start, end)` to a concrete file/line span.

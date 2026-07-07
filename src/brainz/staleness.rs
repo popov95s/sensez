@@ -22,9 +22,9 @@ pub fn stale_entries(
             let age = now.saturating_sub(entry.first_seen);
             if age > STALE_AFTER_SECS && !ignore.contains(key) {
                 out.push((
-                    pillar.clone(),
+                    pillar.to_string(),
                     key.clone(),
-                    entry.label.clone(),
+                    entry.label.to_string(),
                     age / 86_400,
                 ));
             }

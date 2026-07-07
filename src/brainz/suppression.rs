@@ -22,26 +22,36 @@ pub fn apply_suppressions(root: &Path, report: &mut crate::report::AnalysisRepor
         ignore: &ignore,
         accept: &accept,
     };
-    retain_allowed(&mut report.cycles, prints.get("cycles"), "cycles", &ctx);
+    retain_allowed(
+        &mut report.cycles,
+        prints.get(&fingerprint::Namespace::Cycles),
+        "cycles",
+        &ctx,
+    );
     retain_allowed(
         &mut report.dead_code,
-        prints.get("dead_code"),
+        prints.get(&fingerprint::Namespace::DeadCode),
         "dead_code",
         &ctx,
     );
     retain_allowed(
         &mut report.boundaries,
-        prints.get("boundaries"),
+        prints.get(&fingerprint::Namespace::Boundaries),
         "boundaries",
         &ctx,
     );
     retain_allowed(
         &mut report.duplication,
-        prints.get("duplication"),
+        prints.get(&fingerprint::Namespace::Duplication),
         "duplication",
         &ctx,
     );
-    retain_allowed(&mut report.smells, prints.get("smells"), "smells", &ctx);
+    retain_allowed(
+        &mut report.smells,
+        prints.get(&fingerprint::Namespace::Smells),
+        "smells",
+        &ctx,
+    );
 }
 
 struct Suppress<'a> {
@@ -51,15 +61,16 @@ struct Suppress<'a> {
 
 impl Suppress<'_> {
     fn hides(&self, print: &Print, pillar: &str) -> bool {
-        if self.ignore.contains(&format!("{:x}", print.hash)) {
+        let rendered = print.rendered();
+        if self.ignore.contains(&rendered.key) {
             return true;
         }
         let matches = |key: &str| {
             self.accept
                 .get(key)
-                .is_some_and(|pats| pats.iter().any(|p| print.label.contains(p.as_str())))
+                .is_some_and(|pats| pats.iter().any(|p| rendered.label.contains(p.as_str())))
         };
-        matches(pillar) || matches(&print.detector)
+        matches(pillar) || matches(&rendered.class)
     }
 }
 

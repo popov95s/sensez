@@ -4,6 +4,7 @@
 //! and feed back into the metrics: triaged findings stop appearing as stale,
 //! and a vanished false positive is never counted as resolved value.
 
+use super::fingerprint::Namespace;
 use super::store;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -60,20 +61,22 @@ pub fn mark(
     let aged = store::load_fingerprints(root, branch);
     let needle = pattern.to_lowercase();
     // (fingerprint key, label, detector) for each matched finding.
+    let namespace =
+        Namespace::from_str(pillar).ok_or_else(|| anyhow!("unknown pillar '{pillar}'"))?;
     let matches: Vec<(String, String, String)> = aged
-        .get(pillar)
+        .get(&namespace)
         .map(|prints| {
             prints
                 .iter()
-                .filter(|(_, e)| e.label.to_lowercase().contains(&needle))
-                .map(|(k, e)| (k.clone(), e.label.clone(), e.detector.clone()))
+                .filter(|(_, e)| e.label.to_string().to_lowercase().contains(&needle))
+                .map(|(k, e)| (k.clone(), e.label.to_string(), e.class.to_string()))
                 .collect()
         })
         .unwrap_or_default();
     if matches.is_empty() {
         let known: Vec<String> = aged
-            .get(pillar)
-            .map(|p| p.values().map(|e| e.label.clone()).collect())
+            .get(&namespace)
+            .map(|p| p.values().map(|e| e.label.to_string()).collect())
             .unwrap_or_default();
         return Err(anyhow!(
             "no '{pillar}' finding matches '{pattern}'; known: {}",
@@ -118,7 +121,7 @@ pub fn ignored_keys(triage: &Triage) -> std::collections::HashSet<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::brainz::fingerprint::{Aged, AgedEntry};
+    use crate::brainz::fingerprint::{Aged, AgedEntry, Detector, Label, Namespace};
 
     #[test]
     fn mark_matches_by_label_and_clears() {
@@ -127,13 +130,19 @@ mod tests {
         fs::create_dir_all(&root).unwrap();
 
         let aged: Aged = BTreeMap::from([(
-            "dead_code".to_string(),
+            Namespace::DeadCode,
             BTreeMap::from([(
                 "abc1".to_string(),
                 AgedEntry {
                     first_seen: 1,
-                    label: "app::orphan (function)".to_string(),
-                    detector: "dead_code/function".to_string(),
+                    label: Label::DeadCode {
+                        module: "app".to_string(),
+                        symbol: "orphan".to_string(),
+                        symbol_kind: "function".to_string(),
+                    },
+                    class: Detector::DeadCode {
+                        symbol_kind: "function".to_string(),
+                    },
                 },
             )]),
         )]);

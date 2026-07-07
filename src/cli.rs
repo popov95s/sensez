@@ -54,6 +54,11 @@ pub fn run() -> Result<ExitCode> {
                 top_k,
                 json,
             } => run_search(&path, &query, top_k, json).map(|()| ExitCode::SUCCESS),
+            spec::EyezAction::Reindex {
+                path,
+                force,
+                semantic,
+            } => run_reindex(&path, force, semantic).map(|()| ExitCode::SUCCESS),
         },
         #[cfg(feature = "eyez")]
         Some(Command::Search {
@@ -92,6 +97,21 @@ fn serve_mcp() -> Result<ExitCode> {
         .context("starting tokio runtime")?
         .block_on(crate::mcp::serve())
         .map(|()| ExitCode::SUCCESS)
+}
+
+#[cfg(feature = "eyez")]
+fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
+    let report = crate::eyez::reindex(path, force, semantic)?;
+    println!(
+        "Indexed {} doc/comment item(s).{}",
+        report.docs,
+        if report.semantic_warmed {
+            " Semantic duplication cache warmed."
+        } else {
+            ""
+        }
+    );
+    Ok(())
 }
 
 /// Build/refresh the eyez index for `path` and print the top hits for `query`.

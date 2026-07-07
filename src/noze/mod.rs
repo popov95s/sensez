@@ -15,9 +15,23 @@ use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
 use std::collections::BTreeMap;
+use std::path::Path;
 
 /// Run every analyzer pillar, rank findings by impact, and aggregate metadata.
+#[allow(dead_code)]
 pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> AnalysisReport {
+    run_with_root(files, graph, config, None)
+}
+
+/// Run every analyzer pillar with optional project-root context for analyzers
+/// that maintain local caches. The root is intentionally optional so unit tests
+/// and direct library calls can keep using in-memory-only analysis.
+pub fn run_with_root(
+    files: &[ParsedFile],
+    graph: &CodebaseGraph,
+    config: &Config,
+    root: Option<&Path>,
+) -> AnalysisReport {
     let mut cycles = cycles::detect(graph, &config.smells.exclude);
     for cycle in &mut cycles {
         if cycle.action != ActionLevel::Info {
@@ -37,7 +51,7 @@ pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> Anal
     for violation in &mut boundary_audit.violations {
         violation.action = config.action.boundaries;
     }
-    let mut duplication = duplication::detect(files, &config.duplication);
+    let mut duplication = duplication::detect_with_root(files, &config.duplication, root);
     for class in &mut duplication {
         if class.action != ActionLevel::Info {
             class.action = config.action.duplication;
@@ -79,7 +93,7 @@ pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> Anal
         duplication,
         smells,
     };
-    report.meta.glossary = glossary::for_report(&report);
+    report.meta.glossary = crate::noze::glossary::for_report(&report);
     report
 }
 
@@ -110,7 +124,7 @@ pub fn limit(report: &mut AnalysisReport, max: usize) {
     report.boundaries.truncate(max);
     report.duplication.truncate(max);
     report.smells.truncate(max);
-    report.meta.glossary = glossary::for_report(report);
+    report.meta.glossary = crate::noze::glossary::for_report(report);
 }
 
 fn severity_rank(s: Severity) -> u8 {

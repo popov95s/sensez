@@ -6,31 +6,30 @@
 //! fingerprint carries a human-readable label so stale findings can be shown
 //! to (and triaged by) the user.
 
+mod types;
+
+use crate::fingerprints::{self, Fingerprint};
+use crate::report::SmellKind;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
-use std::hash::{Hash, Hasher};
+
+pub use types::{Detector, Label, Namespace};
 
 /// One scan's findings: pillar → fingerprints in report order.
-pub type Prints = BTreeMap<String, Vec<Print>>;
+pub type Prints = fingerprints::Groups<Namespace, Label, Detector>;
 
 /// A single finding's stable identity for a scan: a content hash, a
 /// human-readable label, and the detector that produced it (`pillar/<kind>`,
 /// or just the pillar for detectors without sub-kinds).
-#[derive(Debug, Clone)]
-pub struct Print {
-    pub hash: u64,
-    pub label: String,
-    pub detector: String,
-}
+pub type Print = Fingerprint<Namespace, Label, Detector>;
 
 /// A fingerprint persisted across scans with its age, label, and detector.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct AgedEntry {
     pub first_seen: u64,
-    pub label: String,
-    /// Detector id (`pillar/<kind>`, or just the pillar).
-    pub detector: String,
+    pub label: Label,
+    pub class: Detector,
 }
 
 /// Fingerprints banked as resolved, kept so a finding that later comes back is
@@ -42,41 +41,33 @@ pub type ResolvedHistory = BTreeMap<String, ResolvedRecord>;
 /// when it was banked as resolved (to expire stale history).
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResolvedRecord {
-    pub detector: String,
+    pub class: Detector,
     pub resolved_ts: u64,
 }
 
 /// Pillar → fingerprint (hex string; JSON keys must be strings) → entry.
 /// Persisted as `last-scan.json`.
-pub type Aged = BTreeMap<String, BTreeMap<String, AgedEntry>>;
+pub type Aged = BTreeMap<Namespace, BTreeMap<String, AgedEntry>>;
 
 /// Fingerprint every pillar of a JSON-serialized `AnalysisReport`.
 pub fn fingerprints(report: &Value) -> Prints {
     PILLARS
         .iter()
-        .map(|(pillar, key_fn)| {
+        .map(|(namespace, json_key, key_fn)| {
             let prints = report
-                .get(*pillar)
+                .get(*json_key)
                 .and_then(Value::as_array)
                 .map(|findings| {
                     findings
                         .iter()
                         .map(|finding| {
                             let key = key_fn(finding);
-                            let detector = match key.sub_kind {
-                                Some(kind) if !kind.is_empty() => format!("{pillar}/{kind}"),
-                                _ => pillar.to_string(),
-                            };
-                            Print {
-                                hash: key.hash,
-                                label: key.label,
-                                detector,
-                            }
+                            Print::identity(key.hash, key.namespace, key.label, key.detector)
                         })
                         .collect()
                 })
                 .unwrap_or_default();
-            (pillar.to_string(), prints)
+            (*namespace, prints)
         })
         .collect()
 }
@@ -84,39 +75,29 @@ pub fn fingerprints(report: &Value) -> Prints {
 /// Per-detector reported counts for a report (e.g. `smells/god_module → 4`).
 /// Recorded on every scan, including diff/gate scans that skip aging.
 pub fn detector_counts(report: &Value) -> BTreeMap<String, u64> {
-    let mut counts = BTreeMap::new();
-    for prints in fingerprints(report).values() {
-        for print in prints {
-            *counts.entry(print.detector.clone()).or_default() += 1;
-        }
-    }
-    counts
+    fingerprints::class_counts(&fingerprints(report))
 }
 
-/// Stable identity fields for one finding. `None` sub-kind means the pillar has
-/// no finer detector (the detector id is then just the pillar).
+/// Stable identity fields for one finding.
 struct FingerprintKey {
     hash: u64,
-    label: String,
-    sub_kind: Option<String>,
+    namespace: Namespace,
+    label: Label,
+    detector: Detector,
 }
 
 type KeyFn = fn(&Value) -> FingerprintKey;
 
-const PILLARS: [(&str, KeyFn); 5] = [
-    ("cycles", cycle_key),
-    ("dead_code", dead_code_key),
-    ("boundaries", boundary_key),
-    ("duplication", clone_key),
-    ("smells", smell_key),
+const PILLARS: [(Namespace, &str, KeyFn); 5] = [
+    (Namespace::Cycles, "cycles", cycle_key),
+    (Namespace::DeadCode, "dead_code", dead_code_key),
+    (Namespace::Boundaries, "boundaries", boundary_key),
+    (Namespace::Duplication, "duplication", clone_key),
+    (Namespace::Smells, "smells", smell_key),
 ];
 
 fn hash_parts(parts: &[&str]) -> u64 {
-    let mut hasher = rustc_hash::FxHasher::default();
-    for part in parts {
-        part.hash(&mut hasher);
-    }
-    hasher.finish()
+    fingerprints::hash_parts(parts)
 }
 
 fn field<'v>(finding: &'v Value, key: &str) -> &'v str {
@@ -131,10 +112,12 @@ fn cycle_key(finding: &Value) -> FingerprintKey {
         .map(|m| m.iter().filter_map(Value::as_str).collect())
         .unwrap_or_default();
     modules.sort_unstable();
+    let label = modules.join(" ↔ ");
     FingerprintKey {
         hash: hash_parts(&modules),
-        label: modules.join(" ↔ "),
-        sub_kind: None,
+        label: Label::Cycle { modules: label },
+        namespace: Namespace::Cycles,
+        detector: Detector::Cycles,
     }
 }
 
@@ -148,8 +131,15 @@ fn dead_code_key(finding: &Value) -> FingerprintKey {
     );
     FingerprintKey {
         hash: hash_parts(&[module, symbol, kind]),
-        label: format!("{module}::{symbol} ({kind})"),
-        sub_kind: Some(kind.to_string()),
+        label: Label::DeadCode {
+            module: module.to_string(),
+            symbol: symbol.to_string(),
+            symbol_kind: kind.to_string(),
+        },
+        namespace: Namespace::DeadCode,
+        detector: Detector::DeadCode {
+            symbol_kind: kind.to_string(),
+        },
     }
 }
 
@@ -162,8 +152,13 @@ fn boundary_key(finding: &Value) -> FingerprintKey {
     );
     FingerprintKey {
         hash: hash_parts(&[from, to, rule]),
-        label: format!("{from} → {to} ({rule})"),
-        sub_kind: None,
+        label: Label::Boundary {
+            from: from.to_string(),
+            to: to.to_string(),
+            rule: rule.to_string(),
+        },
+        namespace: Namespace::Boundaries,
+        detector: Detector::Boundaries,
     }
 }
 
@@ -178,12 +173,16 @@ fn clone_key(finding: &Value) -> FingerprintKey {
     let arity = files.len().to_string();
     files.sort_unstable();
     files.dedup();
-    let label = format!("clone x{arity}: {}", files.join(" + "));
+    let label = files.join(" + ");
     files.push(&arity);
     FingerprintKey {
         hash: hash_parts(&files),
-        label,
-        sub_kind: None,
+        label: Label::Clone {
+            arity: arity.parse().unwrap_or_default(),
+            files: label,
+        },
+        namespace: Namespace::Duplication,
+        detector: Detector::Duplication,
     }
 }
 
@@ -195,10 +194,17 @@ fn smell_key(finding: &Value) -> FingerprintKey {
         field(finding, "file"),
         field(finding, "symbol"),
     );
+    let smell = serde_json::from_value(finding.get("kind").cloned().unwrap_or(Value::Null))
+        .unwrap_or(SmellKind::LongFunction);
     FingerprintKey {
         hash: hash_parts(&[kind, file, symbol]),
-        label: format!("{kind} @ {file}::{symbol}"),
-        sub_kind: Some(kind.to_string()),
+        label: Label::Smell {
+            smell,
+            file: file.to_string(),
+            symbol: symbol.to_string(),
+        },
+        namespace: Namespace::Smells,
+        detector: Detector::Smell { smell },
     }
 }
 
@@ -212,6 +218,6 @@ mod tests {
         let a = cycle_key(&json!({"modules": ["x", "y"]}));
         let b = cycle_key(&json!({"modules": ["y", "x"]}));
         assert_eq!(a.hash, b.hash);
-        assert_eq!(a.sub_kind, None, "cycles have no detector sub-kind");
+        assert_eq!(a.detector, Detector::Cycles);
     }
 }

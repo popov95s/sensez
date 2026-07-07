@@ -121,7 +121,7 @@ pub fn record_gate_block(root: &Path, report: &Value) {
     let fingerprints: Vec<String> = fingerprint::fingerprints(report)
         .values()
         .flatten()
-        .map(|p| format!("{:x}", p.hash))
+        .map(|p| p.key())
         .collect();
     hub::push(root, move |session, branch| Event::GateBlock {
         ts: hub::now(),
