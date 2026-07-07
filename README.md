@@ -18,6 +18,8 @@ and the `spine` to do it fast.
 
 Supported language profiles currently include Python, JavaScript, TypeScript, and Rust (for dogfooding primarily).
 
+Docs: https://popov95s.github.io/sensez/latest/
+
 ## Quick Start
 ### Python
 ```Bash
@@ -243,3 +245,7 @@ action = "warning"
 
 Sensez does not send telemetry or source code anywhere. Local metrics stay under
 `.sensez/local-metrics/`. 
+
+---
+
+Disclaimer: [DISCLAIMER.md](DISCLAIMER.md)
