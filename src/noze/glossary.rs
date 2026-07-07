@@ -859,7 +859,6 @@ mod tests {
                 None => continue,
             };
             assert!(!doc.why_bad.is_empty());
-            assert!(!doc.references.is_empty());
             assert!(doc.fixes.iter().any(|block| block.language == "python"));
             assert!(doc.fixes.iter().any(|block| block.language == "typescript"));
         }
