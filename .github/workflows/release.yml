@@ -13,6 +13,7 @@ on:
         default: testpypi
         type: choice
         options:
+          - docs
           - testpypi
           - pypi
           - npm
@@ -319,7 +320,7 @@ jobs:
       - guard
       - publish-pypi
       - publish-npm
-    if: ${{ always() && ((needs.guard.outputs.target == 'release' && needs.publish-pypi.result == 'success' && needs.publish-npm.result == 'success') || (needs.guard.outputs.target == 'pypi' && needs.publish-pypi.result == 'success')) }}
+    if: ${{ always() && (needs.guard.outputs.target == 'docs' || (needs.guard.outputs.target == 'release' && needs.publish-pypi.result == 'success' && needs.publish-npm.result == 'success') || (needs.guard.outputs.target == 'pypi' && needs.publish-pypi.result == 'success')) }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -376,5 +377,6 @@ jobs:
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git fetch origin gh-pages --depth=1 || true
           uv run --no-project --with mkdocs-material --with mike mike deploy --push --update-aliases "$DOCS_VERSION" latest
           uv run --no-project --with mkdocs-material --with mike mike set-default --push latest
