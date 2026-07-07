@@ -49,6 +49,8 @@ mcp = ["dep:tokio"]
 eyez = ["dep:model2vec-rs", "dep:postcard"]
 # Backwards-compatible alias for older build invocations.
 semantic = ["eyez"]
+# Docs-only metadata used by docs/generate.py. Keep this out of default builds.
+docs = []
 
 [dependencies]
 clap = { version = "4.5", features = ["derive", "env"] }
