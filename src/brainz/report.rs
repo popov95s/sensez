@@ -289,7 +289,8 @@ mod tests {
                 secs_total: 3 * 86_400,
             },
         );
-        t.outcomes.insert(OutcomeKey::new("debt", "dead_code/function"), 1);
+        t.outcomes
+            .insert(OutcomeKey::new("debt", "dead_code/function"), 1);
         // smells/god_module: 1 fixed, 3 false positives → precision 0.25.
         t.resolved_by_detector.insert(
             "smells/god_module".into(),
@@ -374,7 +375,8 @@ mod tests {
 
         // One stray false positive is not enough evidence to brand a detector.
         let mut t = Totals::default();
-        t.outcomes.insert(OutcomeKey::new("false_positive", "smells/x"), 1);
+        t.outcomes
+            .insert(OutcomeKey::new("false_positive", "smells/x"), 1);
         assert!(low_precision_detectors(&t).is_empty());
     }
 
