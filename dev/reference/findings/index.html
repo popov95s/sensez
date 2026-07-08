@@ -645,6 +645,17 @@
   
 </li>
         
+          <li class="md-nav__item">
+  <a href="#narrating-code-narrating_code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Narrating Code (narrating_code)
+      
+    </span>
+  </a>
+  
+</li>
+        
       </ul>
     </nav>
   
@@ -1409,6 +1420,17 @@
     <span class="md-ellipsis">
       
         Long Parameter List (long_parameter_list)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#narrating-code-narrating_code" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Narrating Code (narrating_code)
       
     </span>
   </a>
@@ -3090,6 +3112,119 @@
 <li>Ruff: <code>PLR0913</code></li>
 <li>ESLint: <code>max-params</code></li>
 </ul>
+<h3 id="narrating-code-narrating_code">Narrating Code (<code>narrating_code</code>)</h3>
+<p><strong>What it is</strong></p>
+<p>A function is packed with explanatory comments — prefer clearer names or extracted helpers, keeping comments for why.</p>
+<p><strong>Why it's bad</strong></p>
+<p>The prose becomes a second implementation that readers must keep in sync with the code.</p>
+<p><strong>Example</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="15:2"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Python</label><label for="__tabbed_15_2">JS / TS</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">activate_plan</span><span class="p">(</span><span class="n">account</span><span class="p">:</span> <span class="n">Account</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="c1"># Load the account owner.</span>
+    <span class="n">owner</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">owner</span>
+    <span class="c1"># Load the billing profile.</span>
+    <span class="n">billing</span> <span class="o">=</span> <span class="n">owner</span><span class="o">.</span><span class="n">billing_profile</span>
+    <span class="c1"># Check whether billing is enabled.</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">billing</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="c1"># Load the selected plan.</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">billing</span><span class="o">.</span><span class="n">selected_plan</span>
+    <span class="c1"># Activate the selected plan.</span>
+    <span class="n">account</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+    <span class="c1"># Notify the owner.</span>
+    <span class="n">notify_owner</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">plan</span><span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Rename values and extract helper functions so the code says what the comments were saying.</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">activate_plan</span><span class="p">(</span><span class="n">account</span><span class="p">:</span> <span class="n">Account</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">owner</span> <span class="o">=</span> <span class="n">account</span><span class="o">.</span><span class="n">owner</span>
+    <span class="n">billing</span> <span class="o">=</span> <span class="n">owner</span><span class="o">.</span><span class="n">billing_profile</span>
+    <span class="k">if</span> <span class="ow">not</span> <span class="n">billing</span><span class="o">.</span><span class="n">enabled</span><span class="p">:</span>
+        <span class="k">return</span>
+    <span class="n">_activate_selected_plan</span><span class="p">(</span><span class="n">account</span><span class="p">,</span> <span class="n">owner</span><span class="p">,</span> <span class="n">billing</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">_activate_selected_plan</span><span class="p">(</span>
+    <span class="n">account</span><span class="p">:</span> <span class="n">Account</span><span class="p">,</span>
+    <span class="n">owner</span><span class="p">:</span> <span class="n">Owner</span><span class="p">,</span>
+    <span class="n">billing</span><span class="p">:</span> <span class="n">BillingProfile</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">billing</span><span class="o">.</span><span class="n">selected_plan</span>
+    <span class="n">account</span><span class="o">.</span><span class="n">activate</span><span class="p">(</span><span class="n">plan</span><span class="p">)</span>
+    <span class="n">notify_owner</span><span class="p">(</span><span class="n">owner</span><span class="p">,</span> <span class="n">plan</span><span class="p">)</span>
+</code></pre></div>
+</details></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">activatePlan</span><span class="p">(</span><span class="nx">account</span><span class="o">:</span><span class="w"> </span><span class="kt">Account</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="c1">// Load the account owner.</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">owner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">owner</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// Load the billing profile.</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">billing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">owner</span><span class="p">.</span><span class="nx">billingProfile</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// Check whether billing is enabled.</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">billing</span><span class="p">.</span><span class="nx">enabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="c1">// Load the selected plan.</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">billing</span><span class="p">.</span><span class="nx">selectedPlan</span><span class="p">;</span>
+<span class="w">  </span><span class="c1">// Activate the selected plan.</span>
+<span class="w">  </span><span class="nx">account</span><span class="p">.</span><span class="nx">activate</span><span class="p">(</span><span class="nx">plan</span><span class="p">);</span>
+<span class="w">  </span><span class="c1">// Notify the owner.</span>
+<span class="w">  </span><span class="nx">notifyOwner</span><span class="p">(</span><span class="nx">owner</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Extract named predicates/helpers and keep comments for constraints or rationale.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">activatePlan</span><span class="p">(</span><span class="nx">account</span><span class="o">:</span><span class="w"> </span><span class="kt">Account</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">owner</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">owner</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">billing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">owner</span><span class="p">.</span><span class="nx">billingProfile</span><span class="p">;</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="o">!</span><span class="nx">billing</span><span class="p">.</span><span class="nx">enabled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="nx">activateSelectedPlan</span><span class="p">(</span><span class="nx">account</span><span class="p">,</span><span class="w"> </span><span class="nx">owner</span><span class="p">,</span><span class="w"> </span><span class="nx">billing</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">activateSelectedPlan</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">account</span><span class="o">:</span><span class="w"> </span><span class="kt">Account</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">owner</span><span class="o">:</span><span class="w"> </span><span class="kt">Owner</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">billing</span><span class="o">:</span><span class="w"> </span><span class="kt">BillingProfile</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">billing</span><span class="p">.</span><span class="nx">selectedPlan</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">account</span><span class="p">.</span><span class="nx">activate</span><span class="p">(</span><span class="nx">plan</span><span class="p">);</span>
+<span class="w">  </span><span class="nx">notifyOwner</span><span class="p">(</span><span class="nx">owner</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="p">);</span>
+<span class="p">}</span>
+</code></pre></div>
+</details></p>
+</div>
+</div>
+</div>
+<p><strong>Tune It</strong></p>
+<p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.narrating_code]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">min_comment_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="c1"># detector-specific threshold</span>
+<span class="n">max_comment_ratio_percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w"> </span><span class="c1"># detector-specific threshold</span>
+</code></pre></div>
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 <h2 id="coupling-and-cohesion">Coupling and Cohesion</h2>
 <h3 id="data-clump-data_clump">Data Clump (<code>data_clump</code>)</h3>
 <p><strong>What it is</strong></p>
@@ -3097,7 +3232,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The same bundle has to be kept in sync everywhere it travels.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="15:2"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Python</label><label for="__tabbed_15_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="16:2"><input checked="checked" id="__tabbed_16_1" name="__tabbed_16" type="radio" /><input id="__tabbed_16_2" name="__tabbed_16" type="radio" /><div class="tabbed-labels"><label for="__tabbed_16_1">Python</label><label for="__tabbed_16_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3188,7 +3323,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>One file starts changing for unrelated reasons, so fixes get tangled.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="16:2"><input checked="checked" id="__tabbed_16_1" name="__tabbed_16" type="radio" /><input id="__tabbed_16_2" name="__tabbed_16" type="radio" /><div class="tabbed-labels"><label for="__tabbed_16_1">Python</label><label for="__tabbed_16_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="17:2"><input checked="checked" id="__tabbed_17_1" name="__tabbed_17" type="radio" /><input id="__tabbed_17_2" name="__tabbed_17" type="radio" /><div class="tabbed-labels"><label for="__tabbed_17_1">Python</label><label for="__tabbed_17_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3288,7 +3423,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Logic sits next to the wrong data, so edits keep reaching through a foreign object.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="17:2"><input checked="checked" id="__tabbed_17_1" name="__tabbed_17" type="radio" /><input id="__tabbed_17_2" name="__tabbed_17" type="radio" /><div class="tabbed-labels"><label for="__tabbed_17_1">Python</label><label for="__tabbed_17_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="18:2"><input checked="checked" id="__tabbed_18_1" name="__tabbed_18" type="radio" /><input id="__tabbed_18_2" name="__tabbed_18" type="radio" /><div class="tabbed-labels"><label for="__tabbed_18_1">Python</label><label for="__tabbed_18_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3393,7 +3528,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Two classes know too much about each other's internals, so refactors ripple.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="18:2"><input checked="checked" id="__tabbed_18_1" name="__tabbed_18" type="radio" /><input id="__tabbed_18_2" name="__tabbed_18" type="radio" /><div class="tabbed-labels"><label for="__tabbed_18_1">Python</label><label for="__tabbed_18_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="19:2"><input checked="checked" id="__tabbed_19_1" name="__tabbed_19" type="radio" /><input id="__tabbed_19_2" name="__tabbed_19" type="radio" /><div class="tabbed-labels"><label for="__tabbed_19_1">Python</label><label for="__tabbed_19_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3484,7 +3619,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Deep property walking couples the caller to the whole object graph.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="19:2"><input checked="checked" id="__tabbed_19_1" name="__tabbed_19" type="radio" /><input id="__tabbed_19_2" name="__tabbed_19" type="radio" /><div class="tabbed-labels"><label for="__tabbed_19_1">Python</label><label for="__tabbed_19_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="20:2"><input checked="checked" id="__tabbed_20_1" name="__tabbed_20" type="radio" /><input id="__tabbed_20_2" name="__tabbed_20" type="radio" /><div class="tabbed-labels"><label for="__tabbed_20_1">Python</label><label for="__tabbed_20_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3575,7 +3710,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Inheritance promises behavior the subclass does not actually want.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="20:2"><input checked="checked" id="__tabbed_20_1" name="__tabbed_20" type="radio" /><input id="__tabbed_20_2" name="__tabbed_20" type="radio" /><div class="tabbed-labels"><label for="__tabbed_20_1">Python</label><label for="__tabbed_20_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="21:2"><input checked="checked" id="__tabbed_21_1" name="__tabbed_21" type="radio" /><input id="__tabbed_21_2" name="__tabbed_21" type="radio" /><div class="tabbed-labels"><label for="__tabbed_21_1">Python</label><label for="__tabbed_21_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3664,7 +3799,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>One edit fans out to many dependents.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="21:2"><input checked="checked" id="__tabbed_21_1" name="__tabbed_21" type="radio" /><input id="__tabbed_21_2" name="__tabbed_21" type="radio" /><div class="tabbed-labels"><label for="__tabbed_21_1">Python</label><label for="__tabbed_21_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="22:2"><input checked="checked" id="__tabbed_22_1" name="__tabbed_22" type="radio" /><input id="__tabbed_22_2" name="__tabbed_22" type="radio" /><div class="tabbed-labels"><label for="__tabbed_22_1">Python</label><label for="__tabbed_22_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3736,7 +3871,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Stringly typed payloads drift silently when the shape changes.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="22:2"><input checked="checked" id="__tabbed_22_1" name="__tabbed_22" type="radio" /><input id="__tabbed_22_2" name="__tabbed_22" type="radio" /><div class="tabbed-labels"><label for="__tabbed_22_1">Python</label><label for="__tabbed_22_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Python</label><label for="__tabbed_23_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3816,7 +3951,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Weak types make invalid states look valid until runtime.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Python</label><label for="__tabbed_23_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3897,7 +4032,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Positional bundles hide meaning and make the code brittle to reorderings.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3972,7 +4107,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Mutating inputs hides side effects and makes call order matter.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4038,7 +4173,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Rebinding a parameter muddies the original meaning of the value.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="27:2"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Python</label><label for="__tabbed_27_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4104,7 +4239,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A variable with multiple meanings is a trap for both readers and debuggers.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="27:2"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Python</label><label for="__tabbed_27_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="28:2"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Python</label><label for="__tabbed_28_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4174,7 +4309,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Costs grow faster than the data and the code gets hard to flatten.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="28:2"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Python</label><label for="__tabbed_28_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="29:2"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Python</label><label for="__tabbed_29_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4267,7 +4402,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A per-item call can explode runtime and hit the backend one request at a time.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="29:2"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Python</label><label for="__tabbed_29_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="30:2"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Python</label><label for="__tabbed_30_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4336,7 +4471,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The same collection gets scanned over and over when one pass would do.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="30:2"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Python</label><label for="__tabbed_30_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4409,7 +4544,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Repeated sorts turn a small loop into a surprisingly expensive one.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
