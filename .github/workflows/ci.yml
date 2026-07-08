@@ -17,6 +17,7 @@ on:
       - 'README.md'
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'regression/**'
       - 'action/README.md'
       - '.github/workflows/ci.yml'
   pull_request:
@@ -31,6 +32,7 @@ on:
       - 'README.md'
       - 'docs/**'
       - 'mkdocs.yml'
+      - 'regression/**'
       - 'action/README.md'
       - '.github/workflows/ci.yml'
 
@@ -119,6 +121,11 @@ jobs:
 
       - name: Build sensez (release)
         run: cargo build --release --features all-langs
+
+      - name: Run regression suite
+        # Exercises the pinned Flask and Zod targets against the release
+        # binary so behavior drift shows up before we ship.
+        run: ./regression/run.sh --target flask --target zod --ci
 
       - name: Run benchmarks
         run: ./benchmarks/run.sh
