@@ -52,31 +52,6 @@
       "name": "brainz_triage"
     },
     {
-      "description": "Semantic FIRST-PASS search over a codebase's docstrings and comments only. A fast way to orient \u2014 'does something like this already exist?' \u2014 before writing new code. NOT exhaustive and NOT a replacement for a real search: it ranks by meaning so it can miss relevant code, and it is blind to undocumented symbols, code bodies, and anything without a docstring/comment. Treat hits as leads to confirm, and still use grep/file search when you need completeness. Usage is recorded automatically; nothing to report.",
-      "inputSchema": {
-        "properties": {
-          "path": {
-            "description": "Project root to index/search",
-            "type": "string"
-          },
-          "query": {
-            "description": "Natural-language intent query",
-            "type": "string"
-          },
-          "top_k": {
-            "description": "Number of results (default 10)",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "path",
-          "query"
-        ],
-        "type": "object"
-      },
-      "name": "eyez_search_docs"
-    },
-    {
       "description": "Use this tool when the user explicitly asks to tune, optimize, or adjust their sensez linting and code-smell thresholds. It returns a high-level statistical summary of rule violations across the repository without flooding the context window.\n\nProtocol after invoking: analyze which rules generate the most noise based on counts; present a concise, conversational summary highlighting the top 2-3 noisy rules; offer specific adjustments to the .toml configuration file, such as raising a complexity threshold or disabling a rule; after user approval, use normal file-writing capabilities to update the configuration .toml directly.",
       "inputSchema": {
         "properties": {
