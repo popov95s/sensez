@@ -107,7 +107,7 @@ check-versions:
 # Update every version field to the new value, then refresh Cargo.lock.
 # Leaves the working tree dirty so you can review the diff before committing.
 # Usage: just bump 0.2.0
-bump version:
+bump version: _require-clean
     @just _validate-semver "{{version}}"
     @just _write-version "{{version}}"
     cargo check --quiet
@@ -121,7 +121,7 @@ bump version:
 # workflow_dispatch run on GitHub. The push is split so you can abort with
 # Ctrl+C between the two git push commands if you change your mind.
 # Usage: just release 0.2.0 pypi
-release version target:
+release version target: _require-clean
     #!/usr/bin/env bash
     set -euo pipefail
     just _validate-semver "{{version}}"
