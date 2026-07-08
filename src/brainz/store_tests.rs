@@ -1,4 +1,4 @@
-use super::events::{Event, Totals};
+use super::events::{Event, OutcomeKey, Totals};
 use super::fingerprint::{Aged, AgedEntry, Detector, Label, Namespace, ResolvedHistory};
 use super::store::*;
 use std::collections::BTreeMap;
@@ -27,7 +27,7 @@ fn totals_and_events_roundtrip() {
     append_events(&root, std::slice::from_ref(&event)).unwrap();
     append_events(&root, &[event]).unwrap();
 
-    assert_eq!(load_totals(&root).outcomes["fixed:smells"], 1);
+    assert_eq!(load_totals(&root).outcomes[&OutcomeKey::new("fixed", "smells")], 1);
     let log = fs::read_to_string(root.join(".sensez/local-metrics/events.jsonl")).unwrap();
     assert_eq!(log.lines().count(), 2, "appends accumulate");
 

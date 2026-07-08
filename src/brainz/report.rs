@@ -4,7 +4,7 @@
 //! (precision, time-to-resolution, gate funnel, search health) the report
 //! surfaces, so the storage layer stays a plain ledger.
 
-use super::events::{Resolved, Totals};
+use super::events::{OutcomeKey, Resolved, Totals};
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -54,9 +54,7 @@ pub fn precision_by_detector(totals: &Totals) -> Value {
         .map(String::as_str)
         .collect();
     for key in totals.outcomes.keys() {
-        if let Some((_, detector)) = key.split_once(':') {
-            detectors.insert(detector);
-        }
+        detectors.insert(&key.detector);
     }
 
     let mut out = serde_json::Map::new();
@@ -85,11 +83,11 @@ pub fn precision_by_detector(totals: &Totals) -> Value {
     Value::Object(out)
 }
 
-/// One outcome count keyed `"<verdict>:<detector>"`.
+/// One outcome count keyed by verdict and detector.
 fn outcome(totals: &Totals, verdict: &str, detector: &str) -> u64 {
     totals
         .outcomes
-        .get(&format!("{verdict}:{detector}"))
+        .get(&OutcomeKey::new(verdict, detector))
         .copied()
         .unwrap_or(0)
 }
@@ -108,9 +106,7 @@ pub fn low_precision_detectors(totals: &Totals) -> BTreeSet<String> {
         .map(String::as_str)
         .collect();
     for key in totals.outcomes.keys() {
-        if let Some((_, detector)) = key.split_once(':') {
-            detectors.insert(detector);
-        }
+        detectors.insert(&key.detector);
     }
     detectors
         .into_iter()
@@ -293,7 +289,7 @@ mod tests {
                 secs_total: 3 * 86_400,
             },
         );
-        t.outcomes.insert("debt:dead_code/function".into(), 1);
+        t.outcomes.insert(OutcomeKey::new("debt", "dead_code/function"), 1);
         // smells/god_module: 1 fixed, 3 false positives → precision 0.25.
         t.resolved_by_detector.insert(
             "smells/god_module".into(),
@@ -303,7 +299,7 @@ mod tests {
             },
         );
         t.outcomes
-            .insert("false_positive:smells/god_module".into(), 3);
+            .insert(OutcomeKey::new("false_positive", "smells/god_module"), 3);
         t.scans_by_origin.insert("gate".into(), 3);
         t.scans_by_origin.insert("tool".into(), 1);
         t.searches = 4;
@@ -378,7 +374,7 @@ mod tests {
 
         // One stray false positive is not enough evidence to brand a detector.
         let mut t = Totals::default();
-        t.outcomes.insert("false_positive:smells/x".into(), 1);
+        t.outcomes.insert(OutcomeKey::new("false_positive", "smells/x"), 1);
         assert!(low_precision_detectors(&t).is_empty());
     }
 

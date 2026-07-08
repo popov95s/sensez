@@ -46,6 +46,45 @@ impl Resolved {
     }
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
+pub struct OutcomeKey {
+    pub verdict: String,
+    pub detector: String,
+}
+
+impl OutcomeKey {
+    /// Create a new outcome key.
+    pub fn new(verdict: impl Into<String>, detector: impl Into<String>) -> Self {
+        Self {
+            verdict: verdict.into(),
+            detector: detector.into(),
+        }
+    }
+}
+
+impl Serialize for OutcomeKey {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        // Serialize as "verdict:detector" for JSON compatibility
+        serializer.serialize_str(&format!("{}:{}", self.verdict, self.detector))
+    }
+}
+
+impl<'de> Deserialize<'de> for OutcomeKey {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        let (verdict, detector) = s
+            .split_once(':')
+            .ok_or_else(|| serde::de::Error::custom(format!("invalid outcome key format: {s}")))?;
+        Ok(OutcomeKey::new(verdict, detector))
+    }
+}
+
 /// One recorded server interaction (a row in append-only `events.jsonl`).
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
@@ -154,8 +193,8 @@ pub struct Totals {
     pub first_searches: u64,
     /// Searches that returned no hits (a miss the user had to work around).
     pub searches_zero_hit: u64,
-    /// `"<verdict>:<detector>"` → user-triage outcome count.
-    pub outcomes: BTreeMap<String, u64>,
+    /// User-triage outcome counts keyed by verdict and detector.
+    pub outcomes: BTreeMap<OutcomeKey, u64>,
     /// Sum of (referenced file bytes − returned snippet bytes) over searches.
     pub est_context_bytes_saved: u64,
     /// Detector (`pillar/<kind>`) → findings reported by the latest scan.
@@ -249,7 +288,7 @@ impl Totals {
             } => {
                 *self
                     .outcomes
-                    .entry(format!("{action}:{pillar}"))
+                    .entry(OutcomeKey::new(action, pillar))
                     .or_default() += count;
             }
         }
@@ -334,7 +373,7 @@ mod tests {
 
         assert_eq!((t.first_used, t.last_used), (10, 30));
         assert_eq!((t.scans, t.searches, t.first_searches), (1, 1, 1));
-        assert_eq!(t.outcomes["fixed:duplication"], 2);
+        assert_eq!(t.outcomes[&OutcomeKey::new("fixed", "duplication")], 2);
         assert_eq!(t.est_context_bytes_saved, 4900);
         assert_eq!(t.scans_by_origin["gate"], 1);
         assert_eq!(t.reported_by_detector["dead_code/function"], 3);
