@@ -23,9 +23,6 @@ Docs: https://popov95s.github.io/sensez/latest/
 ## Quick Start
 ### Python
 ```Bash
-# Run a one-off scan with uv
-uvx --from sensez sensez noze .
-
 # Add as a project dev dependency; run it with `uv run sensez ...`
 uv add --dev sensez
 uv run sensez init
@@ -33,6 +30,9 @@ uv run sensez init
 # Install as a global CLI so `sensez ...` works directly
 uv tool install sensez
 sensez init
+
+# or run a one-off scan with uv
+uvx sensez noze .
 ```
 
 ### JS/TS
