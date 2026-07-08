@@ -79,6 +79,25 @@ repo intelligence signals, including dead code (`5.75s`).
 
 `sensez` tries to lower dead code noise and allows for configuration of what gets reported. It also includes a few more Python and TS/JS opinionated smells, apart from overall structural consistency metrics.
 
+## Agent Impact
+
+We gave the same coding agent 70 real-world Python tasks from SWE-PolyBench and
+SWE-bench Verified, plus 21 synthetic tasks designed to trigger specific
+maintainability traps. Both variants received SOLID/DRY principles. The Sensez
+variant additionally used the `noze_sniff` MCP tool in a mandatory feedback loop
+before declaring each task complete.
+
+| | New quality issues | Clone tokens | New clones | Lines written | Tokens used |
+|---|---|---|---|---|---|
+| Without Sensez | 14 | 1,251 | 129 | 2,080 | 1.23M |
+| With Sensez | 2 | 126 | 0 | 682 | 1.34M |
+| **Reduction** | **86%** | **90%** | **100%** | **67%** | **+8.7% overhead** |
+
+Sensez agents produced structurally cleaner code with 67% fewer lines. 
+
+Benchmarks used: SWE-PolyBench_500, SWE-bench Verified, and synthetic pillar tests.
+Full methodology and per-benchmark results in [`evals/`](evals/).
+
 ## The Problem
 
 Coding agents drift. Not due to bad intentions, but because their loop is leaky.

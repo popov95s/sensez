@@ -9,5 +9,4 @@ specs*
 evals/**/results*/
 evals/**/predictions/
 evals/**/__pycache__/
-evals/*
 .codex

@@ -1,0 +1,9 @@
+# Untested eval suites — keep for future work
+/smellbench_ab/
+/frontiercode_ab/
+/swe_ci_ab/
+
+# Generated result directories
+results/
+results_*/
+results_deepseek_v4_poc/
