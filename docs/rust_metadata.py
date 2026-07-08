@@ -92,14 +92,23 @@ def _enabled_fields() -> dict[SmellTerm, str]:
 
 def _rule_knob_fields() -> list[tuple[SmellTerm, str, str]]:
     source = SMELL_RULES_RS.read_text()
-    body = source.split("fn apply_rule_knob", 1)[1].split("fn is_rule_key", 1)[0]
-    return [
+    integer_body = source.split("fn apply_integer_knob", 1)[1].split("fn set", 1)[0]
+    bool_body = source.split("fn apply_rule_knob", 1)[1].split("if bool_rule_knobs", 1)[0]
+    integer_knobs = [
+        (SmellTerm(camel_to_snake(kind)), key, field)
+        for kind, key, field in re.findall(
+            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*(?:\{\s*)?set\(&mut smells\.(\w+),',
+            integer_body,
+        )
+    ]
+    bool_knobs = [
         (SmellTerm(camel_to_snake(kind)), key, field)
         for kind, key, field in re.findall(
             r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*\{\s*smells\.(\w+)\s*=',
-            body,
+            bool_body,
         )
     ]
+    return integer_knobs + bool_knobs
 
 
 def _js_ts_overrides() -> dict[str, set[SmellTerm]]:
