@@ -84,6 +84,10 @@ wait-timeout = "0.2"
 # serde binary format; replaced unmaintained bincode, RUSTSEC-2025-0141).
 model2vec-rs = { version = "0.2", optional = true }
 postcard = { version = "1", default-features = false, features = ["use-std"], optional = true }
+# OS advisory file locks (flock on Unix, LockFileEx on Windows). Released by
+# the kernel on process death, preventing the stale-lock permadeath that the
+# previous sentinel-file approach suffered from.
+fs4 = "1.1"
 
 [dev-dependencies]
 # Unique, panic-safe temp dirs for tests (no fixed-name collisions or leaks).

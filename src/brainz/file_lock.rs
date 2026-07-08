@@ -1,41 +1,41 @@
-use anyhow::{Context, Result};
-use std::fs;
-use std::path::{Path, PathBuf};
-use std::thread;
-use std::time::{Duration, Instant};
+//! OS advisory file locks for cross-process synchronization.
+//!
+//! Uses `fs4` for proper `flock` (Unix) / `LockFileEx` (Windows) semantics.
+//! The kernel releases these locks automatically when the process dies,
+//! preventing the stale-lock permadeath that sentinel-file approaches suffer.
 
-const LOCK_TIMEOUT: Duration = Duration::from_secs(5);
+use anyhow::{Context, Result};
+use std::fs::{self, OpenOptions};
+use std::path::Path;
 
 pub(super) struct FileLock {
-    path: PathBuf,
+    file: fs::File,
 }
 
 impl Drop for FileLock {
     fn drop(&mut self) {
-        let _ = fs::remove_file(&self.path);
+        let _ = self.file.unlock();
+        // Keep the lockfile around — it's cheap and avoids recreating it.
+        // The lock itself is released by unlock() above (and by the kernel on death).
     }
 }
 
+/// Acquire an exclusive advisory lock on `name` within the local-metrics dir.
+/// Blocks until the lock is available or an error occurs.
 pub(super) fn acquire(root: &Path, name: &str) -> Result<FileLock> {
     let dir = crate::dotdir::ensure(root, Some("local-metrics"))?;
     let path = dir.join(name);
-    let start = Instant::now();
-    loop {
-        match fs::OpenOptions::new()
-            .write(true)
-            .create_new(true)
-            .open(&path)
-        {
-            Ok(_) => return Ok(FileLock { path }),
-            Err(err) if err.kind() == std::io::ErrorKind::AlreadyExists => {
-                if start.elapsed() >= LOCK_TIMEOUT {
-                    anyhow::bail!("timed out waiting for {}", path.display());
-                }
-                thread::sleep(Duration::from_millis(10));
-            }
-            Err(err) => {
-                return Err(err).with_context(|| format!("creating {}", path.display()));
-            }
-        }
-    }
+
+    let file = OpenOptions::new()
+        .create(true)
+        .truncate(false)
+        .write(true)
+        .read(true)
+        .open(&path)
+        .with_context(|| format!("opening lock file {}", path.display()))?;
+
+    file.lock()
+        .with_context(|| format!("acquiring exclusive lock on {}", path.display()))?;
+
+    Ok(FileLock { file })
 }

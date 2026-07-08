@@ -5,7 +5,9 @@
   ],
   "files": [
     "events.jsonl",
+    "flush.lock",
     "last-scan.json",
+    "last-scan.lock",
     "totals.json",
     "triage.json"
   ]

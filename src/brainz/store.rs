@@ -227,6 +227,9 @@ fn save_fingerprints_locked(
         }
     }
     let json = serde_json::to_vec(&all).context("serializing fingerprints")?;
-    fs::write(d.join("last-scan.json"), json).context("writing last-scan.json")?;
+    let target = d.join("last-scan.json");
+    let tmp = target.with_extension("json.tmp");
+    fs::write(&tmp, &json).with_context(|| format!("writing {}", tmp.display()))?;
+    fs::rename(&tmp, &target).context("replacing last-scan.json")?;
     Ok(true)
 }
