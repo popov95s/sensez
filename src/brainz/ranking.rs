@@ -1,6 +1,6 @@
 //! Precision-aware presentation ranking for findings.
 
-use super::fingerprint::{self, Print};
+use super::fingerprint;
 use super::{hub, report, store};
 use serde_json::Value;
 use std::collections::BTreeSet;
@@ -31,30 +31,30 @@ pub fn rank_by_precision(root: &Path, report: &mut crate::report::AnalysisReport
         return;
     };
     let prints = fingerprint::fingerprints(&value);
-    demote_noisy(
+    fingerprint::partition_by_fingerprint(
         &mut report.cycles,
         prints.get(&fingerprint::Namespace::Cycles),
-        &noisy,
+        |p| noisy.contains(&p.class.to_string()),
     );
-    demote_noisy(
+    fingerprint::partition_by_fingerprint(
         &mut report.dead_code,
         prints.get(&fingerprint::Namespace::DeadCode),
-        &noisy,
+        |p| noisy.contains(&p.class.to_string()),
     );
-    demote_noisy(
+    fingerprint::partition_by_fingerprint(
         &mut report.boundaries,
         prints.get(&fingerprint::Namespace::Boundaries),
-        &noisy,
+        |p| noisy.contains(&p.class.to_string()),
     );
-    demote_noisy(
+    fingerprint::partition_by_fingerprint(
         &mut report.duplication,
         prints.get(&fingerprint::Namespace::Duplication),
-        &noisy,
+        |p| noisy.contains(&p.class.to_string()),
     );
-    demote_noisy(
+    fingerprint::partition_by_fingerprint(
         &mut report.smells,
         prints.get(&fingerprint::Namespace::Smells),
-        &noisy,
+        |p| noisy.contains(&p.class.to_string()),
     );
 }
 
@@ -64,32 +64,13 @@ fn noisy_detectors(root: &Path) -> BTreeSet<String> {
     })
 }
 
-fn demote_noisy<T>(items: &mut Vec<T>, prints: Option<&Vec<Print>>, noisy: &BTreeSet<String>) {
-    let Some(prints) = prints else {
-        return;
-    };
-    let (mut trusted, mut sink) = (Vec::new(), Vec::new());
-    for (i, item) in std::mem::take(items).into_iter().enumerate() {
-        let is_noisy = prints
-            .get(i)
-            .map(|p| noisy.contains(&p.class.to_string()))
-            .unwrap_or(false);
-        if is_noisy {
-            sink.push(item);
-        } else {
-            trusted.push(item);
-        }
-    }
-    trusted.append(&mut sink);
-    *items = trusted;
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::brainz::fingerprint::Print;
 
     #[test]
-    fn demote_noisy_sinks_low_precision_keeping_order() {
+    fn partition_by_fingerprint_sinks_matching_items_keeping_order() {
         let print = |hash, noisy| {
             Print::identity(
                 hash,
@@ -115,8 +96,9 @@ mod tests {
             print(3, false),
             print(4, true),
         ];
-        let noisy: BTreeSet<String> = ["smells/god_module".to_string()].into();
-        demote_noisy(&mut items, Some(&prints), &noisy);
+        fingerprint::partition_by_fingerprint(&mut items, Some(&prints), |p| {
+            matches!(p.class, fingerprint::Detector::Smell { smell } if smell == crate::report::SmellKind::GodModule)
+        });
         assert_eq!(items, vec!["a", "c", "b", "d"]);
     }
 }

@@ -72,6 +72,55 @@ pub fn fingerprints(report: &Value) -> Prints {
         .collect()
 }
 
+/// Retain items whose fingerprint satisfies the predicate.
+///
+/// Walks `items` in lockstep with the corresponding `prints` vector (which must
+/// be in the same order). Items without a matching print are kept by default.
+pub fn retain_by_fingerprint<T>(
+    items: &mut Vec<T>,
+    prints: Option<&Vec<Print>>,
+    predicate: impl Fn(&Print) -> bool,
+) {
+    let Some(prints) = prints else {
+        return;
+    };
+    let mut i = 0;
+    items.retain(|_| {
+        let keep = prints.get(i).map(&predicate).unwrap_or(true);
+        i += 1;
+        keep
+    });
+}
+
+/// Partition items by fingerprint predicate, moving matching items to the end.
+///
+/// Walks `items` in lockstep with the corresponding `prints` vector (which must
+/// be in the same order). Items whose fingerprint satisfies the predicate are
+/// moved to the end while preserving relative order within each group.
+pub fn partition_by_fingerprint<T>(
+    items: &mut Vec<T>,
+    prints: Option<&Vec<Print>>,
+    predicate: impl Fn(&Print) -> bool,
+) {
+    let Some(prints) = prints else {
+        return;
+    };
+    let (mut trusted, mut sink) = (Vec::new(), Vec::new());
+    for (i, item) in std::mem::take(items).into_iter().enumerate() {
+        let matches = prints
+            .get(i)
+            .map(&predicate)
+            .unwrap_or(false);
+        if matches {
+            sink.push(item);
+        } else {
+            trusted.push(item);
+        }
+    }
+    trusted.append(&mut sink);
+    *items = trusted;
+}
+
 /// Per-detector reported counts for a report (e.g. `smells/god_module → 4`).
 /// Recorded on every scan, including diff/gate scans that skip aging.
 pub fn detector_counts(report: &Value) -> BTreeMap<String, u64> {

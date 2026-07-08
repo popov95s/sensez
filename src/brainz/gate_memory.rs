@@ -14,30 +14,30 @@ pub fn retain_unseen_gate_findings(root: &std::path::Path, report: &mut Analysis
         return finding_count(report);
     };
     let prints = fingerprint::fingerprints(&value);
-    retain_unblocked(
+    fingerprint::retain_by_fingerprint(
         &mut report.cycles,
         prints.get(&fingerprint::Namespace::Cycles),
-        &blocked,
+        |p| !blocked.contains(&p.key()),
     );
-    retain_unblocked(
+    fingerprint::retain_by_fingerprint(
         &mut report.dead_code,
         prints.get(&fingerprint::Namespace::DeadCode),
-        &blocked,
+        |p| !blocked.contains(&p.key()),
     );
-    retain_unblocked(
+    fingerprint::retain_by_fingerprint(
         &mut report.boundaries,
         prints.get(&fingerprint::Namespace::Boundaries),
-        &blocked,
+        |p| !blocked.contains(&p.key()),
     );
-    retain_unblocked(
+    fingerprint::retain_by_fingerprint(
         &mut report.duplication,
         prints.get(&fingerprint::Namespace::Duplication),
-        &blocked,
+        |p| !blocked.contains(&p.key()),
     );
-    retain_unblocked(
+    fingerprint::retain_by_fingerprint(
         &mut report.smells,
         prints.get(&fingerprint::Namespace::Smells),
-        &blocked,
+        |p| !blocked.contains(&p.key()),
     );
     report.meta.glossary = crate::noze::glossary::for_report(report);
     finding_count(report)
@@ -52,25 +52,6 @@ fn blocked_fingerprints(root: &std::path::Path) -> BTreeSet<String> {
         })
         .flatten()
         .collect()
-}
-
-fn retain_unblocked<T>(
-    items: &mut Vec<T>,
-    prints: Option<&Vec<fingerprint::Print>>,
-    blocked: &BTreeSet<String>,
-) {
-    let Some(prints) = prints else {
-        return;
-    };
-    let mut i = 0;
-    items.retain(|_| {
-        let keep = prints
-            .get(i)
-            .map(|p| !blocked.contains(&p.key()))
-            .unwrap_or(true);
-        i += 1;
-        keep
-    });
 }
 
 fn finding_count(report: &AnalysisReport) -> usize {

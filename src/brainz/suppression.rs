@@ -22,35 +22,30 @@ pub fn apply_suppressions(root: &Path, report: &mut crate::report::AnalysisRepor
         ignore: &ignore,
         accept: &accept,
     };
-    retain_allowed(
+    fingerprint::retain_by_fingerprint(
         &mut report.cycles,
         prints.get(&fingerprint::Namespace::Cycles),
-        "cycles",
-        &ctx,
+        |p| !ctx.hides(p, "cycles"),
     );
-    retain_allowed(
+    fingerprint::retain_by_fingerprint(
         &mut report.dead_code,
         prints.get(&fingerprint::Namespace::DeadCode),
-        "dead_code",
-        &ctx,
+        |p| !ctx.hides(p, "dead_code"),
     );
-    retain_allowed(
+    fingerprint::retain_by_fingerprint(
         &mut report.boundaries,
         prints.get(&fingerprint::Namespace::Boundaries),
-        "boundaries",
-        &ctx,
+        |p| !ctx.hides(p, "boundaries"),
     );
-    retain_allowed(
+    fingerprint::retain_by_fingerprint(
         &mut report.duplication,
         prints.get(&fingerprint::Namespace::Duplication),
-        "duplication",
-        &ctx,
+        |p| !ctx.hides(p, "duplication"),
     );
-    retain_allowed(
+    fingerprint::retain_by_fingerprint(
         &mut report.smells,
         prints.get(&fingerprint::Namespace::Smells),
-        "smells",
-        &ctx,
+        |p| !ctx.hides(p, "smells"),
     );
 }
 
@@ -72,23 +67,6 @@ impl Suppress<'_> {
         };
         matches(pillar) || matches(&rendered.class)
     }
-}
-
-fn retain_allowed<T>(
-    items: &mut Vec<T>,
-    prints: Option<&Vec<Print>>,
-    pillar: &str,
-    ctx: &Suppress,
-) {
-    let Some(prints) = prints else {
-        return;
-    };
-    let mut i = 0;
-    items.retain(|_| {
-        let keep = prints.get(i).map(|p| !ctx.hides(p, pillar)).unwrap_or(true);
-        i += 1;
-        keep
-    });
 }
 
 #[cfg(test)]
