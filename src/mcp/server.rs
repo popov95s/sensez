@@ -29,8 +29,12 @@ pub async fn serve() -> Result<()> {
                 Err(err) => break Err(err),
             },
             _ = flush_tick.tick() => {
-                crate::brainz::recapture(); // bank fixes since the last scan
-                crate::brainz::flush();
+                // Spawn blocking to avoid stalling the async runtime during
+                // potentially expensive recapture/flush operations.
+                let _ = tokio::task::spawn_blocking(|| {
+                    crate::brainz::recapture(); // bank fixes since the last scan
+                    crate::brainz::flush();
+                }).await;
             }
             _ = &mut shutdown => break Ok(()),  // Ctrl-C / SIGTERM
         }
@@ -40,7 +44,9 @@ pub async fn serve() -> Result<()> {
     // in-session fixes, and a shutdown-time recapture would do an O(repo)
     // cheap-scan guard walk under SIGTERM pressure. If the client cleanly
     // disconnects mid-session, the last periodic flush is fresh enough.
-    crate::brainz::flush();
+    let _ = tokio::task::spawn_blocking(|| {
+        crate::brainz::flush();
+    }).await;
     served
 }
 
@@ -53,7 +59,12 @@ async fn handle_line(line: &str, stdout: &mut tokio::io::Stdout) -> Result<()> {
         Ok(value) => value,
         Err(_) => return write_line(stdout, &parse_error()).await,
     };
-    if let Some(response) = super::handle_message(&message) {
+    // Spawn blocking to avoid stalling the async runtime during potentially
+    // expensive operations like scans.
+    let response = tokio::task::spawn_blocking(move || super::handle_message(&message))
+        .await
+        .context("spawn_blocking handle_message")?;
+    if let Some(response) = response {
         write_line(stdout, &response).await?;
     }
     Ok(())
