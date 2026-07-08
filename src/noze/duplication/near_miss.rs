@@ -70,19 +70,26 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
 
 /// Functions not nested inside another function (methods and module functions).
 fn top_level_functions(file: &ParsedFile) -> Vec<&crate::spine::parser::FunctionUnit> {
-    file.walked
-        .units
-        .functions
-        .iter()
-        .filter(|f| {
-            !file.walked.units.functions.iter().any(|g| {
-                !std::ptr::eq(*f, g)
-                    && g.start_line <= f.start_line
-                    && f.end_line <= g.end_line
-                    && (g.start_line, g.end_line) != (f.start_line, f.end_line)
-            })
-        })
-        .collect()
+    let mut functions: Vec<&crate::spine::parser::FunctionUnit> =
+        file.walked.units.functions.iter().collect();
+
+    functions.sort_by(|a, b| {
+        a.start_line
+            .cmp(&b.start_line)
+            .then_with(|| b.end_line.cmp(&a.end_line))
+    });
+
+    let mut result = Vec::new();
+    let mut max_end_line = 0;
+
+    for func in functions {
+        if func.end_line > max_end_line {
+            result.push(func);
+            max_end_line = func.end_line;
+        }
+    }
+
+    result
 }
 
 /// Tokens (kind, lexeme) whose start row falls within the function's lines.
