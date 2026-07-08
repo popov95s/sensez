@@ -1,7 +1,6 @@
 //! End-to-end scan orchestration shared by the CLI and the Python surface.
 
 use crate::config::model::Config;
-use crate::diff::ChangedLines;
 use crate::noze;
 use crate::profiles::registry;
 use crate::report::{AnalysisReport, ScanStage};
@@ -13,13 +12,12 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 /// Crawl, parse, build the graph, run analyzers, apply triaged suppressions
-/// and precision ranking, then apply optional diff scope. The brainz
-/// coupling for filtering lives here — callers just get a filtered report.
+/// and precision ranking. Returns the report and a module→file map (needed for
+/// diff filtering via [`crate::diff::apply`]).
 pub fn analyze_path(
     path: &Path,
     threshold: Option<usize>,
-    diff: Option<&ChangedLines>,
-) -> Result<AnalysisReport> {
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
     let (mut config, config_issues) = Config::load_for_scan(path);
     if let Some(value) = threshold {
         config.duplication.threshold = value;
@@ -53,20 +51,18 @@ pub fn analyze_path(
     report.meta.files_skipped = report.meta.issues.len();
     timer.lap("analyze");
 
-    if let Some(changed) = diff {
-        let mut module_files: HashMap<String, PathBuf> = HashMap::new();
-        for idx in graph.graph.node_indices() {
-            let n = &graph.graph[idx];
-            if n.is_external {
-                continue;
-            }
-            module_files
-                .entry(n.module_name.clone())
-                .or_insert_with(|| n.file_path.clone());
+    let mut module_files: HashMap<String, PathBuf> = HashMap::new();
+    for idx in graph.graph.node_indices() {
+        let n = &graph.graph[idx];
+        if n.is_external {
+            continue;
         }
-        crate::diff::apply(&mut report, changed, &module_files);
+        module_files
+            .entry(n.module_name.clone())
+            .or_insert_with(|| n.file_path.clone());
     }
-    Ok(report)
+
+    Ok((report, module_files))
 }
 
 /// Opt-in per-phase tracing (`SENSEZ_TIMING=1`).
@@ -111,7 +107,7 @@ fn entry_modules(project_root: &Path, parsed: &[ParsedFile]) -> Vec<String> {
 
 /// Run and render a scan. `max = 0` leaves findings uncapped.
 pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -> Result<String> {
-    let mut report = analyze_path(path, threshold, None)?;
+    let (mut report, _module_files) = analyze_path(path, threshold)?;
     noze::limit(&mut report, max);
     match format {
         Format::Json => reporter::to_json(&report),
@@ -122,6 +118,7 @@ pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::diff::ChangedLines;
     use std::fs;
 
     #[test]
@@ -163,7 +160,9 @@ mod tests {
         let mut changed = ChangedLines::default();
         changed.add(&dir.join("touched.py"), 5, 6);
 
-        let report = analyze_path(&dir, None, Some(&changed)).unwrap();
+        let (report, module_files) = analyze_path(&dir, None).unwrap();
+        let mut report = report;
+        crate::diff::apply(&mut report, &changed, &module_files);
         assert_eq!(report.meta.mode, crate::report::ReportMode::Diff);
         let dead: Vec<_> = report.dead_code.iter().map(|f| f.symbol.as_str()).collect();
         assert!(dead.contains(&"unused_here"), "touched file's finding kept");
@@ -204,8 +203,9 @@ mod tests {
         fs::write(&file, src).unwrap();
 
         let has_split = |changed: &ChangedLines| {
-            analyze_path(&dir, None, Some(changed))
-                .unwrap()
+            let (mut report, module_files) = analyze_path(&dir, None).unwrap();
+            crate::diff::apply(&mut report, changed, &module_files);
+            report
                 .smells
                 .iter()
                 .any(|s| s.kind == SmellKind::SplitVariable && s.symbol == "proc")
@@ -213,8 +213,9 @@ mod tests {
 
         // Sanity: a full scan finds it (proves the fixture triggers the smell).
         assert!(
-            analyze_path(&dir, None, None)
+            analyze_path(&dir, None)
                 .unwrap()
+                .0
                 .smells
                 .iter()
                 .any(|s| s.kind == SmellKind::SplitVariable),
@@ -246,7 +247,7 @@ mod tests {
         let deep = format!("x = {}1{}", "(".repeat(100_000), ")".repeat(100_000));
         fs::write(dir.join("too_deep.py"), deep).unwrap();
 
-        let report = analyze_path(&dir, None, None).unwrap();
+        let (report, _) = analyze_path(&dir, None).unwrap();
         assert_eq!(report.meta.files_skipped, 1);
         assert_eq!(report.meta.issues.len(), 1);
         assert_eq!(report.meta.issues[0].stage, crate::report::ScanStage::Parse);
@@ -267,7 +268,7 @@ mod tests {
         fs::write(dir.join("app.py"), "def flat():\n    return 1\n").unwrap();
         fs::write(dir.join("app/__init__.py"), "def pkg():\n    return 2\n").unwrap();
 
-        let report = analyze_path(&dir, None, None).unwrap();
+        let (report, _) = analyze_path(&dir, None).unwrap();
 
         assert_eq!(report.meta.files_skipped, 0);
         assert!(report.meta.issues.is_empty());
@@ -302,7 +303,7 @@ mod tests {
         .unwrap();
         fs::write(dir.join("consumer.py"), "from m import live\n\nlive()\n").unwrap();
 
-        let report = analyze_path(&dir, None, None).unwrap();
+        let (report, _) = analyze_path(&dir, None).unwrap();
         let dead = report
             .dead_code
             .iter()

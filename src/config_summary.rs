@@ -49,7 +49,7 @@ pub(crate) fn scan(path: &Path, threshold: Option<usize>) -> Result<String> {
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
-    let report = crate::analyze_path(path, threshold, None)?;
+    let (report, _) = crate::analyze_path(path, threshold)?;
     let summary = from_report(path, &report, &config);
     serde_json::to_string_pretty(&summary).context("serializing configuration summary")
 }

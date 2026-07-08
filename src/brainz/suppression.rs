@@ -124,7 +124,7 @@ mod tests {
         );
         triage_finding(root, "dead_code", "orphan_two", "false_positive", None).unwrap();
 
-        let mut report = crate::analyze_path(root, None, None).unwrap();
+        let (mut report, _) = crate::analyze_path(root, None).unwrap();
         apply_suppressions(root, &mut report);
         let symbols: Vec<&str> = report.dead_code.iter().map(|f| f.symbol.as_str()).collect();
         assert!(
@@ -187,7 +187,7 @@ mod tests {
         )
         .unwrap();
 
-        let mut report = crate::analyze_path(root, None, None).unwrap();
+        let (mut report, _) = crate::analyze_path(root, None).unwrap();
         apply_suppressions(root, &mut report);
         let symbols: Vec<&str> = report.dead_code.iter().map(|f| f.symbol.as_str()).collect();
         assert!(

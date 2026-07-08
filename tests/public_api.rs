@@ -51,7 +51,7 @@ fn public_scan_entry_points_work_on_a_tiny_repo() {
     let parsed: serde_json::Value = serde_json::from_str(&rendered).unwrap();
     assert_eq!(parsed["meta"]["mode"], "full");
 
-    let report = analyze_path(root, None, None).unwrap();
+    let (report, _) = analyze_path(root, None).unwrap();
     assert_eq!(report.meta.mode, ReportMode::Full);
     assert_eq!(report.meta.analyzed_files, 1);
 }
@@ -63,7 +63,7 @@ fn scan_degrades_to_defaults_when_config_is_invalid() {
     fs::write(root.join("sensez.toml"), "exclude = [\"[invalid\"]\n").unwrap();
     fs::write(root.join("demo.py"), "def add(a, b):\n    return a + b\n").unwrap();
 
-    let report = analyze_path(root, None, None).unwrap();
+    let (report, _) = analyze_path(root, None).unwrap();
     assert_eq!(report.meta.analyzed_files, 1);
     assert!(report.meta.issues.iter().any(|issue| {
         issue.stage == ScanStage::Config && issue.message.contains("invalid glob in exclude")
@@ -77,7 +77,7 @@ fn scan_warns_when_pyproject_config_cannot_be_read() {
     fs::write(root.join("pyproject.toml"), "[tool.sensez\n").unwrap();
     fs::write(root.join("demo.py"), "def add(a, b):\n    return a + b\n").unwrap();
 
-    let report = analyze_path(root, None, None).unwrap();
+    let (report, _) = analyze_path(root, None).unwrap();
     assert_eq!(report.meta.analyzed_files, 1);
     assert!(report.meta.issues.iter().any(|issue| {
         issue.stage == ScanStage::Config && issue.message.contains("parsing pyproject.toml")

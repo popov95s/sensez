@@ -46,8 +46,8 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u
         hub::mark_rescanned(root);
         return;
     }
-    let report = match crate::analyze_path(root, threshold, None) {
-        Ok(report) => report,
+    let report = match crate::analyze_path(root, threshold) {
+        Ok((report, _)) => report,
         Err(err) => {
             eprintln!("[sensez metrics] auto-rescan {}: {err:#}", root.display());
             return;

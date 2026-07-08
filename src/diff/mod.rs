@@ -59,11 +59,13 @@ impl ChangedLines {
         self.files.is_empty()
     }
 
+    #[cfg(test)]
     /// The (canonicalized) paths with any recorded change.
     pub fn paths(&self) -> impl Iterator<Item = &Path> {
         self.files.keys().map(PathBuf::as_path)
     }
 
+    #[cfg(test)]
     pub fn signature(&self) -> u64 {
         use std::hash::Hasher;
         let mut paths: Vec<&Path> = self.files.keys().map(PathBuf::as_path).collect();
@@ -82,6 +84,7 @@ fn canon(path: &Path) -> PathBuf {
     std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
 }
 
+#[cfg(test)]
 fn hash_path_into<H: std::hash::Hasher>(path: &Path, hasher: &mut H) {
     use std::hash::Hash;
     use std::time::UNIX_EPOCH;

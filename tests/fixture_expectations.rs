@@ -107,7 +107,7 @@ fn fixture_cases_match_expectations() {
         );
         copy_dir_all(&case.source, &copied);
         let scan_root = copied.join(case.config.root.as_deref().unwrap_or(Path::new(".")));
-        let report = analyze_path(&scan_root, None, None)
+        let (report, _) = analyze_path(&scan_root, None)
             .unwrap_or_else(|err| panic!("{}: scan failed: {err:#}", case.name));
 
         assert_case(&case.config, &report);

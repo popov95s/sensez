@@ -163,7 +163,10 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
         return Ok(ExitCode::SUCCESS);
     }
     let diff = build_diff(path, options.diff, options.diff_from.as_deref());
-    let mut report = crate::analyze_path(path, options.threshold, diff.changed.as_ref())?;
+    let (mut report, module_files) = crate::analyze_path(path, options.threshold)?;
+    if let Some(changed) = diff.changed.as_ref() {
+        crate::diff::apply(&mut report, changed, &module_files);
+    }
     report.meta.issues.extend(diff.issues);
     report.meta.files_skipped = report.meta.issues.len();
     crate::reporter::apply(&mut report, path, &options.output_glob)

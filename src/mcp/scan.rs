@@ -20,9 +20,12 @@ pub(super) fn full(
     max: usize,
 ) -> Result<(AnalysisReport, Value, Duration)> {
     let start = Instant::now();
-    let mut report = crate::analyze_path(path, threshold, None)
+    let (mut report, _module_files) = crate::analyze_path(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
-    finish(path, threshold, max, &mut report, start)
+    let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
+    suppress_scan_issues(&mut report);
+    crate::noze::limit(&mut report, max);
+    Ok((report, snapshot, start.elapsed()))
 }
 
 pub(super) fn diff(
@@ -35,7 +38,7 @@ pub(super) fn diff(
         Ok(changed) => (Some(changed), None),
         Err(err) => (None, Some(format!("{err:#}"))),
     };
-    let mut report = crate::analyze_path(path, threshold, changed.as_ref())
+    let (mut report, module_files) = crate::analyze_path(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
     if let Some(message) = diff_error {
         report.meta.issues.push(ScanIssue {
@@ -45,20 +48,16 @@ pub(super) fn diff(
         });
         report.meta.files_skipped = report.meta.issues.len();
     }
-    finish(path, threshold, max, &mut report, start)
+    let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
+    suppress_scan_issues(&mut report);
+    crate::noze::limit(&mut report, max);
+    if let Some(changed) = changed {
+        crate::diff::apply(&mut report, &changed, &module_files);
+    }
+    Ok((report, snapshot, start.elapsed()))
 }
 
-/// Shared tail: strip scan issues, cap to top-N, snapshot.
-fn finish(
-    path: &Path,
-    threshold: Option<usize>,
-    max: usize,
-    report: &mut AnalysisReport,
-    start: Instant,
-) -> Result<(AnalysisReport, Value, Duration)> {
-    super::scan_recording::suppress_scan_issues(report);
-    crate::noze::limit(report, max);
-    let snapshot = super::scan_recording::snapshot_for_recording(path, threshold, report, false)
-        .context("snapshotting report for fingerprinting")?;
-    Ok((report.clone(), snapshot, start.elapsed()))
+fn suppress_scan_issues(report: &mut AnalysisReport) {
+    report.meta.issues.clear();
+    report.meta.files_skipped = 0;
 }
