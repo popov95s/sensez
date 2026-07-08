@@ -46,7 +46,8 @@ pub async fn serve() -> Result<()> {
     // disconnects mid-session, the last periodic flush is fresh enough.
     let _ = tokio::task::spawn_blocking(|| {
         crate::brainz::flush();
-    }).await;
+    })
+    .await;
     served
 }
 

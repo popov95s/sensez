@@ -96,9 +96,11 @@ mod tests {
             print(3, false),
             print(4, true),
         ];
-        fingerprint::partition_by_fingerprint(&mut items, Some(&prints), |p| {
-            matches!(p.class, fingerprint::Detector::Smell { smell } if smell == crate::report::SmellKind::GodModule)
-        });
+        fingerprint::partition_by_fingerprint(
+            &mut items,
+            Some(&prints),
+            |p| matches!(p.class, fingerprint::Detector::Smell { smell } if smell == crate::report::SmellKind::GodModule),
+        );
         assert_eq!(items, vec!["a", "c", "b", "d"]);
     }
 }

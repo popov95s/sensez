@@ -107,10 +107,7 @@ pub fn partition_by_fingerprint<T>(
     };
     let (mut trusted, mut sink) = (Vec::new(), Vec::new());
     for (i, item) in std::mem::take(items).into_iter().enumerate() {
-        let matches = prints
-            .get(i)
-            .map(&predicate)
-            .unwrap_or(false);
+        let matches = prints.get(i).map(&predicate).unwrap_or(false);
         if matches {
             sink.push(item);
         } else {
