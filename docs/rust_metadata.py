@@ -15,6 +15,7 @@ SMELL_KIND_RS = ROOT / "src/report/smell_kind.rs"
 SMELL_KNOBS_RS = ROOT / "src/config/smells/knobs.rs"
 SMELL_DEFAULTS_RS = ROOT / "src/config/smells/defaults.rs"
 SMELL_RESOLVE_RS = ROOT / "src/config/smells/resolve.rs"
+SMELL_RULES_RS = ROOT / "src/config/smells/rules.rs"
 
 LANGUAGE_ROWS = (
     (("python",), "Python"),
@@ -34,7 +35,7 @@ def smell_kinds() -> set[SmellTerm]:
 
 
 def parse_rule_knobs() -> dict[SmellTerm, list[str]]:
-    source = SMELL_RESOLVE_RS.read_text()
+    source = SMELL_RULES_RS.read_text()
     body = source.split("fn rule_knobs", 1)[1].split("fn bool_rule_knobs", 1)[0]
     out: dict[SmellTerm, list[str]] = {}
     for arm, keys in re.findall(r"(?s)(.*?)=>\s*&\[(.*?)\],", body):
@@ -78,8 +79,8 @@ def _default_smell_fields() -> dict[str, str]:
 
 
 def _enabled_fields() -> dict[SmellTerm, str]:
-    source = SMELL_RESOLVE_RS.read_text()
-    body = source.split("fn set_rule_enabled", 1)[1].split("fn language_label", 1)[0]
+    source = SMELL_RULES_RS.read_text()
+    body = source.split("fn set_rule_enabled", 1)[1]
     return {
         SmellTerm(camel_to_snake(kind)): field
         for kind, field in re.findall(
@@ -90,7 +91,7 @@ def _enabled_fields() -> dict[SmellTerm, str]:
 
 
 def _rule_knob_fields() -> list[tuple[SmellTerm, str, str]]:
-    source = SMELL_RESOLVE_RS.read_text()
+    source = SMELL_RULES_RS.read_text()
     body = source.split("fn apply_rule_knob", 1)[1].split("fn is_rule_key", 1)[0]
     return [
         (SmellTerm(camel_to_snake(kind)), key, field)
