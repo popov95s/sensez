@@ -135,7 +135,7 @@ fn severity_rank(s: Severity) -> u8 {
     }
 }
 
-fn action_rank(level: ActionLevel) -> u8 {
+pub(super) fn action_rank(level: ActionLevel) -> u8 {
     match level {
         ActionLevel::MustFix => 0,
         ActionLevel::Warning => 1,

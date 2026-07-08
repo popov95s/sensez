@@ -73,20 +73,11 @@ pub fn detect_with_root(
     // Rank by impact: long clones with many occurrences first.
     out.sort_by_key(|c| {
         (
-            action_rank(c.action),
+            super::action_rank(c.action),
             std::cmp::Reverse(c.token_length * c.occurrences.len()),
         )
     });
     out
-}
-
-fn action_rank(level: ActionLevel) -> u8 {
-    match level {
-        ActionLevel::MustFix => 0,
-        ActionLevel::Warning => 1,
-        ActionLevel::Advisory => 2,
-        ActionLevel::Info => 3,
-    }
 }
 
 /// Run the suffix-array clone pipeline over one single-language file cohort.
