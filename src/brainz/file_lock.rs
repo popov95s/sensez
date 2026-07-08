@@ -5,6 +5,7 @@
 //! preventing the stale-lock permadeath that sentinel-file approaches suffer.
 
 use anyhow::{Context, Result};
+use fs4::FileExt;
 use std::fs::{self, OpenOptions};
 use std::path::Path;
 
@@ -14,7 +15,7 @@ pub(super) struct FileLock {
 
 impl Drop for FileLock {
     fn drop(&mut self) {
-        let _ = self.file.unlock();
+        let _ = FileExt::unlock(&self.file);
         // Keep the lockfile around — it's cheap and avoids recreating it.
         // The lock itself is released by unlock() above (and by the kernel on death).
     }
@@ -34,7 +35,7 @@ pub(super) fn acquire(root: &Path, name: &str) -> Result<FileLock> {
         .open(&path)
         .with_context(|| format!("opening lock file {}", path.display()))?;
 
-    file.lock()
+    FileExt::lock(&file)
         .with_context(|| format!("acquiring exclusive lock on {}", path.display()))?;
 
     Ok(FileLock { file })
