@@ -4,8 +4,12 @@ use std::path::Path;
 pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let path = super::handlers::required_str(args, "path")?;
     let root = Path::new(path);
-    let Ok(changed) = crate::diff::git::changed_vs_head(root) else {
-        return Ok(allow());
+    let changed = match crate::diff::git::changed_vs_head(root) {
+        Ok(changed) => changed,
+        Err(err) => {
+            eprintln!("[sensez gate] failed to get git diff, allowing: {err:#}");
+            return Ok(allow());
+        }
     };
     if changed.is_empty() {
         return Ok(allow());
@@ -14,8 +18,12 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let gate_config = crate::config::model::Config::load(root)
         .map(|config| config.gate)
         .unwrap_or_default();
-    let Ok((mut report, snapshot, elapsed)) = super::scan::diff(root, None, 0) else {
-        return Ok(allow());
+    let (mut report, snapshot, elapsed) = match super::scan::diff(root, None, 0) {
+        Ok(result) => result,
+        Err(err) => {
+            eprintln!("[sensez gate] failed to scan, allowing: {err:#}");
+            return Ok(allow());
+        }
     };
     crate::brainz::record_scan(root, &snapshot, elapsed, None, crate::brainz::Origin::Gate);
 
