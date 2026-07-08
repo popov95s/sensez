@@ -1,5 +1,5 @@
-//! Size smells: long function (line span), large class (method count), and
-//! heavy nested functions (inner defs that outgrew "simple wrapper").
+//! Size smells: long function, narrating comments, large class, and heavy
+//! nested functions.
 
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
@@ -26,6 +26,9 @@ pub fn detect(
                 lines as u32,
                 cfg.max_function_lines as u32,
             ));
+        }
+        if cfg.narrating_code {
+            narrating_code(ctx, cfg, out, m, lines);
         }
         // A nested def carrying real logic is hidden inside its parent.
         if cfg.max_nested_function_lines > 0 && m.is_nested && lines > cfg.max_nested_function_lines
@@ -60,4 +63,33 @@ pub fn detect(
             ));
         }
     }
+}
+
+fn narrating_code(
+    ctx: &SmellContext<'_>,
+    cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+    m: &FunctionMetrics,
+    lines: usize,
+) {
+    if m.comment_lines < cfg.min_comment_lines || lines == 0 {
+        return;
+    }
+    let ratio = (m.comment_lines * 100).div_ceil(lines);
+    if ratio <= cfg.max_comment_ratio_percent {
+        return;
+    }
+    out.push(make(
+        SmellKind::NarratingCode,
+        format!(
+            "{} comment line(s), {ratio}% of function (threshold {}%) — prefer clearer names or extracted helpers unless the comment explains why",
+            m.comment_lines, cfg.max_comment_ratio_percent
+        ),
+        ctx.path,
+        m.start_line,
+        &m.name,
+        Severity::Info,
+        ratio as u32,
+        cfg.max_comment_ratio_percent as u32,
+    ));
 }

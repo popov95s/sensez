@@ -27,6 +27,7 @@
       "smells/message_chain": 1,
       "smells/mutated_parameter": 6,
       "smells/n_plus_one_call": 1,
+      "smells/narrating_code": 5,
       "smells/nested_loop": 35,
       "smells/repeated_iteration": 8,
       "smells/shotgun_surgery_hazard": 2,

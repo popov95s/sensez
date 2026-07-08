@@ -1088,15 +1088,26 @@
       "message_chain": 1,
       "mutated_parameter": 6,
       "n_plus_one_call": 1,
+      "narrating_code": 5,
       "nested_loop": 35,
       "repeated_iteration": 8,
       "shotgun_surgery_hazard": 2,
       "unnecessary_nested_if": 14
     },
-    "smells_total": 234,
+    "smells_total": 239,
     "source_lines": 74802
   },
   "smells": [
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/discriminated-union.ts",
+      "kind": "narrating_code",
+      "line": 104,
+      "message": "7 comment line(s), 54% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 54,
+      "symbol": "",
+      "threshold": 30
+    },
     {
       "action": "advisory",
       "file": "<zod>/packages/docs/app/llms.txt/route.ts",
@@ -1106,6 +1117,36 @@
       "metric": 1,
       "symbol": "stringifyTitle",
       "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/docs/components/heading.tsx",
+      "kind": "narrating_code",
+      "line": 12,
+      "message": "16 comment line(s), 44% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 44,
+      "symbol": "Heading",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/docs/components/inkeep-search.tsx",
+      "kind": "narrating_code",
+      "line": 7,
+      "message": "14 comment line(s), 35% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 35,
+      "symbol": "InkeepSearchBox",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "narrating_code",
+      "line": 327,
+      "message": "12 comment line(s), 42% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 42,
+      "symbol": "generateFields",
+      "threshold": 30
     },
     {
       "action": "advisory",
@@ -1216,6 +1257,16 @@
       "metric": 2,
       "symbol": "_parse",
       "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "narrating_code",
+      "line": 1355,
+      "message": "11 comment line(s), 55% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 55,
+      "symbol": "_enum",
+      "threshold": 30
     },
     {
       "action": "advisory",

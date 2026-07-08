@@ -6,6 +6,7 @@
 //! Each language module is `#[cfg(feature)]`-gated so an unbuilt language
 //! compiles to nothing.
 
+pub(crate) mod comments;
 pub(crate) mod conditionals;
 pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]

@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 31] = {
+pub const ALL_SMELLS: [SmellKind; 32] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -44,6 +44,7 @@ pub const ALL_SMELLS: [SmellKind; 31] = {
         MagicNumbers,
         MessageChain,
         MutatedParameter,
+        NarratingCode,
         NestedLoop,
         NPlusOneCall,
         ReassignedParameter,
@@ -58,7 +59,7 @@ pub const ALL_SMELLS: [SmellKind; 31] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 31] = {
+pub const SMELLS: [SmellDoc; 32] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(True, False)`) — use an enum or keyword args so calls read clearly." },
@@ -81,6 +82,7 @@ pub const SMELLS: [SmellDoc; 31] = {
         SmellDoc { kind: MagicNumbers, title: "Magic Numbers", explanation: "Unexplained numeric literals in logic — name them as constants so their intent is clear." },
         SmellDoc { kind: MessageChain, title: "Message Chain", explanation: "A long `a.b.c.d` access chain couples the caller to a deep object graph (Law of Demeter) — ask the immediate collaborator instead." },
         SmellDoc { kind: MutatedParameter, title: "Mutated Parameter", explanation: "The function mutates a caller's argument in place — a hidden side effect; return a new value instead." },
+        SmellDoc { kind: NarratingCode, title: "Narrating Code", explanation: "A function is packed with explanatory comments — prefer clearer names or extracted helpers, keeping comments for why." },
         SmellDoc { kind: NestedLoop, title: "Nested Loop", explanation: "A loop is nested directly or through a helper called inside a loop — work grows multiplicatively; combine passes or pre-index the data." },
         SmellDoc { kind: NPlusOneCall, title: "N+1 Loop Call", explanation: "An external-looking call runs once per loop item — prefer a bulk query/request or prefetch so work scales by batch, not item." },
         SmellDoc { kind: ReassignedParameter, title: "Reassigned Parameter", explanation: "A parameter is rebound to a new value inside the body — confusing; use a separate local." },
@@ -240,6 +242,10 @@ pub mod docs {
     pub const RG_MESSAGE_CHAINS: ReferenceLink = ReferenceLink {
         label: "Refactoring.Guru: Message Chains",
         url: "https://refactoring.guru/smells/message-chains",
+    };
+    pub const RG_COMMENTS: ReferenceLink = ReferenceLink {
+        label: "Refactoring.Guru: Comments",
+        url: "https://refactoring.guru/smells/comments",
     };
     pub const RG_REFUSED_BEQUEST: ReferenceLink = ReferenceLink {
         label: "Refactoring.Guru: Refused Bequest",
@@ -616,6 +622,28 @@ FindingDocs {
                 LanguageBlock {
                     language: "typescript",
                     body: "Return a copied value or make mutation an intentional method on an owner.",
+                },
+            ],
+        },
+        FindingDocs {
+            kind: NarratingCode,
+            why_bad: "The prose becomes a second implementation that readers must keep in sync with the code.",
+            external_lints: &[],
+            references: &[
+                RG_COMMENTS,
+            ],
+            fixes: &[
+                LanguageBlock {
+                    language: "python",
+                    body: "Rename values and extract helper functions so the code says what the comments were saying.",
+                },
+                LanguageBlock {
+                    language: "typescript",
+                    body: "Extract named predicates/helpers and keep comments for constraints or rationale.",
+                },
+                LanguageBlock {
+                    language: "rust",
+                    body: "Move step-by-step narration into names and helper functions; keep comments for invariants and safety rationale.",
                 },
             ],
         },

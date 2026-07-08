@@ -193,6 +193,8 @@ pub(super) fn grouped_value_target(language: Language) -> &'static str {
 }
 
 #[cfg(test)]
+mod comments_tests;
+#[cfg(test)]
 mod determinism_tests;
 #[cfg(test)]
 mod discipline_tests;

@@ -28,6 +28,7 @@
       "smells/magic_string_default": 4,
       "smells/mutated_parameter": 3,
       "smells/n_plus_one_call": 1,
+      "smells/narrating_code": 4,
       "smells/nested_loop": 13,
       "smells/shotgun_surgery_hazard": 1,
       "smells/tuple_packing": 3

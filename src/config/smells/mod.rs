@@ -4,6 +4,7 @@ mod defaults;
 mod knobs;
 mod raw;
 mod resolve;
+mod rules;
 mod validate;
 
 pub use knobs::Smells;

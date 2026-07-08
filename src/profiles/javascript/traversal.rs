@@ -56,10 +56,20 @@ fn visit(
 
     // Comments never map to a structural token, so capturing their text for the
     // eyez index cannot affect duplication.
-    #[cfg(feature = "eyez")]
     if kind == "comment" {
-        let scope_path: Vec<&str> = scope.iter().map(|s| s.name.as_str()).collect();
-        crate::eyez::capture::javascript::push_comment(out, module_name, &scope_path, node, src);
+        walk::record_comment_span(out, node);
+        #[cfg(feature = "eyez")]
+        {
+            let scope_path: Vec<&str> = scope.iter().map(|s| s.name.as_str()).collect();
+            crate::eyez::capture::javascript::push_comment(
+                out,
+                module_name,
+                &scope_path,
+                node,
+                src,
+            );
+        }
+        return;
     }
 
     emit_mapped(

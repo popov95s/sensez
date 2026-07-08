@@ -90,6 +90,25 @@ fn nested_rule_tables_group_knobs_and_implicitly_enable() {
 }
 
 #[test]
+fn narrating_code_rule_knobs_parse() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.narrating_code]
+            min_comment_lines = 8
+            max_comment_ratio_percent = 20
+            action = "warning"
+        "#,
+    )
+    .unwrap();
+
+    let py = cfg.for_language(Language::Python);
+    assert!(py.narrating_code);
+    assert_eq!(py.min_comment_lines, 8);
+    assert_eq!(py.max_comment_ratio_percent, 20);
+    assert_eq!(py.actions[&SmellKind::NarratingCode], ActionLevel::Warning);
+}
+
+#[test]
 fn language_rule_tables_override_base_rules() {
     let cfg: SmellConfig = toml::from_str(
         r#"

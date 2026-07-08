@@ -1681,6 +1681,139 @@ max_params = 5 # allowed parameters before flagging
 - Ruff: `PLR0913`
 - ESLint: `max-params`
 
+### Narrating Code (`narrating_code`)
+
+**What it is**
+
+A function is packed with explanatory comments — prefer clearer names or extracted helpers, keeping comments for why.
+
+**Why it's bad**
+
+The prose becomes a second implementation that readers must keep in sync with the code.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def activate_plan(account: Account) -> None:
+        # Load the account owner.
+        owner = account.owner
+        # Load the billing profile.
+        billing = owner.billing_profile
+        # Check whether billing is enabled.
+        if not billing.enabled:
+            return
+        # Load the selected plan.
+        plan = billing.selected_plan
+        # Activate the selected plan.
+        account.activate(plan)
+        # Notify the owner.
+        notify_owner(owner, plan)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Rename values and extract helper functions so the code says what the comments were saying.
+
+    ```python
+    def activate_plan(account: Account) -> None:
+        owner = account.owner
+        billing = owner.billing_profile
+        if not billing.enabled:
+            return
+        _activate_selected_plan(account, owner, billing)
+
+
+    def _activate_selected_plan(
+        account: Account,
+        owner: Owner,
+        billing: BillingProfile,
+    ) -> None:
+        plan = billing.selected_plan
+        account.activate(plan)
+        notify_owner(owner, plan)
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    function activatePlan(account: Account): void {
+      // Load the account owner.
+      const owner = account.owner;
+      // Load the billing profile.
+      const billing = owner.billingProfile;
+      // Check whether billing is enabled.
+      if (!billing.enabled) {
+        return;
+      }
+      // Load the selected plan.
+      const plan = billing.selectedPlan;
+      // Activate the selected plan.
+      account.activate(plan);
+      // Notify the owner.
+      notifyOwner(owner, plan);
+    }
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Extract named predicates/helpers and keep comments for constraints or rationale.
+
+    ```ts
+    function activatePlan(account: Account): void {
+      const owner = account.owner;
+      const billing = owner.billingProfile;
+      if (!billing.enabled) {
+        return;
+      }
+      activateSelectedPlan(account, owner, billing);
+    }
+
+    function activateSelectedPlan(
+      account: Account,
+      owner: Owner,
+      billing: BillingProfile,
+    ): void {
+      const plan = billing.selectedPlan;
+      account.activate(plan);
+      notifyOwner(owner, plan);
+    }
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.narrating_code]
+enabled = true
+action = "warning"
+min_comment_lines = 5 # detector-specific threshold
+max_comment_ratio_percent = 30 # detector-specific threshold
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ## Coupling and Cohesion
 
 ### Data Clump (`data_clump`)

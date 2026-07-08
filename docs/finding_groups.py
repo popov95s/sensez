@@ -35,6 +35,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.LARGE_CLASS,
             SmellTerm.LONG_FUNCTION,
             SmellTerm.LONG_PARAMETER_LIST,
+            SmellTerm.NARRATING_CODE,
         ),
     ),
     (

@@ -24,6 +24,8 @@ pub struct FunctionUnit {
     pub cognitive: usize,
     /// Count of "magic" numeric literals (not 0/1/2).
     pub magic_numbers: usize,
+    /// Number of source lines occupied by comments inside this function body.
+    pub comment_lines: usize,
     /// Longest `a.b.c.d` attribute chain (Law of Demeter / message chains).
     pub max_chain_depth: usize,
     pub is_method: bool,
@@ -65,6 +67,14 @@ pub struct FunctionUnit {
     pub parent: String,
 }
 
+/// Source span for a comment node. Language profiles record these during the
+/// normal syntax walk; the shared walk post-pass attaches them to functions.
+#[derive(Debug, Clone, Default)]
+pub struct CommentSpan {
+    pub start_line: usize,
+    pub end_line: usize,
+}
+
 /// A smell-detector view of one function: the aggregated metrics + the anchor
 /// data (name, line range) needed to build a [`SmellFinding`]. Built from a
 /// [`FunctionUnit`] via [`From`], so detectors work against a fixed type
@@ -93,6 +103,7 @@ pub struct FunctionMetrics {
     // Size / shape
     pub max_tuple_return: usize,
     pub magic_numbers: usize,
+    pub comment_lines: usize,
 
     // Coupling
     pub max_chain_depth: usize,
@@ -131,6 +142,7 @@ impl From<&FunctionUnit> for FunctionMetrics {
             cognitive: f.cognitive,
             max_tuple_return: f.max_tuple_return,
             magic_numbers: f.magic_numbers,
+            comment_lines: f.comment_lines,
             max_chain_depth: f.max_chain_depth,
             receiver_access: f.receiver_access.clone(),
             str_keys: f.str_keys.clone(),

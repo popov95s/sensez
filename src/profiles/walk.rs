@@ -4,8 +4,11 @@
 //! one grammar's node kinds), but the bookkeeping that targets the shared
 //! [`Walked`] output is identical everywhere and lives here once.
 
+use crate::profiles::comments;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
-use crate::spine::ir::{bump, record_attr, FunctionUnit, PerfLine, SymbolKind, Walked};
+use crate::spine::ir::{
+    bump, record_attr, CommentSpan, FunctionUnit, PerfLine, SymbolKind, Walked,
+};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -48,6 +51,7 @@ pub(crate) fn run(
         &mut fn_bounds,
         &mut out,
     );
+    comments::attach(&mut out);
     out
 }
 
@@ -233,6 +237,14 @@ pub(crate) fn record_short_string_fallback(
     if literal_len.is_some_and(|len| len <= 1) {
         unit.short_string_fallback_lines.push(line);
     }
+}
+
+/// Record a source comment span for shared post-walk attachment.
+pub(crate) fn record_comment_span(out: &mut Walked, node: Node) {
+    out.units.comment_spans.push(CommentSpan {
+        start_line: node.start_position().row + 1,
+        end_line: node.end_position().row + 1,
+    });
 }
 
 pub(crate) fn node_text<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {

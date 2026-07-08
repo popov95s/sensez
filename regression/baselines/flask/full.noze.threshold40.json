@@ -283,11 +283,12 @@
       "magic_string_default": 4,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
+      "narrating_code": 4,
       "nested_loop": 13,
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
-    "smells_total": 87,
+    "smells_total": 91,
     "source_lines": 18417
   },
   "smells": [
@@ -403,6 +404,16 @@
     },
     {
       "action": "advisory",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "narrating_code",
+      "line": 636,
+      "message": "7 comment line(s), 35% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 35,
+      "symbol": "list_commands",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
       "file": "<flask>/src/flask/helpers.py",
       "kind": "literal_membership",
       "line": 28,
@@ -450,6 +461,36 @@
       "metric": 1,
       "symbol": "_find_error_handler",
       "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "narrating_code",
+      "line": 279,
+      "message": "62 comment line(s), 48% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 48,
+      "symbol": "__init__",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "narrating_code",
+      "line": 41,
+      "message": "14 comment line(s), 32% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 32,
+      "symbol": "__init__",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "narrating_code",
+      "line": 75,
+      "message": "90 comment line(s), 64% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
+      "metric": 64,
+      "symbol": "__init__",
+      "threshold": 30
     },
     {
       "action": "advisory",

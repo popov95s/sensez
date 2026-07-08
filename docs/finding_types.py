@@ -38,6 +38,7 @@ class SmellTerm(StrEnum):
     MAGIC_STRING_DEFAULT = "magic_string_default"
     MESSAGE_CHAIN = "message_chain"
     MUTATED_PARAMETER = "mutated_parameter"
+    NARRATING_CODE = "narrating_code"
     N_PLUS_ONE_CALL = "n_plus_one_call"
     NESTED_LOOP = "nested_loop"
     REASSIGNED_PARAMETER = "reassigned_parameter"
