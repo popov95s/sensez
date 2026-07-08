@@ -130,7 +130,7 @@ jobs:
           if-no-files-found: error
 
   publish-pypi:
-    needs: build-pypi-wheels
+    needs: [guard, build-pypi-wheels]
     if: ${{ needs.guard.outputs.target == 'pypi' || needs.guard.outputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
@@ -190,7 +190,7 @@ jobs:
           if-no-files-found: error
 
   publish-testpypi:
-    needs: build-testpypi-wheels
+    needs: [guard, build-testpypi-wheels]
     if: ${{ needs.guard.outputs.target == 'testpypi' }}
     runs-on: ubuntu-latest
     environment:
@@ -273,7 +273,7 @@ jobs:
           if-no-files-found: error
 
   publish-npm:
-    needs: build-npm-packages
+    needs: [guard, build-npm-packages]
     if: ${{ needs.guard.outputs.target == 'npm' || needs.guard.outputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
