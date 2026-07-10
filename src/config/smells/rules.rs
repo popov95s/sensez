@@ -1,5 +1,6 @@
-use super::knobs::Smells;
+use super::knobs::{Smells, Strictness};
 use super::raw::RuleRaw;
+use super::strictness;
 use crate::report::SmellKind;
 use std::collections::BTreeMap;
 
@@ -55,6 +56,12 @@ fn apply_rule_knob(
     key: &str,
     value: &toml::Value,
 ) -> Result<bool, String> {
+    if let Some(s) = value.as_str() {
+        return apply_string_knob(smells, kind, key, s);
+    }
+    if strictness::is_string_rule_knob(kind, key) {
+        return Err(format!("[smells.rules.{kind}] {key} must be a string"));
+    }
     if let Some(b) = value.as_bool() {
         let matched = match (kind, key) {
             (SmellKind::MutatedParameter, "include_attributes") => {
@@ -69,7 +76,7 @@ fn apply_rule_knob(
         return Err(format!("[smells.rules.{kind}] {key} must be a boolean"));
     }
     let Some(n) = value.as_integer() else {
-        return if rule_knobs(kind).contains(&key) {
+        return if integer_rule_knobs(kind).contains(&key) {
             Err(format!("[smells.rules.{kind}] {key} must be an integer"))
         } else {
             Ok(false)
@@ -79,6 +86,39 @@ fn apply_rule_knob(
         return Err(format!("[smells.rules.{kind}] {key} must be non-negative"));
     }
     Ok(apply_integer_knob(smells, kind, key, n as usize))
+}
+
+fn apply_string_knob(
+    smells: &mut Smells,
+    kind: SmellKind,
+    key: &str,
+    value: &str,
+) -> Result<bool, String> {
+    match (kind, key) {
+        _ if strictness::is_string_rule_knob(kind, key) => set_strictness_knob(
+            smells,
+            kind,
+            strictness::parse_strictness(kind, key, value)?,
+        ),
+        _ if integer_rule_knobs(kind).contains(&key) => {
+            Err(format!("[smells.rules.{kind}] {key} must be an integer"))
+        }
+        _ => Ok(false),
+    }
+}
+
+fn set_strictness_knob(
+    smells: &mut Smells,
+    kind: SmellKind,
+    value: Strictness,
+) -> Result<bool, String> {
+    match kind {
+        SmellKind::LooseTyping => {
+            smells.loose_typing_strictness = value;
+            Ok(true)
+        }
+        _ => Err(format!("[smells.rules.{kind}] has no strictness storage")),
+    }
 }
 
 fn apply_integer_knob(smells: &mut Smells, kind: SmellKind, key: &str, n: usize) -> bool {
@@ -118,10 +158,12 @@ fn set(slot: &mut usize, value: usize) -> bool {
 }
 
 fn is_rule_key(kind: SmellKind, key: &str) -> bool {
-    matches!(key, "enabled" | "action") || rule_knobs(kind).contains(&key)
+    matches!(key, "enabled" | "action")
+        || integer_rule_knobs(kind).contains(&key)
+        || strictness::is_string_rule_knob(kind, key)
 }
 
-fn rule_knobs(kind: SmellKind) -> &'static [&'static str] {
+fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
     match kind {
         SmellKind::SplitVariable => &["min_assigns"],
         SmellKind::MutatedParameter => &["include_attributes"],

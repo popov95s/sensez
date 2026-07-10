@@ -121,7 +121,13 @@ fn visit(
     match kind {
         "function_definition" => typehints::record_function(node, src, &mut out.units.type_hints),
         "assignment" if !scope.last().is_some_and(|s| s.is_class) => {
+            if scope.is_empty() {
+                typehints::record_type_alias(node, src, &mut out.units.type_hints);
+            }
             typehints::record_assignment(node, src, &mut out.units.type_hints)
+        }
+        "type_alias_statement" if scope.is_empty() => {
+            typehints::record_type_alias(node, src, &mut out.units.type_hints)
         }
         _ => {}
     }

@@ -544,11 +544,11 @@ FindingDocs {
             fixes: &[
                 LanguageBlock {
                     language: "python",
-                    body: "Use a dataclass or another concrete model so callers pass named fields instead of loose keys.",
+                    body: "Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.",
                 },
                 LanguageBlock {
                     language: "typescript",
-                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type.",
+                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
                 },
             ],
         },

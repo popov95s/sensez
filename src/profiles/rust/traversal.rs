@@ -5,7 +5,7 @@ use super::{imports, lexeme, scope, symbols, tokens as token_map, units};
 use crate::profiles::walk::{
     self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
 };
-use crate::spine::ir::{record_attr, Walked};
+use crate::spine::ir::{record_attr, TypeAlias, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -150,6 +150,9 @@ fn visit_node(
         state.test_depth > 0 || cfg_test_here,
         out,
     );
+    if kind == "type_item" && state.scope.is_empty() {
+        record_type_alias(node, src, out);
+    }
 
     if token_map::is_leaf(kind) {
         return;
@@ -223,6 +226,28 @@ fn record_units(
     let is_method = scope.last().is_some_and(|s| s.is_class);
     let unit = units::analyze_function(node, src, is_method, &mut out.units.type_hints);
     out.units.functions.push(unit);
+}
+
+fn record_type_alias(node: Node, src: &[u8], out: &mut Walked) {
+    let Some((name, target)) = parse_type_alias(node, src) else {
+        return;
+    };
+    out.units.type_hints.type_aliases.push(TypeAlias {
+        name,
+        target,
+        line: node.start_position().row + 1,
+    });
+}
+
+fn parse_type_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
+    let text = node.utf8_text(src).ok()?.trim();
+    let rest = text.strip_prefix("pub ").unwrap_or(text);
+    let rest = rest.strip_prefix("type ")?;
+    let (name, target) = rest.split_once('=')?;
+    Some((
+        name.trim().to_string(),
+        target.trim().trim_end_matches(';').trim().to_string(),
+    ))
 }
 
 fn has_cfg_test_attr(node: Node, src: &[u8]) -> bool {

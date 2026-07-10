@@ -1,7 +1,7 @@
 //! Tests for the type/mutation-discipline detectors (`typing.rs`, `mutation.rs`).
 
 use super::*;
-use crate::config::smells::Smells;
+use crate::config::smells::{Smells, Strictness};
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -24,8 +24,45 @@ fn loose_typing_flags_dict_any_param_and_return() {
     let body = "def f(payload: dict[str, Any], names: list[str]) -> dict:\n    return payload\n";
     let s = find(&local("lt", body, &cfg), "loose_typing").expect("must flag");
     assert_eq!(s.severity, Severity::Warning, "Any present → Warning");
-    assert_eq!(s.metric, 3, "two params + return");
-    assert!(s.message.contains("payload") && s.message.contains("names"));
+    assert_eq!(s.metric, 2, "medium catches Any param + schema return");
+    assert!(s.message.contains("payload"));
+    assert!(!s.message.contains("names"));
+    assert!(s.message.contains("shallow type alias"));
+}
+
+#[test]
+fn loose_typing_strictness_controls_primitive_collections() {
+    let body = "def f(name: Any, names: list[str]) -> None:\n    return None\n";
+    let low = Smells {
+        loose_typing_strictness: Strictness::Low,
+        ..Smells::default()
+    };
+    let s = find(&local("lt_low", body, &low), "loose_typing").expect("Any must flag");
+    assert_eq!(s.metric, 1);
+    assert!(!s.message.contains("names"));
+
+    let high = Smells {
+        loose_typing_strictness: Strictness::High,
+        ..Smells::default()
+    };
+    let s = find(&local("lt_high", body, &high), "loose_typing").expect("must flag");
+    assert_eq!(s.metric, 2);
+    assert!(s.message.contains("names"));
+}
+
+#[test]
+fn high_strictness_reports_type_hiding_aliases() {
+    let cfg = Smells {
+        loose_typing_strictness: Strictness::High,
+        ..Smells::default()
+    };
+    let body = "UserId = str\nPayload = dict[str, Any]\ndef f(user_id: UserId) -> None:\n    return None\n";
+    let findings = local("lt_alias", body, &cfg);
+    let aliases = findings
+        .iter()
+        .filter(|s| s.kind.as_str() == "loose_typing" && s.message.contains("type alias"))
+        .count();
+    assert_eq!(aliases, 2);
 }
 
 #[test]
@@ -44,7 +81,7 @@ fn loose_typing_handles_optional_and_union() {
     let body = "def f(a: Optional[dict[str, str]], b: list[int] | None):\n    return a\n";
     let s = find(&local("lt_opt", body, &cfg), "loose_typing").expect("must flag");
     assert_eq!(s.severity, Severity::Info, "no Any → Info");
-    assert_eq!(s.metric, 2);
+    assert_eq!(s.metric, 1, "medium catches schema-erasing dicts only");
 }
 
 #[test]

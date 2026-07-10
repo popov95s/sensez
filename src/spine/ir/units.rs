@@ -185,6 +185,13 @@ pub struct ClassProperty {
     pub line: usize,
 }
 
+#[derive(Debug, Clone, Default)]
+pub struct TypeAlias {
+    pub name: String,
+    pub target: String,
+    pub line: usize,
+}
+
 /// Best-effort, annotation-driven type information (no full inference). Absent
 /// entries mean "unknown" — type-assisted smells skip rather than guess.
 #[derive(Debug, Clone, Default)]
@@ -197,6 +204,8 @@ pub struct TypeHints {
     pub attr_types: HashMap<String, String>,
     /// function name → annotated return type.
     pub return_types: HashMap<String, String>,
+    /// Top-level type aliases (`Payload = dict[...]`, `type Payload = ...`).
+    pub type_aliases: Vec<TypeAlias>,
 }
 
 /// Increment `map[key]`, allocating the key only when absent. On the hot

@@ -2,7 +2,7 @@
 //! lexical helpers live in [`crate::profiles::typevocab`]; this module owns only
 //! Python's conventions (`dict[str, Any]`, `Optional[...]`, `Literal`, ...).
 
-use crate::profiles::typevocab::{base_type, has_domain_type};
+use crate::profiles::typevocab::{base_type, has_domain_type, has_token, LooseTypeKind};
 
 /// Annotation bases that are loose collections (a missing domain type).
 /// Sets are included: `set[int]` / `set[str]` is the same "collection of bare
@@ -44,16 +44,30 @@ const TYPING_NAMES: [&str; 16] = [
     "None",
 ];
 
-/// `list[str]` / `dict[str, Any]` / `set[int]` are loose; `list[UserModel]` /
-/// `Literal["json", "xml"]` are typed and never match.
-pub(crate) fn is_loose(annotation: &str) -> bool {
-    if annotation.contains("Literal") || has_domain_type(annotation, &TYPING_NAMES) {
-        return false;
+pub(crate) fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
+    if has_token(annotation, "Any") {
+        return Some(LooseTypeKind::EscapeHatch);
     }
-    annotation
+    if annotation.contains("Literal") || has_domain_type(annotation, &TYPING_NAMES) {
+        return None;
+    }
+    if is_schema_erasing(annotation) {
+        return Some(LooseTypeKind::SchemaErasing);
+    }
+    let primitive_collection = annotation
         .split('|')
         .any(|part| LOOSE_BASES.contains(&base_type(part)) && base_type(part) != "Optional")
-        || base_type(annotation) == "Optional" && is_loose(inner(annotation))
+        || base_type(annotation) == "Optional"
+            && loose_kind(inner(annotation))
+                .is_some_and(|kind| matches!(kind, LooseTypeKind::PrimitiveCollection));
+    primitive_collection.then_some(LooseTypeKind::PrimitiveCollection)
+}
+
+/// `list[str]` / `dict[str, Any]` / `set[int]` are loose; `list[UserModel]` /
+/// `Literal["json", "xml"]` are typed and never match.
+#[cfg(test)]
+pub(crate) fn is_loose(annotation: &str) -> bool {
+    loose_kind(annotation).is_some()
 }
 
 pub(crate) fn is_bool(annotation: &str) -> bool {
@@ -73,6 +87,12 @@ fn inner(annotation: &str) -> &str {
         .split_once('[')
         .map(|(_, rest)| rest.strip_suffix(']').unwrap_or(rest))
         .unwrap_or("")
+}
+
+fn is_schema_erasing(annotation: &str) -> bool {
+    let base = base_type(annotation);
+    matches!(base, "dict" | "Dict" | "Mapping" | "MutableMapping")
+        || base == "Optional" && is_schema_erasing(inner(annotation))
 }
 
 #[cfg(test)]

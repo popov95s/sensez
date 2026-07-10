@@ -4,7 +4,7 @@
 //! only obvious instantiations.
 
 use super::symbols;
-use crate::spine::ir::TypeHints;
+use crate::spine::ir::{TypeAlias, TypeHints};
 use tree_sitter::Node;
 
 /// Record a function/method's return + parameter type annotations.
@@ -49,6 +49,38 @@ pub fn record_declaration(node: Node, src: &[u8], hints: &mut TypeHints) {
     if let Some(ty) = ty {
         hints.var_types.insert(name.to_string(), ty);
     }
+}
+
+pub fn record_type_alias(node: Node, src: &[u8], hints: &mut TypeHints) {
+    let Some((name, target)) = parse_type_alias(node, src) else {
+        return;
+    };
+    hints.type_aliases.push(TypeAlias {
+        name,
+        target,
+        line: node.start_position().row + 1,
+    });
+}
+
+fn parse_type_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
+    if node.kind() != "type_alias_declaration" {
+        return None;
+    }
+    if let (Some(name), Some(value)) = (
+        node.child_by_field_name("name")
+            .and_then(|n| n.utf8_text(src).ok()),
+        node.child_by_field_name("value")
+            .and_then(|n| n.utf8_text(src).ok()),
+    ) {
+        return Some((name.trim().to_string(), value.trim().to_string()));
+    }
+    let text = node.utf8_text(src).ok()?.trim();
+    let rest = text.strip_prefix("type ")?;
+    let (name, target) = rest.split_once('=')?;
+    Some((
+        name.trim().to_string(),
+        target.trim().trim_end_matches(';').trim().to_string(),
+    ))
 }
 
 /// If `value` is `new Name(...)` / `new mod.Name(...)`, return that type name.

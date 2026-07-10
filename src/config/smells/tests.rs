@@ -2,6 +2,7 @@
 //! `[smells]` base keys + `[smells.<lang>]` tables overlay on top.
 
 use super::SmellConfig;
+use crate::config::smells::Strictness;
 use crate::report::{ActionLevel, SmellKind};
 use crate::spine::ir::Language;
 
@@ -90,6 +91,21 @@ fn nested_rule_tables_group_knobs_and_implicitly_enable() {
 }
 
 #[test]
+fn loose_typing_strictness_rule_knob_parses() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.loose_typing]
+            strictness = "high"
+        "#,
+    )
+    .unwrap();
+
+    let py = cfg.for_language(Language::Python);
+    assert!(py.loose_typing, "setting strictness implies enabled");
+    assert_eq!(py.loose_typing_strictness, Strictness::High);
+}
+
+#[test]
 fn narrating_code_rule_knobs_parse() {
     let cfg: SmellConfig = toml::from_str(
         r#"
@@ -164,4 +180,18 @@ fn known_keys_with_wrong_types_fail_loudly() {
 
     assert!(err.contains("invalid [smells.python]"), "{err}");
     assert!(err.contains("max_cyclomatic"), "{err}");
+}
+
+#[test]
+fn loose_typing_strictness_rejects_bad_values() {
+    let err = toml::from_str::<SmellConfig>(
+        r#"
+            [rules.loose_typing]
+            strictness = "maximum"
+        "#,
+    )
+    .unwrap_err()
+    .to_string();
+
+    assert!(err.contains("low, medium, high"), "{err}");
 }

@@ -280,6 +280,28 @@ mod tests {
         );
     }
 
+    #[test]
+    fn ts_loose_typing_high_reports_arrays_and_aliases() {
+        let src = b"type UserId = string;\nexport function f(ids: string[]): void {}\n";
+        let cfg = Smells {
+            loose_typing_strictness: crate::config::smells::Strictness::High,
+            ..Smells::default()
+        };
+        let findings = findings_for(src, &cfg);
+        assert!(
+            findings
+                .iter()
+                .any(|f| f.kind == SmellKind::LooseTyping && f.message.contains("ids")),
+            "{findings:?}"
+        );
+        assert!(
+            findings.iter().any(
+                |f| f.kind == SmellKind::LooseTyping && f.message.contains("type alias UserId")
+            ),
+            "{findings:?}"
+        );
+    }
+
     /// TS type annotations/interfaces don't break structural tokenization, and
     /// the control-flow shape is still captured.
     #[test]

@@ -167,6 +167,8 @@ fn record_units(node: Node, src: &[u8], kind: &str, scope: &[Scope], out: &mut W
             .push(super::classunit::analyze_class(node, src));
     } else if kind == "variable_declarator" {
         typehints::record_declaration(node, src, &mut out.units.type_hints);
+    } else if kind == "type_alias_declaration" && scope.is_empty() {
+        typehints::record_type_alias(node, src, &mut out.units.type_hints);
     }
 }
 

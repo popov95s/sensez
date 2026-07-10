@@ -2,11 +2,23 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+from pathlib import Path
+
 from finding_types import SmellTerm
 from rust_metadata import (
     LANGUAGE_ROWS,
+    StrictnessRule,
     default_enabled,
     default_knob_values,
+    strictness_rules,
+)
+
+ROOT = Path(__file__).resolve().parents[1]
+EXAMPLES = ROOT / "docs/examples/smells"
+EXAMPLE_LANGUAGES = (
+    ("Python", "python", "py"),
+    ("JS / TS", "ts", "ts"),
 )
 
 KNOB_COMMENTS = {
@@ -31,11 +43,30 @@ KNOB_COMMENTS = {
 }
 
 
+@dataclass(frozen=True)
+class TuningTab:
+    title: str
+    knobs: tuple[tuple[str, str], ...]
+    description: str
+
+
+@dataclass(frozen=True)
+class ExampleTab:
+    title: str
+    description: str
+    problem: str
+    fix_text: str
+    fixed: str
+
+
 def example_knob_value(smell_term: SmellTerm, key: str) -> str:
     return default_knob_values().get(f"{smell_term}.{key}", "10")
 
 
 def render_tuning(smell_term: SmellTerm, knobs: list[str]) -> str:
+    strictness_rule = strictness_rules().get(smell_term)
+    if strictness_rule:
+        return render_ranked_tuning(smell_term, strictness_rule)
     lines = [
         "**Tune It**\n\n",
         "Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.\n\n",
@@ -51,6 +82,125 @@ def render_tuning(smell_term: SmellTerm, knobs: list[str]) -> str:
         lines.append("# This detector has no extra threshold knobs.\n")
     lines.extend(["```\n\n", render_default_states(smell_term)])
     return "".join(lines)
+
+
+def has_ranked_examples(smell_term: SmellTerm) -> bool:
+    return smell_term in strictness_rules()
+
+
+def render_ranked_examples(smell_term: SmellTerm, fixes) -> str:
+    lines = []
+    rule = strictness_rules()[smell_term]
+    for title, fence, ext in EXAMPLE_LANGUAGES:
+        lines.append(f'=== "{title}"\n\n')
+        lines.extend(indent_block(render_ranked_example_tabs(smell_term, rule, fixes, fence, ext)))
+    return "".join(lines)
+
+
+def render_ranked_tuning(smell_term: SmellTerm, rule: StrictnessRule) -> str:
+    return render_tabbed_tuning(smell_term, ranked_tuning_tabs(rule))
+
+
+def ranked_tuning_tabs(rule: StrictnessRule) -> list[TuningTab]:
+    return [
+        TuningTab(
+            title=level.title,
+            knobs=((rule.knob, f'"{level.value}"'),),
+            description=level.description,
+        )
+        for level in rule.levels
+    ]
+
+
+def read_ranked_example(smell_term: SmellTerm, level: str, ext: str) -> str:
+    return (EXAMPLES / smell_term / level / f"example.{ext}").read_text().rstrip()
+
+
+def render_tabbed_tuning(smell_term: SmellTerm, tabs: list[TuningTab]) -> str:
+    heading = [
+        "**Tune It**\n\n",
+        "Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.\n\n",
+    ]
+    body = [line for tab in tabs for line in render_tuning_tab(smell_term, tab)]
+    return "".join([*heading, *body, render_default_states(smell_term)])
+
+
+def render_tuning_tab(smell_term: SmellTerm, tab: TuningTab) -> list[str]:
+    lines = [f'=== "{tab.title}"\n\n']
+    lines.extend(indent_block(render_toml_example(smell_term, tab.knobs)))
+    lines.append(f"    {tab.description}\n\n")
+    return lines
+
+
+def render_ranked_example_tabs(
+    smell_term: SmellTerm,
+    rule: StrictnessRule,
+    fixes,
+    fence: str,
+    ext: str,
+) -> list[str]:
+    tabs = [
+        ExampleTab(
+            title=level.title,
+            description=level.description,
+            problem=read_ranked_example(smell_term, level.value, ext),
+            fix_text=fixes[language_key(ext)],
+            fixed=read_fixed_example(smell_term, ext),
+        )
+        for level in rule.levels
+    ]
+    return [line for tab in tabs for line in render_example_tab(fence, tab)]
+
+
+def render_example_tab(fence: str, tab: ExampleTab) -> list[str]:
+    content = [
+        f'=== "{tab.title}"\n\n',
+        f"    {tab.description}\n\n",
+        "    **Problem**\n\n",
+        *indent_block(render_code_block(fence, tab.problem)),
+        "    <details class=\"sensez-proposed-fix\" markdown=\"1\">\n",
+        "    <summary>Proposed fix</summary>\n\n",
+        *indent_markdown(tab.fix_text),
+        "\n",
+        *indent_block(render_code_block(fence, tab.fixed)),
+        "    </details>\n\n",
+    ]
+    return content
+
+
+def read_fixed_example(smell_term: SmellTerm, ext: str) -> str:
+    return (EXAMPLES / smell_term / f"fixed.{ext}").read_text().rstrip()
+
+
+def language_key(ext: str) -> str:
+    return "python" if ext == "py" else "typescript"
+
+
+def render_toml_example(smell_term: SmellTerm, knobs: tuple[tuple[str, str], ...]) -> list[str]:
+    lines = [
+        "```toml\n",
+        f"[smells.<lang>.rules.{smell_term}]\n",
+        "enabled = true\n",
+        'action = "warning"\n',
+    ]
+    lines.extend(f"{key} = {value}\n" for key, value in knobs)
+    lines.append("```\n\n")
+    return lines
+
+
+def render_code_block(language: str, code: str) -> list[str]:
+    lines = [f"```{language}\n"]
+    lines.extend(f"{line}\n" for line in code.rstrip().splitlines())
+    lines.append("```\n\n")
+    return lines
+
+
+def indent_block(lines: list[str]) -> list[str]:
+    return [f"    {line}" if line.strip() else line for line in lines]
+
+
+def indent_markdown(markdown: str) -> list[str]:
+    return [f"    {line}\n" if line else "\n" for line in markdown.splitlines()]
 
 
 def render_default_states(smell_term: SmellTerm) -> str:

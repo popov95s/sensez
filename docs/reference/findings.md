@@ -2710,79 +2710,260 @@ Weak types make invalid states look valid until runtime.
 
 === "Python"
 
-    **Problem**
+    === "Low"
 
-    ```python
-    from typing import Any
+        Flags only direct escape hatches.
 
+        **Problem**
 
-    def notify(user: dict[str, Any]) -> None:
-        if user["active"]:
-            mailer.send(user["email"])
-    ```
-
-    <details class="sensez-proposed-fix" markdown="1">
-    <summary>Proposed fix</summary>
-
-    Use a dataclass or another concrete model so callers pass named fields instead of loose keys.
-
-    ```python
-    from dataclasses import dataclass
+        ```python
+        from typing import Any
 
 
-    @dataclass(frozen=True)
-    class UserContact:
-        email: str
-        active: bool
+        def notify_contact(raw_contact: Any) -> None:
+            if raw_contact["active"]:
+                mailer.send(raw_contact["email"])
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
+
+        ```python
+        from dataclasses import dataclass
 
 
-    def notify(user: UserContact) -> None:
-        if user.active:
-            mailer.send(user.email)
-    ```
-    </details>
+        @dataclass(frozen=True)
+        class UserContact:
+            email: str
+            active: bool
+
+
+        def notify(user: UserContact) -> None:
+            if user.active:
+                mailer.send(user.email)
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Flags escape hatches plus schema-erasing maps and records.
+
+        **Problem**
+
+        ```python
+        from typing import Any
+
+
+        def notify_contact(contact: dict[str, Any]) -> None:
+            if contact["active"]:
+                mailer.send(contact["email"])
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
+
+        ```python
+        from dataclasses import dataclass
+
+
+        @dataclass(frozen=True)
+        class UserContact:
+            email: str
+            active: bool
+
+
+        def notify(user: UserContact) -> None:
+            if user.active:
+                mailer.send(user.email)
+        ```
+
+        </details>
+
+    === "High"
+
+        Flags everything in medium, primitive-only collections, and shallow aliases.
+
+        **Problem**
+
+        ```python
+        EmailAddress = str
+
+
+        def notify_all(addresses: list[EmailAddress]) -> None:
+            for address in addresses:
+                mailer.send(address)
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
+
+        ```python
+        from dataclasses import dataclass
+
+
+        @dataclass(frozen=True)
+        class UserContact:
+            email: str
+            active: bool
+
+
+        def notify(user: UserContact) -> None:
+            if user.active:
+                mailer.send(user.email)
+        ```
+
+        </details>
 
 === "JS / TS"
 
-    **Problem**
+    === "Low"
 
-    ```ts
-    function notify(user: Record<string, any>): void {
-      if (user.active) {
-        mailer.send(user.email);
-      }
-    }
-    ```
+        Flags only direct escape hatches.
 
-    <details class="sensez-proposed-fix" markdown="1">
-    <summary>Proposed fix</summary>
+        **Problem**
 
-    Replace any with an interface, unknown plus narrowing, or a schema-derived type.
+        ```ts
+        function notifyContact(rawContact: any): void {
+          if (rawContact.active) {
+            mailer.send(rawContact.email);
+          }
+        }
+        ```
 
-    ```ts
-    interface User {
-      email: string;
-      active: boolean;
-    }
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
 
-    function notify(user: User): void {
-      if (user.active) {
-        mailer.send(user.email);
-      }
-    }
-    ```
-    </details>
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+
+        ```ts
+        interface User {
+          email: string;
+          active: boolean;
+        }
+
+        function notify(user: User): void {
+          if (user.active) {
+            mailer.send(user.email);
+          }
+        }
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Flags escape hatches plus schema-erasing maps and records.
+
+        **Problem**
+
+        ```ts
+        function notifyContact(contact: Record<string, any>): void {
+          if (contact.active) {
+            mailer.send(contact.email);
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+
+        ```ts
+        interface User {
+          email: string;
+          active: boolean;
+        }
+
+        function notify(user: User): void {
+          if (user.active) {
+            mailer.send(user.email);
+          }
+        }
+        ```
+
+        </details>
+
+    === "High"
+
+        Flags everything in medium, primitive-only collections, and shallow aliases.
+
+        **Problem**
+
+        ```ts
+        type EmailAddress = string;
+
+        function notifyAll(addresses: EmailAddress[]): void {
+          for (const address of addresses) {
+            mailer.send(address);
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+
+        ```ts
+        interface User {
+          email: string;
+          active: boolean;
+        }
+
+        function notify(user: User): void {
+          if (user.active) {
+            mailer.send(user.email);
+          }
+        }
+        ```
+
+        </details>
+
 
 **Tune It**
 
 Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 
-```toml
-[smells.<lang>.rules.loose_typing]
-enabled = true
-action = "warning"
-# This detector has no extra threshold knobs.
-```
+=== "Low"
+
+    ```toml
+    [smells.<lang>.rules.loose_typing]
+    enabled = true
+    action = "warning"
+    strictness = "low"
+    ```
+
+    Flags only direct escape hatches.
+
+=== "Medium"
+
+    ```toml
+    [smells.<lang>.rules.loose_typing]
+    enabled = true
+    action = "warning"
+    strictness = "medium"
+    ```
+
+    Flags escape hatches plus schema-erasing maps and records.
+
+=== "High"
+
+    ```toml
+    [smells.<lang>.rules.loose_typing]
+    enabled = true
+    action = "warning"
+    strictness = "high"
+    ```
+
+    Flags everything in medium, primitive-only collections, and shallow aliases.
 
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>

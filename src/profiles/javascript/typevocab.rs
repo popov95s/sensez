@@ -3,13 +3,17 @@
 //! module owns only the TS/JS conventions (`Record<string, any>`, `any`,
 //! `Set<number>`, ...). TypeScript reuses this module (it reuses the JS walker).
 
-use crate::profiles::typevocab::{base_type, has_domain_type, idents};
+use crate::profiles::typevocab::{base_type, has_domain_type, has_token, idents, LooseTypeKind};
 
 /// Loose escape-hatch identifiers: `any`/`unknown`/`object` and the built-in
 /// untyped containers. Their presence (with no domain type alongside) is loose.
 const LOOSE_TOKENS: [&str; 11] = [
     "any", "unknown", "object", "Object", "Function", "Record", "Map", "Dict", "WeakMap", "Set",
     "WeakSet",
+];
+
+const SCHEMA_ERASING: [&str; 7] = [
+    "unknown", "object", "Object", "Function", "Record", "Map", "Dict",
 ];
 
 /// Built-in / utility type names that are NOT domain types.
@@ -38,13 +42,27 @@ const BUILTINS: [&str; 22] = [
     "Date",
 ];
 
+pub(crate) fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
+    if has_token(annotation, "any") {
+        return Some(LooseTypeKind::EscapeHatch);
+    }
+    if has_domain_type(annotation, &BUILTINS) {
+        return None;
+    }
+    if idents(annotation).any(|t| SCHEMA_ERASING.contains(&t)) {
+        return Some(LooseTypeKind::SchemaErasing);
+    }
+    if primitive_array(annotation) || idents(annotation).any(|t| LOOSE_TOKENS.contains(&t)) {
+        return Some(LooseTypeKind::PrimitiveCollection);
+    }
+    None
+}
+
 /// `Record<string, any>` / `any` / `Set<number>` are loose;
 /// `Record<string, UserDto>` / `User[]` / `string` are typed and never match.
+#[cfg(test)]
 pub(crate) fn is_loose(annotation: &str) -> bool {
-    if has_domain_type(annotation, &BUILTINS) {
-        return false;
-    }
-    idents(annotation).any(|t| LOOSE_TOKENS.contains(&t))
+    loose_kind(annotation).is_some()
 }
 
 pub(crate) fn is_bool(annotation: &str) -> bool {
@@ -56,6 +74,11 @@ pub(crate) fn is_dictish(annotation: &str) -> bool {
         base_type(annotation),
         "Record" | "Map" | "object" | "any" | "unknown"
     ) || annotation.trim_start().starts_with('{')
+}
+
+fn primitive_array(annotation: &str) -> bool {
+    let trimmed = annotation.trim();
+    trimmed.ends_with("[]") || matches!(base_type(trimmed), "Array" | "ReadonlyArray")
 }
 
 #[cfg(test)]

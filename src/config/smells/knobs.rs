@@ -4,6 +4,14 @@ use crate::report::{ActionLevel, SmellKind};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+#[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum Strictness {
+    Low,
+    Medium,
+    High,
+}
+
 #[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Smells {
@@ -36,6 +44,7 @@ pub struct Smells {
     pub split_variable: bool,
     pub split_variable_min_assigns: usize,
     pub loose_typing: bool,
+    pub loose_typing_strictness: Strictness,
     pub magic_string_default: bool,
     pub max_bool_params: usize,
     pub tuple_packing: bool,
@@ -79,6 +88,7 @@ impl Default for Smells {
             split_variable: false,
             split_variable_min_assigns: 2,
             loose_typing: true,
+            loose_typing_strictness: Strictness::Medium,
             magic_string_default: true,
             max_bool_params: 2,
             tuple_packing: true,

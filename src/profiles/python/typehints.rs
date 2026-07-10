@@ -9,7 +9,7 @@
 //! the main visit already reaches exactly these nodes in the same pre-order, so
 //! the collected hints are identical, one traversal cheaper.
 
-use crate::spine::ir::TypeHints;
+use crate::spine::ir::{TypeAlias, TypeHints};
 use tree_sitter::Node;
 
 /// Record a `function_definition`'s return + parameter annotations.
@@ -66,6 +66,42 @@ pub fn record_assignment(node: Node, src: &[u8], hints: &mut TypeHints) {
     }
 }
 
+pub fn record_type_alias(node: Node, src: &[u8], hints: &mut TypeHints) {
+    let Some((name, target)) = assignment_alias(node, src).or_else(|| pep695_alias(node, src))
+    else {
+        return;
+    };
+    hints.type_aliases.push(TypeAlias {
+        name,
+        target,
+        line: node.start_position().row + 1,
+    });
+}
+
+fn assignment_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
+    let left = node.child_by_field_name("left")?;
+    if left.kind() != "identifier" {
+        return None;
+    }
+    let name = left.utf8_text(src).ok()?.to_string();
+    let target = node
+        .child_by_field_name("right")
+        .and_then(|n| n.utf8_text(src).ok())?
+        .trim()
+        .to_string();
+    alias_target(&target).then_some((name, target))
+}
+
+fn pep695_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
+    if node.kind() != "type_alias_statement" {
+        return None;
+    }
+    let text = node.utf8_text(src).ok()?.trim();
+    let rest = text.strip_prefix("type ")?;
+    let (name, target) = rest.split_once('=')?;
+    Some((name.trim().to_string(), target.trim().to_string()))
+}
+
 /// If `right` is `Name(...)` / `mod.Name(...)` with a Capitalized callee, return
 /// that type name (the last dotted segment).
 pub(super) fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<String> {
@@ -77,6 +113,15 @@ pub(super) fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<Strin
         Some(c) if c.is_uppercase() => Some(last.to_string()),
         _ => None,
     }
+}
+
+fn alias_target(target: &str) -> bool {
+    target.contains('[')
+        || target.contains('|')
+        || matches!(
+            target,
+            "Any" | "str" | "int" | "float" | "bool" | "dict" | "list" | "tuple" | "set"
+        )
 }
 
 pub(super) fn type_text(node: Option<Node>, src: &[u8]) -> Option<String> {

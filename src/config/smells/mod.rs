@@ -5,9 +5,10 @@ mod knobs;
 mod raw;
 mod resolve;
 mod rules;
+mod strictness;
 mod validate;
 
-pub use knobs::Smells;
+pub use knobs::{Smells, Strictness};
 
 use crate::spine::ir::Language;
 use serde::Deserialize;

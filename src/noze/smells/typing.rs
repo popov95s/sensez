@@ -9,8 +9,10 @@
 //! - `tuple_packing`: position-based grouped data in returns.
 
 use super::{grouped_value_target, make, structure_target, SmellContext};
-use crate::config::smells::Smells;
-use crate::profiles::typevocab::{base_type, is_bool_type, is_loose};
+use crate::config::smells::{Smells, Strictness};
+use crate::profiles::typevocab::{
+    base_type, is_bool_type, is_primitive_scalar_alias, loose_kind, LooseTypeKind,
+};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionMetrics;
 
@@ -24,7 +26,7 @@ pub fn detect(
         boolean_blindness(ctx, m, cfg, out);
 
         if cfg.loose_typing {
-            loose_typing(ctx, m, out);
+            loose_typing(ctx, m, cfg, out);
         }
         if cfg.magic_string_default && !m.short_string_fallback_lines.is_empty() {
             magic_string_default(ctx, m, out);
@@ -33,27 +35,46 @@ pub fn detect(
             tuple_packing(ctx, m, cfg, out);
         }
     }
+    if cfg.loose_typing && cfg.loose_typing_strictness == Strictness::High {
+        type_hiding_aliases(ctx, out);
+    }
 }
 
 /// One finding per function listing every loosely-typed param (and the return).
-fn loose_typing(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<SmellFinding>) {
-    let mut offenders: Vec<String> = Vec::new();
-    for p in &m.param_names {
-        if matches!(p.as_str(), "self" | "cls" | "args" | "kwargs") {
-            continue;
-        }
-        if let Some(ty) = ctx.type_hints.param_types.get(&(m.name.clone(), p.clone())) {
-            if is_loose(ctx.language, ty) {
-                offenders.push(format!("{p}: {ty}"));
-            }
-        }
-    }
+fn loose_typing(
+    ctx: &SmellContext<'_>,
+    m: &FunctionMetrics,
+    cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    let (offenders, param_escape) =
+        m.param_names
+            .iter()
+            .fold((Vec::new(), false), |(mut labels, escape), p| {
+                if matches!(p.as_str(), "self" | "cls" | "args" | "kwargs") {
+                    return (labels, escape);
+                }
+                let next = ctx
+                    .type_hints
+                    .param_types
+                    .get(&(m.name.clone(), p.clone()))
+                    .and_then(|ty| {
+                        reportable_loose(ctx, ty, cfg.loose_typing_strictness)
+                            .map(|kind| (format!("{p}: {ty}"), kind))
+                    });
+                if let Some((label, kind)) = next {
+                    labels.push(label);
+                    (labels, escape || kind == LooseTypeKind::EscapeHatch)
+                } else {
+                    (labels, escape)
+                }
+            });
     // Tuple returns are tuple_packing's finding — don't double-report here.
     let ret = ctx
         .type_hints
         .return_types
         .get(&m.name)
-        .filter(|ty| is_loose(ctx.language, ty) && !matches!(base_type(ty), "tuple" | "Tuple"));
+        .and_then(|ty| reportable_return(ctx, ty, cfg.loose_typing_strictness));
     if offenders.is_empty() && ret.is_none() {
         return;
     }
@@ -61,11 +82,10 @@ fn loose_typing(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<Smell
     if !offenders.is_empty() {
         parts.push(format!("params [{}]", offenders.join(", ")));
     }
-    if let Some(ty) = ret {
+    if let Some((ty, _)) = ret {
         parts.push(format!("returns {ty}"));
     }
-    let any =
-        offenders.iter().any(|o| is_escape_hatch(o)) || ret.is_some_and(|ty| is_escape_hatch(ty));
+    let any = param_escape || ret.is_some_and(|(_, kind)| kind == LooseTypeKind::EscapeHatch);
     let severity = if any {
         Severity::Warning
     } else {
@@ -74,7 +94,7 @@ fn loose_typing(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<Smell
     out.push(make(
         SmellKind::LooseTyping,
         format!(
-            "{} — replace loose collections with {}",
+            "{} — replace loose types with {}; do not silence this with a shallow type alias",
             parts.join("; "),
             structure_target(ctx.language)
         ),
@@ -170,12 +190,54 @@ fn tuple_packing(
     }
 }
 
-/// A loose annotation that is also an untyped *escape hatch* (`Any` / `any` /
-/// `unknown`) rather than a bare collection — worth a Warning over an Info.
-fn is_escape_hatch(annotation: &str) -> bool {
-    annotation
-        .split(|c: char| !c.is_alphanumeric() && c != '_')
-        .any(|t| matches!(t, "Any" | "any" | "unknown"))
+fn reportable_return<'a>(
+    ctx: &SmellContext<'_>,
+    ty: &'a str,
+    strictness: Strictness,
+) -> Option<(&'a str, LooseTypeKind)> {
+    if matches!(base_type(ty), "tuple" | "Tuple") {
+        return None;
+    }
+    reportable_loose(ctx, ty, strictness).map(|kind| (ty, kind))
+}
+
+fn reportable_loose(
+    ctx: &SmellContext<'_>,
+    annotation: &str,
+    strictness: Strictness,
+) -> Option<LooseTypeKind> {
+    let kind = loose_kind(ctx.language, annotation)?;
+    match (strictness, kind) {
+        (Strictness::Low, LooseTypeKind::EscapeHatch)
+        | (Strictness::Medium, LooseTypeKind::EscapeHatch)
+        | (Strictness::Medium, LooseTypeKind::SchemaErasing)
+        | (Strictness::High, _) => Some(kind),
+        _ => None,
+    }
+}
+
+fn type_hiding_aliases(ctx: &SmellContext<'_>, out: &mut Vec<SmellFinding>) {
+    for alias in &ctx.type_hints.type_aliases {
+        let loose = reportable_loose(ctx, &alias.target, Strictness::High).is_some();
+        if !loose && !is_primitive_scalar_alias(ctx.language, &alias.target) {
+            continue;
+        }
+        out.push(make(
+            SmellKind::LooseTyping,
+            format!(
+                "type alias {} = {} hides a loose type-safety contract — replace it with {} instead of a shallow alias",
+                alias.name,
+                alias.target,
+                structure_target(ctx.language)
+            ),
+            ctx.path,
+            alias.line,
+            &alias.name,
+            Severity::Warning,
+            1,
+            0,
+        ));
+    }
 }
 
 /// Top-level element count of `tuple[A, B, C]` (bracket-depth-aware).

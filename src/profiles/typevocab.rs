@@ -13,6 +13,13 @@ use crate::spine::ir::Language;
 
 // ---- shared lexical helpers (used by every language's vocab) ----------------
 
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+pub enum LooseTypeKind {
+    EscapeHatch,
+    SchemaErasing,
+    PrimitiveCollection,
+}
+
 /// Base name of an annotation: `dict[str, Any]` → `dict`,
 /// `Record<string, any>` → `Record`, `any[]` → `any`. Splits on the first
 /// generic/subscript bracket (`[` or `<`) so both syntaxes work.
@@ -38,22 +45,54 @@ pub(crate) fn has_domain_type(annotation: &str, builtins: &[&str]) -> bool {
         .any(|t| t.chars().next().is_some_and(char::is_uppercase) && !builtins.contains(&t))
 }
 
+pub(crate) fn has_token(annotation: &str, token: &str) -> bool {
+    idents(annotation).any(|t| t == token)
+}
+
+pub fn is_primitive_scalar_alias(lang: Language, target: &str) -> bool {
+    let base = base_type(target).trim_start_matches('&').trim();
+    match lang {
+        Language::Python => matches!(base, "str" | "int" | "float" | "bool" | "bytes"),
+        Language::JavaScript | Language::TypeScript => {
+            matches!(base, "string" | "number" | "boolean" | "bigint" | "symbol")
+        }
+        Language::Rust => matches!(
+            base,
+            "String"
+                | "str"
+                | "bool"
+                | "usize"
+                | "isize"
+                | "u8"
+                | "u16"
+                | "u32"
+                | "u64"
+                | "u128"
+                | "i8"
+                | "i16"
+                | "i32"
+                | "i64"
+                | "i128"
+                | "f32"
+                | "f64"
+        ),
+    }
+}
+
 // ---- language routers -------------------------------------------------------
 
-/// True when the annotation is a loose collection / escape hatch with no domain
-/// type anywhere inside it. Routed to the language's own vocabulary.
 #[allow(unreachable_patterns)]
-pub fn is_loose(lang: Language, annotation: &str) -> bool {
+pub fn loose_kind(lang: Language, annotation: &str) -> Option<LooseTypeKind> {
     match lang {
         #[cfg(feature = "lang-python")]
-        Language::Python => crate::profiles::python::typevocab::is_loose(annotation),
+        Language::Python => crate::profiles::python::typevocab::loose_kind(annotation),
         #[cfg(feature = "lang-javascript")]
         Language::JavaScript | Language::TypeScript => {
-            crate::profiles::javascript::typevocab::is_loose(annotation)
+            crate::profiles::javascript::typevocab::loose_kind(annotation)
         }
         #[cfg(feature = "lang-rust")]
-        Language::Rust => crate::profiles::rust::typevocab::is_loose(annotation),
-        _ => false,
+        Language::Rust => crate::profiles::rust::typevocab::loose_kind(annotation),
+        _ => None,
     }
 }
 
