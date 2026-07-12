@@ -1,6 +1,6 @@
 {
   "name": "sensez-linux-x64-gnu",
-  "version": "0.1.12",
+  "version": "0.2.0",
   "description": "Sensez native binary for Linux x64 glibc",
   "license": "MIT",
   "repository": {
