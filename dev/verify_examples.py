@@ -28,7 +28,8 @@ import tempfile
 from pathlib import Path
 
 from finding_types import SmellTerm
-from rust_metadata import smell_kinds
+from rust_metadata import smell_kinds, strictness_rules
+from verify_examples_with_strictness import verify_examples_with_strictness
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "docs/examples"
@@ -219,23 +220,40 @@ def iter_example_dirs() -> ExampleDirList:
     return out
 
 
+def verify_folder(folder: Path, smells: set[SmellTerm]) -> FailureList:
+    failures: FailureList = []
+    if folder.name in PILLAR_KINDS:
+        verify_pillar_folder(folder, folder.name, failures)
+        return failures
+    try:
+        smell = SmellTerm(folder.name)
+    except ValueError:
+        print(f"warning: skipping unrecognized example folder: {folder.name}")
+        return failures
+    if smell not in smells:
+        print(f"warning: skipping unrecognized example folder: {folder.name}")
+        return failures
+    strictness_rule = strictness_rules().get(smell)
+    if strictness_rule:
+        return verify_examples_with_strictness(
+            folder,
+            CONFIG,
+            SUFFIXES,
+            folder.name,
+            strictness_rule,
+            run_noze,
+            build_scan_root,
+        )
+    verify_smell_folder(folder, folder.name, failures)
+    return failures
+
+
 def main() -> int:
     ensure_binary()
     failures: FailureList = []
     smells = smell_kinds()
     for folder in iter_example_dirs():
-        if folder.name in PILLAR_KINDS:
-            verify_pillar_folder(folder, folder.name, failures)
-        else:
-            try:
-                smell = SmellTerm(folder.name)
-            except ValueError:
-                print(f"warning: skipping unrecognized example folder: {folder.name}")
-                continue
-            if smell not in smells:
-                print(f"warning: skipping unrecognized example folder: {folder.name}")
-                continue
-            verify_smell_folder(folder, folder.name, failures)
+        failures.extend(verify_folder(folder, smells))
     if failures:
         print("Docs example verification failed:")
         for failure in failures:

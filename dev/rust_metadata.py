@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import re
+from dataclasses import dataclass
 from pathlib import Path
 
 try:
@@ -16,12 +17,27 @@ SMELL_KNOBS_RS = ROOT / "src/config/smells/knobs.rs"
 SMELL_DEFAULTS_RS = ROOT / "src/config/smells/defaults.rs"
 SMELL_RESOLVE_RS = ROOT / "src/config/smells/resolve.rs"
 SMELL_RULES_RS = ROOT / "src/config/smells/rules.rs"
+SMELL_STRICTNESS_RS = ROOT / "src/config/smells/strictness.rs"
 
 LANGUAGE_ROWS = (
     (("python",), "Python"),
     (("javascript", "typescript"), "JS / TS"),
     (("rust",), "Rust"),
 )
+
+
+@dataclass(frozen=True)
+class StrictnessLevel:
+    title: str
+    value: str
+    description: str
+
+
+@dataclass(frozen=True)
+class StrictnessRule:
+    smell: SmellTerm
+    knob: str
+    levels: tuple[StrictnessLevel, ...]
 
 
 def camel_to_snake(value: str) -> str:
@@ -36,12 +52,65 @@ def smell_kinds() -> set[SmellTerm]:
 
 def parse_rule_knobs() -> dict[SmellTerm, list[str]]:
     source = SMELL_RULES_RS.read_text()
-    body = source.split("fn rule_knobs", 1)[1].split("fn bool_rule_knobs", 1)[0]
-    out: dict[SmellTerm, list[str]] = {}
-    for arm, keys in re.findall(r"(?s)(.*?)=>\s*&\[(.*?)\],", body):
-        for kind in re.findall(r"SmellKind::(\w+)", arm):
-            out[SmellTerm(camel_to_snake(kind))] = re.findall(r'"([^"]+)"', keys)
-    return out
+    body = source.split("fn integer_rule_knobs", 1)[1].split("fn bool_rule_knobs", 1)[0]
+    out = dict(integer_rule_knob_entries(body))
+    return with_string_rule_knobs(out, strictness_rule_knob_entries())
+
+
+def integer_rule_knob_entries(body: str) -> list[tuple[SmellTerm, list[str]]]:
+    return [
+        (SmellTerm(camel_to_snake(kind)), re.findall(r'"([^"]+)"', keys))
+        for arm, keys in re.findall(r"(?s)(.*?)=>\s*&\[(.*?)\],", body)
+        for kind in re.findall(r"SmellKind::(\w+)", arm)
+    ]
+
+
+def strictness_rule_knob_entries() -> list[tuple[SmellTerm, str]]:
+    return [(smell, rule.knob) for smell, rule in strictness_rules().items()]
+
+
+def with_string_rule_knobs(
+    out: dict[SmellTerm, list[str]],
+    entries: list[tuple[SmellTerm, str]],
+) -> dict[SmellTerm, list[str]]:
+    combined = {smell: knobs.copy() for smell, knobs in out.items()}
+    for smell, knob in entries:
+        combined.setdefault(smell, []).append(knob)
+    return combined
+
+
+def strictness_rules() -> dict[SmellTerm, StrictnessRule]:
+    source = SMELL_STRICTNESS_RS.read_text()
+    levels = strictness_level_sets(source)
+    rules = {}
+    rules_body = source.split("pub const STRICTNESS_RULES", 1)[1].split("];", 1)[0]
+    pattern = (
+        r"StrictnessRuleDoc\s*{\s*kind:\s*SmellKind::(\w+),\s*"
+        r'knob:\s*"([^"]+)",\s*levels:\s*(\w+),'
+    )
+    for kind, knob, level_set in re.findall(pattern, rules_body):
+        smell = SmellTerm(camel_to_snake(kind))
+        rules[smell] = StrictnessRule(smell, knob, levels[level_set])
+    return rules
+
+
+def strictness_level_sets(source: str) -> dict[str, tuple[StrictnessLevel, ...]]:
+    sets = {}
+    pattern = r"pub const (\w+): &\[StrictnessLevelDoc\] = &\[(.*?)\];"
+    for name, body in re.findall(pattern, source, re.DOTALL):
+        sets[name] = tuple(
+            StrictnessLevel(title, value, description)
+            for title, value, description in re.findall(
+                r"StrictnessLevelDoc\s*{\s*"
+                r'title:\s*"([^"]+)",\s*'
+                r'value:\s*"([^"]+)",\s*'
+                r'description:\s*"([^"]+)",\s*'
+                r"}",
+                body,
+                re.DOTALL,
+            )
+        )
+    return sets
 
 
 def default_knob_values() -> dict[str, str]:

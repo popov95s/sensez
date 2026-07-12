@@ -3954,18 +3954,22 @@
 <div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
+<div class="tabbed-set tabbed-alternate" data-tabs="25:3"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><input id="__tabbed_25_3" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Low</label><label for="__tabbed_25_2">Medium</label><label for="__tabbed_25_3">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Flags only direct escape hatches.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
 
 
-<span class="k">def</span><span class="w"> </span><span class="nf">notify</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">user</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">]:</span>
-        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">user</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">notify_contact</span><span class="p">(</span><span class="n">raw_contact</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">raw_contact</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">]:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">raw_contact</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>Use a dataclass or another concrete model so callers pass named fields instead of loose keys.</p>
-<p><div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+<p>Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as <code>UserPayload = dict[str, Any]</code> or <code>UserId = str</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
 
 
 <span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -3978,20 +3982,83 @@
     <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
         <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
 </code></pre></div>
-</details></p>
+</details>
 </div>
 <div class="tabbed-block">
+<p>Flags escape hatches plus schema-erasing maps and records.</p>
 <p><strong>Problem</strong></p>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">notify</span><span class="p">(</span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">any</span><span class="o">&gt;</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">active</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">typing</span><span class="w"> </span><span class="kn">import</span> <span class="n">Any</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">notify_contact</span><span class="p">(</span><span class="n">contact</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">contact</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">]:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">contact</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as <code>UserPayload = dict[str, Any]</code> or <code>UserId = str</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserContact</span><span class="p">:</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">notify</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">UserContact</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+</code></pre></div>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="n">EmailAddress</span> <span class="o">=</span> <span class="nb">str</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">notify_all</span><span class="p">(</span><span class="n">addresses</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">EmailAddress</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">address</span> <span class="ow">in</span> <span class="n">addresses</span><span class="p">:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">address</span><span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as <code>UserPayload = dict[str, Any]</code> or <code>UserId = str</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kn">from</span><span class="w"> </span><span class="nn">dataclasses</span><span class="w"> </span><span class="kn">import</span> <span class="n">dataclass</span>
+
+
+<span class="nd">@dataclass</span><span class="p">(</span><span class="n">frozen</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">UserContact</span><span class="p">:</span>
+    <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">active</span><span class="p">:</span> <span class="nb">bool</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">notify</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">UserContact</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">user</span><span class="o">.</span><span class="n">active</span><span class="p">:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">)</span>
+</code></pre></div>
+</details>
+</div>
+</div>
+</div>
+</div>
+<div class="tabbed-block">
+<div class="tabbed-set tabbed-alternate" data-tabs="26:3"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><input id="__tabbed_26_3" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Low</label><label for="__tabbed_26_2">Medium</label><label for="__tabbed_26_3">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Flags only direct escape hatches.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">notifyContact</span><span class="p">(</span><span class="nx">rawContact</span><span class="o">:</span><span class="w"> </span><span class="kt">any</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">rawContact</span><span class="p">.</span><span class="nx">active</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">rawContact</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type.</p>
-<p><div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
+<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
 <span class="p">}</span>
@@ -4002,17 +4069,95 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
-</details></p>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Flags escape hatches plus schema-erasing maps and records.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">notifyContact</span><span class="p">(</span><span class="nx">contact</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">any</span><span class="o">&gt;</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">contact</span><span class="p">.</span><span class="nx">active</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">contact</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">notify</span><span class="p">(</span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">User</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">active</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">EmailAddress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">notifyAll</span><span class="p">(</span><span class="nx">addresses</span><span class="o">:</span><span class="w"> </span><span class="kt">EmailAddress</span><span class="p">[])</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">address</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">addresses</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">address</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">notify</span><span class="p">(</span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">User</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">active</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <p><strong>Tune It</strong></p>
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="27:3"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><input id="__tabbed_27_3" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Low</label><label for="__tabbed_27_2">Medium</label><label for="__tabbed_27_3">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;low&quot;</span>
 </code></pre></div>
+<p>Flags only direct escape hatches.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;medium&quot;</span>
+</code></pre></div>
+<p>Flags escape hatches plus schema-erasing maps and records.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;high&quot;</span>
+</code></pre></div>
+<p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
+</div>
+</div>
+</div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
 
@@ -4032,7 +4177,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Positional bundles hide meaning and make the code brittle to reorderings.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="28:2"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Python</label><label for="__tabbed_28_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4107,7 +4252,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Mutating inputs hides side effects and makes call order matter.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="29:2"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Python</label><label for="__tabbed_29_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4173,7 +4318,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Rebinding a parameter muddies the original meaning of the value.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="27:2"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Python</label><label for="__tabbed_27_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="30:2"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Python</label><label for="__tabbed_30_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4239,7 +4384,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A variable with multiple meanings is a trap for both readers and debuggers.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="28:2"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Python</label><label for="__tabbed_28_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4309,7 +4454,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Costs grow faster than the data and the code gets hard to flatten.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="29:2"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Python</label><label for="__tabbed_29_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4402,7 +4547,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A per-item call can explode runtime and hit the backend one request at a time.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="30:2"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Python</label><label for="__tabbed_30_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="33:2"><input checked="checked" id="__tabbed_33_1" name="__tabbed_33" type="radio" /><input id="__tabbed_33_2" name="__tabbed_33" type="radio" /><div class="tabbed-labels"><label for="__tabbed_33_1">Python</label><label for="__tabbed_33_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4471,7 +4616,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The same collection gets scanned over and over when one pass would do.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="34:2"><input checked="checked" id="__tabbed_34_1" name="__tabbed_34" type="radio" /><input id="__tabbed_34_2" name="__tabbed_34" type="radio" /><div class="tabbed-labels"><label for="__tabbed_34_1">Python</label><label for="__tabbed_34_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4544,7 +4689,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Repeated sorts turn a small loop into a surprisingly expensive one.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="35:2"><input checked="checked" id="__tabbed_35_1" name="__tabbed_35" type="radio" /><input id="__tabbed_35_2" name="__tabbed_35" type="radio" /><div class="tabbed-labels"><label for="__tabbed_35_1">Python</label><label for="__tabbed_35_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
