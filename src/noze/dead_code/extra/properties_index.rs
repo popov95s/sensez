@@ -21,6 +21,13 @@ impl ClassIndex {
         out
     }
 
+    pub(super) fn ancestors(&self, class: &str) -> Vec<String> {
+        let mut out = Vec::new();
+        let mut seen = HashSet::new();
+        self.collect_ancestors(class, &mut seen, &mut out);
+        out
+    }
+
     fn collect_descendants(&self, class: &str, seen: &mut HashSet<String>, out: &mut Vec<String>) {
         let Some(children) = self.children.get(class) else {
             return;
@@ -29,6 +36,24 @@ impl ClassIndex {
             if seen.insert(candidate.clone()) {
                 out.push(candidate.clone());
                 self.collect_descendants(candidate, seen, out);
+            }
+        }
+    }
+
+    fn collect_ancestors(&self, class: &str, seen: &mut HashSet<String>, out: &mut Vec<String>) {
+        let Some(bases) = self.bases.get(class) else {
+            return;
+        };
+        let candidates: Vec<_> = bases
+            .iter()
+            .flat_map(|base| type_parts(base))
+            .filter(|part| self.names.contains_key(*part))
+            .map(str::to_string)
+            .collect();
+        for candidate in candidates {
+            if seen.insert(candidate.clone()) {
+                out.push(candidate.clone());
+                self.collect_ancestors(&candidate, seen, out);
             }
         }
     }

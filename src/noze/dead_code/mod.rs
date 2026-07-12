@@ -97,15 +97,22 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
 
     if config.unused_imports || config.unused_methods || config.unused_properties {
         let modmap = extra::module_map(cg);
-        let production_files = files
+        let report_files: Vec<_> = files
             .iter()
-            .filter(|file| !rule_sets.is_ignored_source(file.language, &file.path));
+            .filter(|file| !rule_sets.is_ignored_source(file.language, &file.path))
+            .collect();
+        let usage_files: Vec<_> = files
+            .iter()
+            .filter(|file| !rule_sets.is_test_source(file.language, &file.path))
+            .collect();
         if config.unused_imports {
-            findings.extend(extra::unused_imports(production_files.clone(), &modmap));
+            findings.extend(extra::unused_imports(report_files.iter().copied(), &modmap));
         }
         if config.unused_methods {
+            let member_files =
+                extra::MemberFiles::new(report_files.iter().copied(), usage_files.iter().copied());
             findings.extend(extra::unused_methods(
-                production_files.clone(),
+                &member_files,
                 &modmap,
                 |language, name| {
                     rule_sets
@@ -115,7 +122,10 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             ));
         }
         if config.unused_properties {
-            findings.extend(extra::unused_properties(production_files, &modmap));
+            findings.extend(extra::unused_properties(
+                report_files.iter().copied(),
+                &modmap,
+            ));
         }
     }
     findings
@@ -168,6 +178,11 @@ impl RuleSets {
             rules.test_source_globs.is_match(path) || rules.entry_globs.is_match(path)
         })
     }
+
+    fn is_test_source(&self, language: Language, path: &Path) -> bool {
+        self.for_language(language)
+            .is_some_and(|rules| rules.test_source_globs.is_match(path))
+    }
 }
 
 fn merged_set(configured: &[String], defaults: &'static [&'static str]) -> HashSet<String> {
@@ -189,6 +204,8 @@ fn merged_globset(configured: &[String], defaults: &'static [&'static str]) -> G
     build_globset(&globs).unwrap_or_else(|_| GlobSet::empty())
 }
 
+#[cfg(test)]
+mod member_tests;
 #[cfg(test)]
 mod test_sources;
 #[cfg(test)]

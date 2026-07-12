@@ -682,7 +682,7 @@
       "god_module": 2,
       "heavy_nested_function": 3,
       "large_class": 2,
-      "loose_typing": 71,
+      "loose_typing": 82,
       "magic_string_default": 67,
       "message_chain": 1,
       "mutated_parameter": 6,
@@ -693,7 +693,7 @@
       "shotgun_surgery_hazard": 2,
       "unnecessary_nested_if": 14
     },
-    "smells_total": 239,
+    "smells_total": 250,
     "source_lines": 74802
   },
   "smells": [
@@ -951,7 +951,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 3241,
-      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose collections with a typed object or interface",
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 3,
       "symbol": "mergeValues",
       "threshold": 0
@@ -961,7 +961,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 3559,
-      "message": "params [first: any, second: any, third: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [first: any, second: any, third: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 3,
       "symbol": "create",
       "threshold": 0
@@ -1039,7 +1039,7 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
       "line": 2495,
-      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose collections with a typed object or interface",
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 3,
       "symbol": "mergeValues",
       "threshold": 0

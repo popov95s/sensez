@@ -172,6 +172,15 @@
     {
       "action": "advisory",
       "confidence": "High",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "method",
+      "line": 136,
+      "module": "flask.testing",
+      "symbol": "session_transaction"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
       "file": "<flask>/src/flask/typing.py",
       "kind": "variable",
       "line": 54,

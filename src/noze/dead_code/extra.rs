@@ -1,23 +1,61 @@
-//! Opt-in dead-code passes: unused imports and unused methods.
+//! Opt-in dead-code passes: unused imports, methods, and properties.
 //!
-//! Both are intra-file analyses keyed off the per-file identifier counts:
-//! a binding/method whose name never appears beyond its definition site is a
-//! candidate. Unused imports are reliably detectable (High); unused methods are
-//! Low confidence because cross-file attribute access (`obj.method()`) cannot
-//! be seen statically.
+//! Unused imports are reliable intra-file checks. Class members use a
+//! project-wide attribute evidence model so cross-file receiver access can keep
+//! methods and properties live without pushing language-specific rules into the
+//! shared graph or parser IR.
 
+mod exports;
+mod methods;
+mod overrides;
 mod properties;
+mod properties_index;
+mod usage;
 
 use crate::profiles::registry;
 use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
 use crate::spine::graph::CodebaseGraph;
-use crate::spine::ir::Language;
 use crate::spine::parser::SymbolKind;
 use crate::spine::parser::{ImportPhase, ParsedFile};
 use std::collections::HashMap;
 use std::path::PathBuf;
 
+pub(super) use methods::unused_methods;
 pub use properties::unused_properties;
+
+pub(super) struct MemberFiles<'a> {
+    report: Vec<&'a ParsedFile>,
+    usage: Vec<&'a ParsedFile>,
+}
+
+impl<'a> MemberFiles<'a> {
+    pub(super) fn new(
+        report: impl IntoIterator<Item = &'a ParsedFile>,
+        usage: impl IntoIterator<Item = &'a ParsedFile>,
+    ) -> Self {
+        Self {
+            report: report.into_iter().collect(),
+            usage: usage.into_iter().collect(),
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn same(files: impl IntoIterator<Item = &'a ParsedFile>) -> Self {
+        let files: Vec<&ParsedFile> = files.into_iter().collect();
+        Self {
+            report: files.clone(),
+            usage: files,
+        }
+    }
+
+    pub(super) fn report(&self) -> &[&'a ParsedFile] {
+        &self.report
+    }
+
+    pub(super) fn usage(&self) -> &[&'a ParsedFile] {
+        &self.usage
+    }
+}
 
 /// Map each internal file path to its resolved dotted module name.
 pub fn module_map(cg: &CodebaseGraph) -> HashMap<PathBuf, String> {
@@ -84,53 +122,9 @@ pub fn unused_imports<'a>(
     findings
 }
 
-/// Methods never referenced within their own module. Dunders and configured
-/// entrypoint names are excluded; results are Low confidence.
-pub fn unused_methods<'a>(
-    files: impl IntoIterator<Item = &'a ParsedFile>,
-    modmap: &HashMap<PathBuf, String>,
-    is_entrypoint_name: impl Fn(Language, &str) -> bool,
-) -> Vec<DeadCodeFinding> {
-    let mut findings = Vec::new();
-    for file in files {
-        let module = modmap.get(&file.path).cloned().unwrap_or_default();
-        for (name, line) in &file.walked.symbols.methods {
-            if is_dunder(name) || is_entrypoint_name(file.language, name) {
-                continue;
-            }
-            if file
-                .walked
-                .usage
-                .name_counts
-                .get(name)
-                .copied()
-                .unwrap_or(0)
-                > 1
-            {
-                continue; // called somewhere in this module
-            }
-            findings.push(DeadCodeFinding {
-                action: ActionLevel::Advisory,
-                module: module.clone(),
-                symbol: name.clone(),
-                kind: SymbolKind::Method,
-                confidence: Confidence::Low,
-                file: file.path.clone(),
-                line: *line,
-                reason: String::new(),
-            });
-        }
-    }
-    findings
-}
-
 fn is_referenced(counts: &HashMap<String, usize>, name: &str) -> bool {
     // Imports never contribute to name_counts, so any count means it is used.
     counts.get(name).copied().unwrap_or(0) > 0
-}
-
-fn is_dunder(name: &str) -> bool {
-    name.starts_with("__") && name.ends_with("__")
 }
 
 #[cfg(test)]
@@ -163,7 +157,8 @@ mod tests {
         );
         assert!(!imps.contains(&"sys".to_string()), "sys is used");
 
-        let meths: Vec<_> = unused_methods(&files, &modmap, |_language, _name| false)
+        let member_files = MemberFiles::same(files.iter());
+        let meths: Vec<_> = unused_methods(&member_files, &modmap, |_language, _name| false)
             .iter()
             .map(|f| f.symbol.clone())
             .collect();

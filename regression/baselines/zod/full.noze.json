@@ -860,7 +860,7 @@
       "god_module": 2,
       "heavy_nested_function": 3,
       "large_class": 2,
-      "loose_typing": 71,
+      "loose_typing": 82,
       "magic_string_default": 67,
       "message_chain": 1,
       "mutated_parameter": 6,
@@ -871,7 +871,7 @@
       "shotgun_surgery_hazard": 2,
       "unnecessary_nested_if": 14
     },
-    "smells_total": 239,
+    "smells_total": 250,
     "source_lines": 74802
   },
   "smells": [
@@ -884,6 +884,26 @@
       "metric": 54,
       "symbol": "",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/safe.ts",
+      "kind": "loose_typing",
+      "line": 11,
+      "message": "params [value: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "makeSuccess",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/safe.ts",
+      "kind": "loose_typing",
+      "line": 14,
+      "message": "params [value: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "makeFail",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -924,6 +944,76 @@
       "metric": 42,
       "symbol": "generateFields",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "loose_typing",
+      "line": 271,
+      "message": "params [value: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "assert",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 223,
+      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 229,
+      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "safeParse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 247,
+      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "\"~validate\"",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 292,
+      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "parseAsync",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 298,
+      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "safeParseAsync",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4908,
+      "message": "params [params: unknown, data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "cleanParams",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -1037,6 +1127,26 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2632,
+      "message": "params [fn: (data: unknown) => unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "custom",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "loose_typing",
+      "line": 57,
+      "message": "params [v: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "set",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "narrating_code",
       "line": 1355,
@@ -1078,6 +1188,26 @@
     {
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 3478,
+      "message": "params [input: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "handleOptionalResult",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 4647,
+      "message": "params [result: unknown, input: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "handleRefineResult",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "n_plus_one_call",
       "line": 3072,
       "message": "external-looking call runs once per loop iteration; combine the work or use a bulk operation.",
@@ -1110,9 +1240,19 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 284,
-      "message": "params [obj: object] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [obj: object] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "objectClone",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 885,
+      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "parsedType",
       "threshold": 0
     },
     {
@@ -1120,7 +1260,7 @@
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "loose_typing",
       "line": 1007,
-      "message": "params [mask: object] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: object] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "required",
       "threshold": 0
@@ -1130,7 +1270,7 @@
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "loose_typing",
       "line": 969,
-      "message": "params [mask: object] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: object] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "partial",
       "threshold": 0
@@ -1140,7 +1280,7 @@
       "file": "<zod>/packages/bench/benchUtil.ts",
       "kind": "loose_typing",
       "line": 23,
-      "message": "params [options: any[]]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [options: any[]]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "randomPick",
       "threshold": 0
@@ -1150,7 +1290,7 @@
       "file": "<zod>/packages/bench/benchUtil.ts",
       "kind": "loose_typing",
       "line": 27,
-      "message": "params [factory: object | (() => any)]; returns any[] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [factory: object | (() => any)]; returns any[] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "makeData",
       "threshold": 0
@@ -1206,22 +1346,12 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/bench/safe.ts",
+      "file": "<zod>/packages/bench/metabench.ts",
       "kind": "loose_typing",
-      "line": 11,
-      "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
+      "line": 74,
+      "message": "params [fn: (val: D) => any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
-      "symbol": "makeSuccess",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/bench/safe.ts",
-      "kind": "loose_typing",
-      "line": 14,
-      "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "makeFail",
+      "symbol": "add",
       "threshold": 0
     },
     {
@@ -1249,7 +1379,7 @@
       "file": "<zod>/packages/docs/app/llms.txt/route.ts",
       "kind": "loose_typing",
       "line": 6,
-      "message": "params [title: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [title: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "stringifyTitle",
       "threshold": 0
@@ -1309,7 +1439,7 @@
       "file": "<zod>/packages/docs/components/if.tsx",
       "kind": "loose_typing",
       "line": 3,
-      "message": "params [props: { groupId: string; values: string[]; children: any }] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [props: { groupId: string; values: string[]; children: any }] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "If",
       "threshold": 0
@@ -1579,7 +1709,7 @@
       "file": "<zod>/packages/zod/src/v3/ZodError.ts",
       "kind": "loose_typing",
       "line": 217,
-      "message": "params [_mapper: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [_mapper: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "format",
       "threshold": 0
@@ -1588,18 +1718,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/ZodError.ts",
       "kind": "loose_typing",
-      "line": 271,
-      "message": "params [value: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "assert",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
-      "kind": "loose_typing",
       "line": 298,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "flatten",
       "threshold": 0
@@ -1613,6 +1733,36 @@
       "metric": 1,
       "symbol": "",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+      "kind": "loose_typing",
+      "line": 101,
+      "message": "params [results: SyncParseReturnType<any>[]] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "mergeArray",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+      "kind": "loose_typing",
+      "line": 112,
+      "message": "params [pairs: { key: ParseReturnType<any>; value: ParseReturnType<any> }[]]; returns Promise<SyncParseReturnType<any>> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "mergeObjectAsync",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+      "kind": "loose_typing",
+      "line": 128,
+      "message": "params [pairs: {\n      key: SyncParseReturnType<any>;\n      value: SyncParseReturnType<any>;\n      alwaysSet?: boolean;\n    }[]] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "mergeObjectSync",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -1808,28 +1958,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
-      "line": 223,
-      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "parse",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
-      "line": 229,
-      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "safeParse",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
       "line": 2424,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "deepPartialify",
       "threshold": 0
@@ -1838,18 +1968,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
-      "line": 247,
-      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "\"~validate\"",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
       "line": 2823,
-      "message": "params [mask: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "partial",
       "threshold": 0
@@ -1859,7 +1979,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 2852,
-      "message": "params [mask: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "required",
       "threshold": 0
@@ -1868,20 +1988,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
-      "line": 292,
-      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
+      "line": 2951,
+      "message": "params [results: { ctx: ParseContext; result: SyncParseReturnType<any> }[]] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
-      "symbol": "parseAsync",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
-      "line": 298,
-      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "safeParseAsync",
+      "symbol": "handleResults",
       "threshold": 0
     },
     {
@@ -1889,7 +1999,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 3241,
-      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose collections with a typed object or interface",
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 3,
       "symbol": "mergeValues",
       "threshold": 0
@@ -1899,7 +2009,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 3559,
-      "message": "params [first: any, second: any, third: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [first: any, second: any, third: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 3,
       "symbol": "create",
       "threshold": 0
@@ -1908,8 +2018,18 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
+      "line": 3734,
+      "message": "params [elements: SyncParseReturnType<any>[]] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "finalizeSet",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
       "line": 3847,
-      "message": "params [returns: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [returns: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "makeReturnsIssue",
       "threshold": 0
@@ -1919,7 +2039,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 481,
-      "message": "params [def: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [def: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "default",
       "threshold": 0
@@ -1928,19 +2048,9 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
-      "line": 4908,
-      "message": "params [params: unknown, data: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 2,
-      "symbol": "cleanParams",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
       "line": 4915,
-      "message": "params [check: (data: any) => any] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
+      "message": "params [check: (data: any) => any, _params: string | CustomParams | ((input: any) => CustomParams)] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
       "symbol": "custom",
       "threshold": 0
     },
@@ -1949,7 +2059,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 503,
-      "message": "params [def: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [def: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "catch",
       "threshold": 0
@@ -1959,7 +2069,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 68,
-      "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "constructor",
       "threshold": 0
@@ -2049,7 +2159,7 @@
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "loose_typing",
       "line": 1977,
-      "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [values: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_enum",
       "threshold": 0
@@ -2059,7 +2169,7 @@
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "loose_typing",
       "line": 2035,
-      "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any, params: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "literal",
       "threshold": 0
@@ -2068,30 +2178,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "loose_typing",
-      "line": 2632,
-      "message": "params [fn: (data: unknown) => unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "custom",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
-      "kind": "loose_typing",
       "line": 338,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "meta",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
-      "kind": "loose_typing",
-      "line": 57,
-      "message": "params [v: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "set",
       "threshold": 0
     },
     {
@@ -2119,7 +2209,7 @@
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "loose_typing",
       "line": 1355,
-      "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [values: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_enum",
       "threshold": 0
@@ -2129,7 +2219,7 @@
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "loose_typing",
       "line": 1409,
-      "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any, params: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "_literal",
       "threshold": 0
@@ -2168,7 +2258,7 @@
       "file": "<zod>/packages/zod/src/v4/core/doc.ts",
       "kind": "loose_typing",
       "line": 20,
-      "message": "params [arg: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [arg: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "write",
       "threshold": 0
@@ -2178,7 +2268,7 @@
       "file": "<zod>/packages/zod/src/v4/core/doc.ts",
       "kind": "loose_typing",
       "line": 36,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "compile",
       "threshold": 0
@@ -2244,10 +2334,20 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
+      "kind": "loose_typing",
+      "line": 52,
+      "message": "returns $ZodRegistry<Record<string, any>> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "metadataRegistry",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "loose_typing",
       "line": 621,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "toJSONSchema",
       "threshold": 0
@@ -2296,8 +2396,18 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
+      "line": 1630,
+      "message": "params [result: ParsePayload<any>, final: ParsePayload<any[]>] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "handleArrayResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
       "line": 1750,
-      "message": "params [input: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [input: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "handlePropertyResult",
       "threshold": 0
@@ -2307,7 +2417,7 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
       "line": 1856,
-      "message": "params [proms: Promise<any>[], input: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [proms: Promise<any>[], input: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "handleCatchall",
       "threshold": 0
@@ -2317,7 +2427,7 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
       "line": 2495,
-      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose collections with a typed object or interface",
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 3,
       "symbol": "mergeValues",
       "threshold": 0
@@ -2326,9 +2436,19 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
-      "line": 2765,
-      "message": "params [input: unknown[]] \u2014 replace loose collections with a typed object or interface",
+      "line": 2758,
+      "message": "params [final: ParsePayload<any[]>] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
+      "symbol": "handleTupleResult",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2765,
+      "message": "params [final: ParsePayload<any[]>, input: unknown[]] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
       "symbol": "handleTupleResults",
       "threshold": 0
     },
@@ -2337,7 +2457,7 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
       "line": 3086,
-      "message": "params [key: unknown, input: Map<any, any>] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [key: unknown, input: Map<any, any>] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "handleMapResult",
       "threshold": 0
@@ -2346,10 +2466,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
-      "line": 3478,
-      "message": "params [input: unknown] \u2014 replace loose collections with a typed object or interface",
+      "line": 3180,
+      "message": "params [final: ParsePayload<Set<any>>] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
-      "symbol": "handleOptionalResult",
+      "symbol": "handleSetResult",
       "threshold": 0
     },
     {
@@ -2357,19 +2477,9 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
       "line": 4122,
-      "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "handleCodecTxResult",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "loose_typing",
-      "line": 4647,
-      "message": "params [result: unknown, input: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 2,
-      "symbol": "handleRefineResult",
       "threshold": 0
     },
     {
@@ -2477,7 +2587,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 205,
-      "message": "params [_: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [_: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "assert",
       "threshold": 0
@@ -2487,7 +2597,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 219,
-      "message": "params [value: any]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "jsonStringifyReplacer",
       "threshold": 0
@@ -2497,7 +2607,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 238,
-      "message": "params [input: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [input: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "nullish",
       "threshold": 0
@@ -2506,8 +2616,18 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
+      "line": 288,
+      "message": "params [value: K extends keyof T ? T[K] : any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "assignProp",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
       "line": 301,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "mergeDefs",
       "threshold": 0
@@ -2517,7 +2637,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 312,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "cloneDef",
       "threshold": 0
@@ -2527,7 +2647,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 316,
-      "message": "params [obj: any]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [obj: any]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "getElementAtPath",
       "threshold": 0
@@ -2537,7 +2657,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 360,
-      "message": "params [data: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [data: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "isObject",
       "threshold": 0
@@ -2547,7 +2667,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 385,
-      "message": "params [o: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [o: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "isPlainObject",
       "threshold": 0
@@ -2557,7 +2677,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 406,
-      "message": "params [o: any]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [o: any]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "shallowClone",
       "threshold": 0
@@ -2567,7 +2687,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 414,
-      "message": "params [data: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [data: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "numKeys",
       "threshold": 0
@@ -2577,7 +2697,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 568,
-      "message": "params [value: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "stringifyPrimitive",
       "threshold": 0
@@ -2587,7 +2707,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 601,
-      "message": "params [mask: Record<string, unknown>]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: Record<string, unknown>]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "pick",
       "threshold": 0
@@ -2597,7 +2717,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 630,
-      "message": "params [mask: object]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: object]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "omit",
       "threshold": 0
@@ -2607,7 +2727,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 659,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "extend",
       "threshold": 0
@@ -2617,7 +2737,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 687,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "safeExtend",
       "threshold": 0
@@ -2627,7 +2747,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 701,
-      "message": "returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "merge",
       "threshold": 0
@@ -2637,7 +2757,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 720,
-      "message": "params [mask: object | undefined]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: object | undefined]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "partial",
       "threshold": 0
@@ -2647,7 +2767,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 772,
-      "message": "params [mask: object | undefined]; returns any \u2014 replace loose collections with a typed object or interface",
+      "message": "params [mask: object | undefined]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "required",
       "threshold": 0
@@ -2657,7 +2777,7 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 871,
-      "message": "params [input: any]; returns \"set\" | \"map\" | \"file\" | \"unknown\" \u2014 replace loose collections with a typed object or interface",
+      "message": "params [input: any]; returns \"set\" | \"map\" | \"file\" | \"unknown\" \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "getSizableOrigin",
       "threshold": 0
@@ -2667,19 +2787,9 @@
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "loose_typing",
       "line": 879,
-      "message": "params [input: any]; returns \"array\" | \"string\" | \"unknown\" \u2014 replace loose collections with a typed object or interface",
+      "message": "params [input: any]; returns \"array\" | \"string\" | \"unknown\" \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "getLengthableOrigin",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/util.ts",
-      "kind": "loose_typing",
-      "line": 885,
-      "message": "params [data: unknown] \u2014 replace loose collections with a typed object or interface",
-      "metric": 1,
-      "symbol": "parsedType",
       "threshold": 0
     },
     {
@@ -3206,7 +3316,7 @@
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "loose_typing",
       "line": 1295,
-      "message": "params [values: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [values: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_enum",
       "threshold": 0
@@ -3216,7 +3326,7 @@
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "loose_typing",
       "line": 1344,
-      "message": "params [value: any, params: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [value: any, params: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "literal",
       "threshold": 0
@@ -3226,7 +3336,7 @@
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "loose_typing",
       "line": 821,
-      "message": "params [params: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [params: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "array",
       "threshold": 0
@@ -3236,7 +3346,7 @@
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "loose_typing",
       "line": 927,
-      "message": "params [shape: any] \u2014 replace loose collections with a typed object or interface",
+      "message": "params [shape: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "merge",
       "threshold": 0

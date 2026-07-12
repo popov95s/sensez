@@ -172,6 +172,15 @@
     {
       "action": "advisory",
       "confidence": "High",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "method",
+      "line": 136,
+      "module": "flask.testing",
+      "symbol": "session_transaction"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
       "file": "<flask>/src/flask/typing.py",
       "kind": "variable",
       "line": 54,
@@ -266,7 +275,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 3,
+    "dead_code_total": 4,
     "duplication_total": 5,
     "external_edges": 334,
     "internal_edges": 304,
@@ -279,7 +288,7 @@
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
       "literal_membership": 5,
-      "loose_typing": 28,
+      "loose_typing": 98,
       "magic_string_default": 4,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
@@ -288,7 +297,7 @@
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
-    "smells_total": 91,
+    "smells_total": 161,
     "source_lines": 18417
   },
   "smells": [
@@ -297,7 +306,7 @@
       "file": "<flask>/examples/celery/src/task_app/views.py",
       "kind": "loose_typing",
       "line": 11,
-      "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "result",
       "threshold": 0
@@ -307,7 +316,7 @@
       "file": "<flask>/examples/celery/src/task_app/views.py",
       "kind": "loose_typing",
       "line": 22,
-      "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "add",
       "threshold": 0
@@ -317,7 +326,7 @@
       "file": "<flask>/examples/celery/src/task_app/views.py",
       "kind": "loose_typing",
       "line": 30,
-      "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "block",
       "threshold": 0
@@ -327,7 +336,7 @@
       "file": "<flask>/examples/celery/src/task_app/views.py",
       "kind": "loose_typing",
       "line": 36,
-      "message": "returns dict[str, object] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "process",
       "threshold": 0
@@ -360,36 +369,6 @@
       "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
       "symbol": "open_resource",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "loose_typing",
-      "line": 636,
-      "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "list_commands",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "loose_typing",
-      "line": 678,
-      "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "parse_args",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "loose_typing",
-      "line": 935,
-      "message": "params [extra_files: list[str] | None, exclude_patterns: list[str] | None] \u2014 replace loose collections with a dataclass or model",
-      "metric": 2,
-      "symbol": "run_command",
       "threshold": 0
     },
     {
@@ -434,36 +413,6 @@
     },
     {
       "action": "advisory",
-      "file": "<flask>/src/flask/helpers.py",
-      "kind": "loose_typing",
-      "line": 360,
-      "message": "returns list[str] | list[tuple[str, str]] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "get_flashed_messages",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/helpers.py",
-      "kind": "loose_typing",
-      "line": 645,
-      "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "_split_blueprint_path",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "loose_typing",
-      "line": 868,
-      "message": "params [blueprints: list[str]] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "_find_error_handler",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "narrating_code",
       "line": 279,
@@ -495,16 +444,6 @@
     {
       "action": "advisory",
       "file": "<flask>/src/flask/templating.py",
-      "kind": "loose_typing",
-      "line": 108,
-      "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "list_templates",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/templating.py",
       "kind": "tuple_packing",
       "line": 57,
       "message": "returns a 3-element tuple \u2014 positional grouped data; consider a NamedTuple or dataclass",
@@ -531,16 +470,6 @@
       "metric": 3,
       "symbol": "_get_source_fast",
       "threshold": 2
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/wrappers.py",
-      "kind": "loose_typing",
-      "line": 181,
-      "message": "returns list[str] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "blueprints",
-      "threshold": 0
     },
     {
       "action": "warning",
@@ -615,8 +544,28 @@
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
       "kind": "loose_typing",
+      "line": 1065,
+      "message": "params [func: t.Callable[..., t.Any]]; returns t.Callable[..., t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "ensure_sync",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "loose_typing",
+      "line": 1079,
+      "message": "params [func: t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]]]; returns t.Callable[..., t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "async_to_sync",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "loose_typing",
       "line": 590,
-      "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [context: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "update_template_context",
       "threshold": 0
@@ -626,9 +575,29 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "loose_typing",
       "line": 620,
-      "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "make_shell_context",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "loose_typing",
+      "line": 86,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "wrapper",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "loose_typing",
+      "line": 98,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "wrapper",
       "threshold": 0
     },
     {
@@ -706,7 +675,7 @@
       "file": "<flask>/src/flask/blueprints.py",
       "kind": "loose_typing",
       "line": 19,
-      "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "__init__",
       "threshold": 0
@@ -793,6 +762,76 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 267,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "get_version",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 413,
+      "message": "returns t.Callable[[t.Callable[..., t.Any]], click.Command] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "command",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 422,
+      "message": "params [f: t.Callable[..., t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "decorator",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 429,
+      "message": "returns t.Callable[[t.Callable[..., t.Any]], click.Group] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "group",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 791,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "convert",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 828,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "_validate_key",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 873,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "convert",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
       "kind": "magic_string_default",
       "line": 1081,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
@@ -844,8 +883,48 @@
       "action": "warning",
       "file": "<flask>/src/flask/config.py",
       "kind": "loose_typing",
+      "line": 126,
+      "message": "params [loads: t.Callable[[str], t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "from_prefixed_env",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "loose_typing",
+      "line": 23,
+      "message": "params [get_converter: t.Callable[[t.Any], T] | None] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "loose_typing",
+      "line": 256,
+      "message": "params [load: t.Callable[[t.IO[t.Any]], t.Mapping[str, t.Any]]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "from_file",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "loose_typing",
+      "line": 304,
+      "message": "params [mapping: t.Mapping[str, t.Any] | None] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "from_mapping",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "loose_typing",
       "line": 323,
-      "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "get_namespace",
       "threshold": 0
@@ -854,8 +933,18 @@
       "action": "warning",
       "file": "<flask>/src/flask/config.py",
       "kind": "loose_typing",
+      "line": 46,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__set__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "loose_typing",
       "line": 94,
-      "message": "params [defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [defaults: dict[str, t.Any] | None] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "__init__",
       "threshold": 0
@@ -879,6 +968,96 @@
       "metric": 3,
       "symbol": "AppContext",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 118,
+      "message": "params [f: ft.AfterRequestCallable[t.Any]]; returns ft.AfterRequestCallable[t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "after_this_request",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 201,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "wrapper",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 528,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__getattr__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 53,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__getattr__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 59,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__setattr__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 68,
+      "message": "params [default: t.Any | None]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "get",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 79,
+      "message": "params [default: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "pop",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "loose_typing",
+      "line": 93,
+      "message": "params [default: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "setdefault",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/debughelpers.py",
+      "kind": "loose_typing",
+      "line": 91,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__getitem__",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -913,6 +1092,16 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/globals.py",
+      "kind": "loose_typing",
+      "line": 65,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__getattr__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/globals.py",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
       "metric": 16,
@@ -933,10 +1122,70 @@
       "action": "warning",
       "file": "<flask>/src/flask/helpers.py",
       "kind": "loose_typing",
+      "line": 120,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "decorator",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "loose_typing",
+      "line": 304,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "get_template_attribute",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "loose_typing",
       "line": 402,
-      "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_prepare_send_file_kwargs",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/__init__.py",
+      "kind": "loose_typing",
+      "line": 108,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "load",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/__init__.py",
+      "kind": "loose_typing",
+      "line": 13,
+      "message": "params [obj: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "dumps",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/__init__.py",
+      "kind": "loose_typing",
+      "line": 47,
+      "message": "params [obj: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "dump",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/__init__.py",
+      "kind": "loose_typing",
+      "line": 77,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "loads",
       "threshold": 0
     },
     {
@@ -948,6 +1197,86 @@
       "metric": 2,
       "symbol": "JSONProvider",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 108,
+      "message": "params [o: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "_default",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 166,
+      "message": "params [obj: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "dumps",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 181,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "loads",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 41,
+      "message": "params [obj: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "dumps",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 49,
+      "message": "params [obj: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "dump",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 59,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "loads",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 67,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "load",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 75,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_prepare_response_obj",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -963,10 +1292,310 @@
       "action": "warning",
       "file": "<flask>/src/flask/json/tag.py",
       "kind": "loose_typing",
-      "line": 297,
-      "message": "params [value: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "line": 103,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 110,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 114,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 122,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 125,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 137,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 140,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 143,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 150,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 153,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 163,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 166,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 169,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 181,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 184,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 187,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 195,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 198,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 201,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 209,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 212,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 215,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 289,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "tag",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 297,
+      "message": "params [value: dict[str, t.Any]]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
       "symbol": "untag",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 309,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "_untag_scan",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 321,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "dumps",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 325,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "loads",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 73,
+      "message": "params [value: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 77,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_json",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 82,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "to_python",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/tag.py",
+      "kind": "loose_typing",
+      "line": 87,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "tag",
       "threshold": 0
     },
     {
@@ -1003,7 +1632,7 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "loose_typing",
       "line": 960,
-      "message": "params [values: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [values: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "inject_url_defaults",
       "threshold": 0
@@ -1013,7 +1642,7 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "loose_typing",
       "line": 981,
-      "message": "params [values: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [values: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "handle_url_build_error",
       "threshold": 0
@@ -1063,7 +1692,7 @@
       "file": "<flask>/src/flask/sansio/blueprints.py",
       "kind": "loose_typing",
       "line": 174,
-      "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "__init__",
       "threshold": 0
@@ -1073,7 +1702,7 @@
       "file": "<flask>/src/flask/sansio/blueprints.py",
       "kind": "loose_typing",
       "line": 246,
-      "message": "params [options: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [options: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "make_setup_state",
       "threshold": 0
@@ -1083,9 +1712,29 @@
       "file": "<flask>/src/flask/sansio/blueprints.py",
       "kind": "loose_typing",
       "line": 273,
-      "message": "params [options: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [options: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "register",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "loose_typing",
+      "line": 380,
+      "message": "params [bp_dict: dict[ft.AppOrBlueprintKey, list[t.Any]], parent_dict: dict[ft.AppOrBlueprintKey, list[t.Any]]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "extend",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "loose_typing",
+      "line": 41,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__init__",
       "threshold": 0
     },
     {
@@ -1123,9 +1772,19 @@
       "file": "<flask>/src/flask/sansio/scaffold.py",
       "kind": "loose_typing",
       "line": 284,
-      "message": "params [options: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [options: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_method_route",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 45,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "wrapper_func",
       "threshold": 0
     },
     {
@@ -1140,10 +1799,30 @@
     },
     {
       "action": "warning",
+      "file": "<flask>/src/flask/sessions.py",
+      "kind": "loose_typing",
+      "line": 276,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_lazy_sha1",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sessions.py",
+      "kind": "loose_typing",
+      "line": 73,
+      "message": "params [initial: c.Mapping[str, t.Any] | None] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<flask>/src/flask/templating.py",
       "kind": "loose_typing",
       "line": 123,
-      "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [context: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_render",
       "threshold": 0
@@ -1153,7 +1832,7 @@
       "file": "<flask>/src/flask/templating.py",
       "kind": "loose_typing",
       "line": 163,
-      "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
+      "message": "params [context: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_stream",
       "threshold": 0
@@ -1163,7 +1842,7 @@
       "file": "<flask>/src/flask/templating.py",
       "kind": "loose_typing",
       "line": 21,
-      "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
+      "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_default_template_ctx_processor",
       "threshold": 0
@@ -1177,6 +1856,26 @@
       "metric": 1,
       "symbol": "list_templates",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "loose_typing",
+      "line": 275,
+      "message": "params [cli: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "invoke",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "loose_typing",
+      "line": 88,
+      "message": "params [obj: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "json_dumps",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -1197,6 +1896,16 @@
       "metric": 7,
       "symbol": "Request",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "loose_typing",
+      "line": 212,
+      "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "on_json_loading_failed",
+      "threshold": 0
     }
   ]
 }

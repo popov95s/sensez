@@ -172,6 +172,15 @@
     {
       "action": "advisory",
       "confidence": "High",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "method",
+      "line": 136,
+      "module": "flask.testing",
+      "symbol": "session_transaction"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
       "file": "<flask>/src/flask/typing.py",
       "kind": "variable",
       "line": 54,
@@ -250,7 +259,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 3,
+    "dead_code_total": 4,
     "duplication_total": 4,
     "external_edges": 334,
     "internal_edges": 304,
@@ -263,7 +272,7 @@
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
       "literal_membership": 5,
-      "loose_typing": 28,
+      "loose_typing": 98,
       "magic_string_default": 4,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
@@ -272,7 +281,7 @@
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
-    "smells_total": 91,
+    "smells_total": 161,
     "source_lines": 18417
   },
   "smells": [
@@ -439,20 +448,20 @@
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
       "kind": "loose_typing",
-      "line": 590,
-      "message": "params [context: dict[str, t.Any]] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "update_template_context",
+      "line": 1065,
+      "message": "params [func: t.Callable[..., t.Any]]; returns t.Callable[..., t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "ensure_sync",
       "threshold": 0
     },
     {
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
       "kind": "loose_typing",
-      "line": 620,
-      "message": "returns dict[str, t.Any] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "make_shell_context",
+      "line": 1079,
+      "message": "params [func: t.Callable[..., t.Coroutine[t.Any, t.Any, t.Any]]]; returns t.Callable[..., t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "async_to_sync",
       "threshold": 0
     },
     {
@@ -487,16 +496,6 @@
     },
     {
       "action": "warning",
-      "file": "<flask>/src/flask/blueprints.py",
-      "kind": "loose_typing",
-      "line": 19,
-      "message": "params [url_defaults: dict[str, t.Any] | None] \u2014 replace loose collections with a dataclass or model",
-      "metric": 1,
-      "symbol": "__init__",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "boolean_blindness",
       "line": 563,
@@ -523,6 +522,16 @@
       "metric": 35,
       "symbol": "flask.cli",
       "threshold": 25
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 791,
+      "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "convert",
+      "threshold": 0
     },
     {
       "action": "warning",

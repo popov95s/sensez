@@ -18,7 +18,7 @@
       "smells/god_module": 2,
       "smells/heavy_nested_function": 3,
       "smells/large_class": 2,
-      "smells/loose_typing": 71,
+      "smells/loose_typing": 82,
       "smells/magic_string_default": 67,
       "smells/message_chain": 1,
       "smells/mutated_parameter": 6,
