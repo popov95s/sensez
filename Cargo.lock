@@ -1816,7 +1816,7 @@ checksum = "d4f410fedcf71af0345d7607d246e7ad15faaadd49d240ee3b24e5dc21a820ac"
 
 [[package]]
 name = "sensez"
-version = "0.2.1"
+version = "0.2.2"
 dependencies = [
  "anyhow",
  "bio",
