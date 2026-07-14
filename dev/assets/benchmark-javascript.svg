@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="760" height="208" viewBox="0 0 760 208" role="img" aria-labelledby="title desc">
+  <title id="title">JavaScript and TypeScript benchmark: lower is better</title>
+  <desc id="desc">Sensez completes in 0.16 seconds, Fallow in 0.48 seconds, and Repowise in 5.75 seconds. Bars use a logarithmic scale.</desc>
+  <style>text{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;fill:#24292f}.muted{fill:#57606a}.bar{fill:#0969da}.value{font-weight:600}</style>
+  <rect width="760" height="208" rx="12" fill="#f6f8fa"/>
+  <text x="32" y="42" font-size="20" font-weight="700">JavaScript / TypeScript benchmark</text>
+  <text class="muted" x="32" y="66" font-size="13">Seconds — lower is better · bars use a logarithmic scale</text>
+  <text x="32" y="107" font-size="15">sensez</text><rect class="bar" x="144" y="92" width="38" height="20" rx="4"/><text class="value" x="197" y="107" font-size="15">0.16 s</text>
+  <text x="32" y="147" font-size="15">fallow</text><rect class="bar" x="144" y="132" width="171" height="20" rx="4"/><text class="value" x="330" y="147" font-size="15">0.48 s</text>
+  <text x="32" y="187" font-size="15">repowise</text><rect class="bar" x="144" y="172" width="552" height="20" rx="4"/><text class="value" x="711" y="187" font-size="15" text-anchor="end">5.75 s</text>
+</svg>
