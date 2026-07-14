@@ -17,7 +17,6 @@ TypeScript/TSX, and Rust profiles are supported (Rust primarily for dogfooding).
 **[Documentation](https://popov95s.github.io/sensez/latest/)** ·
 **[MCP and agent guide](https://popov95s.github.io/sensez/latest/usage/mcp-and-agents/)** ·
 **[Configuration reference](https://popov95s.github.io/sensez/latest/reference/configuration/)** ·
-**[Report a security issue](https://github.com/popov95s/sensez/blob/main/SECURITY.md)**
 
 ## Why Sensez?
 
