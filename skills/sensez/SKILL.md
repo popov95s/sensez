@@ -1,10 +1,10 @@
 ---
 name: sensez
 description: >-
-  Use when checking a codebase for structural duplication, dead code candidates,
-  circular imports, boundary violations, or design smells through the Sensez MCP
-  server. Use after edit turns to verify that newly written code is structurally
-  correct. You can also run it on user triggers: "find duplicate code", "audit
+  Use the Sensez MCP server when checking a codebase for structural duplication,
+  dead code candidates, circular imports, boundary violations, or design smells.
+  Use it after you have completed a full edit turn to verify that newly written code is structurally
+  correct. You can also use it on user triggers: "find duplicate code", "audit
   this project", "check dead code", "detect cycles", "enforce boundaries", "run
   Sensez", or "check this change". Not for per-file lint/type issues; use the
   language's linter and type-checker for those.
@@ -24,17 +24,11 @@ Python, JavaScript, TypeScript/TSX, and Rust:
 | Dead code | `dead_code` | High confidence is actionable; Medium/Low need review. |
 | Smells | `smells` | Advisory design pressure; lead with high-impact findings. |
 
-## MCP Server
+## Use The MCP
 
-Sensez is used by agents through its MCP server. Configure the MCP client to run:
-
-```bash
-sensez mcp serve
-```
-
-The server speaks JSON-RPC over stdio. Once connected, use the MCP tools for
-Sensez work. Always pass an absolute repository root as `path` unless the user
-explicitly asks for a partial scan.
+Sensez is an agent-facing MCP integration. When this skill applies, use the
+available Sensez MCP tools directly. Always pass an absolute repository root as
+`path` unless the user explicitly asks for a partial scan.
 
 ## MCP Tools
 
@@ -54,7 +48,7 @@ explicitly asks for a partial scan.
 - `brainz_triage`: record the user's explicit verdict on a finding. Never call it
   unless the user classifies a finding as debt, false positive, or cleared.
 
-## Running Scans
+## Running Analysis
 
 Call `noze_sniff` with `path` set to the absolute repository root. Omit `diff`
 for the default diff-focused scan, or pass `diff=false` when the user asks for a
