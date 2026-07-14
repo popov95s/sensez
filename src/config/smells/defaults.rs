@@ -30,9 +30,8 @@ fn js_ts_default() -> Smells {
         large_class: true,
         ..Smells::default()
     };
-    smells.disabled.extend([
-        SmellKind::HighCognitiveComplexity,
-        SmellKind::DeepNesting,
-    ]);
+    smells
+        .disabled
+        .extend([SmellKind::HighCognitiveComplexity, SmellKind::DeepNesting]);
     smells
 }
