@@ -1,6 +1,6 @@
 {
   "name": "sensez-win32-x64-msvc",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "Sensez native binary for Windows x64 MSVC",
   "license": "MIT",
   "repository": {
