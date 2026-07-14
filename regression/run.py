@@ -42,6 +42,12 @@ entry_points = [
 unused_imports = true
 unused_methods = true
 unused_variables = true
+
+[smells.rules.nested_loop]
+enabled = true
+
+[smells.rules.n_plus_one_call]
+enabled = true
 """
 
 
@@ -117,16 +123,16 @@ def select_targets(targets: list[Target], args: argparse.Namespace) -> list[Targ
         return targets
     names = set(args.target)
     profiles = set(args.profile)
-    selected = [
-        t for t in targets if t["name"] in names or t["profile"] in profiles
-    ]
+    selected = [t for t in targets if t["name"] in names or t["profile"] in profiles]
     missing = names - {t["name"] for t in selected}
     if missing:
         raise SystemExit(f"unknown target(s): {', '.join(sorted(missing))}")
     return selected
 
 
-def run_target(config: RegressionConfig, target: Target, sensez: Path, accept: bool) -> None:
+def run_target(
+    config: RegressionConfig, target: Target, sensez: Path, accept: bool
+) -> None:
     name = target["name"]
     print(f"== {name} ==")
     cache = ensure_cache(config["cache_root"], target)
@@ -173,7 +179,9 @@ def scenario_repo(cache: Path, target: Target) -> Path:
     tmp = Path(tempfile.mkdtemp(prefix=f"sensez-{name}-"))
     dest = tmp / name
     run(["git", "clone", "--local", str(cache), str(dest)], ROOT)
-    head = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=cache, text=True).strip()
+    head = subprocess.check_output(
+        ["git", "rev-parse", "HEAD"], cwd=cache, text=True
+    ).strip()
     run(["git", "checkout", "--force", head], dest)
     run(["git", "checkout", "-B", "sensez-regression-worktree"], dest)
     if target.get("setup"):
@@ -195,7 +203,9 @@ def run_full_scans(sensez: Path, cache: Path, target: Target, out: Path) -> None
     try:
         default = run_json([sensez, "noze", str(repo), "--json"], ROOT)
         dump_norm(out / "default.noze.json", default, repo, target)
-        default_capped = run_json([sensez, "noze", str(repo), "--max", "5", "--json"], ROOT)
+        default_capped = run_json(
+            [sensez, "noze", str(repo), "--max", "5", "--json"], ROOT
+        )
         dump_norm(out / "default.noze.max5.json", default_capped, repo, target)
         full = run_json([sensez, "noze", str(repo), "--all", "--json"], ROOT)
         dump_norm(out / "full.noze.json", full, repo, target)
@@ -203,7 +213,9 @@ def run_full_scans(sensez: Path, cache: Path, target: Target, out: Path) -> None
             [sensez, "noze", str(repo), "--all", "--threshold", "40", "--json"], ROOT
         )
         dump_norm(out / "full.noze.threshold40.json", threshold, repo, target)
-        capped = run_json([sensez, "noze", str(repo), "--all", "--max", "5", "--json"], ROOT)
+        capped = run_json(
+            [sensez, "noze", str(repo), "--all", "--max", "5", "--json"], ROOT
+        )
         dump_norm(out / "full.noze.max5.json", capped, repo, target)
     finally:
         cleanup_repo(repo)
@@ -245,7 +257,9 @@ def run_mcp_scenarios(
         dump_norm(out / "brainz.after-full.json", report, repo, target)
         assert_brainz_totals_reported(report, target["name"])
         apply_fixture(repo, fixture, fixture["text"])
-        diff = text_json(client.call_tool("noze_sniff", {"path": str(repo), "diff": True}))
+        diff = text_json(
+            client.call_tool("noze_sniff", {"path": str(repo), "diff": True})
+        )
         dump_norm(out / "diff.noze.json", diff, repo, target)
         gate = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
         dump_norm(out / "gate.block.json", gate, repo, target)
@@ -254,9 +268,7 @@ def run_mcp_scenarios(
         # against the last block, so the gate allows without the host
         # needing to set `stop_hook_active`. This is the agent-friendly
         # UX: one block per real complaint, not one per turn.
-        allow_same = text_json(
-            client.call_tool("noze_gate", {"path": str(repo)})
-        )
+        allow_same = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
         dump_norm(out / "gate.allow-same-content.json", allow_same, repo, target)
         assert_gate_allows(allow_same, "signature dedup")
         allow = text_json(
@@ -286,9 +298,7 @@ def run_mcp_scenarios(
         client.call_tool("noze_sniff", {"path": str(repo), "limit": 20})
         reintroduced = text_json(client.call_tool("brainz_report", {"path": str(repo)}))
         dump_norm(out / "brainz.after-reintro.json", reintroduced, repo, target)
-        assert_finding_reintroduced(
-            reintroduced, fixture["detector"], target["name"]
-        )
+        assert_finding_reintroduced(reintroduced, fixture["detector"], target["name"])
         assert_exact_transition_count(
             reintroduced,
             fixture["detector"],
@@ -379,7 +389,9 @@ def run_gate_reblock_scenario(
         second = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
         dump_norm(out / "gate.block-new-only.json", second, repo, target)
         assert_gate_blocks(second, target["name"])
-        assert_gate_mentions_new_only(second, extra_symbol, fixture["symbol"], target["name"])
+        assert_gate_mentions_new_only(
+            second, extra_symbol, fixture["symbol"], target["name"]
+        )
     finally:
         client.close()
         cleanup_repo(repo)
@@ -468,9 +480,7 @@ def assert_gate_blocks(response: object, target_name: str) -> None:
     """
     decision = _json_path(response, ("decision",))
     if decision != "block":
-        raise AssertionError(
-            f"{target_name}: gate expected to block, got {response!r}"
-        )
+        raise AssertionError(f"{target_name}: gate expected to block, got {response!r}")
 
 
 def assert_gate_allows(response: object, reason: str) -> None:
@@ -494,9 +504,13 @@ def assert_gate_mentions_new_only(
     if "1 diff finding(s)" not in reason:
         raise AssertionError(f"{target_name}: expected one new gate finding: {reason}")
     if new_symbol not in reason:
-        raise AssertionError(f"{target_name}: new finding missing from gate reason: {reason}")
+        raise AssertionError(
+            f"{target_name}: new finding missing from gate reason: {reason}"
+        )
     if old_symbol in reason:
-        raise AssertionError(f"{target_name}: unchanged finding was re-listed: {reason}")
+        raise AssertionError(
+            f"{target_name}: unchanged finding was re-listed: {reason}"
+        )
 
 
 def assert_finding_resolved(report: object, detector: str, target_name: str) -> None:
@@ -515,7 +529,9 @@ def assert_finding_resolved(report: object, detector: str, target_name: str) -> 
         )
 
 
-def assert_finding_reintroduced(report: object, detector: str, target_name: str) -> None:
+def assert_finding_reintroduced(
+    report: object, detector: str, target_name: str
+) -> None:
     """After the agent reintroduces a previously-fixed finding, the
     brainz totals must count it as a reintroduction. A regression here
     would silently drop the fix reintroduction signal and let noisy detectors
