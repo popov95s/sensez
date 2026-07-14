@@ -1,219 +1,181 @@
-### Why can't coding agents detect code smells? Because they don't have a `noze`.
+# Sensez
 
-Coding agents are very good at producing code. They are also very good at
-producing the same helper three times, gently ignoring your architecture notes,
-and using `dict[str, Any]` when you ask for type safety. You ask it to complete
-a task like "a staff software engineer", you ask it to follow SOLID principles
-and use strong type safety. It happily agrees, and starts working on the task.
-The vibes are immaculate. You come back a few minutes later to a slopocalypse
-that looks nothing like what your AGENTS.md says and you spend hours trying to
-understand where to start.
+[![PyPI](https://img.shields.io/pypi/v/sensez?logo=pypi&logoColor=white)](https://pypi.org/project/sensez/) [![npm](https://img.shields.io/npm/v/sensez?logo=npm&logoColor=white)](https://www.npmjs.com/package/sensez) [![CI](https://github.com/popov95s/sensez/actions/workflows/ci.yml/badge.svg)](https://github.com/popov95s/sensez/actions/workflows/ci.yml) [![Website](https://img.shields.io/badge/website-sensez.dev-222222?logo=googlechrome&logoColor=white)](https://sensez.dev) [![Documentation](https://img.shields.io/badge/docs-latest-222222?logo=readthedocs&logoColor=white)](https://popov95s.github.io/sensez/latest/) [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f)](https://github.com/popov95s/sensez/blob/main/LICENSE.MD)
 
-Sensez is a suite of Rust CLIs with an MCP server for maintenance before tech debt
-accumulates. It runs beside your linter and type-checker and looks for cross-file
-problems they usually do not own: duplication, dead code, import cycles, boundary
-violations, and design smells. It is designed to give your coding agent the
-`noze` to detect code smells, the `bonez` to respect architectural boundaries,
-and the `spine` to do it fast.
+**Structural maintainability checks for coding agents and teams.**
 
-Supported language profiles currently include Python, JavaScript, TypeScript, and Rust (for dogfooding primarily).
+Sensez is a suite of Rust CLIs and an MCP server that runs alongside your linter
+and type-checker. It finds cross-file problems that those tools do not usually
+own: duplication, dead code, import cycles, architecture-boundary violations,
+and design smells.
 
-Docs: https://popov95s.github.io/sensez/latest/
+It gives coding agents the `noze` to detect code smells, the `bonez` to respect
+architectural boundaries, and the `spine` to do it fast. Python, JavaScript,
+TypeScript/TSX, and Rust profiles are supported (Rust primarily for dogfooding).
 
-## Quick Start
+**[Website](https://sensez.dev)** ·
+**[Documentation](https://popov95s.github.io/sensez/latest/)** ·
+**[MCP and agent guide](https://popov95s.github.io/sensez/latest/usage/mcp-and-agents/)** ·
+**[Configuration reference](https://popov95s.github.io/sensez/latest/reference/configuration/)** ·
+**[Report a security issue](https://github.com/popov95s/sensez/blob/main/SECURITY.md)**
+
+## Why Sensez?
+
+Coding agents are excellent at producing code—and, occasionally, at producing
+the same helper three times, gently ignoring architecture notes, and replacing
+type-safe models with `dict[str, Any]`. The vibes are immaculate; the result
+can still be a slopocalypse that takes hours to untangle.
+
+Sensez closes that feedback loop while an edit is still fresh. It gives agents
+short, structured feedback on the repository's shape, so problems can be fixed
+before they become load-bearing.
+
+The gap is especially visible in agent-driven work:
+
+- **Context rots.** Architecture guidance fades across long, summarized turns.
+- **CI is too late.** Small, non-blocking structural warnings are easy to defer.
+- **Slow checks do not fit the turn.** If a check takes minutes, it cannot run
+  in every feedback loop—and debt has time to accumulate.
+
+```text
+[Agent proposes turn finish] ──> [Sensez MCP sniff] ──> [Finds cycle / clone / smell]
+                                      │
+                                      └──> Immediate, actionable feedback
+```
+
+Sensez complements—not replaces—Ruff, ty, mypy, ESLint, TypeScript, `rustc`,
+and Clippy. Use those tools for local correctness; use Sensez for the structural
+relationships across the codebase.
+
+## Quick start
+
 ### Python
-```Bash
-# Add as a project dev dependency; run it with `uv run sensez ...`
+
+```bash
+# Add to a project; run it with `uv run sensez ...`
 uv add --dev sensez
 uv run sensez init
 
-# Install as a global CLI so `sensez ...` works directly
+# Or install a global CLI
 uv tool install sensez
 sensez init
 
-# or run a one-off scan with uv
+# Or run a one-off scan
 uvx sensez noze .
 ```
 
-### JS/TS
-```Bash
-# Add as a dev dependency
-npm install --save-dev sensez
-# Generate a sensez.toml starter config
-npx sensez init . 
+### JavaScript and TypeScript
 
-# Run a one-off scan with npx
+```bash
+# Add as a development dependency
+npm install --save-dev sensez
+
+# Generate a starter config and scan
+npx sensez init .
 npx sensez noze .
 ```
 
-`sensez .` and `sensez noze .` both run the default scan. The verbose form is
-still available as `sensez noze sniff .`.
+`sensez .` and `sensez noze .` both run the default scan. The explicit form
+`sensez noze sniff .` remains available for agent-oriented workflows.
 
-## Performance Snapshot
-
-```mermaid
-xychart-beta
-  title "pylint benchmark seconds"
-  x-axis ["sensez", "vulture", "repowise", "symilar"]
-  y-axis "seconds" 0 --> 20
-  bar [0.27, 1.29, 17.26, 20]
-```
-
-`sensez` scans all structural pillars in one pass (`0.27s`). `vulture` checks
-Python dead code (`1.29s`). `repowise` uses a custom ranking mechanism, including dead code (`17.26s`).
-`symilar` checks line-based duplication (`234.12s`; chart capped at `20s`).
-
-### JS/TS
-
-```mermaid
-xychart-beta
-  title "zod benchmark seconds"
-  x-axis ["sensez", "fallow", "repowise"]
-  y-axis "seconds" 0 --> 6
-  bar [0.16, 0.48, 5.75]
-```
-
-`sensez` scans all structural pillars in one pass (`0.16s`). `fallow` checks
-JS/TS structural dead-code and dependency findings (`0.48s`). `repowise` checks
-repo intelligence signals, including dead code (`5.75s`).
-
-`sensez` tries to lower dead code noise and allows for configuration of what gets reported. It also includes a few more Python and TS/JS opinionated smells, apart from overall structural consistency metrics.
-
-## Agent Impact
-
-We gave the same coding agent 70 real-world Python tasks from SWE-PolyBench and
-SWE-bench Verified, plus 21 synthetic tasks designed to trigger specific
-maintainability traps. Both variants received SOLID/DRY principles. The Sensez
-variant additionally used the `noze_sniff` MCP tool in a mandatory feedback loop
-before declaring each task complete.
-
-| | New quality issues | Clone tokens | New clones | Lines written | Tokens used |
-|---|---|---|---|---|---|
-| Without Sensez | 14 | 1,251 | 129 | 2,080 | 1.23M |
-| With Sensez | 2 | 126 | 0 | 682 | 1.34M |
-| **Reduction** | **86%** | **90%** | **100%** | **67%** | **+8.7% overhead** |
-
-Sensez agents produced structurally cleaner code with 67% fewer lines. 
-
-Benchmarks used: SWE-PolyBench_500, SWE-bench Verified, and synthetic pillar tests.
-Full methodology and per-benchmark results in [`evals/`](evals/).
-
-## The Problem
-
-Coding agents drift. Not due to bad intentions, but because their loop is leaky.
-
-1. Context rots.
-   You told the agent to respect boundaries, follow SOLID, and think like a
-   staff engineer. Six turns later, the context has been summarized twice and
-   the agent is confidently rewriting the same csv file parser your colleague
-   wrote two weeks ago.
-
-2. CI is too late.
-   CI is great at saying "absolutely not." It is much worse at saying "hm, this
-   duplication is small but suspicious." Non-blocking warnings have a natural
-   habitat: ignored forever.
-
-3. Slow checks do not fit the turn.
-   If a check takes minutes, it should not run every agent turn. If it does not
-   run every turn, the slop has time to ferment.
-```text
-[Agent Proposes Turn Finish] ──> [ 👃 Sensez MCP Sniff ] ──> [ Catches Import Cycle / Duplication ]
-                                   │
-                                   └──> (Immediate Agent Feedback: "Loose typing violation on line 40 of code.py. Replace loose collections with dataclass/model.")
-```
-
-Sensez provides short, structured feedback directly to the agent while the edit is still fresh. Less archaeology, more "fix it before it becomes load-bearing."
-
-## noze
-
-`noze` takes care of the gorgonzola coding agents love so much:
+## What it finds
 
 | Area | Output key | What it catches |
-|---|---|---|
-| Duplication | `duplication` | Structural clones, including local rename copies. |
+| --- | --- | --- |
+| Duplication | `duplication` | Structural clones, including local-rename copies. |
 | Dead code | `dead_code` | Unreferenced symbols with confidence tiers. |
 | Cycles | `cycles` | Import loops and load-order tangles. |
-| Boundaries | `boundaries` | Imports crossing configured architecture rules. |
+| Boundaries | `boundaries` | Imports that cross configured architecture rules. |
 | Smells | `smells` | Design pressure inside functions, classes, modules, and the graph. |
 
-Some smell examples:
+Some examples of the included smells:
 
-| Smell | Why noze flags it |
-|---|---|
-| `tuple_packing` | Positional tuples hide meaning. `tuple[int, str, int]` is not a data model. |
-| `loose_typing` | `Any` and vague containers erase the contract callers need. |
-| `boolean_blindness` | `do_thing(True, False)` is a guessing game with arguments. |
-| `implicit_schema` | Repeated string-key access usually means a real shape is hiding in a dict. |
-| `mutated_parameter` | You pass a parameter and the function you sent it to returns it all chewed up. Disgusting. |
-| `feature_envy` | A method that mostly uses another object's data may belong somewhere else. |
+| Smell | Why Sensez flags it |
+| --- | --- |
+| `tuple_packing` | Positional tuples hide meaning; `tuple[int, str, int]` is not a data model. |
+| `loose_typing` | `Any`, schema-erasing maps, and primitive containers erase caller contracts. |
+| `boolean_blindness` | `do_thing(True, False)` makes argument meaning a guessing game. |
+| `implicit_schema` | Repeated string-key access often means a real shape is hiding in a dict. |
+| `mutated_parameter` | A function returns a parameter after chewing it up. |
+| `feature_envy` | A method that mostly uses another object's data may belong elsewhere. |
 | `message_chain` | Long `a.b.c.d` chains couple callers to deep object plumbing. |
 | `god_module` | One module has become the place everything depends on. |
-| `magic_string_default` | Trying to lie to the type checker by adding an `\|\| ""` or `or ""` to hide a string that should be required. |
-| `split_variable` | Multiple reassignments of the same variable within the same scope. Set to 1 to keep them constant within the scope and enforce helper functions for complex assignment logic. |
-| `nested_loops` | [BETA, can be noisy] Nested iterations may blow up exponentially if not handled properly |
-| `n_plus_one_call` | [BETA, can be noisy] Making external calls 1 by 1 (e.g. to a database) instead of using a batched approach. |
+| `magic_string_default` | <code>&#124;&#124; ""</code> or <code>or ""</code> hides a string that should be required. |
+| `split_variable` | Multiple reassignments of a variable in one scope add hidden state. |
+| `nested_loop` | **Beta, opt-in:** nested iteration may have unintended complexity. |
+| `n_plus_one_call` | **Beta, opt-in:** one-by-one external calls may need batching. |
 
-
-`noze` is not a formatter, linter, or type-checker. Keep using Ruff, ty, mypy,
-ESLint, TypeScript, rustc, and Clippy. `noze` sits next to them and watches the
-repo-level shape.
-
-The default report is intentionally fixable in one screen: each pillar shows
-only its top 5 offenders, each smell kind shows its own total plus top 3
-examples, and dead-code output includes high-confidence findings only. Use
-`--all` to print every finding, or `--max N` to choose a different cap.
-
-For CI, filter to the pillars you care about:
+The default report is intentionally fixable in one screen: each pillar shows its
+top five offenders, each smell kind shows its total plus its top three examples,
+and dead-code output includes high-confidence findings only. Use `--all` for
+every finding, or `--max N` to set another cap.
 
 ```bash
+# Focus a CI check on the pillars you care about
 sensez noze . --duplicates
 sensez noze . --duplicates --dead-code --json
 ```
 
-## MCP
+## Performance
 
-MCP is the default integration path for agents. Use it when Sensez should run
-repeatedly during a coding session instead of shelling out for one-off scans.
+Sensez evaluates all structural pillars in one pass.
 
-```bash
-sensez mcp serve
-```
+### Python: pylint benchmark
 
-The MCP tools are themed but explicit:
+![Python benchmark: Sensez 0.27 s, Vulture 1.29 s, Repowise 17.26 s, Symilar 234.12 s](https://raw.githubusercontent.com/popov95s/sensez/main/docs/assets/benchmark-python.svg)
+
+| Tool | Time | Scope |
+| --- | ---: | --- |
+| **sensez** | **0.27 s** | All structural pillars in one pass |
+| vulture | 1.29 s | Python dead code |
+| repowise | 17.26 s | Repository intelligence, including dead code |
+| symilar | 234.12 s | Line-based duplication |
+
+### JavaScript / TypeScript: zod benchmark
+
+![JavaScript and TypeScript benchmark: Sensez 0.16 s, Fallow 0.48 s, Repowise 5.75 s](https://raw.githubusercontent.com/popov95s/sensez/main/docs/assets/benchmark-javascript.svg)
+
+| Tool | Time | Scope |
+| --- | ---: | --- |
+| **sensez** | **0.16 s** | All structural pillars in one pass |
+| fallow | 0.48 s | JS/TS structural dead-code and dependency findings |
+| repowise | 5.75 s | Repository intelligence, including dead code |
+
+## Agent impact
+
+The same coding agent completed 70 real-world Python tasks from SWE-PolyBench
+and SWE-bench Verified, plus 21 synthetic tasks designed to trigger specific
+maintainability traps. Both variants received SOLID/DRY principles. The Sensez
+variant additionally had to call `noze_sniff` in a feedback loop before it could
+declare a task complete.
+
+| | New quality issues | Clone tokens | New clones | Lines written | Tokens used |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Without Sensez | 14 | 1,251 | 129 | 2,080 | 1.23M |
+| With Sensez | 2 | 126 | 0 | 682 | 1.34M |
+| **Reduction** | **86%** | **90%** | **100%** | **67%** | **+8.7% overhead** |
+
+Sensez agents produced structurally cleaner code with 67% fewer lines.
+Benchmarks used SWE-PolyBench_500, SWE-bench Verified, and synthetic pillar
+tests. See [the evaluation suite](https://github.com/popov95s/sensez/tree/main/evals)
+for the methodology and per-benchmark results.
+
+## MCP for agents
+
+MCP is the recommended integration when Sensez should run repeatedly during a
+coding session rather than as a one-off shell command. The `init` command would set this up automatically on agent start.
 
 | Tool | Use |
-|---|---|
-| `noze_sniff` | Scan the repo for smells and structure issues. |
-| `noze_gate` | End-of-turn diff gate for agent hooks; experimental and can be noisy on short/Q&A turns. |
+| --- | --- |
+| `noze_sniff` | Scan the repository for smells and structural issues. |
+| `noze_gate` | Experimental end-of-turn diff gate; may be noisy for short or Q&A turns. |
 | `noze_explain` | Explain a finding category. |
 | `brainz_report` | Summarize local usage and resolution metrics. |
 | `brainz_triage` | Record user-approved debt or false-positive verdicts. |
-| `eyez_search_docs` | [disabled] Search docstrings/comments when `eyez` is enabled. |
+| `eyez_search_docs` | Disabled unless `eyez` is enabled; searches docstrings and comments. |
 
-You can also use the `sensez noze` CLI standalone in GitHub Actions.
-
-## brainz
-
-`brainz` is local-only memory. It records scans, gate blocks, triage decisions,
-resolved findings, regressions, detector precision, and usage reports.
-
-```bash
-sensez brainz report .
-sensez brainz report . --json
-```
-
-Everything stays under:
-
-```text
-.sensez/local-metrics/
-```
-
-No telemetry. No source upload. Disable it per repo:
-
-```toml
-[self_improvement]
-enabled = false
-```
+Sensez can also run standalone in GitHub Actions. See the
+[GitHub Action guide](https://popov95s.github.io/sensez/latest/usage/github-action/).
 
 ## Configuration
 
@@ -221,20 +183,18 @@ Sensez reads `sensez.toml` from the project root, or `[tool.sensez]` from
 `pyproject.toml` when `sensez.toml` is absent.
 
 ```bash
-sensez init . --yes
+sensez init
 ```
 
-Main knobs:
+The main configuration areas are:
 
 - `[duplication]` for clone thresholds
-- `[dead_code]` for dynamic entrypoints
+- `[dead_code]` for dynamic entry points
 - `[smells]` for smell toggles and thresholds
 - `[[boundaries.forbidden]]` for architecture contracts
-- `[action]` for how strongly agents/gates treat each pillar
+- `[action]` for how strongly agents and gates treat each pillar
 - `[accept]` for shared accepted findings
 - `[self_improvement]` for local metrics
-
-Small example:
 
 ```toml
 [duplication]
@@ -246,25 +206,47 @@ entrypoint_names = ["register", "main", "setup"]
 [smells.rules.long_function]
 max_lines = 80
 action = "warning"
+
+# The beta performance heuristics are disabled by default.
+[smells.rules.nested_loop]
+enabled = true
+
+[smells.rules.n_plus_one_call]
+enabled = true
 ```
 
-## Project Anatomy
+## Local-only metrics and privacy
+
+`brainz` records scans, gate blocks, triage decisions, resolved findings,
+regressions, detector precision, and usage reports locally.
+
+```bash
+sensez brainz report .
+sensez brainz report . --json
+```
+
+Everything remains under `.sensez/local-metrics/`. Sensez sends no telemetry
+and uploads no source code. Disable local metrics for a repository with:
+
+```toml
+[self_improvement]
+enabled = false
+```
+
+## Project anatomy
 
 - `spine`: file discovery, parsing, shared IR, and dependency graph.
 - `profiles`: language adapters for Python, JS/TS, TSX, and Rust.
 - `noze`: duplication, dead code, cycles, and design smells.
-- `bonez`: architecture boundary auditing. Not yet enabled.
+- `bonez`: architecture-boundary auditing; not yet enabled.
 - `brainz`: local-only metrics and feedback memory.
-- `eyez`: optional doc/comment search. Not yet enabled.
+- `eyez`: optional doc/comment search; not yet enabled.
 - `mcp`: JSON-RPC/MCP surface for agent integration.
 - `reporter`: terminal and JSON output.
-- `setup`: `sensez init`, starter config, MCP registration, and hook setup.
+- `setup`: starter configuration, MCP registration, and hook setup.
 
-## Privacy
+## Disclaimer
 
-Sensez does not send telemetry or source code anywhere. Local metrics stay under
-`.sensez/local-metrics/`. 
-
----
-
-Disclaimer: [DISCLAIMER.md](DISCLAIMER.md)
+Please review
+[DISCLAIMER.md](https://github.com/popov95s/sensez/blob/main/DISCLAIMER.md) for
+the project disclaimer.
