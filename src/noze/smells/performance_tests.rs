@@ -9,11 +9,31 @@ fn local(ext: &str, body: &str) -> Vec<SmellFinding> {
     let path = tmp.path().join(format!("sample.{ext}"));
     fs::write(&path, body).unwrap();
     let file = parse_file(&path, 0).unwrap();
-    detect_local(&file, &Smells::default())
+    let mut cfg = Smells::default();
+    cfg.disabled
+        .retain(|kind| !matches!(kind, SmellKind::NestedLoop | SmellKind::NPlusOneCall));
+    detect_local(&file, &cfg)
 }
 
 fn has(findings: &[SmellFinding], kind: SmellKind) -> bool {
     findings.iter().any(|f| f.kind == kind)
+}
+
+#[test]
+fn nested_loop_and_n_plus_one_are_off_by_default() {
+    let src = "\
+def f(db, ids, xs):
+    for id in ids:
+        for x in xs:
+            db.fetch(x)
+";
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("sample.py");
+    fs::write(&path, src).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    let findings = detect_local(&file, &Smells::default());
+    assert!(!has(&findings, SmellKind::NestedLoop), "{findings:?}");
+    assert!(!has(&findings, SmellKind::NPlusOneCall), "{findings:?}");
 }
 
 #[test]

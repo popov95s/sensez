@@ -134,10 +134,24 @@ def default_enabled(smell_term: SmellTerm, language: str) -> bool:
 
 
 def _default_for_kind(smell_term: SmellTerm, fields: dict[str, str]) -> bool:
+    if smell_term in _default_disabled():
+        return False
     field = _enabled_fields().get(smell_term)
     if not field:
         return True
     return fields.get(field, "true") == "true"
+
+
+def _default_disabled() -> set[SmellTerm]:
+    source = SMELL_KNOBS_RS.read_text()
+    default_impl = source.split("impl Default for Smells", 1)[1]
+    match = re.search(r"disabled:\s*vec!\[(.*?)\]", default_impl, re.DOTALL)
+    if not match:
+        return set()
+    return {
+        SmellTerm(camel_to_snake(kind))
+        for kind in re.findall(r"SmellKind::(\w+)", match.group(1))
+    }
 
 
 def _default_smell_fields() -> dict[str, str]:

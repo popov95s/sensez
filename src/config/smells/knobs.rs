@@ -62,7 +62,7 @@ impl Default for Smells {
         Smells {
             enabled: true,
             exclude: Vec::new(),
-            disabled: Vec::new(),
+            disabled: vec![SmellKind::NestedLoop, SmellKind::NPlusOneCall],
             actions: BTreeMap::new(),
             max_cyclomatic: 10,
             max_cognitive: 15,

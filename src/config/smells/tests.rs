@@ -14,12 +14,15 @@ fn defaults_differ_per_language() {
     let py = cfg.for_language(Language::Python);
     let ts = cfg.for_language(Language::TypeScript);
 
-    assert!(py.disabled.is_empty(), "python disables nothing by default");
+    assert!(py.disabled.contains(&SmellKind::NestedLoop));
+    assert!(py.disabled.contains(&SmellKind::NPlusOneCall));
     assert!(!py.large_class, "python large_class deferred to Ruff");
 
     assert!(ts.large_class, "TS enables large_class (no native rule)");
     assert!(ts.disabled.contains(&SmellKind::DeepNesting));
     assert!(ts.disabled.contains(&SmellKind::HighCognitiveComplexity));
+    assert!(ts.disabled.contains(&SmellKind::NestedLoop));
+    assert!(ts.disabled.contains(&SmellKind::NPlusOneCall));
     // JavaScript shares the TS default.
     assert!(cfg
         .for_language(Language::JavaScript)
@@ -88,6 +91,21 @@ fn nested_rule_tables_group_knobs_and_implicitly_enable() {
     assert_eq!(py.actions[&SmellKind::SplitVariable], ActionLevel::Info);
     assert!(py.long_function, "setting max_lines implies enabled");
     assert_eq!(py.max_function_lines, 80);
+}
+
+#[test]
+fn beta_performance_rules_require_explicit_opt_in() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.nested_loop]
+            enabled = true
+        "#,
+    )
+    .unwrap();
+
+    let py = cfg.for_language(Language::Python);
+    assert!(!py.disabled.contains(&SmellKind::NestedLoop));
+    assert!(py.disabled.contains(&SmellKind::NPlusOneCall));
 }
 
 #[test]

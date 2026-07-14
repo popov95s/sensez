@@ -26,9 +26,13 @@ pub fn default_for(lang: Language) -> Smells {
 /// (`cyclomatic_complexity`, `long_function`, `long_parameter_list`,
 /// `magic_numbers`), so a user can still opt into them per language.
 fn js_ts_default() -> Smells {
-    Smells {
+    let mut smells = Smells {
         large_class: true,
-        disabled: vec![SmellKind::HighCognitiveComplexity, SmellKind::DeepNesting],
         ..Smells::default()
-    }
+    };
+    smells.disabled.extend([
+        SmellKind::HighCognitiveComplexity,
+        SmellKind::DeepNesting,
+    ]);
+    smells
 }
