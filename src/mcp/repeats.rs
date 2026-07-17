@@ -5,7 +5,7 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, OnceLock};
 
-type RepoKey = (PathBuf, String);
+type RepoKey = (PathBuf, String, Option<String>);
 
 pub(super) const DEFER_EXPIRY_SECS: u64 = 3 * 86_400;
 
@@ -31,20 +31,22 @@ fn states() -> &'static Mutex<HashMap<RepoKey, RepeatState>> {
 
 pub(super) fn suppress_repeated(
     root: &Path,
+    scope: Option<&str>,
     report: &mut AnalysisReport,
     limit: usize,
 ) -> RepeatOutcome {
-    suppress_repeated_at(root, report, limit, now_secs())
+    suppress_repeated_at(root, scope, report, limit, now_secs())
 }
 
 pub(super) fn suppress_repeated_at(
     root: &Path,
+    scope: Option<&str>,
     report: &mut AnalysisReport,
     limit: usize,
     now: u64,
 ) -> RepeatOutcome {
     let branch = crate::diff::git::current_branch(root).unwrap_or_else(|| "unbranched".into());
-    let repo = (canon(root), branch);
+    let repo = (canon(root), branch, scope.map(str::to_string));
     let active = active_keys(report);
     let mut states = states().lock().unwrap_or_else(|e| e.into_inner());
     let state = states.entry(repo).or_default();

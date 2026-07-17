@@ -5,8 +5,12 @@ use super::{fingerprint, store};
 use crate::report::AnalysisReport;
 use std::collections::BTreeSet;
 
-pub fn retain_unseen_gate_findings(root: &std::path::Path, report: &mut AnalysisReport) -> usize {
-    let blocked = blocked_fingerprints(root);
+pub fn retain_unseen_gate_findings(
+    root: &std::path::Path,
+    scope: Option<&str>,
+    report: &mut AnalysisReport,
+) -> usize {
+    let blocked = blocked_fingerprints(root, scope);
     if blocked.is_empty() {
         return finding_count(report);
     }
@@ -43,11 +47,15 @@ pub fn retain_unseen_gate_findings(root: &std::path::Path, report: &mut Analysis
     finding_count(report)
 }
 
-fn blocked_fingerprints(root: &std::path::Path) -> BTreeSet<String> {
+fn blocked_fingerprints(root: &std::path::Path, scope: Option<&str>) -> BTreeSet<String> {
     store::load_events(root)
         .into_iter()
         .filter_map(|event| match event {
-            Event::GateBlock { fingerprints, .. } => Some(fingerprints),
+            Event::GateBlock {
+                scope: event_scope,
+                fingerprints,
+                ..
+            } if event_scope.as_deref() == scope => Some(fingerprints),
             _ => None,
         })
         .flatten()
@@ -75,19 +83,41 @@ mod tests {
         let root = tmp.path();
         let mut first = report_with(root, &[("alpha", 4)]);
         let value = serde_json::to_value(&first).unwrap();
-        crate::brainz::record_gate_block(root, &value);
+        crate::brainz::record_gate_block(root, None, &value);
         crate::brainz::flush();
 
         let mut next = report_with(root, &[("alpha", 40), ("beta", 12)]);
-        assert_eq!(retain_unseen_gate_findings(root, &mut next), 1);
+        assert_eq!(retain_unseen_gate_findings(root, None, &mut next), 1);
         assert_eq!(next.dead_code.len(), 1);
         assert_eq!(next.dead_code[0].symbol, "beta");
 
         first.dead_code[0].line = 400;
         assert_eq!(
-            retain_unseen_gate_findings(root, &mut first),
+            retain_unseen_gate_findings(root, None, &mut first),
             0,
             "line drift keeps the same finding identity"
+        );
+    }
+
+    #[test]
+    fn blocked_findings_are_isolated_by_session_scope() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        let first = report_with(root, &[("alpha", 4)]);
+        let value = serde_json::to_value(&first).unwrap();
+        crate::brainz::record_gate_block(root, Some("session:one"), &value);
+        crate::brainz::flush();
+
+        let mut other_session = report_with(root, &[("alpha", 4)]);
+        assert_eq!(
+            retain_unseen_gate_findings(root, Some("session:two"), &mut other_session),
+            1
+        );
+
+        let mut original_session = report_with(root, &[("alpha", 4)]);
+        assert_eq!(
+            retain_unseen_gate_findings(root, Some("session:one"), &mut original_session),
+            0
         );
     }
 

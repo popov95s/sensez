@@ -41,6 +41,11 @@ fn flag_driven_init_writes_all_artifacts() {
     );
     assert!(stop.contains("stop_hook_active"), "soft-block escape wired");
     assert!(
+        stop.contains("transcript_path"),
+        "main transcript is forwarded"
+    );
+    assert!(settings["hooks"]["SubagentStop"].is_null());
+    assert!(
         stop.contains("experimental stop hook"),
         "hook setup should call out that it is experimental"
     );
@@ -67,6 +72,37 @@ fn flag_driven_init_writes_all_artifacts() {
     let mcp: serde_json::Value =
         serde_json::from_str(&fs::read_to_string(root.join(".mcp.json")).unwrap()).unwrap();
     assert_eq!(mcp["mcpServers"].as_object().unwrap().len(), 1);
+}
+
+#[test]
+fn init_removes_only_the_legacy_subagent_gate() {
+    let (_tmp, root) = temp_root();
+    let claude = root.join(".claude");
+    fs::create_dir_all(&claude).unwrap();
+    fs::write(
+        claude.join("settings.json"),
+        r#"{"hooks":{"SubagentStop":[
+            {"hooks":[{"type":"mcp_tool","tool":"noze_gate"}]},
+            {"hooks":[{"type":"command","command":"keep-me"}]}
+        ]}}"#,
+    )
+    .unwrap();
+
+    run(InitOptions {
+        path: Some(root.clone()),
+        agent: Some("claude-code".into()),
+        gate: true,
+        no_metrics: true,
+        yes: true,
+    })
+    .unwrap();
+
+    let settings: serde_json::Value =
+        serde_json::from_str(&fs::read_to_string(claude.join("settings.json")).unwrap()).unwrap();
+    let subagent = settings["hooks"]["SubagentStop"].as_array().unwrap();
+    assert_eq!(subagent.len(), 1);
+    assert!(subagent[0].to_string().contains("keep-me"));
+    assert!(!subagent[0].to_string().contains("noze_gate"));
 }
 
 #[test]

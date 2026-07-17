@@ -151,6 +151,8 @@ pub enum Event {
         ts: u64,
         session: String,
         branch: String,
+        #[serde(skip_serializing_if = "Option::is_none", default)]
+        scope: Option<String>,
         fingerprints: Vec<String>,
     },
     /// A user-triage outcome: the user adjudicated a finding (debt /

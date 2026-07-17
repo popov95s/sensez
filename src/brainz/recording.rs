@@ -117,7 +117,7 @@ pub fn record_search(
     });
 }
 
-pub fn record_gate_block(root: &Path, report: &Value) {
+pub fn record_gate_block(root: &Path, scope: Option<&str>, report: &Value) {
     let fingerprints: Vec<String> = fingerprint::fingerprints(report)
         .values()
         .flatten()
@@ -127,6 +127,7 @@ pub fn record_gate_block(root: &Path, report: &Value) {
         ts: hub::now(),
         session,
         branch,
+        scope: scope.map(str::to_string),
         fingerprints,
     });
 }

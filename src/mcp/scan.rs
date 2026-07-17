@@ -57,6 +57,22 @@ pub(super) fn diff(
     Ok((report, snapshot, start.elapsed()))
 }
 
+pub(super) fn diff_changed(
+    path: &Path,
+    threshold: Option<usize>,
+    max: usize,
+    changed: crate::diff::ChangedLines,
+) -> Result<(AnalysisReport, Value, Duration)> {
+    let start = Instant::now();
+    let (mut report, module_files) = crate::analyze_path(path, threshold)
+        .with_context(|| format!("scanning {}", path.display()))?;
+    let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
+    suppress_scan_issues(&mut report);
+    crate::noze::limit(&mut report, max);
+    crate::diff::apply(&mut report, &changed, &module_files);
+    Ok((report, snapshot, start.elapsed()))
+}
+
 fn suppress_scan_issues(report: &mut AnalysisReport) {
     report.meta.issues.clear();
     report.meta.files_skipped = 0;

@@ -293,18 +293,18 @@ fn gate_deferred_finding_resurfaces_after_expiry() {
     std::fs::write(&file, "def f():\n    pass\n").unwrap();
 
     let mut first = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, &mut first, 1, 10);
+    let outcome = suppress_repeated_at(root, None, &mut first, 1, 10);
     assert_eq!(outcome.deferred, 0);
     assert_eq!(first.smells.len(), 1);
 
     let mut deferred = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, &mut deferred, 1, 11);
+    let outcome = suppress_repeated_at(root, None, &mut deferred, 1, 11);
     assert_eq!(outcome.deferred, 1);
     assert!(deferred.smells.is_empty());
 
     let expiry = 11 + DEFER_EXPIRY_SECS;
     let mut resurface = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, &mut resurface, 1, expiry);
+    let outcome = suppress_repeated_at(root, None, &mut resurface, 1, expiry);
     assert_eq!(
         outcome.deferred, 0,
         "expired defer does not count as deferred"
@@ -316,11 +316,17 @@ fn gate_deferred_finding_resurfaces_after_expiry() {
     );
 
     let mut second_defer = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, &mut second_defer, 1, expiry + 1);
+    let outcome = suppress_repeated_at(root, None, &mut second_defer, 1, expiry + 1);
     assert_eq!(outcome.deferred, 1);
 
     let mut much_later = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, &mut much_later, 1, expiry + DEFER_EXPIRY_SECS * 10);
+    let outcome = suppress_repeated_at(
+        root,
+        None,
+        &mut much_later,
+        1,
+        expiry + DEFER_EXPIRY_SECS * 10,
+    );
     assert_eq!(outcome.deferred, 1, "second defer is permanent");
     assert!(much_later.smells.is_empty());
 }

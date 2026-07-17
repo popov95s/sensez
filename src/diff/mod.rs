@@ -14,7 +14,7 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
 /// Added/modified line ranges per file (keyed by canonicalized absolute path).
-#[derive(Debug, Default)]
+#[derive(Clone, Debug, Default)]
 pub struct ChangedLines {
     files: HashMap<PathBuf, Vec<(usize, usize)>>,
 }

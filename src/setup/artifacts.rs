@@ -209,42 +209,7 @@ fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
 }
 
 pub fn write_gate(root: &Path) -> Result<String> {
-    let settings_path = root.join(".claude/settings.json");
-    if let Some(parent) = settings_path.parent() {
-        std::fs::create_dir_all(parent)
-            .with_context(|| format!("creating {}", parent.display()))?;
-    }
-    let mut settings: Value = std::fs::read_to_string(&settings_path)
-        .ok()
-        .and_then(|t| serde_json::from_str(&t).ok())
-        .unwrap_or_else(|| json!({}));
-    let mut stops = settings["hooks"]["Stop"]
-        .as_array()
-        .cloned()
-        .unwrap_or_default();
-    if stops.iter().any(|e| {
-        let text = e.to_string();
-        text.contains("\"tool\":\"noze_gate\"") || text.contains("\"tool\":\"gate\"")
-    }) {
-        return Ok(
-            "Stop-gate already installed (experimental; mcp_tool -> sensez noze_gate)".into(),
-        );
-    }
-    stops.push(json!({"hooks": [{
-        "type": "mcp_tool",
-        "server": "sensez",
-        "tool": "noze_gate",
-        "input": {"path": "${cwd}", "stop_hook_active": "${stop_hook_active}"},
-        "timeout": 60,
-        "statusMessage": "sensez: experimental stop hook scanning session changes"
-    }]}));
-    settings["hooks"]["Stop"] = json!(stops);
-    std::fs::write(&settings_path, serde_json::to_string_pretty(&settings)?)
-        .with_context(|| format!("writing {}", settings_path.display()))?;
-    Ok(
-        "installed experimental Stop-gate hook (mcp_tool -> sensez noze_gate, shared session)"
-            .into(),
-    )
+    super::gate::write(root)
 }
 
 pub fn ensure_gitignore(root: &Path) -> Result<String> {

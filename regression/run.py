@@ -143,6 +143,7 @@ def run_target(
     run_full_scans(sensez, cache, target, out)
     run_mcp_scenarios(sensez, config, target, cache, out)
     run_gate_reblock_scenario(sensez, config, target, cache, out)
+    run_shared_worktree_gate_scenario(sensez, config, target, cache, out)
     run_gate_detached_scenario(sensez, config, target, cache, out)
     run_branch_metric_scenarios(sensez, config, target, out)
     baseline = BASELINES / name
@@ -395,6 +396,79 @@ def run_gate_reblock_scenario(
     finally:
         client.close()
         cleanup_repo(repo)
+
+
+def run_shared_worktree_gate_scenario(
+    sensez: Path,
+    config: RegressionConfig,
+    target: Target,
+    cache: Path,
+    out: Path,
+) -> None:
+    """One checkout, two Claude sessions, and no agent-facing tracking call."""
+    repo = scenario_repo(cache, target)
+    fixture = config["profiles"][target["profile"]]["dead_code_fixture"]
+    session_a = fixture
+    session_b = extra_dead_code_fixture(fixture, extra_symbol_for(fixture))
+    client = McpClient(sensez)
+    try:
+        client.request("initialize")
+        apply_fixture(repo, session_a, session_a["text"])
+        apply_fixture(repo, session_b, session_b["text"])
+        transcript_a = write_write_transcript(repo, session_a["path"], "session-a.jsonl")
+        transcript_b = write_write_transcript(repo, session_b["path"], "session-b.jsonl")
+        first_a = scoped_gate(client, repo, "claude-session-a", transcript_a)
+        first_b = scoped_gate(client, repo, "claude-session-b", transcript_b)
+        assert_session_gate_isolated(first_a, session_a, session_b)
+        assert_session_gate_isolated(first_b, session_b, session_a)
+        dump_norm(out / "gate.shared-worktree.session-a.json", first_a, repo, target)
+        dump_norm(out / "gate.shared-worktree.session-b.json", first_b, repo, target)
+        repeat_a = scoped_gate(client, repo, "claude-session-a", transcript_a)
+        assert_gate_allows(repeat_a, "same transcript-scoped finding")
+        dump_norm(out / "gate.shared-worktree.session-a-repeat.json", repeat_a, repo, target)
+    finally:
+        client.close()
+        cleanup_repo(repo)
+
+
+def write_write_transcript(repo: Path, relative: str, name: str) -> Path:
+    path = repo / ".sensez-regression" / name
+    path.parent.mkdir(parents=True, exist_ok=True)
+    entry = {
+        "message": {
+            "content": [
+                {"type": "tool_use", "name": "Write", "input": {"file_path": str(repo / relative)}}
+            ]
+        }
+    }
+    path.write_text(json.dumps(entry) + "\n")
+    return path
+
+
+def scoped_gate(client: McpClient, repo: Path, session_id: str, transcript: Path) -> object:
+    return text_json(
+        client.call_tool(
+            "noze_gate",
+            {"path": str(repo), "session_id": session_id, "transcript_path": str(transcript)},
+        )
+    )
+
+
+def assert_session_gate_isolated(
+    response: object, owned: dict[str, str], other: dict[str, str]
+) -> None:
+    reason = _json_path(response, ("reason",))
+    if _json_path(response, ("decision",)) != "block" or not isinstance(reason, str):
+        raise RuntimeError(f"expected scoped gate block, got {response!r}")
+    owned_path = Path(owned["path"]).name
+    other_path = Path(other["path"]).name
+    if (
+        owned["symbol"] not in reason
+        or owned_path not in reason
+        or other["symbol"] in reason
+        or other_path in reason
+    ):
+        raise RuntimeError(f"shared-worktree gate leaked findings: {reason}")
 
 
 def run_gate_detached_scenario(
