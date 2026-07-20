@@ -37,6 +37,10 @@ pub fn run() -> Result<ExitCode> {
         Some(Command::Mcp(args)) => match args.action {
             spec::McpAction::Serve => serve_mcp(),
         },
+        #[cfg(feature = "lsp")]
+        Some(Command::Server(args)) => match args.action {
+            spec::ServerAction::Stdio => crate::lsp::serve().map(|()| ExitCode::SUCCESS),
+        },
         #[cfg(feature = "mcp")]
         Some(Command::Brainz(args)) => match args.action {
             spec::BrainzAction::Report { path, json } => {

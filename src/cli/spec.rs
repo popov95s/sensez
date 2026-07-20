@@ -47,6 +47,9 @@ pub enum Command {
     /// MCP server commands.
     #[cfg(feature = "mcp")]
     Mcp(McpArgs),
+    /// Language Server Protocol commands for editor integrations.
+    #[cfg(feature = "lsp")]
+    Server(ServerArgs),
     /// Local metrics and value reports.
     #[cfg(feature = "mcp")]
     Brainz(BrainzArgs),
@@ -78,6 +81,21 @@ pub enum Command {
         #[arg(long)]
         json: bool,
     },
+}
+
+#[cfg(feature = "lsp")]
+#[derive(Args, Debug)]
+#[command(subcommand_required = true, arg_required_else_help = true)]
+pub struct ServerArgs {
+    #[command(subcommand)]
+    pub action: ServerAction,
+}
+
+#[cfg(feature = "lsp")]
+#[derive(Subcommand, Debug)]
+pub enum ServerAction {
+    /// Run the Language Server Protocol server over stdio.
+    Stdio,
 }
 
 #[derive(Args, Debug)]

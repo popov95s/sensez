@@ -12,6 +12,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'npm/**'
+      - 'editors/vscode/**'
       - 'benchmarks/**'
       - 'baseline-comparisons/**'
       - 'pyproject.toml'
@@ -30,6 +31,7 @@ on:
       - 'src/**'
       - 'tests/**'
       - 'npm/**'
+      - 'editors/vscode/**'
       - 'benchmarks/**'
       - 'baseline-comparisons/**'
       - 'pyproject.toml'
@@ -82,6 +84,14 @@ jobs:
       - name: Install docs example JS tooling
         run: npm ci
         working-directory: docs/examples
+
+      - name: Install VS Code extension tooling
+        run: npm install
+        working-directory: editors/vscode
+
+      - name: Check VS Code extension
+        run: npm run check && npm run build
+        working-directory: editors/vscode
 
       - name: Check formatting
         run: cargo fmt --check

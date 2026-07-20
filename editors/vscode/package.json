@@ -1,0 +1,70 @@
+{
+  "name": "sensez-vscode",
+  "displayName": "sensez",
+  "description": "Structural maintainability diagnostics for Python, JavaScript, TypeScript, TSX, and Rust.",
+  "version": "0.2.2",
+  "publisher": "sensez",
+  "license": "MIT",
+  "repository": { "type": "git", "url": "https://github.com/popov95s/sensez" },
+  "engines": { "vscode": "^1.96.0" },
+  "categories": ["Linters", "Programming Languages", "Formatters"],
+  "activationEvents": ["onStartupFinished"],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      { "command": "sensez.rescan", "title": "sensez: Rescan Workspace" },
+      { "command": "sensez.restart", "title": "sensez: Restart Language Server" },
+      { "command": "sensez.showChangeHealth", "title": "sensez: Show Change Health" },
+      { "command": "sensez.analyzeChanges", "title": "sensez: Analyse Current Changes" }
+    ],
+    "configuration": {
+      "title": "sensez",
+      "properties": {
+        "sensez.path": { "type": "string", "default": "", "scope": "window", "markdownDescription": "Absolute path to a sensez executable. This setting is used only in trusted workspaces." },
+        "sensez.enable": { "type": "boolean", "default": true, "scope": "window", "description": "Enable sensez diagnostics." },
+        "sensez.diagnostics.level": { "type": "string", "enum": ["must_fix", "warning", "advisory", "info", "off"], "default": "must_fix", "scope": "window", "description": "Highest diagnostic level shown in the editor. Set to off to remove sensez highlighting." },
+        "sensez.analysis.scope": { "type": "string", "enum": ["changed", "workspace"], "default": "changed", "scope": "window", "description": "Analyze only uncommitted changed code, or show findings from the entire workspace." },
+        "sensez.repositoryHealth.enabled": { "type": "boolean", "default": true, "scope": "window", "description": "Enable the Change Health panel and sensez status-bar summary." },
+        "sensez.trace.server": { "type": "string", "enum": ["off", "messages", "verbose"], "default": "off", "scope": "window" }
+      }
+    },
+    "languages": [
+      { "id": "python", "extensions": [".py"] },
+      { "id": "javascript", "extensions": [".js", ".mjs", ".cjs"] },
+      { "id": "typescript", "extensions": [".ts", ".mts", ".cts"] },
+      { "id": "typescriptreact", "extensions": [".tsx"] },
+      { "id": "rust", "extensions": [".rs"] }
+    ],
+    "viewsContainers": {
+      "panel": [
+        { "id": "sensez", "title": "sensez", "icon": "media/sensez.svg" }
+      ]
+    },
+    "views": {
+      "sensez": [
+        { "id": "sensez.changeHealth", "name": "Change Health", "when": "sensez.healthEnabled" }
+      ]
+    },
+    "viewsWelcome": [
+      {
+        "view": "sensez.changeHealth",
+        "contents": "sensez is waiting for change analysis. [Analyse Current Changes](command:sensez.analyzeChanges)"
+      }
+    ]
+  },
+  "scripts": {
+    "build": "node esbuild.mjs",
+    "check": "tsc --noEmit",
+    "prepare-binary": "node scripts/prepare-binary.mjs",
+    "package": "npm run check && npm run build && npm run prepare-binary && npx @vscode/vsce package",
+    "test": "npm run check"
+  },
+  "dependencies": { "vscode-languageclient": "^9.0.1" },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "@types/vscode": "^1.96.0",
+    "@vscode/vsce": "^3.2.1",
+    "esbuild": "^0.24.2",
+    "typescript": "^5.7.2"
+  }
+}

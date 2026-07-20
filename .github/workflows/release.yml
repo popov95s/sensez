@@ -79,7 +79,7 @@ jobs:
           const cargo = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
           const pyproject = fs.readFileSync('pyproject.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
           const npmPackages = target === 'npm' || target === 'release'
-            ? ['npm/package.json', ...fs.readdirSync('npm/platform').map((name) => `npm/platform/${name}/package.json`)]
+            ? ['npm/package.json', ...fs.readdirSync('npm/platform').map((name) => `npm/platform/${name}/package.json`), 'editors/vscode/package.json']
             : [];
           const npmVersions = npmPackages.map((file) => `${file}=${JSON.parse(fs.readFileSync(file, 'utf8')).version}`);
           const optionalDeps = target === 'npm' || target === 'release'
