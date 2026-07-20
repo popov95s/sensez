@@ -1,9 +1,6 @@
 name: Release VS Code extension
 
 on:
-  push:
-    tags:
-      - 'v[0-9]+.[0-9]+.[0-9]+*'
   workflow_dispatch:
     inputs:
       publish:
@@ -26,25 +23,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Verify authorized tag actor
-        if: github.event_name == 'push'
-        run: |
-          if [ "${{ github.actor }}" != "popov95s" ]; then
-            echo "Tag releases are restricted to popov95s." >&2
-            exit 1
-          fi
-
       - name: Verify unified release version
         env:
           TAG_VERSION: ${{ github.ref_name }}
-          EVENT_NAME: ${{ github.event_name }}
+          REF_TYPE: ${{ github.ref_type }}
         run: |
           node - <<'NODE'
           const fs = require('node:fs');
           const tag = process.env.TAG_VERSION.replace(/^v/, '');
           const cargo = fs.readFileSync('Cargo.toml', 'utf8').match(/^version\s*=\s*"([^"]+)"/m)?.[1];
           const extension = JSON.parse(fs.readFileSync('editors/vscode/package.json', 'utf8')).version;
-          if (process.env.EVENT_NAME === 'push' && (tag !== cargo || tag !== extension)) {
+          if (process.env.REF_TYPE === 'tag' && (tag !== cargo || tag !== extension)) {
             throw new Error(`tag=${tag}, cargo=${cargo}, vscode=${extension}; all release versions must match`);
           }
           NODE
@@ -99,7 +88,7 @@ jobs:
           if-no-files-found: error
 
   publish:
-    if: github.event_name == 'push' || inputs.publish
+    if: inputs.publish && github.ref_type == 'tag'
     needs: package
     runs-on: ubuntu-latest
     environment: vscode-marketplace
