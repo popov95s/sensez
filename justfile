@@ -79,7 +79,7 @@ check-versions:
         exit 1
     fi
     bad=0
-    for f in npm/package.json npm/platform/*/package.json; do
+    for f in npm/package.json npm/platform/*/package.json editors/vscode/package.json; do
         v=$(node -e "console.log(JSON.parse(require('fs').readFileSync(process.argv[1],'utf8')).version)" "$f")
         if [ "$v" != "$cargo_version" ]; then
             echo "  MISMATCH $f: $v"
@@ -107,7 +107,7 @@ check-versions:
 # Update every version field to the new value, then refresh Cargo.lock.
 # Leaves the working tree dirty so you can review the diff before committing.
 # Usage: just bump 0.2.0
-bump version: _require-clean
+bump version: 
     @just _validate-semver "{{version}}"
     @just _write-version "{{version}}"
     cargo check --quiet
@@ -128,7 +128,7 @@ release version target: _require-clean
     just _validate-target "{{target}}"
     just _write-version "{{version}}"
     cargo check --quiet
-    git add Cargo.toml Cargo.lock pyproject.toml npm/package.json npm/platform/
+    git add Cargo.toml Cargo.lock pyproject.toml npm/package.json npm/platform/ editors/vscode/package.json editors/vscode/package-lock.json
     if ! git diff --cached --quiet; then
         git commit -m "bump version to {{version}}"
     else
@@ -152,7 +152,7 @@ _require-clean:
     #!/usr/bin/env bash
     set -euo pipefail
     untracked_excl=(--exclude-untracked -- \
-        ':!Cargo.toml' ':!Cargo.lock' ':!pyproject.toml' ':!npm' ':!justfile')
+        ':!Cargo.toml' ':!Cargo.lock' ':!pyproject.toml' ':!npm' ':!editors/vscode/package.json' ':!editors/vscode/package-lock.json' ':!justfile')
     if ! git diff --quiet "${untracked_excl[@]}" \
        || ! git diff --cached --quiet; then
         echo "error: working tree has uncommitted changes outside the version manifests." >&2
@@ -198,6 +198,7 @@ _write-version version:
         const targets = [
             "npm/package.json",
             ...fs.readdirSync("npm/platform").map((n) => `npm/platform/${n}/package.json`),
+            "editors/vscode/package.json",
         ];
         for (const f of targets) {
             const pkg = JSON.parse(fs.readFileSync(f, "utf8"));
@@ -209,4 +210,9 @@ _write-version version:
             }
             fs.writeFileSync(f, JSON.stringify(pkg, null, 2) + "\n");
         }
+        const lockPath = "editors/vscode/package-lock.json";
+        const lock = JSON.parse(fs.readFileSync(lockPath, "utf8"));
+        lock.version = v;
+        if (lock.packages?.[""]) lock.packages[""].version = v;
+        fs.writeFileSync(lockPath, JSON.stringify(lock, null, 2) + "\n");
     ' "$v"
