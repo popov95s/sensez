@@ -91,7 +91,10 @@ impl HealthSummary {
                 .iter()
                 .map(|finding| HealthFinding {
                     group: None,
-                    label: format!("{} must not import {}", finding.from_module, finding.to_module),
+                    label: format!(
+                        "{} must not import {}",
+                        finding.from_module, finding.to_module
+                    ),
                     detail: format!("Boundary `{}`", finding.rule),
                     file: finding.file.display().to_string(),
                     line: finding.line,
