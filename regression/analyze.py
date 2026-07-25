@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import argparse
 import difflib
-import filecmp
+import json
 import shutil
 from pathlib import Path
 
@@ -15,13 +15,21 @@ def compare_tree(results: Path, baselines: Path) -> tuple[str, ...]:
         if not baseline.exists():
             failures.append(f"missing baseline: {rel}")
             continue
-        if not filecmp.cmp(result, baseline, shallow=False):
+        if not same_json(result, baseline):
             failures.append(f"changed baseline: {rel}\n{_diff(baseline, result)}")
     for baseline in sorted(baselines.rglob("*.json")):
         rel = baseline.relative_to(baselines)
         if not (results / rel).exists():
             failures.append(f"missing result for baseline: {rel}")
     return tuple(failures)
+
+
+def same_json(left: Path, right: Path) -> bool:
+    """Compare JSON artifacts by value, ignoring whitespace and key ordering."""
+    try:
+        return json.loads(left.read_text()) == json.loads(right.read_text())
+    except json.JSONDecodeError:
+        return False
 
 
 def accept_tree(results: Path, baselines: Path) -> None:
@@ -34,8 +42,8 @@ def accept_tree(results: Path, baselines: Path) -> None:
 
 
 def _diff(expected: Path, actual: Path) -> str:
-    before = expected.read_text().splitlines()
-    after = actual.read_text().splitlines()
+    before = _json_lines(expected)
+    after = _json_lines(actual)
     lines = difflib.unified_diff(
         before,
         after,
@@ -45,6 +53,14 @@ def _diff(expected: Path, actual: Path) -> str:
         n=3,
     )
     return "\n".join(lines)
+
+
+def _json_lines(path: Path) -> list[str]:
+    try:
+        value = json.loads(path.read_text())
+    except json.JSONDecodeError:
+        return path.read_text().splitlines()
+    return json.dumps(value, indent=2, sort_keys=True).splitlines()
 
 
 def main() -> int:
