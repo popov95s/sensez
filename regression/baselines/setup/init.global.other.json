@@ -1,0 +1,33 @@
+{
+  "home_files": {},
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "other",
+        "--yes"
+      ],
+      "exit_code": 0,
+      "stderr": "warning: <repo> is not part of a Git repository.\n",
+      "stdout": "\nSensez is set up globally:\n  \u2022 any MCP client works: speak JSON-RPC over stdio to `sensez mcp serve` (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)\n\nSensez will use each repository's configuration, or built-in defaults when none exists.\nRestart your agent to pick up the MCP server.\n"
+    },
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "other",
+        "--yes"
+      ],
+      "exit_code": 0,
+      "stderr": "warning: <repo> is not part of a Git repository.\n",
+      "stdout": "\nSensez is set up globally:\n  \u2022 any MCP client works: speak JSON-RPC over stdio to `sensez mcp serve` (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)\n\nSensez will use each repository's configuration, or built-in defaults when none exists.\nRestart your agent to pick up the MCP server.\n"
+    }
+  ],
+  "scenario": "global"
+}

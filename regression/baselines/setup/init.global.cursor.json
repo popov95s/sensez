@@ -1,0 +1,35 @@
+{
+  "home_files": {
+    ".cursor/mcp.json": "{\n  \"mcpServers\": {\n    \"existing\": {\n      \"args\": [],\n      \"command\": \"/bin/existing\"\n    },\n    \"sensez\": {\n      \"args\": [\n        \"mcp\",\n        \"serve\"\n      ],\n      \"command\": \"<sensez>\"\n    }\n  }\n}"
+  },
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "cursor",
+        "--yes"
+      ],
+      "exit_code": 0,
+      "stderr": "warning: <repo> is not part of a Git repository.\n",
+      "stdout": "\nSensez is set up globally:\n  \u2022 registered Sensez MCP server as `sensez` in <home>/.cursor/mcp.json\n\nSensez will use each repository's configuration, or built-in defaults when none exists.\nRestart your agent to pick up the MCP server.\n"
+    },
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "cursor",
+        "--yes"
+      ],
+      "exit_code": 0,
+      "stderr": "warning: <repo> is not part of a Git repository.\n",
+      "stdout": "\nSensez is set up globally:\n  \u2022 registered Sensez MCP server as `sensez` in <home>/.cursor/mcp.json\n\nSensez will use each repository's configuration, or built-in defaults when none exists.\nRestart your agent to pick up the MCP server.\n"
+    }
+  ],
+  "scenario": "global"
+}

@@ -1,0 +1,20 @@
+{
+  "home_files": {},
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "unknown",
+        "--yes"
+      ],
+      "exit_code": 1,
+      "stderr": "Error: unknown --agent 'unknown' (claude-code | cursor | cline | codex | opencode | pi | other)\n",
+      "stdout": ""
+    }
+  ],
+  "scenario": "project-edge"
+}

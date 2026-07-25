@@ -25,6 +25,7 @@ from .brainz_regressions import (
 )
 from .mcp_client import McpClient, text_json
 from .normalize import dump_json, normalize_artifact
+from .setup_regressions import run_setup_regressions
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -86,13 +87,23 @@ class JsonPath:
 def main() -> int:
     args = parse_args()
     config = cast(RegressionConfig, tomllib.loads(CONFIG.read_text()))
-    targets = select_targets(config["targets"], args)
+    targets = [] if args.setup_only else select_targets(config["targets"], args)
     sensez = args.sensez.resolve()
     if not sensez.exists():
         print(f"missing release binary: {sensez}", file=sys.stderr)
         print("build it with: cargo build --release --all-features")
         return 2
     failures: list[str] = []
+    try:
+        print("== setup ==")
+        run_setup_regressions(
+            sensez,
+            RESULTS / "setup",
+            BASELINES / "setup",
+            args.accept,
+        )
+    except Exception as exc:
+        failures.append(f"setup: {exc}")
     for target in targets:
         try:
             run_target(config, target, sensez, args.accept)
@@ -109,6 +120,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--target", action="append", default=[])
     parser.add_argument("--profile", action="append", default=[])
     parser.add_argument("--all", action="store_true")
+    parser.add_argument("--setup-only", action="store_true")
     parser.add_argument("--ci", action="store_true")
     parser.add_argument("--accept", action="store_true")
     parser.add_argument("--sensez", type=Path, default=ROOT / "target/release/sensez")

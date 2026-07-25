@@ -1,0 +1,20 @@
+{
+  "home_files": {},
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "codex",
+        "--yes"
+      ],
+      "exit_code": 1,
+      "stderr": "warning: <repo> is not part of a Git repository.\nError: cannot install globally: user home directory is unavailable\n",
+      "stdout": ""
+    }
+  ],
+  "scenario": "missing-home"
+}

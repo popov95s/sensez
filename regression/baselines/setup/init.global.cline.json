@@ -1,0 +1,36 @@
+{
+  "home_files": {
+    ".cline/data/settings/cline_mcp_settings.json": "{\n  \"mcpServers\": {\n    \"existing\": {\n      \"args\": [],\n      \"command\": \"/bin/existing\"\n    },\n    \"sensez\": {\n      \"args\": [\n        \"mcp\",\n        \"serve\"\n      ],\n      \"command\": \"<sensez>\"\n    }\n  }\n}",
+    ".cline/skills/sensez/SKILL.md": "---\nname: sensez\ndescription: >-\n  Use the Sensez MCP server when checking a codebase for structural duplication,\n  dead code candidates, circular imports, boundary violations, or design smells.\n  Use it after you have completed a full edit turn to verify that newly written code is structurally\n  correct. You can also use it on user triggers: \"find duplicate code\", \"audit\n  this project\", \"check dead code\", \"detect cycles\", \"enforce boundaries\", \"run\n  Sensez\", or \"check this change\". Not for per-file lint/type issues; use the\n  language's linter and type-checker for those.\n---\n\n# Sensez\n\nSensez finds project-level maintainability problems that linters and\ntype-checkers usually cannot see across files. It currently has profiles for\nPython, JavaScript, TypeScript/TSX, and Rust:\n\n| Area | Output key | What to do with it |\n|---|---|---|\n| Duplication | `duplication` | Prefer reuse/extraction when the duplicated block is real code, not tests/fixtures. |\n| Cycles | `cycles` | Treat as load-time architecture risk; break one import edge. |\n| Boundaries | `boundaries` | Enforce the rule in `sensez.toml`; do not ignore unless the rule is wrong. |\n| Dead code | `dead_code` | High confidence is actionable; Medium/Low need review. |\n| Smells | `smells` | Advisory design pressure; lead with high-impact findings. |\n\n## Use The MCP\n\nSensez is an agent-facing MCP integration. When this skill applies, use the\navailable Sensez MCP tools directly. Always pass an absolute repository root as\n`path` unless the user explicitly asks for a partial scan.\n\n## MCP Tools\n\n- `noze_sniff`: analyze duplication, dead code, cycles, boundary violations, and\n  smells. Results are diff-focused by default so they show findings touched by\n  current uncommitted changes while still analyzing the full graph. Pass\n  `diff=false` for an explicit full-repository audit.\n- `get_configuration_summary`: use only when the user asks to tune or adjust\n  Sensez thresholds/configuration. Summarize the noisiest rules and offer\n  concrete config changes before editing config files.\n- `noze_gate`: end-of-turn quality gate for agent hooks. It is intended for hook\n  integration, not ordinary direct calls during conversation.\n- `noze_explain`: define a pillar or smell kind in plain English. Use it when you\n  need to explain a finding category without guessing.\n- `brainz_report`: summarize local-only Sensez usage metrics. Use when the user\n  asks how Sensez helped, or before a commit.\n- `brainz_triage`: record the user's explicit verdict on a finding. Never call it\n  unless the user classifies a finding as debt, false positive, or cleared.\n\n## Running Analysis\n\nCall `noze_sniff` with `path` set to the absolute repository root. Omit `diff`\nfor the default diff-focused scan, or pass `diff=false` when the user asks for a\nfull audit. Use `limit` to cap each pillar's returned findings when context is\ntight, and use `threshold` only when the user requests a different duplication\ntoken threshold.\n\nAfter each edit turn, call `noze_sniff` to check that the code just written is\nstructurally sound. Report only findings that touch the current change unless\nthe user asked for a full audit.\n\n## Reading Results\n\nImportant `meta` fields:\n\n- `mode`: `full` or `diff`.\n- `*_total`: true counts before `limit` truncation.\n- `boundaries_configured`: `false` means boundaries were not checked.\n- `external_edges` vs `internal_edges`: a very high external ratio may mean roots/imports were not resolved well.\n\nDead-code confidence:\n\n- `High`: module is reachable and the symbol is not referenced. Usually safe to remove after a quick domain check.\n- `Medium`: module is imported plainly; attribute access may hide usage.\n- `Low`: module itself is not imported. Treat as possible script/framework entrypoint.\n\nDo not present Medium/Low as guaranteed deletion work. Phrase them as review\ncandidates.\n\n## Agent Guidance\n\nLead with reliable signals: boundary violations, cycles, high-confidence dead\ncode, and large duplication classes. For smells, explain why the finding matters\nin this codebase before recommending a refactor.\n\nPrefer adding framework entrypoints or boundary rules to Sensez configuration\nover suppressing individual findings in source. Use `get_configuration_summary`\nwhen the user explicitly asks to tune noisy rules.\n\nDo not use Sensez for unused local variables, per-file unused imports, formatting,\nor type errors. Those belong to tools like ruff, ESLint, TypeScript, ty, mypy, or\nthe language compiler.\n"
+  },
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "cline",
+        "--yes"
+      ],
+      "exit_code": 0,
+      "stderr": "warning: <repo> is not part of a Git repository.\n",
+      "stdout": "\nSensez is set up globally:\n  \u2022 registered Sensez MCP server as `sensez` in <home>/.cline/data/settings/cline_mcp_settings.json\n  \u2022 installed Sensez skill in <home>/.cline/skills/sensez\n\nSensez will use each repository's configuration, or built-in defaults when none exists.\nRestart your agent to pick up the MCP server.\n"
+    },
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "cline",
+        "--yes"
+      ],
+      "exit_code": 0,
+      "stderr": "warning: <repo> is not part of a Git repository.\n",
+      "stdout": "\nSensez is set up globally:\n  \u2022 registered Sensez MCP server as `sensez` in <home>/.cline/data/settings/cline_mcp_settings.json\n  \u2022 installed Sensez skill in <home>/.cline/skills/sensez\n\nSensez will use each repository's configuration, or built-in defaults when none exists.\nRestart your agent to pick up the MCP server.\n"
+    }
+  ],
+  "scenario": "global"
+}

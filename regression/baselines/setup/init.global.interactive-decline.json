@@ -1,0 +1,18 @@
+{
+  "home_files": {},
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "codex"
+      ],
+      "exit_code": 0,
+      "terminal": "warning: <repo> is not part of a Git repository.\n\nInstall Sensez globally for Codex instead?\nThis will configure <home>/.codex/config.toml and <home>/.codex/skills/sensez and make Sensez available in every project. [y/N] n\nSensez was not installed.\n"
+    }
+  ],
+  "scenario": "interactive-global"
+}

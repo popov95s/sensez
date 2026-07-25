@@ -1,0 +1,19 @@
+{
+  "home_files": {},
+  "repo_files": {},
+  "runs": [
+    {
+      "command": [
+        "<sensez>",
+        "init",
+        "<repo>",
+        "--agent",
+        "codex"
+      ],
+      "exit_code": 1,
+      "stderr": "warning: <repo> is not part of a Git repository.\nError: global installation requires confirmation; rerun with --yes to configure <home>/.codex/config.toml and <home>/.codex/skills/sensez\n",
+      "stdout": ""
+    }
+  ],
+  "scenario": "no-confirmation"
+}
