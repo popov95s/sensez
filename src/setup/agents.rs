@@ -16,6 +16,9 @@ pub struct AgentSpec {
     pub label: &'static str,
     pub mcp_relpath: Option<&'static str>,
     pub skill_relpath: Option<&'static str>,
+    pub global_mcp_relpath: Option<&'static str>,
+    pub global_skill_relpath: Option<&'static str>,
+    pub mcp_adapter: Option<McpAdapter>,
     pub supports_hooks: bool,
 }
 
@@ -26,6 +29,9 @@ pub const AGENTS: &[AgentSpec] = &[
         label: "Claude Code",
         mcp_relpath: Some(".mcp.json"),
         skill_relpath: Some(".claude/skills/sensez"),
+        global_mcp_relpath: Some(".claude.json"),
+        global_skill_relpath: Some(".claude/skills/sensez"),
+        mcp_adapter: Some(McpAdapter::Standard),
         supports_hooks: true,
     },
     AgentSpec {
@@ -34,6 +40,9 @@ pub const AGENTS: &[AgentSpec] = &[
         label: "Cursor",
         mcp_relpath: Some(".cursor/mcp.json"),
         skill_relpath: None,
+        global_mcp_relpath: Some(".cursor/mcp.json"),
+        global_skill_relpath: None,
+        mcp_adapter: Some(McpAdapter::Standard),
         supports_hooks: false,
     },
     AgentSpec {
@@ -41,7 +50,10 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "cline",
         label: "Cline",
         mcp_relpath: Some(".cline/mcp.json"),
-        skill_relpath: None,
+        skill_relpath: Some(".cline/skills/sensez"),
+        global_mcp_relpath: Some(".cline/data/settings/cline_mcp_settings.json"),
+        global_skill_relpath: Some(".cline/skills/sensez"),
+        mcp_adapter: Some(McpAdapter::Standard),
         supports_hooks: false,
     },
     AgentSpec {
@@ -50,6 +62,9 @@ pub const AGENTS: &[AgentSpec] = &[
         label: "Codex",
         mcp_relpath: Some(".codex/config.toml"),
         skill_relpath: Some(".codex/skills/sensez"),
+        global_mcp_relpath: Some(".codex/config.toml"),
+        global_skill_relpath: Some(".codex/skills/sensez"),
+        mcp_adapter: Some(McpAdapter::Codex),
         supports_hooks: false,
     },
     AgentSpec {
@@ -58,6 +73,9 @@ pub const AGENTS: &[AgentSpec] = &[
         label: "OpenCode",
         mcp_relpath: Some("opencode.jsonc"),
         skill_relpath: Some(".opencode/skills/sensez"),
+        global_mcp_relpath: Some(".config/opencode/opencode.json"),
+        global_skill_relpath: Some(".config/opencode/skills/sensez"),
+        mcp_adapter: Some(McpAdapter::OpenCode),
         supports_hooks: false,
     },
     AgentSpec {
@@ -65,7 +83,10 @@ pub const AGENTS: &[AgentSpec] = &[
         id: "pi",
         label: "Pi",
         mcp_relpath: Some(".pi/mcp.json"),
-        skill_relpath: None,
+        skill_relpath: Some(".pi/skills/sensez"),
+        global_mcp_relpath: Some(".pi/agent/mcp.json"),
+        global_skill_relpath: Some(".pi/agent/skills/sensez"),
+        mcp_adapter: Some(McpAdapter::Standard),
         supports_hooks: false,
     },
     AgentSpec {
@@ -74,6 +95,9 @@ pub const AGENTS: &[AgentSpec] = &[
         label: "Other / none",
         mcp_relpath: None,
         skill_relpath: None,
+        global_mcp_relpath: None,
+        global_skill_relpath: None,
+        mcp_adapter: None,
         supports_hooks: false,
     },
 ];
@@ -93,3 +117,4 @@ pub fn from_choice(choice: usize) -> &'static AgentSpec {
 pub fn prompt_options() -> Vec<&'static str> {
     INTERACTIVE_AGENTS.iter().map(|agent| agent.label).collect()
 }
+use super::providers::McpAdapter;

@@ -2,10 +2,13 @@ mod agents;
 mod artifacts;
 mod gate;
 mod prompts;
+mod providers;
+mod scope;
 mod skills;
 
 use anyhow::{bail, Context, Result};
-use std::path::{Path, PathBuf};
+use scope::InstallScope;
+use std::path::PathBuf;
 
 pub struct InitOptions {
     pub path: Option<PathBuf>,
@@ -16,7 +19,11 @@ pub struct InitOptions {
 }
 
 pub fn run(opts: InitOptions) -> Result<()> {
-    let root = resolve_root(opts.path.as_deref())?;
+    run_with_home(opts, None)
+}
+
+fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()> {
+    let target = scope::Target::resolve(opts.path.as_deref())?;
     let interactive = prompts::interactive();
     if !interactive && opts.agent.is_none() && !opts.yes {
         bail!(
@@ -37,8 +44,43 @@ pub fn run(opts: InitOptions) -> Result<()> {
         }
         None => "claude-code".to_string(),
     };
+    let agent_spec = agents::find(&agent).context("validated agent disappeared")?;
+    let (install_scope, root) = if target.repository_root.is_some() {
+        target.warn_if_nested();
+        (InstallScope::Project, target.requested_root.clone())
+    } else {
+        eprintln!(
+            "warning: {} is not part of a Git repository.",
+            target.requested_root.display()
+        );
+        let home = match home_override {
+            Some(home) => home,
+            None => scope::user_home()?,
+        };
+        let destinations = scope::destination_summary(&home, agent_spec);
+        let accepted = opts.yes
+            || (interactive
+                && prompts::confirm(
+                    &format!(
+                        "Install Sensez globally for {} instead?\nThis will configure {} and make Sensez available in every project.",
+                        agent_spec.label, destinations
+                    ),
+                    false,
+                )?);
+        if !accepted {
+            if !interactive {
+                bail!(
+                    "global installation requires confirmation; rerun with --yes to configure {}",
+                    destinations
+                );
+            }
+            println!("Sensez was not installed.");
+            return Ok(());
+        }
+        (InstallScope::Global, home)
+    };
 
-    let gate = if agents::find(&agent).is_some_and(|spec| spec.supports_hooks) {
+    let gate = if agent_spec.supports_hooks {
         opts.gate
             || (interactive
                 && !opts.yes
@@ -57,7 +99,7 @@ pub fn run(opts: InitOptions) -> Result<()> {
         false
     };
 
-    let metrics_enabled = if opts.no_metrics {
+    let metrics_enabled = if opts.no_metrics || install_scope == InstallScope::Global {
         false
     } else if interactive && !opts.yes {
         prompts::confirm(
@@ -74,7 +116,8 @@ pub fn run(opts: InitOptions) -> Result<()> {
     };
 
     let has_pyproject = root.join("pyproject.toml").exists();
-    let into_pyproject = has_pyproject
+    let into_pyproject = install_scope == InstallScope::Project
+        && has_pyproject
         && !root.join("sensez.toml").exists()
         && interactive
         && !opts.yes
@@ -88,30 +131,35 @@ pub fn run(opts: InitOptions) -> Result<()> {
         .context("locating the sensez executable")?
         .to_string_lossy()
         .into_owned();
-    let mut done = vec![artifacts::write_config(
-        &root,
-        metrics_enabled,
-        into_pyproject,
-    )?];
-    done.push(artifacts::ensure_sensez_dir(&root)?);
-    let agent_spec = agents::find(&agent);
-    if matches!(
-        agent_spec.map(|spec| spec.kind),
-        Some(agents::AgentKind::Other)
-    ) {
+    let mut done = Vec::new();
+    if install_scope == InstallScope::Project {
+        done.push(artifacts::write_config(
+            &root,
+            metrics_enabled,
+            into_pyproject,
+        )?);
+        done.push(artifacts::ensure_sensez_dir(&root)?);
+    }
+    if matches!(agent_spec.kind, agents::AgentKind::Other) {
         done.push(
             "any MCP client works: speak JSON-RPC over stdio to `sensez mcp serve` \
              (tools: noze_sniff, eyez_search_docs, brainz_triage, brainz_report)"
                 .to_string(),
         );
-    } else if agent_spec.and_then(|spec| spec.mcp_relpath).is_some() {
+    } else if install_scope == InstallScope::Global && agent_spec.global_mcp_relpath.is_some() {
+        done.push(artifacts::write_global_mcp_config(
+            &root,
+            &agent,
+            &sensez_bin,
+        )?);
+    } else if install_scope == InstallScope::Project && agent_spec.mcp_relpath.is_some() {
         done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
     } else {
         done.push(
             "no MCP config path is known for this agent yet; use `sensez mcp serve` from your agent's MCP settings".to_string(),
         );
     }
-    if let Some(msg) = skills::install(&root, &agent)? {
+    if let Some(msg) = skills::install(&root, &agent, install_scope == InstallScope::Global)? {
         done.push(msg);
     }
     if gate {
@@ -126,54 +174,45 @@ pub fn run(opts: InitOptions) -> Result<()> {
                 .to_string(),
         );
     }
-    done.push(artifacts::ensure_gitignore(&root)?);
+    if install_scope == InstallScope::Project {
+        done.push(artifacts::ensure_gitignore(&root)?);
+    }
 
-    println!("\nSensez is set up in {}:", root.display());
+    println!(
+        "\nSensez is set up {}:",
+        if install_scope == InstallScope::Global {
+            "globally".to_string()
+        } else {
+            format!("in {}", root.display())
+        }
+    );
     for line in &done {
         println!("  • {line}");
     }
-    println!(
-        "\nYou're running on defaults. Everything sensez does — thresholds, \
-         excludes, boundaries, self-improvement — is configured in {}.\n{}",
-        if into_pyproject {
-            "pyproject.toml [tool.sensez]"
-        } else {
-            "sensez.toml"
-        },
-        if agents::find(&agent).is_some_and(|spec| spec.supports_hooks) {
-            "Reload your Claude Code window to pick up the MCP server."
-        } else {
-            "Restart your agent to pick up the MCP server."
-        }
-    );
+    let restart = if agent_spec.supports_hooks {
+        "Reload your Claude Code window to pick up the MCP server."
+    } else {
+        "Restart your agent to pick up the MCP server."
+    };
+    if install_scope == InstallScope::Global {
+        println!("\nSensez will use each repository's configuration, or built-in defaults when none exists.\n{restart}");
+    } else {
+        println!(
+            "\nYou're running on defaults. Everything sensez does — thresholds, excludes, boundaries, self-improvement — is configured in {}.\n{}",
+            if into_pyproject {
+                "pyproject.toml [tool.sensez]"
+            } else {
+                "sensez.toml"
+            },
+            restart
+        );
+    }
     Ok(())
 }
 
-fn resolve_root(path: Option<&Path>) -> Result<PathBuf> {
-    let root = match path {
-        Some(p) => p.to_path_buf(),
-        None => std::env::current_dir().context("getting current directory")?,
-    };
-    let root = root
-        .canonicalize()
-        .with_context(|| format!("resolving {}", root.display()))?;
-    if !root.is_dir() {
-        bail!("{} is not a directory", root.display());
-    }
-    if !root.join(".git").exists() {
-        if let Some(repo) = root.ancestors().skip(1).find(|a| a.join(".git").exists()) {
-            eprintln!(
-                "note: {} is a subdirectory of the repository at {} — Sensez' \
-                 graph analysis is only correct over the full repo; consider \
-                 running `sensez init {}` instead.",
-                root.display(),
-                repo.display(),
-                repo.display()
-            );
-        }
-    }
-    Ok(root)
-}
+#[cfg(test)]
+#[path = "global_tests.rs"]
+mod global_tests;
 
 #[cfg(test)]
 #[path = "tests.rs"]

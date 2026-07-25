@@ -1,5 +1,4 @@
 use anyhow::{Context, Result};
-use serde_json::{json, Value};
 use std::path::Path;
 
 const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability layer that complements your linter and
@@ -127,85 +126,40 @@ pub fn ensure_sensez_dir(root: &Path) -> Result<String> {
 }
 
 pub fn write_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<String> {
-    let rel = crate::setup::agents::find(agent)
-        .and_then(|spec| spec.mcp_relpath)
+    let spec = crate::setup::agents::find(agent)
+        .ok_or_else(|| anyhow::anyhow!("unknown agent '{agent}'"))?;
+    let rel = spec
+        .mcp_relpath
         .ok_or_else(|| anyhow::anyhow!("no MCP config path is known for agent '{agent}'"))?;
-    let path = root.join(rel);
+    write_mcp_config_at(&root.join(rel), spec, sensez_bin)
+}
+
+pub fn write_global_mcp_config(root: &Path, agent: &str, sensez_bin: &str) -> Result<String> {
+    let spec = crate::setup::agents::find(agent)
+        .ok_or_else(|| anyhow::anyhow!("unknown agent '{agent}'"))?;
+    let rel = spec
+        .global_mcp_relpath
+        .ok_or_else(|| anyhow::anyhow!("no global MCP config path is known for agent '{agent}'"))?;
+    write_mcp_config_at(&root.join(rel), spec, sensez_bin)
+}
+
+fn write_mcp_config_at(
+    path: &Path,
+    spec: &crate::setup::agents::AgentSpec,
+    sensez_bin: &str,
+) -> Result<String> {
     if let Some(parent) = path.parent() {
         std::fs::create_dir_all(parent)
             .with_context(|| format!("creating {}", parent.display()))?;
     }
-    match path.extension().and_then(|ext| ext.to_str()) {
-        Some("toml") => write_mcp_toml(&path, sensez_bin)?,
-        Some("jsonc") => write_mcp_jsonc(&path, sensez_bin)?,
-        _ => write_mcp_json(&path, sensez_bin)?,
-    }
+    let adapter = spec
+        .mcp_adapter
+        .ok_or_else(|| anyhow::anyhow!("no MCP adapter is known for agent '{}'", spec.id))?;
+    adapter.write(path, sensez_bin)?;
     Ok(format!(
         "registered Sensez MCP server as `sensez` in {}",
         path.display()
     ))
-}
-
-fn write_mcp_json(path: &Path, sensez_bin: &str) -> Result<()> {
-    let mut config: Value = std::fs::read_to_string(path)
-        .ok()
-        .and_then(|t| serde_json::from_str(&t).ok())
-        .unwrap_or_else(|| json!({}));
-    config["mcpServers"]["sensez"] = json!({"command": sensez_bin, "args": ["mcp", "serve"]});
-    std::fs::write(path, serde_json::to_string_pretty(&config)?)
-        .with_context(|| format!("writing {}", path.display()))?;
-    Ok(())
-}
-
-fn write_mcp_jsonc(path: &Path, sensez_bin: &str) -> Result<()> {
-    let mut config: Value = std::fs::read_to_string(path)
-        .ok()
-        .and_then(|t| serde_json::from_str(&t).ok())
-        .unwrap_or_else(|| {
-            json!({
-                "$schema": "https://opencode.ai/config.json",
-                "mcp": {}
-            })
-        });
-    config["mcp"]["sensez"] = json!({
-        "type": "local",
-        "command": [sensez_bin, "mcp", "serve"],
-        "enabled": true
-    });
-    std::fs::write(path, serde_json::to_string_pretty(&config)?)
-        .with_context(|| format!("writing {}", path.display()))?;
-    Ok(())
-}
-
-fn write_mcp_toml(path: &Path, sensez_bin: &str) -> Result<()> {
-    let mut config: toml::Value = std::fs::read_to_string(path)
-        .ok()
-        .and_then(|t| toml::from_str(&t).ok())
-        .unwrap_or_else(|| toml::Value::Table(toml::map::Map::new()));
-    let table = config
-        .as_table_mut()
-        .ok_or_else(|| anyhow::anyhow!("{} must be a TOML table", path.display()))?;
-    let mcp = table
-        .entry("mcp_servers")
-        .or_insert_with(|| toml::Value::Table(toml::map::Map::new()))
-        .as_table_mut()
-        .ok_or_else(|| anyhow::anyhow!("mcp_servers must be a TOML table"))?;
-    let mut sensez = toml::map::Map::new();
-    sensez.insert(
-        "command".to_string(),
-        toml::Value::String(sensez_bin.to_string()),
-    );
-    sensez.insert(
-        "args".to_string(),
-        toml::Value::Array(vec![
-            toml::Value::String("mcp".to_string()),
-            toml::Value::String("serve".to_string()),
-        ]),
-    );
-    mcp.insert("sensez".to_string(), toml::Value::Table(sensez));
-    std::fs::write(path, toml::to_string_pretty(&config)?)
-        .with_context(|| format!("writing {}", path.display()))?;
-    Ok(())
 }
 
 pub fn write_gate(root: &Path) -> Result<String> {

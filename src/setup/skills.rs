@@ -3,10 +3,16 @@ use std::path::Path;
 
 const SENSEZ_SKILL: &str = include_str!("../../skills/sensez/SKILL.md");
 
-pub fn install(root: &Path, agent: &str) -> Result<Option<String>> {
-    let Some(rel) = crate::setup::agents::find(agent).and_then(|spec| spec.skill_relpath) else {
+pub fn install(root: &Path, agent: &str, global: bool) -> Result<Option<String>> {
+    let Some(spec) = crate::setup::agents::find(agent) else {
         return Ok(None);
     };
+    let rel = if global {
+        spec.global_skill_relpath
+    } else {
+        spec.skill_relpath
+    };
+    let Some(rel) = rel else { return Ok(None) };
     let source = root.join("skills").join("sensez");
     let dest = root.join(rel);
     std::fs::create_dir_all(&dest).with_context(|| format!("creating {}", dest.display()))?;

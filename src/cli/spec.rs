@@ -27,11 +27,11 @@ pub struct Cli {
 pub enum Command {
     /// Code smell and structure checks. Defaults to scanning the given path.
     Noze(NozeArgs),
-    /// First-time setup for a repository.
+    /// Set up a repository, or offer a global agent install outside Git.
     Init {
         /// Repository root (default: current directory).
         path: Option<PathBuf>,
-        /// Coding agent to configure: claude-code | cursor | other.
+        /// Coding agent: claude-code | cursor | cline | codex | opencode | pi | other.
         #[arg(long)]
         agent: Option<String>,
         /// Install the Claude Code Stop-gate hook.
