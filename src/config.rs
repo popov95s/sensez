@@ -16,10 +16,10 @@ use crate::report::{ScanIssue, ScanStage};
 use anyhow::{Context, Result};
 use std::path::Path;
 
-/// Vendored/generated/build artifacts are not owned source. Exclude them from
-/// discovery for every pillar so minified bundles and checked-in third-party
-/// code never dominate repo reports.
-pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 12] = [
+/// Vendored/generated/build artifacts and documentation applications are not
+/// owned product source. Exclude them from discovery for every pillar so they
+/// never dominate repository findings.
+pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 13] = [
     "**/node_modules/**",
     "**/.venv/**",
     "**/venv/**",
@@ -30,6 +30,7 @@ pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 12] = [
     "**/_vendor/**",
     "**/vendors/**",
     "**/generated/**",
+    "**/docs/**",
     "**/*.min.js",
     "**/*.min.css",
 ];

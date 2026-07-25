@@ -33,9 +33,9 @@ pub fn extract(
     vec![context(source, clause, node, source_module, scope, phase)]
 }
 
-/// Extract a CommonJS `require("…")` / dynamic `import("…")` call as an import,
-/// if `node` is such a call. The bound local name is unknown here (assignment
-/// happens in the enclosing declaration), so `bindings` stays empty.
+/// Extract a CommonJS `require("…")` / dynamic `import("…")` call as an import.
+/// When the call initializes a variable declarator, preserve its binding shape so
+/// the graph can credit namespace access and destructured symbols.
 pub fn require_import(
     node: Node,
     src: &[u8],
@@ -55,12 +55,85 @@ pub fn require_import(
         .and_then(|s| string_value(s, src))?;
     Some(context(
         source,
-        ImportClause::default(),
+        initializer_clause(node, src),
         node,
         source_module,
         scope,
         ImportPhase::Runtime,
     ))
+}
+
+fn initializer_clause(node: Node, src: &[u8]) -> ImportClause {
+    let Some(declarator) = variable_declarator(node) else {
+        return ImportClause::default();
+    };
+    let Some(name) = declarator.child_by_field_name("name") else {
+        return ImportClause::default();
+    };
+    match name.kind() {
+        "identifier" => ImportClause {
+            bindings: vec![node_text(name, src)],
+            ..ImportClause::default()
+        },
+        "object_pattern" => object_pattern_clause(name, src),
+        _ => ImportClause::default(),
+    }
+}
+
+fn variable_declarator(node: Node) -> Option<Node> {
+    let mut current = node.parent();
+    while let Some(parent) = current {
+        if parent.kind() == "variable_declarator" {
+            return parent
+                .child_by_field_name("value")
+                .filter(|value| {
+                    value.start_byte() <= node.start_byte() && node.end_byte() <= value.end_byte()
+                })
+                .map(|_| parent);
+        }
+        if matches!(parent.kind(), "statement_block" | "program") {
+            return None;
+        }
+        current = parent.parent();
+    }
+    None
+}
+
+fn object_pattern_clause(pattern: Node, src: &[u8]) -> ImportClause {
+    let mut clause = ImportClause::default();
+    let mut cursor = pattern.walk();
+    for child in pattern.named_children(&mut cursor) {
+        match child.kind() {
+            "shorthand_property_identifier_pattern" => {
+                let name = node_text(child, src);
+                clause.symbols.push(name.clone());
+                clause.bindings.push(name);
+                clause.binding_phases.push(ImportPhase::Runtime);
+            }
+            "pair_pattern" => {
+                let text = node_text(child, src);
+                let Some((symbol, binding)) = split_pair_pattern(&text) else {
+                    continue;
+                };
+                clause.symbols.push(symbol.to_string());
+                clause.bindings.push(binding.to_string());
+                clause.binding_phases.push(ImportPhase::Runtime);
+            }
+            _ => {}
+        }
+    }
+    clause
+}
+
+fn split_pair_pattern(text: &str) -> Option<(&str, &str)> {
+    text.split_once(" as ")
+        .or_else(|| text.split_once(':'))
+        .map(|(symbol, binding)| (symbol.trim(), binding.trim()))
+        .filter(|(symbol, binding)| !symbol.is_empty() && !binding.is_empty())
+}
+
+fn node_text(node: Node, src: &[u8]) -> String {
+    node.utf8_text(src).unwrap_or_default().to_string()
 }
 
 fn context(

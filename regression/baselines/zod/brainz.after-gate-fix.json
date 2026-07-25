@@ -8,34 +8,32 @@
     "reintroduced_by_detector": {},
     "reported_by_detector": {
       "cycles": 2,
-      "dead_code/class": 3,
-      "dead_code/function": 1,
-      "dead_code/import": 3,
-      "duplication": 15,
+      "dead_code/import": 1,
+      "duplication": 16,
       "smells/data_clump": 3,
       "smells/divergent_change": 12,
       "smells/feature_envy": 7,
-      "smells/god_module": 2,
+      "smells/god_module": 1,
       "smells/heavy_nested_function": 3,
       "smells/large_class": 2,
-      "smells/loose_typing": 82,
-      "smells/magic_string_default": 67,
+      "smells/loose_typing": 80,
+      "smells/magic_string_default": 59,
       "smells/message_chain": 1,
-      "smells/mutated_parameter": 6,
+      "smells/mutated_parameter": 3,
       "smells/n_plus_one_call": 1,
-      "smells/narrating_code": 5,
-      "smells/nested_loop": 35,
-      "smells/repeated_iteration": 8,
-      "smells/shotgun_surgery_hazard": 2,
-      "smells/unnecessary_nested_if": 14
+      "smells/narrating_code": 3,
+      "smells/nested_loop": 27,
+      "smells/repeated_iteration": 7,
+      "smells/shotgun_surgery_hazard": 3,
+      "smells/unnecessary_nested_if": 13
     },
     "resolved_by_detector": {
       "dead_code/function": {
         "count": 1
       }
     },
-    "scan_files_total": 2440,
-    "scan_loc_total": 448846,
+    "scan_files_total": 2200,
+    "scan_loc_total": 431770,
     "scans": 6,
     "scans_by_origin": {
       "gate": 3,
@@ -51,7 +49,7 @@
       "boundary_rules": 0,
       "duplication_exclude_globs": 8,
       "duplication_threshold": 50,
-      "exclude_globs": 12
+      "exclude_globs": 13
     }
   },
   "fix_reintroductions_by_detector": {},
@@ -103,7 +101,7 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 406.67,
+    "mean_files": 366.67,
     "scans": 6
   },
   "stale_findings": [],

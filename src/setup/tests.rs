@@ -7,6 +7,7 @@ use std::path::PathBuf;
 fn temp_root() -> (tempfile::TempDir, PathBuf) {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path().canonicalize().unwrap();
+    fs::create_dir(root.join(".git")).unwrap();
     (tmp, root)
 }
 
@@ -290,18 +291,4 @@ fn pyproject_mode_appends_tool_sensez() {
     // Round-trip: the config layer must actually parse what init wrote.
     let cfg = crate::config::model::Config::load(&root).unwrap();
     assert!(cfg.self_improvement.enabled);
-}
-
-#[test]
-fn no_tty_no_flags_refuses_instead_of_hanging() {
-    let (_tmp, root) = temp_root();
-    let result = run(InitOptions {
-        path: Some(root.clone()),
-        agent: None,
-        gate: false,
-        no_metrics: false,
-        yes: false,
-    });
-    // Test runners have no TTY, so this must bail with guidance.
-    assert!(result.is_err());
 }

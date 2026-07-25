@@ -108,6 +108,12 @@ pub trait ModuleProfile: Send + Sync {
         importer_file: &Path,
         root: &Path,
     ) -> String;
+    /// Give a colliding module identity a profile-specific, workspace-relative
+    /// name. Profiles that have no alternate namespace retain `base`.
+    fn disambiguated_module_name(&self, file: &Path, workspace_root: &Path, base: &str) -> String {
+        let _ = (file, workspace_root);
+        base.to_string()
+    }
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String>;
     fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         false

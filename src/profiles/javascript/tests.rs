@@ -49,6 +49,37 @@ fn extracts_es_and_commonjs_imports() {
     assert_eq!(named.bindings, vec!["a", "c"]); // alias-aware
 }
 
+#[test]
+fn extracts_dynamic_import_destructuring_and_namespace_bindings() {
+    let src =
+        b"const { load: fetch, save } = await import('./store');\nconst api = require('./api');\n";
+    let imports = parse_source(src, 0, "m", &JsProfile)
+        .unwrap()
+        .symbols
+        .imports;
+
+    let store = imports
+        .iter()
+        .find(|import| import.target_module == "./store")
+        .unwrap();
+    assert_eq!(store.imported_symbols, vec!["load", "save"]);
+    assert_eq!(store.bindings, vec!["fetch", "save"]);
+
+    let api = imports
+        .iter()
+        .find(|import| import.target_module == "./api")
+        .unwrap();
+    assert!(api.imported_symbols.is_empty());
+    assert_eq!(api.bindings, vec!["api"]);
+}
+
+#[test]
+fn credits_template_shorthand_and_type_references() {
+    let src = b"const LABEL = 'ok';\nconst item = { LABEL };\nconst text = `${LABEL}`;\ntype Label = typeof LABEL;\n";
+    let walked = parse_source(src, 0, "m", &JsProfile).unwrap();
+    assert_eq!(walked.usage.name_counts.get("LABEL"), Some(&4));
+}
+
 /// Relative imports resolve to sibling module keys and a mutual import is a cycle.
 #[test]
 fn relative_imports_resolve_and_detect_cycle() {

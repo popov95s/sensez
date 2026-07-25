@@ -34,8 +34,8 @@
         "count": 1
       }
     },
-    "scan_files_total": 508,
-    "scan_loc_total": 110536,
+    "scan_files_total": 502,
+    "scan_loc_total": 109924,
     "scans": 6,
     "scans_by_origin": {
       "gate": 3,
@@ -51,7 +51,7 @@
       "boundary_rules": 0,
       "duplication_exclude_globs": 8,
       "duplication_threshold": 50,
-      "exclude_globs": 12
+      "exclude_globs": 13
     }
   },
   "fix_reintroductions_by_detector": {},
@@ -103,7 +103,7 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 84.67,
+    "mean_files": 83.67,
     "scans": 6
   },
   "stale_findings": [],

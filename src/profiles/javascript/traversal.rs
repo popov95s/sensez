@@ -82,7 +82,10 @@ fn visit(
         lexeme::code,
     );
 
-    if kind == "identifier" {
+    if matches!(
+        kind,
+        "identifier" | "shorthand_property_identifier" | "type_identifier"
+    ) {
         credit_name(out, node, src);
     }
     if kind == "string" {

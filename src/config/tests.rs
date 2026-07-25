@@ -70,6 +70,7 @@ fn baseline_excludes_survive_empty_config() {
     assert!(cfg.dead_code.entry_points.is_empty());
     assert!(cfg.duplication.exclude.contains(&"**/tests/**".to_string()));
     assert!(cfg.exclude.contains(&"**/vendor/**".to_string()));
+    assert!(cfg.exclude.contains(&"**/docs/**".to_string()));
     assert!(cfg.exclude.contains(&"**/*.min.js".to_string()));
 }
 

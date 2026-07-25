@@ -255,13 +255,13 @@
     }
   ],
   "meta": {
-    "analyzed_files": 83,
+    "analyzed_files": 82,
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
     "dead_code_total": 4,
     "duplication_total": 4,
-    "external_edges": 334,
+    "external_edges": 329,
     "internal_edges": 304,
     "mode": "full",
     "smell_totals": {
@@ -282,7 +282,7 @@
       "tuple_packing": 3
     },
     "smells_total": 161,
-    "source_lines": 18417
+    "source_lines": 18315
   },
   "smells": [
     {

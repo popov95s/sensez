@@ -47,7 +47,6 @@ pub fn is_leaf(kind: &str) -> bool {
             | "shorthand_property_identifier"
             | "number"
             | "string"
-            | "template_string"
             | "true"
             | "false"
             | "null"

@@ -12,6 +12,8 @@ use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+mod paths;
+
 static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["ts"],
@@ -86,7 +88,16 @@ macro_rules! impl_ts_traits {
                 file: &Path,
                 root: &Path,
             ) -> String {
-                resolve::resolve_target(import, file, root)
+                paths::resolve_target(import, file, root)
+            }
+
+            fn disambiguated_module_name(
+                &self,
+                file: &Path,
+                workspace_root: &Path,
+                _base: &str,
+            ) -> String {
+                roots::module_name(file, workspace_root)
             }
 
             fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {
@@ -147,6 +158,55 @@ mod tests {
     };
     use std::fs;
     use std::path::PathBuf;
+
+    #[test]
+    fn graph_resolves_tsconfig_paths_and_keeps_workspace_module_ids_unique() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        fs::write(dir.join("package.json"), "{\"name\":\"workspace\"}\n").unwrap();
+        fs::write(
+            dir.join("tsconfig.json"),
+            r#"{ "compilerOptions": { "paths": { "@/*": ["src/*"] } } }"#,
+        )
+        .unwrap();
+        fs::create_dir_all(dir.join("src")).unwrap();
+        fs::create_dir_all(dir.join("packages/alpha/src")).unwrap();
+        fs::create_dir_all(dir.join("packages/beta/src")).unwrap();
+        fs::write(dir.join("src/data.ts"), "export const live = 1;\n").unwrap();
+        fs::write(
+            dir.join("src/consumer.ts"),
+            "import { live } from '@/data';\nconsole.log(live);\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join("packages/alpha/src/index.ts"),
+            "export const alpha = 1;\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join("packages/beta/src/index.ts"),
+            "export const beta = 1;\n",
+        )
+        .unwrap();
+
+        let files: Vec<_> = [
+            "src/data.ts",
+            "src/consumer.ts",
+            "packages/alpha/src/index.ts",
+            "packages/beta/src/index.ts",
+        ]
+        .iter()
+        .enumerate()
+        .map(|(index, file)| parse_file(&dir.join(file), index as u32).unwrap())
+        .collect();
+        let graph = crate::spine::graph::build(&files, &[]);
+
+        let consumer = graph.name_to_index["src/consumer"];
+        let data = graph.name_to_index["src/data"];
+        assert!(graph.graph.find_edge(consumer, data).is_some());
+        assert!(graph.name_to_index.contains_key("packages/alpha/src"));
+        assert!(graph.name_to_index.contains_key("packages/beta/src"));
+    }
 
     /// Build a `ParsedFile` for a TS source and return the smells `cfg` produces.
     fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {

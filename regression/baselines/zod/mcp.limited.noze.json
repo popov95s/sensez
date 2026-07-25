@@ -5,6 +5,12 @@
       "action": "info",
       "edges": [
         {
+          "file": "<zod>/packages/zod/src/v4/core/core.ts",
+          "from_module": "src/v4/core/core",
+          "line": 3,
+          "to_module": "src/v4/core/util"
+        },
+        {
           "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
           "from_module": "src/v4/core/regexes",
           "line": 1,
@@ -23,15 +29,39 @@
           "to_module": "src/v4/core/util"
         },
         {
-          "file": "<zod>/packages/zod/src/v4/core/core.ts",
-          "from_module": "src/v4/core/core",
-          "line": 3,
+          "file": "<zod>/packages/zod/src/v4/core/util.ts",
+          "from_module": "src/v4/core/util",
+          "line": 5,
+          "to_module": "src/v4/core/schemas"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+          "from_module": "src/v4/core/parse",
+          "line": 4,
           "to_module": "src/v4/core/util"
         },
         {
           "file": "<zod>/packages/zod/src/v4/core/registries.ts",
           "from_module": "src/v4/core/registries",
           "line": 2,
+          "to_module": "src/v4/core/schemas"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/api.ts",
+          "from_module": "src/v4/core/api",
+          "line": 6,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+          "from_module": "src/v4/core/schemas",
+          "line": 322,
+          "to_module": "src/v4/core/util"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+          "from_module": "src/v4/core/to-json-schema",
+          "line": 4,
           "to_module": "src/v4/core/schemas"
         },
         {
@@ -45,42 +75,6 @@
           "from_module": "src/v4/core/json-schema-generator",
           "line": 5,
           "to_module": "src/v4/core/to-json-schema"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/api.ts",
-          "from_module": "src/v4/core/api",
-          "line": 6,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/parse.ts",
-          "from_module": "src/v4/core/parse",
-          "line": 4,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/index.ts",
-          "from_module": "src/v4/core",
-          "line": 15,
-          "to_module": "src/v4/core/json-schema-generator"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
-          "from_module": "src/v4/core/to-json-schema",
-          "line": 4,
-          "to_module": "src/v4/core/schemas"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-          "from_module": "src/v4/core/schemas",
-          "line": 322,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/util.ts",
-          "from_module": "src/v4/core/util",
-          "line": 5,
-          "to_module": "src/v4/core/schemas"
         },
         {
           "file": "<zod>/packages/zod/src/v4/locales/yo.ts",
@@ -399,23 +393,28 @@
           "from_module": "src/v4/locales",
           "line": 52,
           "to_module": "src/v4/locales/yo"
+        },
+        {
+          "file": "<zod>/packages/zod/src/v4/core/index.ts",
+          "from_module": "src/v4/core",
+          "line": 15,
+          "to_module": "src/v4/core/json-schema-generator"
         }
       ],
       "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
       "modules": [
+        "src/v4/core/core",
         "src/v4/core/regexes",
         "src/v4/core/checks",
         "src/v4/core/errors",
-        "src/v4/core/core",
+        "src/v4/core/util",
+        "src/v4/core/parse",
         "src/v4/core/registries",
+        "src/v4/core/api",
+        "src/v4/core/schemas",
+        "src/v4/core/to-json-schema",
         "src/v4/core/json-schema-processors",
         "src/v4/core/json-schema-generator",
-        "src/v4/core/api",
-        "src/v4/core/parse",
-        "src/v4/core",
-        "src/v4/core/to-json-schema",
-        "src/v4/core/schemas",
-        "src/v4/core/util",
         "src/v4/locales/yo",
         "src/v4/locales/zh-TW",
         "src/v4/locales/zh-CN",
@@ -468,7 +467,8 @@
         "src/v4/locales/be",
         "src/v4/locales/az",
         "src/v4/locales/ar",
-        "src/v4/locales"
+        "src/v4/locales",
+        "src/v4/core"
       ]
     },
     {
@@ -540,68 +540,30 @@
     {
       "action": "advisory",
       "confidence": "High",
-      "file": "<zod>/packages/bench/benchUtil.ts",
-      "kind": "function",
-      "line": 67,
-      "module": "benchUtil",
-      "symbol": "toFixed"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/bench/metabench.ts",
-      "kind": "class",
-      "line": 148,
-      "module": "metabench",
-      "symbol": "BenchmarkJS"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/bench/metabench.ts",
-      "kind": "class",
-      "line": 216,
-      "module": "metabench",
-      "symbol": "Mitata"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/bench/metabench.ts",
-      "kind": "class",
-      "line": 80,
-      "module": "metabench",
-      "symbol": "Tinybench"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/docs/app/(doc)/[[...slug]]/page.tsx",
-      "kind": "import",
-      "line": 3,
-      "module": "app/(doc)/[[...slug]]/page",
-      "symbol": "Tabs"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
       "file": "<zod>/packages/treeshake/rollup.config.js",
       "kind": "import",
       "line": 5,
       "module": "rollup.config",
       "symbol": "bundleSize"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/scripts/check-versions.ts",
-      "kind": "import",
-      "line": 4,
-      "module": "scripts/check-versions",
-      "symbol": "version"
     }
   ],
   "duplication": [
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 114,
+          "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
+          "start_row": 93
+        },
+        {
+          "end_row": 130,
+          "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
+          "start_row": 109
+        }
+      ],
+      "token_length": 60
+    },
     {
       "action": "advisory",
       "occurrences": [
@@ -824,7 +786,7 @@
           "start_row": 8
         }
       ],
-      "token_length": 158
+      "token_length": 166
     },
     {
       "action": "advisory",
@@ -980,11 +942,11 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/checks.ts",
-      "kind": "god_module",
-      "message": "fan-in 56 + fan-out 5 = 61 (threshold 25)",
-      "metric": 61,
+      "kind": "shotgun_surgery_hazard",
+      "message": "depended on by 56 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 56,
       "symbol": "src/v4/core/checks",
-      "threshold": 25
+      "threshold": 54
     },
     {
       "action": "warning",
@@ -1003,7 +965,7 @@
       "message": "depended on by 60 distinct modules \u2014 a change here scatters edits widely",
       "metric": 60,
       "symbol": "src/v4/core/errors",
-      "threshold": 60
+      "threshold": 54
     },
     {
       "action": "warning",
@@ -1022,7 +984,7 @@
       "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
       "metric": 65,
       "symbol": "src/v4/core/util",
-      "threshold": 60
+      "threshold": 54
     },
     {
       "action": "warning",

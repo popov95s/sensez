@@ -30,8 +30,8 @@
       "smells/tuple_packing": 3
     },
     "resolved_by_detector": {},
-    "scan_files_total": 83,
-    "scan_loc_total": 18417,
+    "scan_files_total": 82,
+    "scan_loc_total": 18315,
     "scans": 1,
     "scans_by_origin": {
       "tool": 1
@@ -46,7 +46,7 @@
       "boundary_rules": 0,
       "duplication_exclude_globs": 8,
       "duplication_threshold": 50,
-      "exclude_globs": 12
+      "exclude_globs": 13
     }
   },
   "fix_reintroductions_by_detector": {},
@@ -74,7 +74,7 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 83.0,
+    "mean_files": 82.0,
     "scans": 1
   },
   "stale_findings": [],

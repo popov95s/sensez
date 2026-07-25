@@ -1,39 +1,35 @@
 //! Assemble a [`CodebaseGraph`] from parsed files.
 
+use super::identity;
 use crate::profiles::registry;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
+use std::path::PathBuf;
 
 /// Build the directed module graph. `configured_roots` overrides auto-detection.
 pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGraph {
     let mut cg = CodebaseGraph::default();
-    // Per file: (resolved module name, detected root). Roots are memoized per
-    // (parent dir, language) so a per-file marker walk becomes a per-dir one.
+    let identities = identity::for_files(files, configured_roots);
     let mut module_of: Vec<Option<String>> = Vec::with_capacity(files.len());
-    let mut root_of: Vec<PathBuf> = Vec::with_capacity(files.len());
-    let mut root_cache: HashMap<(PathBuf, Language), PathBuf> = HashMap::new();
+    let mut by_logical_name = HashMap::new();
 
     // Pass 1: create a node per file. Re-exports are NOT folded into declared
     // symbols — a re-exported name is kept alive in its defining module by the
     // re-export *edge*, and folding it here would falsely flag the package's
     // re-export as dead.
-    for file in files {
-        let root = root_for(file, configured_roots, &mut root_cache);
-        let name = registry::module_profile(file.language).module_name(&file.path, &root);
-        if cg.name_to_index.contains_key(&name) {
+    for (file, identity) in files.iter().zip(&identities) {
+        if cg.name_to_index.contains_key(&identity.name) {
             // Same logical module identity, e.g. app.py and app/__init__.py.
             // Keep the first node so imports remain deterministic.
             module_of.push(None);
-            root_of.push(root);
             continue;
         }
         let idx = cg.graph.add_node(ModuleNode {
             file_path: file.path.clone(),
-            module_name: name.clone(),
+            module_name: identity.name.clone(),
             language: file.language,
             declared_public_symbols: file.walked.symbols.declared.clone(),
             declared_kinds: file.walked.symbols.declared_kinds.clone(),
@@ -43,9 +39,16 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
             name_counts: file.walked.usage.name_counts.clone(),
             is_external: false,
         });
-        cg.name_to_index.insert(name.clone(), idx);
-        module_of.push(Some(name));
-        root_of.push(root);
+        cg.name_to_index.insert(identity.name.clone(), idx);
+        by_logical_name.insert(
+            (
+                file.language,
+                identity.root.clone(),
+                identity.logical_name.clone(),
+            ),
+            identity.name.clone(),
+        );
+        module_of.push(Some(identity.name.clone()));
     }
 
     // Pass 2: add an edge per import.
@@ -58,7 +61,11 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         let is_index = profile.is_package_index(&file.path);
         let pkg = profile.containing_package(module_name, is_index);
         for import in &file.walked.symbols.imports {
-            let target = profile.resolve_target(import, &pkg, &file.path, &root_of[i]);
+            let resolved = profile.resolve_target(import, &pkg, &file.path, &identities[i].root);
+            let target = by_logical_name
+                .get(&(file.language, identities[i].root.clone(), resolved.clone()))
+                .cloned()
+                .unwrap_or(resolved);
             add_import_edges(
                 &mut cg,
                 src_idx,
@@ -70,27 +77,6 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         }
     }
     cg
-}
-
-/// Resolve a file's package root: the longest configured root that contains it,
-/// else the profile's auto-detected root (memoized per parent dir + language).
-fn root_for(
-    file: &ParsedFile,
-    configured: &[PathBuf],
-    cache: &mut HashMap<(PathBuf, Language), PathBuf>,
-) -> PathBuf {
-    if let Some(root) = configured
-        .iter()
-        .filter(|r| file.path.starts_with(r))
-        .max_by_key(|r| r.components().count())
-    {
-        return root.clone();
-    }
-    let dir = file.path.parent().unwrap_or(Path::new(".")).to_path_buf();
-    cache
-        .entry((dir, file.language))
-        .or_insert_with(|| registry::module_profile(file.language).root_for(&file.path))
-        .clone()
 }
 
 /// Add edge(s) for one import. `from pkg import name` where `pkg.name` is a

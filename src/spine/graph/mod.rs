@@ -2,6 +2,7 @@
 //! edges are import relationships (carrying the full [`ImportContext`]).
 
 mod builder;
+mod identity;
 
 pub use builder::build;
 

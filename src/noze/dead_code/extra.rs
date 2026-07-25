@@ -227,4 +227,36 @@ mod tests {
         assert!(!imps.contains(&"MassiveUserClass".to_string()));
         assert!(imps.contains(&"runtimeConnect".to_string()));
     }
+
+    #[cfg(feature = "lang-typescript")]
+    #[test]
+    fn recognizes_runtime_imports_referenced_only_by_types() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(
+            dir.join("consumer.ts"),
+            "import { Shape, unused } from './models';\ntype Item = Shape;\n",
+        )
+        .unwrap();
+        fs::write(
+            dir.join("models.ts"),
+            "export interface Shape { readonly id: string; }\nexport const unused = 1;\n",
+        )
+        .unwrap();
+        let files = vec![
+            parse_file(&dir.join("consumer.ts"), 0).unwrap(),
+            parse_file(&dir.join("models.ts"), 1).unwrap(),
+        ];
+        let graph = crate::spine::graph::build(&files, &[]);
+        let modmap = module_map(&graph);
+
+        let findings = unused_imports(&files, &modmap);
+        let symbols: Vec<_> = findings
+            .iter()
+            .map(|finding| finding.symbol.as_str())
+            .collect();
+        assert!(!symbols.contains(&"Shape"));
+        assert!(symbols.contains(&"unused"));
+    }
 }

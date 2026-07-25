@@ -28,7 +28,7 @@
       "boundary_rules": 0,
       "duplication_exclude_globs": 8,
       "duplication_threshold": 50,
-      "exclude_globs": 12
+      "exclude_globs": 13
     }
   },
   "fix_reintroductions_by_detector": {},
