@@ -145,6 +145,29 @@ action = "must_fix"
 # mistaken for a clean pass).
 [boundaries]
 
-# [[boundaries.forbidden]]
-# from = "app.api.endpoints.*"
-# to = "app.db.*"
+# The analysis core may not reach upward into protocol or stateful integration
+# layers. These rules preserve a one-way dependency flow:
+# spine/profiles/noze -> pipeline/reporting -> MCP/brainz.
+[[boundaries.forbidden]]
+from = "**/spine/**"
+to = "**/mcp/**"
+
+[[boundaries.forbidden]]
+from = "**/spine/**"
+to = "**/brainz/**"
+
+[[boundaries.forbidden]]
+from = "**/profiles/**"
+to = "**/mcp/**"
+
+[[boundaries.forbidden]]
+from = "**/profiles/**"
+to = "**/brainz/**"
+
+[[boundaries.forbidden]]
+from = "**/noze/**"
+to = "**/mcp/**"
+
+[[boundaries.forbidden]]
+from = "**/noze/**"
+to = "**/brainz/**"
