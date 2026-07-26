@@ -12,6 +12,8 @@ class ConfigError(Exception):
 
 DEFAULT_RELATIVE_PATH = "."
 DEFAULT_VERSION = "latest"
+EMPTY_TEXT = ""
+TRUTHY_VALUES = frozenset(("1", "true", "yes", "y", "on"))
 
 
 @dataclass(frozen=True)
@@ -24,6 +26,10 @@ class ActionEnvironment:
             return None
         text = value.strip()
         return text if text else None
+
+    def value(self, key: str, default: str) -> str:
+        value = self.text(key)
+        return default if value is None else value
 
 
 class AnnotationLevel(str, Enum):
@@ -51,7 +57,8 @@ class FailureLevel(str, Enum):
 
     @classmethod
     def parse(cls, value: str | None) -> "FailureLevel":
-        normalized = (value or "").strip().lower().replace("-", "_")
+        normalized = cls.DISABLED.value if value is None else value.strip().lower()
+        normalized = normalized.replace("-", "_")
         try:
             return cls(normalized)
         except ValueError as error:
@@ -90,22 +97,22 @@ class Config:
             workspace=workspace,
             path=path,
             version=_version_from_env(env),
-            threshold=env.text("INPUT_THRESHOLD") or "",
+            threshold=env.value("INPUT_THRESHOLD", EMPTY_TEXT),
             with_comments=_truthy(env.text("INPUT_WITH_COMMENTS")),
             fail_on_new=fail_on_new,
             level=level,
-            token=env.text("GITHUB_TOKEN") or "",
+            token=env.value("GITHUB_TOKEN", EMPTY_TEXT),
             event_path=Path(event) if event else None,
-            repository=env.text("GITHUB_REPOSITORY") or "",
-            api_url=(env.text("GITHUB_API_URL") or "https://api.github.com").rstrip("/"),
-            server_url=(env.text("GITHUB_SERVER_URL") or "https://github.com").rstrip("/"),
+            repository=env.value("GITHUB_REPOSITORY", EMPTY_TEXT),
+            api_url=env.value("GITHUB_API_URL", "https://api.github.com").rstrip("/"),
+            server_url=env.value("GITHUB_SERVER_URL", "https://github.com").rstrip("/"),
         )
 
 
 def _truthy(value: str | None) -> bool:
     if value is None:
         return False
-    return value.strip().lower() in {"1", "true", "yes", "y", "on"}
+    return value.strip().lower() in TRUTHY_VALUES
 
 
 def _workspace_from_env(env: ActionEnvironment) -> Path:

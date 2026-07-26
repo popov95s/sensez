@@ -67,12 +67,19 @@ def post_comments(findings: list[Finding], config: Config) -> None:
 def _existing_markers(client: GitHubClient, pull_number: int) -> CommentMarkers:
     comments = client.paged(f"pulls/{pull_number}/comments?per_page=100")
     markers = frozenset(
-        line.strip()
+        marker
         for comment in comments
-        for line in str(comment.get("body", "")).splitlines()
-        if line.strip().startswith("<!-- sensez:")
+        for marker in _markers_in(str(comment.get("body", "")))
     )
     return CommentMarkers(markers)
+
+
+def _markers_in(body: str) -> list[str]:
+    return [
+        line.strip()
+        for line in body.splitlines()
+        if line.strip().startswith("<!-- sensez:")
+    ]
 
 
 def _comment_line(finding: Finding, changed: ChangedLineSet) -> Optional[int]:
