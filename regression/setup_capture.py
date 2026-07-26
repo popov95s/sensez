@@ -6,6 +6,7 @@ import re
 import select
 import subprocess
 import time
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Sequence
 
@@ -13,26 +14,47 @@ from typing import Sequence
 ANSI = re.compile(r"\x1b(?:[@-Z\\-_]|\[[0-?]*[ -/]*[@-~])")
 
 
+@dataclass(frozen=True)
+class PathReplacements:
+    pairs: tuple[tuple[str, str], ...]
+
+    def normalize(self, text: str) -> str:
+        normalized = ANSI.sub("", text).replace("\r\n", "\n").replace("\r", "\n")
+        for source, target in self.pairs:
+            normalized = normalized.replace(source, target)
+        return normalized
+
+
+@dataclass(frozen=True)
+class FileSnapshot:
+    files: dict[str, str]
+
+
+@dataclass(frozen=True)
+class ProcessEnvironment:
+    values: dict[str, str]
+
+
 def run(
     command: Sequence[str | Path],
     cwd: Path,
     home: Path,
-    paths: dict[str, str],
+    paths: PathReplacements,
     remove_home: bool = False,
 ) -> object:
     text_command = [str(part) for part in command]
     proc = subprocess.run(
         text_command,
         cwd=cwd,
-        env=_environment(home, remove_home),
+        env=_environment(home, remove_home).values,
         text=True,
         capture_output=True,
     )
     return {
-        "command": [_normalize(part, paths) for part in text_command],
+        "command": [paths.normalize(part) for part in text_command],
         "exit_code": proc.returncode,
-        "stdout": _normalize(proc.stdout, paths),
-        "stderr": _normalize(proc.stderr, paths),
+        "stdout": paths.normalize(proc.stdout),
+        "stderr": paths.normalize(proc.stderr),
     }
 
 
@@ -41,45 +63,31 @@ def run_pty(
     cwd: Path,
     home: Path,
     answer: str,
-    paths: dict[str, str],
+    paths: PathReplacements,
 ) -> object:
     master, slave = pty.openpty()
     text_command = [str(part) for part in command]
     proc = subprocess.Popen(
         text_command,
         cwd=cwd,
-        env=_environment(home),
+        env=_environment(home).values,
         stdin=slave,
         stdout=slave,
         stderr=slave,
         close_fds=True,
     )
     os.close(slave)
-    transcript = bytearray()
-    answered = False
-    deadline = time.monotonic() + 10
     try:
-        while time.monotonic() < deadline:
-            ready, _, _ = select.select([master], [], [], 0.1)
-            if ready:
-                try:
-                    transcript.extend(os.read(master, 4096))
-                except OSError:
-                    break
-            if not answered and b"Install Sensez globally" in transcript:
-                os.write(master, answer.encode())
-                answered = True
-            if proc.poll() is not None and not ready:
-                break
+        transcript = _read_pty(master, proc, answer)
         if proc.poll() is None:
             proc.kill()
             raise RuntimeError("interactive init scenario timed out")
     finally:
         os.close(master)
     return {
-        "command": [_normalize(part, paths) for part in text_command],
+        "command": [paths.normalize(part) for part in text_command],
         "exit_code": proc.wait(),
-        "terminal": _normalize(transcript.decode(errors="replace"), paths),
+        "terminal": paths.normalize(transcript.decode(errors="replace")),
     }
 
 
@@ -88,19 +96,17 @@ def artifact(
     runs: list[object],
     repo: Path,
     home: Path,
-    paths: dict[str, str],
+    paths: PathReplacements,
 ) -> object:
     return {
         "scenario": scenario,
         "runs": runs,
-        "repo_files": _snapshot(repo, paths),
-        "home_files": _snapshot(home, paths),
+        "repo_files": _snapshot(repo, paths).files,
+        "home_files": _snapshot(home, paths).files,
     }
 
 
-def replacements(
-    sensez: Path, repo: Path, home: Path, cwd: Path
-) -> dict[str, str]:
+def replacements(sensez: Path, repo: Path, home: Path, cwd: Path) -> PathReplacements:
     pairs = {
         str(sensez): "<sensez>",
         str(sensez.resolve()): "<sensez>",
@@ -114,7 +120,8 @@ def replacements(
     for source, target in list(pairs.items()):
         if source.startswith("/private/var/"):
             pairs[source.replace("/private/var/", "/var/", 1)] = target
-    return dict(sorted(pairs.items(), key=lambda item: len(item[0]), reverse=True))
+    ordered = sorted(pairs.items(), key=lambda item: len(item[0]), reverse=True)
+    return PathReplacements(tuple(ordered))
 
 
 def seed_global_config(home: Path, agent: str) -> None:
@@ -151,17 +158,17 @@ def git_init(repo: Path) -> None:
     )
 
 
-def _snapshot(root: Path, paths: dict[str, str]) -> dict[str, str]:
+def _snapshot(root: Path, paths: PathReplacements) -> FileSnapshot:
     files: dict[str, str] = {}
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root)
         if ".git" in rel.parts or not path.is_file():
             continue
-        files[str(rel)] = _normalize(path.read_text(errors="replace"), paths)
-    return files
+        files[str(rel)] = paths.normalize(path.read_text(errors="replace"))
+    return FileSnapshot(files)
 
 
-def _environment(home: Path, remove_home: bool = False) -> dict[str, str]:
+def _environment(home: Path, remove_home: bool = False) -> ProcessEnvironment:
     env = os.environ.copy()
     env["NO_COLOR"] = "1"
     if remove_home:
@@ -170,11 +177,23 @@ def _environment(home: Path, remove_home: bool = False) -> dict[str, str]:
     else:
         env["HOME"] = str(home)
         env.pop("USERPROFILE", None)
-    return env
+    return ProcessEnvironment(env)
 
 
-def _normalize(text: str, paths: dict[str, str]) -> str:
-    normalized = ANSI.sub("", text).replace("\r\n", "\n").replace("\r", "\n")
-    for source, target in paths.items():
-        normalized = normalized.replace(source, target)
-    return normalized
+def _read_pty(master: int, proc: subprocess.Popen[bytes], answer: str) -> bytearray:
+    transcript = bytearray()
+    answered = False
+    deadline = time.monotonic() + 10
+    while time.monotonic() < deadline:
+        ready, _, _ = select.select([master], [], [], 0.1)
+        if ready:
+            try:
+                transcript.extend(os.read(master, 4096))
+            except OSError:
+                break
+        if not answered and b"Install Sensez globally" in transcript:
+            os.write(master, answer.encode())
+            answered = True
+        if proc.poll() is not None and not ready:
+            break
+    return transcript
