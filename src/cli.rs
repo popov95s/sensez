@@ -201,20 +201,7 @@ fn report_meets_fail_level(report: &crate::report::AnalysisReport, level: FailOn
         FailOnNewLevel::Advisory => crate::report::ActionLevel::Advisory,
         FailOnNewLevel::Info => crate::report::ActionLevel::Info,
     };
-    report_findings(report).any(|action| action <= threshold)
-}
-
-fn report_findings(
-    report: &crate::report::AnalysisReport,
-) -> impl Iterator<Item = crate::report::ActionLevel> + '_ {
-    report
-        .cycles
-        .iter()
-        .map(|finding| finding.action)
-        .chain(report.dead_code.iter().map(|finding| finding.action))
-        .chain(report.boundaries.iter().map(|finding| finding.action))
-        .chain(report.duplication.iter().map(|finding| finding.action))
-        .chain(report.smells.iter().map(|finding| finding.action))
+    report.actions().any(|action| action <= threshold)
 }
 
 struct DiffSelection {

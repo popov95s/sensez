@@ -144,21 +144,8 @@ impl HealthSummary {
 
     pub fn set_current_changes(&mut self, report: &AnalysisReport) {
         self.current_changes = ChangeCount {
-            total: report.cycles.len()
-                + report.dead_code.len()
-                + report.boundaries.len()
-                + report.duplication.len()
-                + report.smells.len(),
-            blocking: report
-                .cycles
-                .iter()
-                .map(|finding| finding.action)
-                .chain(report.dead_code.iter().map(|finding| finding.action))
-                .chain(report.boundaries.iter().map(|finding| finding.action))
-                .chain(report.duplication.iter().map(|finding| finding.action))
-                .chain(report.smells.iter().map(|finding| finding.action))
-                .filter(|action| *action == ActionLevel::MustFix)
-                .count(),
+            total: report.finding_count(),
+            blocking: report.count_at_action(ActionLevel::MustFix),
         };
     }
 }

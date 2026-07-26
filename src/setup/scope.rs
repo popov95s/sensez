@@ -63,14 +63,14 @@ pub fn user_home() -> Result<PathBuf> {
 }
 
 pub fn destination_summary(home: &Path, agent: &AgentSpec) -> String {
-    let destinations: Vec<String> = [agent.global_mcp_relpath, agent.global_skill_relpath]
+    let destinations: Vec<String> = agent
+        .global_mcp_relpath
         .into_iter()
-        .flatten()
+        .chain(agent.global_skill_relpath)
         .map(|relative| home.join(relative).display().to_string())
         .collect();
-    if destinations.is_empty() {
-        "your agent's user-level MCP settings".to_string()
-    } else {
-        destinations.join(" and ")
-    }
+    let Some(_) = destinations.first() else {
+        return "your agent's user-level MCP settings".to_string();
+    };
+    destinations.join(" and ")
 }

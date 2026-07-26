@@ -12,10 +12,10 @@ pub fn retain_unseen_gate_findings(
 ) -> usize {
     let blocked = blocked_fingerprints(root, scope);
     if blocked.is_empty() {
-        return finding_count(report);
+        return report.finding_count();
     }
     let Ok(value) = serde_json::to_value(&*report) else {
-        return finding_count(report);
+        return report.finding_count();
     };
     let prints = fingerprint::fingerprints(&value);
     fingerprint::retain_by_fingerprint(
@@ -44,7 +44,7 @@ pub fn retain_unseen_gate_findings(
         |p| !blocked.contains(&p.key()),
     );
     report.meta.glossary = crate::noze::glossary::for_report(report);
-    finding_count(report)
+    report.finding_count()
 }
 
 fn blocked_fingerprints(root: &std::path::Path, scope: Option<&str>) -> BTreeSet<String> {
@@ -60,14 +60,6 @@ fn blocked_fingerprints(root: &std::path::Path, scope: Option<&str>) -> BTreeSet
         })
         .flatten()
         .collect()
-}
-
-fn finding_count(report: &AnalysisReport) -> usize {
-    report.duplication.len()
-        + report.dead_code.len()
-        + report.cycles.len()
-        + report.boundaries.len()
-        + report.smells.len()
 }
 
 #[cfg(test)]
