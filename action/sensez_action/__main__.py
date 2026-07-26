@@ -5,7 +5,7 @@ import sys
 
 from .annotations import annotate
 from .comments import CommentError, post_comments
-from .config import Config, ConfigError
+from .config import ActionEnvironment, Config, ConfigError
 from .findings import flatten_duplication, should_fail
 from .runner import SensezError, run_sensez
 from .summary import write_summary
@@ -13,7 +13,7 @@ from .summary import write_summary
 
 def main() -> int:
     try:
-        config = Config.from_env(os.environ)
+        config = Config.from_env(ActionEnvironment(dict(os.environ)))
         scan = run_sensez(config)
         findings = flatten_duplication(scan.report, config.workspace, scan.changed_lines)
         annotate(findings, config.level)

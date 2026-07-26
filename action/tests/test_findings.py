@@ -1,6 +1,7 @@
 import unittest
 from pathlib import Path
 
+from sensez_action.config import FailureLevel
 from sensez_action.findings import flatten_duplication, should_fail
 
 
@@ -47,6 +48,6 @@ class FindingTests(unittest.TestCase):
     def test_failure_level_uses_action_order(self) -> None:
         report = {"duplication": [{"action": "warning"}]}
 
-        self.assertTrue(should_fail(report, "warning"))
-        self.assertTrue(should_fail(report, "info"))
-        self.assertFalse(should_fail(report, "must_fix"))
+        self.assertTrue(should_fail(report, FailureLevel.WARNING))
+        self.assertTrue(should_fail(report, FailureLevel.INFO))
+        self.assertFalse(should_fail(report, FailureLevel.MUST_FIX))

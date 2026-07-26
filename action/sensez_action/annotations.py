@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import TypedDict
 
+from .config import AnnotationLevel
 from .findings import Finding
 
 
@@ -12,7 +13,7 @@ class AnnotationProps(TypedDict):
     title: str
 
 
-def annotate(findings: list[Finding], level: str) -> None:
+def annotate(findings: list[Finding], level: AnnotationLevel) -> None:
     for finding in findings:
         props: AnnotationProps = {
             "file": finding.file,
@@ -20,7 +21,7 @@ def annotate(findings: list[Finding], level: str) -> None:
             "endLine": str(finding.end_line),
             "title": "Sensez duplication",
         }
-        print(f"::{level} {_props(props)}::{_escape_message(finding.message)}")
+        print(f"::{level.value} {_props(props)}::{_escape_message(finding.message)}")
 
 
 def _props(values: AnnotationProps) -> str:

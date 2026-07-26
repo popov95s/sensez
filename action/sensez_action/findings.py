@@ -5,6 +5,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import TypedDict, Optional, cast
 
+from .config import FailureLevel
 from .diff import ChangedLines
 
 
@@ -68,10 +69,10 @@ def flatten_duplication(
     return findings
 
 
-def should_fail(report: DuplicationReport, fail_on_new: str) -> bool:
-    if not fail_on_new:
+def should_fail(report: DuplicationReport, fail_on_new: FailureLevel) -> bool:
+    if fail_on_new is FailureLevel.DISABLED:
         return False
-    threshold = ACTION_ORDER[fail_on_new]
+    threshold = ACTION_ORDER[fail_on_new.value]
     for clone_class in report.get("duplication", []):
         clone_class = cast(CloneClass, clone_class)
         action = str(clone_class.get("action") or "advisory")
