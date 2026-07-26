@@ -8,6 +8,7 @@
 //! locals) via the `identifier_code` closure.
 
 use crate::spine::ir::tokens::StructuralToken;
+use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Code for any function-bound local variable (collapsed; renameable).
@@ -41,6 +42,38 @@ pub(crate) fn code(
         Call => 10,
         Return => 11,
     }
+}
+
+/// Classify an identifier as stable API surface, a renameable local, or a
+/// stable free name. Profiles only provide their grammar-specific API rule.
+fn identifier_code(
+    node: Node,
+    src: &[u8],
+    fn_bounds: &[HashSet<String>],
+    is_api_surface: impl FnOnce(Node) -> bool,
+) -> u64 {
+    let text = node.utf8_text(src).unwrap_or_default();
+    if is_api_surface(node) {
+        return hash(text);
+    }
+    if fn_bounds.iter().rev().any(|names| names.contains(text)) {
+        return LOCAL;
+    }
+    hash(text)
+}
+
+/// Apply the shared token mapping and identifier classification in one call.
+/// The predicate is the only grammar-specific part of a profile's lexeme rule.
+pub(crate) fn code_with_api_surface(
+    node: Node,
+    tok: StructuralToken,
+    src: &[u8],
+    fn_bounds: &[HashSet<String>],
+    is_api_surface: impl FnOnce(Node) -> bool,
+) -> u64 {
+    code(node, tok, src, || {
+        identifier_code(node, src, fn_bounds, is_api_surface)
+    })
 }
 
 /// The operator token of a binary/comparison node: the `operator` field where

@@ -22,11 +22,12 @@ pub(crate) mod units;
 mod tests;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+    DeadCodeProfile, Language, LanguageInfo, ModuleLayout, ModuleProfile, ParseProfile,
+    PerformanceProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// The JavaScript language profile (zero-sized).
 pub struct JsProfile;
@@ -35,6 +36,12 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     language: Language::JavaScript,
     extensions: &["js", "jsx", "mjs", "cjs"],
 };
+static JS_MODULES: ModuleLayout = ModuleLayout::new(
+    roots::root_for,
+    roots::module_name,
+    roots::is_package_index,
+    resolve::containing_package,
+);
 
 impl ParseProfile for JsProfile {
     fn info(&self) -> &'static LanguageInfo {
@@ -51,20 +58,8 @@ impl ParseProfile for JsProfile {
 }
 
 impl ModuleProfile for JsProfile {
-    fn root_for(&self, file: &Path) -> PathBuf {
-        roots::root_for(file)
-    }
-
-    fn module_name(&self, file: &Path, root: &Path) -> String {
-        roots::module_name(file, root)
-    }
-
-    fn is_package_index(&self, file: &Path) -> bool {
-        roots::is_package_index(file)
-    }
-
-    fn containing_package(&self, module_name: &str, is_index: bool) -> String {
-        resolve::containing_package(module_name, is_index)
+    fn module_layout(&self) -> ModuleLayout {
+        JS_MODULES
     }
 
     fn resolve_target(

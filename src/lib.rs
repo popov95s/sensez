@@ -23,6 +23,8 @@ pub mod report;
 mod reporter;
 mod setup;
 mod spine;
+#[cfg(test)]
+mod test_support;
 
 pub use cli::run as run_cli;
 pub use pipeline::{analyze_path, scan};

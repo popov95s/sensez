@@ -196,8 +196,8 @@ fn usage_report(args: &Value) -> ToolResult {
 mod tests {
     use super::super::protocol::handle_message;
     use super::ScanArgs;
+    use crate::test_support::GitTestRepo;
     use serde_json::{json, Value};
-    use std::process::Command;
 
     #[test]
     fn tools_list_includes_metrics_tools() {
@@ -440,61 +440,7 @@ mod tests {
         serde_json::from_str(text).unwrap()
     }
 
-    /// Owns the TempDir so the directory stays alive for the test body.
-    struct TestRepo {
-        _tmp: tempfile::TempDir,
-        file: std::path::PathBuf,
-        path: String,
-    }
-
-    fn fresh_repo(scratch: &str) -> Option<TestRepo> {
-        let tmp = tempfile::tempdir().ok()?;
-        let root = tmp.path().to_path_buf();
-        if !init_repo(&root, scratch) {
-            return None;
-        }
-        Some(TestRepo {
-            _tmp: tmp,
-            path: root.to_string_lossy().into_owned(),
-            file: root.join(scratch),
-        })
-    }
-
-    fn init_repo(root: &std::path::Path, scratch: &str) -> bool {
-        if !Command::new("git")
-            .args(["init"])
-            .current_dir(root)
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
-        {
-            return false;
-        }
-        let module = scratch.strip_suffix(".py").unwrap_or("m");
-        std::fs::write(
-            root.join("base.py"),
-            format!("from {module} import live\n\nprint(live())\n"),
-        )
-        .unwrap();
-        let ok = Command::new("git")
-            .args(["add", "."])
-            .current_dir(root)
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false);
-        ok && Command::new("git")
-            .args([
-                "-c",
-                "user.email=sensez@example.test",
-                "-c",
-                "user.name=Sensez",
-                "commit",
-                "-m",
-                "base",
-            ])
-            .current_dir(root)
-            .output()
-            .map(|o| o.status.success())
-            .unwrap_or(false)
+    fn fresh_repo(scratch: &str) -> Option<GitTestRepo> {
+        GitTestRepo::importing(scratch, "m")
     }
 }

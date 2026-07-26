@@ -1,7 +1,7 @@
 use super::gate::gate;
+use crate::test_support::GitTestRepo;
 use serde_json::{json, Value};
-use std::path::{Path, PathBuf};
-use std::process::Command;
+use std::path::Path;
 
 #[test]
 fn gate_degrades_open() {
@@ -366,59 +366,6 @@ fn assert_block(resp: &Value) {
     assert!(!reason.contains("Findings (top 5 per pillar)"));
 }
 
-/// Fresh git repo with one initial commit and a scratch file. Owns
-/// the `TempDir` so the directory stays alive for the test body.
-struct TestRepo {
-    _tmp: tempfile::TempDir,
-    root: PathBuf,
-    file: PathBuf,
-    path: String,
-}
-
-fn fresh_repo(scratch: &str) -> Option<TestRepo> {
-    let tmp = tempfile::tempdir().ok()?;
-    let root = tmp.path().to_path_buf();
-    if !init_repo(&root, scratch) {
-        return None;
-    }
-    Some(TestRepo {
-        _tmp: tmp,
-        file: root.join(scratch),
-        path: root.to_string_lossy().into_owned(),
-        root,
-    })
-}
-
-fn init_repo(root: &Path, scratch: &str) -> bool {
-    if !git(root, &["init"]) {
-        return false;
-    }
-    let module = scratch.strip_suffix(".py").unwrap_or("added");
-    std::fs::write(
-        root.join("base.py"),
-        format!("from {module} import live\n\nprint(live())\n"),
-    )
-    .unwrap();
-    git(root, &["add", "."])
-        && git(
-            root,
-            &[
-                "-c",
-                "user.email=sensez@example.test",
-                "-c",
-                "user.name=Sensez",
-                "commit",
-                "-m",
-                "base",
-            ],
-        )
-}
-
-fn git(root: &Path, args: &[&str]) -> bool {
-    Command::new("git")
-        .args(args)
-        .current_dir(root)
-        .output()
-        .map(|out| out.status.success())
-        .unwrap_or(false)
+fn fresh_repo(scratch: &str) -> Option<GitTestRepo> {
+    GitTestRepo::importing(scratch, "added")
 }

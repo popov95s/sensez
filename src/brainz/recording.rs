@@ -147,9 +147,8 @@ fn record_outcome(root: &Path, pillar: &str, action: &str, count: u64, detail: O
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::test_support::GitTestRepo;
     use serde_json::json;
-    use std::path::Path;
-    use std::process::Command;
 
     #[test]
     fn unnamed_branch_scan_does_not_diff_against_shared_baseline() {
@@ -172,11 +171,10 @@ mod tests {
 
     #[test]
     fn detached_scan_does_not_reuse_a_named_branch_baseline() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        if !init_repo(root) {
+        let Some(repo) = GitTestRepo::new("unused.py", "print('base')\n") else {
             return;
-        }
+        };
+        let root = repo.root.as_path();
         let seen = json!({
             "dead_code": [{"module": "demo", "symbol": "kept", "kind": "function"}],
         });
@@ -186,7 +184,7 @@ mod tests {
         crate::brainz::flush();
         assert!(store::dir(root).join("last-scan.json").exists());
 
-        assert!(git(root, &["checkout", "--detach"]));
+        assert!(repo.git(&["checkout", "--detach"]));
         record_scan(root, &gone, Duration::from_millis(1), None, Origin::Tool);
         crate::brainz::flush();
 
@@ -195,34 +193,5 @@ mod tests {
         assert!(totals.reintroduced_by_detector.is_empty());
         assert!(store::load_fingerprints(root, "").is_empty());
         assert!(store::load_resolved_history(root, "").is_empty());
-    }
-
-    fn init_repo(root: &Path) -> bool {
-        if !git(root, &["init"]) {
-            return false;
-        }
-        std::fs::write(root.join("base.py"), "print('base')\n").unwrap();
-        git(root, &["add", "."])
-            && git(
-                root,
-                &[
-                    "-c",
-                    "user.email=sensez@example.test",
-                    "-c",
-                    "user.name=Sensez",
-                    "commit",
-                    "-m",
-                    "base",
-                ],
-            )
-    }
-
-    fn git(root: &Path, args: &[&str]) -> bool {
-        Command::new("git")
-            .args(args)
-            .current_dir(root)
-            .output()
-            .map(|out| out.status.success())
-            .unwrap_or(false)
     }
 }

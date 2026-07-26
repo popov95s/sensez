@@ -23,11 +23,12 @@ mod tests;
 mod units_tests;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+    DeadCodeProfile, Language, LanguageInfo, ModuleLayout, ModuleProfile, ParseProfile,
+    PerformanceProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
-use std::path::{Path, PathBuf};
+use std::path::Path;
 
 /// The Rust language profile (zero-sized).
 pub struct RustProfile;
@@ -36,6 +37,12 @@ static RUST_INFO: LanguageInfo = LanguageInfo {
     language: Language::Rust,
     extensions: &["rs"],
 };
+static RUST_MODULES: ModuleLayout = ModuleLayout::new(
+    roots::root_for,
+    roots::module_name,
+    roots::is_package_index,
+    resolve::containing_package,
+);
 
 impl ParseProfile for RustProfile {
     fn info(&self) -> &'static LanguageInfo {
@@ -52,20 +59,8 @@ impl ParseProfile for RustProfile {
 }
 
 impl ModuleProfile for RustProfile {
-    fn root_for(&self, file: &Path) -> PathBuf {
-        roots::root_for(file)
-    }
-
-    fn module_name(&self, file: &Path, root: &Path) -> String {
-        roots::module_name(file, root)
-    }
-
-    fn is_package_index(&self, file: &Path) -> bool {
-        roots::is_package_index(file)
-    }
-
-    fn containing_package(&self, module_name: &str, is_index: bool) -> String {
-        resolve::containing_package(module_name, is_index)
+    fn module_layout(&self) -> ModuleLayout {
+        RUST_MODULES
     }
 
     fn resolve_target(
