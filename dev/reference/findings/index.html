@@ -2703,7 +2703,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>{{FIX_TEXT:python}}</p>
+<p>Validate at the boundary or first use, then rely on the established invariant.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">publish</span><span class="p">(</span><span class="n">message</span><span class="p">):</span>
     <span class="k">if</span> <span class="n">message</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">return</span>
@@ -2723,7 +2723,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>{{FIX_TEXT:typescript}}</p>
+<p>Validate at the boundary or first use, then rely on the established invariant.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">publish</span><span class="p">(</span><span class="nx">message</span><span class="o">:</span><span class="w"> </span><span class="kt">Message</span><span class="w"> </span><span class="o">|</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">message</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span><span class="w"> </span><span class="k">return</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">prepare</span><span class="p">(</span><span class="nx">message</span><span class="p">);</span>
@@ -2747,9 +2747,9 @@
 <table>
 <thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
 <tbody>
-<tr><td>Python</td><td>Yes</td></tr>
-<tr><td>JS / TS</td><td>Yes</td></tr>
-<tr><td>Rust</td><td>Yes</td></tr>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
 </tbody>
 </table>
 </details>
@@ -3584,7 +3584,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>{{FIX_TEXT:python}}</p>
+<p>Narrow the Protocol to genuine shared behavior, or use the concrete types directly.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">FileWorker</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">open_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">rotate_file</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span> <span class="o">...</span>
@@ -3616,7 +3616,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>{{FIX_TEXT:typescript}}</p>
+<p>Narrow the interface to genuine shared behavior, or use the concrete types directly.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">FileWorker</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">openFile</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
 <span class="w">  </span><span class="nx">rotateFile</span><span class="p">()</span><span class="w"> </span><span class="p">{}</span>
@@ -4499,7 +4499,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>{{FIX_TEXT:python}}</p>
+<p>Validate once at the boundary, catch specific failures, and preserve unexpected errors.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_payload</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">Payload</span><span class="o">.</span><span class="n">parse</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
@@ -4522,7 +4522,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>{{FIX_TEXT:typescript}}</p>
+<p>Parse once at the boundary, catch specific failures, and preserve unexpected errors.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">loadPayload</span><span class="p">(</span><span class="nx">raw</span><span class="o">:</span><span class="w"> </span><span class="kt">unknown</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Payload</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">PayloadSchema</span><span class="p">.</span><span class="nx">parse</span><span class="p">(</span><span class="nx">raw</span><span class="p">);</span>
 <span class="p">}</span>
@@ -4544,9 +4544,9 @@
 <table>
 <thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
 <tbody>
-<tr><td>Python</td><td>Yes</td></tr>
-<tr><td>JS / TS</td><td>Yes</td></tr>
-<tr><td>Rust</td><td>Yes</td></tr>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
 </tbody>
 </table>
 </details>

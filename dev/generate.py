@@ -113,7 +113,7 @@ def parse_lints(source: str) -> list[tuple[str, str]]:
 def parse_language_blocks(source: str) -> dict[str, str]:
     pattern = re.compile(
         r'LanguageBlock \{\s*language: "((?:\\.|[^"\\])*)",\s*'
-        r'body: "((?:\\.|[^"\\])*)",\s*\}',
+        r'body: "((?:\\.|[^"\\])*)",?\s*\}',
         re.S,
     )
     return {
