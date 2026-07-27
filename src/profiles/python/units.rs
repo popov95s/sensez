@@ -4,6 +4,7 @@
 
 use super::{classunit, conditionals, performance, symbols};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
+use std::collections::HashMap;
 use tree_sitter::Node;
 
 const ALLOWED_NUMS: [&str; 5] = ["0", "1", "2", "0.0", "1.0"];
@@ -31,11 +32,15 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
 /// Body-walk accumulator. Borrows the unit so helpers stay small.
 struct Acc<'u> {
     unit: &'u mut FunctionUnit,
+    guards: HashMap<u64, usize>,
 }
 
 impl<'u> Acc<'u> {
     fn new(unit: &'u mut FunctionUnit) -> Self {
-        Acc { unit }
+        Acc {
+            unit,
+            guards: HashMap::new(),
+        }
     }
 
     /// Recurse a body node at block-nesting `depth`, accumulating metrics.
@@ -48,6 +53,10 @@ impl<'u> Acc<'u> {
         let child_loop_depth = loop_depth + usize::from(performance::is_loop(kind));
         super::obsession::scan(self.unit, node, src);
         performance::scan(&mut self.unit.performance, node, src, loop_depth);
+        if let Some(method) = own_method_call(node, src) {
+            self.unit.own_method_calls.insert(method);
+        }
+        super::risk_facts::scan(self.unit, &mut self.guards, node, src);
 
         let mut child_depth = depth;
         if is_nesting(kind) {
@@ -64,7 +73,12 @@ impl<'u> Acc<'u> {
             self.unit.collapsible_nested_ifs += 1;
         }
         match kind {
-            "return_statement" => self.unit.return_count += 1,
+            "return_statement" => {
+                self.unit.return_count += 1;
+                if let Some(constructor) = returned_constructor(node, src) {
+                    self.unit.returned_constructors.insert(constructor);
+                }
+            }
             "integer" | "float" => {
                 if let Ok(t) = node.utf8_text(src) {
                     if !ALLOWED_NUMS.contains(&t) {
@@ -112,6 +126,36 @@ impl<'u> Acc<'u> {
             *self.unit.local_reassigns.entry(target).or_insert(0) += 1;
         }
     }
+}
+
+fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
+    if node.kind() != "call" {
+        return None;
+    }
+    let function = node.child_by_field_name("function")?;
+    if function.kind() != "attribute"
+        || function
+            .child_by_field_name("object")
+            .and_then(|object| object.utf8_text(src).ok())
+            != Some("self")
+    {
+        return None;
+    }
+    function
+        .child_by_field_name("attribute")
+        .and_then(|method| method.utf8_text(src).ok())
+        .map(str::to_string)
+}
+
+fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
+    let value = node.named_child(0)?;
+    if value.kind() != "call" {
+        return None;
+    }
+    let function = value.child_by_field_name("function")?;
+    (function.kind() == "identifier")
+        .then(|| function.utf8_text(src).ok().map(str::to_string))
+        .flatten()
 }
 
 /// Build a [`ClassUnit`] for a `class_definition` node.

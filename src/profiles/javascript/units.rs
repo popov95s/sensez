@@ -6,6 +6,7 @@
 
 use super::{conditionals, obsession, performance, symbols};
 use crate::spine::ir::FunctionUnit;
+use std::collections::HashMap;
 use tree_sitter::Node;
 
 /// Numeric literals that are never "magic".
@@ -36,7 +37,10 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         ..Default::default()
     };
     if let Some(body) = func.child_by_field_name("body") {
-        let mut acc = Acc { unit: &mut unit };
+        let mut acc = Acc {
+            unit: &mut unit,
+            guards: HashMap::new(),
+        };
         acc.visit(body, src, 0, 0);
     }
     // A TS tuple *return type* `(): [A, B, C]` is position-based grouped data —
@@ -88,6 +92,7 @@ fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
 /// Body-walk accumulator (borrows the unit so helpers stay small).
 struct Acc<'u> {
     unit: &'u mut FunctionUnit,
+    guards: HashMap<u64, usize>,
 }
 
 impl Acc<'_> {
@@ -99,6 +104,10 @@ impl Acc<'_> {
         }
         obsession::scan(self.unit, node, src);
         performance::scan(&mut self.unit.performance, node, src, loop_depth);
+        if let Some(method) = own_method_call(node, src) {
+            self.unit.own_method_calls.insert(method);
+        }
+        super::risk_facts::scan(self.unit, &mut self.guards, node, src);
 
         let mut child_depth = depth;
         if is_nesting(kind) {
@@ -116,7 +125,12 @@ impl Acc<'_> {
             self.unit.collapsible_nested_ifs += 1;
         }
         match kind {
-            "return_statement" => self.unit.return_count += 1,
+            "return_statement" => {
+                self.unit.return_count += 1;
+                if let Some(constructor) = returned_constructor(node, src) {
+                    self.unit.returned_constructors.insert(constructor);
+                }
+            }
             "number" => {
                 if let Ok(t) = node.utf8_text(src) {
                     if !ALLOWED_NUMS.contains(&t) {
@@ -182,6 +196,36 @@ impl Acc<'_> {
                 .or_insert(0) += 1;
         }
     }
+}
+
+fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
+    if node.kind() != "call_expression" {
+        return None;
+    }
+    let function = node.child_by_field_name("function")?;
+    if function.kind() != "member_expression"
+        || !function
+            .child_by_field_name("object")
+            .is_some_and(|object| object.kind() == "this")
+    {
+        return None;
+    }
+    function
+        .child_by_field_name("property")
+        .and_then(|method| method.utf8_text(src).ok())
+        .map(str::to_string)
+}
+
+fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
+    let value = node.named_child(0)?;
+    let function = match value.kind() {
+        "call_expression" => value.child_by_field_name("function"),
+        "new_expression" => value.child_by_field_name("constructor"),
+        _ => None,
+    }?;
+    (function.kind() == "identifier")
+        .then(|| function.utf8_text(src).ok().map(str::to_string))
+        .flatten()
 }
 
 /// Length of the pure attribute chain `a.b.c.d` ending at this `member_expression`

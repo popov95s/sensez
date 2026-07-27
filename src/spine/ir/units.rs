@@ -5,6 +5,20 @@
 use super::PerformanceFacts;
 use std::collections::{HashMap, HashSet};
 
+/// Syntax facts used by the high-precision generated-code detectors.
+#[derive(Debug, Clone, Default)]
+pub struct ReviewRiskFacts {
+    pub broad_handlers: usize,
+    pub empty_fallbacks: usize,
+    pub repeated_guards: usize,
+}
+
+#[derive(Debug, Clone, Default)]
+pub struct SchemaCall {
+    pub target: String,
+    pub arguments: Vec<String>,
+}
+
 /// Per-function structural summary used by the design-smell pillar.
 #[derive(Debug, Clone, Default)]
 pub struct FunctionUnit {
@@ -38,9 +52,18 @@ pub struct FunctionUnit {
     /// functions excluded). Collected here during the single body walk so the
     /// owning class can assemble its LCOM map without re-walking each method.
     pub self_attrs: HashSet<String>,
+    /// Calls to methods on the language's own-instance receiver.
+    pub own_method_calls: HashSet<String>,
     /// Receiver identifier → distinct string-literal subscript keys
     /// (`cfg["host"]`, reads and writes alike) — implicit-schema detection.
     pub str_keys: HashMap<String, HashSet<String>>,
+    /// Direct helper calls with identifier arguments, used to propagate
+    /// dictionary shapes across small helper boundaries.
+    pub schema_calls: Vec<SchemaCall>,
+    /// Loose inputs passed through a recognized typed/schema decoder.
+    pub validated_names: HashSet<String>,
+    /// Domain constructors directly returned by this function.
+    pub returned_constructors: HashSet<String>,
     /// Identifiers whose *object* is mutated in this body: subscript-assign,
     /// `del x[k]`, or a known mutating method call (`x.append(...)`).
     pub mutated_names: HashSet<String>,
@@ -60,6 +83,8 @@ pub struct FunctionUnit {
     pub short_string_fallback_lines: Vec<usize>,
     /// Compact call/loop facts consumed by performance smell detectors.
     pub performance: PerformanceFacts,
+    /// Conservative evidence for AI-generated-code patterns.
+    pub review_risks: ReviewRiskFacts,
     /// True if this function is defined inside another function's body
     /// (methods directly on a class are NOT nested).
     pub is_nested: bool,
@@ -109,6 +134,9 @@ pub struct FunctionMetrics {
     pub max_chain_depth: usize,
     pub receiver_access: HashMap<String, usize>,
     pub str_keys: HashMap<String, HashSet<String>>,
+    pub schema_calls: Vec<SchemaCall>,
+    pub validated_names: HashSet<String>,
+    pub returned_constructors: HashSet<String>,
 
     // Mutation
     pub mutated_names: HashSet<String>,
@@ -119,6 +147,9 @@ pub struct FunctionMetrics {
 
     // Performance
     pub performance: PerformanceFacts,
+
+    // Structurally derived review risks
+    pub review_risks: ReviewRiskFacts,
 }
 
 impl From<&FunctionUnit> for FunctionMetrics {
@@ -146,12 +177,16 @@ impl From<&FunctionUnit> for FunctionMetrics {
             max_chain_depth: f.max_chain_depth,
             receiver_access: f.receiver_access.clone(),
             str_keys: f.str_keys.clone(),
+            schema_calls: f.schema_calls.clone(),
+            validated_names: f.validated_names.clone(),
+            returned_constructors: f.returned_constructors.clone(),
             mutated_names: f.mutated_names.clone(),
             attr_mutated_names: f.attr_mutated_names.clone(),
             literal_membership_tests: f.literal_membership_tests,
             local_reassigns: f.local_reassigns.clone(),
             short_string_fallback_lines: f.short_string_fallback_lines.clone(),
             performance: f.performance.clone(),
+            review_risks: f.review_risks.clone(),
         }
     }
 }
@@ -170,6 +205,8 @@ pub struct ClassUnit {
     pub methods: Vec<String>,
     /// Method name → set of `self.<attr>` it reads or writes (LCOM, temp field).
     pub method_attr_use: HashMap<String, HashSet<String>>,
+    /// Method name → sibling methods invoked through `self` / `this`.
+    pub method_calls: HashMap<String, HashSet<String>>,
     /// Concrete methods whose body is only `pass` / `raise NotImplementedError`
     /// (excludes `@abstractmethod`-decorated declarations).
     pub overrides_to_stub: Vec<String>,

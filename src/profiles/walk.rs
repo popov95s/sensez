@@ -188,7 +188,7 @@ pub(crate) fn register_method(out: &mut Walked, name: String, line: usize) {
 /// class lists it as a direct method (so a function defined inside an `if` in a
 /// class body is correctly excluded).
 pub(crate) fn attach_method_attrs(out: &mut Walked) {
-    let assignments: Vec<(usize, String, HashSet<String>)> = out
+    let assignments: Vec<(usize, String, HashSet<String>, HashSet<String>)> = out
         .units
         .functions
         .iter()
@@ -201,11 +201,21 @@ pub(crate) fn attach_method_attrs(out: &mut Walked) {
                 .filter(|(_, c)| c.start_line <= f.start_line && f.end_line <= c.end_line)
                 .max_by_key(|(_, c)| c.start_line)
                 .filter(|(_, c)| c.methods.contains(&f.name))
-                .map(|(i, _)| (i, f.name.clone(), f.self_attrs.clone()))
+                .map(|(i, _)| {
+                    (
+                        i,
+                        f.name.clone(),
+                        f.self_attrs.clone(),
+                        f.own_method_calls.clone(),
+                    )
+                })
         })
         .collect();
-    for (i, name, attrs) in assignments {
-        out.units.classes[i].method_attr_use.insert(name, attrs);
+    for (i, name, attrs, calls) in assignments {
+        out.units.classes[i]
+            .method_attr_use
+            .insert(name.clone(), attrs);
+        out.units.classes[i].method_calls.insert(name, calls);
     }
 }
 
@@ -262,7 +272,7 @@ fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<Strin
     subject_fields
         .iter()
         .find_map(|field| node.child_by_field_name(field))
-        .filter(|n| n.kind() == "identifier")
         .and_then(|n| node_text(n, src))
+        .filter(|text| text.len() <= 120)
         .map(str::to_string)
 }

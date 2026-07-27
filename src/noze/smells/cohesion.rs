@@ -1,8 +1,8 @@
 //! Cohesion smells: Divergent Change (via LCOM).
 //!
 //! LCOM here is component-based (LCOM4-style): methods are nodes, linked when
-//! they share a `self.<attr>`. A class whose methods fall into several disjoint
-//! components is poorly cohesive — a hazard for divergent change.
+//! they share a `self.<attr>` or call one another. A class whose methods fall
+//! into several disjoint components is poorly cohesive.
 //!
 //! Only methods that actually touch instance state participate. Stateless
 //! classes (CRUD repos of `@staticmethod`s, Pydantic/`Enum` data classes) carry
@@ -80,6 +80,13 @@ fn lcom_components(class: &ClassUnit, stateful: &[&str]) -> usize {
                     None => {
                         owner.insert(attr.as_str(), i);
                     }
+                }
+            }
+        }
+        if let Some(calls) = class.method_calls.get(*m) {
+            for called in calls {
+                if let Some(j) = stateful.iter().position(|name| *name == called) {
+                    union(&mut parent, i, j);
                 }
             }
         }
