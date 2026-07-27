@@ -13,10 +13,20 @@ mod graphy;
 mod inherit;
 mod mutation;
 mod performance;
+mod review_risks;
 mod size;
 mod structural;
 mod typing;
 mod union_find;
+
+#[cfg(test)]
+mod cohesion_tests;
+#[cfg(test)]
+mod graph_tests;
+#[cfg(test)]
+mod review_risks_tests;
+#[cfg(test)]
+mod schema_tests;
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
@@ -97,6 +107,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     size::detect(&ctx, &metrics, cfg, classes, &mut out);
     structural::detect(&ctx, &metrics, cfg, &mut out);
     cohesion::detect(&ctx, &metrics, classes, &mut out);
+    review_risks::detect(&ctx, &metrics, classes, &mut out);
     coupling::detect(&ctx, &metrics, &usage, &locals, cfg, &mut out);
     inherit::detect(&ctx, classes, cfg, &mut out);
     typing::detect(&ctx, &metrics, cfg, &mut out);

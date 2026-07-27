@@ -5,6 +5,8 @@ mod agent_scope;
 mod compact;
 mod gate;
 #[cfg(test)]
+mod gate_lifecycle_tests;
+#[cfg(test)]
 mod gate_regression_tests;
 #[cfg(test)]
 mod gate_tests;
