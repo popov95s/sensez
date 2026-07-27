@@ -9,7 +9,15 @@ fn local(ext: &str, source: &str) -> Vec<SmellFinding> {
     let path = temp.path().join(format!("sample.{ext}"));
     fs::write(&path, source).unwrap();
     let file = parse_file(&path, 0).unwrap();
-    detect_local(&file, &Smells::default())
+    detect_local(&file, &review_risk_config())
+}
+
+fn review_risk_config() -> Smells {
+    let mut config = Smells::default();
+    config.disabled.retain(|kind| {
+        *kind != SmellKind::DefensiveFallback && *kind != SmellKind::RedundantValidation
+    });
+    config
 }
 
 fn has(findings: &[SmellFinding], kind: SmellKind) -> bool {

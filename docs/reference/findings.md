@@ -1114,7 +1114,7 @@ Repeated guards obscure which invariants have already been established.
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    {{FIX_TEXT:python}}
+    Validate at the boundary or first use, then rely on the established invariant.
 
     ```python
     def publish(message):
@@ -1141,7 +1141,7 @@ Repeated guards obscure which invariants have already been established.
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    {{FIX_TEXT:typescript}}
+    Validate at the boundary or first use, then rely on the established invariant.
 
     ```ts
     function publish(message: Message | undefined) {
@@ -1169,9 +1169,9 @@ action = "warning"
 <table>
 <thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
 <tbody>
-<tr><td>Python</td><td>Yes</td></tr>
-<tr><td>JS / TS</td><td>Yes</td></tr>
-<tr><td>Rust</td><td>Yes</td></tr>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
 </tbody>
 </table>
 </details>
@@ -2177,7 +2177,7 @@ A forced common type couples two implementations whose real responsibilities no 
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    {{FIX_TEXT:python}}
+    Narrow the Protocol to genuine shared behavior, or use the concrete types directly.
 
     ```python
     class FileWorker:
@@ -2216,7 +2216,7 @@ A forced common type couples two implementations whose real responsibilities no 
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    {{FIX_TEXT:typescript}}
+    Narrow the interface to genuine shared behavior, or use the concrete types directly.
 
     ```ts
     class FileWorker {
@@ -3309,7 +3309,7 @@ Broad catches plus empty defaults turn contract violations into plausible but wr
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    {{FIX_TEXT:python}}
+    Validate once at the boundary, catch specific failures, and preserve unexpected errors.
 
     ```python
     def load_payload(raw):
@@ -3339,7 +3339,7 @@ Broad catches plus empty defaults turn contract violations into plausible but wr
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    {{FIX_TEXT:typescript}}
+    Parse once at the boundary, catch specific failures, and preserve unexpected errors.
 
     ```ts
     function loadPayload(raw: unknown): Payload {
@@ -3365,9 +3365,9 @@ action = "warning"
 <table>
 <thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
 <tbody>
-<tr><td>Python</td><td>Yes</td></tr>
-<tr><td>JS / TS</td><td>Yes</td></tr>
-<tr><td>Rust</td><td>Yes</td></tr>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
 </tbody>
 </table>
 </details>

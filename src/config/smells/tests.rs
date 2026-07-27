@@ -16,6 +16,8 @@ fn defaults_differ_per_language() {
 
     assert!(py.disabled.contains(&SmellKind::NestedLoop));
     assert!(py.disabled.contains(&SmellKind::NPlusOneCall));
+    assert!(py.disabled.contains(&SmellKind::DefensiveFallback));
+    assert!(py.disabled.contains(&SmellKind::RedundantValidation));
     assert!(!py.large_class, "python large_class deferred to Ruff");
 
     assert!(ts.large_class, "TS enables large_class (no native rule)");
@@ -23,6 +25,8 @@ fn defaults_differ_per_language() {
     assert!(ts.disabled.contains(&SmellKind::HighCognitiveComplexity));
     assert!(ts.disabled.contains(&SmellKind::NestedLoop));
     assert!(ts.disabled.contains(&SmellKind::NPlusOneCall));
+    assert!(ts.disabled.contains(&SmellKind::DefensiveFallback));
+    assert!(ts.disabled.contains(&SmellKind::RedundantValidation));
     // JavaScript shares the TS default.
     assert!(cfg
         .for_language(Language::JavaScript)
@@ -106,6 +110,21 @@ fn beta_performance_rules_require_explicit_opt_in() {
     let py = cfg.for_language(Language::Python);
     assert!(!py.disabled.contains(&SmellKind::NestedLoop));
     assert!(py.disabled.contains(&SmellKind::NPlusOneCall));
+}
+
+#[test]
+fn review_risk_rules_require_explicit_opt_in() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.redundant_validation]
+            enabled = true
+        "#,
+    )
+    .unwrap();
+
+    let py = cfg.for_language(Language::Python);
+    assert!(!py.disabled.contains(&SmellKind::RedundantValidation));
+    assert!(py.disabled.contains(&SmellKind::DefensiveFallback));
 }
 
 #[test]
