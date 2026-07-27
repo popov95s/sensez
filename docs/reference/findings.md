@@ -3302,7 +3302,7 @@ Broad catches plus empty defaults turn contract violations into plausible but wr
             names = raw.get("names") or []
             options = raw.get("options") or {}
             return names, options
-        except Exception:
+        except:
             return [], {}
     ```
 
