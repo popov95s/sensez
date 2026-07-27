@@ -47,10 +47,10 @@ echo "==> sensez binary: $SENSEZ_BIN"
 # -- time a single run --------------------------------------------------------
 time_run() {
   local start end
-  start=$(python3 -c 'import time; print(time.perf_counter())')
+  start=$(python3 -c 'import time; print(time.time_ns())')
   "$SENSEZ_BIN" noze "$1" --json --all >/dev/null 2>&1
-  end=$(python3 -c 'import time; print(time.perf_counter())')
-  python3 -c "print(round($end - $start, 3))"
+  end=$(python3 -c 'import time; print(time.time_ns())')
+  python3 -c "print(round(($end - $start) / 1_000_000_000, 3))"
 }
 
 # -- benchmark one target -----------------------------------------------------

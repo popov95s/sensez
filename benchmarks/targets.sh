@@ -15,9 +15,9 @@ clone_at() {
   local dest="$BENCH_CACHE/$name"
 
   if [ -f "$dest/.sensez-clone-done" ]; then
-    local current
-    current=$(git -C "$dest" rev-parse HEAD 2>/dev/null || echo "")
-    if [ "$current" = "$ref" ]; then
+    local cached_ref
+    cached_ref=$(tr -d '\n' < "$dest/.sensez-clone-done")
+    if [ "$cached_ref" = "$ref" ]; then
       echo "  $name: already at $ref"
       return
     fi
@@ -33,7 +33,7 @@ clone_at() {
   git -C "$dest" remote add origin "$url"
   git -C "$dest" fetch --depth 1 origin "$ref" --quiet
   git -C "$dest" checkout FETCH_HEAD --quiet
-  touch "$dest/.sensez-clone-done"
+  printf '%s\n' "$ref" > "$dest/.sensez-clone-done"
   echo "  $name: done ($(git -C "$dest" rev-parse --short HEAD))"
 }
 
