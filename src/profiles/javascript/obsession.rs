@@ -4,7 +4,7 @@
 //! severity live in `noze::smells`.
 
 use crate::profiles::walk;
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{FunctionUnit, SchemaCall};
 use tree_sitter::Node;
 
 /// Methods whose call mutates the receiver in place (Array / Map / Set).
@@ -136,6 +136,7 @@ fn record_delete(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 /// `x.push(...)` (mutating call) and `["a","b"].includes(y)` (literal membership).
 fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    record_schema_call(unit, node, src);
     let Some(func) = node
         .child_by_field_name("function")
         .filter(|f| f.kind() == "member_expression")
@@ -153,6 +154,38 @@ fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         Some("includes") if is_string_array(object) => unit.literal_membership_tests += 1,
         _ => {}
     }
+}
+
+fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let Some(function) = node.child_by_field_name("function") else {
+        return;
+    };
+    let arguments = identifier_arguments(node, src);
+    if function.kind() == "identifier" && !arguments.is_empty() {
+        unit.schema_calls.push(SchemaCall {
+            target: function.utf8_text(src).unwrap_or_default().to_string(),
+            arguments: arguments.clone(),
+        });
+    }
+    let validator = function
+        .child_by_field_name("property")
+        .and_then(|property| property.utf8_text(src).ok())
+        .is_some_and(|method| matches!(method, "parse" | "safeParse" | "decode"));
+    if validator {
+        unit.validated_names.extend(arguments);
+    }
+}
+
+fn identifier_arguments(node: Node, src: &[u8]) -> Vec<String> {
+    let Some(arguments) = node.child_by_field_name("arguments") else {
+        return Vec::new();
+    };
+    let mut cursor = arguments.walk();
+    arguments
+        .named_children(&mut cursor)
+        .filter(|argument| argument.kind() == "identifier")
+        .filter_map(|argument| argument.utf8_text(src).ok().map(str::to_string))
+        .collect()
 }
 
 /// True for `["a", "b", ...]` — a non-empty array literal of only strings.

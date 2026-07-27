@@ -81,6 +81,17 @@ pub(crate) fn is_dictish(annotation: &str) -> bool {
     )
 }
 
+pub(crate) fn has_domain_model(annotation: &str) -> bool {
+    has_domain_type(annotation, &TYPING_NAMES)
+}
+
+pub(crate) fn is_primitive_scalar_alias(annotation: &str) -> bool {
+    matches!(
+        base_type(annotation),
+        "str" | "int" | "float" | "bool" | "bytes"
+    )
+}
+
 /// `Optional[dict[str, Any]]` → `dict[str, Any]` (best effort).
 fn inner(annotation: &str) -> &str {
     annotation

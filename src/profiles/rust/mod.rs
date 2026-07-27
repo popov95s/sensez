@@ -24,7 +24,7 @@ mod units_tests;
 
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleLayout, ModuleProfile, ParseProfile,
-    PerformanceProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
@@ -115,7 +115,47 @@ impl DeadCodeProfile for RustProfile {
 }
 
 impl PerformanceProfile for RustProfile {
-    fn is_expensive_loop_call(&self, method: &str) -> bool {
-        performance::EXPENSIVE_LOOP_METHODS.contains(&method)
+    fn receiver_root<'a>(&self, receiver: &'a str) -> &'a str {
+        performance::receiver_root(receiver)
+    }
+
+    fn is_mutating_call(&self, method: &str) -> bool {
+        performance::is_mutating_call(method)
+    }
+
+    fn is_bounded_loop(&self, subject: &str) -> bool {
+        performance::is_bounded_loop(subject)
+    }
+
+    fn is_external_loop_call(
+        &self,
+        method: &str,
+        receiver: &str,
+        receiver_type: Option<&str>,
+        loops: &[crate::spine::ir::PerfLine],
+    ) -> bool {
+        performance::is_external_loop_call(method, receiver, receiver_type, loops)
+    }
+}
+
+impl TypeVocabularyProfile for RustProfile {
+    fn loose_kind(&self, annotation: &str) -> Option<crate::profiles::typevocab::LooseTypeKind> {
+        typevocab::loose_kind(annotation)
+    }
+
+    fn is_bool(&self, annotation: &str) -> bool {
+        typevocab::is_bool(annotation)
+    }
+
+    fn is_dictish(&self, annotation: &str) -> bool {
+        typevocab::is_dictish(annotation)
+    }
+
+    fn has_domain_model(&self, annotation: &str) -> bool {
+        typevocab::has_domain_model(annotation)
+    }
+
+    fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
+        typevocab::is_primitive_scalar_alias(annotation)
     }
 }

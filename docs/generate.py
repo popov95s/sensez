@@ -100,7 +100,9 @@ def parse_rich_docs() -> dict[str, RichDocs]:
 
 def parse_lints(source: str) -> list[tuple[str, str]]:
     pattern = re.compile(
-        r'ExternalLint \{ tool: "((?:\\.|[^"\\])*)", rule: "((?:\\.|[^"\\])*)" \}',
+        r'ExternalLint\s*\{\s*tool:\s*"((?:\\.|[^"\\])*)",\s*'
+        r'rule:\s*"((?:\\.|[^"\\])*)",?\s*\}',
+        re.S,
     )
     return [
         (decode_rust_string(tool), decode_rust_string(rule))

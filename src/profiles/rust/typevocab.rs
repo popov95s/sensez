@@ -30,3 +30,30 @@ pub fn is_dictish(annotation: &str) -> bool {
     let base = base_type(annotation).trim_start_matches('&').trim();
     matches!(base, "HashMap" | "BTreeMap")
 }
+
+pub fn has_domain_model(annotation: &str) -> bool {
+    has_domain_type(annotation, BUILTINS)
+}
+
+pub fn is_primitive_scalar_alias(annotation: &str) -> bool {
+    matches!(
+        base_type(annotation).trim_start_matches('&').trim(),
+        "String"
+            | "str"
+            | "bool"
+            | "usize"
+            | "isize"
+            | "u8"
+            | "u16"
+            | "u32"
+            | "u64"
+            | "u128"
+            | "i8"
+            | "i16"
+            | "i32"
+            | "i64"
+            | "i128"
+            | "f32"
+            | "f64"
+    )
+}

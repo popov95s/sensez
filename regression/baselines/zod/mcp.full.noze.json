@@ -864,16 +864,6 @@
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
-      "line": 223,
-      "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
-      "metric": 1,
-      "symbol": "parse",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
       "line": 229,
       "message": "params [data: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1109,16 +1099,6 @@
       "metric": 2,
       "symbol": "handleRefineResult",
       "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "n_plus_one_call",
-      "line": 3072,
-      "message": "external-looking call runs once per loop iteration; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "",
-      "threshold": 1
     },
     {
       "action": "advisory",
@@ -1371,21 +1351,11 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/tsc/generate.ts",
-      "kind": "repeated_iteration",
-      "line": 256,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "generateExtendChain",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v3/ZodError.ts",
       "kind": "divergent_change",
       "line": 194,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
       "symbol": "ZodError",
       "threshold": 1
     },
@@ -1453,50 +1423,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "divergent_change",
-      "line": 1369,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
-      "symbol": "ZodNumber",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "divergent_change",
       "line": 158,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
       "symbol": "ZodType",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "divergent_change",
-      "line": 1635,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
-      "symbol": "ZodBigInt",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "divergent_change",
-      "line": 1877,
-      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 2,
-      "symbol": "ZodDate",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "divergent_change",
-      "line": 2236,
-      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 2,
-      "symbol": "ZodArray",
       "threshold": 1
     },
     {
@@ -1523,16 +1453,6 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "divergent_change",
-      "line": 3686,
-      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 2,
-      "symbol": "ZodSet",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "divergent_change",
       "line": 3817,
       "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
       "metric": 2,
@@ -1544,8 +1464,8 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "divergent_change",
       "line": 731,
-      "message": "class splits into 4 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 4,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
       "symbol": "ZodString",
       "threshold": 1
     },
@@ -1831,16 +1751,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
-      "kind": "repeated_iteration",
-      "line": 214,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "convertBaseSchema",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "loose_typing",
       "line": 1977,
@@ -2036,26 +1946,6 @@
       "metric": 1,
       "symbol": "toJSONSchema",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
-      "kind": "repeated_iteration",
-      "line": 158,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
-      "kind": "repeated_iteration",
-      "line": 194,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -2261,10 +2151,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "repeated_iteration",
-      "line": 2257,
+      "line": 2211,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "symbol": "handleExclusiveUnionResults",
+      "symbol": "",
       "threshold": 1
     },
     {

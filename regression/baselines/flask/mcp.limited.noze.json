@@ -262,10 +262,20 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
+      "kind": "boolean_blindness",
+      "line": 310,
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "metric": 3,
+      "symbol": "__init__",
+      "threshold": 2
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
       "kind": "divergent_change",
       "line": 109,
-      "message": "class splits into 8 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 8,
+      "message": "class splits into 5 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 5,
       "symbol": "Flask",
       "threshold": 1
     },
@@ -401,8 +411,8 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "divergent_change",
       "line": 59,
-      "message": "class splits into 10 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 10,
+      "message": "class splits into 5 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 5,
       "symbol": "App",
       "threshold": 1
     },
@@ -414,16 +424,6 @@
       "metric": 28,
       "symbol": "flask.sansio.app",
       "threshold": 25
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/blueprints.py",
-      "kind": "divergent_change",
-      "line": 119,
-      "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 7,
-      "symbol": "Blueprint",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -440,8 +440,8 @@
       "file": "<flask>/src/flask/sansio/scaffold.py",
       "kind": "divergent_change",
       "line": 52,
-      "message": "class splits into 6 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 6,
+      "message": "class splits into 5 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 5,
       "symbol": "Scaffold",
       "threshold": 1
     },

@@ -1,15 +1,8 @@
-//! Type-annotation vocabulary: the language-neutral seam + shared lexical base.
+//! Language-neutral mechanics shared by type-vocabulary profiles.
 //!
-//! Each language's notion of a "loose" / boolean / dict-shaped annotation lives
-//! in its own profile module (`python::typevocab`, `javascript::typevocab`) —
-//! never jammed together. This module owns only (a) the small string helpers
-//! every language reuses, and (b) thin routers that dispatch a [`Language`] to
-//! its module (the same compile-time, feature-gated routing as [`registry`]).
-//! Analyzer passes call these routers and stay language-agnostic.
-//!
-//! [`registry`]: crate::profiles::registry
-
-use crate::spine::ir::Language;
+//! Language-specific annotation names and classifications belong exclusively
+//! to each language's `typevocab` module and are exposed through
+//! [`super::TypeVocabularyProfile`].
 
 // ---- shared lexical helpers (used by every language's vocab) ----------------
 
@@ -47,84 +40,4 @@ pub(crate) fn has_domain_type(annotation: &str, builtins: &[&str]) -> bool {
 
 pub(crate) fn has_token(annotation: &str, token: &str) -> bool {
     idents(annotation).any(|t| t == token)
-}
-
-pub fn is_primitive_scalar_alias(lang: Language, target: &str) -> bool {
-    let base = base_type(target).trim_start_matches('&').trim();
-    match lang {
-        Language::Python => matches!(base, "str" | "int" | "float" | "bool" | "bytes"),
-        Language::JavaScript | Language::TypeScript => {
-            matches!(base, "string" | "number" | "boolean" | "bigint" | "symbol")
-        }
-        Language::Rust => matches!(
-            base,
-            "String"
-                | "str"
-                | "bool"
-                | "usize"
-                | "isize"
-                | "u8"
-                | "u16"
-                | "u32"
-                | "u64"
-                | "u128"
-                | "i8"
-                | "i16"
-                | "i32"
-                | "i64"
-                | "i128"
-                | "f32"
-                | "f64"
-        ),
-    }
-}
-
-// ---- language routers -------------------------------------------------------
-
-#[allow(unreachable_patterns)]
-pub fn loose_kind(lang: Language, annotation: &str) -> Option<LooseTypeKind> {
-    match lang {
-        #[cfg(feature = "lang-python")]
-        Language::Python => crate::profiles::python::typevocab::loose_kind(annotation),
-        #[cfg(feature = "lang-javascript")]
-        Language::JavaScript | Language::TypeScript => {
-            crate::profiles::javascript::typevocab::loose_kind(annotation)
-        }
-        #[cfg(feature = "lang-rust")]
-        Language::Rust => crate::profiles::rust::typevocab::loose_kind(annotation),
-        _ => None,
-    }
-}
-
-/// The language's boolean type name (Python `bool`, TS `boolean`).
-#[allow(unreachable_patterns)]
-pub fn is_bool_type(lang: Language, annotation: &str) -> bool {
-    match lang {
-        #[cfg(feature = "lang-python")]
-        Language::Python => crate::profiles::python::typevocab::is_bool(annotation),
-        #[cfg(feature = "lang-javascript")]
-        Language::JavaScript | Language::TypeScript => {
-            crate::profiles::javascript::typevocab::is_bool(annotation)
-        }
-        #[cfg(feature = "lang-rust")]
-        Language::Rust => crate::profiles::rust::typevocab::is_bool(annotation),
-        _ => false,
-    }
-}
-
-/// A dict/record-shaped (or `Any`-ish) annotation — a receiver that might carry
-/// an implicit schema. Non-dict annotated receivers (DataFrame, ndarray) skip.
-#[allow(unreachable_patterns)]
-pub fn is_dictish(lang: Language, annotation: &str) -> bool {
-    match lang {
-        #[cfg(feature = "lang-python")]
-        Language::Python => crate::profiles::python::typevocab::is_dictish(annotation),
-        #[cfg(feature = "lang-javascript")]
-        Language::JavaScript | Language::TypeScript => {
-            crate::profiles::javascript::typevocab::is_dictish(annotation)
-        }
-        #[cfg(feature = "lang-rust")]
-        Language::Rust => crate::profiles::rust::typevocab::is_dictish(annotation),
-        _ => false,
-    }
 }

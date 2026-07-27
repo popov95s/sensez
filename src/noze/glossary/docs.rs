@@ -654,6 +654,36 @@ FindingDocs {
             },
         ],
     },
+    FindingDocs {
+        kind: DefensiveFallback,
+        why_bad: "Broad catches plus empty defaults turn contract violations into plausible but wrong data.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock { language: "python", body: "Validate once at the boundary, catch specific failures, and preserve unexpected errors." },
+            LanguageBlock { language: "typescript", body: "Parse once at the boundary, catch specific failures, and preserve unexpected errors." },
+        ],
+    },
+    FindingDocs {
+        kind: DivergentAbstraction,
+        why_bad: "A forced common type couples two implementations whose real responsibilities no longer match.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock { language: "python", body: "Narrow the Protocol to genuine shared behavior, or use the concrete types directly." },
+            LanguageBlock { language: "typescript", body: "Narrow the interface to genuine shared behavior, or use the concrete types directly." },
+        ],
+    },
+    FindingDocs {
+        kind: RedundantValidation,
+        why_bad: "Repeated guards obscure which invariants have already been established.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock { language: "python", body: "Validate at the boundary or first use, then rely on the established invariant." },
+            LanguageBlock { language: "typescript", body: "Validate at the boundary or first use, then rely on the established invariant." },
+        ],
+    },
 ];
 
 pub fn all() -> impl Iterator<Item = &'static FindingDocs> {

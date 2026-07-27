@@ -10,9 +10,7 @@
 
 use super::{grouped_value_target, make, structure_target, SmellContext};
 use crate::config::smells::{Smells, Strictness};
-use crate::profiles::typevocab::{
-    base_type, is_bool_type, is_primitive_scalar_alias, loose_kind, LooseTypeKind,
-};
+use crate::profiles::typevocab::{base_type, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionMetrics;
 
@@ -52,6 +50,9 @@ fn loose_typing(
             .iter()
             .fold((Vec::new(), false), |(mut labels, escape), p| {
                 if matches!(p.as_str(), "self" | "cls" | "args" | "kwargs") {
+                    return (labels, escape);
+                }
+                if m.validated_names.contains(p) {
                     return (labels, escape);
                 }
                 let next = ctx
@@ -141,7 +142,7 @@ fn boolean_blindness(
         .param_names
         .iter()
         .filter_map(|p| ctx.type_hints.param_types.get(&(m.name.clone(), p.clone())))
-        .filter(|ty| is_bool_type(ctx.language, ty))
+        .filter(|ty| ctx.type_vocabulary.is_bool(ty))
         .count();
     if bools > cfg.max_bool_params {
         out.push(make(
@@ -206,7 +207,7 @@ fn reportable_loose(
     annotation: &str,
     strictness: Strictness,
 ) -> Option<LooseTypeKind> {
-    let kind = loose_kind(ctx.language, annotation)?;
+    let kind = ctx.type_vocabulary.loose_kind(annotation)?;
     match (strictness, kind) {
         (Strictness::Low, LooseTypeKind::EscapeHatch)
         | (Strictness::Medium, LooseTypeKind::EscapeHatch)
@@ -219,7 +220,7 @@ fn reportable_loose(
 fn type_hiding_aliases(ctx: &SmellContext<'_>, out: &mut Vec<SmellFinding>) {
     for alias in &ctx.type_hints.type_aliases {
         let loose = reportable_loose(ctx, &alias.target, Strictness::High).is_some();
-        if !loose && !is_primitive_scalar_alias(ctx.language, &alias.target) {
+        if !loose && !ctx.type_vocabulary.is_primitive_scalar_alias(&alias.target) {
             continue;
         }
         out.push(make(

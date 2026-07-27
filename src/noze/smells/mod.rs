@@ -30,6 +30,7 @@ mod schema_tests;
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
+use crate::profiles::{registry, TypeVocabularyProfile};
 use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::Language;
@@ -49,6 +50,7 @@ pub(super) struct SmellContext<'a> {
     pub path: &'a Path,
     pub language: Language,
     pub type_hints: &'a TypeHints,
+    pub type_vocabulary: &'static dyn TypeVocabularyProfile,
 }
 
 impl<'a> SmellContext<'a> {
@@ -57,6 +59,7 @@ impl<'a> SmellContext<'a> {
             path: &file.path,
             language: file.language,
             type_hints: &file.walked.units.type_hints,
+            type_vocabulary: registry::type_vocabulary(file.language),
         }
     }
 }

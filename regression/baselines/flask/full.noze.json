@@ -266,7 +266,7 @@
     "mode": "full",
     "smell_totals": {
       "boolean_blindness": 4,
-      "divergent_change": 12,
+      "divergent_change": 8,
       "feature_envy": 1,
       "god_module": 3,
       "heavy_nested_function": 1,
@@ -281,7 +281,7 @@
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
-    "smells_total": 161,
+    "smells_total": 157,
     "source_lines": 18315
   },
   "smells": [
@@ -470,8 +470,8 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "divergent_change",
       "line": 109,
-      "message": "class splits into 8 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 8,
+      "message": "class splits into 5 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 5,
       "symbol": "Flask",
       "threshold": 1
     },
@@ -689,8 +689,8 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "divergent_change",
       "line": 531,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
       "symbol": "FlaskGroup",
       "threshold": 1
     },
@@ -858,8 +858,8 @@
       "file": "<flask>/src/flask/config.py",
       "kind": "divergent_change",
       "line": 50,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
+      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 2,
       "symbol": "Config",
       "threshold": 1
     },
@@ -941,16 +941,6 @@
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "from_prefixed_env",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/ctx.py",
-      "kind": "divergent_change",
-      "line": 260,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
-      "symbol": "AppContext",
       "threshold": 1
     },
     {
@@ -1261,16 +1251,6 @@
       "metric": 1,
       "symbol": "_prepare_response_obj",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/json/tag.py",
-      "kind": "divergent_change",
-      "line": 219,
-      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 3,
-      "symbol": "TaggedJSONSerializer",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -1597,8 +1577,8 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "divergent_change",
       "line": 59,
-      "message": "class splits into 10 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 10,
+      "message": "class splits into 5 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 5,
       "symbol": "App",
       "threshold": 1
     },
@@ -1649,16 +1629,6 @@
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "inject_url_defaults",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/blueprints.py",
-      "kind": "divergent_change",
-      "line": 119,
-      "message": "class splits into 7 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 7,
-      "symbol": "Blueprint",
       "threshold": 1
     },
     {
@@ -1746,8 +1716,8 @@
       "file": "<flask>/src/flask/sansio/scaffold.py",
       "kind": "divergent_change",
       "line": 52,
-      "message": "class splits into 6 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 6,
+      "message": "class splits into 5 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 5,
       "symbol": "Scaffold",
       "threshold": 1
     },
@@ -1770,16 +1740,6 @@
       "metric": 1,
       "symbol": "wrapper_func",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sessions.py",
-      "kind": "divergent_change",
-      "line": 284,
-      "message": "class splits into 2 cohesion clusters (low LCOM) \u2014 prone to divergent change",
-      "metric": 2,
-      "symbol": "SecureCookieSessionInterface",
-      "threshold": 1
     },
     {
       "action": "warning",

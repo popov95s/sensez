@@ -9,16 +9,7 @@ use super::unit_helpers::{
     pattern_name, target_root, tuple_type_arity, type_text, unquote,
 };
 
-const ITER_METHODS: &[&str] = &[
-    "iter",
-    "iter_mut",
-    "into_iter",
-    "map",
-    "filter",
-    "fold",
-    "any",
-    "all",
-];
+const ITER_METHODS: &[&str] = &["fold", "any", "all", "count", "sum", "position"];
 const MUTATORS: &[&str] = &[
     "push",
     "pop",

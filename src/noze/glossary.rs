@@ -21,12 +21,14 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 32] = {
+pub const ALL_SMELLS: [SmellKind; 35] = {
     use SmellKind::*;
     [
         BooleanBlindness,
         DataClump,
         DeepNesting,
+        DefensiveFallback,
+        DivergentAbstraction,
         DivergentChange,
         FeatureEnvy,
         GodModule,
@@ -48,6 +50,7 @@ pub const ALL_SMELLS: [SmellKind; 32] = {
         NestedLoop,
         NPlusOneCall,
         ReassignedParameter,
+        RedundantValidation,
         RefusedBequest,
         RepeatedIteration,
         ShotgunSurgeryHazard,
@@ -59,12 +62,14 @@ pub const ALL_SMELLS: [SmellKind; 32] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 32] = {
+pub const SMELLS: [SmellDoc; 35] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(True, False)`) — use an enum or keyword args so calls read clearly." },
         SmellDoc { kind: DataClump, title: "Data Clump", explanation: "The same group of values is passed together through many functions — bundle them into one object or typed structure." },
         SmellDoc { kind: DeepNesting, title: "Deep Nesting", explanation: "Control flow nests many levels deep, hard to follow — flatten with early returns or extracted helpers." },
+        SmellDoc { kind: DefensiveFallback, title: "Defensive Fallback Soup", explanation: "Broad error handling and repeated empty defaults hide invalid states — validate the boundary and let unexpected failures remain visible." },
+        SmellDoc { kind: DivergentAbstraction, title: "Divergent Abstraction", explanation: "An abstraction has only two implementations that grow in different directions — remove the forced common type or narrow it to genuine shared behavior." },
         SmellDoc { kind: DivergentChange, title: "Divergent Change", explanation: "One module gets edited for many unrelated reasons — it has too many responsibilities; split it along those axes." },
         SmellDoc { kind: FeatureEnvy, title: "Feature Envy", explanation: "A method uses another object's data more than its own — move it onto the class that owns that data." },
         SmellDoc { kind: GodModule, title: "God Module", explanation: "A module that too much of the codebase depends on (high centrality) — a coupling and change-risk hotspot; split its responsibilities." },
@@ -86,6 +91,7 @@ pub const SMELLS: [SmellDoc; 32] = {
         SmellDoc { kind: NestedLoop, title: "Nested Loop", explanation: "A loop is nested directly or through a helper called inside a loop — work grows multiplicatively; combine passes or pre-index the data." },
         SmellDoc { kind: NPlusOneCall, title: "N+1 Loop Call", explanation: "An external-looking call runs once per loop item — prefer a bulk query/request or prefetch so work scales by batch, not item." },
         SmellDoc { kind: ReassignedParameter, title: "Reassigned Parameter", explanation: "A parameter is rebound to a new value inside the body — confusing; use a separate local." },
+        SmellDoc { kind: RedundantValidation, title: "Redundant Validation", explanation: "The same condition is checked repeatedly in one function — establish the invariant once and simplify the later path." },
         SmellDoc { kind: RefusedBequest, title: "Refused Bequest", explanation: "A subclass inherits methods/fields it doesn't use or stubs out — the inheritance is wrong; prefer composition." },
         SmellDoc { kind: RepeatedIteration, title: "Repeated Iteration", explanation: "The same collection is iterated several times in one scope — fuse the passes so the data is scanned once." },
         SmellDoc { kind: ShotgunSurgeryHazard, title: "Shotgun Surgery Hazard", explanation: "A symbol so widely depended-on that one change ripples across many modules — a blast-radius hotspot." },

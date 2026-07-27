@@ -23,6 +23,8 @@ pub struct CallFact {
     pub method: String,
     pub line: usize,
     pub member: bool,
+    /// Nearest conditional branch start line; zero means unconditional.
+    pub region: usize,
 }
 
 impl CallFact {
@@ -42,6 +44,7 @@ impl CallFact {
             method: method.to_string(),
             line,
             member: true,
+            region: 0,
         }
     }
 }

@@ -182,3 +182,71 @@ def build_rows(order):
     let findings = local("py", src);
     assert!(!has(&findings, SmellKind::NestedLoop), "{findings:?}");
 }
+
+#[test]
+fn repeated_iteration_keeps_full_receiver_path() {
+    let src = "\
+def summarize(report):
+    errors = report.errors.count(\"error\")
+    warnings = report.warnings.count(\"warning\")
+    return errors + warnings
+";
+    let findings = local("py", src);
+    assert!(
+        !has(&findings, SmellKind::RepeatedIteration),
+        "{findings:?}"
+    );
+}
+
+#[test]
+fn mutation_between_iteration_passes_suppresses_finding() {
+    let src = "\
+def summarize(items):
+    before = sum(items)
+    items.append(3)
+    return max(items)
+";
+    let findings = local("py", src);
+    assert!(
+        !has(&findings, SmellKind::RepeatedIteration),
+        "{findings:?}"
+    );
+}
+
+#[test]
+fn mutually_exclusive_iteration_passes_are_not_combined() {
+    let src = "\
+def summarize(items, detailed):
+    if detailed:
+        return sum(items)
+    else:
+        return max(items)
+";
+    let findings = local("py", src);
+    assert!(
+        !has(&findings, SmellKind::RepeatedIteration),
+        "{findings:?}"
+    );
+}
+
+#[test]
+fn small_literal_ranges_and_take_are_bounded() {
+    let py = "\
+def pairs(items):
+    for item in items:
+        for index in range(5):
+            print(item, index)
+";
+    assert!(!has(&local("py", py), SmellKind::NestedLoop));
+
+    let rust = "\
+fn pairs(items: &[u32]) {
+    for item in items {
+        for index in (0..100).take(5) {
+            println!(\"{item} {index}\");
+        }
+    }
+}
+";
+    assert!(!has(&local("rs", rust), SmellKind::NestedLoop));
+}

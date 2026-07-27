@@ -5,12 +5,14 @@
 //! exclude fails loudly instead of silently changing scan scope.
 
 use anyhow::{anyhow, Result};
-use globset::{Glob, GlobSet};
+use globset::{GlobBuilder, GlobSet};
 
 /// Validate every glob in a user-facing config field.
 pub fn validate_patterns(label: &str, patterns: &[String]) -> Result<()> {
     for pattern in patterns {
-        Glob::new(pattern)
+        GlobBuilder::new(pattern)
+            .literal_separator(true)
+            .build()
             .map(|_| ())
             .map_err(|err| anyhow!("invalid glob in {label} ({pattern:?}): {err}"))?;
     }
@@ -21,7 +23,9 @@ pub fn validate_patterns(label: &str, patterns: &[String]) -> Result<()> {
 pub fn build_globset(patterns: &[String]) -> Result<GlobSet> {
     let mut builder = GlobSet::builder();
     for pattern in patterns {
-        let glob = Glob::new(pattern)
+        let glob = GlobBuilder::new(pattern)
+            .literal_separator(true)
+            .build()
             .map_err(|err| anyhow!("invalid glob pattern ({pattern:?}): {err}"))?;
         builder.add(glob);
     }
@@ -39,6 +43,9 @@ mod tests {
         let set = build_globset(&["**/tests/**".to_string()]).unwrap();
         assert!(set.is_match("src/tests/x.py"));
         assert!(!set.is_match("src/main.py"));
+        let python_tests = build_globset(&["**/test_*.py".to_string()]).unwrap();
+        assert!(python_tests.is_match("src/test_api.py"));
+        assert!(!python_tests.is_match("src/test_helpers/example.py"));
     }
 
     #[test]

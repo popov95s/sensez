@@ -6,6 +6,7 @@
 
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
+    TypeVocabularyProfile,
 };
 use std::path::Path;
 
@@ -65,4 +66,8 @@ pub fn dead_code_profile(language: Language) -> &'static dyn DeadCodeProfile {
 
 pub fn performance_profile(language: Language) -> &'static dyn PerformanceProfile {
     profile(language) as &dyn PerformanceProfile
+}
+
+pub fn type_vocabulary(language: Language) -> &'static dyn TypeVocabularyProfile {
+    profile(language) as &dyn TypeVocabularyProfile
 }

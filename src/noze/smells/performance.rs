@@ -1,10 +1,13 @@
 //! Performance-oriented local smells.
 
+mod external;
+
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::{registry, PerformanceProfile};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{CallFact, FunctionMetrics, PerfLine};
+use crate::spine::ir::{CallFact, FunctionMetrics};
+use external::external_calls;
 use std::collections::BTreeMap;
 
 pub fn detect(
@@ -36,7 +39,7 @@ fn direct_findings(
     profile: &dyn PerformanceProfile,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
-    let nested_loops = significant_loops(&m.performance.nested_loops);
+    let nested_loops = significant_loops(profile, &m.performance.nested_loops);
     if let Some(first) = nested_loops.first() {
         out.push(finding(
             SmellKind::NestedLoop,
@@ -59,7 +62,7 @@ fn direct_findings(
             Severity::Warning,
         ));
     }
-    for calls in repeated_iterations(m).values() {
+    for calls in repeated_iterations(m, profile).values() {
         out.push(finding(
             SmellKind::RepeatedIteration,
             ctx,
@@ -70,7 +73,7 @@ fn direct_findings(
             Severity::Warning,
         ));
     }
-    for call in external_calls(&m.performance.loop_calls, functions, profile).values() {
+    for call in external_calls(ctx, m, &m.performance.loop_calls, functions, profile).values() {
         out.push(finding(
             SmellKind::NPlusOneCall,
             ctx,
@@ -98,7 +101,7 @@ fn helper_findings(
         let Some(callee) = functions.get(call.target.as_str()).copied() else {
             continue;
         };
-        let callee_loops = significant_loops(&callee.performance.loops);
+        let callee_loops = significant_loops(profile, &callee.performance.loops);
         if !callee_loops.is_empty() {
             out.push(finding(
                 SmellKind::NestedLoop,
@@ -110,7 +113,7 @@ fn helper_findings(
                 Severity::Warning,
             ));
         }
-        if !external_calls(&callee.performance.calls, functions, profile).is_empty() {
+        if !external_calls(ctx, callee, &callee.performance.calls, functions, profile).is_empty() {
             out.push(finding(
                 SmellKind::NPlusOneCall,
                 ctx,
@@ -125,38 +128,48 @@ fn helper_findings(
     out
 }
 
-fn repeated_iterations(m: &FunctionMetrics) -> BTreeMap<&str, Vec<&CallFact>> {
-    let mut by_base: BTreeMap<&str, Vec<&CallFact>> = BTreeMap::new();
+fn repeated_iterations<'a>(
+    m: &'a FunctionMetrics,
+    profile: &dyn PerformanceProfile,
+) -> BTreeMap<(&'a str, usize), Vec<&'a CallFact>> {
+    let mut by_base: BTreeMap<(&str, usize), Vec<&CallFact>> = BTreeMap::new();
     for call in &m.performance.iteration_calls {
         if !call.base.is_empty() {
-            by_base.entry(call.base.as_str()).or_default().push(call);
+            by_base
+                .entry((call.base.as_str(), call.region))
+                .or_default()
+                .push(call);
         }
     }
-    by_base.retain(|_, calls| calls.len() > 1);
+    by_base.retain(|(base, _), calls| {
+        calls.len() > 1 && !mutation_between(profile, &m.performance.calls, base, calls)
+    });
     by_base
 }
 
-fn external_calls<'a>(
-    calls: &'a [CallFact],
-    functions: &BTreeMap<&str, &FunctionMetrics>,
+fn mutation_between(
     profile: &dyn PerformanceProfile,
-) -> BTreeMap<&'a str, &'a CallFact> {
-    let mut out = BTreeMap::new();
-    for call in calls {
-        if functions.contains_key(call.target.as_str()) {
-            continue;
-        }
-        if is_external(call, profile) {
-            out.entry(call.target.as_str()).or_insert(call);
-        }
-    }
-    out
+    all_calls: &[CallFact],
+    base: &str,
+    iterations: &[&CallFact],
+) -> bool {
+    let first = iterations.iter().map(|call| call.line).min().unwrap_or(0);
+    let last = iterations.iter().map(|call| call.line).max().unwrap_or(0);
+    all_calls.iter().any(|call| {
+        call.base == base
+            && first < call.line
+            && call.line < last
+            && profile.is_mutating_call(&call.method)
+    })
 }
 
-fn significant_loops(loops: &[PerfLine]) -> Vec<&PerfLine> {
+fn significant_loops<'a>(
+    profile: &dyn PerformanceProfile,
+    loops: &'a [crate::spine::ir::PerfLine],
+) -> Vec<&'a crate::spine::ir::PerfLine> {
     loops
         .iter()
-        .filter(|line| !is_bounded_constant(&line.subject))
+        .filter(|line| !profile.is_bounded_loop(&line.subject))
         .collect()
 }
 
@@ -180,15 +193,4 @@ fn finding(
         metric as u32,
         1,
     )
-}
-
-fn is_external(call: &CallFact, profile: &dyn PerformanceProfile) -> bool {
-    call.member && profile.is_expensive_loop_call(&call.method)
-}
-
-fn is_bounded_constant(subject: &str) -> bool {
-    !subject.is_empty()
-        && subject
-            .chars()
-            .all(|ch| ch.is_ascii_uppercase() || ch == '_')
 }

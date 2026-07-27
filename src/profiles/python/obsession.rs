@@ -3,7 +3,7 @@
 //! structure only — thresholds and severity live in `noze::smells`.
 
 use crate::profiles::walk;
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{FunctionUnit, SchemaCall};
 use tree_sitter::Node;
 
 /// Method names whose call mutates the receiver in place (list/dict/set/deque).
@@ -38,7 +38,10 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
                 record_subscript_target(unit, target, src);
             }
         }
-        "call" => record_mutating_call(unit, node, src),
+        "call" => {
+            record_schema_call(unit, node, src);
+            record_mutating_call(unit, node, src);
+        }
         "return_statement" => {
             if let Some(value) = node.named_child(0) {
                 if matches!(value.kind(), "expression_list" | "tuple") {
@@ -54,6 +57,41 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         "conditional_expression" => record_conditional_fallback(unit, node, src),
         _ => {}
     }
+}
+
+fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let Some(function) = node.child_by_field_name("function") else {
+        return;
+    };
+    let target = function.utf8_text(src).unwrap_or_default();
+    let arguments = identifier_arguments(node, src);
+    if function.kind() == "identifier" && !arguments.is_empty() {
+        unit.schema_calls.push(SchemaCall {
+            target: target.to_string(),
+            arguments: arguments.clone(),
+        });
+    }
+    let validator = target.rsplit('.').next().is_some_and(|method| {
+        matches!(
+            method,
+            "model_validate" | "parse_obj" | "validate_python" | "load"
+        )
+    });
+    if validator {
+        unit.validated_names.extend(arguments);
+    }
+}
+
+fn identifier_arguments(node: Node, src: &[u8]) -> Vec<String> {
+    let Some(arguments) = node.child_by_field_name("arguments") else {
+        return Vec::new();
+    };
+    let mut cursor = arguments.walk();
+    arguments
+        .named_children(&mut cursor)
+        .filter(|argument| argument.kind() == "identifier")
+        .filter_map(|argument| argument.utf8_text(src).ok().map(str::to_string))
+        .collect()
 }
 
 /// `value or ""` / `value or "?"` — the fallback is Python's right operand.

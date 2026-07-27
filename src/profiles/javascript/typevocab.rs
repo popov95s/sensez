@@ -76,6 +76,17 @@ pub(crate) fn is_dictish(annotation: &str) -> bool {
     ) || annotation.trim_start().starts_with('{')
 }
 
+pub(crate) fn has_domain_model(annotation: &str) -> bool {
+    has_domain_type(annotation, &BUILTINS)
+}
+
+pub(crate) fn is_primitive_scalar_alias(annotation: &str) -> bool {
+    matches!(
+        base_type(annotation),
+        "string" | "number" | "boolean" | "bigint" | "symbol"
+    )
+}
+
 fn primitive_array(annotation: &str) -> bool {
     let trimmed = annotation.trim();
     trimmed.ends_with("[]") || matches!(base_type(trimmed), "Array" | "ReadonlyArray")

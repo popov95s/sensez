@@ -8,6 +8,7 @@
 
 pub(crate) mod comments;
 pub(crate) mod conditionals;
+pub(crate) mod guard_fingerprint;
 pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
@@ -24,7 +25,7 @@ pub mod rust;
 #[cfg(feature = "lang-typescript")]
 pub mod typescript;
 
-use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, Walked};
+use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, PerfLine, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -193,15 +194,33 @@ pub trait DeadCodeProfile: Send + Sync {
 }
 
 pub trait PerformanceProfile: Send + Sync {
-    fn is_expensive_loop_call(&self, method: &str) -> bool;
+    fn receiver_root<'a>(&self, receiver: &'a str) -> &'a str;
+    fn is_mutating_call(&self, method: &str) -> bool;
+    fn is_bounded_loop(&self, subject: &str) -> bool;
+    fn is_external_loop_call(
+        &self,
+        method: &str,
+        receiver: &str,
+        receiver_type: Option<&str>,
+        loops: &[PerfLine],
+    ) -> bool;
+}
+
+/// Language-owned interpretation of type annotations used by smell detectors.
+pub trait TypeVocabularyProfile: Send + Sync {
+    fn loose_kind(&self, annotation: &str) -> Option<typevocab::LooseTypeKind>;
+    fn is_bool(&self, annotation: &str) -> bool;
+    fn is_dictish(&self, annotation: &str) -> bool;
+    fn has_domain_model(&self, annotation: &str) -> bool;
+    fn is_primitive_scalar_alias(&self, annotation: &str) -> bool;
 }
 
 pub trait LanguageProfile:
-    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile
+    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
 {
 }
 
 impl<T> LanguageProfile for T where
-    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile
+    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
 {
 }

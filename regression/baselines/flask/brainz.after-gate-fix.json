@@ -14,7 +14,7 @@
       "dead_code/variable": 1,
       "duplication": 4,
       "smells/boolean_blindness": 4,
-      "smells/divergent_change": 12,
+      "smells/divergent_change": 8,
       "smells/feature_envy": 1,
       "smells/god_module": 3,
       "smells/heavy_nested_function": 1,
