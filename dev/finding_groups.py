@@ -25,6 +25,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.HIGH_COMPLEXITY,
             SmellTerm.TOO_MANY_RETURNS,
             SmellTerm.UNNECESSARY_NESTED_IF,
+            SmellTerm.REDUNDANT_VALIDATION,
         ),
     ),
     (
@@ -43,6 +44,7 @@ GROUPS: tuple[FindingGroup, ...] = (
         (
             SmellTerm.DATA_CLUMP,
             SmellTerm.DIVERGENT_CHANGE,
+            SmellTerm.DIVERGENT_ABSTRACTION,
             SmellTerm.FEATURE_ENVY,
             SmellTerm.INAPPROPRIATE_INTIMACY,
             SmellTerm.MESSAGE_CHAIN,
@@ -56,6 +58,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.IMPLICIT_SCHEMA,
             SmellTerm.LOOSE_TYPING,
             SmellTerm.TUPLE_PACKING,
+            SmellTerm.DEFENSIVE_FALLBACK,
         ),
     ),
     (
