@@ -45,7 +45,7 @@ on:
       - '.github/workflows/ci.yml'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
   group: ci-${{ github.ref }}
@@ -62,7 +62,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.97.0
         with:
           components: rustfmt, clippy
 
@@ -86,7 +86,7 @@ jobs:
         working-directory: docs/examples
 
       - name: Install VS Code extension tooling
-        run: npm install
+        run: npm ci
         working-directory: editors/vscode
 
       - name: Check VS Code extension
@@ -95,6 +95,20 @@ jobs:
 
       - name: Check formatting
         run: cargo fmt --check
+
+      - name: Enforce source file size limit
+        run: |
+          oversized="$(
+            find src regression -type f \( -name '*.rs' -o -name '*.py' \) \
+              ! -path 'src/noze/glossary/docs.rs' -print0 |
+              xargs -0 wc -l |
+              awk '$1 > 300 && $2 != "total" { print }'
+          )"
+          if [ -n "$oversized" ]; then
+            echo "Source files over the 300-line architectural limit:"
+            echo "$oversized"
+            exit 1
+          fi
 
       - name: Install cargo-deny
         run: cargo install cargo-deny --locked
@@ -124,6 +138,9 @@ jobs:
         # bad stage must produce the named finding and fixed.* must be clean.
         run: uv run --no-project docs/verify_examples.py
 
+      - name: Run detector precision tests
+        run: cargo test --all-features noze::smells
+
       - name: Verify docs examples formatting
         run: |
           uv run --no-project --with ruff ruff format --no-cache --check docs/examples
@@ -146,8 +163,24 @@ jobs:
       - name: Run benchmarks
         run: ./benchmarks/run.sh
 
+  deploy-docs:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    needs: rust
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v6
+        with:
+          version: "0.9.5"
+
       - name: Deploy dev docs
-        if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
         env:
           NO_MKDOCS_2_WARNING: "1"
         run: |
