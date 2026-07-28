@@ -115,51 +115,40 @@ bump version:
     @echo ""
     @echo "Bumped to {{version}}. Cargo.lock is refreshed."
     @echo "Review with:  git diff --stat"
-    @echo "Commit with:  just release {{version}} <target>"
+    @echo "Commit with:  just release {{version}}"
 
 # Bump, commit, tag, and push. The tag is what you pass to the existing
-# workflow_dispatch run on GitHub. The push is split so you can abort with
-# Ctrl+C between the two git push commands if you change your mind.
-# Usage: just release 0.2.0 pypi
-release version target: _require-clean
+# workflow_dispatch run on GitHub. The branch and tag are pushed together so
+# the remote cannot receive one without the other.
+# Usage: just release 0.2.0
+release version:
     #!/usr/bin/env bash
     set -euo pipefail
     just _validate-semver "{{version}}"
-    just _validate-target "{{target}}"
     just _write-version "{{version}}"
     cargo check --quiet
-    git add Cargo.toml Cargo.lock pyproject.toml npm/package.json npm/platform/ editors/vscode/package.json editors/vscode/package-lock.json
-    if ! git diff --cached --quiet; then
-        git commit -m "bump version to {{version}}"
+    release_files=(
+        Cargo.toml
+        Cargo.lock
+        pyproject.toml
+        npm/package.json
+        npm/platform/*/package.json
+        editors/vscode/package.json
+        editors/vscode/package-lock.json
+    )
+    if ! git diff HEAD --quiet -- "${release_files[@]}"; then
+        git commit --only -m "chore: bump version to {{version}}" -- "${release_files[@]}"
     else
         echo "Nothing to commit (already at {{version}}?)."
     fi
     git tag -a "v{{version}}" -m "v{{version}}"
     echo "Pushing branch and tag v{{version}}..."
-    git push origin HEAD
-    git push origin "v{{version}}"
+    git push origin HEAD "v{{version}}"
     echo ""
-    echo "Tag v{{version}} is now on origin. Go to GitHub Actions and trigger"
-    echo "the Release workflow with target={{target}}."
+    echo "Tag v{{version}} is now on origin. The Release workflow will publish"
+    echo "the release automatically."
 
 # --- Internal helpers ------------------------------------------------------
-
-# Refuse to bump a tree that has uncommitted changes to files that are NOT
-# the version manifests. Version files are the ones we're about to edit, so
-# changes there are expected; anything else would get swept into the bump
-# commit and pollute the release.
-_require-clean:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    untracked_excl=(--exclude-untracked -- \
-        ':!Cargo.toml' ':!Cargo.lock' ':!pyproject.toml' ':!npm' ':!editors/vscode/package.json' ':!editors/vscode/package-lock.json' ':!justfile')
-    if ! git diff --quiet "${untracked_excl[@]}" \
-       || ! git diff --cached --quiet; then
-        echo "error: working tree has uncommitted changes outside the version manifests." >&2
-        echo "Commit or stash them first so the bump stays isolated." >&2
-        git status --short
-        exit 1
-    fi
 
 # Validate that $1 looks like a semver (with optional pre-release / build).
 _validate-semver version:
@@ -174,15 +163,6 @@ _validate-semver version:
         echo "error: '$v' is not a valid semver (expected X.Y.Z, with optional -pre and +build)." >&2
         exit 1
     fi
-
-# Validate that the release target is one of the workflow's accepted values.
-_validate-target target:
-    #!/usr/bin/env bash
-    set -euo pipefail
-    case "{{target}}" in
-        testpypi|pypi|npm|release) ;;
-        *) echo "error: target must be one of testpypi|pypi|npm|release (got '{{target}}')." >&2; exit 1 ;;
-    esac
 
 # Do the actual file edits. Cargo.toml is the source of truth; every other
 # manifest is rewritten to match.
