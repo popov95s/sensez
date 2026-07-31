@@ -160,18 +160,23 @@ fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(function) = node.child_by_field_name("function") else {
         return;
     };
+    let is_schema_call = function.kind() == "identifier";
+    let is_validator = function
+        .child_by_field_name("property")
+        .and_then(|property| property.utf8_text(src).ok())
+        .is_some_and(|method| matches!(method, "parse" | "safeParse" | "decode"));
+    if !is_schema_call && !is_validator {
+        return;
+    }
+
     let arguments = identifier_arguments(node, src);
-    if function.kind() == "identifier" && !arguments.is_empty() {
+    if is_schema_call && !arguments.is_empty() {
         unit.schema_calls.push(SchemaCall {
             target: function.utf8_text(src).unwrap_or_default().to_string(),
             arguments: arguments.clone(),
         });
     }
-    let validator = function
-        .child_by_field_name("property")
-        .and_then(|property| property.utf8_text(src).ok())
-        .is_some_and(|method| matches!(method, "parse" | "safeParse" | "decode"));
-    if validator {
+    if is_validator {
         unit.validated_names.extend(arguments);
     }
 }
