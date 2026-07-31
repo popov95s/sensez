@@ -7,15 +7,55 @@
 use crate::profiles::javascript::{resolve, roots};
 use crate::spine::ir::ImportContext;
 use serde_json::Value;
+use std::collections::hash_map::Entry as CacheEntry;
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-pub(super) fn resolve_target(import: &ImportContext, file: &Path, root: &Path) -> String {
-    aliases(root)
+/// TypeScript resolver state scoped to one graph build.
+///
+/// A scan can include multiple package roots, each with its own alias table.
+/// Both valid and empty tables are retained so a missing or malformed config is
+/// attempted once per root, rather than once per import.
+#[derive(Default)]
+pub(crate) struct ResolutionCache {
+    aliases_by_root: HashMap<PathBuf, Paths>,
+    #[cfg(test)]
+    loads: usize,
+}
+
+impl ResolutionCache {
+    pub(super) fn aliases(&mut self, root: &Path) -> &Paths {
+        match self.aliases_by_root.entry(root.to_path_buf()) {
+            CacheEntry::Occupied(entry) => entry.into_mut(),
+            CacheEntry::Vacant(entry) => {
+                #[cfg(test)]
+                {
+                    self.loads += 1;
+                }
+                entry.insert(load_aliases(root))
+            }
+        }
+    }
+
+    #[cfg(test)]
+    pub(super) fn load_count(&self) -> usize {
+        self.loads
+    }
+}
+
+pub(super) fn resolve_target(
+    cache: &mut ResolutionCache,
+    import: &ImportContext,
+    file: &Path,
+    root: &Path,
+) -> String {
+    cache
+        .aliases(root)
         .resolve(&import.target_module)
         .unwrap_or_else(|| resolve::resolve_target(import, file, root))
 }
 
-struct Paths {
+pub(super) struct Paths {
     root: PathBuf,
     base_url: PathBuf,
     entries: Vec<Entry>,
@@ -27,7 +67,7 @@ struct Entry {
 }
 
 impl Paths {
-    fn resolve(&self, specifier: &str) -> Option<String> {
+    pub(super) fn resolve(&self, specifier: &str) -> Option<String> {
         self.entries
             .iter()
             .filter_map(|entry| match_pattern(&entry.pattern, specifier).map(|part| (entry, part)))
@@ -38,7 +78,7 @@ impl Paths {
     }
 }
 
-fn aliases(root: &Path) -> Paths {
+fn load_aliases(root: &Path) -> Paths {
     let path = root.join("tsconfig.json");
     let Ok(text) = std::fs::read_to_string(path) else {
         return Paths {
@@ -170,28 +210,5 @@ impl JsoncState {
         }
         output.push(ch);
         true
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn resolves_exact_and_wildcard_paths_from_jsonc() {
-        let tmp = tempfile::tempdir().unwrap();
-        std::fs::write(
-            tmp.path().join("tsconfig.json"),
-            r#"{ /* comment */ "compilerOptions": { "paths": {
-                "@/*": ["src/*"], "@scope/library": ["packages/library/src/index.ts"],
-            }, }, }"#,
-        )
-        .unwrap();
-        let paths = aliases(tmp.path());
-        assert_eq!(paths.resolve("@/ui/button"), Some("src/ui/button".into()));
-        assert_eq!(
-            paths.resolve("@scope/library"),
-            Some("packages/library/src".into())
-        );
     }
 }

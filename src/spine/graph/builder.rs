@@ -1,7 +1,7 @@
 //! Assemble a [`CodebaseGraph`] from parsed files.
 
 use super::identity;
-use crate::profiles::registry;
+use crate::profiles::{registry, ResolutionCache};
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;
@@ -15,6 +15,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     let identities = identity::for_files(files, configured_roots);
     let mut module_of: Vec<Option<String>> = Vec::with_capacity(files.len());
     let mut by_logical_name = HashMap::new();
+    let mut resolution_cache = ResolutionCache::default();
 
     // Pass 1: create a node per file. Re-exports are NOT folded into declared
     // symbols — a re-exported name is kept alive in its defining module by the
@@ -61,7 +62,13 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         let is_index = profile.is_package_index(&file.path);
         let pkg = profile.containing_package(module_name, is_index);
         for import in &file.walked.symbols.imports {
-            let resolved = profile.resolve_target(import, &pkg, &file.path, &identities[i].root);
+            let resolved = profile.resolve_target(
+                import,
+                &pkg,
+                &file.path,
+                &identities[i].root,
+                &mut resolution_cache,
+            );
             let target = by_logical_name
                 .get(&(file.language, identities[i].root.clone(), resolved.clone()))
                 .cloned()

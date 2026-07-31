@@ -69,6 +69,7 @@ impl ModuleProfile for RustProfile {
         _importer_package: &str,
         file: &Path,
         root: &Path,
+        _resolution_cache: &mut crate::profiles::ResolutionCache,
     ) -> String {
         // `crate::`/`self::`/`super::`/package-name paths resolve on disk.
         resolve::resolve_target(import, file, root)

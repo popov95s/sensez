@@ -25,6 +25,18 @@ pub mod rust;
 #[cfg(feature = "lang-typescript")]
 pub mod typescript;
 
+/// Per-graph-build state used by language-specific import resolvers.
+///
+/// Keeping this state in the graph-build lifetime avoids stale configuration
+/// in long-lived MCP processes while allowing profiles to cache immutable
+/// resolver inputs for every import under the same module root.
+#[cfg(feature = "lang-typescript")]
+pub(crate) use typescript::ResolutionCache;
+
+#[cfg(not(feature = "lang-typescript"))]
+#[derive(Default)]
+pub(crate) struct ResolutionCache;
+
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, PerfLine, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -142,6 +154,7 @@ pub trait ModuleProfile: Send + Sync {
         importer_package: &str,
         importer_file: &Path,
         root: &Path,
+        resolution_cache: &mut ResolutionCache,
     ) -> String;
     /// Give a colliding module identity a profile-specific, workspace-relative
     /// name. Profiles that have no alternate namespace retain `base`.

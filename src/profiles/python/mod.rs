@@ -70,6 +70,7 @@ impl ModuleProfile for PythonProfile {
         importer_package: &str,
         _importer_file: &Path,
         _root: &Path,
+        _resolution_cache: &mut crate::profiles::ResolutionCache,
     ) -> String {
         // Dotted-package semantics: resolution needs only the importer's package.
         resolve::resolve_target(import, importer_package)

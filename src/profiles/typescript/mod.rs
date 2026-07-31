@@ -14,6 +14,10 @@ use std::collections::HashSet;
 use std::path::Path;
 
 mod paths;
+pub(crate) use paths::ResolutionCache;
+#[cfg(test)]
+#[path = "paths_tests.rs"]
+mod paths_tests;
 
 static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
@@ -82,8 +86,9 @@ macro_rules! impl_ts_traits {
                 _importer_package: &str,
                 file: &Path,
                 root: &Path,
+                resolution_cache: &mut crate::profiles::ResolutionCache,
             ) -> String {
-                paths::resolve_target(import, file, root)
+                paths::resolve_target(resolution_cache, import, file, root)
             }
 
             fn disambiguated_module_name(

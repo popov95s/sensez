@@ -69,6 +69,7 @@ impl ModuleProfile for JsProfile {
         _importer_package: &str,
         file: &Path,
         root: &Path,
+        _resolution_cache: &mut crate::profiles::ResolutionCache,
     ) -> String {
         // `./foo` resolves against the importing file's directory on disk.
         resolve::resolve_target(import, file, root)
