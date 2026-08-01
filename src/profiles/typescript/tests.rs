@@ -292,3 +292,20 @@ fn python_class_base_defaults_do_not_leak_to_typescript() {
         "TypeScript must not inherit Python's AppConfig entrypoint base"
     );
 }
+
+#[test]
+fn fused_collector_ts_return_annotation_not_in_body() {
+    let src = b"function add(a: number, b: number): number {\n  return a + b;\n}\n";
+    let functions = parse_source(src, 0, "m", &TsProfile)
+        .unwrap()
+        .units
+        .functions;
+    assert_eq!(functions.len(), 1);
+    let f = &functions[0];
+    assert_eq!(f.name, "add");
+    assert_eq!(f.return_count, 1);
+    assert_eq!(f.cognitive, 0);
+    assert_eq!(f.branch_count, 0);
+    assert_eq!(f.max_nesting, 0);
+    assert_eq!(f.magic_numbers, 0);
+}

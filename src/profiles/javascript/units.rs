@@ -26,31 +26,152 @@ pub fn is_function(kind: &str) -> bool {
     )
 }
 
-/// Build a [`FunctionUnit`] for a function/method/arrow node.
-pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit {
-    let mut unit = FunctionUnit {
-        name: symbols::def_name(func, src).unwrap_or_default(),
-        start_line: func.start_position().row + 1,
-        end_line: func.end_position().row + 1,
-        param_names: param_names(func, src),
-        is_method,
-        ..Default::default()
-    };
-    if let Some(body) = func.child_by_field_name("body") {
-        let mut acc = Acc {
-            unit: &mut unit,
-            guards: HashMap::new(),
-        };
-        acc.visit(body, src, 0, 0);
-    }
-    // A TS tuple *return type* `(): [A, B, C]` is position-based grouped data —
-    // the analog of Python's bare `return a, b, c` (JS array returns are too
-    // common to treat as tuples, so only the annotation counts here).
-    unit.max_tuple_return = super::classunit::tuple_return_arity(func, src);
-    unit
+pub struct FunctionFacts {
+    pub(crate) unit: FunctionUnit,
+    guards: HashMap<u64, usize>,
+    body_start: usize,
+    body_end: usize,
+    depth: usize,
+    loop_depth: usize,
 }
 
-/// Ordered parameter names; a destructuring pattern counts as one opaque param.
+impl FunctionFacts {
+    pub fn start(func: Node, src: &[u8], is_method: bool) -> Self {
+        let unit = FunctionUnit {
+            name: symbols::def_name(func, src).unwrap_or_default(),
+            start_line: func.start_position().row + 1,
+            end_line: func.end_position().row + 1,
+            param_names: param_names(func, src),
+            is_method,
+            max_tuple_return: super::classunit::tuple_return_arity(func, src),
+            ..Default::default()
+        };
+        let body = func.child_by_field_name("body");
+        let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
+        FunctionFacts {
+            unit,
+            guards: HashMap::new(),
+            body_start: range.start,
+            body_end: range.end,
+            depth: 0,
+            loop_depth: 0,
+        }
+    }
+
+    pub fn enter(&mut self, node: Node, src: &[u8]) -> Option<(usize, usize)> {
+        let range = node.byte_range();
+        if range.start < self.body_start || range.end > self.body_end {
+            return None;
+        }
+        if is_function(node.kind()) {
+            return None;
+        }
+        let prev_depth = self.depth;
+        let prev_loop_depth = self.loop_depth;
+
+        obsession::scan(&mut self.unit, node, src);
+        performance::scan(&mut self.unit.performance, node, src, self.loop_depth);
+        if let Some(method) = own_method_call(node, src) {
+            self.unit.own_method_calls.insert(method);
+        }
+        super::risk_facts::scan(&mut self.unit, &mut self.guards, node, src);
+
+        let kind = node.kind();
+        if is_nesting(kind) {
+            self.depth += 1;
+            self.unit.max_nesting = self.unit.max_nesting.max(self.depth);
+        }
+        if performance::is_loop(kind) {
+            self.loop_depth += 1;
+        }
+        if let Some(weight) = cognitive_weight(kind, node, src, prev_depth) {
+            self.unit.cognitive += weight;
+        }
+        if is_branch(kind, node, src) {
+            self.unit.branch_count += 1;
+        }
+        if conditionals::is_collapsible_nested_if(node) {
+            self.unit.collapsible_nested_ifs += 1;
+        }
+        match kind {
+            "return_statement" => {
+                self.unit.return_count += 1;
+                if let Some(constructor) = returned_constructor(node, src) {
+                    self.unit.returned_constructors.insert(constructor);
+                }
+            }
+            "number" => {
+                if let Ok(t) = node.utf8_text(src) {
+                    if !ALLOWED_NUMS.contains(&t) {
+                        self.unit.magic_numbers += 1;
+                    }
+                }
+            }
+            "member_expression" => self.record_member(node, src),
+            "assignment_expression" => self.record_assignment(node, src),
+            _ => {}
+        }
+        Some((self.depth - prev_depth, self.loop_depth - prev_loop_depth))
+    }
+
+    pub fn leave(&mut self, frame: (usize, usize)) {
+        self.depth -= frame.0;
+        self.loop_depth -= frame.1;
+    }
+
+    pub fn finish(self) -> FunctionUnit {
+        self.unit
+    }
+}
+
+impl FunctionFacts {
+    fn record_member(&mut self, node: Node, src: &[u8]) {
+        self.unit.max_chain_depth = self.unit.max_chain_depth.max(chain_len(node));
+        let Some(obj) = node.child_by_field_name("object") else {
+            return;
+        };
+        match obj.kind() {
+            "this" => {
+                *self
+                    .unit
+                    .receiver_access
+                    .entry("self".to_string())
+                    .or_insert(0) += 1;
+                if let Some(attr) = node
+                    .child_by_field_name("property")
+                    .and_then(|a| a.utf8_text(src).ok())
+                {
+                    self.unit.self_attrs.insert(attr.to_string());
+                }
+            }
+            "identifier" => {
+                if let Ok(base) = obj.utf8_text(src) {
+                    *self
+                        .unit
+                        .receiver_access
+                        .entry(base.to_string())
+                        .or_insert(0) += 1;
+                }
+            }
+            _ => {}
+        }
+    }
+
+    fn record_assignment(&mut self, node: Node, src: &[u8]) {
+        if let Some(left) = node
+            .child_by_field_name("left")
+            .filter(|l| l.kind() == "identifier")
+            .and_then(|l| l.utf8_text(src).ok())
+        {
+            *self
+                .unit
+                .local_reassigns
+                .entry(left.to_string())
+                .or_insert(0) += 1;
+        }
+    }
+}
+
 fn param_names(func: Node, src: &[u8]) -> Vec<String> {
     let mut out = Vec::new();
     if let Some(p) = func.child_by_field_name("parameter") {
@@ -89,124 +210,15 @@ fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
     }
 }
 
-/// Body-walk accumulator (borrows the unit so helpers stay small).
-struct Acc<'u> {
-    unit: &'u mut FunctionUnit,
-    guards: HashMap<u64, usize>,
-}
-
-impl Acc<'_> {
-    /// Recurse a body node at block-nesting `depth`, accumulating metrics.
-    fn visit(&mut self, node: Node, src: &[u8], depth: usize, loop_depth: usize) {
-        let kind = node.kind();
-        if is_function(kind) {
-            return; // nested function/arrow gets its own unit
-        }
-        obsession::scan(self.unit, node, src);
-        performance::scan(&mut self.unit.performance, node, src, loop_depth);
-        if let Some(method) = own_method_call(node, src) {
-            self.unit.own_method_calls.insert(method);
-        }
-        super::risk_facts::scan(self.unit, &mut self.guards, node, src);
-
-        let mut child_depth = depth;
-        if is_nesting(kind) {
-            child_depth = depth + 1;
-            self.unit.max_nesting = self.unit.max_nesting.max(child_depth);
-        }
-        let child_loop_depth = loop_depth + usize::from(performance::is_loop(kind));
-        if let Some(weight) = cognitive_weight(kind, node, src, depth) {
-            self.unit.cognitive += weight;
-        }
-        if is_branch(kind, node, src) {
-            self.unit.branch_count += 1;
-        }
-        if conditionals::is_collapsible_nested_if(node) {
-            self.unit.collapsible_nested_ifs += 1;
-        }
-        match kind {
-            "return_statement" => {
-                self.unit.return_count += 1;
-                if let Some(constructor) = returned_constructor(node, src) {
-                    self.unit.returned_constructors.insert(constructor);
-                }
-            }
-            "number" => {
-                if let Ok(t) = node.utf8_text(src) {
-                    if !ALLOWED_NUMS.contains(&t) {
-                        self.unit.magic_numbers += 1;
-                    }
-                }
-            }
-            "member_expression" => self.record_member(node, src),
-            "assignment_expression" => self.record_assignment(node, src),
-            _ => {}
-        }
-
-        let mut cursor = node.walk();
-        for child in node.named_children(&mut cursor) {
-            self.visit(child, src, child_depth, child_loop_depth);
-        }
-    }
-
-    /// `obj.attr` / `this.attr`: chain depth + receiver access (`this` → `self`).
-    fn record_member(&mut self, node: Node, src: &[u8]) {
-        self.unit.max_chain_depth = self.unit.max_chain_depth.max(chain_len(node));
-        let Some(obj) = node.child_by_field_name("object") else {
-            return;
-        };
-        match obj.kind() {
-            "this" => {
-                *self
-                    .unit
-                    .receiver_access
-                    .entry("self".to_string())
-                    .or_insert(0) += 1;
-                if let Some(attr) = node
-                    .child_by_field_name("property")
-                    .and_then(|a| a.utf8_text(src).ok())
-                {
-                    self.unit.self_attrs.insert(attr.to_string());
-                }
-            }
-            "identifier" => {
-                if let Ok(base) = obj.utf8_text(src) {
-                    *self
-                        .unit
-                        .receiver_access
-                        .entry(base.to_string())
-                        .or_insert(0) += 1;
-                }
-            }
-            _ => {}
-        }
-    }
-
-    /// Count a plain assignment to each simple-identifier target.
-    fn record_assignment(&mut self, node: Node, src: &[u8]) {
-        if let Some(left) = node
-            .child_by_field_name("left")
-            .filter(|l| l.kind() == "identifier")
-            .and_then(|l| l.utf8_text(src).ok())
-        {
-            *self
-                .unit
-                .local_reassigns
-                .entry(left.to_string())
-                .or_insert(0) += 1;
-        }
-    }
-}
-
 fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
     if node.kind() != "call_expression" {
         return None;
     }
     let function = node.child_by_field_name("function")?;
     if function.kind() != "member_expression"
-        || !function
+        || function
             .child_by_field_name("object")
-            .is_some_and(|object| object.kind() == "this")
+            .is_none_or(|object| object.kind() != "this")
     {
         return None;
     }
