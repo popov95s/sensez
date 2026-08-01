@@ -10,3 +10,13 @@ evals/**/results*/
 evals/**/predictions/
 evals/**/__pycache__/
 .codex
+.opencode
+# Generated at npm publish time by the prepublishOnly hook in npm/package.json.
+npm/README.md
+site/
+internal_docs/*
+
+# Generated VS Code extension artifacts
+editors/vscode/dist/
+editors/vscode/bundled/
+editors/vscode/*.vsix
