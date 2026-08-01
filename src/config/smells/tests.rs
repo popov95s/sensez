@@ -15,6 +15,7 @@ fn defaults_differ_per_language() {
     let ts = cfg.for_language(Language::TypeScript);
 
     assert!(py.disabled.contains(&SmellKind::NestedLoop));
+    assert!(!py.disabled.contains(&SmellKind::NestedTernary));
     assert!(py.disabled.contains(&SmellKind::NPlusOneCall));
     assert!(py.disabled.contains(&SmellKind::DefensiveFallback));
     assert!(py.disabled.contains(&SmellKind::RedundantValidation));
@@ -32,6 +33,14 @@ fn defaults_differ_per_language() {
         .for_language(Language::JavaScript)
         .disabled
         .contains(&SmellKind::DeepNesting));
+    assert!(!cfg
+        .for_language(Language::JavaScript)
+        .disabled
+        .contains(&SmellKind::NestedTernary));
+    assert!(!cfg
+        .for_language(Language::Rust)
+        .disabled
+        .contains(&SmellKind::NestedTernary));
 }
 
 /// A `[smells.<lang>]` table overrides only the keys it names; the rest keep the

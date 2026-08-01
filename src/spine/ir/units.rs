@@ -34,6 +34,9 @@ pub struct FunctionUnit {
     pub branch_count: usize,
     /// `if x { if y { ... } }` shapes with no else/default path.
     pub collapsible_nested_ifs: usize,
+    /// Source lines of conditional expressions nested inside another
+    /// conditional expression in this function.
+    pub nested_ternary_lines: Vec<usize>,
     /// Nesting-weighted cognitive-complexity accumulator (Sonar-style).
     pub cognitive: usize,
     /// Count of "magic" numeric literals (not 0/1/2).
@@ -123,6 +126,7 @@ pub struct FunctionMetrics {
     pub return_count: usize,
     pub branch_count: usize,
     pub collapsible_nested_ifs: usize,
+    pub nested_ternary_lines: Vec<usize>,
     pub cognitive: usize,
 
     // Size / shape
@@ -170,6 +174,7 @@ impl From<&FunctionUnit> for FunctionMetrics {
             return_count: f.return_count,
             branch_count: f.branch_count,
             collapsible_nested_ifs: f.collapsible_nested_ifs,
+            nested_ternary_lines: f.nested_ternary_lines.clone(),
             cognitive: f.cognitive,
             max_tuple_return: f.max_tuple_return,
             magic_numbers: f.magic_numbers,

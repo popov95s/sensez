@@ -72,6 +72,11 @@ impl<'u> Acc<'u> {
         if conditionals::is_collapsible_nested_if(node) {
             self.unit.collapsible_nested_ifs += 1;
         }
+        if kind == "conditional_expression" && conditionals::is_nested_ternary(node) {
+            self.unit
+                .nested_ternary_lines
+                .push(node.start_position().row + 1);
+        }
         match kind {
             "return_statement" => {
                 self.unit.return_count += 1;

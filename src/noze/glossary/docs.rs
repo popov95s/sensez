@@ -537,6 +537,22 @@ FindingDocs {
         ],
     },
     FindingDocs {
+        kind: NestedTernary,
+        why_bad: "Nested conditional expressions force readers to mentally match several conditions with their results, making agent-generated logic difficult to review and change.",
+        external_lints: &[ExternalLint { tool: "eslint", rule: "no-nested-ternary" }],
+        references: &[],
+        fixes: &[
+            LanguageBlock {
+                language: "python",
+                body: "Extract the decision into a named helper, or replace the expression with ordered if statements and early returns.",
+            },
+            LanguageBlock {
+                language: "typescript",
+                body: "Move result selection into a named function and use explicit if branches with early returns.",
+            },
+        ],
+    },
+    FindingDocs {
         kind: RepeatedIteration,
         why_bad: "The same collection gets scanned over and over when one pass would do.",
         external_lints: &[],

@@ -215,6 +215,8 @@ mod discipline_tests;
 #[cfg(test)]
 mod nested_if_tests;
 #[cfg(test)]
+mod nested_ternary_tests;
+#[cfg(test)]
 mod performance_tests;
 #[cfg(test)]
 mod tests;

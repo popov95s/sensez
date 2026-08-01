@@ -34,6 +34,7 @@ impl StructuralDetector<'_, '_> {
         }
         self.message_chains(m);
         self.unnecessary_nested_if(m);
+        self.nested_ternary(m);
         if self.cfg.split_variable {
             self.split_variables(m);
         }
@@ -141,6 +142,30 @@ impl StructuralDetector<'_, '_> {
             &m.name,
             Severity::Info,
             m.collapsible_nested_ifs as u32,
+            0,
+        ));
+    }
+
+    fn nested_ternary(&mut self, m: &FunctionMetrics) {
+        let Some(&line) = m.nested_ternary_lines.first() else {
+            return;
+        };
+        let count = m.nested_ternary_lines.len();
+        let noun = if count == 1 {
+            "expression is"
+        } else {
+            "expressions are"
+        };
+        self.out.push(make(
+            SmellKind::NestedTernary,
+            format!(
+                "{count} nested ternary {noun} hard to follow — extract the result into a named helper or flatten it with if statements and early returns"
+            ),
+            self.ctx.path,
+            line,
+            &m.name,
+            Severity::Warning,
+            count as u32,
             0,
         ));
     }

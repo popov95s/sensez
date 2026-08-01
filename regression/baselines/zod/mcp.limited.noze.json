@@ -831,6 +831,16 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/locales/en.ts",
+      "kind": "nested_ternary",
+      "line": 62,
+      "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 10,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "feature_envy",
       "line": 1108,
@@ -924,16 +934,6 @@
       "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
       "kind": "nested_loop",
       "line": 380,
-      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
-      "metric": 5,
-      "symbol": "convertBaseSchema",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
-      "kind": "nested_loop",
-      "line": 415,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 5,
       "symbol": "convertBaseSchema",

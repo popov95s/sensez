@@ -94,6 +94,10 @@ impl FunctionFacts {
             self.unit.collapsible_nested_ifs += 1;
         }
         match kind {
+            "ternary_expression" if conditionals::is_nested_ternary(node) => self
+                .unit
+                .nested_ternary_lines
+                .push(node.start_position().row + 1),
             "return_statement" => {
                 self.unit.return_count += 1;
                 if let Some(constructor) = returned_constructor(node, src) {

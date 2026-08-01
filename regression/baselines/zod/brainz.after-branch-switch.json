@@ -27,6 +27,7 @@
       "smells/mutated_parameter": 3,
       "smells/narrating_code": 3,
       "smells/nested_loop": 27,
+      "smells/nested_ternary": 8,
       "smells/repeated_iteration": 3,
       "smells/shotgun_surgery_hazard": 3,
       "smells/unnecessary_nested_if": 13

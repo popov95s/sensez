@@ -990,6 +990,108 @@ max_returns = 4 # allowed return statements before flagging
 
 - Ruff: `PLR0911`
 
+### Nested Ternary (`nested_ternary`)
+
+**What it is**
+
+A conditional expression contains another conditional expression, forcing readers to match several branches mentally — extract the result into a named function or flatten it into if statements with early returns.
+
+**Why it's bad**
+
+Nested conditional expressions force readers to mentally match several conditions with their results, making agent-generated logic difficult to review and change.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def delivery_status(order: Order) -> DeliveryStatus:
+        return (
+            DeliveryStatus.READY
+            if order.is_paid
+            else DeliveryStatus.RETRY
+            if order.payment_retry_allowed
+            else DeliveryStatus.BLOCKED
+        )
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Extract the decision into a named helper, or replace the expression with ordered if statements and early returns.
+
+    ```python
+    def delivery_status(order) -> DeliveryStatus:
+        if order.is_paid:
+            return DeliveryStatus.READY
+        if order.payment_retry_allowed:
+            return DeliveryStatus.RETRY
+        return DeliveryStatus.BLOCKED
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    export function deliveryStatus(order: Order): DeliveryStatus {
+      return order.isPaid
+        ? DeliveryStatus.Ready
+        : order.paymentRetryAllowed
+          ? DeliveryStatus.Retry
+          : DeliveryStatus.Blocked;
+    }
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Move result selection into a named function and use explicit if branches with early returns.
+
+    ```ts
+    function deliveryStatus(order: Order): DeliveryStatus {
+      if (order.isPaid) {
+        return DeliveryStatus.Ready;
+      }
+      if (order.paymentRetryAllowed) {
+        return DeliveryStatus.Retry;
+      }
+      return DeliveryStatus.Blocked;
+    }
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.nested_ternary]
+enabled = true
+action = "warning"
+# This detector has no extra threshold knobs.
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
+**External linter coverage**
+
+- ESLint: `no-nested-ternary`
+
 ### Unnecessary Nested If (`unnecessary_nested_if`)
 
 **What it is**

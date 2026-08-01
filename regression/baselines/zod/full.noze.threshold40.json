@@ -1051,11 +1051,12 @@
       "mutated_parameter": 3,
       "narrating_code": 3,
       "nested_loop": 27,
+      "nested_ternary": 8,
       "repeated_iteration": 3,
       "shotgun_surgery_hazard": 3,
       "unnecessary_nested_if": 13
     },
-    "smells_total": 214,
+    "smells_total": 222,
     "source_lines": 71956
   },
   "smells": [
@@ -1670,6 +1671,16 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/locales/en.ts",
+      "kind": "nested_ternary",
+      "line": 62,
+      "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 10,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "divergent_change",
       "line": 158,
@@ -1980,6 +1991,16 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_ternary",
+      "line": 4909,
+      "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 1,
+      "symbol": "cleanParams",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
       "kind": "nested_loop",
       "line": 380,
@@ -2198,6 +2219,26 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "nested_ternary",
+      "line": 380,
+      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "nested_ternary",
+      "line": 532,
+      "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
       "kind": "magic_string_default",
       "line": 135,
@@ -2214,6 +2255,16 @@
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+      "kind": "nested_ternary",
+      "line": 103,
+      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
+      "symbol": "timeSource",
       "threshold": 0
     },
     {
@@ -2385,6 +2436,26 @@
       "metric": 2,
       "symbol": "handleIntersectionResults",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_ternary",
+      "line": 1136,
+      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_ternary",
+      "line": 3287,
+      "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -2952,6 +3023,16 @@
       "line": 72,
       "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 3,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
+      "kind": "nested_ternary",
+      "line": 74,
+      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
       "symbol": "",
       "threshold": 0
     },

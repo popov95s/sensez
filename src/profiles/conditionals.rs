@@ -27,6 +27,24 @@ pub(crate) fn is_collapsible_nested_if(node: Node<'_>, shape: &IfShape<'_>) -> b
     inner.kind() == shape.if_kind && !has_else(inner, shape)
 }
 
+pub(crate) fn is_nested_conditional(
+    node: Node<'_>,
+    conditional_kind: &str,
+    function_kinds: &[&str],
+) -> bool {
+    let mut parent = node.parent();
+    while let Some(current) = parent {
+        if current.kind() == conditional_kind {
+            return true;
+        }
+        if function_kinds.contains(&current.kind()) {
+            return false;
+        }
+        parent = current.parent();
+    }
+    false
+}
+
 fn has_else(node: Node<'_>, shape: &IfShape<'_>) -> bool {
     node.child_by_field_name(shape.else_field).is_some()
 }

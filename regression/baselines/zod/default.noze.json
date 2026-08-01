@@ -652,11 +652,12 @@
       "mutated_parameter": 3,
       "narrating_code": 3,
       "nested_loop": 27,
+      "nested_ternary": 8,
       "repeated_iteration": 3,
       "shotgun_surgery_hazard": 3,
       "unnecessary_nested_if": 13
     },
-    "smells_total": 214,
+    "smells_total": 222,
     "source_lines": 71956
   },
   "smells": [
@@ -778,6 +779,16 @@
       "metric": 2,
       "symbol": "ZodError",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/locales/en.ts",
+      "kind": "nested_ternary",
+      "line": 62,
+      "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 10,
+      "symbol": "",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -946,6 +957,26 @@
       "metric": 9,
       "symbol": "constructor",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "nested_ternary",
+      "line": 380,
+      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+      "kind": "nested_ternary",
+      "line": 103,
+      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
+      "symbol": "timeSource",
+      "threshold": 0
     },
     {
       "action": "warning",

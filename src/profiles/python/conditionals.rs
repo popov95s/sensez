@@ -12,3 +12,11 @@ const IF_SHAPE: IfShape<'static> = IfShape {
 pub(crate) fn is_collapsible_nested_if(node: Node<'_>) -> bool {
     conditionals::is_collapsible_nested_if(node, &IF_SHAPE)
 }
+
+pub(crate) fn is_nested_ternary(node: Node<'_>) -> bool {
+    conditionals::is_nested_conditional(
+        node,
+        "conditional_expression",
+        &["function_definition", "lambda"],
+    )
+}
