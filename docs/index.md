@@ -13,5 +13,6 @@ Start here:
 - [Configuration Reference](reference/configuration.md)
 - [Local Metrics](local-metrics.md)
 - [MCP and Agents](usage/mcp-and-agents.md)
+- [GitHub Action](usage/github-action.md)
 
 

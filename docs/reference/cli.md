@@ -15,7 +15,7 @@ Usage: sensez [OPTIONS] [PATH] [COMMAND]
 
 Commands:
   noze    Code smell and structure checks. Defaults to scanning the given path
-  init    First-time setup for a repository
+  init    Set up a repository, or offer a global agent install outside Git
   mcp     MCP server commands
   brainz  Local metrics and value reports
   eyez    Docs/comment search commands
@@ -173,7 +173,7 @@ Options:
 ## `sensez init --help`
 
 ```text
-First-time setup for a repository
+Set up a repository, or offer a global agent install outside Git
 
 Usage: init [OPTIONS] [PATH]
 
@@ -183,7 +183,7 @@ Arguments:
 
 Options:
       --agent <AGENT>
-          Coding agent to configure: claude-code | cursor | other
+          Coding agent: claude-code | cursor | cline | codex | opencode | pi | other
 
       --gate
           Install the Claude Code Stop-gate hook
