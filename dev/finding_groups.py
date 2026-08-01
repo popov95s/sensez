@@ -24,6 +24,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.HIGH_COGNITIVE_COMPLEXITY,
             SmellTerm.HIGH_COMPLEXITY,
             SmellTerm.TOO_MANY_RETURNS,
+            SmellTerm.NESTED_TERNARY,
             SmellTerm.UNNECESSARY_NESTED_IF,
             SmellTerm.REDUNDANT_VALIDATION,
         ),

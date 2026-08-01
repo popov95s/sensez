@@ -563,6 +563,17 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#nested-ternary-nested_ternary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested Ternary (nested_ternary)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#unnecessary-nested-if-unnecessary_nested_if" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1370,6 +1381,17 @@
     <span class="md-ellipsis">
       
         Too Many Returns (too_many_returns)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#nested-ternary-nested_ternary" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Nested Ternary (nested_ternary)
       
     </span>
   </a>
@@ -2608,13 +2630,95 @@
 <ul>
 <li>Ruff: <code>PLR0911</code></li>
 </ul>
+<h3 id="nested-ternary-nested_ternary">Nested Ternary (<code>nested_ternary</code>)</h3>
+<p><strong>What it is</strong></p>
+<p>A conditional expression contains another conditional expression, forcing readers to match several branches mentally — extract the result into a named function or flatten it into if statements with early returns.</p>
+<p><strong>Why it's bad</strong></p>
+<p>Nested conditional expressions force readers to mentally match several conditions with their results, making agent-generated logic difficult to review and change.</p>
+<p><strong>Example</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Python</label><label for="__tabbed_9_2">JS / TS</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_status</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeliveryStatus</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">READY</span>
+        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_paid</span>
+        <span class="k">else</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">RETRY</span>
+        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">payment_retry_allowed</span>
+        <span class="k">else</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">BLOCKED</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Extract the decision into a named helper, or replace the expression with ordered if statements and early returns.</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_status</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeliveryStatus</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_paid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">READY</span>
+    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">payment_retry_allowed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">RETRY</span>
+    <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">BLOCKED</span>
+</code></pre></div>
+</details></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryStatus</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">order</span><span class="p">.</span><span class="nx">isPaid</span>
+<span class="w">    </span><span class="o">?</span><span class="w"> </span><span class="nx">DeliveryStatus.Ready</span>
+<span class="w">    </span><span class="o">:</span><span class="w"> </span><span class="kt">order.paymentRetryAllowed</span>
+<span class="w">      </span><span class="o">?</span><span class="w"> </span><span class="nx">DeliveryStatus.Retry</span>
+<span class="w">      </span><span class="o">:</span><span class="w"> </span><span class="kt">DeliveryStatus.Blocked</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Move result selection into a named function and use explicit if branches with early returns.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryStatus</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">isPaid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Ready</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">paymentRetryAllowed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Retry</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Blocked</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</details></p>
+</div>
+</div>
+</div>
+<p><strong>Tune It</strong></p>
+<p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.nested_ternary]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="c1"># This detector has no extra threshold knobs.</span>
+</code></pre></div>
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
+<p><strong>External linter coverage</strong></p>
+<ul>
+<li>ESLint: <code>no-nested-ternary</code></li>
+</ul>
 <h3 id="unnecessary-nested-if-unnecessary_nested_if">Unnecessary Nested If (<code>unnecessary_nested_if</code>)</h3>
 <p><strong>What it is</strong></p>
 <p>An <code>if</code> whose only body is another <code>if</code>, with no else path — combine the conditions with <code>and</code>/<code>&amp;&amp;</code> to flatten the control flow.</p>
 <p><strong>Why it's bad</strong></p>
 <p>The code says 'if' twice when the condition really belongs on one line.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Python</label><label for="__tabbed_9_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Python</label><label for="__tabbed_10_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2689,7 +2793,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Repeated guards obscure which invariants have already been established.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Python</label><label for="__tabbed_10_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Python</label><label for="__tabbed_11_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2761,7 +2865,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A single module becomes a hot spot with too many reasons to change.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Python</label><label for="__tabbed_11_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Python</label><label for="__tabbed_12_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2854,7 +2958,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Nested helpers hide important behavior and make tests awkward.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Python</label><label for="__tabbed_12_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Python</label><label for="__tabbed_13_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2943,7 +3047,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The class stops having a clear job and becomes a grab bag.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Python</label><label for="__tabbed_13_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="14:2"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Python</label><label for="__tabbed_14_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3061,7 +3165,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The function becomes a scroll instead of a unit you can hold in your head.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="14:2"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Python</label><label for="__tabbed_14_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="15:2"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Python</label><label for="__tabbed_15_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3174,7 +3278,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The call contract becomes noisy and easy to pass in the wrong order.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="15:2"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Python</label><label for="__tabbed_15_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="16:2"><input checked="checked" id="__tabbed_16_1" name="__tabbed_16" type="radio" /><input id="__tabbed_16_2" name="__tabbed_16" type="radio" /><div class="tabbed-labels"><label for="__tabbed_16_1">Python</label><label for="__tabbed_16_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3255,7 +3359,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The prose becomes a second implementation that readers must keep in sync with the code.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="16:2"><input checked="checked" id="__tabbed_16_1" name="__tabbed_16" type="radio" /><input id="__tabbed_16_2" name="__tabbed_16" type="radio" /><div class="tabbed-labels"><label for="__tabbed_16_1">Python</label><label for="__tabbed_16_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="17:2"><input checked="checked" id="__tabbed_17_1" name="__tabbed_17" type="radio" /><input id="__tabbed_17_2" name="__tabbed_17" type="radio" /><div class="tabbed-labels"><label for="__tabbed_17_1">Python</label><label for="__tabbed_17_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3369,7 +3473,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The same bundle has to be kept in sync everywhere it travels.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="17:2"><input checked="checked" id="__tabbed_17_1" name="__tabbed_17" type="radio" /><input id="__tabbed_17_2" name="__tabbed_17" type="radio" /><div class="tabbed-labels"><label for="__tabbed_17_1">Python</label><label for="__tabbed_17_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="18:2"><input checked="checked" id="__tabbed_18_1" name="__tabbed_18" type="radio" /><input id="__tabbed_18_2" name="__tabbed_18" type="radio" /><div class="tabbed-labels"><label for="__tabbed_18_1">Python</label><label for="__tabbed_18_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3460,7 +3564,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>One file starts changing for unrelated reasons, so fixes get tangled.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="18:2"><input checked="checked" id="__tabbed_18_1" name="__tabbed_18" type="radio" /><input id="__tabbed_18_2" name="__tabbed_18" type="radio" /><div class="tabbed-labels"><label for="__tabbed_18_1">Python</label><label for="__tabbed_18_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="19:2"><input checked="checked" id="__tabbed_19_1" name="__tabbed_19" type="radio" /><input id="__tabbed_19_2" name="__tabbed_19" type="radio" /><div class="tabbed-labels"><label for="__tabbed_19_1">Python</label><label for="__tabbed_19_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3560,7 +3664,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A forced common type couples two implementations whose real responsibilities no longer match.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="19:2"><input checked="checked" id="__tabbed_19_1" name="__tabbed_19" type="radio" /><input id="__tabbed_19_2" name="__tabbed_19" type="radio" /><div class="tabbed-labels"><label for="__tabbed_19_1">Python</label><label for="__tabbed_19_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="20:2"><input checked="checked" id="__tabbed_20_1" name="__tabbed_20" type="radio" /><input id="__tabbed_20_2" name="__tabbed_20" type="radio" /><div class="tabbed-labels"><label for="__tabbed_20_1">Python</label><label for="__tabbed_20_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3657,7 +3761,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Logic sits next to the wrong data, so edits keep reaching through a foreign object.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="20:2"><input checked="checked" id="__tabbed_20_1" name="__tabbed_20" type="radio" /><input id="__tabbed_20_2" name="__tabbed_20" type="radio" /><div class="tabbed-labels"><label for="__tabbed_20_1">Python</label><label for="__tabbed_20_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="21:2"><input checked="checked" id="__tabbed_21_1" name="__tabbed_21" type="radio" /><input id="__tabbed_21_2" name="__tabbed_21" type="radio" /><div class="tabbed-labels"><label for="__tabbed_21_1">Python</label><label for="__tabbed_21_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3762,7 +3866,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Two classes know too much about each other's internals, so refactors ripple.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="21:2"><input checked="checked" id="__tabbed_21_1" name="__tabbed_21" type="radio" /><input id="__tabbed_21_2" name="__tabbed_21" type="radio" /><div class="tabbed-labels"><label for="__tabbed_21_1">Python</label><label for="__tabbed_21_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="22:2"><input checked="checked" id="__tabbed_22_1" name="__tabbed_22" type="radio" /><input id="__tabbed_22_2" name="__tabbed_22" type="radio" /><div class="tabbed-labels"><label for="__tabbed_22_1">Python</label><label for="__tabbed_22_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3853,7 +3957,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Deep property walking couples the caller to the whole object graph.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="22:2"><input checked="checked" id="__tabbed_22_1" name="__tabbed_22" type="radio" /><input id="__tabbed_22_2" name="__tabbed_22" type="radio" /><div class="tabbed-labels"><label for="__tabbed_22_1">Python</label><label for="__tabbed_22_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Python</label><label for="__tabbed_23_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3944,7 +4048,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Inheritance promises behavior the subclass does not actually want.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Python</label><label for="__tabbed_23_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4033,7 +4137,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>One edit fans out to many dependents.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4105,7 +4209,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Stringly typed payloads drift silently when the shape changes.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4185,10 +4289,10 @@
 <p><strong>Why it's bad</strong></p>
 <p>Weak types make invalid states look valid until runtime.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="27:2"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Python</label><label for="__tabbed_27_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="tabbed-set tabbed-alternate" data-tabs="27:3"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><input id="__tabbed_27_3" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Low</label><label for="__tabbed_27_2">Medium</label><label for="__tabbed_27_3">High</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="28:3"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><input id="__tabbed_28_3" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Low</label><label for="__tabbed_28_2">Medium</label><label for="__tabbed_28_3">High</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>Flags only direct escape hatches.</p>
@@ -4278,7 +4382,7 @@
 </div>
 </div>
 <div class="tabbed-block">
-<div class="tabbed-set tabbed-alternate" data-tabs="28:3"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><input id="__tabbed_28_3" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Low</label><label for="__tabbed_28_2">Medium</label><label for="__tabbed_28_3">High</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="29:3"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><input id="__tabbed_29_3" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Low</label><label for="__tabbed_29_2">Medium</label><label for="__tabbed_29_3">High</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>Flags only direct escape hatches.</p>
@@ -4364,7 +4468,7 @@
 </div>
 <p><strong>Tune It</strong></p>
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="29:3"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><input id="__tabbed_29_3" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Low</label><label for="__tabbed_29_2">Medium</label><label for="__tabbed_29_3">High</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="30:3"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><input id="__tabbed_30_3" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Low</label><label for="__tabbed_30_2">Medium</label><label for="__tabbed_30_3">High</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
@@ -4411,7 +4515,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Positional bundles hide meaning and make the code brittle to reorderings.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="30:2"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Python</label><label for="__tabbed_30_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4485,7 +4589,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Broad catches plus empty defaults turn contract violations into plausible but wrong data.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4558,7 +4662,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Mutating inputs hides side effects and makes call order matter.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="33:2"><input checked="checked" id="__tabbed_33_1" name="__tabbed_33" type="radio" /><input id="__tabbed_33_2" name="__tabbed_33" type="radio" /><div class="tabbed-labels"><label for="__tabbed_33_1">Python</label><label for="__tabbed_33_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4624,7 +4728,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Rebinding a parameter muddies the original meaning of the value.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="33:2"><input checked="checked" id="__tabbed_33_1" name="__tabbed_33" type="radio" /><input id="__tabbed_33_2" name="__tabbed_33" type="radio" /><div class="tabbed-labels"><label for="__tabbed_33_1">Python</label><label for="__tabbed_33_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="34:2"><input checked="checked" id="__tabbed_34_1" name="__tabbed_34" type="radio" /><input id="__tabbed_34_2" name="__tabbed_34" type="radio" /><div class="tabbed-labels"><label for="__tabbed_34_1">Python</label><label for="__tabbed_34_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4690,7 +4794,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A variable with multiple meanings is a trap for both readers and debuggers.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="34:2"><input checked="checked" id="__tabbed_34_1" name="__tabbed_34" type="radio" /><input id="__tabbed_34_2" name="__tabbed_34" type="radio" /><div class="tabbed-labels"><label for="__tabbed_34_1">Python</label><label for="__tabbed_34_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="35:2"><input checked="checked" id="__tabbed_35_1" name="__tabbed_35" type="radio" /><input id="__tabbed_35_2" name="__tabbed_35" type="radio" /><div class="tabbed-labels"><label for="__tabbed_35_1">Python</label><label for="__tabbed_35_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4760,7 +4864,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Costs grow faster than the data and the code gets hard to flatten.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="35:2"><input checked="checked" id="__tabbed_35_1" name="__tabbed_35" type="radio" /><input id="__tabbed_35_2" name="__tabbed_35" type="radio" /><div class="tabbed-labels"><label for="__tabbed_35_1">Python</label><label for="__tabbed_35_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="36:2"><input checked="checked" id="__tabbed_36_1" name="__tabbed_36" type="radio" /><input id="__tabbed_36_2" name="__tabbed_36" type="radio" /><div class="tabbed-labels"><label for="__tabbed_36_1">Python</label><label for="__tabbed_36_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4853,7 +4957,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A per-item call can explode runtime and hit the backend one request at a time.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="36:2"><input checked="checked" id="__tabbed_36_1" name="__tabbed_36" type="radio" /><input id="__tabbed_36_2" name="__tabbed_36" type="radio" /><div class="tabbed-labels"><label for="__tabbed_36_1">Python</label><label for="__tabbed_36_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="37:2"><input checked="checked" id="__tabbed_37_1" name="__tabbed_37" type="radio" /><input id="__tabbed_37_2" name="__tabbed_37" type="radio" /><div class="tabbed-labels"><label for="__tabbed_37_1">Python</label><label for="__tabbed_37_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4922,7 +5026,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The same collection gets scanned over and over when one pass would do.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="37:2"><input checked="checked" id="__tabbed_37_1" name="__tabbed_37" type="radio" /><input id="__tabbed_37_2" name="__tabbed_37" type="radio" /><div class="tabbed-labels"><label for="__tabbed_37_1">Python</label><label for="__tabbed_37_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="38:2"><input checked="checked" id="__tabbed_38_1" name="__tabbed_38" type="radio" /><input id="__tabbed_38_2" name="__tabbed_38" type="radio" /><div class="tabbed-labels"><label for="__tabbed_38_1">Python</label><label for="__tabbed_38_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4995,7 +5099,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Repeated sorts turn a small loop into a surprisingly expensive one.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="38:2"><input checked="checked" id="__tabbed_38_1" name="__tabbed_38" type="radio" /><input id="__tabbed_38_2" name="__tabbed_38" type="radio" /><div class="tabbed-labels"><label for="__tabbed_38_1">Python</label><label for="__tabbed_38_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="39:2"><input checked="checked" id="__tabbed_39_1" name="__tabbed_39" type="radio" /><input id="__tabbed_39_2" name="__tabbed_39" type="radio" /><div class="tabbed-labels"><label for="__tabbed_39_1">Python</label><label for="__tabbed_39_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>

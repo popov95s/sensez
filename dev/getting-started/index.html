@@ -327,10 +327,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#initialization" class="md-nav__link">
+  <a href="#1-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Initialization
+        1. Install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-initialize-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Initialize the repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-restart-your-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Restart your agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-tune-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Tune it
       
     </span>
   </a>
@@ -776,10 +809,43 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#initialization" class="md-nav__link">
+  <a href="#1-install" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Initialization
+        1. Install
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#2-initialize-the-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        2. Initialize the repository
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#3-restart-your-agent" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        3. Restart your agent
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#4-tune-it" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        4. Tune it
       
     </span>
   </a>
@@ -817,44 +883,114 @@
 <h1 id="getting-started">Getting Started</h1>
 <p>Sensez is meant to run inside an agent loop so it can catch smells before they
 reach a pull request. The fastest path is to keep it close to the edit: use it inside your coding agent loop to provide it quick feedback on its work, as it's getting developed.</p>
-<h2 id="initialization">Initialization</h2>
+<h2 id="1-install">1. Install</h2>
 <div class="tabbed-set tabbed-alternate" data-tabs="1:2"><input checked="checked" id="__tabbed_1_1" name="__tabbed_1" type="radio" /><input id="__tabbed_1_2" name="__tabbed_1" type="radio" /><div class="tabbed-labels"><label for="__tabbed_1_1">Python</label><label for="__tabbed_1_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<p>If your repo is Python-first, install Sensez with <code>uv</code> and initialize the
-repo config.</p>
-<p><div class="highlight"><pre><span></span><code>uv<span class="w"> </span>add<span class="w"> </span>--dev<span class="w"> </span>sensez
-uv<span class="w"> </span>run<span class="w"> </span>sensez<span class="w"> </span>init
+<div class="highlight"><pre><span></span><code><span class="c1"># As a project dev dependency</span>
+uv<span class="w"> </span>add<span class="w"> </span>--dev<span class="w"> </span>sensez
+
+<span class="c1"># Or as a global CLI</span>
+uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>sensez
 </code></pre></div>
-or if you prefer to install it globally as a tool:</p>
-<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </span>sensez
-sensez<span class="w"> </span>init
-</code></pre></div>
-<p>The setup will guide you through the basics of using the tool. After setup, <strong>you will need to restart your coding agent</strong> for the MCP to be picked up.</p>
-<p>For one off checks using the CLI, you can use:
-<div class="highlight"><pre><span></span><code>uvx<span class="w"> </span>sensez<span class="w"> </span>noze<span class="w"> </span>.
-</code></pre></div></p>
 </div>
 <div class="tabbed-block">
-<p>If your repo is JavaScript or TypeScript-first, install Sensez with npm and
-initialize the repo config.</p>
 <div class="highlight"><pre><span></span><code>npm<span class="w"> </span>install<span class="w"> </span>--save-dev<span class="w"> </span>sensez
-npx<span class="w"> </span>sensez<span class="w"> </span>init<span class="w"> </span>.
-</code></pre></div>
-<p>The setup will guide you through the basics of using the tool. After setup, <strong>you will need to restart your coding agent</strong> for the MCP to be picked up.</p>
-<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>sensez<span class="w"> </span>noze<span class="w"> </span>.
 </code></pre></div>
 </div>
 </div>
 </div>
+<h2 id="2-initialize-the-repository">2. Initialize the repository</h2>
+<div class="tabbed-set tabbed-alternate" data-tabs="2:2"><input checked="checked" id="__tabbed_2_1" name="__tabbed_2" type="radio" /><input id="__tabbed_2_2" name="__tabbed_2" type="radio" /><div class="tabbed-labels"><label for="__tabbed_2_1">Python</label><label for="__tabbed_2_2">JS / TS</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>uv<span class="w"> </span>run<span class="w"> </span>sensez<span class="w"> </span>init
+</code></pre></div>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code>npx<span class="w"> </span>sensez<span class="w"> </span>init
+</code></pre></div>
+</div>
+</div>
+</div>
+<p><code>sensez init</code> setup guides you through the install, after you select which coding agent to use it with. Then:</p>
+<ul>
+<li>writes a commented starter config — <code>sensez.toml</code>, or a <code>[tool.sensez]</code>
+  section in <code>pyproject.toml</code> if you prefer;</li>
+<li>registers the Sensez MCP server with your agent, so the agent launches
+  Sensez automatically at startup;</li>
+<li>installs the Sensez skill that teaches the agent when and how to scan;</li>
+<li>creates <code>.sensez/</code> for local metrics and caches, and adds it to <code>.gitignore</code>, if local metrics are enabled;</li>
+<li>optionally installs an experimental end-of-turn gate hook (Claude Code only).</li>
+</ul>
+<p>What <code>init</code> writes for each supported agent:</p>
+<table>
+<thead>
+<tr>
+<th>Agent</th>
+<th>MCP config</th>
+<th>Agent skill</th>
+<th>Gate hook</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Claude Code</td>
+<td><code>.mcp.json</code></td>
+<td><code>.claude/skills/sensez</code></td>
+<td>Optional, in <code>.claude/settings.json</code></td>
+</tr>
+<tr>
+<td>Cursor</td>
+<td><code>.cursor/mcp.json</code></td>
+<td>—</td>
+<td>—</td>
+</tr>
+<tr>
+<td>Cline</td>
+<td><code>.cline/mcp.json</code></td>
+<td><code>.cline/skills/sensez</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Codex</td>
+<td><code>.codex/config.toml</code></td>
+<td><code>.codex/skills/sensez</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>OpenCode</td>
+<td><code>opencode.jsonc</code></td>
+<td><code>.opencode/skills/sensez</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Pi</td>
+<td><code>.pi/mcp.json</code></td>
+<td><code>.pi/skills/sensez</code></td>
+<td>—</td>
+</tr>
+<tr>
+<td>Other / none</td>
+<td>— (init prints guidance instead)</td>
+<td>—</td>
+<td>—</td>
+</tr>
+</tbody>
+</table>
+<h2 id="3-restart-your-agent">3. Restart your agent</h2>
+<p>Agents load MCP servers at startup. Restart the agent (or reload the window)
+after <code>init</code>, or the sensez tools will not appear.</p>
+<h2 id="4-tune-it">4. Tune it</h2>
+<p>Everything Sensez does is configured in the file <code>init</code> wrote. Continue with
+the <a href="../reference/configuration/">Configuration Reference</a> for action levels,
+per-language overrides, boundary rules, and accepting findings, and the
+<a href="../reference/findings/">Finding Reference</a> for what each detector does.</p>
 <h2 id="next">Next</h2>
 <ul>
 <li><a href="../reference/cli/">CLI Reference</a> for every command and flag.</li>
-<li><a href="../reference/findings/">Finding Reference</a> for the plain-English meaning of
-  each pillar and smell kind.</li>
-<li><a href="../reference/configuration/">Configuration Reference</a> for <code>sensez.toml</code> and
-  <code>[tool.sensez]</code>.</li>
-<li><a href="../usage/mcp-and-agents/">MCP and Agents</a> for interactive workflows.</li>
+<li><a href="../usage/mcp-and-agents/">MCP and Agents</a> for the interactive workflow.</li>
+<li><a href="../usage/github-action/">GitHub Action</a> for pull-request feedback.</li>
 </ul>
 
 

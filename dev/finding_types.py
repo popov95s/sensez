@@ -43,6 +43,7 @@ class SmellTerm(StrEnum):
     NARRATING_CODE = "narrating_code"
     N_PLUS_ONE_CALL = "n_plus_one_call"
     NESTED_LOOP = "nested_loop"
+    NESTED_TERNARY = "nested_ternary"
     REASSIGNED_PARAMETER = "reassigned_parameter"
     REDUNDANT_VALIDATION = "redundant_validation"
     REFUSED_BEQUEST = "refused_bequest"

@@ -595,10 +595,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#start-mcp" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Start MCP
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tools
       
     </span>
   </a>
@@ -789,10 +800,21 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#start-mcp" class="md-nav__link">
+  <a href="#setup" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Start MCP
+        Setup
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#tools" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Tools
       
     </span>
   </a>
@@ -840,24 +862,30 @@
 
 <h1 id="mcp-and-agents">MCP and Agents</h1>
 <p>Sensez is designed to sit in the middle of an edit loop, not just at the end of
-CI. The MCP server is the main integration point when you want the tool to run
+CI. The MCP server is the integration point that lets a coding agent scan
 repeatedly during a session.</p>
-<h2 id="start-mcp">Start MCP</h2>
-<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>mcp<span class="w"> </span>serve
-</code></pre></div>
-<p>The server speaks stdio MCP and exposes the themed tools used by the agent
-workflow:</p>
+<h2 id="setup">Setup</h2>
+<p>There is nothing to run by hand. <code>sensez init</code> registers the server with your
+coding agent — Claude Code, Cursor, Cline, Codex, OpenCode, and Pi are
+supported — and the agent launches it automatically at startup. See
+<a href="../../getting-started/">Getting Started</a>.</p>
+<h2 id="tools">Tools</h2>
 <ul>
-<li><code>noze_sniff</code></li>
-<li><code>noze_gate</code></li>
-<li><code>noze_explain</code></li>
-<li><code>brainz_report</code></li>
-<li><code>brainz_triage</code></li>
+<li><code>noze_sniff</code> — scan the repository for duplication, dead code, cycles,
+  boundary violations, and smells. Takes an absolute repository root as <code>path</code>.
+  Results are diff-focused by default (findings touched by uncommitted
+  changes, computed over the full graph); pass <code>diff=false</code> for a full audit
+  and <code>limit</code> to cap findings per pillar.</li>
+<li><code>noze_gate</code> — experimental end-of-turn diff gate, intended for hook
+  integration rather than direct calls. May be noisy on short or Q&amp;A turns.</li>
+<li><code>noze_explain</code> — explain a finding category in plain English.</li>
+<li><code>get_configuration_summary</code> — summarize the effective configuration and the
+  noisiest rules, as a starting point for tuning.</li>
+<li><code>brainz_report</code> — summarize local-only usage and resolution metrics.</li>
+<li><code>brainz_triage</code> — record the user's debt or false-positive verdict on a
+  finding.</li>
 </ul>
 <h2 id="use-in-a-session">Use In A Session</h2>
-<p><code>noze_sniff</code> is the "scan now" tool. <code>noze_gate</code> is the end-of-turn diff gate.
-<code>brainz_report</code> summarizes what the tool has helped fix, and <code>brainz_triage</code>
-records the user's debt or false-positive verdict.</p>
 <p>The important habit is to keep feedback close to the edit:</p>
 <ol>
 <li>Run a diff-scoped scan when the change is still fresh.</li>
