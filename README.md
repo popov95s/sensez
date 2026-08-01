@@ -1,22 +1,67 @@
-# Sensez
+# sensez
 
-[![PyPI](https://img.shields.io/pypi/v/sensez?logo=pypi&logoColor=white)](https://pypi.org/project/sensez/) [![npm](https://img.shields.io/npm/v/sensez?logo=npm&logoColor=white)](https://www.npmjs.com/package/sensez) [![CI](https://github.com/popov95s/sensez/actions/workflows/ci.yml/badge.svg)](https://github.com/popov95s/sensez/actions/workflows/ci.yml) [![Website](https://img.shields.io/badge/website-sensez.dev-222222?logo=googlechrome&logoColor=white)](https://sensez.dev) [![Documentation](https://img.shields.io/badge/docs-latest-222222?logo=readthedocs&logoColor=white)](https://popov95s.github.io/sensez/latest/) [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f)](https://github.com/popov95s/sensez/blob/main/LICENSE.MD)
+[![PyPI](https://img.shields.io/pypi/v/sensez?logo=pypi&logoColor=white)](https://pypi.org/project/sensez/) [![npm](https://img.shields.io/npm/v/sensez?logo=npm&logoColor=white)](https://www.npmjs.com/package/sensez) [![CI](https://github.com/popov95s/sensez/actions/workflows/ci.yml/badge.svg)](https://github.com/popov95s/sensez/actions/workflows/ci.yml) [![Website](https://img.shields.io/badge/website-sensez.dev-222222?logo=googlechrome&logoColor=white)](https://sensez.dev) [![Documentation](https://img.shields.io/badge/docs-latest-222222?logo=readthedocs&logoColor=white)](https://popov95s.github.io/sensez/latest/) [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f)](https://github.com/popov95s/sensez/blob/main/LICENSE)
 
-**Structural maintainability checks for coding agents and teams.**
+**Bring your coding agent to its senses.**
 
-Sensez is a suite of Rust CLIs and an MCP server that runs alongside your linter
-and type-checker. It finds cross-file problems that those tools do not usually
-own: duplication, dead code, import cycles, architecture-boundary violations,
-and design smells.
+Coding agents drift. CI catches the result too late, and non-blocking reports become Jira tickets nobody picks up.
 
-It gives coding agents the `noze` to detect code smells, the `bonez` to respect
-architectural boundaries, and the `spine` to do it fast. Python, JavaScript,
-TypeScript/TSX, and Rust profiles are supported (Rust primarily for dogfooding).
+sensez runs inside the coding-agent loop, giving agents fast, structured feedback on duplication, dead code, cycles, architecture violations, and design smells—so they fix problems before technical debt compounds.
+
+In controlled evaluations, agents using Sensez produced 86% fewer quality issues, 90% less duplicated code, and 67% fewer lines.
 
 **[Website](https://sensez.dev)** ·
 **[Documentation](https://popov95s.github.io/sensez/latest/)** ·
 **[MCP and agent guide](https://popov95s.github.io/sensez/latest/usage/mcp-and-agents/)** ·
-**[Configuration reference](https://popov95s.github.io/sensez/latest/reference/configuration/)** ·
+**[Configuration reference](https://popov95s.github.io/sensez/latest/reference/configuration/)**
+
+## Quick start
+
+### Python
+
+```bash
+uv add --dev sensez      # or install globally: uv tool install sensez
+uv run sensez init       # writes a starter config and registers the MCP server
+uv run sensez noze .     # scan once — no install needed with: uvx sensez noze .
+```
+
+### JavaScript and TypeScript
+
+```bash
+npm install --save-dev sensez
+npx sensez init
+npx sensez noze .
+```
+
+`sensez init` writes a commented starter `sensez.toml` and registers Sensez as
+an MCP server with your coding agent — Claude Code, Cursor, Cline, Codex,
+OpenCode, and Pi are supported. **Restart the agent afterwards** so the server
+is picked up. `sensez .` and `sensez noze .` both run the default scan.
+
+A report is one screen, focused on what to fix first:
+
+```text
+$ sensez noze .
+sensez — structural maintainability report
+
+Circular imports (1)
+    [warning] ↻ shop.promo → shop.cart
+        ./shop/promo.py:1  shop.promo → shop.cart
+        ./shop/cart.py:1  shop.cart → shop.promo
+
+Duplication (1)
+    [advisory] structural clone (53):
+      ./shop/clone_a.py:1-12
+      ./shop/clone_b.py:1-12
+
+Dead code candidates (2)
+    [advisory] ./shop/legacy.py:1  shop.legacy::orphan_helper (function) [high]
+    [advisory] ./shop/promo.py:10  shop.promo::recap (function) [high]
+
+Code smells (0)
+
+Boundary violations (not configured)
+```
 
 ## Why Sensez?
 
@@ -46,37 +91,6 @@ Sensez complements—not replaces—Ruff, ty, mypy, ESLint, TypeScript, `rustc`,
 and Clippy. Use those tools for local correctness; use Sensez for the structural
 relationships across the codebase.
 
-## Quick start
-
-### Python
-
-```bash
-# Add to a project; run it with `uv run sensez ...`
-uv add --dev sensez
-uv run sensez init
-
-# Or install a global CLI
-uv tool install sensez
-sensez init
-
-# Or run a one-off scan
-uvx sensez noze .
-```
-
-### JavaScript and TypeScript
-
-```bash
-# Add as a development dependency
-npm install --save-dev sensez
-
-# Generate a starter config and scan
-npx sensez init .
-npx sensez noze .
-```
-
-`sensez .` and `sensez noze .` both run the default scan. The explicit form
-`sensez noze sniff .` remains available for agent-oriented workflows.
-
 ## What it finds
 
 | Area | Output key | What it catches |
@@ -102,6 +116,7 @@ Some examples of the included smells:
 | `magic_string_default` | <code>&#124;&#124; ""</code> or <code>or ""</code> hides a string that should be required. |
 | `split_variable` | Multiple reassignments of a variable in one scope add hidden state. |
 | `nested_loop` | **Beta, opt-in:** nested iteration may have unintended complexity. |
+| `nested_ternary` | Nested conditional expressions make agent-generated decisions hard to follow. |
 | `n_plus_one_call` | **Beta, opt-in:** one-by-one external calls may need batching. |
 
 The default report is intentionally fixable in one screen: each pillar shows its
@@ -162,13 +177,16 @@ for the methodology and per-benchmark results.
 ## MCP for agents
 
 MCP is the recommended integration when Sensez should run repeatedly during a
-coding session rather than as a one-off shell command. The `init` command would set this up automatically on agent start.
+coding session rather than as a one-off shell command. `sensez init` registers
+the server with your coding agent, which then launches it automatically at
+startup — there is nothing to run by hand.
 
 | Tool | Use |
 | --- | --- |
 | `noze_sniff` | Scan the repository for smells and structural issues. |
 | `noze_gate` | Experimental end-of-turn diff gate; may be noisy for short or Q&A turns. |
 | `noze_explain` | Explain a finding category. |
+| `get_configuration_summary` | Summarize the effective configuration and noisiest rules when tuning. |
 | `brainz_report` | Summarize local usage and resolution metrics. |
 | `brainz_triage` | Record user-approved debt or false-positive verdicts. |
 | `eyez_search_docs` | Disabled unless `eyez` is enabled; searches docstrings and comments. |
@@ -214,6 +232,12 @@ enabled = true
 enabled = true
 ```
 
+Smell rules can also be overridden per language, and every finding carries an
+action level (`info` → `must_fix`) that drives gates and CI. See the
+[Configuration reference](https://popov95s.github.io/sensez/latest/reference/configuration/)
+for action levels, per-language overrides, boundary patterns, and accepting
+findings.
+
 ## Local-only metrics and privacy
 
 `brainz` records scans, gate blocks, triage decisions, resolved findings,
@@ -237,7 +261,7 @@ enabled = false
 - `spine`: file discovery, parsing, shared IR, and dependency graph.
 - `profiles`: language adapters for Python, JS/TS, TSX, and Rust.
 - `noze`: duplication, dead code, cycles, and design smells.
-- `bonez`: architecture-boundary auditing; not yet enabled.
+- `bonez`: architecture-boundary auditing.
 - `brainz`: local-only metrics and feedback memory.
 - `eyez`: optional doc/comment search; not yet enabled.
 - `mcp`: JSON-RPC/MCP surface for agent integration.
