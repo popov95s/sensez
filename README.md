@@ -2,9 +2,11 @@
 
 [![PyPI](https://img.shields.io/pypi/v/sensez?logo=pypi&logoColor=white)](https://pypi.org/project/sensez/) [![npm](https://img.shields.io/npm/v/sensez?logo=npm&logoColor=white)](https://www.npmjs.com/package/sensez) [![CI](https://github.com/popov95s/sensez/actions/workflows/ci.yml/badge.svg)](https://github.com/popov95s/sensez/actions/workflows/ci.yml) [![Website](https://img.shields.io/badge/website-sensez.dev-222222?logo=googlechrome&logoColor=white)](https://sensez.dev) [![Documentation](https://img.shields.io/badge/docs-latest-222222?logo=readthedocs&logoColor=white)](https://popov95s.github.io/sensez/latest/) [![License: MIT](https://img.shields.io/badge/license-MIT-2ea44f)](https://github.com/popov95s/sensez/blob/main/LICENSE)
 
-**Bring your coding agent to its senses.**
+**Coding agents produce tech debt. Bring them to their senses.**
 
-Coding agents drift. CI catches the result too late, and non-blocking reports become Jira tickets nobody picks up.
+Coding agents drift. CI catches the result too late, and non-blocking reports become Jira tickets nobody picks up. Most static analysis tools are too slow or too noisy to run on every agent turn.
+
+sensez closes the loop with fast, structured feedback agents can act on before moving on.
 
 sensez runs inside the coding-agent loop, giving agents fast, structured feedback on duplication, dead code, cycles, architecture violations, and design smells—so they fix problems before technical debt compounds.
 
