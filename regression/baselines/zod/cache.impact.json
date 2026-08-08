@@ -1,0 +1,61 @@
+{
+  "cycle_added": {
+    "cycles": [
+      {
+        "action": "warning",
+        "edges": [
+          {
+            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
+            "from_module": "src/sensez-cache-cycle-b",
+            "line": 1,
+            "to_module": "src/sensez-cache-cycle-a"
+          },
+          {
+            "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
+            "from_module": "src/sensez-cache-cycle-a",
+            "line": 1,
+            "to_module": "src/sensez-cache-cycle-b"
+          }
+        ],
+        "modules": [
+          "src/sensez-cache-cycle-b",
+          "src/sensez-cache-cycle-a"
+        ]
+      }
+    ],
+    "duplication": []
+  },
+  "duplicate_added": {
+    "cycles": [],
+    "duplication": [
+      {
+        "action": "advisory",
+        "occurrences": [
+          {
+            "end_row": 14,
+            "file": "<zod>/packages/zod/src/sensez-cache-duplicate-left.ts",
+            "start_row": 1
+          },
+          {
+            "end_row": 14,
+            "file": "<zod>/packages/zod/src/sensez-cache-duplicate-right.ts",
+            "start_row": 1
+          }
+        ],
+        "token_length": 77
+      }
+    ]
+  },
+  "duplicate_removed": {
+    "cycles": [],
+    "duplication": []
+  },
+  "initial": {
+    "cycles": [],
+    "duplication": []
+  },
+  "repeated": {
+    "cycles": [],
+    "duplication": []
+  }
+}

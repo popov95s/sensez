@@ -1,6 +1,6 @@
 //! Language-neutral facts for performance-oriented smell detection.
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PerformanceFacts {
     pub loops: Vec<PerfLine>,
     pub nested_loops: Vec<PerfLine>,
@@ -10,13 +10,13 @@ pub struct PerformanceFacts {
     pub loop_calls: Vec<CallFact>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PerfLine {
     pub line: usize,
     pub subject: String,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct CallFact {
     pub target: String,
     pub base: String,

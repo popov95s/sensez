@@ -28,8 +28,10 @@ pub fn analyze_path(
     })
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
-    let parsed = parser::parse_files(&discovery.files);
+    let parse_cache = crate::spine::cache::ParseCache::new(path);
+    let parsed = parser::parse_files_with_cache(&discovery.files, Some(&parse_cache));
     timer.lap("parse");
+    timer.cache_stats(&parse_cache.stats());
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
@@ -93,6 +95,16 @@ impl PhaseTimer {
             (now - self.start).as_secs_f64() * 1e3,
         );
         self.last = now;
+    }
+
+    fn cache_stats(&self, stats: &crate::spine::cache::CacheStats) {
+        if self.enabled {
+            eprintln!(
+                "[timing] parse-cache hits={} misses={}",
+                stats.hits(),
+                stats.misses()
+            );
+        }
     }
 }
 

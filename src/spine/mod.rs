@@ -4,6 +4,7 @@
 //! the intermediate representation, and the dependency graph. Feature modules
 //! consume these facts; language adapters live in `profiles`.
 
+pub mod cache;
 pub mod crawler;
 pub mod graph;
 pub mod ir;

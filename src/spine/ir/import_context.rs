@@ -4,7 +4,7 @@
 ///
 /// `import a, b` yields two `ImportContext`s; `from x import a, b` yields one
 /// with `imported_symbols = ["a", "b"]`.
-#[derive(Debug, Clone, serde::Serialize)]
+#[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ImportContext {
     pub source_module: String,
     pub target_module: String,
@@ -28,7 +28,7 @@ pub struct ImportContext {
     pub enclosing_scope: Option<String>,
 }
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ImportPhase {
     Runtime,
