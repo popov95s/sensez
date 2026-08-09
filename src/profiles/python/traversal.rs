@@ -2,6 +2,7 @@
 //! extracts imports/declarations while tracking an explicit lexical scope stack.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
+use crate::profiles::lexeme::BoundNames;
 use crate::profiles::walk::{
     self, credit_attr_with_base_path, credit_name, credit_string, declare, emit_mapped,
     register_method, Scope,
@@ -9,7 +10,6 @@ use crate::profiles::walk::{
 use crate::spine::ir::ImportPhase;
 use crate::spine::ir::Walked;
 use crate::spine::ir::{record_attr, SymbolKind};
-use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
@@ -23,7 +23,7 @@ fn visit(
     file_id: u32,
     module_name: &str,
     scope: &mut Vec<Scope>,
-    fn_bounds: &mut Vec<HashSet<String>>,
+    fn_bounds: &mut Vec<BoundNames>,
     out: &mut Walked,
 ) {
     let kind = node.kind();
@@ -95,7 +95,7 @@ fn visit(
     // of the duplication stream, and `is_leaf` still stops normal descent).
     if kind == "string" || kind == "concatenated_string" {
         if let Some(value) = symbols::string_value(node, src) {
-            credit_string(out, value);
+            credit_string(out, &value);
         }
         credit_interpolations(node, src, out);
     }

@@ -9,12 +9,12 @@ use super::{make, structure_target, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::FunctionMetrics;
+use crate::spine::ir::FunctionUnit;
 use std::collections::{HashMap, HashSet};
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -53,7 +53,7 @@ pub fn detect(
 /// attribute (`p.kwargs[k]=v`); `self`/`cls` stay excluded either way.
 fn mutated_params(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -86,7 +86,7 @@ fn mutated_params(
 }
 
 /// Parameters rebound with plain assignment (opt-in: `x = x or []` is idiomatic).
-fn reassigned_params(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<SmellFinding>) {
+fn reassigned_params(ctx: &SmellContext<'_>, m: &FunctionUnit, out: &mut Vec<SmellFinding>) {
     let rebound: Vec<&str> = m
         .param_names
         .iter()
@@ -114,7 +114,7 @@ fn reassigned_params(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<
 /// (DataFrame, ndarray, ...) are skipped; dict-annotated or unknown both flag.
 fn implicit_schema(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     schemas: &HashMap<String, HashSet<String>>,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
@@ -151,7 +151,7 @@ fn implicit_schema(
     }
 }
 
-fn propagated_schemas(metrics: &[FunctionMetrics]) -> Vec<HashMap<String, HashSet<String>>> {
+fn propagated_schemas(metrics: &[FunctionUnit]) -> Vec<HashMap<String, HashSet<String>>> {
     let by_name: HashMap<&str, usize> = metrics
         .iter()
         .enumerate()
@@ -189,7 +189,7 @@ fn propagated_schemas(metrics: &[FunctionMetrics]) -> Vec<HashMap<String, HashSe
     schemas
 }
 
-fn is_validated_boundary(ctx: &SmellContext<'_>, metric: &FunctionMetrics) -> bool {
+fn is_validated_boundary(ctx: &SmellContext<'_>, metric: &FunctionUnit) -> bool {
     ctx.type_hints
         .return_types
         .get(&metric.name)

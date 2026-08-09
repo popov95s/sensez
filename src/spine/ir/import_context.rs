@@ -12,8 +12,7 @@ pub struct ImportContext {
     /// Local names this import binds into the file (alias-aware). Used for
     /// unused-import detection. `import a.b` binds `a`; `x as y` binds `y`.
     pub bindings: Vec<String>,
-    /// Per-binding phase, same order as `bindings`. Missing entries inherit
-    /// `phase` for backward-compatible internal construction.
+    /// Per-binding phase, in the same order and with the same length as `bindings`.
     pub binding_phases: Vec<ImportPhase>,
     pub line: usize,
     pub column: usize,

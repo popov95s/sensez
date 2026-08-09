@@ -14,18 +14,21 @@ pub fn extract(
 ) -> Vec<ImportContext> {
     let pos = node.start_position();
     let (line, column) = (pos.row + 1, pos.column + 1);
-    let base = |target: String, symbols: Vec<String>, bindings: Vec<String>| ImportContext {
-        source_module: source_module.to_string(),
-        target_module: target,
-        imported_symbols: symbols,
-        bindings,
-        binding_phases: Vec::new(),
-        line,
-        column,
-        phase,
-        is_inline: scope.is_some(),
-        is_module_decl: false,
-        enclosing_scope: scope.map(str::to_string),
+    let base = |target: String, symbols: Vec<String>, bindings: Vec<String>| {
+        let binding_phases = vec![phase; bindings.len()];
+        ImportContext {
+            source_module: source_module.to_string(),
+            target_module: target,
+            imported_symbols: symbols,
+            bindings,
+            binding_phases,
+            line,
+            column,
+            phase,
+            is_inline: scope.is_some(),
+            is_module_decl: false,
+            enclosing_scope: scope.map(str::to_string),
+        }
     };
 
     match node.kind() {

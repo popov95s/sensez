@@ -21,7 +21,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     // symbols — a re-exported name is kept alive in its defining module by the
     // re-export *edge*, and folding it here would falsely flag the package's
     // re-export as dead.
-    for (file, identity) in files.iter().zip(&identities) {
+    for (source_index, (file, identity)) in files.iter().zip(&identities).enumerate() {
         if cg.name_to_index.contains_key(&identity.name) {
             // Same logical module identity, e.g. app.py and app/__init__.py.
             // Keep the first node so imports remain deterministic.
@@ -32,12 +32,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
             file_path: file.path.clone(),
             module_name: identity.name.clone(),
             language: file.language,
-            declared_public_symbols: file.walked.symbols.declared.clone(),
-            declared_kinds: file.walked.symbols.declared_kinds.clone(),
-            declared_lines: file.walked.symbols.declared_lines.clone(),
-            dunder_all: file.walked.symbols.dunder_all.clone(),
-            decorators: file.walked.symbols.decorators.clone(),
-            name_counts: file.walked.usage.name_counts.clone(),
+            source_index: Some(source_index),
             is_external: false,
         });
         cg.name_to_index.insert(identity.name.clone(), idx);
@@ -197,12 +192,7 @@ fn node_for_target(cg: &mut CodebaseGraph, src_lang: Language, target: &str) -> 
         file_path: PathBuf::new(),
         module_name: target.to_string(),
         language: src_lang,
-        declared_public_symbols: Vec::new(),
-        declared_kinds: HashMap::new(),
-        declared_lines: HashMap::new(),
-        dunder_all: None,
-        decorators: HashMap::new(),
-        name_counts: HashMap::new(),
+        source_index: None,
         is_external: true,
     });
     cg.name_to_index.insert(target.to_string(), idx);

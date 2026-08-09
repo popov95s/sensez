@@ -7,18 +7,18 @@ use super::make;
 use super::SmellContext;
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{FunctionMetrics, TypeHints};
+use crate::spine::ir::{FunctionUnit, TypeHints};
 use std::collections::{HashMap, HashSet};
 
 /// Per-file view of cross-function facts only Feature Envy /
 /// Inappropriate Intimacy read. Bundled so neither smell has to reach back
 /// into the full `ParsedFile` just to fetch a usage table.
-pub(super) struct UsageFacts {
+pub(super) struct UsageFacts<'a> {
     /// Base identifier → distinct attribute names accessed on it
     /// (`obj.attr` per function, unioned file-wide). Consumed by
     /// Inappropriate Intimacy to flag a non-`self` receiver reaching into
     /// the private members of a class defined in this file.
-    pub attribute_accesses: HashMap<String, HashSet<String>>,
+    pub attribute_accesses: &'a HashMap<String, HashSet<String>>,
 }
 
 /// Minimum external member touches before envy is worth reporting. One or two
@@ -30,8 +30,8 @@ const ENVY_FLOOR: usize = 3;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
-    usage: &UsageFacts,
+    metrics: &[FunctionUnit],
+    usage: &UsageFacts<'_>,
     locals: &HashSet<&str>,
     _cfg: &Smells,
     out: &mut Vec<SmellFinding>,
@@ -40,7 +40,7 @@ pub fn detect(
     inappropriate_intimacy(ctx, usage, locals, out);
 }
 
-fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionMetrics], out: &mut Vec<SmellFinding>) {
+fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<SmellFinding>) {
     for m in metrics {
         // Feature envy is about a *method* neglecting its own object's data. Free
         // functions (endpoints, helpers) have no "own data", so they can't envy.
@@ -90,11 +90,11 @@ fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionMetrics], out: &mut V
 
 fn inappropriate_intimacy(
     ctx: &SmellContext<'_>,
-    usage: &UsageFacts,
+    usage: &UsageFacts<'_>,
     locals: &HashSet<&str>,
     out: &mut Vec<SmellFinding>,
 ) {
-    for (base, attrs) in &usage.attribute_accesses {
+    for (base, attrs) in usage.attribute_accesses {
         if base == "self" {
             continue;
         }

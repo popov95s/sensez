@@ -6,13 +6,13 @@
 //! everything else (module/free names, attribute/method names, type
 //! annotations, literals) is kept verbatim.
 
-use std::collections::HashSet;
+use crate::profiles::lexeme::BoundNames;
 use tree_sitter::Node;
 
 /// Names bound within `func` (its parameters + body targets), not descending
 /// into nested functions/lambdas (those have their own scope).
-pub fn bound_names(func: Node, src: &[u8]) -> HashSet<String> {
-    let mut set = HashSet::new();
+pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
+    let mut set = BoundNames::default();
     if let Some(params) = func.child_by_field_name("parameters") {
         collect_params(params, src, &mut set);
     }
@@ -22,7 +22,7 @@ pub fn bound_names(func: Node, src: &[u8]) -> HashSet<String> {
     set
 }
 
-fn collect_params(params: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_params(params: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = params.walk();
     for p in params.named_children(&mut cursor) {
         let name = if p.kind() == "identifier" {
@@ -40,7 +40,7 @@ fn collect_params(params: Node, src: &[u8], set: &mut HashSet<String>) {
 
 /// Recursively collect assignment/`for`/walrus/`as` targets, skipping nested
 /// function/lambda scopes.
-fn collect_targets(node: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         match child.kind() {
@@ -72,7 +72,7 @@ fn collect_targets(node: Node, src: &[u8], set: &mut HashSet<String>) {
 
 /// Names on the left of a binding. `self.x`/`arr[i]` targets are attribute or
 /// subscript writes, not local bindings, so they are deliberately ignored.
-fn collect_target_names(node: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_target_names(node: Node, src: &[u8], set: &mut BoundNames) {
     match node.kind() {
         "identifier" => {
             if let Some(t) = text(node, src) {
@@ -89,7 +89,7 @@ fn collect_target_names(node: Node, src: &[u8], set: &mut HashSet<String>) {
     }
 }
 
-fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
+fn first_identifier(node: Node, src: &[u8]) -> Option<u64> {
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         if child.kind() == "identifier" {
@@ -99,6 +99,6 @@ fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
     None
 }
 
-fn text(node: Node, src: &[u8]) -> Option<String> {
-    node.utf8_text(src).ok().map(str::to_string)
+fn text(node: Node, src: &[u8]) -> Option<u64> {
+    node.utf8_text(src).ok().map(crate::profiles::lexeme::hash)
 }

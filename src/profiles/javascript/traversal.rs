@@ -4,12 +4,12 @@
 //! per-function body pass.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
+use crate::profiles::lexeme::BoundNames;
 use crate::profiles::walk::{
-    self, credit_attr, credit_name, credit_string, declare, emit_mapped, register_method, Scope,
+    self, credit_attr, credit_name, credit_string, declare, register_method, Scope,
 };
 use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
-use std::collections::HashSet;
 use tree_sitter::Node;
 
 struct ActiveFn {
@@ -19,7 +19,7 @@ struct ActiveFn {
 
 struct VisitCtx<'a> {
     scope: &'a mut Vec<Scope>,
-    fn_bounds: &'a mut Vec<HashSet<String>>,
+    fn_bounds: &'a mut Vec<BoundNames>,
     out: &'a mut Walked,
     active_fns: &'a mut Vec<ActiveFn>,
 }
@@ -28,7 +28,7 @@ struct VisitCtx<'a> {
 pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
     let mut out = Walked::default();
     let mut scope: Vec<Scope> = Vec::new();
-    let mut fn_bounds: Vec<HashSet<String>> = Vec::new();
+    let mut fn_bounds: Vec<BoundNames> = Vec::new();
     let mut active_fns: Vec<ActiveFn> = Vec::new();
     let mut ctx = VisitCtx {
         scope: &mut scope,
@@ -36,13 +36,20 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         out: &mut out,
         active_fns: &mut active_fns,
     };
-    visit(root, src, file_id, module_name, &mut ctx);
+    visit(root, src, file_id, module_name, false, &mut ctx);
     crate::profiles::comments::attach(&mut out);
     walk::attach_method_attrs(&mut out);
     out
 }
 
-fn visit(node: Node, src: &[u8], file_id: u32, module_name: &str, ctx: &mut VisitCtx) {
+fn visit(
+    node: Node,
+    src: &[u8],
+    file_id: u32,
+    module_name: &str,
+    is_member_property: bool,
+    ctx: &mut VisitCtx,
+) {
     let kind = node.kind();
 
     // ES imports / re-exports: extracted, not descended into.
@@ -91,15 +98,10 @@ fn visit(node: Node, src: &[u8], file_id: u32, module_name: &str, ctx: &mut Visi
         return;
     }
 
-    emit_mapped(
-        ctx.out,
-        file_id,
-        node,
-        src,
-        ctx.fn_bounds,
-        token_map::map_kind,
-        lexeme::code,
-    );
+    if let Some(token) = token_map::map_kind(kind) {
+        let code = lexeme::code(node, token, src, ctx.fn_bounds, is_member_property);
+        walk::emit(ctx.out, file_id, node, token, code);
+    }
 
     if matches!(
         kind,
@@ -159,13 +161,23 @@ fn visit(node: Node, src: &[u8], file_id: u32, module_name: &str, ctx: &mut Visi
         ctx.fn_bounds.push(scope::bound_names(node, src));
     }
 
+    let property_id = (kind == "member_expression")
+        .then(|| node.child_by_field_name("property").map(|child| child.id()))
+        .flatten();
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         let frame = ctx
             .active_fns
             .last_mut()
             .and_then(|active| active.collector.enter(child, src));
-        visit(child, src, file_id, module_name, ctx);
+        visit(
+            child,
+            src,
+            file_id,
+            module_name,
+            property_id == Some(child.id()),
+            ctx,
+        );
         if let Some(f) = frame {
             ctx.active_fns.last_mut().unwrap().collector.leave(f);
         }
@@ -181,11 +193,11 @@ fn visit(node: Node, src: &[u8], file_id: u32, module_name: &str, ctx: &mut Visi
     }
 }
 
-fn quoted_string_value(node: Node, src: &[u8]) -> Option<String> {
+fn quoted_string_value<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
     let text = node.utf8_text(src).ok()?.trim();
     let quote = text.chars().next().filter(|ch| matches!(ch, '"' | '\''))?;
     let body = text.get(quote.len_utf8()..)?;
-    Some(body.strip_suffix(quote).unwrap_or(body).to_string())
+    Some(body.strip_suffix(quote).unwrap_or(body))
 }
 
 /// Per-unit structural summaries for the design-smell pillar. Function-metric

@@ -4,7 +4,7 @@
 //! severity live in `noze::smells`.
 
 use crate::profiles::walk;
-use crate::spine::ir::{FunctionUnit, SchemaCall};
+use crate::spine::ir::{record_attr, FunctionUnit, SchemaCall};
 use tree_sitter::Node;
 
 /// Methods whose call mutates the receiver in place (Array / Map / Set).
@@ -110,10 +110,7 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         .filter(|k| k.kind() == "string")
         .and_then(|k| k.utf8_text(src).ok());
     if let (Some(recv), Some(key)) = (recv, key) {
-        unit.str_keys
-            .entry(recv.to_string())
-            .or_default()
-            .insert(key.trim_matches(['"', '\'', '`']).to_string());
+        record_attr(&mut unit.str_keys, recv, key.trim_matches(['"', '\'', '`']));
     }
 }
 

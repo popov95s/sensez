@@ -3,6 +3,7 @@
 use crate::profiles::DeadCodeProfile;
 use crate::report::Confidence;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
+use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
 use petgraph::graph::NodeIndex;
 use petgraph::visit::EdgeRef;
@@ -45,7 +46,7 @@ pub(super) fn inbound_usage(
 
 /// Cheap, decoration-independent reasons a symbol is not a dead candidate.
 pub(super) fn skip_symbol(
-    node: &ModuleNode,
+    file: &ParsedFile,
     profile: &dyn DeadCodeProfile,
     symbol: &str,
     used: &HashSet<String>,
@@ -53,14 +54,24 @@ pub(super) fn skip_symbol(
     if profile.is_conventionally_private(symbol) {
         return true;
     }
-    if node
+    if file
+        .walked
+        .symbols
         .dunder_all
         .as_ref()
         .is_some_and(|all| all.iter().any(|s| s == symbol))
     {
         return true;
     }
-    if node.name_counts.get(symbol).copied().unwrap_or(0) > 1 {
+    if file
+        .walked
+        .usage
+        .name_counts
+        .get(symbol)
+        .copied()
+        .unwrap_or(0)
+        > 1
+    {
         return true; // referenced within its own module
     }
     used.contains(symbol)

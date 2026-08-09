@@ -2,11 +2,11 @@
 //! extracts imports/declarations while tracking a lexical scope stack.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, units};
+use crate::profiles::lexeme::BoundNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
 };
 use crate::spine::ir::{record_attr, TypeAlias, Walked};
-use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
@@ -20,7 +20,7 @@ fn visit(
     file_id: u32,
     module_name: &str,
     scope: &mut Vec<Scope>,
-    fn_bounds: &mut Vec<HashSet<String>>,
+    fn_bounds: &mut Vec<BoundNames>,
     out: &mut Walked,
 ) {
     let mut state = RustWalkState {
@@ -34,7 +34,7 @@ fn visit(
 
 struct RustWalkState<'a> {
     scope: &'a mut Vec<Scope>,
-    fn_bounds: &'a mut Vec<HashSet<String>>,
+    fn_bounds: &'a mut Vec<BoundNames>,
     test_depth: usize,
     next_is_cfg_test: bool,
 }

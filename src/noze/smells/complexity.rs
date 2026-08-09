@@ -3,11 +3,11 @@
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::FunctionMetrics;
+use crate::spine::ir::FunctionUnit;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {

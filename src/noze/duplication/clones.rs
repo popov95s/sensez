@@ -5,6 +5,7 @@
 
 use super::flatten::Master;
 use bio::data_structures::suffix_array::suffix_array_int;
+use libsais::SuffixArrayConstruction;
 
 /// One n-way structural clone: all `positions` share a common prefix of `len`
 /// tokens in the master buffer.
@@ -14,12 +15,12 @@ pub struct RawGroup {
 }
 
 /// Extract n-way clone groups of length >= `threshold`.
-pub fn extract(master: &Master, threshold: usize) -> Vec<RawGroup> {
+pub fn extract(master: &mut Master, threshold: usize) -> Vec<RawGroup> {
     let n = master.text.len();
     if n < 2 || threshold == 0 {
         return Vec::new();
     }
-    let sa = suffix_array_int(&master.text);
+    let sa = build_suffix_array(&mut master.text);
     let lcp = kasai(&master.text, &sa);
 
     // Walk maximal runs [lo..=hi] where lcp[r] >= threshold for r in lo+1..=hi.
@@ -40,6 +41,24 @@ pub fn extract(master: &Master, threshold: usize) -> Vec<RawGroup> {
         }
     }
     groups
+}
+
+fn build_suffix_array(text: &mut [i32]) -> Vec<usize> {
+    match SuffixArrayConstruction::for_text_mut(text)
+        .in_owned_buffer32()
+        .single_threaded()
+        .run()
+    {
+        Ok(result) => result
+            .into_vec()
+            .into_iter()
+            .map(|position| position as usize)
+            .collect(),
+        Err(_) => {
+            let fallback: Vec<usize> = text.iter().map(|&value| value as usize).collect();
+            suffix_array_int(&fallback)
+        }
+    }
 }
 
 struct LcpRun {
@@ -84,7 +103,7 @@ impl LcpRunScan {
 /// A run is left-maximal unless all its occurrences share the same preceding
 /// token (in which case it's contained in a longer clone). Position 0 has no
 /// predecessor, which counts as a distinct boundary.
-fn is_left_maximal(text: &[usize], positions: &[usize]) -> bool {
+fn is_left_maximal(text: &[i32], positions: &[usize]) -> bool {
     let prev = |p: usize| -> i64 {
         if p == 0 {
             -1
@@ -97,7 +116,7 @@ fn is_left_maximal(text: &[usize], positions: &[usize]) -> bool {
 }
 
 /// Kasai's algorithm: `lcp[r]` is the longest common prefix of `sa[r-1]`,`sa[r]`.
-fn kasai(text: &[usize], sa: &[usize]) -> Vec<usize> {
+fn kasai(text: &[i32], sa: &[usize]) -> Vec<usize> {
     let n = text.len();
     let mut rank = vec![0usize; n];
     for (r, &p) in sa.iter().enumerate() {
@@ -127,7 +146,7 @@ impl PrefixScan {
         self.len = 0;
     }
 
-    fn common_len(&mut self, text: &[usize], left: usize, right: usize) -> usize {
+    fn common_len(&mut self, text: &[i32], left: usize, right: usize) -> usize {
         while left + self.len < text.len()
             && right + self.len < text.len()
             && text[left + self.len] == text[right + self.len]
@@ -161,8 +180,8 @@ mod tests {
         // + terminator 0. Alphabet is dense (0..=7), as suffix_array_int requires.
         let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 1, 2, 3, 4, 7, 0];
         let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let master = Master { text, spans };
-        let groups = extract(&master, 4);
+        let mut master = Master { text, spans };
+        let groups = extract(&mut master, 4);
         assert_eq!(groups.len(), 1, "one n-way group, not pairwise records");
         assert_eq!(groups[0].len, 4);
         assert_eq!(
@@ -176,8 +195,8 @@ mod tests {
     fn nothing_below_threshold() {
         let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 0];
         let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let master = Master { text, spans };
-        assert!(extract(&master, 5).is_empty());
+        let mut master = Master { text, spans };
+        assert!(extract(&mut master, 5).is_empty());
     }
 
     /// Regression: two identical runs must collapse to ONE left-maximal group,
@@ -188,8 +207,8 @@ mod tests {
     fn left_maximal_collapses_offset_fragments() {
         let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 0]; // dense alphabet 0..=5
         let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let master = Master { text, spans };
-        let groups = extract(&master, 2);
+        let mut master = Master { text, spans };
+        let groups = extract(&mut master, 2);
         assert_eq!(
             groups.len(),
             1,

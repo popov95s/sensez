@@ -8,7 +8,6 @@ pub use builder::build;
 
 use crate::spine::ir::Language;
 use crate::spine::parser::ImportContext;
-use crate::spine::parser::SymbolKind;
 use petgraph::graph::{DiGraph, NodeIndex};
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -21,17 +20,8 @@ pub struct ModuleNode {
     /// The language of the source file (drives per-node dead-code dispatch).
     /// External/synthetic nodes inherit the importing module's language.
     pub language: Language,
-    pub declared_public_symbols: Vec<String>,
-    /// Top-level name → kind ("function" | "class" | "variable").
-    pub declared_kinds: HashMap<String, SymbolKind>,
-    /// Top-level name → 1-indexed definition line.
-    pub declared_lines: HashMap<String, usize>,
-    /// Module-level `__all__`, if declared (roots that are never dead).
-    pub dunder_all: Option<Vec<String>>,
-    /// Top-level symbol name → decorator trailing names.
-    pub decorators: HashMap<String, Vec<String>>,
-    /// Count of every identifier occurrence within the module's own source.
-    pub name_counts: HashMap<String, usize>,
+    /// Index into the immutable parsed-file table; absent for external nodes.
+    pub source_index: Option<usize>,
     /// True for stdlib/third-party/unresolved targets outside the scan tree.
     pub is_external: bool,
 }

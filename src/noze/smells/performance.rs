@@ -6,20 +6,20 @@ use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::{registry, PerformanceProfile};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{CallFact, FunctionMetrics};
+use crate::spine::ir::{CallFact, FunctionUnit};
 use external::external_calls;
 use std::collections::BTreeMap;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     _cfg: &Smells,
 ) -> Vec<SmellFinding> {
     // Performance smells need to look up callees by name to attribute
     // helper-in-loop work to the caller, so we keep a per-name view of the
     // metrics by name. The map is name → *metrics*, not name → *unit*, but
     // the only field read for the lookup is `performance`.
-    let functions: BTreeMap<&str, &FunctionMetrics> =
+    let functions: BTreeMap<&str, &FunctionUnit> =
         metrics.iter().map(|m| (m.name.as_str(), m)).collect();
     let profile = registry::performance_profile(ctx.language);
     metrics
@@ -34,8 +34,8 @@ pub fn detect(
 
 fn direct_findings(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
-    functions: &BTreeMap<&str, &FunctionMetrics>,
+    m: &FunctionUnit,
+    functions: &BTreeMap<&str, &FunctionUnit>,
     profile: &dyn PerformanceProfile,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
@@ -89,8 +89,8 @@ fn direct_findings(
 
 fn helper_findings(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
-    functions: &BTreeMap<&str, &FunctionMetrics>,
+    m: &FunctionUnit,
+    functions: &BTreeMap<&str, &FunctionUnit>,
     profile: &dyn PerformanceProfile,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
@@ -129,7 +129,7 @@ fn helper_findings(
 }
 
 fn repeated_iterations<'a>(
-    m: &'a FunctionMetrics,
+    m: &'a FunctionUnit,
     profile: &dyn PerformanceProfile,
 ) -> BTreeMap<(&'a str, usize), Vec<&'a CallFact>> {
     let mut by_base: BTreeMap<(&str, usize), Vec<&CallFact>> = BTreeMap::new();
@@ -177,7 +177,7 @@ fn significant_loops<'a>(
 fn finding(
     kind: SmellKind,
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     line: usize,
     metric: usize,
     reason: &str,

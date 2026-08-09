@@ -5,13 +5,13 @@
 //! thing a real clone may freely rename, so it collapses to one lexeme code.
 //! Member/property names, free names, and literals are kept verbatim.
 
-use std::collections::HashSet;
+use crate::profiles::lexeme::BoundNames;
 use tree_sitter::Node;
 
 /// Names bound within `func` (parameters + body declarations), not descending
 /// into nested function scopes.
-pub fn bound_names(func: Node, src: &[u8]) -> HashSet<String> {
-    let mut set = HashSet::new();
+pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
+    let mut set = BoundNames::default();
     // arrow_function may have a single `parameter` or a `parameters` list.
     if let Some(param) = func.child_by_field_name("parameter") {
         collect_pattern(param, src, &mut set);
@@ -29,7 +29,7 @@ pub fn bound_names(func: Node, src: &[u8]) -> HashSet<String> {
 }
 
 /// Collect declaration/`for`/`catch` targets, skipping nested function scopes.
-fn collect_targets(node: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         match child.kind() {
@@ -67,11 +67,11 @@ fn collect_targets(node: Node, src: &[u8], set: &mut HashSet<String>) {
 }
 
 /// Names introduced by a binding pattern (identifier or destructuring).
-fn collect_pattern(node: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
     match node.kind() {
         "identifier" | "shorthand_property_identifier_pattern" => {
             if let Ok(t) = node.utf8_text(src) {
-                set.insert(t.to_string());
+                set.insert(crate::profiles::lexeme::hash(t));
             }
         }
         "required_parameter" | "optional_parameter" => {

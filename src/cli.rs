@@ -17,8 +17,6 @@ pub fn run() -> Result<ExitCode> {
     let cli = Cli::parse();
     match cli.command {
         Some(Command::Noze(args)) => run_noze(args),
-        Some(Command::Scan { path, options }) => run_scan(&path, &options),
-        Some(Command::Explain { term }) => run_explain(term.as_deref()).map(|()| ExitCode::SUCCESS),
         Some(Command::Init {
             path,
             agent,
@@ -48,8 +46,6 @@ pub fn run() -> Result<ExitCode> {
                     .map(|()| ExitCode::SUCCESS)
             }
         },
-        #[cfg(feature = "mcp")]
-        Some(Command::Serve) => serve_mcp(),
         #[cfg(feature = "eyez")]
         Some(Command::Eyez(args)) => match args.action {
             spec::EyezAction::Search {
@@ -64,13 +60,6 @@ pub fn run() -> Result<ExitCode> {
                 semantic,
             } => run_reindex(&path, force, semantic).map(|()| ExitCode::SUCCESS),
         },
-        #[cfg(feature = "eyez")]
-        Some(Command::Search {
-            path,
-            query,
-            top_k,
-            json,
-        }) => run_search(&path, &query, top_k, json).map(|()| ExitCode::SUCCESS),
         None => {
             let path = cli.path.unwrap_or_else(|| PathBuf::from("."));
             run_scan(&path, &cli.options)

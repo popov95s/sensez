@@ -5,6 +5,7 @@
 //! [`Walked`] output is identical everywhere and lives here once.
 
 use crate::profiles::comments;
+use crate::profiles::lexeme::BoundNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 use crate::spine::ir::{
     bump, record_attr, CommentSpan, FunctionUnit, PerfLine, SymbolKind, Walked,
@@ -19,11 +20,11 @@ pub(crate) struct Scope {
 }
 
 /// A language's per-token lexeme-code function (see `lang::lexeme`).
-pub(crate) type LexemeFn = fn(Node, StructuralToken, &[u8], &[HashSet<String>]) -> u64;
+pub(crate) type LexemeFn = fn(Node, StructuralToken, &[u8], &[BoundNames]) -> u64;
 
 /// A language's recursive visit function (the per-grammar walk body).
 pub(crate) type VisitFn =
-    fn(Node, &[u8], u32, &str, &mut Vec<Scope>, &mut Vec<HashSet<String>>, &mut Walked);
+    fn(Node, &[u8], u32, &str, &mut Vec<Scope>, &mut Vec<BoundNames>, &mut Walked);
 
 /// A language's mutation-target resolver: the root identifier of a
 /// subscript/member chain plus whether the path crossed a member/attribute
@@ -41,7 +42,7 @@ pub(crate) fn run(
 ) -> Walked {
     let mut out = Walked::default();
     let mut scope: Vec<Scope> = Vec::new();
-    let mut fn_bounds: Vec<HashSet<String>> = Vec::new();
+    let mut fn_bounds: Vec<BoundNames> = Vec::new();
     visit(
         root,
         src,
@@ -83,6 +84,10 @@ pub(crate) fn credit_name(out: &mut Walked, node: Node, src: &[u8]) {
 /// (e.g. `x.inner.a` credits `inner → x` and records the leaf `a`).
 /// The field names are per-grammar (`object`/`attribute`, `object`/`property`,
 /// `value`/`field`, `path`/`name`).
+#[cfg_attr(
+    not(any(feature = "lang-javascript", feature = "lang-rust")),
+    allow(dead_code)
+)]
 pub(crate) fn credit_attr(
     out: &mut Walked,
     node: Node,
@@ -97,7 +102,9 @@ pub(crate) fn credit_attr(
         record_attr(&mut out.usage.attribute_accesses, base, attr);
         return;
     }
-    out.usage.chained_attribute_names.insert(attr.to_string());
+    if !out.usage.chained_attribute_names.contains(attr) {
+        out.usage.chained_attribute_names.insert(attr.to_string());
+    }
 }
 
 /// Record member access and preserve non-identifier base paths for languages
@@ -119,7 +126,9 @@ pub(crate) fn credit_attr_with_base_path(
     if let Some(base) = named_child_text(node, src, base_field) {
         record_attr(&mut out.usage.attribute_path_accesses, base, attr);
     }
-    out.usage.chained_attribute_names.insert(attr.to_string());
+    if !out.usage.chained_attribute_names.contains(attr) {
+        out.usage.chained_attribute_names.insert(attr.to_string());
+    }
 }
 
 fn named_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'a str> {
@@ -135,9 +144,9 @@ fn ident_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'
     child.utf8_text(src).ok()
 }
 
-pub(crate) fn credit_string(out: &mut Walked, value: String) {
-    if !value.is_empty() {
-        out.usage.string_literals.insert(value);
+pub(crate) fn credit_string(out: &mut Walked, value: &str) {
+    if !value.is_empty() && !out.usage.string_literals.contains(value) {
+        out.usage.string_literals.insert(value.to_string());
     }
 }
 
@@ -148,7 +157,7 @@ pub(crate) fn emit_mapped(
     file_id: u32,
     node: Node,
     src: &[u8],
-    fn_bounds: &[HashSet<String>],
+    fn_bounds: &[BoundNames],
     map_kind: fn(&str) -> Option<StructuralToken>,
     code: LexemeFn,
 ) {
@@ -158,15 +167,15 @@ pub(crate) fn emit_mapped(
 }
 
 /// Emit one structural token with its lexeme code and 1-indexed line span.
-fn emit(out: &mut Walked, file_id: u32, node: Node, tok: StructuralToken, code: u64) {
+pub(crate) fn emit(out: &mut Walked, file_id: u32, node: Node, tok: StructuralToken, code: u64) {
     let start = node.start_position();
     let end = node.end_position();
     out.syntax.tokens.push(tok);
     out.syntax.lexemes.push(code);
     out.syntax.spans.push(TokenSpan {
         file_id,
-        start_row: start.row + 1,
-        end_row: end.row + 1,
+        start_row: (start.row + 1) as u32,
+        end_row: (end.row + 1) as u32,
     });
 }
 

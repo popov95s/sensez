@@ -45,6 +45,9 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
         if node.is_external || is_entry_module(node, profile, &entry_modules, &rules.entry_globs) {
             continue;
         }
+        let Some(file) = node.source_index.and_then(|index| files.get(index)) else {
+            continue;
+        };
         if rules.test_source_globs.is_match(&node.file_path) {
             continue;
         }
@@ -57,11 +60,13 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             continue; // `from mod import *` consumes everything
         }
         let mut seen = HashSet::new();
-        for symbol in &node.declared_public_symbols {
+        for symbol in &file.walked.symbols.declared {
             if !seen.insert(symbol.as_str()) {
                 continue;
             }
-            let kind = node
+            let kind = file
+                .walked
+                .symbols
                 .declared_kinds
                 .get(symbol)
                 .copied()
@@ -69,12 +74,14 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             if kind == SymbolKind::Variable && !config.unused_variables {
                 continue; // module-level variables are opt-in
             }
-            let dclass =
-                profile.classify_decorator(node.decorators.get(symbol), &rules.entrypoints);
+            let dclass = profile.classify_decorator(
+                file.walked.symbols.decorators.get(symbol),
+                &rules.entrypoints,
+            );
             if dclass.is_registration()
                 || rules.entrypoint_names.contains(symbol.as_str())
                 || class_entrypoints.is_entrypoint(&node.file_path, symbol, kind)
-                || skip_symbol(node, profile, symbol, &inbound.used)
+                || skip_symbol(file, profile, symbol, &inbound.used)
             {
                 continue;
             }
@@ -89,7 +96,13 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
                 kind,
                 confidence,
                 file: node.file_path.clone(),
-                line: node.declared_lines.get(symbol).copied().unwrap_or(0),
+                line: file
+                    .walked
+                    .symbols
+                    .declared_lines
+                    .get(symbol)
+                    .copied()
+                    .unwrap_or(0),
                 reason: String::new(),
             });
         }

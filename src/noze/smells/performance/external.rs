@@ -1,13 +1,13 @@
 use super::super::SmellContext;
 use crate::profiles::PerformanceProfile;
-use crate::spine::ir::{CallFact, FunctionMetrics};
+use crate::spine::ir::{CallFact, FunctionUnit};
 use std::collections::BTreeMap;
 
 pub(super) fn external_calls<'a>(
     ctx: &SmellContext<'_>,
-    owner: &FunctionMetrics,
+    owner: &FunctionUnit,
     calls: &'a [CallFact],
-    functions: &BTreeMap<&str, &FunctionMetrics>,
+    functions: &BTreeMap<&str, &FunctionUnit>,
     profile: &dyn PerformanceProfile,
 ) -> BTreeMap<&'a str, &'a CallFact> {
     let mut out = BTreeMap::new();
@@ -24,7 +24,7 @@ pub(super) fn external_calls<'a>(
 
 fn is_external(
     ctx: &SmellContext<'_>,
-    owner: &FunctionMetrics,
+    owner: &FunctionUnit,
     call: &CallFact,
     profile: &dyn PerformanceProfile,
 ) -> bool {

@@ -4,11 +4,11 @@
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{ClassUnit, FunctionMetrics};
+use crate::spine::ir::{ClassUnit, FunctionUnit};
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     cfg: &Smells,
     classes: &[ClassUnit],
     out: &mut Vec<SmellFinding>,
@@ -69,7 +69,7 @@ fn narrating_code(
     ctx: &SmellContext<'_>,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     lines: usize,
 ) {
     if m.comment_lines < cfg.min_comment_lines || lines == 0 {

@@ -30,6 +30,6 @@ pub enum StructuralToken {
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
 pub struct TokenSpan {
     pub file_id: u32,
-    pub start_row: usize,
-    pub end_row: usize,
+    pub start_row: u32,
+    pub end_row: u32,
 }

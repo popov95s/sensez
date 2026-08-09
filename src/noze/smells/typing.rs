@@ -12,11 +12,11 @@ use super::{grouped_value_target, make, structure_target, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::typevocab::{base_type, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::FunctionMetrics;
+use crate::spine::ir::FunctionUnit;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -41,7 +41,7 @@ pub fn detect(
 /// One finding per function listing every loosely-typed param (and the return).
 fn loose_typing(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -109,7 +109,7 @@ fn loose_typing(
 }
 
 /// Fallback string literals used to paper over optional/nullable values.
-fn magic_string_default(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut Vec<SmellFinding>) {
+fn magic_string_default(ctx: &SmellContext<'_>, m: &FunctionUnit, out: &mut Vec<SmellFinding>) {
     let line = m
         .short_string_fallback_lines
         .first()
@@ -134,7 +134,7 @@ fn magic_string_default(ctx: &SmellContext<'_>, m: &FunctionMetrics, out: &mut V
 /// More than `max_bool_params` bool-annotated parameters.
 fn boolean_blindness(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -162,7 +162,7 @@ fn boolean_blindness(
 /// wider than `max_tuple_return` — position-based grouped data.
 fn tuple_packing(
     ctx: &SmellContext<'_>,
-    m: &FunctionMetrics,
+    m: &FunctionUnit,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {

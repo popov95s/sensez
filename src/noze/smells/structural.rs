@@ -4,11 +4,11 @@
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::FunctionMetrics;
+use crate::spine::ir::FunctionUnit;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -25,7 +25,7 @@ struct StructuralDetector<'a, 'b> {
 }
 
 impl StructuralDetector<'_, '_> {
-    fn inspect(&mut self, m: &FunctionMetrics) {
+    fn inspect(&mut self, m: &FunctionUnit) {
         self.deep_nesting(m);
         self.long_params(m);
         self.too_many_returns(m);
@@ -40,7 +40,7 @@ impl StructuralDetector<'_, '_> {
         }
     }
 
-    fn deep_nesting(&mut self, m: &FunctionMetrics) {
+    fn deep_nesting(&mut self, m: &FunctionUnit) {
         if m.max_nesting <= self.cfg.max_nesting {
             return;
         }
@@ -59,7 +59,7 @@ impl StructuralDetector<'_, '_> {
         ));
     }
 
-    fn long_params(&mut self, m: &FunctionMetrics) {
+    fn long_params(&mut self, m: &FunctionUnit) {
         let params = effective_params(m);
         if !self.cfg.long_parameter_list || params <= self.cfg.max_params {
             return;
@@ -76,7 +76,7 @@ impl StructuralDetector<'_, '_> {
         ));
     }
 
-    fn too_many_returns(&mut self, m: &FunctionMetrics) {
+    fn too_many_returns(&mut self, m: &FunctionUnit) {
         if !self.cfg.too_many_returns || m.return_count <= self.cfg.max_returns {
             return;
         }
@@ -95,7 +95,7 @@ impl StructuralDetector<'_, '_> {
         ));
     }
 
-    fn magic_numbers(&mut self, m: &FunctionMetrics) {
+    fn magic_numbers(&mut self, m: &FunctionUnit) {
         self.out.push(make(
             SmellKind::MagicNumbers,
             format!("{} magic numeric literal(s)", m.magic_numbers),
@@ -108,7 +108,7 @@ impl StructuralDetector<'_, '_> {
         ));
     }
 
-    fn message_chains(&mut self, m: &FunctionMetrics) {
+    fn message_chains(&mut self, m: &FunctionUnit) {
         if m.max_chain_depth <= self.cfg.max_chain_depth {
             return;
         }
@@ -127,7 +127,7 @@ impl StructuralDetector<'_, '_> {
         ));
     }
 
-    fn unnecessary_nested_if(&mut self, m: &FunctionMetrics) {
+    fn unnecessary_nested_if(&mut self, m: &FunctionUnit) {
         if m.collapsible_nested_ifs == 0 {
             return;
         }
@@ -146,7 +146,7 @@ impl StructuralDetector<'_, '_> {
         ));
     }
 
-    fn nested_ternary(&mut self, m: &FunctionMetrics) {
+    fn nested_ternary(&mut self, m: &FunctionUnit) {
         let Some(&line) = m.nested_ternary_lines.first() else {
             return;
         };
@@ -173,7 +173,7 @@ impl StructuralDetector<'_, '_> {
     /// Advisory: a local assigned `split_variable_min_assigns`+ times either holds
     /// distinct concepts or is branch-bound state — both want a single binding
     /// (extract a helper that returns the value).
-    fn split_variables(&mut self, m: &FunctionMetrics) {
+    fn split_variables(&mut self, m: &FunctionUnit) {
         let min_assigns = self.cfg.split_variable_min_assigns.max(2);
         for (name, &count) in &m.local_reassigns {
             if count < min_assigns {
@@ -196,7 +196,7 @@ impl StructuralDetector<'_, '_> {
 }
 
 /// Parameter count excluding a leading `self`/`cls` receiver.
-fn effective_params(m: &FunctionMetrics) -> usize {
+fn effective_params(m: &FunctionUnit) -> usize {
     let skip = matches!(
         m.param_names.first().map(String::as_str),
         Some("self") | Some("cls")

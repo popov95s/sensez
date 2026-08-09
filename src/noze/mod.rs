@@ -4,13 +4,13 @@ pub mod cycles;
 pub mod dead_code;
 pub mod duplication;
 pub mod glossary;
+mod parallel;
 pub mod smells;
 
 use crate::report::{
     ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, Severity, SmellFinding,
 };
 
-use crate::bonez;
 use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
@@ -32,7 +32,14 @@ pub fn run_with_root(
     config: &Config,
     root: Option<&Path>,
 ) -> AnalysisReport {
-    let mut cycles = cycles::detect(graph, &config.smells.exclude);
+    let parallel::AnalyzerFindings {
+        mut cycles,
+        mut dead_code,
+        boundaries: mut boundary_audit,
+        mut duplication,
+        mut smells,
+    } = parallel::detect(files, graph, config, root);
+
     for cycle in &mut cycles {
         if cycle.action != ActionLevel::Info {
             cycle.action = config.action.cycles;
@@ -40,25 +47,21 @@ pub fn run_with_root(
     }
     cycles.sort_by_key(|c| (action_rank(c.action), std::cmp::Reverse(c.modules.len())));
 
-    let mut dead_code = dead_code::detect(graph, files, &config.dead_code);
     dead_code.retain(|finding| finding.confidence != Confidence::Low);
     for finding in &mut dead_code {
         finding.action = config.action.dead_code;
     }
     dead_code.sort_by_key(|f| confidence_rank(f.confidence));
 
-    let mut boundary_audit = bonez::audit(graph, &config.boundaries.forbidden);
     for violation in &mut boundary_audit.violations {
         violation.action = config.action.boundaries;
     }
-    let mut duplication = duplication::detect_with_root(files, &config.duplication, root);
     for class in &mut duplication {
         if class.action != ActionLevel::Info {
             class.action = config.action.duplication;
         }
     }
 
-    let mut smells = smells::detect(files, graph, &config.smells);
     apply_smell_actions(&mut smells, &config.action);
     smells.sort_by(|a, b| {
         action_rank(a.action)

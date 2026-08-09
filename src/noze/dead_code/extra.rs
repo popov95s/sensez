@@ -86,12 +86,9 @@ pub fn unused_imports<'a>(
             .iter()
             .filter(|i| !i.is_inline && i.phase == ImportPhase::Runtime)
         {
-            for (index, binding) in import.bindings.iter().enumerate() {
-                let phase = match import.binding_phases.get(index).copied() {
-                    Some(phase) => phase,
-                    None => import.phase,
-                };
-                if phase == ImportPhase::TypeOnly {
+            debug_assert_eq!(import.bindings.len(), import.binding_phases.len());
+            for (binding, phase) in import.bindings.iter().zip(&import.binding_phases) {
+                if *phase == ImportPhase::TypeOnly {
                     continue;
                 }
                 if binding == "*" || is_referenced(&file.walked.usage.name_counts, binding) {

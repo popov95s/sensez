@@ -93,6 +93,7 @@ impl DeadCodeDefaults {
     /// An all-empty `DeadCodeDefaults` — for profiles that don't override any
     /// convention (JS/TS today, anything new in the future). Spread it with
     /// `..DeadCodeDefaults::EMPTY` and only fill the fields that differ.
+    #[cfg_attr(not(feature = "lang-rust"), allow(dead_code))]
     pub const EMPTY: DeadCodeDefaults = DeadCodeDefaults {
         entrypoints: &[],
         entrypoint_names: &[],

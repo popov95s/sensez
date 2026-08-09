@@ -5,13 +5,13 @@
 //! clone may freely rename, so it collapses to one lexeme code. Field names,
 //! free names, types, and literals are kept verbatim.
 
-use std::collections::HashSet;
+use crate::profiles::lexeme::BoundNames;
 use tree_sitter::Node;
 
 /// Names bound within `func` (parameters + body bindings), not descending into
 /// nested function/closure scopes.
-pub fn bound_names(func: Node, src: &[u8]) -> HashSet<String> {
-    let mut set = HashSet::new();
+pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
+    let mut set = BoundNames::default();
     // `function_item` has a `parameters` list; `closure_expression` has
     // `closure_parameters` (patterns directly as children).
     if let Some(params) = func.child_by_field_name("parameters") {
@@ -35,7 +35,7 @@ pub fn bound_names(func: Node, src: &[u8]) -> HashSet<String> {
 }
 
 /// Collect `let`/`for`/`if let` binding targets, skipping nested fn scopes.
-fn collect_targets(node: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         match child.kind() {
@@ -60,11 +60,11 @@ fn collect_targets(node: Node, src: &[u8], set: &mut HashSet<String>) {
 /// Names introduced by a binding pattern (identifier or destructuring). The
 /// constructor path of `Some(x)` / `Point { x, y }` is a *type*, not a binding,
 /// so the `type` field child is skipped.
-fn collect_pattern(node: Node, src: &[u8], set: &mut HashSet<String>) {
+fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
     match node.kind() {
         "identifier" | "shorthand_field_identifier" => {
             if let Ok(t) = node.utf8_text(src) {
-                set.insert(t.to_string());
+                set.insert(crate::profiles::lexeme::hash(t));
             }
         }
         "tuple_struct_pattern" | "struct_pattern" => {

@@ -222,12 +222,13 @@ fn context(
         Leaf::Module(binding) => (prefix.join("::"), Vec::new(), vec![binding]),
     };
     let pos = node.start_position();
+    let binding_phases = vec![ImportPhase::Runtime; bindings.len()];
     ImportContext {
         source_module: source_module.to_string(),
         target_module: target,
         imported_symbols: symbols,
         bindings,
-        binding_phases: Vec::new(),
+        binding_phases,
         line: pos.row + 1,
         column: pos.column + 1,
         phase: ImportPhase::Runtime,

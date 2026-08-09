@@ -104,7 +104,7 @@ fn function_tokens(
         .zip(&file.walked.syntax.spans)
         .zip(&file.walked.syntax.lexemes)
         .filter(|((_, span), _)| {
-            span.start_row >= func.start_line && span.start_row <= func.end_line
+            span.start_row as usize >= func.start_line && span.start_row as usize <= func.end_line
         })
         .map(|((tok, _), lex)| (*tok, *lex))
         .collect()

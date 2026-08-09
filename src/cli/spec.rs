@@ -56,31 +56,6 @@ pub enum Command {
     /// Docs/comment search commands.
     #[cfg(feature = "eyez")]
     Eyez(EyezArgs),
-    /// Legacy alias for `sensez noze`.
-    #[command(hide = true)]
-    Scan {
-        path: PathBuf,
-        #[command(flatten)]
-        options: ScanOptions,
-    },
-    /// Legacy alias for `sensez noze explain`.
-    #[command(hide = true)]
-    Explain { term: Option<String> },
-    /// Legacy alias for `sensez mcp serve`.
-    #[cfg(feature = "mcp")]
-    #[command(hide = true)]
-    Serve,
-    /// Legacy alias for `sensez eyez search`.
-    #[cfg(feature = "eyez")]
-    #[command(hide = true)]
-    Search {
-        path: PathBuf,
-        query: String,
-        #[arg(long, default_value_t = 10)]
-        top_k: usize,
-        #[arg(long)]
-        json: bool,
-    },
 }
 
 #[cfg(feature = "lsp")]

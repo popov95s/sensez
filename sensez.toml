@@ -33,8 +33,9 @@ exclude = [            # paths kept out of duplication only (still in the graph)
 entrypoints = ["route", "fixture", "task", "command", "app", "cli"]
 entrypoint_names = ["register", "main", "setup"]
 # File globs reached outside the import graph (their symbols are never flagged
-# dead, but they still contribute import edges). Defaults cover alembic
-# migrations and tests/fixtures; override to customize (the list replaces these).
+# dead, but they still contribute import edges). Entries here are merged with
+# the language-profile defaults (which already cover alembic migrations and
+# tests/fixtures) — add what is specific to your project.
 entry_points = [
     "**/alembic/**", "**/migrations/**",
     "**/tests/**", "**/test/**", "**/conftest.py", "**/test_*.py", "**/*_test.py",

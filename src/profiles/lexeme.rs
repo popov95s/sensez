@@ -8,8 +8,10 @@
 //! locals) via the `identifier_code` closure.
 
 use crate::spine::ir::tokens::StructuralToken;
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 use tree_sitter::Node;
+
+pub(crate) type BoundNames = FxHashSet<u64>;
 
 /// Code for any function-bound local variable (collapsed; renameable).
 pub(crate) const LOCAL: u64 = 1;
@@ -30,7 +32,7 @@ pub(crate) fn code(
     match tok {
         GenericIdentifier => identifier_code(),
         GenericLiteral => hash(node.utf8_text(src).unwrap_or_default()),
-        BinaryOp => hash(&format!("op:{}", operator(node))),
+        BinaryOp => hash_operator(operator(node)),
         FunctionDef => 2,
         ClassDef => 3,
         IfStatement => 4,
@@ -49,17 +51,18 @@ pub(crate) fn code(
 fn identifier_code(
     node: Node,
     src: &[u8],
-    fn_bounds: &[HashSet<String>],
+    fn_bounds: &[BoundNames],
     is_api_surface: impl FnOnce(Node) -> bool,
 ) -> u64 {
     let text = node.utf8_text(src).unwrap_or_default();
+    let code = hash(text);
     if is_api_surface(node) {
-        return hash(text);
+        return code;
     }
-    if fn_bounds.iter().rev().any(|names| names.contains(text)) {
+    if fn_bounds.iter().rev().any(|names| names.contains(&code)) {
         return LOCAL;
     }
-    hash(text)
+    code
 }
 
 /// Apply the shared token mapping and identifier classification in one call.
@@ -68,7 +71,7 @@ pub(crate) fn code_with_api_surface(
     node: Node,
     tok: StructuralToken,
     src: &[u8],
-    fn_bounds: &[HashSet<String>],
+    fn_bounds: &[BoundNames],
     is_api_surface: impl FnOnce(Node) -> bool,
 ) -> u64 {
     code(node, tok, src, || {
@@ -79,17 +82,25 @@ pub(crate) fn code_with_api_surface(
 /// The operator token of a binary/comparison node: the `operator` field where
 /// the grammar names one (JS, Rust, most Python operators), else the first
 /// anonymous child (Python `comparison_operator` chains).
-fn operator(node: Node) -> String {
+fn operator(node: Node) -> &'static str {
     if let Some(op) = node.child_by_field_name("operator") {
-        return op.kind().to_string();
+        return op.kind();
     }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         if !child.is_named() {
-            return child.kind().to_string();
+            return child.kind();
         }
     }
-    "op".to_string()
+    "op"
+}
+
+fn hash_operator(operator: &str) -> u64 {
+    use std::hash::{Hash, Hasher};
+    let mut hasher = rustc_hash::FxHasher::default();
+    0x6f70_u16.hash(&mut hasher);
+    operator.hash(&mut hasher);
+    HASH_BASE + (hasher.finish() % (HASH_SPAN - HASH_BASE))
 }
 
 pub(crate) fn hash(text: &str) -> u64 {

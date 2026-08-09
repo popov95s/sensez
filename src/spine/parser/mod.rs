@@ -45,14 +45,17 @@ pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
     let outcomes: Vec<_> = files
         .par_iter()
         .enumerate()
-        .map(|(i, path)| match parse_file(path, i as u32) {
-            Ok(parsed) => Ok(parsed),
-            Err(err) => Err(ScanIssue {
-                stage: ScanStage::Parse,
-                file: Some(path.clone()),
-                message: format!("{err:#}"),
-            }),
-        })
+        .map_init(
+            tree_sitter::Parser::new,
+            |parser, (i, path)| match parse_file_with_parser(path, i as u32, parser) {
+                Ok(parsed) => Ok(parsed),
+                Err(err) => Err(ScanIssue {
+                    stage: ScanStage::Parse,
+                    file: Some(path.clone()),
+                    message: format!("{err:#}"),
+                }),
+            },
+        )
         .collect();
 
     let mut parsed = Vec::new();
@@ -70,7 +73,16 @@ pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
 }
 
 /// Parse a single file from disk, routed to its language profile by extension.
+#[allow(dead_code)]
 pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
+    parse_file_with_parser(path, file_id, &mut tree_sitter::Parser::new())
+}
+
+fn parse_file_with_parser(
+    path: &Path,
+    file_id: u32,
+    parser: &mut tree_sitter::Parser,
+) -> Result<ParsedFile> {
     let profile = registry::parse_for_path(path)
         .ok_or_else(|| anyhow!("no language profile for {}", path.display()))?;
     let src = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
@@ -78,7 +90,7 @@ pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
         .file_stem()
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let walked = parse_source(&src, file_id, &module_name, profile)
+    let walked = parse_source_with_parser(&src, file_id, &module_name, profile, parser)
         .with_context(|| format!("parsing {}", path.display()))?;
     // Lines = newline count + 1 for a trailing partial line; 0 for an empty file.
     let lines = if src.is_empty() {
@@ -101,6 +113,7 @@ pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
 const MAX_TREE_DEPTH: usize = 512;
 
 /// Parse source bytes with the given language profile (no filesystem access).
+#[allow(dead_code)]
 pub fn parse_source(
     src: &[u8],
     file_id: u32,
@@ -108,6 +121,16 @@ pub fn parse_source(
     profile: &dyn ParseProfile,
 ) -> Result<Walked> {
     let mut parser = tree_sitter::Parser::new();
+    parse_source_with_parser(src, file_id, module_name, profile, &mut parser)
+}
+
+fn parse_source_with_parser(
+    src: &[u8],
+    file_id: u32,
+    module_name: &str,
+    profile: &dyn ParseProfile,
+    parser: &mut tree_sitter::Parser,
+) -> Result<Walked> {
     parser
         .set_language(&profile.ts_language())
         .context("incompatible tree-sitter grammar ABI")?;

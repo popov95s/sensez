@@ -5,7 +5,7 @@
 //! receiver so the language-neutral detectors work unchanged.
 
 use super::{conditionals, obsession, performance, symbols};
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{bump, FunctionUnit};
 use std::collections::HashMap;
 use tree_sitter::Node;
 
@@ -136,11 +136,7 @@ impl FunctionFacts {
         };
         match obj.kind() {
             "this" => {
-                *self
-                    .unit
-                    .receiver_access
-                    .entry("self".to_string())
-                    .or_insert(0) += 1;
+                bump(&mut self.unit.receiver_access, "self");
                 if let Some(attr) = node
                     .child_by_field_name("property")
                     .and_then(|a| a.utf8_text(src).ok())
@@ -150,11 +146,7 @@ impl FunctionFacts {
             }
             "identifier" => {
                 if let Ok(base) = obj.utf8_text(src) {
-                    *self
-                        .unit
-                        .receiver_access
-                        .entry(base.to_string())
-                        .or_insert(0) += 1;
+                    bump(&mut self.unit.receiver_access, base);
                 }
             }
             _ => {}
@@ -167,11 +159,7 @@ impl FunctionFacts {
             .filter(|l| l.kind() == "identifier")
             .and_then(|l| l.utf8_text(src).ok())
         {
-            *self
-                .unit
-                .local_reassigns
-                .entry(left.to_string())
-                .or_insert(0) += 1;
+            bump(&mut self.unit.local_reassigns, left);
         }
     }
 }

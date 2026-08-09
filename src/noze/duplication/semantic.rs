@@ -163,7 +163,7 @@ fn function_shape(
         .iter()
         .zip(&file.walked.syntax.spans)
     {
-        if span.start_row >= func.start_line && span.start_row <= func.end_line {
+        if span.start_row as usize >= func.start_line && span.start_row as usize <= func.end_line {
             *shape.entry(*tok).or_insert(0) += 1;
             count += 1;
         }

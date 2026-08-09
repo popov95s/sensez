@@ -49,8 +49,6 @@ lsp = ["mcp", "dep:crossbeam-channel", "dep:lsp-server", "dep:lsp-types", "dep:u
 # on-disk cache). Independent of `mcp`; opt in with `--features eyez`.
 # Default embedder is the pure-Rust Model2Vec static model.
 eyez = ["dep:model2vec-rs"]
-# Backwards-compatible alias for older build invocations.
-semantic = ["eyez"]
 # Docs-only metadata used by docs/generate.py. Keep this out of default builds.
 docs = []
 
@@ -74,6 +72,7 @@ serde_json = "1"
 toml = "0.8"
 anyhow = "1"
 bio = "2"
+libsais = { version = "0.2", default-features = false }
 colored = "2"
 crossterm = "0.28"
 dialoguer = "0.11"

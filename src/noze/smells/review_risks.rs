@@ -2,12 +2,12 @@
 
 use super::{make, SmellContext};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{ClassUnit, FunctionMetrics};
+use crate::spine::ir::{ClassUnit, FunctionUnit};
 use std::collections::HashSet;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    metrics: &[FunctionMetrics],
+    metrics: &[FunctionUnit],
     classes: &[ClassUnit],
     out: &mut Vec<SmellFinding>,
 ) {
@@ -18,11 +18,7 @@ pub fn detect(
     divergent_abstractions(ctx, classes, out);
 }
 
-fn defensive_fallback(
-    ctx: &SmellContext<'_>,
-    metric: &FunctionMetrics,
-    out: &mut Vec<SmellFinding>,
-) {
+fn defensive_fallback(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {
     let facts = &metric.review_risks;
     if facts.broad_handlers == 0 || facts.empty_fallbacks < 2 {
         return;
@@ -42,7 +38,7 @@ fn defensive_fallback(
 
 fn redundant_validation(
     ctx: &SmellContext<'_>,
-    metric: &FunctionMetrics,
+    metric: &FunctionUnit,
     out: &mut Vec<SmellFinding>,
 ) {
     let reassigned_local = metric.local_reassigns.values().any(|count| *count > 1);

@@ -34,7 +34,7 @@ use crate::profiles::{registry, TypeVocabularyProfile};
 use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::Language;
-use crate::spine::ir::{FunctionMetrics, TypeHints};
+use crate::spine::ir::{FunctionUnit, TypeHints};
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
 use rayon::prelude::*;
@@ -92,30 +92,24 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
 /// live/in-editor mode would run per buffer.
 pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     let ctx = SmellContext::from_file(file);
-    let metrics: Vec<FunctionMetrics> = file
-        .walked
-        .units
-        .functions
-        .iter()
-        .map(FunctionMetrics::from)
-        .collect();
+    let metrics: &[FunctionUnit] = &file.walked.units.functions;
 
     let mut out = Vec::new();
     let classes = file.walked.units.classes.as_slice();
     let usage = coupling::UsageFacts {
-        attribute_accesses: file.walked.usage.attribute_accesses.clone(),
+        attribute_accesses: &file.walked.usage.attribute_accesses,
     };
     let locals: HashSet<&str> = classes.iter().map(|c| c.name.as_str()).collect();
-    complexity::detect(&ctx, &metrics, cfg, &mut out);
-    size::detect(&ctx, &metrics, cfg, classes, &mut out);
-    structural::detect(&ctx, &metrics, cfg, &mut out);
-    cohesion::detect(&ctx, &metrics, classes, &mut out);
-    review_risks::detect(&ctx, &metrics, classes, &mut out);
-    coupling::detect(&ctx, &metrics, &usage, &locals, cfg, &mut out);
+    complexity::detect(&ctx, metrics, cfg, &mut out);
+    size::detect(&ctx, metrics, cfg, classes, &mut out);
+    structural::detect(&ctx, metrics, cfg, &mut out);
+    cohesion::detect(&ctx, metrics, classes, &mut out);
+    review_risks::detect(&ctx, metrics, classes, &mut out);
+    coupling::detect(&ctx, metrics, &usage, &locals, cfg, &mut out);
     inherit::detect(&ctx, classes, cfg, &mut out);
-    typing::detect(&ctx, &metrics, cfg, &mut out);
-    mutation::detect(&ctx, &metrics, cfg, &mut out);
-    out.extend(performance::detect(&ctx, &metrics, cfg));
+    typing::detect(&ctx, metrics, cfg, &mut out);
+    mutation::detect(&ctx, metrics, cfg, &mut out);
+    out.extend(performance::detect(&ctx, metrics, cfg));
     // Uniform per-smell on/off: drop any kind disabled for this language.
     if !cfg.disabled.is_empty() {
         out.retain(|f| !cfg.disabled.contains(&f.kind));

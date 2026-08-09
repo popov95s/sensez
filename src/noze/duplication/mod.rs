@@ -25,6 +25,7 @@ use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
+use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
 use std::path::Path;
@@ -61,15 +62,23 @@ pub fn detect_with_root(
         by_language.entry(file.language).or_default().push(*file);
     }
 
-    let mut out: Vec<CloneClass> = by_language
-        .values()
-        .flat_map(|partition| detect_partition(partition, config, root))
-        .collect();
-    out.extend(class_shapes::detect(
-        &kept,
-        config.class_name_duplicates,
-        config.class_property_overlap_min,
-    ));
+    let partitions: Vec<_> = by_language.into_values().collect();
+    let (mut out, class_shapes) = rayon::join(
+        || {
+            partitions
+                .into_par_iter()
+                .flat_map_iter(|partition| detect_partition(&partition, config, root))
+                .collect::<Vec<_>>()
+        },
+        || {
+            class_shapes::detect(
+                &kept,
+                config.class_name_duplicates,
+                config.class_property_overlap_min,
+            )
+        },
+    );
+    out.extend(class_shapes);
     // Rank by impact: long clones with many occurrences first.
     out.sort_by_key(|c| {
         (
@@ -88,8 +97,8 @@ fn detect_partition(
 ) -> Vec<CloneClass> {
     let mut seen: FxHashSet<u64> = FxHashSet::default();
     let mut out: Vec<CloneClass> = Vec::new();
-    let master = flatten::build(kept);
-    let groups = clones::extract(&master, config.threshold);
+    let mut master = flatten::build(kept);
+    let groups = clones::extract(&mut master, config.threshold);
     let clusters = gapped::stitch(groups, &master.spans, config.max_gap);
 
     for cluster in clusters {
@@ -167,8 +176,8 @@ fn occurrence(
     let file = files.get(first.file_id as usize)?.path.clone();
     Some(CloneOccurrence {
         file,
-        start_row: first.start_row,
-        end_row: last.end_row,
+        start_row: first.start_row as usize,
+        end_row: last.end_row as usize,
     })
 }
 

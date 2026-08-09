@@ -13,7 +13,7 @@ use super::make;
 use super::union_find::{find, union};
 use super::SmellContext;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{ClassUnit, FunctionMetrics};
+use crate::spine::ir::{ClassUnit, FunctionUnit};
 use std::collections::HashMap;
 
 /// Minimum instance-stateful methods before LCOM is meaningful. With one or
@@ -24,7 +24,7 @@ const MIN_STATEFUL_METHODS: usize = 3;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
-    _metrics: &[FunctionMetrics],
+    _metrics: &[FunctionUnit],
     classes: &[ClassUnit],
     out: &mut Vec<SmellFinding>,
 ) {
