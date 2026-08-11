@@ -109,32 +109,33 @@ fn parse_file_with_cache(
     let fingerprint =
         crate::spine::cache::SourceFingerprint::new(path, profile.info().language, &src);
     let key = fingerprint.cache_key(crate::spine::cache::PARSE_CACHE_SCHEMA);
-    let mut walked = cache
-        .and_then(|cache| {
-            cache.load(
-                fingerprint.identity,
-                fingerprint.content,
-                fingerprint.language,
-                key,
-            )
-        })
-        .map(Ok)
-        .unwrap_or_else(|| {
-            parse_source_with_parser(&src, file_id, &module_name, profile, parser)
-                .with_context(|| format!("parsing {}", path.display()))
-        })?;
-    if let Some(cache) = cache {
-        // A cache write is best effort. The freshly parsed value is already
-        // valid, and a read-only or concurrently populated cache must not
-        // turn a successful scan into a failure.
-        let _ = cache.persist(
+    let cached = cache.and_then(|cache| {
+        cache.load(
             fingerprint.identity,
             fingerprint.content,
             fingerprint.language,
             key,
-            &walked,
-        );
-    }
+        )
+    });
+    let mut walked = match cached {
+        Some(walked) => walked,
+        None => {
+            let walked = parse_source_with_parser(&src, file_id, &module_name, profile, parser)
+                .with_context(|| format!("parsing {}", path.display()))?;
+            if let Some(cache) = cache {
+                // A cache write is best effort. The freshly parsed value is
+                // already valid, and a read-only cache cannot fail a scan.
+                let _ = cache.persist(
+                    fingerprint.identity,
+                    fingerprint.content,
+                    fingerprint.language,
+                    key,
+                    &walked,
+                );
+            }
+            walked
+        }
+    };
     for span in &mut walked.syntax.spans {
         span.file_id = file_id;
     }

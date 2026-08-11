@@ -102,9 +102,6 @@ impl ParseCache {
         fs::create_dir_all(&directory)
             .with_context(|| format!("creating {}", directory.display()))?;
         let path = self.path_for(key);
-        if path.exists() {
-            return Ok(());
-        }
         let artifact = Artifact {
             schema_version: SCHEMA_VERSION,
             parser_revision: PARSER_REVISION.to_string(),
@@ -141,14 +138,24 @@ mod tests {
     use super::*;
     use crate::spine::ir::Language;
 
-    #[test]
-    fn corrupt_or_stale_artifacts_are_misses() {
+    fn cache_fixture() -> (
+        tempfile::TempDir,
+        ParseCache,
+        crate::spine::cache::SourceFingerprint,
+        u64,
+    ) {
         let root = tempfile::tempdir().unwrap();
         let cache = ParseCache::new(root.path());
         let path = root.path().join("a.py");
         let stamp =
             crate::spine::cache::SourceFingerprint::new(&path, Language::Python, b"x = 1\n");
         let key = stamp.cache_key(SCHEMA_VERSION);
+        (root, cache, stamp, key)
+    }
+
+    #[test]
+    fn corrupt_or_stale_artifacts_are_misses() {
+        let (root, cache, stamp, key) = cache_fixture();
         fs::create_dir_all(root.path().join(CACHE_DIR)).unwrap();
         fs::write(cache.path_for(key), b"not postcard").unwrap();
         assert!(cache
@@ -157,13 +164,29 @@ mod tests {
     }
 
     #[test]
+    fn persist_replaces_an_invalid_artifact_after_a_miss() {
+        let (root, cache, stamp, key) = cache_fixture();
+        fs::create_dir_all(root.path().join(CACHE_DIR)).unwrap();
+        fs::write(cache.path_for(key), b"stale").unwrap();
+
+        cache
+            .persist(
+                stamp.identity,
+                stamp.content,
+                Language::Python,
+                key,
+                &Walked::default(),
+            )
+            .unwrap();
+
+        assert!(cache
+            .load(stamp.identity, stamp.content, Language::Python, key)
+            .is_some());
+    }
+
+    #[test]
     fn round_trip_preserves_walked_facts() {
-        let root = tempfile::tempdir().unwrap();
-        let cache = ParseCache::new(root.path());
-        let path = root.path().join("a.py");
-        let stamp =
-            crate::spine::cache::SourceFingerprint::new(&path, Language::Python, b"x = 1\n");
-        let key = stamp.cache_key(SCHEMA_VERSION);
+        let (_root, cache, stamp, key) = cache_fixture();
         let mut walked = Walked::default();
         walked.syntax.lexemes.push(42);
         cache
