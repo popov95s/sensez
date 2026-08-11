@@ -60,16 +60,17 @@ pub fn parse_files_with_cache(
     let outcomes: Vec<_> = files
         .par_iter()
         .enumerate()
-        .map_init(tree_sitter::Parser::new, |parser, (i, path)| {
-            match parse_file_with_cache(path, i as u32, cache, parser) {
+        .map_init(
+            tree_sitter::Parser::new,
+            |parser, (i, path)| match parse_file_with_cache(path, i as u32, cache, parser) {
                 Ok(parsed) => Ok(parsed),
                 Err(err) => Err(ScanIssue {
                     stage: ScanStage::Parse,
                     file: Some(path.clone()),
                     message: format!("{err:#}"),
                 }),
-            }
-        })
+            },
+        )
         .collect();
 
     let mut parsed = Vec::new();
@@ -244,73 +245,4 @@ impl TreeDepth {
 }
 
 #[cfg(test)]
-mod depth_tests {
-    use super::*;
-    use crate::profiles::registry;
-
-    #[test]
-    fn pathological_nesting_is_rejected_not_crashed() {
-        let profile = registry::parse_for_path(Path::new("x.py")).unwrap();
-        // 100k-deep parenthesized expression would overflow recursive walkers.
-        let src = format!("x = {}1{}", "(".repeat(100_000), ")".repeat(100_000));
-        let result = parse_source(src.as_bytes(), 0, "x", profile);
-        assert!(result.is_err(), "deep tree must be rejected, not walked");
-
-        // Sane code is untouched.
-        let ok = parse_source(b"def f():\n    return (1 + 2)\n", 0, "x", profile);
-        assert!(ok.is_ok());
-    }
-
-    /// The depth gate is exact: a tree at MAX_TREE_DEPTH parses, one level
-    /// deeper is rejected. The fixed overhead between paren count and tree
-    /// depth is measured rather than assumed, so a grammar bump that changes
-    /// node nesting cannot silently shift the boundary under this test.
-    #[test]
-    fn depth_gate_boundary_is_exact() {
-        let profile = registry::parse_for_path(Path::new("x.py")).unwrap();
-        let src_with = |parens: usize| format!("x = {}1{}", "(".repeat(parens), ")".repeat(parens));
-        let depth_of = |parens: usize| {
-            let mut parser = tree_sitter::Parser::new();
-            parser.set_language(&profile.ts_language()).unwrap();
-            let tree = parser.parse(src_with(parens).as_bytes(), None).unwrap();
-            tree_depth(tree.root_node(), usize::MAX)
-        };
-        // depth(k) = k + overhead (each paren nests exactly one level).
-        let overhead = depth_of(10) - 10;
-        let at_limit = MAX_TREE_DEPTH - overhead;
-
-        assert_eq!(depth_of(at_limit), MAX_TREE_DEPTH, "calibration");
-        assert!(
-            parse_source(src_with(at_limit).as_bytes(), 0, "x", profile).is_ok(),
-            "depth == MAX_TREE_DEPTH (512) must be accepted"
-        );
-        assert!(
-            parse_source(src_with(at_limit + 1).as_bytes(), 0, "x", profile).is_err(),
-            "depth == MAX_TREE_DEPTH + 1 (513) must be rejected"
-        );
-    }
-
-    #[test]
-    fn cached_spans_are_rebound_to_the_current_file_id() {
-        let tmp = tempfile::tempdir().unwrap();
-        let path = tmp.path().join("cached.py");
-        std::fs::write(&path, "def f():\n    return 1\n").unwrap();
-        let cache = crate::spine::cache::ParseCache::new(tmp.path());
-        let mut parser = tree_sitter::Parser::new();
-
-        let first = parse_file_with_cache(&path, 3, Some(&cache), &mut parser).unwrap();
-        assert!(first
-            .walked
-            .syntax
-            .spans
-            .iter()
-            .all(|span| span.file_id == 3));
-        let second = parse_file_with_cache(&path, 7, Some(&cache), &mut parser).unwrap();
-        assert!(second
-            .walked
-            .syntax
-            .spans
-            .iter()
-            .all(|span| span.file_id == 7));
-    }
-}
+mod tests;
