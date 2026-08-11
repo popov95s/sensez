@@ -1,7 +1,7 @@
 use super::*;
 
 /// Aggregate result of all pillars.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct AnalysisReport {
     pub meta: ReportMeta,
     pub cycles: Vec<CycleFinding>,

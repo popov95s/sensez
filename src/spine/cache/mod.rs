@@ -4,12 +4,7 @@
 //! Noze findings remain derived values with wider invalidation scopes.
 
 mod fingerprint;
-mod store;
+mod snapshot;
 
 pub use fingerprint::SourceFingerprint;
-pub use store::{CacheStats, ParseCache};
-
-// `Walked` gained/changed serialized fields while this cache was developed;
-// v2 deliberately invalidates artifacts made by the earlier format. Bump this
-// whenever the serialized projection or walker semantics change.
-pub(crate) const PARSE_CACHE_SCHEMA: u32 = 2;
+pub use snapshot::{project_key, AnalysisSnapshot, SnapshotCache};

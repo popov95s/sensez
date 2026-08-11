@@ -47,22 +47,12 @@ pub struct ParseBatch {
 /// Parse many files in parallel, preserving concrete failures as diagnostics.
 #[allow(dead_code)]
 pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
-    parse_files_with_cache(files, None)
-}
-
-/// Parse files, reusing a persistent cache when supplied. Cache failures are
-/// deliberately treated as misses so an unreadable cache never makes a scan
-/// incomplete.
-pub fn parse_files_with_cache(
-    files: &[PathBuf],
-    cache: Option<&crate::spine::cache::ParseCache>,
-) -> ParseBatch {
     let outcomes: Vec<_> = files
         .par_iter()
         .enumerate()
         .map_init(
             tree_sitter::Parser::new,
-            |parser, (i, path)| match parse_file_with_cache(path, i as u32, cache, parser) {
+            |parser, (i, path)| match parse_file_with_parser(path, i as u32, parser) {
                 Ok(parsed) => Ok(parsed),
                 Err(err) => Err(ScanIssue {
                     stage: ScanStage::Parse,
@@ -90,13 +80,12 @@ pub fn parse_files_with_cache(
 /// Parse a single file from disk, routed to its language profile by extension.
 #[allow(dead_code)]
 pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
-    parse_file_with_cache(path, file_id, None, &mut tree_sitter::Parser::new())
+    parse_file_with_parser(path, file_id, &mut tree_sitter::Parser::new())
 }
 
-fn parse_file_with_cache(
+fn parse_file_with_parser(
     path: &Path,
     file_id: u32,
-    cache: Option<&crate::spine::cache::ParseCache>,
     parser: &mut tree_sitter::Parser,
 ) -> Result<ParsedFile> {
     let profile = registry::parse_for_path(path)
@@ -108,37 +97,8 @@ fn parse_file_with_cache(
         .unwrap_or_default();
     let fingerprint =
         crate::spine::cache::SourceFingerprint::new(path, profile.info().language, &src);
-    let key = fingerprint.cache_key(crate::spine::cache::PARSE_CACHE_SCHEMA);
-    let cached = cache.and_then(|cache| {
-        cache.load(
-            fingerprint.identity,
-            fingerprint.content,
-            fingerprint.language,
-            key,
-        )
-    });
-    let mut walked = match cached {
-        Some(walked) => walked,
-        None => {
-            let walked = parse_source_with_parser(&src, file_id, &module_name, profile, parser)
-                .with_context(|| format!("parsing {}", path.display()))?;
-            if let Some(cache) = cache {
-                // A cache write is best effort. The freshly parsed value is
-                // already valid, and a read-only cache cannot fail a scan.
-                let _ = cache.persist(
-                    fingerprint.identity,
-                    fingerprint.content,
-                    fingerprint.language,
-                    key,
-                    &walked,
-                );
-            }
-            walked
-        }
-    };
-    for span in &mut walked.syntax.spans {
-        span.file_id = file_id;
-    }
+    let walked = parse_source_with_parser(&src, file_id, &module_name, profile, parser)
+        .with_context(|| format!("parsing {}", path.display()))?;
     // Lines = newline count + 1 for a trailing partial line; 0 for an empty file.
     let lines = if src.is_empty() {
         0

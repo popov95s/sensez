@@ -1,6 +1,5 @@
 use crate::fingerprints;
 use crate::spine::ir::Language;
-use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 
 /// Source identity and content stamp used by incremental analysis.
@@ -23,14 +22,5 @@ impl SourceFingerprint {
             path: path.to_path_buf(),
             language,
         }
-    }
-
-    pub fn cache_key(&self, schema: u32) -> u64 {
-        let mut hasher = rustc_hash::FxHasher::default();
-        self.identity.hash(&mut hasher);
-        self.content.hash(&mut hasher);
-        self.language.hash(&mut hasher);
-        schema.hash(&mut hasher);
-        hasher.finish()
     }
 }

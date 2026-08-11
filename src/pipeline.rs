@@ -28,16 +28,27 @@ pub fn analyze_path(
     })
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
-    let parse_cache = crate::spine::cache::ParseCache::new(path);
-    let parsed = parser::parse_files_with_cache(&discovery.files, Some(&parse_cache));
+    let snapshot_cache = crate::spine::cache::SnapshotCache::new(path);
+    let snapshot_key = if config_issues.is_empty() && discovery.issues.is_empty() {
+        crate::spine::cache::project_key(&discovery.files, config.signature()).ok()
+    } else {
+        None
+    };
+    timer.lap("fingerprint");
+    if let Some(snapshot) = snapshot_key.and_then(|key| snapshot_cache.load(key)) {
+        timer.cache_hit(true);
+        let mut report = snapshot.report;
+        crate::brainz::apply_suppressions(path, &mut report);
+        crate::brainz::rank_by_precision(path, &mut report);
+        return Ok((report, snapshot.module_files));
+    }
+    timer.cache_hit(false);
+    let parsed = parser::parse_files(&discovery.files);
     timer.lap("parse");
-    timer.cache_stats(&parse_cache.stats());
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
     let mut report = noze::run_with_root(&parsed.files, &graph, &config, Some(path));
-    crate::brainz::apply_suppressions(path, &mut report);
-    crate::brainz::rank_by_precision(path, &mut report);
     report.meta.issues.extend(config_issues);
     report.meta.issues.extend(discovery.issues);
     debug_assert_eq!(
@@ -63,6 +74,16 @@ pub fn analyze_path(
             .entry(n.module_name.clone())
             .or_insert_with(|| n.file_path.clone());
     }
+
+    if let Some(key) = snapshot_key.filter(|_| report.meta.issues.is_empty()) {
+        let snapshot = crate::spine::cache::AnalysisSnapshot {
+            report: report.clone(),
+            module_files: module_files.clone(),
+        };
+        let _ = snapshot_cache.persist(key, &snapshot);
+    }
+    crate::brainz::apply_suppressions(path, &mut report);
+    crate::brainz::rank_by_precision(path, &mut report);
 
     Ok((report, module_files))
 }
@@ -97,12 +118,11 @@ impl PhaseTimer {
         self.last = now;
     }
 
-    fn cache_stats(&self, stats: &crate::spine::cache::CacheStats) {
+    fn cache_hit(&self, hit: bool) {
         if self.enabled {
             eprintln!(
-                "[timing] parse-cache hits={} misses={}",
-                stats.hits(),
-                stats.misses()
+                "[timing] analysis-cache {}",
+                if hit { "hit" } else { "miss" }
             );
         }
     }

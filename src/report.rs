@@ -11,7 +11,7 @@ mod smell_kind;
 pub use smell_kind::SmellKind;
 
 /// A circular-import group (Tarjan SCC of cardinality >= 2).
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CycleFinding {
     pub action: ActionLevel,
     pub modules: Vec<String>,
@@ -24,7 +24,7 @@ pub struct CycleFinding {
 
 /// An import that participates in a cycle: `from_module` imports `to_module` at
 /// `file:line`.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CycleEdge {
     pub from_module: String,
     pub to_module: String,
@@ -33,7 +33,7 @@ pub struct CycleEdge {
 }
 
 /// How likely a dead-code candidate is a true positive.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Confidence {
     /// Nothing in the scan tree imports the module at all.
     High,
@@ -44,7 +44,7 @@ pub enum Confidence {
 }
 
 /// An unreferenced symbol candidate.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct DeadCodeFinding {
     pub action: ActionLevel,
     pub module: String,
@@ -61,7 +61,7 @@ pub struct DeadCodeFinding {
 }
 
 /// A forbidden import edge that was found in the graph.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct BoundaryViolation {
     pub action: ActionLevel,
     pub from_module: String,
@@ -72,7 +72,7 @@ pub struct BoundaryViolation {
 }
 
 /// One physical location of a structural clone.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloneOccurrence {
     pub file: PathBuf,
     pub start_row: usize,
@@ -80,7 +80,7 @@ pub struct CloneOccurrence {
 }
 
 /// A set of locations sharing an identical structural-token run.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CloneClass {
     pub action: ActionLevel,
     pub token_length: usize,
@@ -91,9 +91,10 @@ pub struct CloneClass {
 }
 
 /// How serious a smell finding is (drives ordering and rendering).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Severity {
     Critical,
+    #[default]
     Warning,
     Info,
 }
@@ -141,7 +142,7 @@ impl std::fmt::Display for ActionLevel {
 }
 
 /// A single design-smell finding.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct SmellFinding {
     pub action: ActionLevel,
     pub kind: SmellKind,
@@ -162,7 +163,7 @@ pub struct SmellFinding {
 }
 
 /// Whether a report covers the whole repo or is filtered to a change.
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum ReportMode {
     #[default]
@@ -171,7 +172,7 @@ pub enum ReportMode {
 }
 
 /// Which phase of a scan produced a diagnostic.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum ScanStage {
     Config,
@@ -194,7 +195,7 @@ impl std::fmt::Display for ScanStage {
 }
 
 /// One concrete scan problem that reduced fidelity.
-#[derive(Debug, Clone, Serialize)]
+#[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanIssue {
     pub stage: ScanStage,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -203,7 +204,7 @@ pub struct ScanIssue {
 }
 
 /// Run-level metadata.
-#[derive(Debug, Clone, Default, Serialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct ReportMeta {
     pub mode: ReportMode,
     pub boundaries_configured: bool,
@@ -229,7 +230,7 @@ pub struct ReportMeta {
 }
 
 /// One plain-English definition for a finding category.
-#[derive(Debug, Clone, PartialEq, Eq, Serialize)]
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct GlossaryEntry {
     pub term: String,
     pub title: String,
