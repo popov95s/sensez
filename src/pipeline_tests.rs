@@ -14,6 +14,135 @@ fn scan_produces_json() {
 }
 
 #[test]
+fn repeated_cached_scans_are_identical() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
+    fs::write(dir.join("b.py"), "def b():\n    return 2\n").unwrap();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
+
+    let first = analyze_path(dir, None).unwrap().0;
+    let second = analyze_path(dir, None).unwrap().0;
+    assert_eq!(
+        serde_json::to_value(&first).unwrap(),
+        serde_json::to_value(&second).unwrap(),
+        "cache hits must not change findings or metadata"
+    );
+}
+
+#[test]
+fn disabled_cache_does_not_create_cache_artifacts() {
+    let tmp = tempfile::tempdir().unwrap();
+    fs::write(tmp.path().join("a.py"), "value = 1\n").unwrap();
+    let legacy = tmp.path().join(".sensez/parse-v1");
+    fs::create_dir_all(&legacy).unwrap();
+    fs::write(legacy.join("existing.bin"), "preserve while disabled").unwrap();
+
+    analyze_path(tmp.path(), None).unwrap();
+
+    assert!(!tmp.path().join(".sensez/analysis-v1.bin").exists());
+    assert!(
+        legacy.exists(),
+        "disabled cache must not perform cache cleanup"
+    );
+}
+
+#[test]
+fn changed_file_can_create_and_remove_cross_file_duplication() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(dir.join("sensez.toml"), "[duplication]\nthreshold = 8\n").unwrap();
+    let left = "def left(value):\n    first = module.fetch(value)\n    second = module.clean(first)\n    return second\n";
+    let unique = "def right(value):\n    return value + 1\n";
+    fs::write(dir.join("left.py"), left).unwrap();
+    fs::write(dir.join("right.py"), unique).unwrap();
+
+    let initial = analyze_path(dir, None).unwrap().0;
+    assert!(initial.duplication.is_empty(), "fixture starts unique");
+
+    fs::write(dir.join("right.py"), left.replace("left", "right")).unwrap();
+    let created = analyze_path(dir, None).unwrap().0;
+    assert!(created.duplication.iter().any(|clone| {
+        clone
+            .occurrences
+            .iter()
+            .any(|o| o.file.ends_with("left.py"))
+            && clone
+                .occurrences
+                .iter()
+                .any(|o| o.file.ends_with("right.py"))
+    }));
+
+    fs::write(dir.join("right.py"), unique).unwrap();
+    let removed = analyze_path(dir, None).unwrap().0;
+    assert!(
+        removed.duplication.is_empty(),
+        "stale cached clone survived edit"
+    );
+}
+
+#[test]
+fn changed_import_can_create_and_remove_a_cross_file_cycle() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(
+        dir.join("a.py"),
+        "from b import value\n\ndef a():\n    return value\n",
+    )
+    .unwrap();
+    fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
+
+    assert!(analyze_path(dir, None).unwrap().0.cycles.is_empty());
+
+    fs::write(
+        dir.join("b.py"),
+        "from a import a\n\ndef value():\n    return a()\n",
+    )
+    .unwrap();
+    let created = analyze_path(dir, None).unwrap().0;
+    assert_eq!(
+        created.cycles.len(),
+        1,
+        "changed import must rebuild the graph"
+    );
+
+    fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
+    assert!(
+        analyze_path(dir, None).unwrap().0.cycles.is_empty(),
+        "removed import must remove the cycle"
+    );
+}
+
+#[test]
+fn changed_consumer_updates_dead_code_in_another_file() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(
+        dir.join("provider.py"),
+        "def live():\n    return 1\n\ndef other():\n    return 2\n",
+    )
+    .unwrap();
+    let consumer = dir.join("consumer.py");
+    fs::write(&consumer, "from provider import live\n\nprint(live())\n").unwrap();
+
+    let initial = analyze_path(dir, None).unwrap().0;
+    assert!(!initial
+        .dead_code
+        .iter()
+        .any(|finding| finding.symbol == "live"));
+
+    fs::write(&consumer, "from provider import other\n\nprint(other())\n").unwrap();
+    let changed = analyze_path(dir, None).unwrap().0;
+    assert!(
+        changed
+            .dead_code
+            .iter()
+            .any(|finding| finding.symbol == "live"),
+        "consumer edit must affect provider dead-code findings"
+    );
+}
+
+#[test]
 fn diff_mode_filters_to_touched_files() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();

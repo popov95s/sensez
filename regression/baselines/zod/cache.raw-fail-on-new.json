@@ -1,0 +1,42 @@
+{
+  "meta": {
+    "mode": "diff",
+    "boundaries_configured": false,
+    "internal_edges": 524,
+    "external_edges": 461,
+    "analyzed_files": 371,
+    "source_lines": 71986,
+    "cycles_total": 1,
+    "dead_code_total": 0,
+    "duplication_total": 0,
+    "boundaries_total": 0,
+    "smells_total": 0
+  },
+  "cycles": [
+    {
+      "action": "warning",
+      "modules": [
+        "src/sensez-cache-cycle-b",
+        "src/sensez-cache-cycle-a"
+      ],
+      "edges": [
+        {
+          "from_module": "src/sensez-cache-cycle-b",
+          "to_module": "src/sensez-cache-cycle-a",
+          "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
+          "line": 1
+        },
+        {
+          "from_module": "src/sensez-cache-cycle-a",
+          "to_module": "src/sensez-cache-cycle-b",
+          "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
+          "line": 1
+        }
+      ]
+    }
+  ],
+  "dead_code": [],
+  "boundaries": [],
+  "duplication": [],
+  "smells": []
+}

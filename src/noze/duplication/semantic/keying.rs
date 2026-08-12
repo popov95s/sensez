@@ -33,15 +33,6 @@ pub(super) fn pair_key(left: &Unit, right: &Unit) -> PairKey {
     }
 }
 
-pub(super) fn file_hash(path: &Path) -> u64 {
-    let mut h = rustc_hash::FxHasher::default();
-    path.hash(&mut h);
-    if let Ok(bytes) = std::fs::read(path) {
-        bytes.hash(&mut h);
-    }
-    h.finish()
-}
-
 pub(super) fn bundle_key(
     file_hash: u64,
     file: &Path,

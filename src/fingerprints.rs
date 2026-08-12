@@ -61,6 +61,15 @@ pub fn hash_parts(parts: &[&str]) -> u64 {
     hasher.finish()
 }
 
+/// Hash raw bytes with the same fast, process-stable hasher used by the
+/// existing scan fingerprints. Source caches also store the full fingerprint
+/// metadata, so a hash collision cannot silently cross parser revisions.
+pub fn hash_bytes(bytes: &[u8]) -> u64 {
+    let mut hasher = rustc_hash::FxHasher::default();
+    bytes.hash(&mut hasher);
+    hasher.finish()
+}
+
 pub fn hex(hash: u64) -> String {
     format!("{hash:x}")
 }

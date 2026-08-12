@@ -6,7 +6,9 @@
 //! control-flow shape but differ only in names/values therefore produce
 //! byte-identical token vectors — the basis of structural clone detection.
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize)]
+#[derive(
+    Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
+)]
 pub enum StructuralToken {
     FunctionDef,
     ClassDef,
@@ -27,7 +29,7 @@ pub enum StructuralToken {
 ///
 /// Rows are 1-indexed (tree-sitter reports 0-indexed). Lets the duplication
 /// pillar map master-buffer offsets back to concrete file + line ranges.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TokenSpan {
     pub file_id: u32,
     pub start_row: u32,

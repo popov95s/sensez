@@ -6,21 +6,21 @@ use super::PerformanceFacts;
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ReviewRiskFacts {
     pub broad_handlers: usize,
     pub empty_fallbacks: usize,
     pub repeated_guards: usize,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct SchemaCall {
     pub target: String,
     pub arguments: Vec<String>,
 }
 
 /// Per-function structural summary used by the design-smell pillar.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct FunctionUnit {
     pub name: String,
     pub start_line: usize,
@@ -97,14 +97,14 @@ pub struct FunctionUnit {
 
 /// Source span for a comment node. Language profiles record these during the
 /// normal syntax walk; the shared walk post-pass attaches them to functions.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct CommentSpan {
     pub start_line: usize,
     pub end_line: usize,
 }
 
 /// Per-class structural summary used by the design-smell pillar.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ClassUnit {
     pub name: String,
     pub start_line: usize,
@@ -126,7 +126,7 @@ pub struct ClassUnit {
     pub properties: Vec<ClassProperty>,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct ClassProperty {
     pub name: String,
     pub type_name: String,
@@ -134,7 +134,7 @@ pub struct ClassProperty {
     pub line: usize,
 }
 
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeAlias {
     pub name: String,
     pub target: String,
@@ -143,7 +143,7 @@ pub struct TypeAlias {
 
 /// Best-effort, annotation-driven type information (no full inference). Absent
 /// entries mean "unknown" — type-assisted smells skip rather than guess.
-#[derive(Debug, Clone, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeHints {
     /// (function name, param name) → annotated type text.
     pub param_types: HashMap<(String, String), String>,

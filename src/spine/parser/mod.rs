@@ -13,6 +13,7 @@ pub use crate::spine::ir::{
 
 use crate::profiles::{registry, ParseProfile};
 use crate::report::{ScanIssue, ScanStage};
+pub use crate::spine::cache::SourceFingerprint;
 use crate::spine::ir::Language;
 use anyhow::{anyhow, Context, Result};
 use rayon::prelude::*;
@@ -29,6 +30,9 @@ pub struct ParsedFile {
     pub language: Language,
     /// Source line count (the size denominator for scan-throughput health).
     pub lines: u32,
+    /// Stable source identity plus content hash used by incremental caches.
+    #[allow(dead_code)]
+    pub fingerprint: SourceFingerprint,
     /// The walk output ([`Walked`]) for this file.
     pub walked: Walked,
 }
@@ -41,6 +45,7 @@ pub struct ParseBatch {
 }
 
 /// Parse many files in parallel, preserving concrete failures as diagnostics.
+#[allow(dead_code)]
 pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
     let outcomes: Vec<_> = files
         .par_iter()
@@ -72,6 +77,34 @@ pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
     }
 }
 
+/// Parse buffers already read while computing the project fingerprint.
+pub fn parse_sources(files: &[crate::spine::cache::SourceFile]) -> ParseBatch {
+    let outcomes: Vec<_> = files
+        .par_iter()
+        .enumerate()
+        .map_init(tree_sitter::Parser::new, |parser, (i, source)| {
+            parse_loaded_source(source, i as u32, parser).map_err(|err| ScanIssue {
+                stage: ScanStage::Parse,
+                file: Some(source.path.clone()),
+                message: format!("{err:#}"),
+            })
+        })
+        .collect();
+
+    let mut parsed = Vec::new();
+    let mut issues = Vec::new();
+    for outcome in outcomes {
+        match outcome {
+            Ok(file) => parsed.push(file),
+            Err(issue) => issues.push(issue),
+        }
+    }
+    ParseBatch {
+        files: parsed,
+        issues,
+    }
+}
+
 /// Parse a single file from disk, routed to its language profile by extension.
 #[allow(dead_code)]
 pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
@@ -83,14 +116,33 @@ fn parse_file_with_parser(
     file_id: u32,
     parser: &mut tree_sitter::Parser,
 ) -> Result<ParsedFile> {
+    let src = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+    parse_loaded_source(
+        &crate::spine::cache::SourceFile {
+            path: path.to_path_buf(),
+            bytes: src,
+        },
+        file_id,
+        parser,
+    )
+}
+
+fn parse_loaded_source(
+    source: &crate::spine::cache::SourceFile,
+    file_id: u32,
+    parser: &mut tree_sitter::Parser,
+) -> Result<ParsedFile> {
+    let path = &source.path;
+    let src = &source.bytes;
     let profile = registry::parse_for_path(path)
         .ok_or_else(|| anyhow!("no language profile for {}", path.display()))?;
-    let src = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
     let module_name = path
         .file_stem()
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let walked = parse_source_with_parser(&src, file_id, &module_name, profile, parser)
+    let fingerprint =
+        crate::spine::cache::SourceFingerprint::new(path, profile.info().language, src);
+    let walked = parse_source_with_parser(src, file_id, &module_name, profile, parser)
         .with_context(|| format!("parsing {}", path.display()))?;
     // Lines = newline count + 1 for a trailing partial line; 0 for an empty file.
     let lines = if src.is_empty() {
@@ -102,6 +154,7 @@ fn parse_file_with_parser(
         path: path.to_path_buf(),
         language: profile.info().language,
         lines,
+        fingerprint,
         walked,
     })
 }
@@ -198,49 +251,4 @@ impl TreeDepth {
 }
 
 #[cfg(test)]
-mod depth_tests {
-    use super::*;
-    use crate::profiles::registry;
-
-    #[test]
-    fn pathological_nesting_is_rejected_not_crashed() {
-        let profile = registry::parse_for_path(Path::new("x.py")).unwrap();
-        // 100k-deep parenthesized expression would overflow recursive walkers.
-        let src = format!("x = {}1{}", "(".repeat(100_000), ")".repeat(100_000));
-        let result = parse_source(src.as_bytes(), 0, "x", profile);
-        assert!(result.is_err(), "deep tree must be rejected, not walked");
-
-        // Sane code is untouched.
-        let ok = parse_source(b"def f():\n    return (1 + 2)\n", 0, "x", profile);
-        assert!(ok.is_ok());
-    }
-
-    /// The depth gate is exact: a tree at MAX_TREE_DEPTH parses, one level
-    /// deeper is rejected. The fixed overhead between paren count and tree
-    /// depth is measured rather than assumed, so a grammar bump that changes
-    /// node nesting cannot silently shift the boundary under this test.
-    #[test]
-    fn depth_gate_boundary_is_exact() {
-        let profile = registry::parse_for_path(Path::new("x.py")).unwrap();
-        let src_with = |parens: usize| format!("x = {}1{}", "(".repeat(parens), ")".repeat(parens));
-        let depth_of = |parens: usize| {
-            let mut parser = tree_sitter::Parser::new();
-            parser.set_language(&profile.ts_language()).unwrap();
-            let tree = parser.parse(src_with(parens).as_bytes(), None).unwrap();
-            tree_depth(tree.root_node(), usize::MAX)
-        };
-        // depth(k) = k + overhead (each paren nests exactly one level).
-        let overhead = depth_of(10) - 10;
-        let at_limit = MAX_TREE_DEPTH - overhead;
-
-        assert_eq!(depth_of(at_limit), MAX_TREE_DEPTH, "calibration");
-        assert!(
-            parse_source(src_with(at_limit).as_bytes(), 0, "x", profile).is_ok(),
-            "depth == MAX_TREE_DEPTH (512) must be accepted"
-        );
-        assert!(
-            parse_source(src_with(at_limit + 1).as_bytes(), 0, "x", profile).is_err(),
-            "depth == MAX_TREE_DEPTH + 1 (513) must be rejected"
-        );
-    }
-}
+mod tests;

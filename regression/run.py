@@ -13,6 +13,7 @@ from .harness.models import RegressionConfig, RegressionRun, Target
 from .harness.paths import BASELINES, CONFIG, RESULTS, ROOT
 from .harness.repositories import ensure_cache
 from .scenarios.branch_metrics import run_branch_metric_scenarios
+from .scenarios.cache_impact import run_cache_impact_scenario
 from .scenarios.full_scan import run_full_scans
 from .scenarios.gates import (
     run_gate_detached_scenario,
@@ -98,6 +99,7 @@ def run_target(
     context = RegressionRun(sensez, config, target, cache, output)
 
     run_full_scans(context)
+    run_cache_impact_scenario(context)
     run_mcp_scenarios(context)
     run_gate_reblock_scenario(context)
     run_shared_worktree_gate_scenario(context)

@@ -18,7 +18,7 @@ use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-use keying::{bundle_key, file_hash, pair_key};
+use keying::{bundle_key, pair_key};
 
 const MIN_TOKENS: usize = 20;
 
@@ -63,7 +63,7 @@ pub fn detect(
 fn collect_units(files: &[&ParsedFile], comment_required: bool) -> Vec<Unit> {
     let mut out = Vec::new();
     for file in files {
-        let file_hash = file_hash(&file.path);
+        let file_hash = file.fingerprint.content;
         let comments = comment_bundles(file);
         for func in top_level_functions(file) {
             if let Some((symbol_path, comment)) = comment_for(&comments, func, comment_required) {

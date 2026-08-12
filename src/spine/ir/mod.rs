@@ -26,7 +26,7 @@ use std::collections::{HashMap, HashSet};
 /// What kind of source symbol a declaration (or dead-code finding) refers to.
 /// Serialized snake_case, so the JSON output is identical to the historical
 /// string values ("function", "class", ...).
-#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum SymbolKind {
     Function,
@@ -60,14 +60,14 @@ impl std::fmt::Display for SymbolKind {
 /// Result of walking one file's syntax tree — the language-neutral projection
 /// every analyzer pillar reads. Languages that lack a concept (e.g. JS has no
 /// `__all__`) simply leave the corresponding field empty/`None`.
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct SyntaxFacts {
     pub tokens: Vec<StructuralToken>,
     pub spans: Vec<TokenSpan>,
     pub lexemes: Vec<u64>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct SymbolFacts {
     pub imports: Vec<ImportContext>,
     pub declared: Vec<String>,
@@ -78,7 +78,7 @@ pub struct SymbolFacts {
     pub decorators: HashMap<String, Vec<String>>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct UsageFacts {
     pub name_counts: HashMap<String, usize>,
     pub attribute_accesses: HashMap<String, HashSet<String>>,
@@ -88,7 +88,7 @@ pub struct UsageFacts {
     pub chained_attribute_names: HashSet<String>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct UnitFacts {
     pub functions: Vec<FunctionUnit>,
     pub classes: Vec<ClassUnit>,
@@ -96,7 +96,7 @@ pub struct UnitFacts {
     pub comment_spans: Vec<CommentSpan>,
 }
 
-#[derive(Debug, Default)]
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct Walked {
     /// Structural-token view used by duplication and diff-aware span mapping.
     pub syntax: SyntaxFacts,

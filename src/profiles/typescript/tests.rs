@@ -5,7 +5,7 @@ use crate::report::{SmellFinding, SmellKind};
 use crate::spine::ir::Language;
 use crate::spine::parser::{parse_file, parse_source, ImportPhase, ParsedFile, StructuralToken};
 use std::fs;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 #[test]
 fn graph_resolves_tsconfig_paths_and_keeps_workspace_module_ids_unique() {
@@ -63,6 +63,11 @@ fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
         path: PathBuf::from("m.ts"),
         language: Language::TypeScript,
         lines: 0,
+        fingerprint: crate::spine::cache::SourceFingerprint::new(
+            Path::new("m.ts"),
+            Language::TypeScript,
+            src,
+        ),
         walked,
     };
     detect_local(&file, cfg)

@@ -14,6 +14,14 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 pub fn run() -> Result<ExitCode> {
+    crate::spine::cache::enable_background_writes();
+    let result = run_inner();
+    crate::spine::cache::flush_background_writes();
+    crate::spine::cache::shutdown_background_writes();
+    result
+}
+
+fn run_inner() -> Result<ExitCode> {
     let cli = Cli::parse();
     match cli.command {
         Some(Command::Noze(args)) => run_noze(args),
@@ -157,6 +165,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     let diff = build_diff(path, options.diff, options.diff_from.as_deref());
     let (mut report, module_files) = crate::analyze_path(path, options.threshold)?;
+    let report_started = std::time::Instant::now();
     if let Some(changed) = diff.changed.as_ref() {
         crate::diff::apply(&mut report, changed, &module_files);
     }
@@ -171,6 +180,12 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     } else {
         crate::reporter::render(&report, options.explain)
     };
+    if std::env::var_os("SENSEZ_TIMING").is_some() {
+        eprintln!(
+            "[timing] report           {:>7.1}ms",
+            report_started.elapsed().as_secs_f64() * 1e3
+        );
+    }
     println!("{output}");
 
     if let Some(level) = options.fail_on_new {

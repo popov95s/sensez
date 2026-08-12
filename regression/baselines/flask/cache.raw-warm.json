@@ -1,0 +1,190 @@
+{
+  "meta": {
+    "mode": "full",
+    "boundaries_configured": false,
+    "internal_edges": 306,
+    "external_edges": 330,
+    "analyzed_files": 88,
+    "source_lines": 18351,
+    "cycles_total": 3,
+    "dead_code_total": 0,
+    "duplication_total": 0,
+    "boundaries_total": 0,
+    "smells_total": 0
+  },
+  "cycles": [
+    {
+      "action": "warning",
+      "modules": [
+        "js_example.views",
+        "js_example"
+      ],
+      "edges": [
+        {
+          "from_module": "js_example.views",
+          "to_module": "js_example",
+          "file": "<flask>/examples/javascript/js_example/views.py",
+          "line": 5
+        },
+        {
+          "from_module": "js_example",
+          "to_module": "js_example.views",
+          "file": "<flask>/examples/javascript/js_example/__init__.py",
+          "line": 5
+        }
+      ]
+    },
+    {
+      "action": "warning",
+      "modules": [
+        "flask.sensez_cache_cycle_b",
+        "flask.sensez_cache_cycle_a"
+      ],
+      "edges": [
+        {
+          "from_module": "flask.sensez_cache_cycle_b",
+          "to_module": "flask.sensez_cache_cycle_a",
+          "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
+          "line": 1
+        },
+        {
+          "from_module": "flask.sensez_cache_cycle_a",
+          "to_module": "flask.sensez_cache_cycle_b",
+          "file": "<flask>/src/flask/sensez_cache_cycle_a.py",
+          "line": 1
+        }
+      ]
+    },
+    {
+      "action": "info",
+      "modules": [
+        "flask.cli",
+        "flask.testing",
+        "flask.sansio.scaffold",
+        "flask.sansio.blueprints",
+        "flask.logging",
+        "flask.json.provider",
+        "flask.ctx",
+        "flask.config",
+        "flask.sansio.app",
+        "flask.templating",
+        "flask.app",
+        "flask.json",
+        "flask.json.tag",
+        "flask.sessions",
+        "flask.globals",
+        "flask.helpers",
+        "flask.wrappers"
+      ],
+      "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
+      "edges": [
+        {
+          "from_module": "flask.cli",
+          "to_module": "flask.app",
+          "file": "<flask>/src/flask/cli.py",
+          "line": 34
+        },
+        {
+          "from_module": "flask.testing",
+          "to_module": "flask.app",
+          "file": "<flask>/src/flask/testing.py",
+          "line": 24
+        },
+        {
+          "from_module": "flask.sansio.scaffold",
+          "to_module": "flask.templating",
+          "file": "<flask>/src/flask/sansio/scaffold.py",
+          "line": 19
+        },
+        {
+          "from_module": "flask.sansio.blueprints",
+          "to_module": "flask.sansio.app",
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "line": 15
+        },
+        {
+          "from_module": "flask.logging",
+          "to_module": "flask.sansio.app",
+          "file": "<flask>/src/flask/logging.py",
+          "line": 12
+        },
+        {
+          "from_module": "flask.json.provider",
+          "to_module": "flask.sansio.app",
+          "file": "<flask>/src/flask/json/provider.py",
+          "line": 16
+        },
+        {
+          "from_module": "flask.ctx",
+          "to_module": "flask.wrappers",
+          "file": "<flask>/src/flask/ctx.py",
+          "line": 23
+        },
+        {
+          "from_module": "flask.config",
+          "to_module": "flask.sansio.app",
+          "file": "<flask>/src/flask/config.py",
+          "line": 14
+        },
+        {
+          "from_module": "flask.sansio.app",
+          "to_module": "flask.sansio.blueprints",
+          "file": "<flask>/src/flask/sansio/app.py",
+          "line": 41
+        },
+        {
+          "from_module": "flask.templating",
+          "to_module": "flask.sansio.scaffold",
+          "file": "<flask>/src/flask/templating.py",
+          "line": 18
+        },
+        {
+          "from_module": "flask.app",
+          "to_module": "flask.testing",
+          "file": "<flask>/src/flask/app.py",
+          "line": 61
+        },
+        {
+          "from_module": "flask.json",
+          "to_module": "flask.wrappers",
+          "file": "<flask>/src/flask/json/__init__.py",
+          "line": 10
+        },
+        {
+          "from_module": "flask.json.tag",
+          "to_module": "flask.json",
+          "file": "<flask>/src/flask/json/tag.py",
+          "line": 57
+        },
+        {
+          "from_module": "flask.sessions",
+          "to_module": "flask.wrappers",
+          "file": "<flask>/src/flask/sessions.py",
+          "line": 21
+        },
+        {
+          "from_module": "flask.globals",
+          "to_module": "flask.wrappers",
+          "file": "<flask>/src/flask/globals.py",
+          "line": 13
+        },
+        {
+          "from_module": "flask.helpers",
+          "to_module": "flask.wrappers",
+          "file": "<flask>/src/flask/helpers.py",
+          "line": 25
+        },
+        {
+          "from_module": "flask.wrappers",
+          "to_module": "flask.helpers",
+          "file": "<flask>/src/flask/wrappers.py",
+          "line": 12
+        }
+      ]
+    }
+  ],
+  "dead_code": [],
+  "boundaries": [],
+  "duplication": [],
+  "smells": []
+}

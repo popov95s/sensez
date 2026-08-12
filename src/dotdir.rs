@@ -1,9 +1,6 @@
-#[cfg(any(test, feature = "mcp", feature = "eyez"))]
 use anyhow::{Context, Result};
-#[cfg(any(test, feature = "mcp", feature = "eyez"))]
 use std::path::{Path, PathBuf};
 
-#[cfg(any(test, feature = "mcp", feature = "eyez"))]
 pub fn ensure(root: &Path, sub: Option<&str>) -> Result<PathBuf> {
     let base = root.join(".sensez");
     let dir = match sub {

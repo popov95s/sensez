@@ -18,3 +18,15 @@ def dump_metrics_schema(path: Path, repo: Path) -> None:
 
 def dump_normalized(path: Path, value: object, repo: Path, target: Target) -> None:
     dump_json(path, normalize_artifact(value, repo, target["name"]))
+
+
+def dump_normalized_text(
+    path: Path,
+    text: str,
+    repo: Path,
+    target: Target,
+) -> None:
+    normalized = normalize_artifact(text, repo, target["name"])
+    if not isinstance(normalized, str):
+        raise TypeError("normalized command output must remain text")
+    path.write_text(normalized)

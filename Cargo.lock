@@ -1879,6 +1879,7 @@ dependencies = [
  "crossbeam-channel",
  "crossterm",
  "dialoguer",
+ "flate2",
  "fs4",
  "gen-lsp-types",
  "globset",

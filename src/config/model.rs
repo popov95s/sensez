@@ -8,6 +8,7 @@ use std::path::PathBuf;
 #[derive(Debug, Clone, Hash, Deserialize)]
 #[serde(default)]
 pub struct Config {
+    pub cache: Cache,
     pub roots: Vec<PathBuf>,
     pub exclude: Vec<String>,
     pub duplication: Duplication,
@@ -19,6 +20,12 @@ pub struct Config {
     pub self_improvement: SelfImprovement,
     /// Team-shared accepted findings, keyed by pillar or detector id.
     pub accept: BTreeMap<String, Vec<String>>,
+}
+
+#[derive(Debug, Clone, Default, Hash, Deserialize)]
+#[serde(default)]
+pub struct Cache {
+    pub enabled: bool,
 }
 
 #[derive(Debug, Clone, Hash, Deserialize)]
@@ -97,6 +104,7 @@ pub struct ForbiddenRule {
 impl Default for Config {
     fn default() -> Self {
         Config {
+            cache: Cache::default(),
             roots: Vec::new(),
             exclude: Vec::new(),
             duplication: Duplication {
@@ -176,6 +184,28 @@ impl Default for Gate {
 }
 
 impl Config {
+    pub fn cache_enabled(&self) -> bool {
+        match std::env::var("SENSEZ_ANALYSIS_CACHE") {
+            Ok(value)
+                if matches!(
+                    value.to_ascii_lowercase().as_str(),
+                    "1" | "true" | "yes" | "on"
+                ) =>
+            {
+                true
+            }
+            Ok(value)
+                if matches!(
+                    value.to_ascii_lowercase().as_str(),
+                    "0" | "false" | "no" | "off"
+                ) =>
+            {
+                false
+            }
+            _ => self.cache.enabled,
+        }
+    }
+
     pub fn signature(&self) -> u64 {
         use std::hash::{Hash, Hasher};
         let mut hasher = rustc_hash::FxHasher::default();
