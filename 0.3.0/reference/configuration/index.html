@@ -1,0 +1,1338 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Structural maintainability docs for the Sensez CLI and MCP server.">
+      
+      
+      
+      
+        <link rel="prev" href="../findings/">
+      
+      
+        <link rel="next" href="../../local-metrics/">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/favicon.svg">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.7.7">
+    
+    
+      
+        <title>Configuration - sensez</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.ec1eaa64.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.ab4e12ef.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+      <link rel="stylesheet" href="../../stylesheets/brand.css">
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="orange">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#configuration-reference" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+      <div data-md-color-scheme="default" data-md-component="outdated" hidden>
+        
+      </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="sensez" class="md-header__button md-logo" aria-label="sensez" data-md-component="logo">
+      
+  <img src="../../assets/favicon.svg" alt="logo">
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            sensez
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              Configuration
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="default" data-md-color-primary="black" data-md-color-accent="orange"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="" data-md-color-scheme="slate" data-md-color-primary="black" data-md-color-accent="orange"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+        <div class="md-search__suggest" data-md-component="search-suggest"></div>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="sensez" class="md-nav__button md-logo" aria-label="sensez" data-md-component="logo">
+      
+  <img src="../../assets/favicon.svg" alt="logo">
+
+    </a>
+    sensez
+  </label>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Home
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../getting-started/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Getting Started
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_3" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_3" id="__nav_3_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reference
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_3_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_3">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Reference
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../cli/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    CLI
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../findings/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Findings
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Configuration
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#action-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action levels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#smell-rules-base-vs-per-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smell rules: base vs per-language
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dead-code-teaching-sensez-about-your-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dead code: teaching Sensez about your framework
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accepting-findings-accept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepting findings: [accept]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-and-local-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate and local metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recipes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adopting-sensez-in-an-existing-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adopting Sensez in an existing repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quieting-a-noisy-detector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quieting a noisy detector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixing-framework-false-positives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixing framework false positives
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-advice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical advice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../local-metrics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Local Metrics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" >
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Usage
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Usage
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/mcp-and-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP and Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/github-action/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    GitHub Action
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    
+    
+      
+        
+      
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_5" >
+        
+          
+          <label class="md-nav__link" for="__nav_5" id="__nav_5_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Contributing
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_5_label" aria-expanded="false">
+          <label class="md-nav__title" for="__nav_5">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Contributing
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../contributing/docs/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Maintaining Docs
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#action-levels" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Action levels
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#smell-rules-base-vs-per-language" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Smell rules: base vs per-language
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#dead-code-teaching-sensez-about-your-framework" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Dead code: teaching Sensez about your framework
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#duplication" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Duplication
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#boundaries" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Boundaries
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#accepting-findings-accept" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Accepting findings: [accept]
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#global-scope" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Global scope
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#gate-and-local-metrics" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Gate and local metrics
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#recipes" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Recipes
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Recipes">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#adopting-sensez-in-an-existing-repository" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Adopting Sensez in an existing repository
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#quieting-a-noisy-detector" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Quieting a noisy detector
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#fixing-framework-false-positives" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Fixing framework false positives
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#practical-advice" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Practical advice
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#related-pages" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Related pages
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+
+<h1 id="configuration-reference">Configuration Reference</h1>
+<p>Sensez reads <code>sensez.toml</code> at the repository root. If that file is absent, it
+falls back to a <code>[tool.sensez]</code> table in <code>pyproject.toml</code>; when both exist,
+<code>sensez.toml</code> wins.</p>
+<p><code>sensez init</code> writes a starter file with every supported knob commented at its
+default — that generated file is the complete surface. This page explains the
+concepts behind it and the common tuning workflows. The
+<a href="https://github.com/popov95s/sensez/blob/main/sensez.toml">sensez.toml Sensez uses on itself</a>
+is a heavily commented real-world example.</p>
+<h2 id="action-levels">Action levels</h2>
+<p>Every finding carries an action level. From quietest to strictest:
+<code>info</code> → <code>advisory</code> → <code>warning</code> → <code>must_fix</code>.</p>
+<p>Action levels decide how automated workflows react:</p>
+<ul>
+<li><code>sensez noze . --diff --fail-on-new [LEVEL]</code> exits non-zero when diff-scoped
+  findings meet or exceed <code>LEVEL</code> (default <code>must_fix</code>) — this is the CI hook.</li>
+<li>Agents and the end-of-turn gate treat each pillar according to its level, so
+  <code>must_fix</code> findings lead and <code>info</code> findings stay out of the way.</li>
+</ul>
+<p>Pillar defaults: <code>boundaries</code> = <code>must_fix</code>, <code>cycles</code> = <code>warning</code>,
+<code>duplication</code> = <code>advisory</code>, <code>dead_code</code> = <code>advisory</code>. Smells inherit the
+severity of their detector. Override per pillar or per smell:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[action]</span>
+<span class="n">duplication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+
+<span class="k">[smells.rules.loose_typing]</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;must_fix&quot;</span>
+</code></pre></div>
+<h2 id="smell-rules-base-vs-per-language">Smell rules: base vs per-language</h2>
+<p><code>[smells.rules.&lt;kind&gt;]</code> applies to every language.
+<code>[smells.&lt;lang&gt;.rules.&lt;kind&gt;]</code> — where <code>&lt;lang&gt;</code> is <code>python</code>, <code>javascript</code>,
+<code>typescript</code>, or <code>rust</code> — overrides the base for that language only. (The Rust
+profile is dogfooding-only and not shipped in the published packages.)</p>
+<p>Setting any knob implicitly enables the rule; use <code>enabled = false</code> for
+explicit suppression.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># All languages: long functions warn past 80 lines.</span>
+<span class="k">[smells.rules.long_function]</span>
+<span class="n">max_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">80</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+
+<span class="c1"># ...except TypeScript, which allows 120.</span>
+<span class="k">[smells.typescript.rules.long_function]</span>
+<span class="n">max_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">120</span>
+</code></pre></div>
+<p>Every rule's knobs and default enabled state are listed in the
+<a href="../findings/">Finding Reference</a>.</p>
+<h2 id="dead-code-teaching-sensez-about-your-framework">Dead code: teaching Sensez about your framework</h2>
+<p>Sensez ships no hardcoded framework names. Liveness is modeled from entry
+points, and your lists are <strong>merged with</strong> the language-profile defaults — you
+only add what is specific to your project:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[dead_code]</span>
+<span class="n">entrypoints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;route&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fixture&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task&quot;</span><span class="p">]</span><span class="w">   </span><span class="c1"># decorator trailing names that register code</span>
+<span class="n">entrypoint_names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;register&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">]</span><span class="w">      </span><span class="c1"># function/class names invoked dynamically</span>
+<span class="n">entrypoint_bases</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;AppConfig&quot;</span><span class="p">]</span><span class="w">             </span><span class="c1"># base classes loaded dynamically</span>
+<span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/scripts/**&quot;</span><span class="p">]</span><span class="w">             </span><span class="c1"># file globs reached outside the import graph</span>
+</code></pre></div>
+<p>If dead-code output feels incomplete, broader unused-symbol classes are
+available as opt-ins (your generated config shows their defaults):</p>
+<div class="highlight"><pre><span></span><code><span class="k">[dead_code]</span>
+<span class="n">unused_imports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">unused_methods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">unused_variables</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<p>Prefer adding entry points over suppressing individual findings — one line of
+config fixes a whole class of false positives.</p>
+<h2 id="duplication">Duplication</h2>
+<div class="highlight"><pre><span></span><code><span class="k">[duplication]</span>
+<span class="n">threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w">   </span><span class="c1"># minimum structural-token run to report a clone; raise to quieten</span>
+<span class="n">max_gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w">     </span><span class="c1"># stitch clones across small consistent edits; 0 disables</span>
+<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/tests/**&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;**/migrations/**&quot;</span><span class="p">]</span><span class="w">   </span><span class="c1"># clone-only excludes (files stay in the graph)</span>
+</code></pre></div>
+<p>Opt-in detectors for harder clones: <code>near_miss</code> (consistent renames),
+<code>class_name_duplicates</code>, <code>class_property_overlap_min</code>, and
+<code>[duplication.semantic]</code> (only in builds with the <code>eyez</code> feature).</p>
+<h2 id="boundaries">Boundaries</h2>
+<p>Each rule forbids any module matching <code>from</code> from importing any module matching
+<code>to</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[[boundaries.forbidden]]</span>
+<span class="n">from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;app.domain&quot;</span>
+<span class="n">to</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;app.api&quot;</span>
+</code></pre></div>
+<p>Matching, per endpoint:</p>
+<ul>
+<li>A plain name is a dotted prefix — <code>app.domain</code> matches <code>app.domain</code> and
+  <code>app.domain.*</code>.</li>
+<li>A glob (<code>* ? [</code>) is matched against <strong>both</strong> the module name and the file
+  path, so <code>from = "**/domain/**"</code> works even for namespace packages without
+  <code>__init__.py</code>.</li>
+<li><code>to</code> also matches the literal import target, so rules still fire when an
+  import cannot be resolved to an in-repo module.</li>
+</ul>
+<p>A rule whose <code>from</code> matches no module is reported under
+<code>meta.unmatched_boundary_rules</code> in JSON output — a typo never looks like a
+clean pass.</p>
+<h2 id="accepting-findings-accept">Accepting findings: <code>[accept]</code></h2>
+<p>The out-of-line alternative to <code># noqa</code> — nothing is written into your source.
+Keys are pillars or detector ids; values are substrings of the finding label as
+shown in a scan. The file is committed, so accepted findings stop flagging for
+every teammate and their agents:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[accept]</span>
+<span class="n">dead_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;legacy.compat::shim&quot;</span><span class="p">]</span><span class="w">        </span><span class="c1"># a specific accepted symbol</span>
+<span class="s2">&quot;smells/god_module&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;app.registry&quot;</span><span class="p">]</span><span class="w">     </span><span class="c1"># a specific accepted detector hit</span>
+</code></pre></div>
+<p>There are three ways to silence findings — pick by scope:</p>
+<table>
+<thead>
+<tr>
+<th>Mechanism</th>
+<th>Scope</th>
+<th>Shared?</th>
+<th>Use for</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>exclude</code> globs</td>
+<td>Whole files/dirs, per pillar or global</td>
+<td>Yes (committed)</td>
+<td>Generated code, fixtures, migrations</td>
+</tr>
+<tr>
+<td><code>[accept]</code></td>
+<td>Specific findings</td>
+<td>Yes (committed)</td>
+<td>Accepted debt the team agrees on</td>
+</tr>
+<tr>
+<td><code>brainz_triage</code></td>
+<td>Specific findings</td>
+<td>No (local <code>.sensez/</code>)</td>
+<td>Personal review verdicts</td>
+</tr>
+</tbody>
+</table>
+<h2 id="global-scope">Global scope</h2>
+<div class="highlight"><pre><span></span><code><span class="n">roots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w">                          </span><span class="c1"># package roots; empty = auto-detect from project layout</span>
+<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/generated/**&quot;</span><span class="p">]</span><span class="w">       </span><span class="c1"># excluded from every pillar</span>
+</code></pre></div>
+<h2 id="gate-and-local-metrics">Gate and local metrics</h2>
+<p>Persistent analysis snapshots are disabled by default. Enable them per project,
+or temporarily override the setting with <code>SENSEZ_ANALYSIS_CACHE=1</code> or <code>0</code>:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[cache]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+</code></pre></div>
+<div class="highlight"><pre><span></span><code><span class="k">[gate]</span>
+<span class="n">repeat_limit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w">   </span><span class="c1"># how often the gate re-reports the same finding before auto-deferring</span>
+
+<span class="k">[self_improvement]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w">    </span><span class="c1"># stops even the on-disk recording under .sensez/local-metrics/</span>
+</code></pre></div>
+<h2 id="recipes">Recipes</h2>
+<h3 id="adopting-sensez-in-an-existing-repository">Adopting Sensez in an existing repository</h3>
+<ol>
+<li>Run <code>sensez noze . --summary</code> for aggregated per-rule counts to see what
+   would be noisy.</li>
+<li>Gate only on new work: run <code>sensez noze . --diff --fail-on-new</code> in CI (or
+   use the <a href="../../usage/github-action/">GitHub Action</a>), so the backlog does not
+   block anyone.</li>
+<li>Record the agreed backlog in <code>[accept]</code> as you review it.</li>
+<li>Escalate action levels pillar by pillar as each one cleans up.</li>
+</ol>
+<h3 id="quieting-a-noisy-detector">Quieting a noisy detector</h3>
+<p>Prefer raising its threshold over disabling it, and scope the change to the
+language that is noisy:</p>
+<div class="highlight"><pre><span></span><code><span class="k">[smells.python.rules.god_module]</span>
+<span class="n">min_fan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">40</span>
+</code></pre></div>
+<p>Use <code>enabled = false</code> only as a last resort — a disabled detector is invisible
+in future scans.</p>
+<h3 id="fixing-framework-false-positives">Fixing framework false positives</h3>
+<p>Add the framework's registration pattern to <code>[dead_code]</code> (above) instead of
+suppressing findings one by one.</p>
+<h2 id="practical-advice">Practical advice</h2>
+<ul>
+<li>Keep the file small enough that a new contributor can scan it in one sitting.</li>
+<li>Prefer explicit thresholds and exclusions over broad global disablement.</li>
+<li>Treat the config as code: review changes to it the same way you would review
+  a detector change.</li>
+</ul>
+<h2 id="related-pages">Related pages</h2>
+<ul>
+<li><a href="../cli/">CLI Reference</a></li>
+<li><a href="../findings/">Finding Reference</a></li>
+<li><a href="../../local-metrics/">Local Metrics</a></li>
+</ul>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.indexes", "navigation.sections", "content.code.copy", "search.highlight", "search.suggest"], "search": "../../assets/javascripts/workers/search.2c215733.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": {"provider": "mike"}}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.d7400e89.min.js"></script>
+      
+        <script src="../../javascripts/findings-tabs.js"></script>
+      
+    
+  </body>
+</html>
