@@ -107,22 +107,22 @@ pub(crate) fn persist(cache: SnapshotCache, key: u64, snapshot: AnalysisSnapshot
         if let Some(writer) = WRITER.get() {
             match submit(writer, job) {
                 Ok(()) => return,
-                Err(returned) => job = returned,
+                Err(returned) => job = *returned,
             }
         }
     }
     let _ = job.cache.persist(job.key, &job.snapshot);
 }
 
-fn submit(writer: &BackgroundWriter, job: WriteJob) -> Result<(), WriteJob> {
+fn submit(writer: &BackgroundWriter, job: WriteJob) -> Result<(), Box<WriteJob>> {
     let path = job.cache.path_key();
     let Ok(mut queue) = writer.shared.queue.lock() else {
-        return Err(job);
+        return Err(Box::new(job));
     };
     if queue.shutdown
         || (!queue.pending.contains_key(&path) && queue.pending.len() >= MAX_PENDING_REPOSITORIES)
     {
-        return Err(job);
+        return Err(Box::new(job));
     }
     queue.pending.insert(path, job);
     writer.shared.changed.notify_one();
