@@ -4,7 +4,7 @@
 
 **Coding agents produce tech debt. Bring them to their senses.**
 
-Coding agents forget the maintainability rules you give them. They hide logic in nested functions, reach for dict[str, Any] instead of a typed model, and pass around boolean flags whose meaning only exists in the agent’s current context.
+Coding agents forget the maintainability rules you give them. They hide logic in nested functions, reach for `dict[str, Any]` instead of a typed model, and pass around boolean flags whose meaning only exists in the agent’s current context.
 
 Instructions help, but they’re soft constraints. Static analysis tools in your CI pipeline catch the problem too late and it starts rotting in a Jira ticket. 
 
