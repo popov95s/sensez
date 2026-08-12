@@ -7,6 +7,9 @@ roots = []
 # Files excluded from the scan entirely (every pillar). Globs.
 exclude = []   # e.g. ["**/tests/**", "**/migrations/**"]
 
+[cache]
+enable = true
+
 # Duplication detector: minimum structural-token run length to report a clone.
 # Copy-paste detection. A clone is a run of identical lexemes — real
 # names/methods/types/literals/operators are kept; only function-local variable

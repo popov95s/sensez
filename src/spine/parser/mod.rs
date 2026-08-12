@@ -78,6 +78,7 @@ pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
 }
 
 /// Parse buffers already read while computing the project fingerprint.
+#[allow(dead_code)]
 pub fn parse_sources(files: &[crate::spine::cache::SourceFile]) -> ParseBatch {
     let outcomes: Vec<_> = files
         .par_iter()
@@ -105,6 +106,47 @@ pub fn parse_sources(files: &[crate::spine::cache::SourceFile]) -> ParseBatch {
     }
 }
 
+/// Reuse path+content-matched walk outputs and parse only cache misses. The
+/// returned change set describes the complete manifest, even when the bounded
+/// cache could not retain every unchanged file.
+pub fn parse_sources_incremental(
+    files: &[crate::spine::cache::SourceFile],
+    cache: &mut crate::spine::cache::ParseCacheState,
+) -> (ParseBatch, crate::spine::cache::ChangeStats) {
+    let stats = cache.changes(files);
+    let mut outcomes: Vec<Option<Result<ParsedFile>>> = (0..files.len()).map(|_| None).collect();
+    for (index, source) in files.iter().enumerate() {
+        if let Some(parsed) = cache.restore(source, index as u32) {
+            outcomes[index] = Some(Ok(parsed));
+        }
+    }
+    let misses: Vec<_> = files
+        .par_iter()
+        .enumerate()
+        .filter(|(index, _)| outcomes[*index].is_none())
+        .map_init(tree_sitter::Parser::new, |parser, (index, source)| {
+            (index, parse_loaded_source(source, index as u32, parser))
+        })
+        .collect();
+    for (index, outcome) in misses {
+        outcomes[index] = Some(outcome);
+    }
+
+    let mut batch = ParseBatch::default();
+    for (source, outcome) in files.iter().zip(outcomes) {
+        match outcome {
+            Some(Ok(file)) => batch.files.push(file),
+            Some(Err(err)) => batch.issues.push(ScanIssue {
+                stage: ScanStage::Parse,
+                file: Some(source.path.clone()),
+                message: format!("{err:#}"),
+            }),
+            None => unreachable!("every source is restored or parsed"),
+        }
+    }
+    (batch, stats)
+}
+
 /// Parse a single file from disk, routed to its language profile by extension.
 #[allow(dead_code)]
 pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
@@ -120,6 +162,7 @@ fn parse_file_with_parser(
     parse_loaded_source(
         &crate::spine::cache::SourceFile {
             path: path.to_path_buf(),
+            content_hash: crate::fingerprints::hash_bytes(&src),
             bytes: src,
         },
         file_id,

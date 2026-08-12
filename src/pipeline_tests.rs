@@ -31,6 +31,27 @@ fn repeated_cached_scans_are_identical() {
 }
 
 #[test]
+fn incremental_scan_does_not_rewrite_the_l2_base() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
+    fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
+    fs::write(dir.join("b.py"), "def b():\n    return 2\n").unwrap();
+
+    analyze_path(dir, None).unwrap();
+    let cache = dir.join(".sensez/parse-v2.bin");
+    let initial = fs::read(&cache).unwrap();
+    fs::write(dir.join("a.py"), "def a():\n    return 3\n").unwrap();
+    analyze_path(dir, None).unwrap();
+
+    assert_eq!(
+        fs::read(cache).unwrap(),
+        initial,
+        "normal incremental scans must not recompress the L2 base"
+    );
+}
+
+#[test]
 fn disabled_cache_does_not_create_cache_artifacts() {
     let tmp = tempfile::tempdir().unwrap();
     fs::write(tmp.path().join("a.py"), "value = 1\n").unwrap();
@@ -51,7 +72,11 @@ fn disabled_cache_does_not_create_cache_artifacts() {
 fn changed_file_can_create_and_remove_cross_file_duplication() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
-    fs::write(dir.join("sensez.toml"), "[duplication]\nthreshold = 8\n").unwrap();
+    fs::write(
+        dir.join("sensez.toml"),
+        "[cache]\nenabled = true\n\n[duplication]\nthreshold = 8\n",
+    )
+    .unwrap();
     let left = "def left(value):\n    first = module.fetch(value)\n    second = module.clean(first)\n    return second\n";
     let unique = "def right(value):\n    return value + 1\n";
     fs::write(dir.join("left.py"), left).unwrap();
@@ -85,6 +110,7 @@ fn changed_file_can_create_and_remove_cross_file_duplication() {
 fn changed_import_can_create_and_remove_a_cross_file_cycle() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
     fs::write(
         dir.join("a.py"),
         "from b import value\n\ndef a():\n    return value\n",
@@ -117,6 +143,7 @@ fn changed_import_can_create_and_remove_a_cross_file_cycle() {
 fn changed_consumer_updates_dead_code_in_another_file() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
     fs::write(
         dir.join("provider.py"),
         "def live():\n    return 1\n\ndef other():\n    return 2\n",

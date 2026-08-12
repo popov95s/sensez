@@ -8,6 +8,7 @@ use std::path::PathBuf;
 pub struct SourceFile {
     pub path: PathBuf,
     pub bytes: Vec<u8>,
+    pub content_hash: u64,
 }
 
 pub struct ProjectInputs {
@@ -21,9 +22,11 @@ pub fn load(files: &[PathBuf], config_signature: u64, revision: &str) -> Result<
         .map(|path| {
             let bytes =
                 std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+            let content_hash = fingerprints::hash_bytes(&bytes);
             Ok(SourceFile {
                 path: path.clone(),
                 bytes,
+                content_hash,
             })
         })
         .collect();
@@ -33,7 +36,7 @@ pub fn load(files: &[PathBuf], config_signature: u64, revision: &str) -> Result<
     revision.hash(&mut hasher);
     for source in &sources {
         source.path.hash(&mut hasher);
-        fingerprints::hash_bytes(&source.bytes).hash(&mut hasher);
+        source.content_hash.hash(&mut hasher);
     }
     Ok(ProjectInputs {
         key: hasher.finish(),

@@ -4,7 +4,7 @@ use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
 use std::collections::HashMap;
-use std::fs::{self, OpenOptions};
+use std::fs;
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
 use std::time::Instant;
@@ -12,7 +12,6 @@ use std::time::Instant;
 const CACHE_REL: &str = ".sensez/analysis-v1.bin";
 const LEGACY_PARSE_REL: &str = ".sensez/parse-v1";
 const SCHEMA: u32 = 2;
-const MAX_BYTES: usize = 1_000_000;
 const MAX_DECOMPRESSED_BYTES: u64 = 32_000_000;
 const REVISION: &str = concat!(env!("CARGO_PKG_VERSION"), "-analysis-v2");
 // Keep JSON inside gzip: representative schema benchmarking found compressed
@@ -86,14 +85,14 @@ pub(super) struct PreparedSnapshot {
 impl SnapshotCache {
     pub fn new(root: &Path) -> Self {
         let _ = fs::remove_dir_all(root.join(LEGACY_PARSE_REL));
-        Self {
-            path: root.join(CACHE_REL),
-        }
+        super::budget::enforce_total(root);
+        let path = root.join(CACHE_REL);
+        Self { path }
     }
 
     pub fn load(&self, key: u64) -> Option<AnalysisSnapshot> {
         let bytes = timed("cache-read", || fs::read(&self.path)).ok()?;
-        if bytes.len() > MAX_BYTES {
+        if bytes.len() > super::budget::TOTAL_BYTES {
             return None;
         }
         let decoded = timed("cache-decompress", || {
@@ -111,14 +110,6 @@ impl SnapshotCache {
         let mut snapshot = artifact.snapshot;
         snapshot.restore_internal_fields();
         Some(snapshot)
-    }
-
-    pub fn persist(&self, key: u64, snapshot: &AnalysisSnapshot) -> Result<bool> {
-        let Some(prepared) = Self::prepare(key, snapshot)? else {
-            return Ok(false);
-        };
-        self.write(prepared)?;
-        Ok(true)
     }
 
     pub(super) fn path_key(&self) -> PathBuf {
@@ -142,7 +133,7 @@ impl SnapshotCache {
             encoder.write_all(&serialized)?;
             encoder.finish()
         })?;
-        if bytes.len() > MAX_BYTES {
+        if bytes.len() > super::budget::TOTAL_BYTES {
             return Ok(None);
         }
         Ok(Some(PreparedSnapshot { bytes }))
@@ -150,27 +141,18 @@ impl SnapshotCache {
 
     pub(super) fn write(&self, prepared: PreparedSnapshot) -> Result<()> {
         timed("cache-write", || {
-            let Some(directory) = self.path.parent() else {
-                return Ok(());
-            };
-            fs::create_dir_all(directory)?;
-            let temp = self
-                .path
-                .with_extension(format!("tmp-{}", std::process::id()));
-            let result = (|| {
-                let mut file = OpenOptions::new()
-                    .create(true)
-                    .truncate(true)
-                    .write(true)
-                    .open(&temp)?;
-                file.write_all(&prepared.bytes)?;
-                fs::rename(&temp, &self.path)
-            })();
-            if result.is_err() {
-                let _ = fs::remove_file(&temp);
-            }
-            result.context("persisting analysis cache")
+            super::storage::atomic_write(&self.path, &prepared.bytes, "persisting analysis cache")
         })
+    }
+
+    pub(super) fn remove(&self) {
+        let _ = fs::remove_file(&self.path);
+    }
+}
+
+impl PreparedSnapshot {
+    pub(super) fn len(&self) -> usize {
+        self.bytes.len()
     }
 }
 
@@ -196,10 +178,15 @@ mod tests {
         let root = tempfile::tempdir().unwrap();
         let cache = SnapshotCache::new(root.path());
         let snapshot = AnalysisSnapshot::new(AnalysisReport::default(), HashMap::new());
-        assert!(cache.persist(7, &snapshot).unwrap());
+        cache
+            .write(SnapshotCache::prepare(7, &snapshot).unwrap().unwrap())
+            .unwrap();
         assert!(cache.load(7).is_some());
         assert!(cache.load(8).is_none());
-        assert!(fs::metadata(root.path().join(CACHE_REL)).unwrap().len() < MAX_BYTES as u64);
+        assert!(
+            fs::metadata(root.path().join(CACHE_REL)).unwrap().len()
+                < super::super::budget::TOTAL_BYTES as u64
+        );
     }
 
     #[test]
@@ -217,7 +204,7 @@ mod tests {
     #[test]
     fn oversized_snapshot_is_not_persisted() {
         let root = tempfile::tempdir().unwrap();
-        let cache = SnapshotCache::new(root.path());
+        let _cache = SnapshotCache::new(root.path());
         let module_files = (0_u64..120_000)
             .map(|value| {
                 let digest = fingerprints::hash_bytes(&value.to_le_bytes());
@@ -229,7 +216,7 @@ mod tests {
             .collect();
         let snapshot = AnalysisSnapshot::new(AnalysisReport::default(), module_files);
 
-        assert!(!cache.persist(7, &snapshot).unwrap());
+        assert!(SnapshotCache::prepare(7, &snapshot).unwrap().is_none());
         assert!(!root.path().join(CACHE_REL).exists());
     }
 }

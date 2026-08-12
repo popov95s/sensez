@@ -30,6 +30,7 @@ pub fn analyze_path(
     timer.lap("crawl");
     let cache_enabled = config.cache_enabled();
     let snapshot_cache = cache_enabled.then(|| crate::spine::cache::SnapshotCache::new(path));
+    let parse_cache = cache_enabled.then(|| crate::spine::cache::ParseCache::new(path));
     let project = if cache_enabled && config_issues.is_empty() && discovery.issues.is_empty() {
         crate::spine::cache::load_project(&discovery.files, config.signature()).ok()
     } else {
@@ -53,9 +54,14 @@ pub fn analyze_path(
     if cache_enabled {
         timer.cache_hit(false);
     }
-    let parsed = match project.as_ref() {
-        Some(project) => parser::parse_sources(&project.sources),
-        None => parser::parse_files(&discovery.files),
+    let (parsed, parse_stats) = match (project.as_ref(), parse_cache.as_ref()) {
+        (Some(project), Some(cache)) => {
+            let mut state = cache.load();
+            let (parsed, stats) = parser::parse_sources_incremental(&project.sources, &mut state);
+            timer.incremental_cache(stats, project.sources.len());
+            (parsed, Some(stats))
+        }
+        _ => (parser::parse_files(&discovery.files), None),
     };
     timer.lap("parse");
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
@@ -88,15 +94,16 @@ pub fn analyze_path(
             .or_insert_with(|| n.file_path.clone());
     }
 
-    if let Some(key) = project
-        .as_ref()
-        .map(|project| project.key)
-        .filter(|_| report.meta.issues.is_empty())
-    {
+    if report.meta.issues.is_empty() {
         let snapshot =
             crate::spine::cache::AnalysisSnapshot::new(report.clone(), module_files.clone());
-        if let Some(cache) = snapshot_cache {
-            crate::spine::cache::persist_snapshot(cache, key, snapshot);
+        if let (Some(project), Some(cache), Some(parse_cache)) =
+            (project, snapshot_cache, parse_cache)
+        {
+            let parse = parse_stats
+                .filter(|stats| stats.reusable == 0)
+                .map(|_| crate::spine::cache::ParseCache::capture(&project.sources, parsed.files));
+            crate::spine::cache::persist(cache, parse_cache, project.key, snapshot, parse);
         }
     }
     timer.lap("cache-queue");
@@ -148,6 +155,22 @@ impl PhaseTimer {
     fn cache_disabled(&self) {
         if self.enabled {
             eprintln!("[timing] analysis-cache disabled");
+        }
+    }
+
+    fn incremental_cache(&self, stats: crate::spine::cache::ChangeStats, total: usize) {
+        if self.enabled {
+            eprintln!(
+                "[timing] parse-cache reused={}/{} bytes={}/{} added={} modified={} deleted={} unchanged={}",
+                stats.reusable,
+                total,
+                stats.reusable_bytes,
+                stats.total_bytes,
+                stats.added,
+                stats.modified,
+                stats.deleted,
+                stats.unchanged,
+            );
         }
     }
 }

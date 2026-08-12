@@ -135,6 +135,16 @@
     "cycles": [],
     "duplication": []
   },
+  "incremental_parse": {
+    "added": 0,
+    "deleted": 0,
+    "modified": 1,
+    "reused": 87,
+    "reused_bytes": 587124,
+    "total": 88,
+    "total_bytes": 587651,
+    "unchanged": 87
+  },
   "initial": {
     "cycles": [],
     "duplication": []

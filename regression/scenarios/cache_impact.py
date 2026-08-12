@@ -7,14 +7,14 @@ cross-file dependency effects.
 """
 
 from pathlib import Path
-from typing import cast
 
 from ..harness.artifacts import dump_normalized
-from ..harness.commands import CommandEnvironment, run_json
+from ..harness.commands import CommandEnvironment
 from ..harness.models import RegressionRun
 from ..harness.repositories import cleanup_repo, scenario_repo
 from .cache_models import ScanReport, ScenarioFiles
 from .cache_raw import dump_raw_cache_outputs
+from .cache_scan import scan, timed_scan
 
 
 def run_cache_impact_scenario(context: RegressionRun) -> None:
@@ -23,7 +23,7 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
     try:
         _enable_scenario_entrypoints(repo, context.target["profile"])
         _write_sources(repo, files)
-        disabled = _scan(context, repo, threshold=8)
+        disabled = scan(context, repo, threshold=8)
         cache = repo / ".sensez/analysis-v1.bin"
         assert not cache.exists(), "disabled cache created a snapshot"
         config_path = repo / "sensez.toml"
@@ -33,20 +33,24 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         legacy = repo / ".sensez/parse-v1"
         legacy.mkdir(parents=True)
         (legacy / "obsolete.bin").write_bytes(b"obsolete")
-        initial = _scan(context, repo, threshold=8)
+        initial = scan(context, repo, threshold=8)
+        parse_cache = repo / ".sensez/parse-v2.bin"
         assert cache.is_file(), "initial scan did not create analysis snapshot"
+        assert parse_cache.is_file(), "initial scan did not create incremental parse cache"
         assert initial == disabled, "enabling cache changed cold scan output"
-        assert cache.stat().st_size <= 1_000_000, "analysis snapshot exceeded 1MB"
+        assert cache.stat().st_size + parse_cache.stat().st_size <= 1_000_000, (
+            "combined analysis cache exceeded 1MB"
+        )
         assert not legacy.exists(), "legacy parse cache was not removed"
         initial_cache = cache.read_bytes()
         initial_mtime = cache.stat().st_mtime_ns
-        repeated = _scan(context, repo, threshold=8)
+        repeated = scan(context, repo, threshold=8)
         assert initial == repeated, "repeated cached repository scan changed output"
         assert cache.read_bytes() == initial_cache, "cache hit rewrote snapshot content"
         assert cache.stat().st_mtime_ns == initial_mtime, "cache hit rewrote snapshot file"
 
         cache.write_bytes(b"corrupt snapshot")
-        overridden = _scan(
+        overridden = scan(
             context,
             repo,
             threshold=8,
@@ -56,14 +60,17 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         assert cache.read_bytes() == b"corrupt snapshot", (
             "disabled environment override accessed the snapshot"
         )
-        recovered = _scan(context, repo, threshold=8)
+        recovered = scan(context, repo, threshold=8)
         assert recovered == initial, "corrupt snapshot recovery changed output"
         assert cache.read_bytes().startswith(b"\x1f\x8b"), "corrupt snapshot was not replaced"
 
         _write(repo / files.duplicate_right, files.duplicate_body)
-        duplicate = _scan(context, repo, threshold=8)
+        duplicate, reuse = timed_scan(context, repo, threshold=8)
+        assert reuse["modified"] == 1, f"expected one modified file, observed {reuse}"
+        assert reuse["reused"] > 0, f"one-file edit reused no parsed files: {reuse}"
         cache.unlink()
-        duplicate_cold = _scan(context, repo, threshold=8)
+        parse_cache.unlink()
+        duplicate_cold = scan(context, repo, threshold=8)
         assert duplicate == duplicate_cold, (
             "source edit produced different cached and cold reports"
         )
@@ -72,30 +79,30 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
             f"observed {_snapshot(duplicate, files)['duplication']}"
         )
         config_path.write_text(cached_config + "\n[duplication]\nthreshold = 500\n")
-        config_changed = _scan(context, repo)
+        config_changed = scan(context, repo)
         assert not _has_cross_file_duplicate(config_changed, files), (
             "config change reused an incompatible snapshot"
         )
         config_path.write_text(cached_config)
-        config_restored = _scan(context, repo)
+        config_restored = scan(context, repo)
         assert _has_cross_file_duplicate(config_restored, files), (
             "restored config did not recompute duplicate output"
         )
 
         (repo / files.duplicate_right).unlink()
-        deleted = _scan(context, repo, threshold=8)
+        deleted = scan(context, repo, threshold=8)
         assert not _has_cross_file_duplicate(deleted, files), (
             "deleted source remained in the cached report"
         )
         _write(repo / files.duplicate_right, files.duplicate_unique)
-        restored_source = _scan(context, repo, threshold=8)
+        restored_source = scan(context, repo, threshold=8)
 
         _write(repo / files.cycle_b, files.cycle_b_changed_body)
-        cycle = _scan(context, repo)
+        cycle = scan(context, repo)
         assert _has_cycle(cycle, files), "cross-file cycle introduced by edit was missed"
         cache.unlink()
-        diff_cold = _scan(context, repo, diff=True)
-        diff_cached = _scan(context, repo, diff=True)
+        diff_cold = scan(context, repo, diff=True)
+        diff_cached = scan(context, repo, diff=True)
         assert diff_cold == diff_cached, "cached diff report changed output"
 
         dump_raw_cache_outputs(context, repo, cache)
@@ -107,6 +114,7 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
             "repeated": _snapshot(repeated, files),
             "corrupt_recovery": _snapshot(recovered, files),
             "duplicate_added": _snapshot(duplicate, files),
+            "incremental_parse": reuse,
             "config_changed": _snapshot(config_changed, files),
             "config_restored": _snapshot(config_restored, files),
             "source_deleted": _snapshot(deleted, files),
@@ -123,33 +131,6 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         )
     finally:
         cleanup_repo(repo)
-
-
-def _scan(
-    context: RegressionRun,
-    repo: Path,
-    threshold: int | None = None,
-    diff: bool = False,
-    env: CommandEnvironment | None = None,
-) -> ScanReport:
-    environment = (
-        CommandEnvironment((("SENSEZ_ANALYSIS_CACHE", ""),))
-        if env is None
-        else env
-    )
-    options = ["--all"]
-    if diff:
-        options.append("--diff")
-    if threshold is not None:
-        options.extend(["--threshold", str(threshold)])
-    return cast(
-        ScanReport,
-        run_json(
-            [context.sensez, "noze", str(repo), *options, "--json"],
-            repo,
-            env=environment,
-        ),
-    )
 
 
 def _write(path: Path, text: str) -> None:

@@ -13,6 +13,7 @@ def dump_raw_cache_outputs(
     cache: Path,
 ) -> None:
     cache.unlink(missing_ok=True)
+    cache.with_name("parse-v2.bin").unlink(missing_ok=True)
     cold = _run(context, repo, "--cycles", "--all", "--json")
     assert cold.returncode == 0, "cold raw scan failed"
     assert cache.is_file(), "cold raw scan did not create a snapshot"

@@ -119,6 +119,20 @@ print(json.dumps(combined))
 echo ""
 bold "==> Comparison"
 
+if [ "${L2_BENCHMARK:-1}" = "1" ]; then
+  echo ""
+  bold "==> L2 one-file-edit guard"
+  cache_targets=()
+  for name in "${TARGETS[@]}"; do
+    cache_targets+=("$name=$BENCH_CACHE/$name")
+  done
+  python3 "$SCRIPT_DIR/cache_l2.py" \
+    --sensez "$SENSEZ_BIN" \
+    --runs "${L2_RUNS:-5}" \
+    --threshold "${L2_THRESHOLD:-1.25}" \
+    "${cache_targets[@]}"
+fi
+
 if [ "${SENSEZ_WRITE_BASELINE:-0}" = "1" ]; then
   echo "$combined" > "$BASELINE_FILE"
   green "baseline written to $BASELINE_FILE — commit this file."

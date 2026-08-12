@@ -1,4 +1,4 @@
-use super::{AnalysisSnapshot, SnapshotCache};
+use super::{AnalysisSnapshot, ParseCache, ParseWriteInput, SnapshotCache};
 use std::collections::HashMap;
 use std::path::PathBuf;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -11,8 +11,10 @@ static WRITER: OnceLock<BackgroundWriter> = OnceLock::new();
 
 struct WriteJob {
     cache: SnapshotCache,
+    parse_cache: ParseCache,
     key: u64,
     snapshot: AnalysisSnapshot,
+    parse: Option<ParseWriteInput>,
 }
 
 #[derive(Default)]
@@ -109,11 +111,19 @@ pub fn shutdown_background_writes() {
     writer.shutdown();
 }
 
-pub(crate) fn persist(cache: SnapshotCache, key: u64, snapshot: AnalysisSnapshot) {
+pub(crate) fn persist(
+    cache: SnapshotCache,
+    parse_cache: ParseCache,
+    key: u64,
+    snapshot: AnalysisSnapshot,
+    parse: Option<ParseWriteInput>,
+) {
     let mut job = WriteJob {
         cache,
+        parse_cache,
         key,
         snapshot,
+        parse,
     };
     if ENABLED.load(Ordering::Acquire) {
         let writer = WRITER
@@ -125,7 +135,7 @@ pub(crate) fn persist(cache: SnapshotCache, key: u64, snapshot: AnalysisSnapshot
             }
         }
     }
-    let _ = job.cache.persist(job.key, &job.snapshot);
+    persist_job(job);
 }
 
 fn submit(writer: &BackgroundWriter, job: WriteJob) -> Result<(), Box<WriteJob>> {
@@ -166,9 +176,7 @@ fn run(shared: Arc<Shared>) {
         };
 
         if let Some(job) = job {
-            if let Ok(Some(prepared)) = SnapshotCache::prepare(job.key, &job.snapshot) {
-                let _ = job.cache.write(prepared);
-            }
+            persist_job(job);
         }
         if let Ok(mut queue) = shared.queue.lock() {
             queue.active = false;
@@ -177,26 +185,56 @@ fn run(shared: Arc<Shared>) {
     }
 }
 
+fn persist_job(job: WriteJob) {
+    let snapshot = SnapshotCache::prepare(job.key, &job.snapshot)
+        .ok()
+        .flatten();
+    let parse_budget = super::budget::TOTAL_BYTES
+        .saturating_sub(snapshot.as_ref().map_or(0, |prepared| prepared.len()));
+    let refresh_parse = job.parse.is_some();
+    let parsed = job
+        .parse
+        .and_then(|input| ParseCache::prepare(input, parse_budget).ok().flatten());
+    match snapshot {
+        Some(prepared) => {
+            let _ = job.cache.write(prepared);
+        }
+        None => job.cache.remove(),
+    }
+    match parsed {
+        Some(prepared) => {
+            let _ = job.parse_cache.write(prepared);
+        }
+        None if refresh_parse || job.parse_cache.len() > parse_budget => job.parse_cache.remove(),
+        None => {}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use crate::report::AnalysisReport;
+    use crate::spine::cache::SourceFile;
 
     #[test]
     fn flush_persists_latest_snapshot_for_repository() {
         let root = tempfile::tempdir().unwrap();
         let cache = SnapshotCache::new(root.path());
+        let parse_cache = ParseCache::new(root.path());
         let writer = BackgroundWriter::start().unwrap();
         for key in 1..=20 {
             let mut report = AnalysisReport::default();
             report.meta.analyzed_files = key;
             let snapshot = AnalysisSnapshot::new(report, HashMap::new());
+            let parse = Some(ParseCache::capture(&[] as &[SourceFile], Vec::new()));
             submit(
                 &writer,
                 WriteJob {
                     cache: cache.clone(),
+                    parse_cache: parse_cache.clone(),
                     key: key as u64,
                     snapshot,
+                    parse,
                 },
             )
             .map_err(|_| ())
