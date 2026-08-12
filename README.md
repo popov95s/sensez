@@ -4,13 +4,13 @@
 
 **Coding agents produce tech debt. Bring them to their senses.**
 
-Coding agents drift. CI catches the result too late, and non-blocking reports become Jira tickets nobody picks up. Most static analysis tools are too slow or too noisy to run on every agent turn.
+Coding agents forget the maintainability rules you give them. They hide logic in nested functions, reach for dict[str, Any] instead of a typed model, and pass around boolean flags whose meaning only exists in the agent’s current context.
 
-sensez closes the loop with fast, structured feedback agents can act on before moving on.
+Instructions help, but they’re soft constraints. Static analysis tools in your CI pipeline catch the problem too late and it starts rotting in a Jira ticket. 
 
-sensez runs inside the coding-agent loop, giving agents fast, structured feedback on duplication, dead code, cycles, architecture violations, and design smells—so they fix problems before technical debt compounds.
+`sensez` adds fast, deterministic static feedback that agents can act on while they’re still working. It runs inside the coding-agent loop, giving agents fast, structured feedback on duplication, dead code, cycles, architecture violations, and design smells—so they fix problems before technical debt compounds.
 
-In controlled evaluations, agents using Sensez produced 86% fewer quality issues, 90% less duplicated code, and 67% fewer lines.
+In controlled evaluations, agents using Sensez produced 86% fewer code smells, 90% less duplicated code, and 67% fewer lines.
 
 **[Website](https://sensez.dev)** ·
 **[Documentation](https://popov95s.github.io/sensez/latest/)** ·
