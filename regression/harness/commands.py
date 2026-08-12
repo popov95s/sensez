@@ -18,10 +18,18 @@ class CommandOutput:
     stderr: str
 
 
+@dataclass(frozen=True)
+class CommandEnvironment:
+    values: tuple[tuple[str, str], ...]
+
+    def merged(self):
+        return {**os.environ, **dict(self.values)}
+
+
 def run_json(
     command: Sequence[CommandArg],
     cwd: Path,
-    env: dict[str, str] | None = None,
+    env: CommandEnvironment | None = None,
 ) -> object:
     output = run(command, cwd, capture=True, env=env)
     if output is None:
@@ -32,7 +40,7 @@ def run_json(
 def run_captured(
     command: Sequence[CommandArg],
     cwd: Path,
-    env: dict[str, str] | None = None,
+    env: CommandEnvironment | None = None,
 ) -> CommandOutput:
     proc = subprocess.run(
         [str(part) for part in command],
@@ -40,7 +48,7 @@ def run_captured(
         text=True,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        env=None if env is None else {**os.environ, **env},
+        env=None if env is None else env.merged(),
     )
     return CommandOutput(proc.returncode, proc.stdout, proc.stderr)
 
@@ -50,7 +58,7 @@ def run(
     cwd: Path,
     capture: bool = False,
     check: bool = True,
-    env: dict[str, str] | None = None,
+    env: CommandEnvironment | None = None,
 ) -> str | None:
     text_command = [str(part) for part in command]
     proc = subprocess.run(
@@ -59,7 +67,7 @@ def run(
         text=True,
         stdout=subprocess.PIPE if capture else None,
         stderr=subprocess.PIPE,
-        env=None if env is None else {**os.environ, **env},
+        env=None if env is None else env.merged(),
     )
     if check and proc.returncode != 0:
         rendered = " ".join(text_command)

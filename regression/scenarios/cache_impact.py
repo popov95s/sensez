@@ -10,7 +10,7 @@ from pathlib import Path
 from typing import cast
 
 from ..harness.artifacts import dump_normalized
-from ..harness.commands import run_json
+from ..harness.commands import CommandEnvironment, run_json
 from ..harness.models import RegressionRun
 from ..harness.repositories import cleanup_repo, scenario_repo
 from .cache_models import ScanReport, ScenarioFiles
@@ -50,7 +50,7 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
             context,
             repo,
             threshold=8,
-            env={"SENSEZ_ANALYSIS_CACHE": "0"},
+            env=CommandEnvironment((("SENSEZ_ANALYSIS_CACHE", "0"),)),
         )
         assert overridden == initial, "disabled environment override changed output"
         assert cache.read_bytes() == b"corrupt snapshot", (
@@ -130,9 +130,13 @@ def _scan(
     repo: Path,
     threshold: int | None = None,
     diff: bool = False,
-    env: dict[str, str] | None = None,
+    env: CommandEnvironment | None = None,
 ) -> ScanReport:
-    environment = {"SENSEZ_ANALYSIS_CACHE": ""} if env is None else env
+    environment = (
+        CommandEnvironment((("SENSEZ_ANALYSIS_CACHE", ""),))
+        if env is None
+        else env
+    )
     options = ["--all"]
     if diff:
         options.append("--diff")

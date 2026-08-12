@@ -3,7 +3,7 @@
 from pathlib import Path
 
 from ..harness.artifacts import dump_normalized_text
-from ..harness.commands import CommandOutput, run_captured
+from ..harness.commands import CommandEnvironment, CommandOutput, run_captured
 from ..harness.models import RegressionRun
 
 
@@ -53,7 +53,7 @@ def _run(
     return run_captured(
         [context.sensez, "noze", str(repo), *options],
         repo,
-        env={"SENSEZ_ANALYSIS_CACHE": ""},
+        env=CommandEnvironment((("SENSEZ_ANALYSIS_CACHE", ""),)),
     )
 
 
