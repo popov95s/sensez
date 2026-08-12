@@ -1,27 +1,69 @@
-use crate::fingerprints;
-use crate::report::AnalysisReport;
+use crate::report::{AnalysisReport, Severity};
 use anyhow::{Context, Result};
 use flate2::read::GzDecoder;
 use flate2::write::GzEncoder;
 use flate2::Compression;
-use rayon::prelude::*;
 use std::collections::HashMap;
 use std::fs::{self, OpenOptions};
-use std::hash::{Hash, Hasher};
 use std::io::{Read, Write};
 use std::path::{Path, PathBuf};
+use std::time::Instant;
 
 const CACHE_REL: &str = ".sensez/analysis-v1.bin";
 const LEGACY_PARSE_REL: &str = ".sensez/parse-v1";
-const SCHEMA: u32 = 1;
+const SCHEMA: u32 = 2;
 const MAX_BYTES: usize = 1_000_000;
 const MAX_DECOMPRESSED_BYTES: u64 = 32_000_000;
-const REVISION: &str = concat!(env!("CARGO_PKG_VERSION"), "-analysis-v1");
+const REVISION: &str = concat!(env!("CARGO_PKG_VERSION"), "-analysis-v2");
+// Keep JSON inside gzip: representative schema benchmarking found compressed
+// MessagePack 13% larger, while JSON preserves the public report's conditional
+// Serde fields without a second cache-only model.
+
+pub(super) fn revision() -> &'static str {
+    REVISION
+}
 
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct AnalysisSnapshot {
     pub report: AnalysisReport,
     pub module_files: HashMap<String, PathBuf>,
+    smell_end_lines: Vec<usize>,
+    smell_severities: Vec<Severity>,
+}
+
+impl AnalysisSnapshot {
+    pub fn new(report: AnalysisReport, module_files: HashMap<String, PathBuf>) -> Self {
+        let smell_end_lines = report
+            .smells
+            .iter()
+            .map(|finding| finding.end_line)
+            .collect();
+        let smell_severities = report
+            .smells
+            .iter()
+            .map(|finding| finding.severity)
+            .collect();
+        Self {
+            report,
+            module_files,
+            smell_end_lines,
+            smell_severities,
+        }
+    }
+
+    fn restore_internal_fields(&mut self) {
+        for ((finding, end_line), severity) in self
+            .report
+            .smells
+            .iter_mut()
+            .zip(&self.smell_end_lines)
+            .zip(&self.smell_severities)
+        {
+            finding.end_line = *end_line;
+            finding.severity = *severity;
+        }
+        self.report.meta.glossary = crate::noze::glossary::for_report(&self.report);
+    }
 }
 
 #[derive(serde::Serialize, serde::Deserialize)]
@@ -32,8 +74,13 @@ struct Artifact {
     snapshot: AnalysisSnapshot,
 }
 
+#[derive(Clone)]
 pub struct SnapshotCache {
     path: PathBuf,
+}
+
+pub(super) struct PreparedSnapshot {
+    bytes: Vec<u8>,
 }
 
 impl SnapshotCache {
@@ -45,88 +92,110 @@ impl SnapshotCache {
     }
 
     pub fn load(&self, key: u64) -> Option<AnalysisSnapshot> {
-        let bytes = fs::read(&self.path).ok()?;
+        let bytes = timed("cache-read", || fs::read(&self.path)).ok()?;
         if bytes.len() > MAX_BYTES {
             return None;
         }
-        let mut decoded = Vec::new();
-        GzDecoder::new(bytes.as_slice())
-            .take(MAX_DECOMPRESSED_BYTES)
-            .read_to_end(&mut decoded)
-            .ok()?;
-        let artifact: Artifact = serde_json::from_slice(&decoded).ok()?;
-        (artifact.schema == SCHEMA && artifact.revision == REVISION && artifact.key == key)
-            .then_some(artifact.snapshot)
+        let decoded = timed("cache-decompress", || {
+            let mut decoded = Vec::new();
+            GzDecoder::new(bytes.as_slice())
+                .take(MAX_DECOMPRESSED_BYTES)
+                .read_to_end(&mut decoded)
+                .map(|_| decoded)
+        })
+        .ok()?;
+        let artifact: Artifact = timed("cache-decode", || serde_json::from_slice(&decoded)).ok()?;
+        if artifact.schema != SCHEMA || artifact.revision != REVISION || artifact.key != key {
+            return None;
+        }
+        let mut snapshot = artifact.snapshot;
+        snapshot.restore_internal_fields();
+        Some(snapshot)
     }
 
     pub fn persist(&self, key: u64, snapshot: &AnalysisSnapshot) -> Result<bool> {
+        let Some(prepared) = Self::prepare(key, snapshot)? else {
+            return Ok(false);
+        };
+        self.write(prepared)?;
+        Ok(true)
+    }
+
+    pub(super) fn path_key(&self) -> PathBuf {
+        self.path.clone()
+    }
+
+    pub(super) fn prepare(
+        key: u64,
+        snapshot: &AnalysisSnapshot,
+    ) -> Result<Option<PreparedSnapshot>> {
         let artifact = Artifact {
             schema: SCHEMA,
             revision: REVISION.to_string(),
             key,
             snapshot: snapshot.clone(),
         };
-        let serialized = serde_json::to_vec(&artifact).context("serializing analysis cache")?;
-        let mut encoder = GzEncoder::new(Vec::new(), Compression::fast());
-        encoder.write_all(&serialized)?;
-        let bytes = encoder.finish()?;
+        let serialized = timed("cache-encode", || serde_json::to_vec(&artifact))
+            .context("serializing analysis cache")?;
+        let bytes = timed("cache-compress", || {
+            let mut encoder = GzEncoder::new(Vec::new(), Compression::fast());
+            encoder.write_all(&serialized)?;
+            encoder.finish()
+        })?;
         if bytes.len() > MAX_BYTES {
-            return Ok(false);
+            return Ok(None);
         }
-        let Some(directory) = self.path.parent() else {
-            return Ok(false);
-        };
-        fs::create_dir_all(directory)?;
-        let temp = self
-            .path
-            .with_extension(format!("tmp-{}", std::process::id()));
-        let result = (|| {
-            let mut file = OpenOptions::new()
-                .create(true)
-                .truncate(true)
-                .write(true)
-                .open(&temp)?;
-            file.write_all(&bytes)?;
-            fs::rename(&temp, &self.path)
-        })();
-        if result.is_err() {
-            let _ = fs::remove_file(&temp);
-        }
-        result.context("persisting analysis cache")?;
-        Ok(true)
+        Ok(Some(PreparedSnapshot { bytes }))
+    }
+
+    pub(super) fn write(&self, prepared: PreparedSnapshot) -> Result<()> {
+        timed("cache-write", || {
+            let Some(directory) = self.path.parent() else {
+                return Ok(());
+            };
+            fs::create_dir_all(directory)?;
+            let temp = self
+                .path
+                .with_extension(format!("tmp-{}", std::process::id()));
+            let result = (|| {
+                let mut file = OpenOptions::new()
+                    .create(true)
+                    .truncate(true)
+                    .write(true)
+                    .open(&temp)?;
+                file.write_all(&prepared.bytes)?;
+                fs::rename(&temp, &self.path)
+            })();
+            if result.is_err() {
+                let _ = fs::remove_file(&temp);
+            }
+            result.context("persisting analysis cache")
+        })
     }
 }
 
-pub fn project_key(files: &[PathBuf], config_signature: u64) -> Result<u64> {
-    let parts: Result<Vec<_>> = files
-        .par_iter()
-        .map(|path| {
-            let source = fs::read(path).with_context(|| format!("reading {}", path.display()))?;
-            Ok((path.clone(), fingerprints::hash_bytes(&source)))
-        })
-        .collect();
-    let mut hasher = rustc_hash::FxHasher::default();
-    config_signature.hash(&mut hasher);
-    REVISION.hash(&mut hasher);
-    for (path, content) in parts? {
-        path.hash(&mut hasher);
-        content.hash(&mut hasher);
+fn timed<T>(label: &str, operation: impl FnOnce() -> T) -> T {
+    let started = Instant::now();
+    let result = operation();
+    if std::env::var_os("SENSEZ_TIMING").is_some() {
+        eprintln!(
+            "[timing] {label:<16} {:>7.1}ms",
+            started.elapsed().as_secs_f64() * 1e3
+        );
     }
-    Ok(hasher.finish())
+    result
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::fingerprints;
 
     #[test]
     fn snapshot_round_trips_under_the_hard_cap() {
         let root = tempfile::tempdir().unwrap();
         let cache = SnapshotCache::new(root.path());
-        let snapshot = AnalysisSnapshot {
-            report: AnalysisReport::default(),
-            module_files: HashMap::new(),
-        };
+        let snapshot = AnalysisSnapshot::new(AnalysisReport::default(), HashMap::new());
         assert!(cache.persist(7, &snapshot).unwrap());
         assert!(cache.load(7).is_some());
         assert!(cache.load(8).is_none());
@@ -146,13 +215,21 @@ mod tests {
     }
 
     #[test]
-    fn project_key_changes_with_source_or_config() {
+    fn oversized_snapshot_is_not_persisted() {
         let root = tempfile::tempdir().unwrap();
-        let file = root.path().join("a.py");
-        fs::write(&file, "x = 1\n").unwrap();
-        let first = project_key(std::slice::from_ref(&file), 1).unwrap();
-        fs::write(&file, "x = 2\n").unwrap();
-        assert_ne!(first, project_key(std::slice::from_ref(&file), 1).unwrap());
-        assert_ne!(first, project_key(&[file], 2).unwrap());
+        let cache = SnapshotCache::new(root.path());
+        let module_files = (0_u64..120_000)
+            .map(|value| {
+                let digest = fingerprints::hash_bytes(&value.to_le_bytes());
+                (
+                    format!("module-{digest:016x}"),
+                    PathBuf::from(format!("/{digest:016x}.ts")),
+                )
+            })
+            .collect();
+        let snapshot = AnalysisSnapshot::new(AnalysisReport::default(), module_files);
+
+        assert!(!cache.persist(7, &snapshot).unwrap());
+        assert!(!root.path().join(CACHE_REL).exists());
     }
 }

@@ -1,0 +1,37 @@
+sensez — structural maintainability report
+
+Circular imports (3)
+    [warning] ↻ js_example.views → js_example
+        <flask>/examples/javascript/js_example/views.py:5  js_example.views → js_example
+        <flask>/examples/javascript/js_example/__init__.py:5  js_example → js_example.views
+    [warning] ↻ flask.sensez_cache_cycle_b → flask.sensez_cache_cycle_a
+        <flask>/src/flask/sensez_cache_cycle_b.py:1  flask.sensez_cache_cycle_b → flask.sensez_cache_cycle_a
+        <flask>/src/flask/sensez_cache_cycle_a.py:1  flask.sensez_cache_cycle_a → flask.sensez_cache_cycle_b
+    [info] ↻ flask.cli → flask.testing → flask.sansio.scaffold → flask.sansio.blueprints → flask.logging → flask.json.provider → flask.ctx → flask.config → flask.sansio.app → flask.templating → flask.app → flask.json → flask.json.tag → flask.sessions → flask.globals → flask.helpers → flask.wrappers
+        <flask>/src/flask/cli.py:34  flask.cli → flask.app
+        <flask>/src/flask/testing.py:24  flask.testing → flask.app
+        <flask>/src/flask/sansio/scaffold.py:19  flask.sansio.scaffold → flask.templating
+        <flask>/src/flask/sansio/blueprints.py:15  flask.sansio.blueprints → flask.sansio.app
+        <flask>/src/flask/logging.py:12  flask.logging → flask.sansio.app
+        <flask>/src/flask/json/provider.py:16  flask.json.provider → flask.sansio.app
+        <flask>/src/flask/ctx.py:23  flask.ctx → flask.wrappers
+        <flask>/src/flask/config.py:14  flask.config → flask.sansio.app
+        <flask>/src/flask/sansio/app.py:41  flask.sansio.app → flask.sansio.blueprints
+        <flask>/src/flask/templating.py:18  flask.templating → flask.sansio.scaffold
+        <flask>/src/flask/app.py:61  flask.app → flask.testing
+        <flask>/src/flask/json/__init__.py:10  flask.json → flask.wrappers
+        <flask>/src/flask/json/tag.py:57  flask.json.tag → flask.json
+        <flask>/src/flask/sessions.py:21  flask.sessions → flask.wrappers
+        <flask>/src/flask/globals.py:13  flask.globals → flask.wrappers
+        <flask>/src/flask/helpers.py:25  flask.helpers → flask.wrappers
+        <flask>/src/flask/wrappers.py:12  flask.wrappers → flask.helpers
+        type-only cycle: may indicate type coupling and dependent abstractions
+
+Duplication (0)
+
+Dead code candidates (0)
+
+Code smells (0)
+
+Boundary violations (not configured)
+

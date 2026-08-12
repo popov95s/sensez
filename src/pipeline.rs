@@ -29,13 +29,16 @@ pub fn analyze_path(
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
     let snapshot_cache = crate::spine::cache::SnapshotCache::new(path);
-    let snapshot_key = if config_issues.is_empty() && discovery.issues.is_empty() {
-        crate::spine::cache::project_key(&discovery.files, config.signature()).ok()
+    let project = if config_issues.is_empty() && discovery.issues.is_empty() {
+        crate::spine::cache::load_project(&discovery.files, config.signature()).ok()
     } else {
         None
     };
     timer.lap("fingerprint");
-    if let Some(snapshot) = snapshot_key.and_then(|key| snapshot_cache.load(key)) {
+    if let Some(snapshot) = project
+        .as_ref()
+        .and_then(|project| snapshot_cache.load(project.key))
+    {
         timer.cache_hit(true);
         let mut report = snapshot.report;
         crate::brainz::apply_suppressions(path, &mut report);
@@ -43,7 +46,10 @@ pub fn analyze_path(
         return Ok((report, snapshot.module_files));
     }
     timer.cache_hit(false);
-    let parsed = parser::parse_files(&discovery.files);
+    let parsed = match project.as_ref() {
+        Some(project) => parser::parse_sources(&project.sources),
+        None => parser::parse_files(&discovery.files),
+    };
     timer.lap("parse");
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
@@ -75,13 +81,16 @@ pub fn analyze_path(
             .or_insert_with(|| n.file_path.clone());
     }
 
-    if let Some(key) = snapshot_key.filter(|_| report.meta.issues.is_empty()) {
-        let snapshot = crate::spine::cache::AnalysisSnapshot {
-            report: report.clone(),
-            module_files: module_files.clone(),
-        };
-        let _ = snapshot_cache.persist(key, &snapshot);
+    if let Some(key) = project
+        .as_ref()
+        .map(|project| project.key)
+        .filter(|_| report.meta.issues.is_empty())
+    {
+        let snapshot =
+            crate::spine::cache::AnalysisSnapshot::new(report.clone(), module_files.clone());
+        crate::spine::cache::persist_snapshot(snapshot_cache, key, snapshot);
     }
+    timer.lap("cache-queue");
     crate::brainz::apply_suppressions(path, &mut report);
     crate::brainz::rank_by_precision(path, &mut report);
 

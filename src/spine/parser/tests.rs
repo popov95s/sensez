@@ -25,3 +25,18 @@ fn depth_gate_boundary_is_exact() {
     assert!(parse_source(src_with(at_limit).as_bytes(), 0, "x", profile).is_ok());
     assert!(parse_source(src_with(at_limit + 1).as_bytes(), 0, "x", profile).is_err());
 }
+
+#[test]
+fn loaded_sources_parse_without_rereading_the_filesystem() {
+    let root = tempfile::tempdir().unwrap();
+    let path = root.path().join("loaded.py");
+    std::fs::write(&path, "def loaded():\n    return 1\n").unwrap();
+    let project = crate::spine::cache::load_project(std::slice::from_ref(&path), 1).unwrap();
+    std::fs::remove_file(&path).unwrap();
+
+    let parsed = parse_sources(&project.sources);
+
+    assert!(parsed.issues.is_empty());
+    assert_eq!(parsed.files.len(), 1);
+    assert_eq!(parsed.files[0].path, path);
+}

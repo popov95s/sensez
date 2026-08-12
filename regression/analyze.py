@@ -9,19 +9,25 @@ from pathlib import Path
 
 def compare_tree(results: Path, baselines: Path) -> tuple[str, ...]:
     failures: list[str] = []
-    for result in sorted(results.rglob("*.json")):
+    for result in _artifacts(results):
         rel = result.relative_to(results)
         baseline = baselines / rel
         if not baseline.exists():
             failures.append(f"missing baseline: {rel}")
             continue
-        if not same_json(result, baseline):
+        if not same_artifact(result, baseline):
             failures.append(f"changed baseline: {rel}\n{_diff(baseline, result)}")
-    for baseline in sorted(baselines.rglob("*.json")):
+    for baseline in _artifacts(baselines):
         rel = baseline.relative_to(baselines)
         if not (results / rel).exists():
             failures.append(f"missing result for baseline: {rel}")
     return tuple(failures)
+
+
+def same_artifact(left: Path, right: Path) -> bool:
+    if left.name.startswith("cache.raw-"):
+        return left.read_bytes() == right.read_bytes()
+    return same_json(left, right)
 
 
 def same_json(left: Path, right: Path) -> bool:
@@ -34,7 +40,7 @@ def same_json(left: Path, right: Path) -> bool:
 
 def accept_tree(results: Path, baselines: Path) -> None:
     baselines.mkdir(parents=True, exist_ok=True)
-    for result in sorted(results.rglob("*.json")):
+    for result in _artifacts(results):
         rel = result.relative_to(results)
         dest = baselines / rel
         dest.parent.mkdir(parents=True, exist_ok=True)
@@ -42,8 +48,8 @@ def accept_tree(results: Path, baselines: Path) -> None:
 
 
 def _diff(expected: Path, actual: Path) -> str:
-    before = _json_lines(expected)
-    after = _json_lines(actual)
+    before = _artifact_lines(expected)
+    after = _artifact_lines(actual)
     lines = difflib.unified_diff(
         before,
         after,
@@ -55,12 +61,18 @@ def _diff(expected: Path, actual: Path) -> str:
     return "\n".join(lines)
 
 
-def _json_lines(path: Path) -> list[str]:
+def _artifact_lines(path: Path) -> list[str]:
+    if path.name.startswith("cache.raw-"):
+        return path.read_text().splitlines()
     try:
         value = json.loads(path.read_text())
     except json.JSONDecodeError:
         return path.read_text().splitlines()
     return json.dumps(value, indent=2, sort_keys=True).splitlines()
+
+
+def _artifacts(root: Path) -> list[Path]:
+    return sorted(path for path in root.rglob("*") if path.is_file())
 
 
 def main() -> int:
