@@ -106,6 +106,10 @@
     ],
     "duplication": []
   },
+  "disabled": {
+    "cycles": [],
+    "duplication": []
+  },
   "duplicate_added": {
     "cycles": [],
     "duplication": [
@@ -126,6 +130,10 @@
         "token_length": 77
       }
     ]
+  },
+  "environment_disabled": {
+    "cycles": [],
+    "duplication": []
   },
   "initial": {
     "cycles": [],

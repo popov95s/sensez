@@ -19,6 +19,7 @@ fn repeated_cached_scans_are_identical() {
     let dir = tmp.path();
     fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
     fs::write(dir.join("b.py"), "def b():\n    return 2\n").unwrap();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
 
     let first = analyze_path(dir, None).unwrap().0;
     let second = analyze_path(dir, None).unwrap().0;
@@ -27,6 +28,20 @@ fn repeated_cached_scans_are_identical() {
         serde_json::to_value(&second).unwrap(),
         "cache hits must not change findings or metadata"
     );
+}
+
+#[test]
+fn disabled_cache_does_not_create_cache_artifacts() {
+    let tmp = tempfile::tempdir().unwrap();
+    fs::write(tmp.path().join("a.py"), "value = 1\n").unwrap();
+    let legacy = tmp.path().join(".sensez/parse-v1");
+    fs::create_dir_all(&legacy).unwrap();
+    fs::write(legacy.join("existing.bin"), "preserve while disabled").unwrap();
+
+    analyze_path(tmp.path(), None).unwrap();
+
+    assert!(!tmp.path().join(".sensez/analysis-v1.bin").exists());
+    assert!(legacy.exists(), "disabled cache must not perform cache cleanup");
 }
 
 #[test]

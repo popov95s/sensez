@@ -25,6 +25,7 @@ fn flag_driven_init_writes_all_artifacts() {
 
     let toml = fs::read_to_string(root.join("sensez.toml")).unwrap();
     assert!(toml.contains("[self_improvement]"));
+    assert!(toml.contains("[cache]"));
     assert!(toml.contains("enabled = false"), "--no-metrics honored");
 
     let mcp: serde_json::Value =

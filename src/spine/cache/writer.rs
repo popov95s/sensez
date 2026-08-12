@@ -49,6 +49,23 @@ impl BackgroundWriter {
         })
     }
 
+    fn disabled() -> Self {
+        Self {
+            shared: Arc::new(Shared {
+                queue: Mutex::new(Queue {
+                    shutdown: true,
+                    ..Queue::default()
+                }),
+                changed: Condvar::new(),
+            }),
+            handle: Mutex::new(None),
+        }
+    }
+
+    fn is_active(&self) -> bool {
+        self.handle.lock().is_ok_and(|handle| handle.is_some())
+    }
+
     fn flush(&self) {
         let Ok(queue) = self.shared.queue.lock() else {
             return;
@@ -74,12 +91,7 @@ impl BackgroundWriter {
 }
 
 pub fn enable_background_writes() {
-    if WRITER.get().is_none() {
-        if let Some(writer) = BackgroundWriter::start() {
-            let _ = WRITER.set(writer);
-        }
-    }
-    ENABLED.store(WRITER.get().is_some(), Ordering::Release);
+    ENABLED.store(true, Ordering::Release);
 }
 
 pub fn flush_background_writes() {
@@ -104,7 +116,9 @@ pub(crate) fn persist(cache: SnapshotCache, key: u64, snapshot: AnalysisSnapshot
         snapshot,
     };
     if ENABLED.load(Ordering::Acquire) {
-        if let Some(writer) = WRITER.get() {
+        let writer = WRITER
+            .get_or_init(|| BackgroundWriter::start().unwrap_or_else(BackgroundWriter::disabled));
+        if writer.is_active() {
             match submit(writer, job) {
                 Ok(()) => return,
                 Err(returned) => job = *returned,

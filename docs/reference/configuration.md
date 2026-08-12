@@ -153,6 +153,14 @@ exclude = ["**/generated/**"]       # excluded from every pillar
 
 ## Gate and local metrics
 
+Persistent analysis snapshots are disabled by default. Enable them per project,
+or temporarily override the setting with `SENSEZ_ANALYSIS_CACHE=1` or `0`:
+
+```toml
+[cache]
+enabled = true
+```
+
 ```toml
 [gate]
 repeat_limit = 2   # how often the gate re-reports the same finding before auto-deferring

@@ -28,16 +28,21 @@ pub fn analyze_path(
     })
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
-    let snapshot_cache = crate::spine::cache::SnapshotCache::new(path);
-    let project = if config_issues.is_empty() && discovery.issues.is_empty() {
+    let cache_enabled = config.cache_enabled();
+    let snapshot_cache = cache_enabled.then(|| crate::spine::cache::SnapshotCache::new(path));
+    let project = if cache_enabled && config_issues.is_empty() && discovery.issues.is_empty() {
         crate::spine::cache::load_project(&discovery.files, config.signature()).ok()
     } else {
         None
     };
-    timer.lap("fingerprint");
+    if cache_enabled {
+        timer.lap("fingerprint");
+    } else {
+        timer.cache_disabled();
+    }
     if let Some(snapshot) = project
         .as_ref()
-        .and_then(|project| snapshot_cache.load(project.key))
+        .and_then(|project| snapshot_cache.as_ref()?.load(project.key))
     {
         timer.cache_hit(true);
         let mut report = snapshot.report;
@@ -88,7 +93,9 @@ pub fn analyze_path(
     {
         let snapshot =
             crate::spine::cache::AnalysisSnapshot::new(report.clone(), module_files.clone());
-        crate::spine::cache::persist_snapshot(snapshot_cache, key, snapshot);
+        if let Some(cache) = snapshot_cache {
+            crate::spine::cache::persist_snapshot(cache, key, snapshot);
+        }
     }
     timer.lap("cache-queue");
     crate::brainz::apply_suppressions(path, &mut report);
@@ -133,6 +140,12 @@ impl PhaseTimer {
                 "[timing] analysis-cache {}",
                 if hit { "hit" } else { "miss" }
             );
+        }
+    }
+
+    fn cache_disabled(&self) {
+        if self.enabled {
+            eprintln!("[timing] analysis-cache disabled");
         }
     }
 }

@@ -53,6 +53,7 @@ def _run(
     return run_captured(
         [context.sensez, "noze", str(repo), *options],
         repo,
+        env={"SENSEZ_ANALYSIS_CACHE": ""},
     )
 
 

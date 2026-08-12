@@ -6,6 +6,7 @@ use super::*;
 fn defaults_when_missing() {
     let cfg = Config::load(Path::new("/nonexistent/xyz")).unwrap();
     assert_eq!(cfg.duplication.threshold, 50);
+    assert!(!cfg.cache.enabled, "analysis cache must be opt-in");
     assert!(
         !cfg.duplication.class_name_duplicates,
         "same-name class duplication is disabled by default"
@@ -26,6 +27,14 @@ fn defaults_when_missing() {
         cfg.dead_code.entrypoints.is_empty(),
         "language-specific dead-code defaults are profile-scoped, not global config"
     );
+}
+
+#[test]
+fn cache_config_is_opt_in() {
+    let tmp = tempfile::tempdir().unwrap();
+    std::fs::write(tmp.path().join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
+
+    assert!(Config::load(tmp.path()).unwrap().cache.enabled);
 }
 
 #[test]
@@ -169,4 +178,8 @@ fn signature_is_stable_and_changes_with_knobs() {
         crate::report::ActionLevel::Info,
     );
     assert_ne!(cfg.signature(), action_changed.signature());
+
+    let mut cache_changed = cfg.clone();
+    cache_changed.cache.enabled = true;
+    assert_ne!(cfg.signature(), cache_changed.signature());
 }

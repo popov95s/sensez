@@ -23,12 +23,19 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
     try:
         _enable_scenario_entrypoints(repo, context.target["profile"])
         _write_sources(repo, files)
+        disabled = _scan(context, repo, threshold=8)
+        cache = repo / ".sensez/analysis-v1.bin"
+        assert not cache.exists(), "disabled cache created a snapshot"
+        config_path = repo / "sensez.toml"
+        original_config = config_path.read_text()
+        cached_config = original_config + "\n[cache]\nenabled = true\n"
+        config_path.write_text(cached_config)
         legacy = repo / ".sensez/parse-v1"
         legacy.mkdir(parents=True)
         (legacy / "obsolete.bin").write_bytes(b"obsolete")
         initial = _scan(context, repo, threshold=8)
-        cache = repo / ".sensez/analysis-v1.bin"
         assert cache.is_file(), "initial scan did not create analysis snapshot"
+        assert initial == disabled, "enabling cache changed cold scan output"
         assert cache.stat().st_size <= 1_000_000, "analysis snapshot exceeded 1MB"
         assert not legacy.exists(), "legacy parse cache was not removed"
         initial_cache = cache.read_bytes()
@@ -39,6 +46,16 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         assert cache.stat().st_mtime_ns == initial_mtime, "cache hit rewrote snapshot file"
 
         cache.write_bytes(b"corrupt snapshot")
+        overridden = _scan(
+            context,
+            repo,
+            threshold=8,
+            env={"SENSEZ_ANALYSIS_CACHE": "0"},
+        )
+        assert overridden == initial, "disabled environment override changed output"
+        assert cache.read_bytes() == b"corrupt snapshot", (
+            "disabled environment override accessed the snapshot"
+        )
         recovered = _scan(context, repo, threshold=8)
         assert recovered == initial, "corrupt snapshot recovery changed output"
         assert cache.read_bytes().startswith(b"\x1f\x8b"), "corrupt snapshot was not replaced"
@@ -54,14 +71,12 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
             "duplicate introduced in one file was not detected in the other; "
             f"observed {_snapshot(duplicate, files)['duplication']}"
         )
-        config_path = repo / "sensez.toml"
-        original_config = config_path.read_text()
-        config_path.write_text(original_config + "\n[duplication]\nthreshold = 500\n")
+        config_path.write_text(cached_config + "\n[duplication]\nthreshold = 500\n")
         config_changed = _scan(context, repo)
         assert not _has_cross_file_duplicate(config_changed, files), (
             "config change reused an incompatible snapshot"
         )
-        config_path.write_text(original_config)
+        config_path.write_text(cached_config)
         config_restored = _scan(context, repo)
         assert _has_cross_file_duplicate(config_restored, files), (
             "restored config did not recompute duplicate output"
@@ -87,6 +102,8 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
 
         result = {
             "initial": _snapshot(initial, files),
+            "disabled": _snapshot(disabled, files),
+            "environment_disabled": _snapshot(overridden, files),
             "repeated": _snapshot(repeated, files),
             "corrupt_recovery": _snapshot(recovered, files),
             "duplicate_added": _snapshot(duplicate, files),
@@ -113,7 +130,9 @@ def _scan(
     repo: Path,
     threshold: int | None = None,
     diff: bool = False,
+    env: dict[str, str] | None = None,
 ) -> ScanReport:
+    environment = {"SENSEZ_ANALYSIS_CACHE": ""} if env is None else env
     options = ["--all"]
     if diff:
         options.append("--diff")
@@ -124,6 +143,7 @@ def _scan(
         run_json(
             [context.sensez, "noze", str(repo), *options, "--json"],
             repo,
+            env=environment,
         ),
     )
 

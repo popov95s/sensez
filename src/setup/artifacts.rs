@@ -7,6 +7,11 @@ const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability lay
 # sensez does is configured in this file; commented entries show the defaults.
 # Re-run `sensez init` anytime.
 
+[cache]
+# Persistent analysis snapshots are opt-in. They stay under .sensez/, are
+# capped at 1MB, and never change scan output.
+# enabled = false
+
 [self_improvement]
 # sensez learns from each working session — which findings you fix, which you
 # dismiss as false positives — to tune what it surfaces and to show its value
