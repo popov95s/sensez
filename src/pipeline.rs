@@ -50,7 +50,9 @@ pub fn analyze_path(
         crate::brainz::rank_by_precision(path, &mut report);
         return Ok((report, snapshot.module_files));
     }
-    timer.cache_hit(false);
+    if cache_enabled {
+        timer.cache_hit(false);
+    }
     let parsed = match project.as_ref() {
         Some(project) => parser::parse_sources(&project.sources),
         None => parser::parse_files(&discovery.files),

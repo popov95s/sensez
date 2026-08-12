@@ -41,7 +41,10 @@ fn disabled_cache_does_not_create_cache_artifacts() {
     analyze_path(tmp.path(), None).unwrap();
 
     assert!(!tmp.path().join(".sensez/analysis-v1.bin").exists());
-    assert!(legacy.exists(), "disabled cache must not perform cache cleanup");
+    assert!(
+        legacy.exists(),
+        "disabled cache must not perform cache cleanup"
+    );
 }
 
 #[test]
