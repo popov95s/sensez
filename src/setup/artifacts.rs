@@ -8,8 +8,9 @@ const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability lay
 # Re-run `sensez init` anytime.
 
 [cache]
-# Persistent analysis snapshots are opt-in. They stay under .sensez/, are
-# capped at 1MB, and never change scan output.
+# CLI scans are stateless. Long-lived MCP/LSP servers reuse process-local
+# analysis state and never persist parsed source facts under .sensez/.
+# Set enabled = true to enable this reuse for MCP/LSP. It has no effect on CLI.
 # enabled = false
 
 [self_improvement]

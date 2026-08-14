@@ -15,11 +15,7 @@ use std::process::ExitCode;
 
 pub fn run() -> Result<ExitCode> {
     let cli = Cli::parse();
-    crate::spine::cache::enable_background_writes();
-    let result = run_inner(cli);
-    crate::spine::cache::flush_background_writes();
-    crate::spine::cache::shutdown_background_writes();
-    result
+    run_inner(cli)
 }
 
 fn run_inner(cli: Cli) -> Result<ExitCode> {

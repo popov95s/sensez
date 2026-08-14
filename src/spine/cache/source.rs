@@ -18,9 +18,19 @@ pub fn load(files: &[PathBuf]) -> Result<ProjectInputs> {
     let sources: Result<Vec<_>> = files
         .par_iter()
         .map(|path| {
+            let read_started =
+                crate::spine::parser::timing::enabled().then(std::time::Instant::now);
             let bytes =
                 std::fs::read(path).with_context(|| format!("reading {}", path.display()))?;
+            if let Some(started) = read_started {
+                crate::spine::parser::timing::record_read(started.elapsed());
+            }
+            let hash_started =
+                crate::spine::parser::timing::enabled().then(std::time::Instant::now);
             let content_hash = fingerprints::hash_bytes(&bytes);
+            if let Some(started) = hash_started {
+                crate::spine::parser::timing::record_hash(started.elapsed());
+            }
             Ok(SourceFile {
                 path: path.clone(),
                 bytes,

@@ -28,6 +28,7 @@ mod spine;
 mod test_support;
 
 pub use cli::run as run_cli;
+pub(crate) use pipeline::analyze_path_in_service;
 pub use pipeline::{analyze_path, scan};
 pub use report::*;
 pub use reporter::Format;

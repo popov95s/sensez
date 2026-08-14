@@ -214,7 +214,7 @@ The main configuration areas are:
 - `[action]` for how strongly agents and gates treat each pillar
 - `[accept]` for shared accepted findings
 - `[self_improvement]` for local metrics
-- `[cache]` for opt-in persistent analysis snapshots to make warm-runs almost instant
+- `[cache]` enables MCP/LSP process-memory reuse; CLI scans always stay stateless
 
 ```toml
 [duplication]

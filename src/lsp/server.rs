@@ -184,7 +184,7 @@ fn rescan_all(
 
 fn spawn_scan(root: PathBuf, generation: u64, settings: Settings, completed: Sender<ScanResult>) {
     thread::spawn(move || {
-        let result = match crate::analyze_path(&root, None) {
+        let result = match crate::analyze_path_in_service(&root, None) {
             Ok((mut report, module_files)) => {
                 let mut health = settings.health_enabled.then(|| {
                     HealthSummary::from_report(root.display().to_string(), "workspace", &report)

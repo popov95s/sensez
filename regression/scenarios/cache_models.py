@@ -6,6 +6,7 @@ from typing import TypedDict
 
 class ScanReport(TypedDict):
     cycles: list[dict]
+    dead_code: list[dict]
     duplication: list[dict]
 
 

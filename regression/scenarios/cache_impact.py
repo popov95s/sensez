@@ -9,12 +9,11 @@ cross-file dependency effects.
 from pathlib import Path
 
 from ..harness.artifacts import dump_normalized
-from ..harness.commands import CommandEnvironment
 from ..harness.models import RegressionRun
 from ..harness.repositories import cleanup_repo, scenario_repo
 from .cache_models import ScanReport, ScenarioFiles
-from .cache_raw import dump_raw_cache_outputs
-from .cache_scan import scan, timed_scan, wait_for_parse_cache
+from .cache_raw import dump_raw_cache_output
+from .cache_scan import scan
 
 
 def run_cache_impact_scenario(context: RegressionRun) -> None:
@@ -23,105 +22,42 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
     try:
         _enable_scenario_entrypoints(repo, context.target["profile"])
         _write_sources(repo, files)
-        disabled = scan(context, repo, threshold=8)
         cache = repo / ".sensez/parse-v2.bin"
-        assert not cache.exists(), "disabled cache created a parse cache"
         config_path = repo / "sensez.toml"
         original_config = config_path.read_text()
         cached_config = original_config + "\n[cache]\nenabled = true\n"
         config_path.write_text(cached_config)
-        legacy = repo / ".sensez/parse-v1"
-        legacy.mkdir(parents=True)
-        (legacy / "obsolete.bin").write_bytes(b"obsolete")
+        cache.parent.mkdir(exist_ok=True)
+        cache.write_bytes(b"cli must not touch this")
         initial = scan(context, repo, threshold=8)
-        incremental_cache = wait_for_parse_cache(repo)
-        assert incremental_cache.exists(), "initial scan did not create incremental cache state"
-        assert initial == disabled, "enabling cache changed cold scan output"
-        if incremental_cache.is_file():
-            assert incremental_cache.stat().st_size <= 1_000_000, "parse cache exceeded 1MB"
-        assert not legacy.exists(), "legacy parse cache was not removed"
-        initial_cache = cache.read_bytes() if cache.is_file() else None
-        initial_mtime = cache.stat().st_mtime_ns if cache.is_file() else None
-        repeated = scan(context, repo, threshold=8)
-        assert initial == repeated, "repeated cached repository scan changed output"
-        if initial_cache is not None:
-            assert cache.read_bytes() == initial_cache, "unchanged scan rewrote parse cache"
-            assert cache.stat().st_mtime_ns == initial_mtime, "unchanged scan rewrote parse cache"
-
-        cache.write_bytes(b"corrupt parse cache")
-        overridden = scan(
-            context,
-            repo,
-            threshold=8,
-            env=CommandEnvironment((("SENSEZ_ANALYSIS_CACHE", "0"),)),
-        )
-        assert overridden == initial, "disabled environment override changed output"
-        assert cache.read_bytes() == b"corrupt parse cache", (
-            "disabled environment override accessed the parse cache"
-        )
-        recovered = scan(context, repo, threshold=8)
-        assert recovered == initial, "corrupt snapshot recovery changed output"
-        assert cache.read_bytes().startswith(b"\x1f\x8b"), "corrupt parse cache was not replaced"
+        dump_raw_cache_output(context, repo, "initial")
 
         _write(repo / files.duplicate_right, files.duplicate_body)
-        duplicate, reuse = timed_scan(context, repo, threshold=8)
-        assert reuse["modified"] == 1, f"expected one modified file, observed {reuse}"
-        assert reuse["reused"] > 0, f"one-file edit reused no parsed files: {reuse}"
-        cache.unlink()
-        if incremental_cache.is_file():
-            incremental_cache.unlink()
-        duplicate_cold = scan(context, repo, threshold=8)
-        assert duplicate == duplicate_cold, (
-            "source edit produced different cached and cold reports"
-        )
+        duplicate = scan(context, repo, threshold=8)
         assert _has_cross_file_duplicate(duplicate, files), (
             "duplicate introduced in one file was not detected in the other; "
             f"observed {_snapshot(duplicate, files)['duplication']}"
         )
-        config_path.write_text(cached_config + "\n[duplication]\nthreshold = 500\n")
-        config_changed = scan(context, repo)
-        assert not _has_cross_file_duplicate(config_changed, files), (
-            "config change reused an incompatible snapshot"
-        )
-        config_path.write_text(cached_config)
-        config_restored = scan(context, repo)
-        assert _has_cross_file_duplicate(config_restored, files), (
-            "restored config did not recompute duplicate output"
-        )
-
-        (repo / files.duplicate_right).unlink()
-        deleted = scan(context, repo, threshold=8)
-        assert not _has_cross_file_duplicate(deleted, files), (
-            "deleted source remained in the cached report"
-        )
-        _write(repo / files.duplicate_right, files.duplicate_unique)
-        restored_source = scan(context, repo, threshold=8)
+        dump_raw_cache_output(context, repo, "duplicate-changed")
 
         _write(repo / files.cycle_b, files.cycle_b_changed_body)
         cycle = scan(context, repo)
         assert _has_cycle(cycle, files), "cross-file cycle introduced by edit was missed"
-        cache.unlink()
-        diff_cold = scan(context, repo, diff=True)
-        diff_cached = scan(context, repo, diff=True)
-        assert diff_cold == diff_cached, "cached diff report changed output"
+        dump_raw_cache_output(context, repo, "cycle-changed")
 
-        dump_raw_cache_outputs(context, repo, cache)
+        _write(repo / files.consumer, files.consumer_other)
+        consumer_changed = scan(context, repo)
+        assert _provider_symbol_is_dead(consumer_changed, files), (
+            "consumer edit did not update dead code in its provider"
+        )
+        dump_raw_cache_output(context, repo, "consumer-changed")
+        assert cache.read_bytes() == b"cli must not touch this"
 
         result = {
             "initial": _snapshot(initial, files),
-            "disabled": _snapshot(disabled, files),
-            "environment_disabled": _snapshot(overridden, files),
-            "repeated": _snapshot(repeated, files),
-            "corrupt_recovery": _snapshot(recovered, files),
             "duplicate_added": _snapshot(duplicate, files),
-            "incremental_parse": reuse,
-            "config_changed": _snapshot(config_changed, files),
-            "config_restored": _snapshot(config_restored, files),
-            "source_deleted": _snapshot(deleted, files),
-            "source_restored": _snapshot(restored_source, files),
             "cycle_added": _snapshot(cycle, files),
-            "diff_cold": _snapshot(diff_cold, files),
-            "diff_cached": _snapshot(diff_cached, files),
+            "consumer_changed": _snapshot(consumer_changed, files),
         }
         dump_normalized(
             context.out / "cache.impact.json",
@@ -192,7 +128,12 @@ def _snapshot(report: ScanReport, files: ScenarioFiles) -> ScanReport:
             for name in cycle_names
         )
     ]
-    return {"duplication": duplication, "cycles": cycles}
+    dead_code = [
+        item
+        for item in report.get("dead_code", [])
+        if item.get("symbol") == files.provider_symbol
+    ]
+    return {"duplication": duplication, "cycles": cycles, "dead_code": dead_code}
 
 
 def _has_cycle(report: ScanReport, files: ScenarioFiles) -> bool:
@@ -203,10 +144,18 @@ def _has_cycle(report: ScanReport, files: ScenarioFiles) -> bool:
     )
 
 
+def _provider_symbol_is_dead(report: ScanReport, files: ScenarioFiles) -> bool:
+    return any(
+        finding.get("symbol") == files.provider_symbol
+        for finding in report.get("dead_code", [])
+    )
+
+
 def _files(profile: str) -> ScenarioFiles:
     if profile == "py":
         ext = ".py"
         base = "src/flask/"
+        provider_name = "sensez_cache_provider"
         duplicate_left = "sensez_cache_duplicate_left.py"
         duplicate_right = "sensez_cache_duplicate_right.py"
         cycle_a_name = "sensez_cache_cycle_a.py"
@@ -217,6 +166,7 @@ def _files(profile: str) -> ScenarioFiles:
     else:
         ext = ".ts"
         base = "packages/zod/src/"
+        provider_name = "sensez-cache-provider"
         duplicate_left = "sensez-cache-duplicate-left.ts"
         duplicate_right = "sensez-cache-duplicate-right.ts"
         cycle_a_name = "sensez-cache-cycle-a.ts"
@@ -272,7 +222,7 @@ def _files(profile: str) -> ScenarioFiles:
             if profile == "py"
             else "export function cycleValue(): number { return cycleA(); }\n"
         ),
-        provider=base + f"sensez-cache-provider{ext}",
+        provider=base + f"{provider_name}{ext}",
         provider_body=provider,
         provider_symbol="sensez_cache_live" if profile == "py" else "sensezCacheLive",
         consumer=base + f"sensez-cache-consumer{ext}",

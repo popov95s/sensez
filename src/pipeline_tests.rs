@@ -31,24 +31,35 @@ fn repeated_cached_scans_are_identical() {
 }
 
 #[test]
-fn incremental_scan_does_not_rewrite_the_l2_base() {
+fn session_scan_reuses_memory_without_creating_l2_artifacts() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
     fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
     fs::write(dir.join("b.py"), "def b():\n    return 2\n").unwrap();
 
-    analyze_path(dir, None).unwrap();
-    let cache = dir.join(".sensez/parse-v2.bin");
-    let initial = fs::read(&cache).unwrap();
+    let session = AnalysisSession::default();
+    let first = analyze_path_in_session(&session, dir, None).unwrap().0;
     fs::write(dir.join("a.py"), "def a():\n    return 3\n").unwrap();
-    analyze_path(dir, None).unwrap();
+    let second = analyze_path_in_session(&session, dir, None).unwrap().0;
+    assert_eq!(first.meta.analyzed_files, second.meta.analyzed_files);
+    assert!(!dir.join(".sensez/parse-v2.bin").exists());
+}
 
-    assert_eq!(
-        fs::read(cache).unwrap(),
-        initial,
-        "normal incremental scans must not recompress the L2 base"
-    );
+#[test]
+fn service_cache_honors_the_enabled_flag() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    let session = AnalysisSession::default();
+    fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = false\n").unwrap();
+
+    analyze_path_in_service_with_session(&session, dir, None).unwrap();
+    assert!(!session.has_workspace(dir));
+
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
+    analyze_path_in_service_with_session(&session, dir, None).unwrap();
+    assert!(session.has_workspace(dir));
 }
 
 #[test]
@@ -58,6 +69,8 @@ fn disabled_cache_does_not_create_cache_artifacts() {
     let legacy = tmp.path().join(".sensez/parse-v1");
     fs::create_dir_all(&legacy).unwrap();
     fs::write(legacy.join("existing.bin"), "preserve while disabled").unwrap();
+    let l2 = tmp.path().join(".sensez/parse-v2.bin");
+    fs::write(&l2, "do not read or rewrite").unwrap();
 
     analyze_path(tmp.path(), None).unwrap();
 
@@ -66,107 +79,7 @@ fn disabled_cache_does_not_create_cache_artifacts() {
         legacy.exists(),
         "disabled cache must not perform cache cleanup"
     );
-}
-
-#[test]
-fn changed_file_can_create_and_remove_cross_file_duplication() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    fs::write(
-        dir.join("sensez.toml"),
-        "[cache]\nenabled = true\n\n[duplication]\nthreshold = 8\n",
-    )
-    .unwrap();
-    let left = "def left(value):\n    first = module.fetch(value)\n    second = module.clean(first)\n    return second\n";
-    let unique = "def right(value):\n    return value + 1\n";
-    fs::write(dir.join("left.py"), left).unwrap();
-    fs::write(dir.join("right.py"), unique).unwrap();
-
-    let initial = analyze_path(dir, None).unwrap().0;
-    assert!(initial.duplication.is_empty(), "fixture starts unique");
-
-    fs::write(dir.join("right.py"), left.replace("left", "right")).unwrap();
-    let created = analyze_path(dir, None).unwrap().0;
-    assert!(created.duplication.iter().any(|clone| {
-        clone
-            .occurrences
-            .iter()
-            .any(|o| o.file.ends_with("left.py"))
-            && clone
-                .occurrences
-                .iter()
-                .any(|o| o.file.ends_with("right.py"))
-    }));
-
-    fs::write(dir.join("right.py"), unique).unwrap();
-    let removed = analyze_path(dir, None).unwrap().0;
-    assert!(
-        removed.duplication.is_empty(),
-        "stale cached clone survived edit"
-    );
-}
-
-#[test]
-fn changed_import_can_create_and_remove_a_cross_file_cycle() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
-    fs::write(
-        dir.join("a.py"),
-        "from b import value\n\ndef a():\n    return value\n",
-    )
-    .unwrap();
-    fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
-
-    assert!(analyze_path(dir, None).unwrap().0.cycles.is_empty());
-
-    fs::write(
-        dir.join("b.py"),
-        "from a import a\n\ndef value():\n    return a()\n",
-    )
-    .unwrap();
-    let created = analyze_path(dir, None).unwrap().0;
-    assert_eq!(
-        created.cycles.len(),
-        1,
-        "changed import must rebuild the graph"
-    );
-
-    fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
-    assert!(
-        analyze_path(dir, None).unwrap().0.cycles.is_empty(),
-        "removed import must remove the cycle"
-    );
-}
-
-#[test]
-fn changed_consumer_updates_dead_code_in_another_file() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
-    fs::write(
-        dir.join("provider.py"),
-        "def live():\n    return 1\n\ndef other():\n    return 2\n",
-    )
-    .unwrap();
-    let consumer = dir.join("consumer.py");
-    fs::write(&consumer, "from provider import live\n\nprint(live())\n").unwrap();
-
-    let initial = analyze_path(dir, None).unwrap().0;
-    assert!(!initial
-        .dead_code
-        .iter()
-        .any(|finding| finding.symbol == "live"));
-
-    fs::write(&consumer, "from provider import other\n\nprint(other())\n").unwrap();
-    let changed = analyze_path(dir, None).unwrap().0;
-    assert!(
-        changed
-            .dead_code
-            .iter()
-            .any(|finding| finding.symbol == "live"),
-        "consumer edit must affect provider dead-code findings"
-    );
+    assert_eq!(fs::read(&l2).unwrap(), b"do not read or rewrite");
 }
 
 #[test]

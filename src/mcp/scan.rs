@@ -20,7 +20,7 @@ pub(super) fn full(
     max: usize,
 ) -> Result<(AnalysisReport, Value, Duration)> {
     let start = Instant::now();
-    let (mut report, _module_files) = crate::analyze_path(path, threshold)
+    let (mut report, _module_files) = crate::analyze_path_in_service(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);
@@ -38,7 +38,7 @@ pub(super) fn diff(
         Ok(changed) => (Some(changed), None),
         Err(err) => (None, Some(format!("{err:#}"))),
     };
-    let (mut report, module_files) = crate::analyze_path(path, threshold)
+    let (mut report, module_files) = crate::analyze_path_in_service(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
     if let Some(message) = diff_error {
         report.meta.issues.push(ScanIssue {
@@ -64,7 +64,7 @@ pub(super) fn diff_changed(
     changed: crate::diff::ChangedLines,
 ) -> Result<(AnalysisReport, Value, Duration)> {
     let start = Instant::now();
-    let (mut report, module_files) = crate::analyze_path(path, threshold)
+    let (mut report, module_files) = crate::analyze_path_in_service(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);

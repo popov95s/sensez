@@ -1,50 +1,21 @@
-"""Golden snapshots of unparsed CLI output from cold and cached scans."""
+"""Raw CLI snapshots for semantic cross-file cache regressions."""
 
 from pathlib import Path
 
 from ..harness.artifacts import dump_normalized_text
 from ..harness.commands import CommandEnvironment, CommandOutput, run_captured
 from ..harness.models import RegressionRun
-from .cache_scan import wait_for_parse_cache
 
 
-def dump_raw_cache_outputs(
+def dump_raw_cache_output(
     context: RegressionRun,
     repo: Path,
-    cache: Path,
+    state: str,
 ) -> None:
-    cache.unlink(missing_ok=True)
-    cache.with_name("parse-v2.bin").unlink(missing_ok=True)
-    cold = _run(context, repo, "--cycles", "--all", "--json")
-    assert cold.returncode == 0, "cold raw scan failed"
-    wait_for_parse_cache(repo)
-
-    warm = _run(context, repo, "--cycles", "--all", "--json")
-    assert warm.returncode == 0, "warm raw scan failed"
-    assert warm == cold, "cached scan changed raw process output"
-
-    terminal = _run(context, repo, "--cycles", "--all")
-    assert terminal.returncode == 0, "human-readable cached scan failed"
-
-    gate = _run(
-        context,
-        repo,
-        "--diff",
-        "--cycles",
-        "--all",
-        "--json",
-        "--fail-on-new",
-        "warning",
-    )
-    assert gate.returncode == 1, "raw fail-on-new scan did not block"
-    assert not any(
-        output.stderr for output in (cold, warm, terminal, gate)
-    ), "raw cache scans unexpectedly wrote to stderr"
-
-    _write(context, repo, "cache.raw-cold.json", cold)
-    _write(context, repo, "cache.raw-warm.json", warm)
-    _write(context, repo, "cache.raw-terminal.txt", terminal)
-    _write(context, repo, "cache.raw-fail-on-new.json", gate)
+    output = _run(context, repo, "--cycles", "--all", "--json")
+    assert output.returncode == 0, f"raw {state} scan failed"
+    assert not output.stderr, f"raw {state} scan wrote to stderr"
+    _write(context, repo, f"cache.raw-{state}.json", output)
 
 
 def _run(

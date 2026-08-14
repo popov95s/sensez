@@ -10,10 +10,13 @@ use crate::spine::{crawler, graph};
 use anyhow::{Context, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::OnceLock;
 
-#[path = "pipeline_cache.rs"]
-mod cache;
-use cache::{parse_available, persist_analysis, PersistRequest};
+#[path = "pipeline_session.rs"]
+mod session;
+use session::AnalysisSession;
+
+static SERVICE_SESSION: OnceLock<AnalysisSession> = OnceLock::new();
 
 /// Crawl, parse, build the graph, run analyzers, apply triaged suppressions
 /// and precision ranking. Returns the report and a module→file map (needed for
@@ -22,49 +25,88 @@ pub fn analyze_path(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    analyze_path_inner(path, threshold)
+    analyze_path_inner(path, threshold, None)
+}
+
+fn analyze_path_in_session(
+    session: &AnalysisSession,
+    path: &Path,
+    threshold: Option<usize>,
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    analyze_path_inner(path, threshold, Some(session))
+}
+
+pub(crate) fn analyze_path_in_service(
+    path: &Path,
+    threshold: Option<usize>,
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    let session = SERVICE_SESSION.get_or_init(AnalysisSession::default);
+    analyze_path_in_service_with_session(session, path, threshold)
+}
+
+fn analyze_path_in_service_with_session(
+    session: &AnalysisSession,
+    path: &Path,
+    threshold: Option<usize>,
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    let (config, _) = Config::load_for_scan(path);
+    if config.cache_enabled() {
+        analyze_path_in_session(session, path, threshold)
+    } else {
+        analyze_path(path, threshold)
+    }
 }
 
 fn analyze_path_inner(
     path: &Path,
     threshold: Option<usize>,
+    session: Option<&AnalysisSession>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
     let (mut config, config_issues) = Config::load_for_scan(path);
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
     let mut timer = PhaseTimer::start();
+    crate::spine::parser::timing::reset();
     let discovery = crawler::discover(path, &config.exclude, &|p| {
         crate::profiles::registry::should_parse_path(p)
     })
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
-    let cache_enabled = config.cache_enabled();
-    let parse_cache = cache_enabled.then(|| crate::spine::cache::ParseCache::new(path));
-    let project = if cache_enabled && config_issues.is_empty() && discovery.issues.is_empty() {
+    let project = if session.is_some() && config_issues.is_empty() && discovery.issues.is_empty() {
         crate::spine::cache::load_project(&discovery.files).ok()
     } else {
         None
     };
     observe_source_state(path, config.signature(), project.as_ref());
-    if cache_enabled {
+    if project.is_some() {
         timer.lap("fingerprint");
     } else {
         timer.cache_disabled();
     }
-    if cache_enabled {
-        timer.cache_hit(false);
-    }
-    let (mut parsed, parse_stats) = parse_available(
-        &discovery.files,
-        project.as_ref(),
-        parse_cache.as_ref(),
-        &mut timer,
-    );
+    let mut changed_paths = Vec::new();
+    let parsed = match (session, project.as_ref()) {
+        (Some(session), Some(project)) => {
+            let (parsed, stats) = session.parse(path, project);
+            changed_paths = stats.changed_paths.clone();
+            timer.incremental_cache(stats, project.sources.len());
+            parsed
+        }
+        _ => crate::spine::parser::parse_files(&discovery.files),
+    };
     timer.lap("parse");
+    timer.parse_breakdown(crate::spine::parser::timing::take());
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
+    if !changed_paths.is_empty() {
+        let impact = crate::spine::impact::affected_files(
+            &graph,
+            &changed_paths,
+            crate::spine::impact::ImpactOptions::default(),
+        );
+        timer.graph_impact(&impact);
+    }
     let mut report = noze::run_with_root(&parsed.files, &graph, &config, Some(path));
     report.meta.issues.extend(config_issues);
     report.meta.issues.extend(discovery.issues);
@@ -92,17 +134,6 @@ fn analyze_path_inner(
             .or_insert_with(|| n.file_path.clone());
     }
 
-    persist_analysis(
-        PersistRequest {
-            is_cli: true,
-            project,
-            parse_cache,
-            cacheable: report.meta.issues.is_empty(),
-            parse_stats,
-        },
-        &mut parsed.files,
-    );
-    timer.lap("cache-queue");
     crate::brainz::apply_suppressions(path, &mut report);
     crate::brainz::rank_by_precision(path, &mut report);
 
@@ -165,15 +196,6 @@ impl PhaseTimer {
         self.last = now;
     }
 
-    fn cache_hit(&self, hit: bool) {
-        if self.enabled {
-            eprintln!(
-                "[timing] analysis-cache {}",
-                if hit { "hit" } else { "miss" }
-            );
-        }
-    }
-
     fn cache_disabled(&self) {
         if self.enabled {
             eprintln!("[timing] analysis-cache disabled");
@@ -194,6 +216,33 @@ impl PhaseTimer {
                 stats.unchanged,
             );
         }
+    }
+
+    fn graph_impact(&self, impact: &crate::spine::impact::AffectedFiles) {
+        if self.enabled {
+            eprintln!(
+                "[timing] graph-impact callers={} callees={} total={} unmapped={}",
+                impact.dependents.files.len(),
+                impact.dependencies.files.len(),
+                impact.all_files().len(),
+                impact.unmapped().len(),
+            );
+        }
+    }
+
+    fn parse_breakdown(&self, breakdown: crate::spine::parser::timing::Breakdown) {
+        if !self.enabled {
+            return;
+        }
+        let ms = |duration: std::time::Duration| duration.as_secs_f64() * 1e3;
+        eprintln!(
+            "[timing] parse-work read={:.1}ms hash={:.1}ms tree={:.1}ms depth={:.1}ms walk={:.1}ms (CPU-sum)",
+            ms(breakdown.read),
+            ms(breakdown.hash),
+            ms(breakdown.tree),
+            ms(breakdown.depth),
+            ms(breakdown.walk),
+        );
     }
 }
 
@@ -216,6 +265,9 @@ pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -
     }
 }
 
+#[cfg(test)]
+#[path = "pipeline_session_tests.rs"]
+mod session_tests;
 #[cfg(test)]
 #[path = "pipeline_tests.rs"]
 mod tests;

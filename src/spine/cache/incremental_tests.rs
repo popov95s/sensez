@@ -38,44 +38,41 @@ fn manifest_detects_branch_style_add_modify_and_delete() {
             content_hash: 5,
         },
     ]);
+    assert_eq!((stats.added, stats.modified, stats.deleted), (1, 1, 1));
     assert_eq!(
-        (stats.added, stats.modified, stats.deleted, stats.unchanged),
-        (1, 1, 1, 1)
+        stats.changed_paths,
+        vec![
+            PathBuf::from("added.py"),
+            PathBuf::from("changed.py"),
+            PathBuf::from("old.py"),
+        ]
     );
 }
 
 #[test]
-fn persisted_walks_are_reused_and_rebound_after_file_order_changes() {
+fn memory_state_reuses_walks_after_file_order_changes() {
     let root = tempfile::tempdir().unwrap();
-    let first = source(
-        root.path().join("first.py"),
-        b"def first():\n    return 1\n",
-    );
-    let second = source(
-        root.path().join("second.py"),
-        b"def second():\n    return 2\n",
-    );
-    let sources = vec![first, second];
-    let mut empty = ParseCacheState::default();
-    let (batch, cold) = crate::spine::parser::parse_sources_incremental(&sources, &mut empty);
+    let sources = vec![
+        source(
+            root.path().join("first.py"),
+            b"def first():\n    return 1\n",
+        ),
+        source(
+            root.path().join("second.py"),
+            b"def second():\n    return 2\n",
+        ),
+    ];
+    let (batch, cold) =
+        crate::spine::parser::parse_sources_incremental(&sources, &mut ParseCacheState::default());
     assert_eq!(cold.reusable, 0);
-
-    let cache = ParseCache::new(root.path());
-    let input = ParseCache::capture(&sources, batch.files);
-    cache
-        .write(
-            ParseCache::prepare(input, super::super::budget::TOTAL_BYTES)
-                .unwrap()
-                .unwrap(),
-        )
-        .unwrap();
+    let mut state = ParseCacheState::default();
+    state.replace(&sources, &batch.files);
 
     let reordered = vec![
         source(sources[1].path.clone(), &sources[1].bytes),
         source(sources[0].path.clone(), &sources[0].bytes),
     ];
-    let mut loaded = cache.load();
-    let (reused, stats) = crate::spine::parser::parse_sources_incremental(&reordered, &mut loaded);
+    let (reused, stats) = crate::spine::parser::parse_sources_incremental(&reordered, &mut state);
     assert_eq!(stats.reusable, 2);
     for (file_id, file) in reused.files.iter().enumerate() {
         assert!(file
@@ -85,34 +82,20 @@ fn persisted_walks_are_reused_and_rebound_after_file_order_changes() {
             .iter()
             .all(|span| span.file_id == file_id as u32));
     }
-    assert!(
-        fs::metadata(root.path().join(CACHE_REL)).unwrap().len()
-            <= super::super::budget::TOTAL_BYTES as u64
-    );
 }
 
 #[test]
-fn changed_content_never_restores_the_stale_walk() {
-    let root = tempfile::tempdir().unwrap();
-    let original = source(root.path().join("module.py"), b"def old():\n    return 1\n");
-    let mut empty = ParseCacheState::default();
+fn changed_content_never_restores_a_stale_walk() {
+    let original = source(PathBuf::from("module.py"), b"def old():\n    return 1\n");
     let (batch, _) = crate::spine::parser::parse_sources_incremental(
         std::slice::from_ref(&original),
-        &mut empty,
+        &mut ParseCacheState::default(),
     );
-    let cache = ParseCache::new(root.path());
-    let input = ParseCache::capture(std::slice::from_ref(&original), batch.files);
-    cache
-        .write(
-            ParseCache::prepare(input, super::super::budget::TOTAL_BYTES)
-                .unwrap()
-                .unwrap(),
-        )
-        .unwrap();
+    let mut state = ParseCacheState::default();
+    state.replace(std::slice::from_ref(&original), &batch.files);
 
     let changed = source(original.path, b"def new():\n    return 2\n");
-    let mut loaded = cache.load();
-    let (batch, stats) = crate::spine::parser::parse_sources_incremental(&[changed], &mut loaded);
+    let (batch, stats) = crate::spine::parser::parse_sources_incremental(&[changed], &mut state);
     assert_eq!((stats.modified, stats.reusable), (1, 0));
     assert!(batch.files[0]
         .walked
@@ -124,14 +107,4 @@ fn changed_content_never_restores_the_stale_walk() {
         .symbols
         .declared
         .contains(&"old".into()));
-}
-
-#[test]
-fn capture_is_skipped_when_one_megabyte_cannot_cover_ten_percent() {
-    let sources: Vec<_> = (0..20)
-        .map(|index| source(PathBuf::from(format!("{index}.py")), &vec![b'x'; 600_000]))
-        .collect();
-
-    assert!(!ParseCache::worth_capturing(&sources));
-    assert!(ParseCache::worth_capturing(&sources[..2]));
 }

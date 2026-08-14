@@ -153,12 +153,13 @@ exclude = ["**/generated/**"]       # excluded from every pillar
 
 ## Gate and local metrics
 
-Persistent analysis snapshots are disabled by default. Enable them per project,
-or temporarily override the setting with `SENSEZ_ANALYSIS_CACHE=1` or `0`:
+CLI scans are stateless and never persist parsed source facts. Long-lived MCP
+and LSP processes reuse analysis state in memory for their own lifetime:
 
 ```toml
 [cache]
-enabled = true
+# Enables process-local reuse in MCP/LSP only; CLI scans always remain stateless.
+enabled = false
 ```
 
 ```toml
