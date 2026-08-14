@@ -31,7 +31,7 @@ fn loaded_sources_parse_without_rereading_the_filesystem() {
     let root = tempfile::tempdir().unwrap();
     let path = root.path().join("loaded.py");
     std::fs::write(&path, "def loaded():\n    return 1\n").unwrap();
-    let project = crate::spine::cache::load_project(std::slice::from_ref(&path), 1).unwrap();
+    let project = crate::spine::cache::load_project(std::slice::from_ref(&path)).unwrap();
     std::fs::remove_file(&path).unwrap();
 
     let parsed = parse_sources(&project.sources);

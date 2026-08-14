@@ -1,6 +1,7 @@
 //! In-memory metrics hub: per-process session state, repo caches, and event queue.
 
 use super::events::{Event, Totals};
+use crate::source_state::SourceState;
 use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 use std::sync::{Mutex, MutexGuard, OnceLock};
@@ -15,6 +16,7 @@ pub(super) struct Baseline {
     /// Branch the baseline was taken on. Recapture skips when the working tree
     /// has since switched branches (the re-scan would reflect different code).
     pub branch: String,
+    pub source_state: Option<SourceState>,
 }
 
 #[derive(Default)]
@@ -23,6 +25,7 @@ struct RepoState {
     session: Totals,
     pending: Vec<Event>,
     baseline: Option<Baseline>,
+    observed_source_state: Option<SourceState>,
     noisy: Option<BTreeSet<String>>,
 }
 
@@ -94,6 +97,21 @@ pub(super) fn set_baseline(root: &Path, baseline: Baseline) {
     hub().repos.entry(root.to_path_buf()).or_default().baseline = Some(baseline);
 }
 
+pub(super) fn observe_source_state(root: &Path, source_state: SourceState) {
+    hub()
+        .repos
+        .entry(root.to_path_buf())
+        .or_default()
+        .observed_source_state = Some(source_state);
+}
+
+pub(super) fn observed_source_state(root: &Path) -> Option<SourceState> {
+    hub()
+        .repos
+        .get(root)
+        .and_then(|state| state.observed_source_state.clone())
+}
+
 pub(super) fn baselines() -> Vec<(PathBuf, Baseline)> {
     hub()
         .repos
@@ -106,6 +124,7 @@ pub(super) fn mark_rescanned(root: &Path) {
     if let Some(state) = hub().repos.get_mut(root) {
         if let Some(baseline) = state.baseline.as_mut() {
             baseline.ts = now();
+            baseline.source_state = state.observed_source_state.clone();
         }
     }
 }

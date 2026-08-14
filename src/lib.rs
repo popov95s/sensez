@@ -22,6 +22,7 @@ mod profiles;
 pub mod report;
 mod reporter;
 mod setup;
+mod source_state;
 mod spine;
 #[cfg(test)]
 mod test_support;

@@ -2,12 +2,22 @@
 
 import json
 import re
+import time
 from pathlib import Path
 from typing import cast
 
 from ..harness.commands import CommandEnvironment, run_captured, run_json
 from ..harness.models import RegressionRun
 from .cache_models import ScanReport
+
+
+def wait_for_parse_cache(repo: Path, timeout: float = 30.0) -> Path:
+    cache = repo / ".sensez/parse-v2.bin"
+    deadline = time.monotonic() + timeout
+    while not cache.is_file() and time.monotonic() < deadline:
+        time.sleep(0.02)
+    assert cache.is_file(), "incremental cache did not become ready"
+    return cache
 
 
 def scan(
@@ -42,9 +52,7 @@ def timed_scan(
     repo: Path,
     threshold: int,
 ) -> tuple[ScanReport, dict[str, int]]:
-    # Exercise L2 directly. L1 invalidation is covered by later source/cycle
-    # edits; removing only the report snapshot makes parse reuse observable.
-    (repo / ".sensez/analysis-v1.bin").unlink(missing_ok=True)
+    # Exercise the persisted parse cache directly.
     output = run_captured(
         [
             context.sensez,

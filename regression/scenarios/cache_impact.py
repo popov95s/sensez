@@ -14,7 +14,7 @@ from ..harness.models import RegressionRun
 from ..harness.repositories import cleanup_repo, scenario_repo
 from .cache_models import ScanReport, ScenarioFiles
 from .cache_raw import dump_raw_cache_outputs
-from .cache_scan import scan, timed_scan
+from .cache_scan import scan, timed_scan, wait_for_parse_cache
 
 
 def run_cache_impact_scenario(context: RegressionRun) -> None:
@@ -24,8 +24,8 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         _enable_scenario_entrypoints(repo, context.target["profile"])
         _write_sources(repo, files)
         disabled = scan(context, repo, threshold=8)
-        cache = repo / ".sensez/analysis-v1.bin"
-        assert not cache.exists(), "disabled cache created a snapshot"
+        cache = repo / ".sensez/parse-v2.bin"
+        assert not cache.exists(), "disabled cache created a parse cache"
         config_path = repo / "sensez.toml"
         original_config = config_path.read_text()
         cached_config = original_config + "\n[cache]\nenabled = true\n"
@@ -34,22 +34,21 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         legacy.mkdir(parents=True)
         (legacy / "obsolete.bin").write_bytes(b"obsolete")
         initial = scan(context, repo, threshold=8)
-        parse_cache = repo / ".sensez/parse-v2.bin"
-        assert cache.is_file(), "initial scan did not create analysis snapshot"
-        assert parse_cache.is_file(), "initial scan did not create incremental parse cache"
+        incremental_cache = wait_for_parse_cache(repo)
+        assert incremental_cache.exists(), "initial scan did not create incremental cache state"
         assert initial == disabled, "enabling cache changed cold scan output"
-        assert cache.stat().st_size + parse_cache.stat().st_size <= 1_000_000, (
-            "combined analysis cache exceeded 1MB"
-        )
+        if incremental_cache.is_file():
+            assert incremental_cache.stat().st_size <= 1_000_000, "parse cache exceeded 1MB"
         assert not legacy.exists(), "legacy parse cache was not removed"
-        initial_cache = cache.read_bytes()
-        initial_mtime = cache.stat().st_mtime_ns
+        initial_cache = cache.read_bytes() if cache.is_file() else None
+        initial_mtime = cache.stat().st_mtime_ns if cache.is_file() else None
         repeated = scan(context, repo, threshold=8)
         assert initial == repeated, "repeated cached repository scan changed output"
-        assert cache.read_bytes() == initial_cache, "cache hit rewrote snapshot content"
-        assert cache.stat().st_mtime_ns == initial_mtime, "cache hit rewrote snapshot file"
+        if initial_cache is not None:
+            assert cache.read_bytes() == initial_cache, "unchanged scan rewrote parse cache"
+            assert cache.stat().st_mtime_ns == initial_mtime, "unchanged scan rewrote parse cache"
 
-        cache.write_bytes(b"corrupt snapshot")
+        cache.write_bytes(b"corrupt parse cache")
         overridden = scan(
             context,
             repo,
@@ -57,19 +56,20 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
             env=CommandEnvironment((("SENSEZ_ANALYSIS_CACHE", "0"),)),
         )
         assert overridden == initial, "disabled environment override changed output"
-        assert cache.read_bytes() == b"corrupt snapshot", (
-            "disabled environment override accessed the snapshot"
+        assert cache.read_bytes() == b"corrupt parse cache", (
+            "disabled environment override accessed the parse cache"
         )
         recovered = scan(context, repo, threshold=8)
         assert recovered == initial, "corrupt snapshot recovery changed output"
-        assert cache.read_bytes().startswith(b"\x1f\x8b"), "corrupt snapshot was not replaced"
+        assert cache.read_bytes().startswith(b"\x1f\x8b"), "corrupt parse cache was not replaced"
 
         _write(repo / files.duplicate_right, files.duplicate_body)
         duplicate, reuse = timed_scan(context, repo, threshold=8)
         assert reuse["modified"] == 1, f"expected one modified file, observed {reuse}"
         assert reuse["reused"] > 0, f"one-file edit reused no parsed files: {reuse}"
         cache.unlink()
-        parse_cache.unlink()
+        if incremental_cache.is_file():
+            incremental_cache.unlink()
         duplicate_cold = scan(context, repo, threshold=8)
         assert duplicate == duplicate_cold, (
             "source edit produced different cached and cold reports"

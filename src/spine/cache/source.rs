@@ -1,7 +1,6 @@
 use crate::fingerprints;
 use anyhow::{Context, Result};
 use rayon::prelude::*;
-use std::hash::{Hash, Hasher};
 use std::path::PathBuf;
 
 #[derive(Debug)]
@@ -12,11 +11,10 @@ pub struct SourceFile {
 }
 
 pub struct ProjectInputs {
-    pub key: u64,
     pub sources: Vec<SourceFile>,
 }
 
-pub fn load(files: &[PathBuf], config_signature: u64, revision: &str) -> Result<ProjectInputs> {
+pub fn load(files: &[PathBuf]) -> Result<ProjectInputs> {
     let sources: Result<Vec<_>> = files
         .par_iter()
         .map(|path| {
@@ -31,17 +29,7 @@ pub fn load(files: &[PathBuf], config_signature: u64, revision: &str) -> Result<
         })
         .collect();
     let sources = sources?;
-    let mut hasher = rustc_hash::FxHasher::default();
-    config_signature.hash(&mut hasher);
-    revision.hash(&mut hasher);
-    for source in &sources {
-        source.path.hash(&mut hasher);
-        source.content_hash.hash(&mut hasher);
-    }
-    Ok(ProjectInputs {
-        key: hasher.finish(),
-        sources,
-    })
+    Ok(ProjectInputs { sources })
 }
 
 #[cfg(test)]
@@ -49,20 +37,20 @@ mod tests {
     use super::*;
 
     #[test]
-    fn key_changes_with_source_config_or_revision() {
+    fn loads_source_content_hashes() {
         let root = tempfile::tempdir().unwrap();
         let file = root.path().join("a.py");
         std::fs::write(&file, "x = 1\n").unwrap();
-        let first = load(std::slice::from_ref(&file), 1, "a").unwrap().key;
+        let first = load(std::slice::from_ref(&file)).unwrap();
+        assert_eq!(
+            first.sources[0].content_hash,
+            fingerprints::hash_bytes(b"x = 1\n")
+        );
         std::fs::write(&file, "x = 2\n").unwrap();
+        let second = load(&[file]).unwrap();
         assert_ne!(
-            first,
-            load(std::slice::from_ref(&file), 1, "a").unwrap().key
+            first.sources[0].content_hash,
+            second.sources[0].content_hash
         );
-        assert_ne!(
-            first,
-            load(std::slice::from_ref(&file), 2, "a").unwrap().key
-        );
-        assert_ne!(first, load(&[file], 1, "b").unwrap().key);
     }
 }

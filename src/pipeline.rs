@@ -6,15 +6,26 @@ use crate::profiles::registry;
 use crate::report::{AnalysisReport, ScanStage};
 use crate::reporter::{self, Format};
 use crate::spine::parser::ParsedFile;
-use crate::spine::{crawler, graph, parser};
+use crate::spine::{crawler, graph};
 use anyhow::{Context, Result};
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+
+#[path = "pipeline_cache.rs"]
+mod cache;
+use cache::{parse_available, persist_analysis, PersistRequest};
 
 /// Crawl, parse, build the graph, run analyzers, apply triaged suppressions
 /// and precision ranking. Returns the report and a module→file map (needed for
 /// diff filtering via [`crate::diff::apply`]).
 pub fn analyze_path(
+    path: &Path,
+    threshold: Option<usize>,
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    analyze_path_inner(path, threshold)
+}
+
+fn analyze_path_inner(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
@@ -29,40 +40,27 @@ pub fn analyze_path(
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
     let cache_enabled = config.cache_enabled();
-    let snapshot_cache = cache_enabled.then(|| crate::spine::cache::SnapshotCache::new(path));
     let parse_cache = cache_enabled.then(|| crate::spine::cache::ParseCache::new(path));
     let project = if cache_enabled && config_issues.is_empty() && discovery.issues.is_empty() {
-        crate::spine::cache::load_project(&discovery.files, config.signature()).ok()
+        crate::spine::cache::load_project(&discovery.files).ok()
     } else {
         None
     };
+    observe_source_state(path, config.signature(), project.as_ref());
     if cache_enabled {
         timer.lap("fingerprint");
     } else {
         timer.cache_disabled();
     }
-    if let Some(snapshot) = project
-        .as_ref()
-        .and_then(|project| snapshot_cache.as_ref()?.load(project.key))
-    {
-        timer.cache_hit(true);
-        let mut report = snapshot.report;
-        crate::brainz::apply_suppressions(path, &mut report);
-        crate::brainz::rank_by_precision(path, &mut report);
-        return Ok((report, snapshot.module_files));
-    }
     if cache_enabled {
         timer.cache_hit(false);
     }
-    let (parsed, parse_stats) = match (project.as_ref(), parse_cache.as_ref()) {
-        (Some(project), Some(cache)) => {
-            let mut state = cache.load();
-            let (parsed, stats) = parser::parse_sources_incremental(&project.sources, &mut state);
-            timer.incremental_cache(stats, project.sources.len());
-            (parsed, Some(stats))
-        }
-        _ => (parser::parse_files(&discovery.files), None),
-    };
+    let (mut parsed, parse_stats) = parse_available(
+        &discovery.files,
+        project.as_ref(),
+        parse_cache.as_ref(),
+        &mut timer,
+    );
     timer.lap("parse");
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
@@ -94,18 +92,16 @@ pub fn analyze_path(
             .or_insert_with(|| n.file_path.clone());
     }
 
-    if report.meta.issues.is_empty() {
-        let snapshot =
-            crate::spine::cache::AnalysisSnapshot::new(report.clone(), module_files.clone());
-        if let (Some(project), Some(cache), Some(parse_cache)) =
-            (project, snapshot_cache, parse_cache)
-        {
-            let parse = parse_stats
-                .filter(|stats| stats.reusable == 0)
-                .map(|_| crate::spine::cache::ParseCache::capture(&project.sources, parsed.files));
-            crate::spine::cache::persist(cache, parse_cache, project.key, snapshot, parse);
-        }
-    }
+    persist_analysis(
+        PersistRequest {
+            is_cli: true,
+            project,
+            parse_cache,
+            cacheable: report.meta.issues.is_empty(),
+            parse_stats,
+        },
+        &mut parsed.files,
+    );
     timer.lap("cache-queue");
     crate::brainz::apply_suppressions(path, &mut report);
     crate::brainz::rank_by_precision(path, &mut report);
@@ -113,8 +109,34 @@ pub fn analyze_path(
     Ok((report, module_files))
 }
 
+fn observe_source_state(
+    root: &Path,
+    config_hash: u64,
+    project: Option<&crate::spine::cache::ProjectInputs>,
+) {
+    let Some(project) = project else {
+        return;
+    };
+    let manifest = crate::source_state::SourceManifest::from_root_hashes(
+        root,
+        project
+            .sources
+            .iter()
+            .map(|source| (source.path.clone(), source.content_hash)),
+    );
+    crate::brainz::observe_source_state(
+        root,
+        crate::source_state::SourceState::new(
+            1,
+            config_hash,
+            crate::diff::git::current_branch(root),
+            manifest,
+        ),
+    );
+}
+
 /// Opt-in per-phase tracing (`SENSEZ_TIMING=1`).
-struct PhaseTimer {
+pub(super) struct PhaseTimer {
     enabled: bool,
     start: std::time::Instant,
     last: std::time::Instant,

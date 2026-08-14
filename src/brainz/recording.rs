@@ -49,6 +49,7 @@ pub fn record_scan(
                 ms: elapsed.as_millis() as u64,
                 threshold,
                 branch,
+                source_state: hub::observed_source_state(root),
             },
         );
         (aging.resolved, aging.reintroduced)

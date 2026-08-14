@@ -5,6 +5,7 @@ from pathlib import Path
 from ..harness.artifacts import dump_normalized_text
 from ..harness.commands import CommandEnvironment, CommandOutput, run_captured
 from ..harness.models import RegressionRun
+from .cache_scan import wait_for_parse_cache
 
 
 def dump_raw_cache_outputs(
@@ -16,7 +17,7 @@ def dump_raw_cache_outputs(
     cache.with_name("parse-v2.bin").unlink(missing_ok=True)
     cold = _run(context, repo, "--cycles", "--all", "--json")
     assert cold.returncode == 0, "cold raw scan failed"
-    assert cache.is_file(), "cold raw scan did not create a snapshot"
+    wait_for_parse_cache(repo)
 
     warm = _run(context, repo, "--cycles", "--all", "--json")
     assert warm.returncode == 0, "warm raw scan failed"

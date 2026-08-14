@@ -14,15 +14,15 @@ use std::path::{Path, PathBuf};
 use std::process::ExitCode;
 
 pub fn run() -> Result<ExitCode> {
+    let cli = Cli::parse();
     crate::spine::cache::enable_background_writes();
-    let result = run_inner();
+    let result = run_inner(cli);
     crate::spine::cache::flush_background_writes();
     crate::spine::cache::shutdown_background_writes();
     result
 }
 
-fn run_inner() -> Result<ExitCode> {
-    let cli = Cli::parse();
+fn run_inner(cli: Cli) -> Result<ExitCode> {
     match cli.command {
         Some(Command::Noze(args)) => run_noze(args),
         Some(Command::Init {

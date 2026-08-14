@@ -10,6 +10,7 @@ mod gate_memory;
 mod hub;
 mod ranking;
 mod recapture;
+mod recapture_state;
 mod recording;
 mod report;
 mod staleness;
@@ -27,6 +28,13 @@ pub use ranking::{rank_by_precision, regressions};
 #[cfg(feature = "eyez")]
 pub use recording::record_search;
 pub use recording::{record_gate_block, record_scan, triage_finding};
+
+pub(crate) fn observe_source_state(
+    root: &std::path::Path,
+    state: crate::source_state::SourceState,
+) {
+    hub::observe_source_state(root, state);
+}
 pub use suppression::apply_suppressions;
 pub use usage::usage_report;
 

@@ -14,7 +14,11 @@ fn manifest_detects_branch_style_add_modify_and_delete() {
     let same = PathBuf::from("same.py");
     let changed = PathBuf::from("changed.py");
     let state = ParseCacheState {
-        manifest: HashMap::from([(old, 1), (same.clone(), 2), (changed.clone(), 3)]),
+        manifest: crate::source_state::SourceManifest::from_hashes([
+            (old, 1),
+            (same.clone(), 2),
+            (changed.clone(), 3),
+        ]),
         files: HashMap::new(),
     };
     let stats = state.changes(&[
@@ -120,4 +124,14 @@ fn changed_content_never_restores_the_stale_walk() {
         .symbols
         .declared
         .contains(&"old".into()));
+}
+
+#[test]
+fn capture_is_skipped_when_one_megabyte_cannot_cover_ten_percent() {
+    let sources: Vec<_> = (0..20)
+        .map(|index| source(PathBuf::from(format!("{index}.py")), &vec![b'x'; 600_000]))
+        .collect();
+
+    assert!(!ParseCache::worth_capturing(&sources));
+    assert!(ParseCache::worth_capturing(&sources[..2]));
 }

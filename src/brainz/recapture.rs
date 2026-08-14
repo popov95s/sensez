@@ -22,7 +22,10 @@ pub(super) fn run() {
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     for (root, base) in hub::baselines() {
-        if base.ms > MAX_RESCAN_MS || !changed_since(&root, base.ts) {
+        if base.ms > MAX_RESCAN_MS
+            || !changed_since(&root, base.ts)
+            || !super::recapture_state::changed(&root, &base)
+        {
             continue;
         }
         // Don't cross-diff: only recapture if still on the baseline's branch.

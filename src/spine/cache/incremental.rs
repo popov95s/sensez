@@ -1,4 +1,5 @@
 use super::{SourceFile, SourceFingerprint};
+use crate::source_state::SourceManifest;
 use crate::spine::ir::{Language, Walked};
 use crate::spine::parser::ParsedFile;
 use anyhow::{Context, Result};
@@ -14,8 +15,9 @@ const CACHE_REL: &str = ".sensez/parse-v2.bin";
 const SCHEMA: u32 = 1;
 const REVISION: &str = concat!(env!("CARGO_PKG_VERSION"), "-walked-v1");
 const MAX_DECOMPRESSED_BYTES: u64 = 32_000_000;
+const MIN_SOURCE_COVERAGE_PERCENT: usize = 10;
 
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeStats {
     pub added: usize,
     pub modified: usize,
@@ -75,24 +77,21 @@ struct ArtifactRef<'a> {
 
 #[derive(Default)]
 pub struct ParseCacheState {
-    manifest: HashMap<PathBuf, u64>,
+    manifest: SourceManifest,
     files: HashMap<(PathBuf, u64), CachedFile>,
 }
 
 impl ParseCacheState {
     pub fn changes(&self, sources: &[SourceFile]) -> ChangeStats {
-        let current: HashMap<_, _> = sources
-            .iter()
-            .map(|source| (source.path.clone(), source.content_hash))
-            .collect();
+        let current = SourceManifest::from_hashes(
+            sources
+                .iter()
+                .map(|source| (source.path.clone(), source.content_hash)),
+        );
+        let changes = self.manifest.changes(&current);
         let mut stats = ChangeStats::default();
         for source in sources {
             stats.total_bytes += source.bytes.len();
-            match self.manifest.get(&source.path) {
-                None => stats.added += 1,
-                Some(hash) if *hash != source.content_hash => stats.modified += 1,
-                Some(_) => stats.unchanged += 1,
-            }
             if self
                 .files
                 .contains_key(&(source.path.clone(), source.content_hash))
@@ -101,11 +100,10 @@ impl ParseCacheState {
                 stats.reusable_bytes += source.bytes.len();
             }
         }
-        stats.deleted = self
-            .manifest
-            .keys()
-            .filter(|path| !current.contains_key(*path))
-            .count();
+        stats.added = changes.added.len();
+        stats.modified = changes.modified.len();
+        stats.deleted = changes.deleted.len();
+        stats.unchanged = changes.unchanged.len();
         stats
     }
 
@@ -132,6 +130,8 @@ pub(super) struct PreparedParse {
 
 impl ParseCache {
     pub fn new(root: &Path) -> Self {
+        let _ = fs::remove_file(root.join(".sensez/analysis-v1.bin"));
+        let _ = fs::remove_dir_all(root.join(".sensez/parse-v1"));
         let path = root.join(CACHE_REL);
         super::budget::remove_oversized(&path, super::budget::TOTAL_BYTES);
         Self { path }
@@ -139,6 +139,10 @@ impl ParseCache {
 
     pub fn load(&self) -> ParseCacheState {
         self.try_load().unwrap_or_default()
+    }
+
+    pub(super) fn path_key(&self) -> PathBuf {
+        self.path.clone()
     }
 
     fn try_load(&self) -> Option<ParseCacheState> {
@@ -156,11 +160,12 @@ impl ParseCache {
             return None;
         }
         Some(ParseCacheState {
-            manifest: artifact
-                .manifest
-                .into_iter()
-                .map(|entry| (entry.path, entry.content_hash))
-                .collect(),
+            manifest: SourceManifest::from_hashes(
+                artifact
+                    .manifest
+                    .into_iter()
+                    .map(|entry| (entry.path, entry.content_hash)),
+            ),
             files: artifact
                 .files
                 .into_iter()
@@ -196,6 +201,23 @@ impl ParseCache {
         }
     }
 
+    pub fn worth_capturing(sources: &[SourceFile]) -> bool {
+        let total: usize = sources.iter().map(|source| source.bytes.len()).sum();
+        if total == 0 {
+            return false;
+        }
+        let mut sizes: Vec<_> = sources.iter().map(|source| source.bytes.len()).collect();
+        sizes.sort_unstable_by_key(|size| std::cmp::Reverse(*size));
+        let mut retained = 0_usize;
+        for size in sizes {
+            if retained > 0 && retained.saturating_add(size) > super::budget::TOTAL_BYTES {
+                break;
+            }
+            retained = retained.saturating_add(size);
+        }
+        retained.saturating_mul(100) / total >= MIN_SOURCE_COVERAGE_PERCENT
+    }
+
     pub(super) fn prepare(
         mut input: ParseWriteInput,
         byte_limit: usize,
@@ -203,22 +225,11 @@ impl ParseCache {
         input
             .files
             .sort_by_key(|file| std::cmp::Reverse(file.source_bytes));
-        let full = encode(&input.manifest, &input.files)?;
-        if full.len() <= byte_limit {
-            return Ok(Some(PreparedParse { bytes: full }));
-        }
-        let mut keep = input.files.len().saturating_mul(byte_limit) / full.len();
-        loop {
-            let bytes = encode(&input.manifest, &input.files[..keep])?;
-            if bytes.len() <= byte_limit {
-                return Ok(Some(PreparedParse { bytes }));
-            }
-            if keep == 0 {
-                return Ok(None);
-            }
-            let next = keep.saturating_mul(byte_limit) / bytes.len();
-            keep = next.min(keep - 1);
-        }
+        // Bound cold-build CPU as well as disk bytes. The largest source files
+        // dominate parse time, so retaining a source prefix no larger than the
+        // disk budget gives useful reuse without serializing the repository.
+        let keep = admitted_prefix(&input.files, byte_limit);
+        encode_to_limit(&input, keep, byte_limit)
     }
 
     pub(super) fn write(&self, prepared: PreparedParse) -> Result<()> {
@@ -237,6 +248,41 @@ impl ParseCache {
         fs::metadata(&self.path)
             .map(|metadata| metadata.len() as usize)
             .unwrap_or_default()
+    }
+}
+
+fn admitted_prefix(files: &[CachedFile], source_limit: usize) -> usize {
+    let mut source_bytes: usize = 0;
+    let count = files
+        .iter()
+        .take_while(|file| {
+            let next = source_bytes.saturating_add(file.source_bytes);
+            if next > source_limit {
+                return false;
+            }
+            source_bytes = next;
+            true
+        })
+        .count();
+    count.max(usize::from(!files.is_empty()))
+}
+
+fn encode_to_limit(
+    input: &ParseWriteInput,
+    initial_keep: usize,
+    byte_limit: usize,
+) -> Result<Option<PreparedParse>> {
+    let mut keep = initial_keep;
+    loop {
+        let bytes = encode(&input.manifest, &input.files[..keep])?;
+        if bytes.len() <= byte_limit {
+            return Ok(Some(PreparedParse { bytes }));
+        }
+        if keep == 0 {
+            return Ok(None);
+        }
+        let next = keep.saturating_mul(byte_limit) / bytes.len();
+        keep = next.min(keep - 1);
     }
 }
 
