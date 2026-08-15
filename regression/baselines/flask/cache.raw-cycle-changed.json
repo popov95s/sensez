@@ -2,10 +2,10 @@
   "meta": {
     "mode": "full",
     "boundaries_configured": false,
-    "internal_edges": 306,
-    "external_edges": 330,
+    "internal_edges": 307,
+    "external_edges": 329,
     "analyzed_files": 88,
-    "source_lines": 18351,
+    "source_lines": 18363,
     "cycles_total": 3,
     "dead_code_total": 0,
     "duplication_total": 0,

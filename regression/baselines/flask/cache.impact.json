@@ -1,10 +1,39 @@
 {
-  "config_changed": {
-    "cycles": [],
-    "duplication": []
-  },
-  "config_restored": {
-    "cycles": [],
+  "consumer_changed": {
+    "cycles": [
+      {
+        "action": "warning",
+        "edges": [
+          {
+            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
+            "from_module": "flask.sensez_cache_cycle_b",
+            "line": 1,
+            "to_module": "flask.sensez_cache_cycle_a"
+          },
+          {
+            "file": "<flask>/src/flask/sensez_cache_cycle_a.py",
+            "from_module": "flask.sensez_cache_cycle_a",
+            "line": 1,
+            "to_module": "flask.sensez_cache_cycle_b"
+          }
+        ],
+        "modules": [
+          "flask.sensez_cache_cycle_b",
+          "flask.sensez_cache_cycle_a"
+        ]
+      }
+    ],
+    "dead_code": [
+      {
+        "action": "advisory",
+        "confidence": "High",
+        "file": "<flask>/src/flask/sensez_cache_provider.py",
+        "kind": "function",
+        "line": 1,
+        "module": "flask.sensez_cache_provider",
+        "symbol": "sensez_cache_live"
+      }
+    ],
     "duplication": [
       {
         "action": "advisory",
@@ -20,13 +49,9 @@
             "start_row": 1
           }
         ],
-        "token_length": 77
+        "token_length": 75
       }
     ]
-  },
-  "corrupt_recovery": {
-    "cycles": [],
-    "duplication": []
   },
   "cycle_added": {
     "cycles": [
@@ -52,66 +77,7 @@
         ]
       }
     ],
-    "duplication": []
-  },
-  "diff_cached": {
-    "cycles": [
-      {
-        "action": "warning",
-        "edges": [
-          {
-            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
-            "from_module": "flask.sensez_cache_cycle_b",
-            "line": 1,
-            "to_module": "flask.sensez_cache_cycle_a"
-          },
-          {
-            "file": "<flask>/src/flask/sensez_cache_cycle_a.py",
-            "from_module": "flask.sensez_cache_cycle_a",
-            "line": 1,
-            "to_module": "flask.sensez_cache_cycle_b"
-          }
-        ],
-        "modules": [
-          "flask.sensez_cache_cycle_b",
-          "flask.sensez_cache_cycle_a"
-        ]
-      }
-    ],
-    "duplication": []
-  },
-  "diff_cold": {
-    "cycles": [
-      {
-        "action": "warning",
-        "edges": [
-          {
-            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
-            "from_module": "flask.sensez_cache_cycle_b",
-            "line": 1,
-            "to_module": "flask.sensez_cache_cycle_a"
-          },
-          {
-            "file": "<flask>/src/flask/sensez_cache_cycle_a.py",
-            "from_module": "flask.sensez_cache_cycle_a",
-            "line": 1,
-            "to_module": "flask.sensez_cache_cycle_b"
-          }
-        ],
-        "modules": [
-          "flask.sensez_cache_cycle_b",
-          "flask.sensez_cache_cycle_a"
-        ]
-      }
-    ],
-    "duplication": []
-  },
-  "disabled": {
-    "cycles": [],
-    "duplication": []
-  },
-  "duplicate_added": {
-    "cycles": [],
+    "dead_code": [],
     "duplication": [
       {
         "action": "advisory",
@@ -127,38 +93,35 @@
             "start_row": 1
           }
         ],
-        "token_length": 77
+        "token_length": 75
       }
     ]
   },
-  "environment_disabled": {
+  "duplicate_added": {
     "cycles": [],
-    "duplication": []
-  },
-  "incremental_parse": {
-    "added": 0,
-    "deleted": 0,
-    "modified": 1,
-    "reused": 87,
-    "reused_bytes": 587124,
-    "total": 88,
-    "total_bytes": 587651,
-    "unchanged": 87
+    "dead_code": [],
+    "duplication": [
+      {
+        "action": "advisory",
+        "occurrences": [
+          {
+            "end_row": 14,
+            "file": "<flask>/src/flask/sensez_cache_duplicate_left.py",
+            "start_row": 1
+          },
+          {
+            "end_row": 14,
+            "file": "<flask>/src/flask/sensez_cache_duplicate_right.py",
+            "start_row": 1
+          }
+        ],
+        "token_length": 75
+      }
+    ]
   },
   "initial": {
     "cycles": [],
-    "duplication": []
-  },
-  "repeated": {
-    "cycles": [],
-    "duplication": []
-  },
-  "source_deleted": {
-    "cycles": [],
-    "duplication": []
-  },
-  "source_restored": {
-    "cycles": [],
+    "dead_code": [],
     "duplication": []
   }
 }

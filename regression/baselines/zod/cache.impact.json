@@ -1,10 +1,29 @@
 {
-  "config_changed": {
-    "cycles": [],
-    "duplication": []
-  },
-  "config_restored": {
-    "cycles": [],
+  "consumer_changed": {
+    "cycles": [
+      {
+        "action": "warning",
+        "edges": [
+          {
+            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
+            "from_module": "src/sensez-cache-cycle-b",
+            "line": 1,
+            "to_module": "src/sensez-cache-cycle-a"
+          },
+          {
+            "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
+            "from_module": "src/sensez-cache-cycle-a",
+            "line": 1,
+            "to_module": "src/sensez-cache-cycle-b"
+          }
+        ],
+        "modules": [
+          "src/sensez-cache-cycle-b",
+          "src/sensez-cache-cycle-a"
+        ]
+      }
+    ],
+    "dead_code": [],
     "duplication": [
       {
         "action": "advisory",
@@ -20,13 +39,9 @@
             "start_row": 1
           }
         ],
-        "token_length": 77
+        "token_length": 75
       }
     ]
-  },
-  "corrupt_recovery": {
-    "cycles": [],
-    "duplication": []
   },
   "cycle_added": {
     "cycles": [
@@ -52,66 +67,7 @@
         ]
       }
     ],
-    "duplication": []
-  },
-  "diff_cached": {
-    "cycles": [
-      {
-        "action": "warning",
-        "edges": [
-          {
-            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
-            "from_module": "src/sensez-cache-cycle-b",
-            "line": 1,
-            "to_module": "src/sensez-cache-cycle-a"
-          },
-          {
-            "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
-            "from_module": "src/sensez-cache-cycle-a",
-            "line": 1,
-            "to_module": "src/sensez-cache-cycle-b"
-          }
-        ],
-        "modules": [
-          "src/sensez-cache-cycle-b",
-          "src/sensez-cache-cycle-a"
-        ]
-      }
-    ],
-    "duplication": []
-  },
-  "diff_cold": {
-    "cycles": [
-      {
-        "action": "warning",
-        "edges": [
-          {
-            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
-            "from_module": "src/sensez-cache-cycle-b",
-            "line": 1,
-            "to_module": "src/sensez-cache-cycle-a"
-          },
-          {
-            "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
-            "from_module": "src/sensez-cache-cycle-a",
-            "line": 1,
-            "to_module": "src/sensez-cache-cycle-b"
-          }
-        ],
-        "modules": [
-          "src/sensez-cache-cycle-b",
-          "src/sensez-cache-cycle-a"
-        ]
-      }
-    ],
-    "duplication": []
-  },
-  "disabled": {
-    "cycles": [],
-    "duplication": []
-  },
-  "duplicate_added": {
-    "cycles": [],
+    "dead_code": [],
     "duplication": [
       {
         "action": "advisory",
@@ -127,38 +83,35 @@
             "start_row": 1
           }
         ],
-        "token_length": 77
+        "token_length": 75
       }
     ]
   },
-  "environment_disabled": {
+  "duplicate_added": {
     "cycles": [],
-    "duplication": []
-  },
-  "incremental_parse": {
-    "added": 0,
-    "deleted": 0,
-    "modified": 1,
-    "reused": 370,
-    "reused_bytes": 2326582,
-    "total": 371,
-    "total_bytes": 2327100,
-    "unchanged": 370
+    "dead_code": [],
+    "duplication": [
+      {
+        "action": "advisory",
+        "occurrences": [
+          {
+            "end_row": 14,
+            "file": "<zod>/packages/zod/src/sensez-cache-duplicate-left.ts",
+            "start_row": 1
+          },
+          {
+            "end_row": 14,
+            "file": "<zod>/packages/zod/src/sensez-cache-duplicate-right.ts",
+            "start_row": 1
+          }
+        ],
+        "token_length": 75
+      }
+    ]
   },
   "initial": {
     "cycles": [],
-    "duplication": []
-  },
-  "repeated": {
-    "cycles": [],
-    "duplication": []
-  },
-  "source_deleted": {
-    "cycles": [],
-    "duplication": []
-  },
-  "source_restored": {
-    "cycles": [],
+    "dead_code": [],
     "duplication": []
   }
 }

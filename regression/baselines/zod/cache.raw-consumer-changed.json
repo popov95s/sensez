@@ -5,7 +5,7 @@
     "internal_edges": 524,
     "external_edges": 461,
     "analyzed_files": 371,
-    "source_lines": 71986,
+    "source_lines": 72000,
     "cycles_total": 3,
     "dead_code_total": 0,
     "duplication_total": 0,
