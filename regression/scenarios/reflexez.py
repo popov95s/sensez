@@ -80,6 +80,7 @@ def run_reflexez_scenario(context: RegressionRun) -> None:
         )
     finally:
         cleanup_repo(repo)
+
     run_randomized_source_scenario(context)
 
 
@@ -225,4 +226,3 @@ def _fixture(profile: str) -> Fixture:
         ),
         global_file="package.json",
     )
-

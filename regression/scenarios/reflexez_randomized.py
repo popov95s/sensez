@@ -5,11 +5,10 @@ from __future__ import annotations
 import random
 import shlex
 import tempfile
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import cast
 
-from ..harness.artifacts import dump_normalized
 from ..harness.commands import run, run_json
 from ..harness.models import RegressionRun
 
@@ -63,12 +62,6 @@ def run_randomized_source_scenario(context: RegressionRun) -> None:
         assert result.exact_selection, (selected, expected)
         assert result.exact_execution, (executed, expected)
         assert result.maximum_distance >= 2
-        dump_normalized(
-            context.out / "reflexez.randomized.json",
-            asdict(result),
-            root,
-            context.target,
-        )
 
 
 def _write_project(root: Path, marker: Path, profile: str) -> None:
@@ -163,4 +156,3 @@ def _commit(root: Path) -> None:
     run(["git", "config", "user.name", "Sensez Regression"], root)
     run(["git", "add", "."], root)
     run(["git", "commit", "-qm", "randomized source graph"], root)
-
