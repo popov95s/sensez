@@ -19,6 +19,7 @@ mod mcp;
 mod noze;
 mod pipeline;
 mod profiles;
+mod reflexez;
 pub mod report;
 mod reporter;
 mod setup;

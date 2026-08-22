@@ -1,0 +1,47 @@
+{
+  "global_change": {
+    "discovered_tests": 24,
+    "fallback_reasons": [
+      "a dependency or test-discovery manifest changed"
+    ],
+    "full_suite": true,
+    "runner_kinds": [
+      "pytest"
+    ],
+    "selected_count": 24,
+    "selected_fixtures": [
+      {
+        "distance": 0,
+        "file": "tests/test_sensez_reflexez_dynamic.py",
+        "reason": "safety_fallback",
+        "runner": "pytest"
+      },
+      {
+        "distance": 0,
+        "file": "tests/test_sensez_reflexez_unrelated.py",
+        "reason": "safety_fallback",
+        "runner": "pytest"
+      }
+    ],
+    "unresolved_dynamic_imports": 2
+  },
+  "selective": {
+    "discovered_tests": 24,
+    "fallback_reasons": [],
+    "full_suite": false,
+    "runner_kinds": [
+      "pytest"
+    ],
+    "selected_count": 1,
+    "selected_fixtures": [
+      {
+        "distance": 1,
+        "file": "tests/test_sensez_reflexez_dynamic.py",
+        "reason": "dynamic_import",
+        "runner": "pytest"
+      }
+    ],
+    "unresolved_dynamic_imports": 2
+  }
+}
+

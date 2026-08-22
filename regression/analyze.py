@@ -7,7 +7,9 @@ import shutil
 from pathlib import Path
 
 
-def compare_tree(results: Path, baselines: Path) -> tuple[str, ...]:
+def compare_tree(
+    results: Path, baselines: Path, require_complete: bool = True
+) -> tuple[str, ...]:
     failures: list[str] = []
     for result in _artifacts(results):
         rel = result.relative_to(results)
@@ -17,10 +19,11 @@ def compare_tree(results: Path, baselines: Path) -> tuple[str, ...]:
             continue
         if not same_artifact(result, baseline):
             failures.append(f"changed baseline: {rel}\n{_diff(baseline, result)}")
-    for baseline in _artifacts(baselines):
-        rel = baseline.relative_to(baselines)
-        if not (results / rel).exists():
-            failures.append(f"missing result for baseline: {rel}")
+    if require_complete:
+        for baseline in _artifacts(baselines):
+            rel = baseline.relative_to(baselines)
+            if not (results / rel).exists():
+                failures.append(f"missing result for baseline: {rel}")
     return tuple(failures)
 
 

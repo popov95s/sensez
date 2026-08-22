@@ -21,6 +21,7 @@ pub fn run() -> Result<ExitCode> {
 fn run_inner(cli: Cli) -> Result<ExitCode> {
     match cli.command {
         Some(Command::Noze(args)) => run_noze(args),
+        Some(Command::Reflexez(args)) => crate::reflexez::run(args),
         Some(Command::Init {
             path,
             agent,
@@ -270,5 +271,7 @@ fn diff_issue(file: Option<PathBuf>, message: String) -> crate::report::ScanIssu
         message,
     }
 }
+#[cfg(test)]
+mod reflexez_tests;
 #[cfg(test)]
 mod tests;

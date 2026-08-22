@@ -49,6 +49,7 @@ nav:
       - Configuration: reference/configuration.md
       - Local Metrics: local-metrics.md
   - Usage:
+      - Affected Tests with Reflexez: usage/reflexez.md
       - MCP and Agents: usage/mcp-and-agents.md
       - GitHub Action: usage/github-action.md
   - Contributing:

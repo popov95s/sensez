@@ -18,6 +18,93 @@ use wait_timeout::ChildExt;
 /// or a misbehaving hook does not stall the scan.
 const GIT_TIMEOUT: Duration = Duration::from_secs(30);
 
+#[derive(Debug)]
+pub struct ChangedFiles {
+    pub root: PathBuf,
+    pub paths: Vec<PathBuf>,
+    pub deleted: Vec<PathBuf>,
+}
+
+pub fn repository_root(scan_path: &Path) -> Result<PathBuf> {
+    let root = run(&["rev-parse", "--show-toplevel"], scan_path)?;
+    Ok(PathBuf::from(root.trim()))
+}
+
+/// Resolve all changed paths for test-impact analysis, including non-source
+/// manifests and configuration files that may require a full-suite fallback.
+pub fn changed_paths(scan_path: &Path, base: Option<&str>, staged: bool) -> Result<ChangedFiles> {
+    use std::collections::BTreeSet;
+
+    let root = repository_root(scan_path)?;
+    let mut relative = BTreeSet::new();
+    let mut deleted = BTreeSet::new();
+    if staged {
+        extend_names(
+            &mut relative,
+            &run(&["diff", "--cached", "--name-only", "-z"], &root)?,
+        );
+        extend_names(
+            &mut deleted,
+            &run(
+                &["diff", "--cached", "--name-only", "--diff-filter=D", "-z"],
+                &root,
+            )?,
+        );
+    } else {
+        if let Some(base) = base {
+            let range = format!("{base}...HEAD");
+            extend_names(
+                &mut relative,
+                &run(&["diff", "--name-only", "-z", &range], &root)?,
+            );
+            extend_names(
+                &mut deleted,
+                &run(
+                    &["diff", "--name-only", "--diff-filter=D", "-z", &range],
+                    &root,
+                )?,
+            );
+        }
+        extend_names(
+            &mut relative,
+            &run(&["diff", "--name-only", "-z", "HEAD"], &root)?,
+        );
+        extend_names(
+            &mut deleted,
+            &run(
+                &["diff", "--name-only", "--diff-filter=D", "-z", "HEAD"],
+                &root,
+            )?,
+        );
+        relative.extend(untracked_relative(&root)?);
+    }
+    Ok(ChangedFiles {
+        paths: relative.into_iter().map(|path| root.join(path)).collect(),
+        deleted: deleted.into_iter().map(|path| root.join(path)).collect(),
+        root,
+    })
+}
+
+fn extend_names(paths: &mut std::collections::BTreeSet<PathBuf>, output: &str) {
+    paths.extend(
+        output
+            .split('\0')
+            .filter(|path| !path.is_empty())
+            .map(PathBuf::from),
+    );
+}
+
+fn untracked_relative(root: &Path) -> Result<Vec<PathBuf>> {
+    let listing = run(&["status", "--porcelain", "--untracked-files=all"], root)?;
+    Ok(listing
+        .lines()
+        .filter_map(|line| line.strip_prefix("?? "))
+        .map(str::trim)
+        .filter(|path| !path.is_empty())
+        .map(PathBuf::from)
+        .collect())
+}
+
 /// Working-tree changes vs `HEAD`, including untracked source files.
 pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
     let root = run(&["rev-parse", "--show-toplevel"], scan_path)?;
@@ -124,103 +211,5 @@ fn run_with_timeout(cmd: &mut Command, cwd: &Path) -> std::io::Result<std::proce
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use std::fs;
-
-    #[test]
-    fn untracked_directory_is_expanded_to_source_files() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        if Command::new("git")
-            .arg("init")
-            .current_dir(root)
-            .output()
-            .is_err()
-        {
-            return; // git not available in this environment
-        }
-        let pkg = root.join("newpkg/src/deep");
-        fs::create_dir_all(&pkg).unwrap();
-        fs::write(pkg.join("a.py"), "def f():\n    pass\n").unwrap();
-        fs::write(pkg.join("b.ts"), "export const x = 1;\n").unwrap();
-        fs::write(pkg.join("notes.md"), "# notes\n").unwrap();
-
-        let found = untracked_sources(root).unwrap();
-        let names: Vec<String> = found
-            .iter()
-            .map(|p| p.file_name().unwrap().to_string_lossy().into_owned())
-            .collect();
-        assert!(
-            names.contains(&"a.py".to_string()),
-            "nested .py expanded: {names:?}"
-        );
-        assert!(
-            !names.contains(&"notes.md".to_string()),
-            "non-source excluded"
-        );
-        // .ts is only recognized when the TypeScript profile is compiled in.
-        #[cfg(feature = "lang-typescript")]
-        assert!(
-            names.contains(&"b.ts".to_string()),
-            "untracked .ts included: {names:?}"
-        );
-    }
-
-    #[test]
-    fn diff_is_fast_with_large_gitignored_footprint() {
-        use std::time::Instant;
-
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        let git = |args: &[&str]| {
-            Command::new("git")
-                .args(args)
-                .current_dir(root)
-                .output()
-                .expect("git must be available")
-        };
-        git(&["init"]);
-        git(&["config", "user.email", "test@test"]);
-        git(&["config", "user.name", "test"]);
-
-        fs::write(root.join(".gitignore"), ".venv/\nnode_modules/\n").unwrap();
-        fs::write(root.join("seed.py"), "# seed\n").unwrap();
-        git(&["add", "."]);
-        git(&["commit", "-m", "seed"]);
-
-        let venv1 = root.join(".venv/lib/python3.11/site-packages");
-        let venv2 = root.join("node_modules/pkg/dist");
-        fs::create_dir_all(&venv1).unwrap();
-        fs::create_dir_all(&venv2).unwrap();
-        for i in 0..500 {
-            fs::write(venv1.join(format!("mod{i}.py")), format!("# {i}\n")).unwrap();
-        }
-        for i in 0..500 {
-            fs::write(venv2.join(format!("chunk{i}.js")), format!("// {i}\n")).unwrap();
-        }
-
-        fs::write(root.join("app.py"), "def main():\n    return 42\n").unwrap();
-
-        let start = Instant::now();
-        let changed = changed_vs_head(root).unwrap();
-        let elapsed = start.elapsed();
-
-        assert!(
-            elapsed.as_secs() < 2,
-            "diff must complete in < 2 s, took {elapsed:.2?}"
-        );
-        assert!(
-            changed.touches_file(&root.join("app.py")),
-            "untracked file must appear"
-        );
-        assert!(
-            !changed.paths().any(|p| p.starts_with(&venv1)),
-            "no files from .venv should appear"
-        );
-        assert!(
-            !changed.paths().any(|p| p.starts_with(&venv2)),
-            "no files from node_modules should appear"
-        );
-    }
-}
+#[path = "git_tests.rs"]
+mod tests;

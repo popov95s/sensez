@@ -15,6 +15,7 @@ Usage: sensez [OPTIONS] [PATH] [COMMAND]
 
 Commands:
   noze    Code smell and structure checks. Defaults to scanning the given path
+  reflexez  Run only tests affected by current changes, using the existing test runner
   init    Set up a repository, or offer a global agent install outside Git
   mcp     MCP server commands
   brainz  Local metrics and value reports
@@ -78,6 +79,29 @@ Options:
 
   -V, --version
           Print version
+```
+
+## `sensez reflexez --help`
+
+```text
+Run only tests affected by current changes, using the existing test runner
+
+Usage: sensez reflexez [OPTIONS] [PATH] [-- <RUNNER_ARGS>...]
+
+Arguments:
+  [PATH]            Repository root (default: current directory)
+  [RUNNER_ARGS]...  Arguments passed unchanged to the selected test runner(s)
+
+Options:
+      --base <BASE>          Compare committed changes with the merge-base of this Git revision
+      --staged               Consider staged changes only
+      --changed-file <PATH>  Analyze this changed path instead of consulting Git. Repeatable
+      --plan                 Print the test plan without executing it
+      --json                 Emit the plan as machine-readable JSON; implies --plan
+      --full                 Select every discovered test while retaining runner discovery
+      --strict-dynamic       Run the full suite if any computed dynamic import remains unresolved
+      --runner <RUNNER>      Force one runner instead of auto-detecting it [default: auto] [possible values: auto, pytest, vitest, jest]
+  -h, --help                 Print help
 ```
 
 ## `sensez noze --help`

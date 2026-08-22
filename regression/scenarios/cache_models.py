@@ -17,6 +17,7 @@ class ScenarioFiles:
     duplicate_left_body: str
     duplicate_right_body: str
     duplicate_body: str
+    duplicate_changed_body: str
     duplicate_unique: str
     cycle_a: str
     cycle_b: str

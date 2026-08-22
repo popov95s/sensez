@@ -21,6 +21,7 @@ from .scenarios.gates import (
     run_shared_worktree_gate_scenario,
 )
 from .scenarios.mcp_flow import run_mcp_scenarios
+from .scenarios.reflexez import run_reflexez_scenario
 from .setup_regressions import run_setup_regressions
 
 
@@ -34,10 +35,10 @@ def main() -> int:
         print("build it with: cargo build --release --all-features")
         return 2
 
-    failures = _run_setup(sensez, args.accept)
+    failures = _run_setup(sensez, args.accept) if not args.scenario else []
     for target in targets:
         try:
-            run_target(config, target, sensez, args.accept)
+            run_target(config, target, sensez, args.accept, set(args.scenario))
         except Exception as error:
             failures.append(f"{target['name']}: {error}")
     if failures:
@@ -50,6 +51,12 @@ def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument("--target", action="append", default=[])
     parser.add_argument("--profile", action="append", default=[])
+    parser.add_argument(
+        "--scenario",
+        action="append",
+        choices=["full", "cache", "reflexez", "mcp", "gate", "branch"],
+        default=[],
+    )
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--setup-only", action="store_true")
     parser.add_argument("--ci", action="store_true")
@@ -88,6 +95,7 @@ def run_target(
     target: Target,
     sensez: Path,
     accept: bool,
+    scenarios: set[str],
 ) -> None:
     name = target["name"]
     print(f"== {name} ==")
@@ -98,14 +106,22 @@ def run_target(
     output.mkdir(parents=True)
     context = RegressionRun(sensez, config, target, cache, output)
 
-    run_full_scans(context)
-    run_cache_impact_scenario(context)
-    run_mcp_scenarios(context)
-    run_gate_reblock_scenario(context)
-    run_shared_worktree_gate_scenario(context)
-    run_gate_detached_scenario(context)
-    run_branch_metric_scenarios(context)
-    _compare_or_accept(output, BASELINES / name, name, accept)
+    enabled = lambda name: not scenarios or name in scenarios
+    if enabled("full"):
+        run_full_scans(context)
+    if enabled("cache"):
+        run_cache_impact_scenario(context)
+    if enabled("reflexez"):
+        run_reflexez_scenario(context)
+    if enabled("mcp"):
+        run_mcp_scenarios(context)
+    if enabled("gate"):
+        run_gate_reblock_scenario(context)
+        run_shared_worktree_gate_scenario(context)
+        run_gate_detached_scenario(context)
+    if enabled("branch"):
+        run_branch_metric_scenarios(context)
+    _compare_or_accept(output, BASELINES / name, name, accept, not scenarios)
 
 
 def _run_setup(sensez: Path, accept: bool) -> list[str]:
@@ -127,12 +143,13 @@ def _compare_or_accept(
     baseline: Path,
     name: str,
     accept: bool,
+    require_complete: bool = True,
 ) -> None:
     if accept:
         accept_tree(output, baseline)
         print(f"accepted baselines for {name}")
         return
-    failures = compare_tree(output, baseline)
+    failures = compare_tree(output, baseline, require_complete=require_complete)
     if failures:
         raise RuntimeError("\n\n".join(failures))
 

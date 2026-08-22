@@ -27,6 +27,8 @@ pub struct Cli {
 pub enum Command {
     /// Code smell and structure checks. Defaults to scanning the given path.
     Noze(NozeArgs),
+    /// Run only tests affected by current changes, using the existing test runner.
+    Reflexez(ReflexezArgs),
     /// Set up a repository, or offer a global agent install outside Git.
     Init {
         /// Repository root (default: current directory).
@@ -56,6 +58,51 @@ pub enum Command {
     /// Docs/comment search commands.
     #[cfg(feature = "eyez")]
     Eyez(EyezArgs),
+}
+
+#[derive(Args, Debug)]
+#[command(
+    after_help = "Examples:\n  sensez reflexez .\n  sensez reflexez . --plan\n  sensez reflexez . --base origin/main\n  sensez reflexez . -- --maxfail=1"
+)]
+pub struct ReflexezArgs {
+    /// Repository root (default: current directory).
+    pub path: Option<PathBuf>,
+    /// Compare committed changes with the merge-base of this Git revision.
+    #[arg(long, conflicts_with = "staged")]
+    pub base: Option<String>,
+    /// Consider staged changes only.
+    #[arg(long)]
+    pub staged: bool,
+    /// Analyze this changed path instead of consulting Git. Repeatable.
+    #[arg(long = "changed-file", value_name = "PATH", conflicts_with_all = ["base", "staged"])]
+    pub changed_files: Vec<PathBuf>,
+    /// Print the test plan without executing it.
+    #[arg(long)]
+    pub plan: bool,
+    /// Emit the plan as machine-readable JSON; implies --plan.
+    #[arg(long)]
+    pub json: bool,
+    /// Select every discovered test while retaining runner discovery.
+    #[arg(long)]
+    pub full: bool,
+    /// Run the full suite if any computed dynamic import remains unresolved.
+    #[arg(long)]
+    pub strict_dynamic: bool,
+    /// Force one runner instead of auto-detecting it.
+    #[arg(long, value_enum, default_value_t = RunnerChoice::Auto)]
+    pub runner: RunnerChoice,
+    /// Arguments passed unchanged to the selected test runner(s).
+    #[arg(last = true)]
+    pub runner_args: Vec<String>,
+}
+
+#[derive(clap::ValueEnum, Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub enum RunnerChoice {
+    #[default]
+    Auto,
+    Pytest,
+    Vitest,
+    Jest,
 }
 
 #[cfg(feature = "lsp")]

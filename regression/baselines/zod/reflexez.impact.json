@@ -1,0 +1,47 @@
+{
+  "global_change": {
+    "discovered_tests": 172,
+    "fallback_reasons": [
+      "a dependency or test-discovery manifest changed"
+    ],
+    "full_suite": true,
+    "runner_kinds": [
+      "vitest"
+    ],
+    "selected_count": 172,
+    "selected_fixtures": [
+      {
+        "distance": 0,
+        "file": "packages/zod/src/sensez-reflexez-dynamic.test.ts",
+        "reason": "safety_fallback",
+        "runner": "vitest"
+      },
+      {
+        "distance": 0,
+        "file": "packages/zod/src/sensez-reflexez-unrelated.test.ts",
+        "reason": "safety_fallback",
+        "runner": "vitest"
+      }
+    ],
+    "unresolved_dynamic_imports": 0
+  },
+  "selective": {
+    "discovered_tests": 172,
+    "fallback_reasons": [],
+    "full_suite": false,
+    "runner_kinds": [
+      "vitest"
+    ],
+    "selected_count": 1,
+    "selected_fixtures": [
+      {
+        "distance": 1,
+        "file": "packages/zod/src/sensez-reflexez-dynamic.test.ts",
+        "reason": "dynamic_import",
+        "runner": "vitest"
+      }
+    ],
+    "unresolved_dynamic_imports": 0
+  }
+}
+

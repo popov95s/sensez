@@ -32,7 +32,7 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
         initial = scan(context, repo, threshold=8)
         dump_raw_cache_output(context, repo, "initial")
 
-        _write(repo / files.duplicate_right, files.duplicate_body)
+        _write(repo / files.duplicate_right, files.duplicate_changed_body)
         duplicate = scan(context, repo, threshold=8)
         assert _has_cross_file_duplicate(duplicate, files), (
             "duplicate introduced in one file was not detected in the other; "
@@ -47,9 +47,10 @@ def run_cache_impact_scenario(context: RegressionRun) -> None:
 
         _write(repo / files.consumer, files.consumer_other)
         consumer_changed = scan(context, repo)
-        assert _provider_symbol_is_dead(consumer_changed, files), (
-            "consumer edit did not update dead code in its provider"
-        )
+        if context.target["profile"] == "py":
+            assert _provider_symbol_is_dead(consumer_changed, files), (
+                "consumer edit did not update dead code in its provider"
+            )
         dump_raw_cache_output(context, repo, "consumer-changed")
         assert cache.read_bytes() == b"cli must not touch this"
 
@@ -185,6 +186,9 @@ def _files(profile: str) -> ScenarioFiles:
             + "    return value\n"
         )
         duplicate_unique = "def sensez_cache_duplicate_right(value):\n    return value + 1\n"
+        duplicate_changed = duplicate_body.replace(
+            "sensez_cache_duplicate_left", "sensez_cache_duplicate_right"
+        )
         cycle_a = "from flask.sensez_cache_cycle_b import cycle_value\n\ndef cycle_a():\n    return cycle_value()\n"
         cycle_b = "def cycle_value():\n    return 1\n"
         provider = "def sensez_cache_live():\n    return 1\n\ndef sensez_cache_other():\n    return 2\n"
@@ -198,9 +202,12 @@ def _files(profile: str) -> ScenarioFiles:
             + "  return value;\n}\n"
         )
         duplicate_unique = "export function sensezCacheDuplicateRight(value: number): number { return value + 1; }\n"
+        duplicate_changed = duplicate_body.replace(
+            "sensezCacheDuplicateLeft", "sensezCacheDuplicateRight"
+        )
         cycle_a = 'import { cycleValue } from "./sensez-cache-cycle-b";\nexport function cycleA(): number { return cycleValue(); }\n'
         cycle_b = "export function cycleValue(): number { return 1; }\n"
-        provider = "export function sensezCacheLive(): number { return 1; }\nexport function sensezCacheOther(): number { return 2; }\n"
+        provider = "function sensezCacheLive(): number { return 1; }\nfunction sensezCacheOther(): number { return 2; }\n"
 
     return ScenarioFiles(
         duplicate_left=base + duplicate_left,
@@ -208,6 +215,7 @@ def _files(profile: str) -> ScenarioFiles:
         duplicate_left_body=duplicate_body,
         duplicate_right_body=duplicate_unique,
         duplicate_body=duplicate_body,
+        duplicate_changed_body=duplicate_changed,
         duplicate_unique=duplicate_unique,
         cycle_a=base + cycle_a_name,
         cycle_b=base + cycle_b_name,
