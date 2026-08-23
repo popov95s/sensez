@@ -1045,6 +1045,8 @@
       
         
       
+        
+      
     
     
     
@@ -1089,6 +1091,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/reflexez/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Affected Tests with Reflexez
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1942,7 +1972,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.boolean_blindness]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_bool_params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="c1"># allowed boolean parameters before flagging</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -1969,7 +1999,7 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">is_allowed</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">&quot;draft&quot;</span><span class="p">,</span> <span class="s2">&quot;paid&quot;</span><span class="p">,</span> <span class="s2">&quot;void&quot;</span><span class="p">]</span>
+    <span class="k">return</span> <span class="n">status</span> <span class="ow">in</span> <span class="p">[</span><span class="s2">"draft"</span><span class="p">,</span> <span class="s2">"paid"</span><span class="p">,</span> <span class="s2">"void"</span><span class="p">]</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -1978,9 +2008,9 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">InvoiceStatus</span><span class="p">(</span><span class="n">Enum</span><span class="p">):</span>
-    <span class="n">DRAFT</span> <span class="o">=</span> <span class="s2">&quot;draft&quot;</span>
-    <span class="n">PAID</span> <span class="o">=</span> <span class="s2">&quot;paid&quot;</span>
-    <span class="n">VOID</span> <span class="o">=</span> <span class="s2">&quot;void&quot;</span>
+    <span class="n">DRAFT</span> <span class="o">=</span> <span class="s2">"draft"</span>
+    <span class="n">PAID</span> <span class="o">=</span> <span class="s2">"paid"</span>
+    <span class="n">VOID</span> <span class="o">=</span> <span class="s2">"void"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">is_allowed</span><span class="p">(</span><span class="n">status</span><span class="p">:</span> <span class="n">InvoiceStatus</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">bool</span><span class="p">:</span>
@@ -1995,16 +2025,16 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">isAllowed</span><span class="p">(</span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;draft&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;paid&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;void&quot;</span><span class="p">].</span><span class="nx">includes</span><span class="p">(</span><span class="nx">status</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="s2">"draft"</span><span class="p">,</span><span class="w"> </span><span class="s2">"paid"</span><span class="p">,</span><span class="w"> </span><span class="s2">"void"</span><span class="p">].</span><span class="nx">includes</span><span class="p">(</span><span class="nx">status</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Use a union type, enum, or const object with a derived type.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="nx">InvoiceStatus</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">Draft</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;draft&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nx">Paid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;paid&quot;</span><span class="p">,</span>
-<span class="w">  </span><span class="nx">Void</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;void&quot;</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Draft</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"draft"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Paid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"paid"</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">Void</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"void"</span><span class="p">,</span>
 <span class="p">}</span>
 
 <span class="kd">function</span><span class="w"> </span><span class="nx">isAllowed</span><span class="p">(</span><span class="nx">status</span><span class="o">:</span><span class="w"> </span><span class="kt">InvoiceStatus</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="w"> </span><span class="p">{</span>
@@ -2021,7 +2051,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.literal_membership]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2048,14 +2078,14 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">&quot;&quot;</span>
+    <span class="k">return</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">""</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Reject a missing required string explicitly instead of hiding it behind a sentinel fallback.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;display name is required&quot;</span><span class="p">)</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">name</span>
 </code></pre></div>
 </details></p>
@@ -2063,7 +2093,7 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">&quot;?&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">"?"</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
@@ -2071,7 +2101,7 @@
 <p>Throw on a missing required string, or model optionality explicitly when absence is valid.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;display name is required&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="p">;</span>
 <span class="p">}</span>
@@ -2084,7 +2114,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.magic_string_default]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2147,7 +2177,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.magic_numbers]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2237,7 +2267,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.deep_nesting]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_nesting</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed nested block depth</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2385,7 +2415,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.high_cognitive_complexity]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_cognitive</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">15</span><span class="w"> </span><span class="c1"># allowed cognitive complexity score</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2417,18 +2447,18 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">choose_refund</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">RefundDecision</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">cancelled</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">deny_refund</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">deny_refund</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">"cancelled"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">fraud_review</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">manual_review</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">days_since_purchase</span> <span class="o">&gt;</span> <span class="mi">30</span><span class="p">:</span>
-        <span class="k">return</span> <span class="n">deny_refund</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;expired&quot;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">deny_refund</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">"expired"</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">damaged</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">full_refund</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">missing_items</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">partial_refund</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">vip_customer</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">goodwill_credit</span><span class="p">(</span><span class="n">order</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">deny_refund</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">&quot;not_eligible&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">deny_refund</span><span class="p">(</span><span class="n">order</span><span class="p">,</span> <span class="s2">"not_eligible"</span><span class="p">)</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -2440,12 +2470,12 @@
 
 
 <span class="n">REFUND_POLICY</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">RefundHandler</span><span class="p">]</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;cancelled&quot;</span><span class="p">:</span> <span class="n">deny_cancelled</span><span class="p">,</span>
-    <span class="s2">&quot;fraud_review&quot;</span><span class="p">:</span> <span class="n">manual_review</span><span class="p">,</span>
-    <span class="s2">&quot;expired&quot;</span><span class="p">:</span> <span class="n">deny_expired</span><span class="p">,</span>
-    <span class="s2">&quot;damaged&quot;</span><span class="p">:</span> <span class="n">full_refund</span><span class="p">,</span>
-    <span class="s2">&quot;missing_items&quot;</span><span class="p">:</span> <span class="n">partial_refund</span><span class="p">,</span>
-    <span class="s2">&quot;vip_customer&quot;</span><span class="p">:</span> <span class="n">goodwill_credit</span><span class="p">,</span>
+    <span class="s2">"cancelled"</span><span class="p">:</span> <span class="n">deny_cancelled</span><span class="p">,</span>
+    <span class="s2">"fraud_review"</span><span class="p">:</span> <span class="n">manual_review</span><span class="p">,</span>
+    <span class="s2">"expired"</span><span class="p">:</span> <span class="n">deny_expired</span><span class="p">,</span>
+    <span class="s2">"damaged"</span><span class="p">:</span> <span class="n">full_refund</span><span class="p">,</span>
+    <span class="s2">"missing_items"</span><span class="p">:</span> <span class="n">partial_refund</span><span class="p">,</span>
+    <span class="s2">"vip_customer"</span><span class="p">:</span> <span class="n">goodwill_credit</span><span class="p">,</span>
 <span class="p">}</span>
 
 
@@ -2459,13 +2489,13 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">chooseRefund</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">RefundDecision</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">cancelled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">denyRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;cancelled&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">denyRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="s2">"cancelled"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">fraudReview</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">manualReview</span><span class="p">(</span><span class="nx">order</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">daysSincePurchase</span><span class="w"> </span><span class="o">&gt;</span><span class="w"> </span><span class="mf">30</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">denyRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;expired&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">denyRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="s2">"expired"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">damaged</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">fullRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">);</span>
@@ -2476,7 +2506,7 @@
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">vipCustomer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">goodwillCredit</span><span class="p">(</span><span class="nx">order</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">denyRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;not_eligible&quot;</span><span class="p">);</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">denyRefund</span><span class="p">(</span><span class="nx">order</span><span class="p">,</span><span class="w"> </span><span class="s2">"not_eligible"</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
@@ -2506,7 +2536,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.high_complexity]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_cyclomatic</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="c1"># allowed independent control-flow paths</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2539,29 +2569,29 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">status_for</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">cancelled</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;cancelled&quot;</span>
+        <span class="k">return</span> <span class="s2">"cancelled"</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">refunded</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;refunded&quot;</span>
+        <span class="k">return</span> <span class="s2">"refunded"</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;failed&quot;</span>
+        <span class="k">return</span> <span class="s2">"failed"</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">paid</span><span class="p">:</span>
-        <span class="k">return</span> <span class="s2">&quot;paid&quot;</span>
-    <span class="k">return</span> <span class="s2">&quot;open&quot;</span>
+        <span class="k">return</span> <span class="s2">"paid"</span>
+    <span class="k">return</span> <span class="s2">"open"</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Group related guards or extract decision helpers.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">status_for</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="n">rules</span> <span class="o">=</span> <span class="p">(</span>
-        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">cancelled</span><span class="p">,</span> <span class="s2">&quot;cancelled&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">refunded</span><span class="p">,</span> <span class="s2">&quot;refunded&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">failed</span><span class="p">,</span> <span class="s2">&quot;failed&quot;</span><span class="p">),</span>
-        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">paid</span><span class="p">,</span> <span class="s2">&quot;paid&quot;</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">cancelled</span><span class="p">,</span> <span class="s2">"cancelled"</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">refunded</span><span class="p">,</span> <span class="s2">"refunded"</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">failed</span><span class="p">,</span> <span class="s2">"failed"</span><span class="p">),</span>
+        <span class="p">(</span><span class="n">order</span><span class="o">.</span><span class="n">paid</span><span class="p">,</span> <span class="s2">"paid"</span><span class="p">),</span>
     <span class="p">)</span>
     <span class="k">for</span> <span class="n">applies</span><span class="p">,</span> <span class="n">status</span> <span class="ow">in</span> <span class="n">rules</span><span class="p">:</span>
         <span class="k">if</span> <span class="n">applies</span><span class="p">:</span>
             <span class="k">return</span> <span class="n">status</span>
-    <span class="k">return</span> <span class="s2">&quot;open&quot;</span>
+    <span class="k">return</span> <span class="s2">"open"</span>
 </code></pre></div>
 </details></p>
 </div>
@@ -2569,28 +2599,28 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">statusFor</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">cancelled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;cancelled&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"cancelled"</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">refunded</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;refunded&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"refunded"</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">failed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;failed&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"failed"</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">paid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;paid&quot;</span><span class="p">;</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"paid"</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;open&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="s2">"open"</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Keep meaningful guard clauses, then extract noisy branches into predicates.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">const</span><span class="w"> </span><span class="nx">ORDER_STATUS_RULES</span><span class="o">:</span><span class="w"> </span><span class="kt">Array</span><span class="o">&lt;</span><span class="p">[</span><span class="nx">keyof</span><span class="w"> </span><span class="nx">Order</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">]</span><span class="o">&gt;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span>
-<span class="w">  </span><span class="p">[</span><span class="s2">&quot;cancelled&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;cancelled&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="p">[</span><span class="s2">&quot;refunded&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;refunded&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="p">[</span><span class="s2">&quot;failed&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;failed&quot;</span><span class="p">],</span>
-<span class="w">  </span><span class="p">[</span><span class="s2">&quot;paid&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;paid&quot;</span><span class="p">],</span>
+<span class="w">  </span><span class="p">[</span><span class="s2">"cancelled"</span><span class="p">,</span><span class="w"> </span><span class="s2">"cancelled"</span><span class="p">],</span>
+<span class="w">  </span><span class="p">[</span><span class="s2">"refunded"</span><span class="p">,</span><span class="w"> </span><span class="s2">"refunded"</span><span class="p">],</span>
+<span class="w">  </span><span class="p">[</span><span class="s2">"failed"</span><span class="p">,</span><span class="w"> </span><span class="s2">"failed"</span><span class="p">],</span>
+<span class="w">  </span><span class="p">[</span><span class="s2">"paid"</span><span class="p">,</span><span class="w"> </span><span class="s2">"paid"</span><span class="p">],</span>
 <span class="p">];</span>
 
 <span class="kd">function</span><span class="w"> </span><span class="nx">statusFor</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
@@ -2599,7 +2629,7 @@
 <span class="w">      </span><span class="k">return</span><span class="w"> </span><span class="nx">status</span><span class="p">;</span>
 <span class="w">    </span><span class="p">}</span>
 <span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="s2">&quot;open&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="s2">"open"</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
 </details></p>
@@ -2610,7 +2640,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.too_many_returns]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_returns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed return statements before flagging</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2692,7 +2722,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.nested_ternary]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2767,7 +2797,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.unnecessary_nested_if]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2842,7 +2872,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.redundant_validation]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2900,10 +2930,10 @@
 </div>
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
-<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">loadUser</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./dep_a&quot;</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">chargeUser</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./dep_b&quot;</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">sendReceipt</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./dep_c&quot;</span><span class="p">;</span>
-<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">archiveReceipt</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">&quot;./dep_d&quot;</span><span class="p">;</span>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">loadUser</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"./dep_a"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">chargeUser</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"./dep_b"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">sendReceipt</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"./dep_c"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">run</span><span class="w"> </span><span class="kr">as</span><span class="w"> </span><span class="nx">archiveReceipt</span><span class="w"> </span><span class="p">}</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"./dep_d"</span><span class="p">;</span>
 
 <span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">processCheckout</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">loadUser</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">chargeUser</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">sendReceipt</span><span class="p">()</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">archiveReceipt</span><span class="p">();</span>
@@ -2936,7 +2966,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.god_module]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_fan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">25</span><span class="w"> </span><span class="c1"># combined incoming/outgoing fan before god-module risk</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -2964,10 +2994,10 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">import_customers</span><span class="p">(</span><span class="n">rows</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]])</span> <span class="o">-&gt;</span> <span class="nb">list</span><span class="p">[</span><span class="n">Customer</span><span class="p">]:</span>
     <span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">Customer</span><span class="p">:</span>
-        <span class="n">email</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-        <span class="n">status</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">plan</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;plan&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-        <span class="n">region</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">email</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"email"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+        <span class="n">status</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"status"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">plan</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"plan"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+        <span class="n">region</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"region"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
         <span class="k">return</span> <span class="n">Customer</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">plan</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
 
     <span class="k">return</span> <span class="p">[</span><span class="n">normalize</span><span class="p">(</span><span class="n">row</span><span class="p">)</span> <span class="k">for</span> <span class="n">row</span> <span class="ow">in</span> <span class="n">rows</span><span class="p">]</span>
@@ -2976,10 +3006,10 @@
 <summary>Proposed fix</summary></p>
 <p>Promote the helper to a top-level private function with direct tests.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">normalize_customer</span><span class="p">(</span><span class="n">row</span><span class="p">:</span> <span class="n">Row</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Customer</span><span class="p">:</span>
-    <span class="n">email</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
-    <span class="n">status</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;status&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">plan</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;plan&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
-    <span class="n">region</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">&quot;region&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"email"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+    <span class="n">status</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"status"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"plan"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
+    <span class="n">region</span> <span class="o">=</span> <span class="n">row</span><span class="p">[</span><span class="s2">"region"</span><span class="p">]</span><span class="o">.</span><span class="n">strip</span><span class="p">()</span>
     <span class="k">return</span> <span class="n">Customer</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">status</span><span class="p">,</span> <span class="n">plan</span><span class="p">,</span> <span class="n">region</span><span class="p">)</span>
 
 
@@ -3025,7 +3055,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.heavy_nested_function]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">15</span><span class="w"> </span><span class="c1"># allowed function or nested-function length</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3143,7 +3173,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.large_class]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_methods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">20</span><span class="w"> </span><span class="c1"># allowed methods before a class is large</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3251,7 +3281,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.long_function]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w"> </span><span class="c1"># allowed function or nested-function length</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3332,7 +3362,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.long_parameter_list]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_params</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="c1"># allowed parameters before flagging</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3449,7 +3479,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.narrating_code]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_comment_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="c1"># detector-specific threshold</span>
 <span class="n">max_comment_ratio_percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w"> </span><span class="c1"># detector-specific threshold</span>
 </code></pre></div>
@@ -3478,7 +3508,7 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">format_label</span><span class="p">(</span><span class="n">street</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">city</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">zip_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">street</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">city</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">zip_code</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">street</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">city</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">zip_code</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">shipping_zone</span><span class="p">(</span><span class="n">street</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">city</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span> <span class="n">zip_code</span><span class="p">:</span> <span class="nb">str</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -3498,7 +3528,7 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">format_label</span><span class="p">(</span><span class="n">address</span><span class="p">:</span> <span class="n">Address</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
-    <span class="k">return</span> <span class="sa">f</span><span class="s2">&quot;</span><span class="si">{</span><span class="n">address</span><span class="o">.</span><span class="n">street</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">address</span><span class="o">.</span><span class="n">city</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">address</span><span class="o">.</span><span class="n">zip_code</span><span class="si">}</span><span class="s2">&quot;</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"</span><span class="si">{</span><span class="n">address</span><span class="o">.</span><span class="n">street</span><span class="si">}</span><span class="s2">, </span><span class="si">{</span><span class="n">address</span><span class="o">.</span><span class="n">city</span><span class="si">}</span><span class="s2"> </span><span class="si">{</span><span class="n">address</span><span class="o">.</span><span class="n">zip_code</span><span class="si">}</span><span class="s2">"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">shipping_zone</span><span class="p">(</span><span class="n">address</span><span class="p">:</span> <span class="n">Address</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -3541,7 +3571,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.data_clump]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_fields</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># shared fields required for a data clump</span>
 <span class="n">min_occurrences</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">3</span><span class="w"> </span><span class="c1"># functions sharing the clump before flagging</span>
 </code></pre></div>
@@ -3642,7 +3672,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.divergent_change]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3739,7 +3769,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.divergent_abstraction]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3807,7 +3837,7 @@
 <span class="p">}</span>
 
 <span class="kd">class</span><span class="w"> </span><span class="nx">BillingPolicy</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;standard&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"standard"</span><span class="p">;</span>
 
 <span class="w">  </span><span class="nx">feeFor</span><span class="p">(</span><span class="nx">account</span><span class="o">:</span><span class="w"> </span><span class="kt">Account</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="kd">const</span><span class="w"> </span><span class="nx">fee</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">balance</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">feeRate</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">limit</span><span class="p">;</span>
@@ -3829,7 +3859,7 @@
 <span class="p">}</span>
 
 <span class="kd">class</span><span class="w"> </span><span class="nx">BillingPolicy</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;standard&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">name</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"standard"</span><span class="p">;</span>
 
 <span class="w">  </span><span class="nx">feeFor</span><span class="p">(</span><span class="nx">account</span><span class="o">:</span><span class="w"> </span><span class="kt">Account</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="k">this</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">account</span><span class="p">.</span><span class="nx">billingFee</span><span class="p">()];</span>
@@ -3844,7 +3874,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.feature_envy]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -3872,8 +3902,8 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Account</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="s2">&quot;secret&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_salt</span> <span class="o">=</span> <span class="s2">&quot;pepper&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="s2">"secret"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_salt</span> <span class="o">=</span> <span class="s2">"pepper"</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">audit_account</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
@@ -3885,8 +3915,8 @@
 <p>Add a public method on the collaborator or merge the coupled objects.</p>
 <p><div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">Account</span><span class="p">:</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="s2">&quot;secret&quot;</span>
-        <span class="bp">self</span><span class="o">.</span><span class="n">_salt</span> <span class="o">=</span> <span class="s2">&quot;pepper&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">=</span> <span class="s2">"secret"</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_salt</span> <span class="o">=</span> <span class="s2">"pepper"</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">audit_key</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
         <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_token</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">_salt</span>
@@ -3901,8 +3931,8 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">Account</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;secret&quot;</span><span class="p">;</span>
-<span class="w">  </span><span class="nx">_salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;pepper&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">_token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"secret"</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">_salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"pepper"</span><span class="p">;</span>
 <span class="p">}</span>
 
 <span class="kd">function</span><span class="w"> </span><span class="nx">auditAccount</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
@@ -3914,8 +3944,8 @@
 <summary>Proposed fix</summary></p>
 <p>Expose a narrow method/property instead of reaching into internals.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">class</span><span class="w"> </span><span class="nx">Account</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;secret&quot;</span><span class="p">;</span>
-<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;pepper&quot;</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">token</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"secret"</span><span class="p">;</span>
+<span class="w">  </span><span class="k">private</span><span class="w"> </span><span class="nx">salt</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"pepper"</span><span class="p">;</span>
 
 <span class="w">  </span><span class="nx">auditKey</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">token</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="k">this</span><span class="p">.</span><span class="nx">salt</span><span class="p">;</span>
@@ -3935,7 +3965,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.inappropriate_intimacy]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4026,7 +4056,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.message_chain]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed message-chain depth</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4090,11 +4120,11 @@
 
 <span class="kd">class</span><span class="w"> </span><span class="nx">ReadOnlyReport</span><span class="w"> </span><span class="k">extends</span><span class="w"> </span><span class="nx">Report</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">exportPdf</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="nb">Uint8Array</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;not supported&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"not supported"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 
 <span class="w">  </span><span class="nx">sendEmail</span><span class="p">()</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">&quot;not supported&quot;</span><span class="p">);</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"not supported"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4115,7 +4145,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.refused_bequest]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4186,7 +4216,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.shotgun_surgery_hazard]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_blast</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># dependent modules before shotgun-surgery risk</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4214,9 +4244,9 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">create_user</span><span class="p">(</span><span class="n">payload</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="n">User</span><span class="p">:</span>
-    <span class="n">email</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">]</span>
-    <span class="n">plan</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;plan&quot;</span><span class="p">]</span>
-    <span class="n">active</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">]</span>
+    <span class="n">email</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">"email"</span><span class="p">]</span>
+    <span class="n">plan</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">"plan"</span><span class="p">]</span>
+    <span class="n">active</span> <span class="o">=</span> <span class="n">payload</span><span class="p">[</span><span class="s2">"active"</span><span class="p">]</span>
     <span class="k">return</span> <span class="n">users</span><span class="o">.</span><span class="n">create</span><span class="p">(</span><span class="n">email</span><span class="p">,</span> <span class="n">plan</span><span class="p">,</span> <span class="n">active</span><span class="p">)</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
@@ -4240,9 +4270,9 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">createUser</span><span class="p">(</span><span class="nx">payload</span><span class="o">:</span><span class="w"> </span><span class="kt">Record</span><span class="o">&lt;</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">unknown</span><span class="o">&gt;</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">];</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">[</span><span class="s2">&quot;plan&quot;</span><span class="p">];</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">];</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">email</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">[</span><span class="s2">"email"</span><span class="p">];</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">plan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">[</span><span class="s2">"plan"</span><span class="p">];</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">active</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">payload</span><span class="p">[</span><span class="s2">"active"</span><span class="p">];</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">users</span><span class="p">.</span><span class="nx">create</span><span class="p">(</span><span class="nx">email</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="p">,</span><span class="w"> </span><span class="nx">active</span><span class="p">);</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -4267,7 +4297,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.implicit_schema]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_keys</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># string keys on one object before implicit-schema risk</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4301,8 +4331,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">notify_contact</span><span class="p">(</span><span class="n">raw_contact</span><span class="p">:</span> <span class="n">Any</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">raw_contact</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">]:</span>
-        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">raw_contact</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">raw_contact</span><span class="p">[</span><span class="s2">"active"</span><span class="p">]:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">raw_contact</span><span class="p">[</span><span class="s2">"email"</span><span class="p">])</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -4329,8 +4359,8 @@
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">notify_contact</span><span class="p">(</span><span class="n">contact</span><span class="p">:</span> <span class="nb">dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Any</span><span class="p">])</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-    <span class="k">if</span> <span class="n">contact</span><span class="p">[</span><span class="s2">&quot;active&quot;</span><span class="p">]:</span>
-        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">contact</span><span class="p">[</span><span class="s2">&quot;email&quot;</span><span class="p">])</span>
+    <span class="k">if</span> <span class="n">contact</span><span class="p">[</span><span class="s2">"active"</span><span class="p">]:</span>
+        <span class="n">mailer</span><span class="o">.</span><span class="n">send</span><span class="p">(</span><span class="n">contact</span><span class="p">[</span><span class="s2">"email"</span><span class="p">])</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -4473,24 +4503,24 @@
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
-<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;low&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"low"</span>
 </code></pre></div>
 <p>Flags only direct escape hatches.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
-<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;medium&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"medium"</span>
 </code></pre></div>
 <p>Flags escape hatches plus schema-erasing maps and records.</p>
 </div>
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
-<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;high&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"high"</span>
 </code></pre></div>
 <p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
 </div>
@@ -4567,7 +4597,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.tuple_packing]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_tuple_return</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="c1"># allowed positional tuple items in a return</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4595,8 +4625,8 @@
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">load_payload</span><span class="p">(</span><span class="n">raw</span><span class="p">):</span>
     <span class="k">try</span><span class="p">:</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;names&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
-        <span class="n">options</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;options&quot;</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
+        <span class="n">names</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"names"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">[]</span>
+        <span class="n">options</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"options"</span><span class="p">)</span> <span class="ow">or</span> <span class="p">{}</span>
         <span class="k">return</span> <span class="n">names</span><span class="p">,</span> <span class="n">options</span>
     <span class="k">except</span><span class="p">:</span>
         <span class="k">return</span> <span class="p">[],</span> <span class="p">{}</span>
@@ -4639,7 +4669,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.defensive_fallback]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4702,7 +4732,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.mutated_parameter]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">include_attributes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="c1"># also flag mutation of fields on parameters</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4768,7 +4798,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.reassigned_parameter]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4841,7 +4871,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.split_variable]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_assigns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="c1"># assignments to one local before flagging</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -4935,7 +4965,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.nested_loop]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -5004,7 +5034,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.n_plus_one_call]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -5077,7 +5107,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.repeated_iteration]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
@@ -5154,7 +5184,7 @@
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.sort_in_loop]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="c1"># This detector has no extra threshold knobs.</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">

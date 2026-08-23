@@ -690,6 +690,8 @@
       
         
       
+        
+      
     
     
     
@@ -734,6 +736,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/reflexez/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Affected Tests with Reflexez
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -1115,10 +1145,10 @@ is a heavily commented real-world example.</p>
 <code>duplication</code> = <code>advisory</code>, <code>dead_code</code> = <code>advisory</code>. Smells inherit the
 severity of their detector. Override per pillar or per smell:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[action]</span>
-<span class="n">duplication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">duplication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 
 <span class="k">[smells.rules.loose_typing]</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;must_fix&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"must_fix"</span>
 </code></pre></div>
 <h2 id="smell-rules-base-vs-per-language">Smell rules: base vs per-language</h2>
 <p><code>[smells.rules.&lt;kind&gt;]</code> applies to every language.
@@ -1130,7 +1160,7 @@ explicit suppression.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># All languages: long functions warn past 80 lines.</span>
 <span class="k">[smells.rules.long_function]</span>
 <span class="n">max_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">80</span>
-<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;warning&quot;</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 
 <span class="c1"># ...except TypeScript, which allows 120.</span>
 <span class="k">[smells.typescript.rules.long_function]</span>
@@ -1143,10 +1173,10 @@ explicit suppression.</p>
 points, and your lists are <strong>merged with</strong> the language-profile defaults — you
 only add what is specific to your project:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[dead_code]</span>
-<span class="n">entrypoints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;route&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;fixture&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;task&quot;</span><span class="p">]</span><span class="w">   </span><span class="c1"># decorator trailing names that register code</span>
-<span class="n">entrypoint_names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;register&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;main&quot;</span><span class="p">]</span><span class="w">      </span><span class="c1"># function/class names invoked dynamically</span>
-<span class="n">entrypoint_bases</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;AppConfig&quot;</span><span class="p">]</span><span class="w">             </span><span class="c1"># base classes loaded dynamically</span>
-<span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/scripts/**&quot;</span><span class="p">]</span><span class="w">             </span><span class="c1"># file globs reached outside the import graph</span>
+<span class="n">entrypoints</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"route"</span><span class="p">,</span><span class="w"> </span><span class="s2">"fixture"</span><span class="p">,</span><span class="w"> </span><span class="s2">"task"</span><span class="p">]</span><span class="w">   </span><span class="c1"># decorator trailing names that register code</span>
+<span class="n">entrypoint_names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"main"</span><span class="p">]</span><span class="w">      </span><span class="c1"># function/class names invoked dynamically</span>
+<span class="n">entrypoint_bases</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"AppConfig"</span><span class="p">]</span><span class="w">             </span><span class="c1"># base classes loaded dynamically</span>
+<span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/scripts/**"</span><span class="p">]</span><span class="w">             </span><span class="c1"># file globs reached outside the import graph</span>
 </code></pre></div>
 <p>If dead-code output feels incomplete, broader unused-symbol classes are
 available as opt-ins (your generated config shows their defaults):</p>
@@ -1161,7 +1191,7 @@ config fixes a whole class of false positives.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[duplication]</span>
 <span class="n">threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w">   </span><span class="c1"># minimum structural-token run to report a clone; raise to quieten</span>
 <span class="n">max_gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w">     </span><span class="c1"># stitch clones across small consistent edits; 0 disables</span>
-<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/tests/**&quot;</span><span class="p">,</span><span class="w"> </span><span class="s2">&quot;**/migrations/**&quot;</span><span class="p">]</span><span class="w">   </span><span class="c1"># clone-only excludes (files stay in the graph)</span>
+<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/tests/**"</span><span class="p">,</span><span class="w"> </span><span class="s2">"**/migrations/**"</span><span class="p">]</span><span class="w">   </span><span class="c1"># clone-only excludes (files stay in the graph)</span>
 </code></pre></div>
 <p>Opt-in detectors for harder clones: <code>near_miss</code> (consistent renames),
 <code>class_name_duplicates</code>, <code>class_property_overlap_min</code>, and
@@ -1170,8 +1200,8 @@ config fixes a whole class of false positives.</p>
 <p>Each rule forbids any module matching <code>from</code> from importing any module matching
 <code>to</code>:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[[boundaries.forbidden]]</span>
-<span class="n">from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;app.domain&quot;</span>
-<span class="n">to</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">&quot;app.api&quot;</span>
+<span class="n">from</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"app.domain"</span>
+<span class="n">to</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"app.api"</span>
 </code></pre></div>
 <p>Matching, per endpoint:</p>
 <ul>
@@ -1192,8 +1222,8 @@ Keys are pillars or detector ids; values are substrings of the finding label as
 shown in a scan. The file is committed, so accepted findings stop flagging for
 every teammate and their agents:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[accept]</span>
-<span class="n">dead_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;legacy.compat::shim&quot;</span><span class="p">]</span><span class="w">        </span><span class="c1"># a specific accepted symbol</span>
-<span class="s2">&quot;smells/god_module&quot;</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;app.registry&quot;</span><span class="p">]</span><span class="w">     </span><span class="c1"># a specific accepted detector hit</span>
+<span class="n">dead_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"legacy.compat::shim"</span><span class="p">]</span><span class="w">        </span><span class="c1"># a specific accepted symbol</span>
+<span class="s2">"smells/god_module"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"app.registry"</span><span class="p">]</span><span class="w">     </span><span class="c1"># a specific accepted detector hit</span>
 </code></pre></div>
 <p>There are three ways to silence findings — pick by scope:</p>
 <table>
@@ -1228,13 +1258,14 @@ every teammate and their agents:</p>
 </table>
 <h2 id="global-scope">Global scope</h2>
 <div class="highlight"><pre><span></span><code><span class="n">roots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w">                          </span><span class="c1"># package roots; empty = auto-detect from project layout</span>
-<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">&quot;**/generated/**&quot;</span><span class="p">]</span><span class="w">       </span><span class="c1"># excluded from every pillar</span>
+<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/generated/**"</span><span class="p">]</span><span class="w">       </span><span class="c1"># excluded from every pillar</span>
 </code></pre></div>
 <h2 id="gate-and-local-metrics">Gate and local metrics</h2>
-<p>Persistent analysis snapshots are disabled by default. Enable them per project,
-or temporarily override the setting with <code>SENSEZ_ANALYSIS_CACHE=1</code> or <code>0</code>:</p>
+<p>CLI scans are stateless and never persist parsed source facts. Long-lived MCP
+and LSP processes reuse analysis state in memory for their own lifetime:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[cache]</span>
-<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="c1"># Enables process-local reuse in MCP/LSP only; CLI scans always remain stateless.</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
 </code></pre></div>
 <div class="highlight"><pre><span></span><code><span class="k">[gate]</span>
 <span class="n">repeat_limit</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w">   </span><span class="c1"># how often the gate re-reports the same finding before auto-deferring</span>

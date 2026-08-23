@@ -11,10 +11,10 @@
       
       
       
-        <link rel="prev" href="../reflexez/">
+        <link rel="prev" href="../../local-metrics/">
       
       
-        <link rel="next" href="../github-action/">
+        <link rel="next" href="../mcp-and-agents/">
       
       
         
@@ -25,7 +25,7 @@
     
     
       
-        <title>MCP and Agents - sensez</title>
+        <title>Affected Tests with Reflexez - sensez</title>
       
     
     
@@ -78,7 +78,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#mcp-and-agents" class="md-skip">
+        <a href="#affected-tests-with-reflexez" class="md-skip">
           Skip to content
         </a>
       
@@ -117,7 +117,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              MCP and Agents
+              Affected Tests with Reflexez
             
           </span>
         </div>
@@ -534,34 +534,6 @@
                 
   
   
-  
-  
-    <li class="md-nav__item">
-      <a href="../reflexez/" class="md-nav__link">
-        
-  
-  
-  <span class="md-ellipsis">
-    
-  
-    Affected Tests with Reflexez
-  
-
-    
-  </span>
-  
-  
-
-      </a>
-    </li>
-  
-
-              
-            
-              
-                
-  
-  
     
   
   
@@ -581,7 +553,7 @@
   <span class="md-ellipsis">
     
   
-    MCP and Agents
+    Affected Tests with Reflexez
   
 
     
@@ -599,7 +571,7 @@
   <span class="md-ellipsis">
     
   
-    MCP and Agents
+    Affected Tests with Reflexez
   
 
     
@@ -625,10 +597,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
+  <a href="#inspect-before-executing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Setup
+        Inspect before executing
       
     </span>
   </a>
@@ -636,10 +608,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tools" class="md-nav__link">
+  <a href="#runner-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tools
+        Runner integration
       
     </span>
   </a>
@@ -647,21 +619,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#use-in-a-session" class="md-nav__link">
+  <a href="#safety-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Use In A Session
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pair-with-ci" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pair With CI
+        Safety model
       
     </span>
   </a>
@@ -672,6 +633,34 @@
   
 </nav>
       
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../mcp-and-agents/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    MCP and Agents
+  
+
+    
+  </span>
+  
+  
+
+      </a>
     </li>
   
 
@@ -830,10 +819,10 @@
     <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
       
         <li class="md-nav__item">
-  <a href="#setup" class="md-nav__link">
+  <a href="#inspect-before-executing" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Setup
+        Inspect before executing
       
     </span>
   </a>
@@ -841,10 +830,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#tools" class="md-nav__link">
+  <a href="#runner-integration" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Tools
+        Runner integration
       
     </span>
   </a>
@@ -852,21 +841,10 @@
 </li>
       
         <li class="md-nav__item">
-  <a href="#use-in-a-session" class="md-nav__link">
+  <a href="#safety-model" class="md-nav__link">
     <span class="md-ellipsis">
       
-        Use In A Session
-      
-    </span>
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#pair-with-ci" class="md-nav__link">
-    <span class="md-ellipsis">
-      
-        Pair With CI
+        Safety model
       
     </span>
   </a>
@@ -890,43 +868,76 @@
 
 
 
-<h1 id="mcp-and-agents">MCP and Agents</h1>
-<p>Sensez is designed to sit in the middle of an edit loop, not just at the end of
-CI. The MCP server is the integration point that lets a coding agent scan
-repeatedly during a session.</p>
-<h2 id="setup">Setup</h2>
-<p>There is nothing to run by hand. <code>sensez init</code> registers the server with your
-coding agent — Claude Code, Cursor, Cline, Codex, OpenCode, and Pi are
-supported — and the agent launches it automatically at startup. See
-<a href="../../getting-started/">Getting Started</a>.</p>
-<h2 id="tools">Tools</h2>
+<h1 id="affected-tests-with-reflexez">Affected tests with Reflexez</h1>
+<p>Reflexez runs the repository's existing pytest, Vitest, or Jest installation. It builds an impact plan and passes ordinary test-file paths to the runner.</p>
+<p>Vitest already provides <a href="https://main.vitest.dev/config/changed"><code>--changed</code></a>
+and Jest provides
+<a href="https://jestjs.io/docs/cli#--findrelatedtests-spaceseparatedlistofsourcefiles"><code>--findRelatedTests</code></a>;
+pytest core provides path/name filters
+and cached-failure selection, but not changed-source dependency selection.
+Reflexez adds one runner-independent workflow across all three: Git change-scope
+handling, transitive cross-file impact, computed dynamic-import analysis,
+explainable JSON plans, and conservative full-suite fallbacks. No test config,
+plugin, fixture, or runner command needs replacing.</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.
+</code></pre></div>
+<p>By default the change scope includes staged, unstaged, and untracked files. For
+a branch or CI job, select an explicit base:</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--base<span class="w"> </span>origin/main
+</code></pre></div>
+<h2 id="inspect-before-executing">Inspect before executing</h2>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--plan
+sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--plan<span class="w"> </span>--json
+</code></pre></div>
+<p>Every selected file includes a reason and dependency distance. Reasons distinguish
+changed tests, direct dependencies, transitive dependencies, computed dynamic
+imports, explicit full runs, and safety fallbacks.</p>
+<h2 id="runner-integration">Runner integration</h2>
+<p>Reflexez detects local Vitest and Jest installations from <code>package.json</code> and
+detects pytest tests by its standard file conventions. Force a runner only when
+auto-detection is ambiguous:</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--runner<span class="w"> </span>pytest
+sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--runner<span class="w"> </span>vitest
+</code></pre></div>
+<p>Arguments after <code>--</code> are forwarded unchanged:</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--<span class="w"> </span>--maxfail<span class="o">=</span><span class="m">1</span><span class="w">      </span><span class="c1"># pytest</span>
+sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--<span class="w"> </span>--reporter<span class="o">=</span>dot<span class="w">   </span><span class="c1"># Vitest</span>
+</code></pre></div>
+<p>Use explicit paths in editor and staged-file integrations:</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--changed-file<span class="w"> </span>src/service.ts
+</code></pre></div>
+<h2 id="safety-model">Safety model</h2>
+<p>Reflexez widens to the full discovered suite when a narrow plan cannot be proven
+safe. Current global triggers include:</p>
 <ul>
-<li><code>noze_sniff</code> — scan the repository for duplication, dead code, cycles,
-  boundary violations, and smells. Takes an absolute repository root as <code>path</code>.
-  Results are diff-focused by default (findings touched by uncommitted
-  changes, computed over the full graph); pass <code>diff=false</code> for a full audit
-  and <code>limit</code> to cap findings per pillar.</li>
-<li><code>noze_gate</code> — experimental end-of-turn diff gate, intended for hook
-  integration rather than direct calls. May be noisy on short or Q&amp;A turns.</li>
-<li><code>noze_explain</code> — explain a finding category in plain English.</li>
-<li><code>get_configuration_summary</code> — summarize the effective configuration and the
-  noisiest rules, as a starting point for tuning.</li>
-<li><code>brainz_report</code> — summarize local-only usage and resolution metrics.</li>
-<li><code>brainz_triage</code> — record the user's debt or false-positive verdict on a
-  finding.</li>
+<li>dependency manifests and lockfiles;</li>
+<li>pytest configuration and <code>conftest.py</code>;</li>
+<li>Vitest/Jest configuration;</li>
+<li>Sensez configuration and common shared test setup/environment files;</li>
+<li>TypeScript module-resolution configuration;</li>
+<li>deleted source files or incomplete parsing;</li>
+<li>changed source code with no provable test dependency;</li>
+<li>relevant dynamic imports whose targets cannot be resolved.</li>
 </ul>
-<h2 id="use-in-a-session">Use In A Session</h2>
-<p>The important habit is to keep feedback close to the edit:</p>
-<ol>
-<li>Run a diff-scoped scan when the change is still fresh.</li>
-<li>Surface only the findings that matter for the current turn.</li>
-<li>Record debt or false positives when a finding is real but intentionally not
-   being fixed now.</li>
-</ol>
-<h2 id="pair-with-ci">Pair With CI</h2>
-<p>Use the MCP workflow for immediacy, and keep CI for enforcement. The agent
-loop should be fast and conversational; CI should be the slower, stricter back
-stop.</p>
+<p>Literal <code>import()</code>, CommonJS <code>require()</code>, <code>importlib.import_module()</code>, and
+<code>__import__()</code> targets use the normal import graph. Reflexez additionally resolves
+simple constant indirection, concatenation, template/f-string patterns, and
+<code>import.meta.glob</code> patterns. This work is isolated to the <code>reflexez</code> command;
+ordinary <code>noze</code> scans do not invoke the dynamic-import pass.</p>
+<p>The plan always reports the repository-wide count of opaque computed imports.
+By default, only an opaque import in the selected impact path widens execution;
+this matches the practical safety model of native changed-test tools. Use
+<code>--strict-dynamic</code> in high-assurance CI to widen on any opaque computed import:</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--base<span class="w"> </span>origin/main<span class="w"> </span>--strict-dynamic
+</code></pre></div>
+<p><code>--full</code> is useful for validating the integration while retaining runner
+discovery:</p>
+<div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--full
+</code></pre></div>
+<p>Reflexez intentionally does not enable unsafe runner optimizations such as
+disabling Vitest isolation or automatically adding pytest-xdist. Runner-level
+parallelism can change fixture, process, and shared-resource semantics; pass
+those options explicitly after measuring them in the repository.</p>
 
 
 

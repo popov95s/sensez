@@ -429,6 +429,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sensez-reflexez-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sensez reflexez --help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sensez-noze-help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -640,6 +651,8 @@
       
         
       
+        
+      
     
     
     
@@ -684,6 +697,34 @@
 
           </label>
           <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../usage/reflexez/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Affected Tests with Reflexez
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
             
               
                 
@@ -877,6 +918,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#sensez-reflexez-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sensez reflexez --help
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#sensez-noze-help" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -997,7 +1049,7 @@
 <h2 id="sensez-help"><code>sensez --help</code></h2>
 <div class="highlight"><pre><span></span><code>Sensez — the structural maintainability layer for your codebase.
 
-Finds the cross-file problems linters and type-checkers can&#39;t see: duplication, dead code, import cycles, layering/boundary violations, and design smells. Opinionated guardrails that keep a codebase coherent and maintainable as it grows.
+Finds the cross-file problems linters and type-checkers can't see: duplication, dead code, import cycles, layering/boundary violations, and design smells. Opinionated guardrails that keep a codebase coherent and maintainable as it grows.
 
 Run it alongside your linter and type-checker (e.g. Ruff/ty for Python, ESLint/tsc for JS/TS), not instead of them.
 
@@ -1005,6 +1057,7 @@ Usage: sensez [OPTIONS] [PATH] [COMMAND]
 
 Commands:
   noze    Code smell and structure checks. Defaults to scanning the given path
+  reflexez  Run only tests affected by current changes, using the existing test runner
   init    Set up a repository, or offer a global agent install outside Git
   mcp     MCP server commands
   brainz  Local metrics and value reports
@@ -1053,7 +1106,7 @@ Options:
           Keep only findings touching the working-tree diff vs HEAD (uses git)
 
       --diff-from &lt;FILE&gt;
-          Keep only findings touching a unified diff read from FILE (&quot;-&quot; = stdin)
+          Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
       --fail-on-new [&lt;LEVEL&gt;]
           Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
@@ -1064,10 +1117,30 @@ Options:
           Append a plain-English legend defining each finding category shown
 
   -h, --help
-          Print help (see a summary with &#39;-h&#39;)
+          Print help (see a summary with '-h')
 
   -V, --version
           Print version
+</code></pre></div>
+<h2 id="sensez-reflexez-help"><code>sensez reflexez --help</code></h2>
+<div class="highlight"><pre><span></span><code>Run only tests affected by current changes, using the existing test runner
+
+Usage: sensez reflexez [OPTIONS] [PATH] [-- &lt;RUNNER_ARGS&gt;...]
+
+Arguments:
+  [PATH]            Repository root (default: current directory)
+  [RUNNER_ARGS]...  Arguments passed unchanged to the selected test runner(s)
+
+Options:
+      --base &lt;BASE&gt;          Compare committed changes with the merge-base of this Git revision
+      --staged               Consider staged changes only
+      --changed-file &lt;PATH&gt;  Analyze this changed path instead of consulting Git. Repeatable
+      --plan                 Print the test plan without executing it
+      --json                 Emit the plan as machine-readable JSON; implies --plan
+      --full                 Select every discovered test while retaining runner discovery
+      --strict-dynamic       Run the full suite if any computed dynamic import remains unresolved
+      --runner &lt;RUNNER&gt;      Force one runner instead of auto-detecting it [default: auto] [possible values: auto, pytest, vitest, jest]
+  -h, --help                 Print help
 </code></pre></div>
 <h2 id="sensez-noze-help"><code>sensez noze --help</code></h2>
 <div class="highlight"><pre><span></span><code>Code smell and structure checks. Defaults to scanning the given path
@@ -1122,7 +1195,7 @@ Options:
           Keep only findings touching the working-tree diff vs HEAD (uses git)
 
       --diff-from &lt;FILE&gt;
-          Keep only findings touching a unified diff read from FILE (&quot;-&quot; = stdin)
+          Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
       --fail-on-new [&lt;LEVEL&gt;]
           Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
