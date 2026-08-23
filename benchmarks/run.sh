@@ -119,7 +119,7 @@ print(json.dumps(combined))
 echo ""
 bold "==> Comparison"
 
-if [ "${L2_BENCHMARK:-1}" = "1" ]; then
+if [ "${L2_BENCHMARK:-0}" = "1" ]; then
   echo ""
   bold "==> L2 one-file-edit guard"
   cache_targets=()
