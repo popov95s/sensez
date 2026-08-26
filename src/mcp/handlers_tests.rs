@@ -5,7 +5,7 @@ use serde_json::{json, Value};
 
 #[test]
 fn tools_list_includes_metrics_tools() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let req = json!({"jsonrpc": "2.0", "id": 3, "method": "tools/list"});
     let resp = handle_message(&req).unwrap();
     let names: Vec<&str> = resp["result"]["tools"]
@@ -23,7 +23,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn usage_report_serves_a_clean_repo() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     std::fs::create_dir_all(&dir).unwrap();
@@ -41,7 +41,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn scan_tool_omits_duplicate_module_noise() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     std::fs::create_dir_all(dir.join("app")).unwrap();
@@ -67,7 +67,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn scan_tool_omits_scan_diagnostics() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     let deep = format!("x = {}1{}", "(".repeat(100_000), ")".repeat(100_000));
@@ -88,7 +88,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn scan_args_defaults_to_diff_mode() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     // The typed struct is the schema — defaults live in `Default` impl,
     // not buried in a `Value::get` chain. Empty args, explicit
     // `true`, and explicit `false` all deserialize to the right
@@ -109,7 +109,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn diff_scan_refreshes_metrics_baseline() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("m.py") else {
         return;
     };
@@ -131,7 +131,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// would be starved of their numerator.
 #[test]
 fn noze_sniff_populates_reported_counts() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("m.py") else {
         return;
     };
@@ -169,7 +169,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// the gate-funnel / conversion signals.
 #[test]
 fn noze_gate_populates_scan_and_block_metrics() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -208,7 +208,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// something identical to the last scan would be wasted I/O.
 #[test]
 fn noze_gate_skips_scan_when_nothing_changed() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };

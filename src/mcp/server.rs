@@ -127,7 +127,9 @@ async fn handle(
     let work = tokio::task::spawn_blocking(move || super::handle_message(&message));
     let response = match tokio::time::timeout(REQUEST_TIMEOUT, work).await {
         Ok(Ok(response)) => response,
-        Ok(Err(err)) => id.map(|id| error_response(Some(id), -32603, format!("handler failed: {err}"))),
+        Ok(Err(err)) => {
+            id.map(|id| error_response(Some(id), -32603, format!("handler failed: {err}")))
+        }
         Err(_elapsed) => id.map(|id| error_response(Some(id), -32000, "request timed out")),
     };
     if let Some(response) = response {
@@ -200,7 +202,9 @@ mod tests {
         let permits = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
         let (tx, mut rx) = mpsc::channel(8);
         dispatch(line, &permits, &tx).await.unwrap();
-        rx.recv().await.map(|text| serde_json::from_str(&text).unwrap())
+        rx.recv()
+            .await
+            .map(|text| serde_json::from_str(&text).unwrap())
     }
 
     #[tokio::test]

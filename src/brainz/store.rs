@@ -38,8 +38,7 @@ pub fn save_totals(root: &Path, totals: &Totals) -> Result<()> {
 pub(super) fn write_durable(target: &Path, bytes: &[u8]) -> Result<()> {
     use std::io::Write;
     let tmp = target.with_extension("tmp");
-    let mut file = fs::File::create(&tmp)
-        .with_context(|| format!("creating {}", tmp.display()))?;
+    let mut file = fs::File::create(&tmp).with_context(|| format!("creating {}", tmp.display()))?;
     file.write_all(bytes)
         .with_context(|| format!("writing {}", tmp.display()))?;
     file.sync_all()

@@ -23,8 +23,8 @@ pub(crate) mod units;
 mod tests;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile,
-    PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;

@@ -34,8 +34,9 @@ pub fn detect(graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
             }
             // Thresholds are per-language (a node's `language` selects the set).
             let lcfg = cfg.for_language(node.language);
-            let blast_floor =
-                lcfg.shotgun_blast_threshold.max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
+            let blast_floor = lcfg
+                .shotgun_blast_threshold
+                .max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
             let blast = afferent(graph, idx, &node.module_name);
             let ce = efferent(graph, idx);
             shotgun(node, blast, blast_floor, lcfg).or_else(|| god_module(node, blast, ce, lcfg))

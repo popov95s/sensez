@@ -29,16 +29,16 @@ struct CachedFile {
 
 impl CachedFile {
     fn restore(&self, source: &SourceFile, file_id: u32) -> ParsedFile {
-        let walked =
-            if self.walked.syntax.spans.is_empty() || self.uniform_file_id == Some(file_id) {
-                Arc::clone(&self.walked)
-            } else {
-                let mut fresh = (*self.walked).clone();
-                for span in &mut fresh.syntax.spans {
-                    span.file_id = file_id;
-                }
-                Arc::new(fresh)
-            };
+        let walked = if self.walked.syntax.spans.is_empty() || self.uniform_file_id == Some(file_id)
+        {
+            Arc::clone(&self.walked)
+        } else {
+            let mut fresh = (*self.walked).clone();
+            for span in &mut fresh.syntax.spans {
+                span.file_id = file_id;
+            }
+            Arc::new(fresh)
+        };
         ParsedFile {
             path: source.path.clone(),
             language: self.language,

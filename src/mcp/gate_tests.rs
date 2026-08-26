@@ -4,7 +4,7 @@ use serde_json::{json, Value};
 
 #[test]
 fn gate_degrades_open() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     std::fs::create_dir_all(&dir).unwrap();
@@ -19,7 +19,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn signature_tracks_writes() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();
     let file = tmp.path().join("a.py");
     std::fs::write(&file, "x = 1\n").unwrap();
@@ -35,7 +35,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn gate_baseline_feeds_resolved_recapture() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -60,7 +60,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn gate_allows_same_unchanged_work_after_one_block() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -75,7 +75,7 @@ let _metrics = crate::test_support::metrics_guard();
 
 #[test]
 fn gate_reblocks_when_agent_fixes_then_introduces_again() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -99,7 +99,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// only moves a known finding does not create a new gate complaint.
 #[test]
 fn gate_identity_survives_line_moves() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -116,7 +116,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// appears — one block per new complaint, not one block per turn.
 #[test]
 fn gate_block_count_tracks_new_identities() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -152,7 +152,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// content unchanged, the gate blocks exactly once and then allows.
 #[test]
 fn gate_blocks_unchanged_finding_only_once() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -173,7 +173,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// `usage_report` totals must reflect what the gate actually saw.
 #[test]
 fn brainz_totals_track_reported_count() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };

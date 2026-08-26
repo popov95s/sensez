@@ -140,7 +140,9 @@ fn run_explain(term: Option<&str>) -> Result<()> {
     use crate::noze::glossary;
     match term {
         Some(t) => match glossary::lookup(t) {
-            Some(e) => output::print_line(&format!("{} ({})\n  {}", e.title, e.term, e.explanation))?,
+            Some(e) => {
+                output::print_line(&format!("{} ({})\n  {}", e.title, e.term, e.explanation))?
+            }
             None => {
                 let known: Vec<String> = glossary::all().into_iter().map(|e| e.term).collect();
                 anyhow::bail!("unknown term '{t}'. Known: {}", known.join(", "));

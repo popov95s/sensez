@@ -37,14 +37,12 @@ pub fn record_scan(
         let ignore = triage::ignored_keys(&triage::load(root));
         let mut resolved = BTreeMap::new();
         let mut reintroduced = BTreeMap::new();
-        if let Err(err) =
-            store::update_fingerprints(root, &branch, now, |previous, history| {
-                let aging = aging::age(&previous, &current, &history, now, &ignore);
-                resolved = aging.resolved;
-                reintroduced = aging.reintroduced;
-                (aging.aged, aging.history)
-            })
-        {
+        if let Err(err) = store::update_fingerprints(root, &branch, now, |previous, history| {
+            let aging = aging::age(&previous, &current, &history, now, &ignore);
+            resolved = aging.resolved;
+            reintroduced = aging.reintroduced;
+            (aging.aged, aging.history)
+        }) {
             eprintln!("[sensez metrics] saving fingerprints: {err:#}");
         }
         hub::set_baseline(

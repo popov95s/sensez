@@ -61,7 +61,10 @@ fn run_summary_command(path: &str) -> anyhow::Result<String> {
     let out_reader = read_to_end(stdout_pipe);
     let err_reader = read_to_end(stderr_pipe);
 
-    match child.wait_timeout(SUMMARY_TIMEOUT).context("waiting for summary")? {
+    match child
+        .wait_timeout(SUMMARY_TIMEOUT)
+        .context("waiting for summary")?
+    {
         Some(status) => {
             let stdout = out_reader.join().unwrap_or_default();
             let stderr = err_reader.join().unwrap_or_default();
@@ -82,9 +85,7 @@ fn run_summary_command(path: &str) -> anyhow::Result<String> {
     }
 }
 
-fn read_to_end<R: std::io::Read + Send + 'static>(
-    mut pipe: R,
-) -> std::thread::JoinHandle<String> {
+fn read_to_end<R: std::io::Read + Send + 'static>(mut pipe: R) -> std::thread::JoinHandle<String> {
     std::thread::spawn(move || {
         let mut buf = String::new();
         let _ = pipe.read_to_string(&mut buf);

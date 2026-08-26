@@ -8,7 +8,7 @@ mod warnings;
 
 pub use brainz::SelfImprovement;
 pub use model::{
-    ActionPolicy, Boundaries, Cache, Cycles, Config, DeadCode, Duplication, ForbiddenRule,
+    ActionPolicy, Boundaries, Cache, Config, Cycles, DeadCode, Duplication, ForbiddenRule,
     SemanticDuplication,
 };
 pub use smells::{SmellConfig, Smells};
@@ -80,10 +80,7 @@ impl Config {
             Ok((config, unknown)) => {
                 issues.push(config_issue(
                     issue_file.clone(),
-                    format!(
-                        "unknown config key(s): {} (ignored)",
-                        unknown.join(", ")
-                    ),
+                    format!("unknown config key(s): {} (ignored)", unknown.join(", ")),
                 ));
                 config
             }
@@ -149,7 +146,9 @@ fn parse_source(source: source::Source) -> Result<(Config, Vec<String>)> {
         .as_table()
         .map(warnings::collect_unknown_keys)
         .unwrap_or_default();
-    let config: Config = value.try_into().with_context(|| format!("parsing {label}"))?;
+    let config: Config = value
+        .try_into()
+        .with_context(|| format!("parsing {label}"))?;
     Ok((config, unknown_keys))
 }
 

@@ -109,17 +109,14 @@ fn changed_content_never_restores_a_stale_walk() {
         .contains(&"old".into()));
 }
 
-
 #[test]
 fn insert_before_cached_files_restamps_shifted_spans() {
     let root = tempfile::tempdir().unwrap();
     let mk_first = || source(root.path().join("a.py"), b"def alpha():\n    return 1\n");
     let mk_second = || source(root.path().join("b.py"), b"def beta():\n    return 2\n");
     let mut state = ParseCacheState::default();
-    let (cold, _) = crate::spine::parser::parse_sources_incremental(
-        &[mk_first(), mk_second()],
-        &mut state,
-    );
+    let (cold, _) =
+        crate::spine::parser::parse_sources_incremental(&[mk_first(), mk_second()], &mut state);
     state.replace(&[mk_first(), mk_second()], &cold.files);
 
     let inserted = source(root.path().join("00_new.py"), b"x = 0\n");
@@ -143,9 +140,23 @@ fn insert_before_cached_files_restamps_shifted_spans() {
     for (reused, truth) in warm.files.iter().zip(&fresh.files) {
         assert_eq!(reused.path, truth.path);
         assert_eq!(reused.walked.syntax.tokens, truth.walked.syntax.tokens);
-        for (span, expected) in reused.walked.syntax.spans.iter().zip(&truth.walked.syntax.spans) {
-            assert_eq!(span.file_id, expected.file_id, "stale id on {}", reused.path.display());
-            assert_eq!((span.start_row, span.end_row), (expected.start_row, expected.end_row));
+        for (span, expected) in reused
+            .walked
+            .syntax
+            .spans
+            .iter()
+            .zip(&truth.walked.syntax.spans)
+        {
+            assert_eq!(
+                span.file_id,
+                expected.file_id,
+                "stale id on {}",
+                reused.path.display()
+            );
+            assert_eq!(
+                (span.start_row, span.end_row),
+                (expected.start_row, expected.end_row)
+            );
         }
     }
 }
@@ -155,10 +166,8 @@ fn deleted_file_is_evicted_from_state() {
     let mk_keep = || source(PathBuf::from("keep.py"), b"a = 1\n");
     let mk_drop = || source(PathBuf::from("drop.py"), b"b = 2\n");
     let mut state = ParseCacheState::default();
-    let (cold, _) = crate::spine::parser::parse_sources_incremental(
-        &[mk_keep(), mk_drop()],
-        &mut state,
-    );
+    let (cold, _) =
+        crate::spine::parser::parse_sources_incremental(&[mk_keep(), mk_drop()], &mut state);
     state.replace(&[mk_keep(), mk_drop()], &cold.files);
 
     let (warm, stats) = crate::spine::parser::parse_sources_incremental(
@@ -173,7 +182,8 @@ fn deleted_file_is_evicted_from_state() {
     // knows about the deleted file.
     state.replace(std::slice::from_ref(&mk_keep()), &warm.files);
     assert_eq!(
-        state.changes(std::slice::from_ref(&mk_keep())).deleted, 0,
+        state.changes(std::slice::from_ref(&mk_keep())).deleted,
+        0,
         "after commit, the tree is stable and the walk is pruned"
     );
 }

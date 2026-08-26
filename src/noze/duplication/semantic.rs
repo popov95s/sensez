@@ -165,7 +165,6 @@ fn function_shape(
     (shape.values().sum(), shape)
 }
 
-
 fn candidate_pairs(units: &[Unit], min_shape_score: u8) -> Vec<Candidate> {
     let threshold = score_threshold(min_shape_score);
     let mut order: Vec<usize> = (0..units.len()).collect();

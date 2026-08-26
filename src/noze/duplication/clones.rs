@@ -56,9 +56,7 @@ fn build_suffix_array(text: &[i32]) -> Vec<usize> {
             .map(|position| position as usize)
             .collect(),
         Err(err) => {
-            eprintln!(
-                "[sensez] suffix array: libsais failed ({err}); using portable fallback"
-            );
+            eprintln!("[sensez] suffix array: libsais failed ({err}); using portable fallback");
             // Master-buffer codes are dense and non-negative by construction
             // (see `flatten::DenseAlphabet`), so widening is lossless here.
             let fallback: Vec<usize> = text.iter().map(|&value| value as usize).collect();

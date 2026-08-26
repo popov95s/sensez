@@ -37,8 +37,10 @@ pub(super) fn collect_unknown_keys(table: &toml::Table) -> Vec<String> {
     }
     if let Some(t) = sub_table(table, "boundaries") {
         check("boundaries", t, &allowed_keys::<Boundaries>(), &mut out);
-        let forbidden_allowed: FxHashSet<String> =
-            FORBIDDEN_KEYS.iter().map(|key| (*key).to_string()).collect();
+        let forbidden_allowed: FxHashSet<String> = FORBIDDEN_KEYS
+            .iter()
+            .map(|key| (*key).to_string())
+            .collect();
         if let Some(rules) = t.get("forbidden").and_then(|v| v.as_array()) {
             for (idx, rule) in rules.iter().enumerate() {
                 if let Some(rt) = rule.as_table() {
@@ -129,13 +131,17 @@ mod tests {
         );
         assert_eq!(
             unknown,
-            vec!["boundaries.forbidden[0].frm", "duplication.semantic.min_shape"]
+            vec![
+                "boundaries.forbidden[0].frm",
+                "duplication.semantic.min_shape"
+            ]
         );
     }
 
     #[test]
     fn free_form_sections_are_not_flagged() {
-        let unknown = keys("[accept]\nanything_at_all = [\"x\"]\n[action.smells]\nwhatever = \"info\"\n");
+        let unknown =
+            keys("[accept]\nanything_at_all = [\"x\"]\n[action.smells]\nwhatever = \"info\"\n");
         assert!(unknown.is_empty());
     }
 }

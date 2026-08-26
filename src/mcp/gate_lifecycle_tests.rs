@@ -7,7 +7,7 @@ use std::path::Path;
 /// counts the reappearance as a reintroduction.
 #[test]
 fn brainz_records_fix_and_reintroduction() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -44,7 +44,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// block reason names the deferred count.
 #[test]
 fn gate_block_message_mentions_deferred_repeats() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
@@ -89,7 +89,7 @@ let _metrics = crate::test_support::metrics_guard();
 /// and the finding resurfaces; a second defer is permanent.
 #[test]
 fn gate_deferred_finding_resurfaces_after_expiry() {
-let _metrics = crate::test_support::metrics_guard();
+    let _metrics = crate::test_support::metrics_guard();
     use super::repeats::{suppress_repeated_at, DEFER_EXPIRY_SECS};
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path();

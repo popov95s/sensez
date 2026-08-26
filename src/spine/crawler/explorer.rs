@@ -205,7 +205,9 @@ mod tests {
             "directory symlinks must not double-count targets"
         );
         assert!(
-            !names.iter().any(|n| n.ends_with("nested.py") && n.contains("pkg_link")),
+            !names
+                .iter()
+                .any(|n| n.ends_with("nested.py") && n.contains("pkg_link")),
             "no path through pkg_link"
         );
         assert_eq!(

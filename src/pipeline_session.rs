@@ -106,7 +106,11 @@ mod tests {
         let roots: Vec<_> = (0..4)
             .map(|i| {
                 let dir = tempfile::tempdir().unwrap();
-                std::fs::write(dir.path().join(format!("m{i}.py")), format!("def f{i}():\n    return {i}\n")).unwrap();
+                std::fs::write(
+                    dir.path().join(format!("m{i}.py")),
+                    format!("def f{i}():\n    return {i}\n"),
+                )
+                .unwrap();
                 dir
             })
             .collect();
@@ -143,7 +147,11 @@ mod tests {
         let dirs: Vec<_> = (0..MAX_WORKSPACES as u8 + 1)
             .map(|i| {
                 let dir = tempfile::tempdir().unwrap();
-                std::fs::write(dir.path().join(format!("m{i}.py")), format!("def f{i}():\n    return {i}\n")).unwrap();
+                std::fs::write(
+                    dir.path().join(format!("m{i}.py")),
+                    format!("def f{i}():\n    return {i}\n"),
+                )
+                .unwrap();
                 dir
             })
             .collect();
@@ -166,7 +174,10 @@ mod tests {
         let newest = dirs.last().unwrap();
         session.parse(newest.path(), &project_for(newest));
 
-        assert!(session.has_workspace(dirs[0].path()), "recently touched stays");
+        assert!(
+            session.has_workspace(dirs[0].path()),
+            "recently touched stays"
+        );
         assert!(
             !session.has_workspace(dirs[1].path()),
             "untouched workspace is evicted"

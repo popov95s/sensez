@@ -90,8 +90,7 @@ fn cycles_exclude_is_independent_of_smells_exclude() {
     // Dedicated `[cycles] exclude` suppresses the finding. An SCC stays
     // reportable while any member is outside the globs, so suppressing this
     // two-module loop takes both.
-    let (tmp, session, dir) =
-        build("[cycles]\nexclude = [\"**/a.py\", \"**/b.py\"]\n");
+    let (tmp, session, dir) = build("[cycles]\nexclude = [\"**/a.py\", \"**/b.py\"]\n");
     assert!(analyze_path_in_session(&session, &dir, None)
         .unwrap()
         .0

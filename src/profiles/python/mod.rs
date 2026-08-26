@@ -20,8 +20,8 @@ pub(crate) mod typevocab;
 mod units;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile,
-    PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Walked};
 use std::collections::HashSet;

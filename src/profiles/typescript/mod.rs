@@ -6,8 +6,8 @@
 
 use crate::profiles::javascript::{deadcode, performance, resolve, roots, traversal, typevocab};
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile,
-    PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
