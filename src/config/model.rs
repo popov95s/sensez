@@ -1,11 +1,11 @@
 use super::brainz::SelfImprovement;
 use super::smells::SmellConfig;
 use crate::report::{ActionLevel, Severity, SmellKind};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Config {
     pub cache: Cache,
@@ -13,6 +13,7 @@ pub struct Config {
     pub exclude: Vec<String>,
     pub duplication: Duplication,
     pub dead_code: DeadCode,
+    pub cycles: Cycles,
     pub boundaries: Boundaries,
     pub smells: SmellConfig,
     pub action: ActionPolicy,
@@ -22,13 +23,13 @@ pub struct Config {
     pub accept: BTreeMap<String, Vec<String>>,
 }
 
-#[derive(Debug, Clone, Default, Hash, Deserialize)]
+#[derive(Debug, Clone, Default, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Cache {
     pub enabled: bool,
 }
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Duplication {
     pub exclude: Vec<String>,
@@ -40,7 +41,7 @@ pub struct Duplication {
     pub class_property_overlap_min: usize,
 }
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SemanticDuplication {
     pub enabled: bool,
@@ -49,7 +50,7 @@ pub struct SemanticDuplication {
     pub comment_required: bool,
 }
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct DeadCode {
     pub entrypoints: Vec<String>,
@@ -64,13 +65,19 @@ pub struct DeadCode {
     pub unused_variables: bool,
 }
 
-#[derive(Debug, Clone, Default, Hash, Deserialize)]
+#[derive(Debug, Clone, Default, Hash, Serialize, Deserialize)]
+#[serde(default)]
+pub struct Cycles {
+    pub exclude: Vec<String>,
+}
+
+#[derive(Debug, Clone, Default, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Boundaries {
     pub forbidden: Vec<ForbiddenRule>,
 }
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct ActionPolicy {
     pub cycles: ActionLevel,
@@ -80,7 +87,7 @@ pub struct ActionPolicy {
     pub smells: BTreeMap<SmellKind, ActionLevel>,
 }
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Gate {
     pub repeat_limit: usize,
@@ -95,7 +102,7 @@ impl ActionPolicy {
     }
 }
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 pub struct ForbiddenRule {
     pub from: String,
     pub to: String,
@@ -133,6 +140,7 @@ impl Default for Config {
             boundaries: Boundaries {
                 forbidden: Vec::new(),
             },
+            cycles: Cycles::default(),
             smells: SmellConfig::default(),
             action: ActionPolicy::default(),
             gate: Gate::default(),

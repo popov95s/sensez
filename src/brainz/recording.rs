@@ -34,11 +34,16 @@ pub fn record_scan(
     let current = fingerprint::fingerprints(report);
     let now = hub::now();
     let (resolved, reintroduced) = if let Some(branch) = hub::branch_key(root) {
-        let previous = store::load_fingerprints(root, &branch);
-        let history = store::load_resolved_history(root, &branch);
         let ignore = triage::ignored_keys(&triage::load(root));
-        let aging = aging::age(&previous, &current, &history, now, &ignore);
-        if let Err(err) = store::save_fingerprints(root, &branch, &aging.aged, &aging.history, now)
+        let mut resolved = BTreeMap::new();
+        let mut reintroduced = BTreeMap::new();
+        if let Err(err) =
+            store::update_fingerprints(root, &branch, now, |previous, history| {
+                let aging = aging::age(&previous, &current, &history, now, &ignore);
+                resolved = aging.resolved;
+                reintroduced = aging.reintroduced;
+                (aging.aged, aging.history)
+            })
         {
             eprintln!("[sensez metrics] saving fingerprints: {err:#}");
         }
@@ -52,7 +57,7 @@ pub fn record_scan(
                 source_state: hub::observed_source_state(root),
             },
         );
-        (aging.resolved, aging.reintroduced)
+        (resolved, reintroduced)
     } else {
         (BTreeMap::new(), BTreeMap::new())
     };
@@ -153,6 +158,7 @@ mod tests {
 
     #[test]
     fn unnamed_branch_scan_does_not_diff_against_shared_baseline() {
+        let _metrics = crate::test_support::metrics_guard();
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path();
         let first = json!({
@@ -172,6 +178,7 @@ mod tests {
 
     #[test]
     fn detached_scan_does_not_reuse_a_named_branch_baseline() {
+        let _metrics = crate::test_support::metrics_guard();
         let Some(repo) = GitTestRepo::new("unused.py", "print('base')\n") else {
             return;
         };

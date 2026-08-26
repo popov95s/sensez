@@ -6,12 +6,12 @@
 
 use crate::profiles::javascript::{deadcode, performance, resolve, roots, traversal, typevocab};
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleLayout, ModuleProfile, ParseProfile,
+    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile,
     PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 mod paths;
 pub(crate) use paths::ResolutionCache;
@@ -28,13 +28,6 @@ static TSX_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["tsx"],
 };
-static TYPESCRIPT_MODULES: ModuleLayout = ModuleLayout::new(
-    roots::root_for,
-    roots::module_name,
-    roots::is_package_index,
-    resolve::containing_package,
-);
-
 /// The TypeScript language profile (zero-sized).
 pub struct TsProfile;
 
@@ -76,8 +69,20 @@ impl ParseProfile for TsxProfile {
 macro_rules! impl_ts_traits {
     ($name:ident) => {
         impl ModuleProfile for $name {
-            fn module_layout(&self) -> ModuleLayout {
-                TYPESCRIPT_MODULES
+            fn root_for(&self, file: &Path) -> PathBuf {
+                roots::root_for(file)
+            }
+
+            fn module_name(&self, file: &Path, root: &Path) -> String {
+                roots::module_name(file, root)
+            }
+
+            fn is_package_index(&self, file: &Path) -> bool {
+                roots::is_package_index(file)
+            }
+
+            fn containing_package(&self, module_name: &str, is_index: bool) -> String {
+                resolve::containing_package(module_name, is_index)
             }
 
             fn resolve_target(

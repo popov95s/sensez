@@ -9,6 +9,7 @@
     "last-scan.json",
     "last-scan.lock",
     "totals.json",
-    "triage.json"
+    "triage.json",
+    "triage.lock"
   ]
 }

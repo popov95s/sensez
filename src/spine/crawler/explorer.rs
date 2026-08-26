@@ -45,10 +45,22 @@ where
             match entry {
                 Ok(entry) => {
                     let path = entry.path();
-                    if entry.file_type().is_some_and(|ft| ft.is_file())
-                        && is_source_file(path)
-                        && !excludes.is_match(path)
-                    {
+                    let is_file = match entry.file_type() {
+                        Some(ft) if ft.is_symlink() => match std::fs::metadata(path) {
+                            Ok(meta) => meta.is_file(),
+                            Err(err) => {
+                                let _ = issue_tx.send(ScanIssue {
+                                    stage: ScanStage::Discover,
+                                    file: Some(path.to_path_buf()),
+                                    message: format!("unreadable symlink: {err}"),
+                                });
+                                false
+                            }
+                        },
+                        Some(ft) => ft.is_file(),
+                        None => false,
+                    };
+                    if is_file && is_source_file(path) && !excludes.is_match(path) {
                         // Receiver lives until the walk completes; ignore send races.
                         let _ = tx.send(entry.into_path());
                     }
@@ -160,5 +172,47 @@ mod tests {
         assert_eq!(issue.stage, ScanStage::Discover);
         assert_eq!(issue.file, Some(PathBuf::from("blocked.py")));
         assert!(issue.message.contains("permission denied"));
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn symlinked_sources_are_included_and_broken_links_reported() {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path();
+        fs::write(dir.join("real.py"), "x = 1\n").unwrap();
+        std::os::unix::fs::symlink(dir.join("real.py"), dir.join("link.py")).unwrap();
+        fs::create_dir(dir.join("pkg")).unwrap();
+        fs::write(dir.join("pkg/nested.py"), "y = 2\n").unwrap();
+        std::os::unix::fs::symlink(dir.join("pkg"), dir.join("pkg_link")).unwrap();
+        std::os::unix::fs::symlink(dir.join("missing.py"), dir.join("broken.py")).unwrap();
+
+        let found = collect_source_files(dir, &[], &is_python).unwrap();
+        let names: Vec<_> = found
+            .files
+            .iter()
+            .map(|p| p.file_name().unwrap().to_string_lossy().to_string())
+            .collect();
+        assert!(names.contains(&"real.py".to_string()));
+        assert!(
+            names.contains(&"link.py".to_string()),
+            "file symlink must be discovered, got {names:?}"
+        );
+        // The directory symlink is not followed: `pkg/nested.py` is reachable
+        // exactly once through the real directory.
+        assert_eq!(
+            names.iter().filter(|n| *n == "nested.py").count(),
+            1,
+            "directory symlinks must not double-count targets"
+        );
+        assert!(
+            !names.iter().any(|n| n.ends_with("nested.py") && n.contains("pkg_link")),
+            "no path through pkg_link"
+        );
+        assert_eq!(
+            found.issues.len(),
+            1,
+            "the broken symlink must be reported, not dropped silently"
+        );
+        assert!(found.issues[0].message.contains("unreadable symlink"));
     }
 }

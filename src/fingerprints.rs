@@ -54,19 +54,17 @@ impl<N, L, C> Fingerprint<N, L, C> {
 pub type Groups<N, L, C = N> = BTreeMap<N, Vec<Fingerprint<N, L, C>>>;
 
 pub fn hash_parts(parts: &[&str]) -> u64 {
-    let mut hasher = rustc_hash::FxHasher::default();
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
     for part in parts {
         part.hash(&mut hasher);
     }
     hasher.finish()
 }
 
-/// Hash raw bytes with the same fast, process-stable hasher used by the
-/// existing scan fingerprints. Source caches also store the full fingerprint
-/// metadata, so a hash collision cannot silently cross parser revisions.
+/// Hash raw bytes for content identity (cache keys and change detection).
 pub fn hash_bytes(bytes: &[u8]) -> u64 {
-    let mut hasher = rustc_hash::FxHasher::default();
-    bytes.hash(&mut hasher);
+    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    hasher.write(bytes);
     hasher.finish()
 }
 
@@ -101,5 +99,14 @@ mod tests {
         let print = Fingerprint::identity(42, Ns::Source, "src/lib.rs", Ns::Source);
         assert_eq!(print.content_hash, 42);
         assert_eq!(print.key(), "2a");
+    }
+
+    #[test]
+    fn hash_parts_is_deterministic_and_order_sensitive() {
+        let first = hash_parts(&["a", "b"]);
+        assert_eq!(first, hash_parts(&["a", "b"]));
+        assert_ne!(first, hash_parts(&["b", "a"]));
+        assert_ne!(first, hash_parts(&["ab"]));
+        assert_ne!(hash_bytes(b"x = 1\n"), hash_bytes(b"x = 2\n"));
     }
 }

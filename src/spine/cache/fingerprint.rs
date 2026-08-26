@@ -12,15 +12,28 @@ pub struct SourceFingerprint {
 }
 
 impl SourceFingerprint {
+    #[cfg(test)]
     pub fn new(path: &Path, language: Language, source: &[u8]) -> Self {
+        Self::with_content_hash(path, language, fingerprints::hash_bytes(source))
+    }
+
+    pub fn with_content_hash(path: &Path, language: Language, content: u64) -> Self {
         let path_text = path.to_string_lossy();
-        let language_text = format!("{language:?}");
-        let identity = fingerprints::hash_parts(&[&path_text, &language_text]);
+        let identity = fingerprints::hash_parts(&[&path_text, debug_name(language)]);
         Self {
             identity,
-            content: fingerprints::hash_bytes(source),
+            content,
             path: path.to_path_buf(),
             language,
         }
+    }
+}
+
+fn debug_name(language: Language) -> &'static str {
+    match language {
+        Language::Python => "Python",
+        Language::JavaScript => "JavaScript",
+        Language::TypeScript => "TypeScript",
+        Language::Rust => "Rust",
     }
 }

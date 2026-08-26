@@ -98,6 +98,13 @@ Opt-in detectors for harder clones: `near_miss` (consistent renames),
 `class_name_duplicates`, `class_property_overlap_min`, and
 `[duplication.semantic]` (only in builds with the `eyez` feature).
 
+## Cycles
+
+```toml
+[cycles]
+exclude = ["**/vendor/**"]   # import edges here never report a cycle
+```
+
 ## Boundaries
 
 Each rule forbids any module matching `from` from importing any module matching

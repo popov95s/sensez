@@ -62,7 +62,15 @@ pub(crate) fn vectors(root: &Path, inputs: &[BundleInput]) -> Result<Vec<Vec<f32
             keys.push(input.key);
             texts.push(input.text.clone());
         }
-        for (key, vector) in keys.into_iter().zip(embedder.embed(&texts)) {
+        let embedded = embedder.embed(&texts);
+        if embedded.len() != keys.len() {
+            return Err(anyhow::anyhow!(
+                "embedder returned {}/{} vectors",
+                embedded.len(),
+                keys.len()
+            ));
+        }
+        for (key, vector) in keys.into_iter().zip(embedded) {
             existing.insert(key, vector);
         }
     }

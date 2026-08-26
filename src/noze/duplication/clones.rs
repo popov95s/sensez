@@ -20,7 +20,7 @@ pub fn extract(master: &mut Master, threshold: usize) -> Vec<RawGroup> {
     if n < 2 || threshold == 0 {
         return Vec::new();
     }
-    let sa = build_suffix_array(&mut master.text);
+    let sa = build_suffix_array(&master.text);
     let lcp = kasai(&master.text, &sa);
 
     // Walk maximal runs [lo..=hi] where lcp[r] >= threshold for r in lo+1..=hi.
@@ -43,8 +43,9 @@ pub fn extract(master: &mut Master, threshold: usize) -> Vec<RawGroup> {
     groups
 }
 
-fn build_suffix_array(text: &mut [i32]) -> Vec<usize> {
-    match SuffixArrayConstruction::for_text_mut(text)
+fn build_suffix_array(text: &[i32]) -> Vec<usize> {
+    let mut scratch = text.to_vec();
+    match SuffixArrayConstruction::for_text_mut(&mut scratch)
         .in_owned_buffer32()
         .single_threaded()
         .run()
@@ -54,7 +55,12 @@ fn build_suffix_array(text: &mut [i32]) -> Vec<usize> {
             .into_iter()
             .map(|position| position as usize)
             .collect(),
-        Err(_) => {
+        Err(err) => {
+            eprintln!(
+                "[sensez] suffix array: libsais failed ({err}); using portable fallback"
+            );
+            // Master-buffer codes are dense and non-negative by construction
+            // (see `flatten::DenseAlphabet`), so widening is lossless here.
             let fallback: Vec<usize> = text.iter().map(|&value| value as usize).collect();
             suffix_array_int(&fallback)
         }

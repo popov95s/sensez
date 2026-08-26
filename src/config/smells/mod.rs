@@ -11,9 +11,9 @@ mod validate;
 pub use knobs::{Smells, Strictness};
 
 use crate::spine::ir::Language;
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(try_from = "raw::SmellsRaw")]
 pub struct SmellConfig {
     pub enabled: bool,

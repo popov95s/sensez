@@ -68,7 +68,7 @@ fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
             Language::TypeScript,
             src,
         ),
-        walked,
+        walked: std::sync::Arc::new(walked),
     };
     detect_local(&file, cfg)
 }

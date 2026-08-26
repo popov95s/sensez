@@ -43,16 +43,53 @@ fn configuration_summary(args: &Value) -> ToolResult {
 }
 
 fn run_summary_command(path: &str) -> anyhow::Result<String> {
+    use std::process::Stdio;
+    use std::time::Duration;
+    use wait_timeout::ChildExt;
+
+    const SUMMARY_TIMEOUT: Duration = Duration::from_secs(60);
+
     let exe = std::env::current_exe().context("resolving current executable")?;
-    let output = Command::new(exe)
+    let mut child = Command::new(exe)
         .args(["noze", path, "--summary"])
-        .output()
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
         .context("running `sensez noze --summary`")?;
-    if !output.status.success() {
-        let stderr = String::from_utf8_lossy(&output.stderr);
-        anyhow::bail!("summary command failed: {stderr}");
+    let stdout_pipe = child.stdout.take().context("capturing summary stdout")?;
+    let stderr_pipe = child.stderr.take().context("capturing summary stderr")?;
+    let out_reader = read_to_end(stdout_pipe);
+    let err_reader = read_to_end(stderr_pipe);
+
+    match child.wait_timeout(SUMMARY_TIMEOUT).context("waiting for summary")? {
+        Some(status) => {
+            let stdout = out_reader.join().unwrap_or_default();
+            let stderr = err_reader.join().unwrap_or_default();
+            if !status.success() {
+                anyhow::bail!("summary command failed: {stderr}");
+            }
+            String::from_utf8(stdout.into_bytes())
+                .map_err(|_| anyhow::anyhow!("summary command emitted non-UTF-8 output"))
+        }
+        None => {
+            let _ = child.kill();
+            let _ = child.wait();
+            anyhow::bail!(
+                "summary command timed out after {}s",
+                SUMMARY_TIMEOUT.as_secs()
+            )
+        }
     }
-    String::from_utf8(output.stdout).context("summary command emitted non-UTF-8 output")
+}
+
+fn read_to_end<R: std::io::Read + Send + 'static>(
+    mut pipe: R,
+) -> std::thread::JoinHandle<String> {
+    std::thread::spawn(move || {
+        let mut buf = String::new();
+        let _ = pipe.read_to_string(&mut buf);
+        buf
+    })
 }
 
 fn scan_tool(args: &Value) -> ToolResult {

@@ -71,6 +71,48 @@ fn changed_import_updates_cross_file_cycle() {
 }
 
 #[test]
+fn cycles_exclude_is_independent_of_smells_exclude() {
+    // `a -> b` plus `b -> a` forms the loop.
+    let importer = "from b import value\n\ndef a():\n    return value\n";
+    let cycle_b = "from a import a\n\ndef value():\n    return a()\n";
+    let build = |toml: &str| {
+        let tmp = tempfile::tempdir().unwrap();
+        let dir = tmp.path().to_path_buf();
+        fs::write(dir.join("sensez.toml"), toml).unwrap();
+        fs::write(dir.join("a.py"), importer).unwrap();
+        fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
+        let session = AnalysisSession::default();
+        // Introduce the back-edge so the loop exists before the first scan.
+        fs::write(dir.join("b.py"), cycle_b).unwrap();
+        (tmp, session, dir)
+    };
+
+    // Dedicated `[cycles] exclude` suppresses the finding. An SCC stays
+    // reportable while any member is outside the globs, so suppressing this
+    // two-module loop takes both.
+    let (tmp, session, dir) =
+        build("[cycles]\nexclude = [\"**/a.py\", \"**/b.py\"]\n");
+    assert!(analyze_path_in_session(&session, &dir, None)
+        .unwrap()
+        .0
+        .cycles
+        .is_empty());
+    drop(tmp);
+
+    // A smells-only exclude must NOT hide the cycle anymore.
+    let (_tmp, session, dir) = build("[smells]\nexclude = [\"**/b.py\"]\n");
+    assert_eq!(
+        analyze_path_in_session(&session, &dir, None)
+            .unwrap()
+            .0
+            .cycles
+            .len(),
+        1,
+        "smell excludes must not leak into cycle detection"
+    );
+}
+
+#[test]
 fn changed_consumer_updates_provider_dead_code() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();

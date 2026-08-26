@@ -4,6 +4,7 @@
 //! and feed back into the metrics: triaged findings stop appearing as stale,
 //! and a vanished false positive is never counted as resolved value.
 
+use super::file_lock;
 use super::fingerprint::Namespace;
 use super::store;
 use anyhow::{anyhow, Context, Result};
@@ -39,8 +40,7 @@ pub fn load(root: &Path) -> Triage {
 fn save(root: &Path, triage: &Triage) -> Result<()> {
     let d = crate::dotdir::ensure(root, Some("local-metrics"))?;
     let json = serde_json::to_vec_pretty(triage).context("serializing triage")?;
-    fs::write(d.join("triage.json"), json).context("writing triage.json")?;
-    Ok(())
+    store::write_durable(&d.join("triage.json"), &json)
 }
 
 /// Mark every finding in `pillar` whose label contains `pattern`
@@ -88,6 +88,7 @@ pub fn mark(
         ));
     }
 
+    let _lock = file_lock::acquire(root, "triage.lock")?;
     let mut triage = load(root);
     let out: Vec<(String, String)> = matches
         .iter()

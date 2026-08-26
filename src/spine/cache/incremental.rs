@@ -4,6 +4,7 @@ use crate::spine::ir::{Language, Walked};
 use crate::spine::parser::ParsedFile;
 use std::collections::HashMap;
 use std::path::PathBuf;
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct ChangeStats {
@@ -17,27 +18,62 @@ pub struct ChangeStats {
     pub changed_paths: Vec<PathBuf>,
 }
 
-#[derive(Clone)]
 struct CachedFile {
     path: PathBuf,
     content_hash: u64,
     language: Language,
     lines: u32,
-    walked: Walked,
+    walked: Arc<Walked>,
+    uniform_file_id: Option<u32>,
 }
 
 impl CachedFile {
     fn restore(&self, source: &SourceFile, file_id: u32) -> ParsedFile {
-        let mut walked = self.walked.clone();
-        for span in &mut walked.syntax.spans {
-            span.file_id = file_id;
-        }
+        let walked =
+            if self.walked.syntax.spans.is_empty() || self.uniform_file_id == Some(file_id) {
+                Arc::clone(&self.walked)
+            } else {
+                let mut fresh = (*self.walked).clone();
+                for span in &mut fresh.syntax.spans {
+                    span.file_id = file_id;
+                }
+                Arc::new(fresh)
+            };
         ParsedFile {
             path: source.path.clone(),
             language: self.language,
             lines: self.lines,
-            fingerprint: SourceFingerprint::new(&source.path, self.language, &source.bytes),
+            // A cache hit means `self.content_hash == source.content_hash` by
+            // definition, so reuse the stored hash — no third byte-scan.
+            fingerprint: SourceFingerprint::with_content_hash(
+                &source.path,
+                self.language,
+                self.content_hash,
+            ),
             walked,
+        }
+    }
+
+    fn from_parsed(file: &ParsedFile) -> Self {
+        let first = file.walked.syntax.spans.first().map(|span| span.file_id);
+        let uniform = if file
+            .walked
+            .syntax
+            .spans
+            .iter()
+            .all(|span| Some(span.file_id) == first)
+        {
+            first
+        } else {
+            None
+        };
+        CachedFile {
+            path: file.path.clone(),
+            content_hash: file.fingerprint.content,
+            language: file.language,
+            lines: file.lines,
+            walked: Arc::clone(&file.walked),
+            uniform_file_id: uniform,
         }
     }
 }
@@ -96,13 +132,7 @@ impl ParseCacheState {
         self.files = parsed
             .iter()
             .map(|file| {
-                let cached = CachedFile {
-                    path: file.path.clone(),
-                    content_hash: file.fingerprint.content,
-                    language: file.language,
-                    lines: file.lines,
-                    walked: file.walked.clone(),
-                };
+                let cached = CachedFile::from_parsed(file);
                 ((cached.path.clone(), cached.content_hash), cached)
             })
             .collect();

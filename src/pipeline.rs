@@ -28,12 +28,14 @@ pub fn analyze_path(
     analyze_path_inner(path, threshold, None)
 }
 
+#[cfg(test)]
 fn analyze_path_in_session(
     session: &AnalysisSession,
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    analyze_path_inner(path, threshold, Some(session))
+    let loaded = Config::load_for_scan(path);
+    analyze_with_config(path, threshold, Some(session), loaded)
 }
 
 pub(crate) fn analyze_path_in_service(
@@ -41,17 +43,23 @@ pub(crate) fn analyze_path_in_service(
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
     let session = SERVICE_SESSION.get_or_init(AnalysisSession::default);
-    analyze_path_in_service_with_session(session, path, threshold)
+    let loaded = Config::load_for_scan(path);
+    if loaded.0.cache_enabled() {
+        analyze_with_config(path, threshold, Some(session), loaded)
+    } else {
+        analyze_path(path, threshold)
+    }
 }
 
+#[cfg(test)]
 fn analyze_path_in_service_with_session(
     session: &AnalysisSession,
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    let (config, _) = Config::load_for_scan(path);
-    if config.cache_enabled() {
-        analyze_path_in_session(session, path, threshold)
+    let loaded = Config::load_for_scan(path);
+    if loaded.0.cache_enabled() {
+        analyze_with_config(path, threshold, Some(session), loaded)
     } else {
         analyze_path(path, threshold)
     }
@@ -62,7 +70,16 @@ fn analyze_path_inner(
     threshold: Option<usize>,
     session: Option<&AnalysisSession>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    let (mut config, config_issues) = Config::load_for_scan(path);
+    let loaded = Config::load_for_scan(path);
+    analyze_with_config(path, threshold, session, loaded)
+}
+
+fn analyze_with_config(
+    path: &Path,
+    threshold: Option<usize>,
+    session: Option<&AnalysisSession>,
+    (mut config, config_issues): (Config, Vec<crate::report::ScanIssue>),
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
@@ -99,7 +116,7 @@ fn analyze_path_inner(
     config.dead_code.entry_modules = entry_modules(path, &parsed.files);
     let graph = graph::build(&parsed.files, &config.roots);
     timer.lap("graph");
-    if !changed_paths.is_empty() {
+    if timer.timing_enabled() && !changed_paths.is_empty() {
         let impact = crate::spine::impact::affected_files(
             &graph,
             &changed_paths,
@@ -194,6 +211,10 @@ impl PhaseTimer {
             (now - self.start).as_secs_f64() * 1e3,
         );
         self.last = now;
+    }
+
+    fn timing_enabled(&self) -> bool {
+        self.enabled
     }
 
     fn cache_disabled(&self) {

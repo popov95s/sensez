@@ -1,5 +1,6 @@
 //! CLI presentation for local-only Brainz metrics.
 
+use super::output::print_line;
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::path::Path;
@@ -7,12 +8,9 @@ use std::path::Path;
 pub fn run_report(path: &Path, json: bool) -> Result<()> {
     let report = crate::brainz::usage_report(path);
     if json {
-        println!(
-            "{}",
-            serde_json::to_string_pretty(&report).context("serializing brainz report")?
-        );
+        print_line(&serde_json::to_string_pretty(&report).context("serializing brainz report")?)?;
     } else {
-        println!("{}", render(&report));
+        print_line(&render(&report))?;
     }
     Ok(())
 }

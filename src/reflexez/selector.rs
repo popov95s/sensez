@@ -10,6 +10,7 @@ use anyhow::{bail, Result};
 use petgraph::graph::NodeIndex;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
     let started = std::time::Instant::now();
@@ -95,7 +96,7 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
 fn add_dynamic_imports(files: &mut [ParsedFile], dynamic: &DynamicFacts) {
     for file in files {
         if let Some(facts) = dynamic.by_file.get(&file.path) {
-            file.walked
+            Arc::make_mut(&mut file.walked)
                 .symbols
                 .imports
                 .extend(facts.imports.iter().cloned());

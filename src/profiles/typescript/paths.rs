@@ -175,13 +175,15 @@ fn normalize_jsonc(text: &str) -> String {
             continue;
         }
         if ch == ',' {
-            let mut lookahead = chars.clone();
-            while lookahead.peek().is_some_and(|next| next.is_whitespace()) {
-                lookahead.next();
+            let keep_before_comma = output.len();
+            output.push(ch);
+            while let Some(next) = chars.next_if(|next| next.is_whitespace()) {
+                output.push(next);
             }
-            if matches!(lookahead.peek(), Some('}' | ']')) {
-                continue;
+            if matches!(chars.peek(), Some('}' | ']')) {
+                output.truncate(keep_before_comma);
             }
+            continue;
         }
         output.push(ch);
     }
@@ -210,5 +212,21 @@ impl JsoncState {
         }
         output.push(ch);
         true
+    }
+}
+
+#[cfg(test)]
+mod normalize_tests {
+    use super::normalize_jsonc;
+
+    #[test]
+    fn strips_comments_and_trailing_commas_into_parseable_json() {
+        let input = "{ /* c */ \"a\": [1, 2,], // line\n \"b\": { \"c\": 1, }, }";
+        let normalized = normalize_jsonc(input);
+        let value: serde_json::Value = serde_json::from_str(&normalized)
+            .unwrap_or_else(|err| panic!("normalized output must be valid JSON: {err}\n{normalized}"));
+        assert_eq!(value["a"], serde_json::json!([1, 2]));
+        assert_eq!(value["b"]["c"], 1);
+        assert!(!normalized.contains("//"), "line comments must be stripped");
     }
 }

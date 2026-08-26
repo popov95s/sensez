@@ -56,12 +56,9 @@ pub fn usage_report(root: &Path) -> Value {
     let config = crate::config::model::Config::load(root).unwrap_or_default();
     let events = store::load_events(root);
     let (recent_since, recent) = recent_window(&events);
-    let baseline = hub::branch_key(root)
-        .map(|key| store::load_fingerprints(root, &key))
+    let (baseline, has_baseline) = hub::branch_key(root)
+        .map(|key| store::branch_state(root, &key))
         .unwrap_or_default();
-    let has_baseline = hub::branch_key(root)
-        .map(|key| store::has_baseline(root, &key))
-        .unwrap_or(false);
     let (blocked, open) = gate_block_sets(&events, baseline.clone(), &branch);
     let session = hub::session_snapshot(root);
     json!({

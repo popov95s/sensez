@@ -17,7 +17,7 @@ mod reachability;
 use crate::config::model::DeadCode;
 use crate::globs::build_globset;
 use crate::profiles::registry;
-use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
+use crate::report::{ActionLevel, DeadCodeFinding};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;
@@ -85,9 +85,14 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
             {
                 continue;
             }
-            let mut confidence = confidence_of(&inbound);
+            let confidence = confidence_of(&inbound);
             if dclass.is_unknown() {
-                confidence = Confidence::Low; // decorated by an unknown wrapper — uncertain
+                // Decorated by an unrecognized wrapper — dynamic dispatch may
+                // keep it live. Every consumer drops Low-confidence findings
+                // (pillar ranking and the CLI default both retain !Low), so
+                // emitting one here is guaranteed-discarded work; skipping
+                // keeps "absent" meaning exactly "not reported as dead".
+                continue;
             }
             findings.push(DeadCodeFinding {
                 action: ActionLevel::Advisory,

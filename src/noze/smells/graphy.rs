@@ -13,6 +13,12 @@ use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use rayon::prelude::*;
 
+/// Blast radius is judged relative to repo size: in a large codebase the core
+/// modules are *expected* to have many dependents, so the configured floor
+/// scales up to this percentage of internal modules. Small repos keep the
+/// configured absolute threshold.
+const BLAST_FLOOR_REPO_PERCENT: usize = 15;
+
 pub fn detect(graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
     let nodes: Vec<_> = graph.graph.node_indices().collect();
     let internal = nodes
@@ -28,11 +34,8 @@ pub fn detect(graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
             }
             // Thresholds are per-language (a node's `language` selects the set).
             let lcfg = cfg.for_language(node.language);
-            // Blast radius is judged relative to repo size: in a large codebase
-            // the core modules are *expected* to have many dependents, so the
-            // configured floor scales up to ~15% of internal modules. Small repos
-            // keep the configured absolute threshold.
-            let blast_floor = lcfg.shotgun_blast_threshold.max(internal * 15 / 100);
+            let blast_floor =
+                lcfg.shotgun_blast_threshold.max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
             let blast = afferent(graph, idx, &node.module_name);
             let ce = efferent(graph, idx);
             shotgun(node, blast, blast_floor, lcfg).or_else(|| god_module(node, blast, ce, lcfg))

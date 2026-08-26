@@ -20,10 +20,10 @@ pub(crate) fn run(args: ReflexezArgs) -> Result<ExitCode> {
     let root = std::fs::canonicalize(root)?;
     let plan = selector::plan(&root, &args)?;
     if args.json {
-        println!("{}", serde_json::to_string_pretty(&plan)?);
+        crate::cli::output::print_line(&serde_json::to_string_pretty(&plan)?)?;
         return Ok(ExitCode::SUCCESS);
     }
-    println!("{}", render::terminal(&plan, &root));
+    crate::cli::output::print_line(&render::terminal(&plan, &root))?;
     if args.plan {
         return Ok(ExitCode::SUCCESS);
     }

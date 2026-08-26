@@ -1,4 +1,5 @@
 use super::*;
+use crate::report::Confidence;
 use crate::spine::parser::parse_file;
 use std::fs;
 

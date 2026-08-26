@@ -209,6 +209,7 @@ The main configuration areas are:
 
 - `[duplication]` for clone thresholds
 - `[dead_code]` for dynamic entry points
+- `[cycles]` for cycle-only path excludes
 - `[smells]` for smell toggles and thresholds
 - `[[boundaries.forbidden]]` for architecture contracts
 - `[action]` for how strongly agents and gates treat each pillar

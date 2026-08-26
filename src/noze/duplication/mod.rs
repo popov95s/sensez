@@ -23,12 +23,38 @@ use crate::config::model::Duplication;
 use crate::globs::build_globset;
 use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::TokenSpan;
-use crate::spine::parser::ParsedFile;
+use crate::spine::parser::{FunctionUnit, ParsedFile};
 use globset::GlobSet;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
 use std::path::Path;
+
+pub(super) fn top_level_functions(file: &ParsedFile) -> Vec<&FunctionUnit> {
+    file.walked
+        .units
+        .functions
+        .iter()
+        .filter(|func| !func.is_nested)
+        .collect()
+}
+
+pub(super) fn span_index_range(
+    file: &ParsedFile,
+    start_line: usize,
+    end_line: usize,
+) -> std::ops::Range<usize> {
+    let spans = &file.walked.syntax.spans;
+    let row = |span: &TokenSpan| span.start_row as usize;
+    let lo = spans.partition_point(|span| row(span) < start_line);
+    let hi = spans.partition_point(|span| row(span) <= end_line);
+    lo..hi.max(lo)
+}
+
+#[cfg(test)]
+pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
+    detect_with_root(files, config, None)
+}
 
 /// Detect duplication per the config (path excludes, threshold, gap stitching).
 ///
@@ -37,11 +63,6 @@ use std::path::Path;
 /// function of the same control-flow shape match as a "clone". Detecting within
 /// each language cohort keeps clones meaningful and lets each partition map its
 /// occurrences back through its own file slice.
-#[allow(dead_code)]
-pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
-    detect_with_root(files, config, None)
-}
-
 pub fn detect_with_root(
     files: &[ParsedFile],
     config: &Duplication,

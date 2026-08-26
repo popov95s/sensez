@@ -4,6 +4,7 @@ use serde_json::{json, Value};
 
 #[test]
 fn gate_blocks_only_new_finding_identities_after_prior_block() {
+let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("work") else {
         return;
     };
@@ -43,6 +44,7 @@ fn gate_blocks_only_new_finding_identities_after_prior_block() {
 
 #[test]
 fn gate_keeps_prior_block_memory_when_head_is_detached() {
+let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("work") else {
         return;
     };

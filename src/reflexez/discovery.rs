@@ -1,7 +1,6 @@
 use super::model::RunnerKind;
 use crate::cli::spec::RunnerChoice;
 use anyhow::{Context, Result};
-use ignore::WalkBuilder;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -25,7 +24,15 @@ struct NodeProject {
 }
 
 pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
-    let files = walk_files(root);
+    let exclude: Vec<String> = crate::config::GLOBAL_BASELINE_EXCLUDE
+        .iter()
+        .map(|glob| glob.to_string())
+        .collect();
+    let discovery = crate::spine::crawler::discover(root, &exclude, &is_project_file)?;
+    for issue in &discovery.issues {
+        eprintln!("sensez reflexez: discovery: {}", issue.message);
+    }
+    let files = discovery.files;
     let sources: Vec<_> = files
         .iter()
         .filter(|path| is_supported_source(path))
@@ -58,16 +65,6 @@ pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
     tests.sort_by(|left, right| left.file.cmp(&right.file));
     tests.dedup_by(|left, right| left.file == right.file && left.runner == right.runner);
     Ok(ProjectFiles { sources, tests })
-}
-
-fn walk_files(root: &Path) -> Vec<PathBuf> {
-    WalkBuilder::new(root)
-        .hidden(false)
-        .build()
-        .filter_map(Result::ok)
-        .filter(|entry| entry.file_type().is_some_and(|kind| kind.is_file()))
-        .map(|entry| entry.into_path())
-        .collect()
 }
 
 fn node_projects(root: &Path, files: &[PathBuf], forced: RunnerChoice) -> Result<Vec<NodeProject>> {
@@ -161,6 +158,11 @@ fn is_supported_source(path: &Path) -> bool {
         path.extension().and_then(|value| value.to_str()),
         Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts")
     ) && crate::profiles::registry::should_parse_path(path)
+}
+
+fn is_project_file(path: &Path) -> bool {
+    is_supported_source(path)
+        || path.file_name().and_then(|name| name.to_str()) == Some("package.json")
 }
 
 fn is_python_test(path: &Path) -> bool {

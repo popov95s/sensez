@@ -71,6 +71,7 @@ mod tests {
 
     #[test]
     fn previously_blocked_identity_is_pruned_by_fingerprint() {
+        let _metrics = crate::test_support::metrics_guard();
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path();
         let mut first = report_with(root, &[("alpha", 4)]);
@@ -93,6 +94,7 @@ mod tests {
 
     #[test]
     fn blocked_findings_are_isolated_by_session_scope() {
+        let _metrics = crate::test_support::metrics_guard();
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path();
         let first = report_with(root, &[("alpha", 4)]);

@@ -19,7 +19,7 @@ use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
 use keying::{bundle_key, pair_key};
-
+const MIN_SIZE_RATIO: f32 = 0.55;
 const MIN_TOKENS: usize = 20;
 
 struct Unit {
@@ -54,8 +54,20 @@ pub fn detect(
     if candidates.is_empty() {
         return Vec::new();
     }
-    let Ok(vectors) = vectors_for(root, &units) else {
-        return Vec::new();
+    let vectors = match vectors_for(root, &units) {
+        Ok(vectors) if vectors.len() == units.len() => vectors,
+        Ok(vectors) => {
+            eprintln!(
+                "[sensez] semantic duplication: embedding returned {}/{} vectors; skipping pass",
+                vectors.len(),
+                units.len()
+            );
+            return Vec::new();
+        }
+        Err(err) => {
+            eprintln!("[sensez] semantic duplication unavailable: {err:#}");
+            return Vec::new();
+        }
     };
     findings(units, candidates, &vectors, config.comment_boost_score)
 }
@@ -65,7 +77,7 @@ fn collect_units(files: &[&ParsedFile], comment_required: bool) -> Vec<Unit> {
     for file in files {
         let file_hash = file.fingerprint.content;
         let comments = comment_bundles(file);
-        for func in top_level_functions(file) {
+        for func in super::top_level_functions(file) {
             if let Some((symbol_path, comment)) = comment_for(&comments, func, comment_required) {
                 let (tokens, shape) = function_shape(file, func);
                 if tokens >= MIN_TOKENS {
@@ -141,49 +153,46 @@ fn last_segment(symbol: &str) -> &str {
         .unwrap_or(symbol)
 }
 
-fn top_level_functions(file: &ParsedFile) -> Vec<&FunctionUnit> {
-    file.walked
-        .units
-        .functions
-        .iter()
-        .filter(|f| !f.is_nested)
-        .collect()
-}
-
 fn function_shape(
     file: &ParsedFile,
     func: &FunctionUnit,
 ) -> (usize, BTreeMap<StructuralToken, usize>) {
+    let range = super::span_index_range(file, func.start_line, func.end_line);
     let mut shape = BTreeMap::new();
-    let mut count = 0;
-    for (tok, span) in file
-        .walked
-        .syntax
-        .tokens
-        .iter()
-        .zip(&file.walked.syntax.spans)
-    {
-        if span.start_row as usize >= func.start_line && span.start_row as usize <= func.end_line {
-            *shape.entry(*tok).or_insert(0) += 1;
-            count += 1;
-        }
+    for tok in &file.walked.syntax.tokens[range] {
+        *shape.entry(*tok).or_insert(0) += 1;
     }
-    (count, shape)
+    (shape.values().sum(), shape)
 }
+
 
 fn candidate_pairs(units: &[Unit], min_shape_score: u8) -> Vec<Candidate> {
     let threshold = score_threshold(min_shape_score);
+    let mut order: Vec<usize> = (0..units.len()).collect();
+    order.sort_by_key(|&index| units[index].tokens);
+
     let mut out = Vec::new();
-    for i in 0..units.len() {
-        for j in i + 1..units.len() {
-            if units[i].file == units[j].file || !similar_size(units[i].tokens, units[j].tokens) {
+    for (pos, &left) in order.iter().enumerate() {
+        let max_tokens = (units[left].tokens as f32 / MIN_SIZE_RATIO).ceil() as usize;
+        for &right in &order[pos + 1..] {
+            if units[right].tokens > max_tokens {
+                break; // sorted: every later unit is at least as big
+            }
+            if units[left].file == units[right].file {
                 continue;
             }
-            let shape_score = cosine(&units[i].shape, &units[j].shape);
+            let shape_score = cosine(&units[left].shape, &units[right].shape);
             if shape_score >= threshold {
+                // Candidate indices must be in unit order (they index both
+                // `units` and the aligned vector list).
+                let (a, b) = if left < right {
+                    (left, right)
+                } else {
+                    (right, left)
+                };
                 out.push(Candidate {
-                    left: i,
-                    right: j,
+                    left: a,
+                    right: b,
                     shape_score,
                 });
             }
@@ -243,10 +252,6 @@ fn findings(
 
 fn score_threshold(score: u8) -> f32 {
     (score.min(100) as f32) / 100.0
-}
-
-fn similar_size(left: usize, right: usize) -> bool {
-    left.min(right) as f32 / left.max(right) as f32 >= 0.55
 }
 
 fn cosine(

@@ -17,8 +17,9 @@ use crate::spine::parser::ParsedFile;
 use std::collections::BTreeMap;
 use std::path::Path;
 
-/// Run every analyzer pillar, rank findings by impact, and aggregate metadata.
-#[allow(dead_code)]
+/// Run every analyzer pillar without project-root context. Test seam for
+/// in-memory fixtures; production scans use [`run_with_root`].
+#[cfg(test)]
 pub fn run(files: &[ParsedFile], graph: &CodebaseGraph, config: &Config) -> AnalysisReport {
     run_with_root(files, graph, config, None)
 }

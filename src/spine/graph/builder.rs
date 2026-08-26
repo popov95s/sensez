@@ -14,7 +14,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     let mut cg = CodebaseGraph::default();
     let identities = identity::for_files(files, configured_roots);
     let mut module_of: Vec<Option<String>> = Vec::with_capacity(files.len());
-    let mut by_logical_name = HashMap::new();
+    let mut by_scope: HashMap<(Language, PathBuf), HashMap<String, String>> = HashMap::new();
     let mut resolution_cache = ResolutionCache::default();
 
     // Pass 1: create a node per file. Re-exports are NOT folded into declared
@@ -36,26 +36,27 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
             is_external: false,
         });
         cg.name_to_index.insert(identity.name.clone(), idx);
-        by_logical_name.insert(
-            (
-                file.language,
-                identity.root.clone(),
-                identity.logical_name.clone(),
-            ),
-            identity.name.clone(),
-        );
+        by_scope
+            .entry((file.language, identity.root.clone()))
+            .or_default()
+            .insert(identity.logical_name.clone(), identity.name.clone());
         module_of.push(Some(identity.name.clone()));
     }
 
     // Pass 2: add an edge per import.
+    let empty_scope = HashMap::new();
     for (i, file) in files.iter().enumerate() {
         let Some(module_name) = module_of[i].as_ref() else {
             continue;
         };
         let profile = registry::module_profile(file.language);
         let src_idx = cg.name_to_index[module_name];
+        let src_module = cg.graph[src_idx].module_name.clone();
         let is_index = profile.is_package_index(&file.path);
         let pkg = profile.containing_package(module_name, is_index);
+        let scoped_names = by_scope
+            .get(&(file.language, identities[i].root.clone()))
+            .unwrap_or(&empty_scope);
         for import in &file.walked.symbols.imports {
             let resolved = profile.resolve_target(
                 import,
@@ -64,15 +65,18 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
                 &identities[i].root,
                 &mut resolution_cache,
             );
-            let target = by_logical_name
-                .get(&(file.language, identities[i].root.clone(), resolved.clone()))
-                .cloned()
-                .unwrap_or(resolved);
+            // Zero-allocation probe: borrow the canonical name when the
+            // logical module exists, else fall back to the raw resolution.
+            let target: &str = scoped_names
+                .get(resolved.as_str())
+                .map(String::as_str)
+                .unwrap_or(&resolved);
             add_import_edges(
                 &mut cg,
                 src_idx,
+                &src_module,
                 file.language,
-                &target,
+                target,
                 import,
                 &file.walked.usage.attribute_accesses,
             );
@@ -89,17 +93,17 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
 fn add_import_edges(
     cg: &mut CodebaseGraph,
     src_idx: NodeIndex,
+    src_module: &str,
     src_lang: Language,
     target: &str,
     import: &crate::spine::parser::ImportContext,
     attrs: &HashMap<String, HashSet<String>>,
 ) {
     let profile = registry::module_profile(src_lang);
-    let src_module = cg.graph[src_idx].module_name.clone();
     let add_edge =
         |cg: &mut CodebaseGraph, dst: NodeIndex, mut ctx: crate::spine::parser::ImportContext| {
             ctx.is_module_decl =
-                ctx.is_module_decl || profile.is_containment(&src_module, &ctx.target_module);
+                ctx.is_module_decl || profile.is_containment(src_module, &ctx.target_module);
             cg.graph.add_edge(src_idx, dst, ctx);
         };
     let mut package_symbols: Vec<String> = Vec::new();

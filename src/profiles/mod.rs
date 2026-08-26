@@ -50,31 +50,6 @@ pub struct LanguageInfo {
     pub extensions: &'static [&'static str],
 }
 
-/// Shared filesystem/module-name operations for a language profile.
-#[derive(Clone, Copy)]
-pub struct ModuleLayout {
-    root_for: fn(&Path) -> PathBuf,
-    module_name: fn(&Path, &Path) -> String,
-    is_package_index: fn(&Path) -> bool,
-    containing_package: fn(&str, bool) -> String,
-}
-
-impl ModuleLayout {
-    pub const fn new(
-        root_for: fn(&Path) -> PathBuf,
-        module_name: fn(&Path, &Path) -> String,
-        is_package_index: fn(&Path) -> bool,
-        containing_package: fn(&str, bool) -> String,
-    ) -> Self {
-        Self {
-            root_for,
-            module_name,
-            is_package_index,
-            containing_package,
-        }
-    }
-}
-
 /// Dead-code conventions supplied by a language profile.
 ///
 /// User config remains global and explicit; these defaults are applied only to
@@ -136,19 +111,14 @@ pub trait ParseProfile: Send + Sync {
 }
 
 pub trait ModuleProfile: Send + Sync {
-    fn module_layout(&self) -> ModuleLayout;
-    fn root_for(&self, file: &Path) -> PathBuf {
-        (self.module_layout().root_for)(file)
-    }
-    fn module_name(&self, file: &Path, root: &Path) -> String {
-        (self.module_layout().module_name)(file, root)
-    }
-    fn is_package_index(&self, file: &Path) -> bool {
-        (self.module_layout().is_package_index)(file)
-    }
-    fn containing_package(&self, module_name: &str, is_index: bool) -> String {
-        (self.module_layout().containing_package)(module_name, is_index)
-    }
+    /// Workspace/package root containing `file` (module names are relative to it).
+    fn root_for(&self, file: &Path) -> PathBuf;
+    /// Logical module name for `file` under `root` (dotted for Python, path-based for JS/TS/Rust).
+    fn module_name(&self, file: &Path, root: &Path) -> String;
+    /// True when `file` is the package's `__init__`/`index` entry.
+    fn is_package_index(&self, file: &Path) -> bool;
+    /// The containing package of `module_name` (`a.b.c` -> `a.b`; index files stay one level deeper).
+    fn containing_package(&self, module_name: &str, is_index: bool) -> String;
     fn resolve_target(
         &self,
         import: &ImportContext,

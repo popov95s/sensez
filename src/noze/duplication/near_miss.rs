@@ -27,7 +27,7 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
     let mut groups: HashMap<Vec<u64>, Vec<Member>> = HashMap::new();
 
     for (idx, file) in files.iter().enumerate() {
-        for func in top_level_functions(file) {
+        for func in super::top_level_functions(file) {
             let tokens = function_tokens(file, func);
             if tokens.len() < threshold {
                 continue;
@@ -68,44 +68,17 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
     out
 }
 
-/// Functions not nested inside another function (methods and module functions).
-fn top_level_functions(file: &ParsedFile) -> Vec<&crate::spine::parser::FunctionUnit> {
-    let mut functions: Vec<&crate::spine::parser::FunctionUnit> =
-        file.walked.units.functions.iter().collect();
-
-    functions.sort_by(|a, b| {
-        a.start_line
-            .cmp(&b.start_line)
-            .then_with(|| b.end_line.cmp(&a.end_line))
-    });
-
-    let mut result = Vec::new();
-    let mut max_end_line = 0;
-
-    for func in functions {
-        if func.end_line > max_end_line {
-            result.push(func);
-            max_end_line = func.end_line;
-        }
-    }
-
-    result
-}
-
-/// Tokens (kind, lexeme) whose start row falls within the function's lines.
+/// Tokens (kind, lexeme) of one top-level function, sliced by binary search
+/// over the file's row-sorted spans (see [`super::span_index_range`]).
 fn function_tokens(
     file: &ParsedFile,
     func: &crate::spine::parser::FunctionUnit,
 ) -> Vec<(StructuralToken, u64)> {
-    file.walked
-        .syntax
-        .tokens
+    let range = super::span_index_range(file, func.start_line, func.end_line);
+    file.walked.syntax.tokens[range.clone()]
         .iter()
-        .zip(&file.walked.syntax.spans)
-        .zip(&file.walked.syntax.lexemes)
-        .filter(|((_, span), _)| {
-            span.start_row as usize >= func.start_line && span.start_row as usize <= func.end_line
-        })
+        .zip(&file.walked.syntax.spans[range.clone()])
+        .zip(&file.walked.syntax.lexemes[range])
         .map(|((tok, _), lex)| (*tok, *lex))
         .collect()
 }

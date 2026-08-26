@@ -106,10 +106,10 @@ pub const SMELLS: [SmellDoc; 36] = {
 };
 
 pub fn smell(kind: SmellKind) -> &'static SmellDoc {
-    match SMELLS.iter().find(|doc| doc.kind == kind) {
-        Some(doc) => doc,
-        None => unreachable!("all smell kinds are documented"),
-    }
+    SMELLS
+        .iter()
+        .find(|doc| doc.kind == kind)
+        .unwrap_or_else(|| panic!("smell kind {} has no glossary entry", kind.as_str()))
 }
 
 use crate::report::{AnalysisReport, GlossaryEntry, SmellKind};

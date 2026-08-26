@@ -3,9 +3,28 @@
 use super::spec::ScanOptions;
 use crate::report::{AnalysisReport, Confidence, SmellFinding};
 use std::collections::BTreeMap;
+use std::io::{self, Write};
 
 const DEFAULT_PILLAR_TOP: usize = 5;
 const DEFAULT_SMELL_KIND_TOP: usize = 3;
+
+pub fn print_line(text: &str) -> io::Result<()> {
+    let result = write_stdout(|out| {
+        out.write_all(text.as_bytes())?;
+        out.write_all(b"\n")
+    });
+    match result {
+        Err(err) if err.kind() == io::ErrorKind::BrokenPipe => Ok(()),
+        other => other,
+    }
+}
+
+fn write_stdout(f: impl FnOnce(&mut io::StdoutLock<'_>) -> io::Result<()>) -> io::Result<()> {
+    let stdout = io::stdout();
+    let mut out = stdout.lock();
+    f(&mut out)?;
+    out.flush()
+}
 
 pub fn apply(report: &mut AnalysisReport, options: &ScanOptions) {
     apply_pillar_filter(report, options);

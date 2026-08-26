@@ -183,3 +183,59 @@ fn signature_is_stable_and_changes_with_knobs() {
     cache_changed.cache.enabled = true;
     assert_ne!(cfg.signature(), cache_changed.signature());
 }
+
+#[test]
+fn unknown_keys_warn_without_failing() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    std::fs::write(
+        dir.join("sensez.toml"),
+        "[duplication]\ntreshold = 40\nthreshold = 60\n",
+    )
+    .unwrap();
+
+    // Public load succeeds; the typo is ignored and the real knob applies.
+    let cfg = Config::load(&dir).unwrap();
+    assert_eq!(cfg.duplication.threshold, 60);
+
+    // Scan loading surfaces the same problem as a ScanIssue.
+    let (cfg, issues) = Config::load_for_scan(&dir);
+    assert_eq!(cfg.duplication.threshold, 60);
+    let unknown: Vec<_> = issues
+        .iter()
+        .filter(|issue| issue.message.contains("unknown config key"))
+        .collect();
+    assert_eq!(unknown.len(), 1);
+    assert!(
+        unknown[0].message.contains("duplication.treshold"),
+        "{}",
+        unknown[0].message
+    );
+}
+
+#[test]
+fn known_config_has_no_unknown_key_warnings() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    std::fs::write(
+        dir.join("sensez.toml"),
+        "exclude = [\"**/generated/**\"]\n\
+         [cache]\nenabled = false\n\
+         [duplication]\nthreshold = 55\n\
+         [duplication.semantic]\nenabled = false\ncomment_required = true\n\
+         [dead_code]\nunused_methods = true\nentrypoints = [\"**/main.py\"]\n\
+         [[boundaries.forbidden]]\nfrom = \"a\"\nto = \"b\"\n\
+         [action]\ncycles = \"warning\"\n\
+         [gate]\nrepeat_limit = 2\n\
+         [self_improvement]\nenabled = true\n",
+    )
+    .unwrap();
+
+    let (_, issues) = Config::load_for_scan(&dir);
+    assert!(
+        !issues
+            .iter()
+            .any(|issue| issue.message.contains("unknown config key")),
+        "{issues:?}"
+    );
+}

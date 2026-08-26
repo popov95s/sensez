@@ -21,7 +21,7 @@ use std::collections::HashMap;
 use std::path::PathBuf;
 
 pub(super) use methods::unused_methods;
-pub use properties::unused_properties;
+pub(super) use properties::unused_properties;
 
 pub(super) struct MemberFiles<'a> {
     report: Vec<&'a ParsedFile>,

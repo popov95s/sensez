@@ -6,14 +6,14 @@
 //! you dismiss as false positives — to tune what it surfaces and to show its
 //! value via `brainz_report`.
 
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 
 /// Controls Sensez' LOCAL-ONLY self-improvement data under
 /// `.sensez/local-metrics/` (scans run, findings resolved, searches served,
 /// triage verdicts). `enabled = false` stops even the on-disk recording — no
 /// events log, no totals, no fingerprint baselines — and `brainz_report`
 /// answers "disabled".
-#[derive(Debug, Clone, Hash, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct SelfImprovement {
     pub enabled: bool,

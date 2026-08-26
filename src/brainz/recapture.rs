@@ -22,6 +22,9 @@ pub(super) fn run() {
         .unwrap_or_else(|poisoned| poisoned.into_inner());
 
     for (root, base) in hub::baselines() {
+        if !root.is_dir() {
+            continue;
+        }
         if base.ms > MAX_RESCAN_MS
             || !changed_since(&root, base.ts)
             || !super::recapture_state::changed(&root, &base)
@@ -136,6 +139,7 @@ mod tests {
     /// the vanished finding must be banked as resolved.
     #[test]
     fn recapture_banks_resolved_without_a_second_scan() {
+        let _metrics = crate::test_support::metrics_guard();
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path().to_path_buf();
         fs::create_dir_all(&root).unwrap();
@@ -175,6 +179,7 @@ mod tests {
 
     #[test]
     fn stale_recapture_baseline_is_a_noop() {
+        let _metrics = crate::test_support::metrics_guard();
         let tmp = tempfile::tempdir().unwrap();
         let root = tmp.path().to_path_buf();
         fs::create_dir_all(&root).unwrap();

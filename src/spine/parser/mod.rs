@@ -14,15 +14,21 @@ use anyhow::{anyhow, Context, Result};
 use rayon::prelude::*;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::sync::Arc;
 
 #[derive(Debug)]
 pub struct ParsedFile {
     pub path: PathBuf,
     pub language: Language,
     pub lines: u32,
-    #[allow(dead_code)]
+    /// Identity + content stamps for the incremental cache and semantic
+    /// duplication keys.
     pub fingerprint: SourceFingerprint,
-    pub walked: Walked,
+    /// Shared so the incremental cache can hand out copies of an unchanged file
+    /// without deep-cloning the whole token stream. The single writer of a
+    /// file's `Walked` (the parser) produces an `Arc`; analyzers read through
+    /// it, and the one mutating caller uses [`Arc::make_mut`].
+    pub walked: Arc<Walked>,
 }
 
 #[derive(Debug, Default)]
@@ -31,7 +37,6 @@ pub struct ParseBatch {
     pub issues: Vec<ScanIssue>,
 }
 
-#[allow(dead_code)]
 pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
     let outcomes: Vec<_> = files
         .par_iter()
@@ -63,7 +68,6 @@ pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
     }
 }
 
-#[allow(dead_code)]
 pub fn parse_sources(files: &[crate::spine::cache::SourceFile]) -> ParseBatch {
     let outcomes: Vec<_> = files
         .par_iter()
@@ -129,7 +133,7 @@ pub fn parse_sources_incremental(
     (batch, stats)
 }
 
-#[allow(dead_code)]
+#[cfg(test)]
 pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
     parse_file_with_parser(path, file_id, &mut tree_sitter::Parser::new())
 }
@@ -173,8 +177,11 @@ fn parse_loaded_source(
         .file_stem()
         .map(|s| s.to_string_lossy().into_owned())
         .unwrap_or_default();
-    let fingerprint =
-        crate::spine::cache::SourceFingerprint::new(path, profile.info().language, src);
+    let fingerprint = crate::spine::cache::SourceFingerprint::with_content_hash(
+        path,
+        profile.info().language,
+        source.content_hash,
+    );
     let walked = parse_source_with_parser(src, file_id, &module_name, profile, parser)
         .with_context(|| format!("parsing {}", path.display()))?;
     let lines = if src.is_empty() {
@@ -187,13 +194,13 @@ fn parse_loaded_source(
         language: profile.info().language,
         lines,
         fingerprint,
-        walked,
+        walked: Arc::new(walked),
     })
 }
 
 const MAX_TREE_DEPTH: usize = 512;
 
-#[allow(dead_code)]
+#[cfg(test)]
 pub fn parse_source(
     src: &[u8],
     file_id: u32,

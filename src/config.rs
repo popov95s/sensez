@@ -4,10 +4,11 @@ mod brainz;
 pub mod model;
 pub mod smells;
 mod source;
+mod warnings;
 
 pub use brainz::SelfImprovement;
 pub use model::{
-    ActionPolicy, Boundaries, Cache, Config, DeadCode, Duplication, ForbiddenRule, Gate,
+    ActionPolicy, Boundaries, Cache, Cycles, Config, DeadCode, Duplication, ForbiddenRule,
     SemanticDuplication,
 };
 pub use smells::{SmellConfig, Smells};
@@ -54,15 +55,14 @@ impl Config {
     /// Load configuration: `sensez.toml`, else `[tool.sensez]` from
     /// `pyproject.toml`, else defaults (see [`source`]).
     pub fn load(project_root: &Path) -> Result<Config> {
-        let mut config: Config = match source::discover(project_root)? {
-            source::Source::SensezToml(text) => {
-                toml::from_str(&text).context("parsing sensez.toml")?
-            }
-            source::Source::Pyproject(table) => table
-                .try_into()
-                .context("parsing [tool.sensez] in pyproject.toml")?,
-            source::Source::Defaults => Config::default(),
+        let (mut config, unknown_keys) = match source::discover(project_root)? {
+            source::Source::SensezToml(text) => parse_source(source::Source::SensezToml(text))?,
+            source::Source::Pyproject(table) => parse_source(source::Source::Pyproject(table))?,
+            source::Source::Defaults => (Config::default(), Vec::new()),
         };
+        for key in &unknown_keys {
+            eprintln!("[sensez] config: unknown key `{key}` (ignored)");
+        }
         // Resolve configured roots to absolute paths under the project root.
         config.roots = config.roots.iter().map(|r| project_root.join(r)).collect();
         config.apply_baseline_excludes();
@@ -76,7 +76,17 @@ impl Config {
         let (source, mut issues) = source::discover_with_issues(project_root);
         let issue_file = config_issue_file(&source, project_root);
         let mut config = match parse_source(source) {
-            Ok(config) => config,
+            Ok((config, unknown)) if unknown.is_empty() => config,
+            Ok((config, unknown)) => {
+                issues.push(config_issue(
+                    issue_file.clone(),
+                    format!(
+                        "unknown config key(s): {} (ignored)",
+                        unknown.join(", ")
+                    ),
+                ));
+                config
+            }
             Err(err) => {
                 issues.push(config_issue(issue_file.clone(), format!("{err:#}")));
                 Config::default()
@@ -107,7 +117,10 @@ impl Config {
                 self.duplication.exclude.push(g.clone());
             }
             if !self.smells.exclude.contains(&g) {
-                self.smells.exclude.push(g);
+                self.smells.exclude.push(g.clone());
+            }
+            if !self.cycles.exclude.contains(&g) {
+                self.cycles.exclude.push(g);
             }
         }
     }
@@ -116,19 +129,28 @@ impl Config {
         crate::globs::validate_patterns("exclude", &self.exclude)?;
         crate::globs::validate_patterns("duplication.exclude", &self.duplication.exclude)?;
         crate::globs::validate_patterns("dead_code.entry_points", &self.dead_code.entry_points)?;
+        crate::globs::validate_patterns("dead_code.entrypoints", &self.dead_code.entrypoints)?;
+        crate::globs::validate_patterns("cycles.exclude", &self.cycles.exclude)?;
         crate::globs::validate_patterns("smells.exclude", &self.smells.exclude)?;
         Ok(())
     }
 }
 
-fn parse_source(source: source::Source) -> Result<Config> {
-    match source {
-        source::Source::SensezToml(text) => toml::from_str(&text).context("parsing sensez.toml"),
-        source::Source::Pyproject(table) => table
-            .try_into()
-            .context("parsing [tool.sensez] in pyproject.toml"),
-        source::Source::Defaults => Ok(Config::default()),
-    }
+fn parse_source(source: source::Source) -> Result<(Config, Vec<String>)> {
+    let (value, label) = match source {
+        source::Source::SensezToml(text) => {
+            let value = text.parse::<toml::Value>().context("parsing sensez.toml")?;
+            (value, "sensez.toml")
+        }
+        source::Source::Pyproject(table) => (table, "[tool.sensez] in pyproject.toml"),
+        source::Source::Defaults => return Ok((Config::default(), Vec::new())),
+    };
+    let unknown_keys = value
+        .as_table()
+        .map(warnings::collect_unknown_keys)
+        .unwrap_or_default();
+    let config: Config = value.try_into().with_context(|| format!("parsing {label}"))?;
+    Ok((config, unknown_keys))
 }
 
 fn config_issue_file(source: &source::Source, project_root: &Path) -> Option<std::path::PathBuf> {

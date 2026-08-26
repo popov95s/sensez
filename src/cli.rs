@@ -2,7 +2,7 @@
 
 #[cfg(feature = "mcp")]
 mod brainz;
-mod output;
+pub(crate) mod output;
 pub(crate) mod spec;
 
 use crate::diff::ChangedLines;
@@ -100,7 +100,7 @@ fn serve_mcp() -> Result<ExitCode> {
 #[cfg(feature = "eyez")]
 fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
     let report = crate::eyez::reindex(path, force, semantic)?;
-    println!(
+    output::print_line(&format!(
         "Indexed {} doc/comment item(s).{}",
         report.docs,
         if report.semantic_warmed {
@@ -108,7 +108,7 @@ fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
         } else {
             ""
         }
-    );
+    ))?;
     Ok(())
 }
 
@@ -118,18 +118,18 @@ fn run_search(path: &Path, query: &str, top_k: usize, json: bool) -> Result<()> 
     let index = crate::eyez::Index::open(path)?;
     let hits = index.search(query, top_k);
     if json {
-        println!("{}", serde_json::to_string_pretty(&hits)?);
+        output::print_line(&serde_json::to_string_pretty(&hits)?)?;
     } else if hits.is_empty() {
-        println!(
+        output::print_line(&format!(
             "No indexed documentation matched (index size: {}).",
             index.len()
-        );
+        ))?;
     } else {
         for hit in &hits {
-            println!(
+            output::print_line(&format!(
                 "{:.3}  {}:{}  {}  [{:?}]\n        {}",
                 hit.score, hit.file, hit.line, hit.symbol_path, hit.kind, hit.text
-            );
+            ))?;
         }
     }
     Ok(())
@@ -140,7 +140,7 @@ fn run_explain(term: Option<&str>) -> Result<()> {
     use crate::noze::glossary;
     match term {
         Some(t) => match glossary::lookup(t) {
-            Some(e) => println!("{} ({})\n  {}", e.title, e.term, e.explanation),
+            Some(e) => output::print_line(&format!("{} ({})\n  {}", e.title, e.term, e.explanation))?,
             None => {
                 let known: Vec<String> = glossary::all().into_iter().map(|e| e.term).collect();
                 anyhow::bail!("unknown term '{t}'. Known: {}", known.join(", "));
@@ -148,7 +148,8 @@ fn run_explain(term: Option<&str>) -> Result<()> {
         },
         None => {
             for e in glossary::all() {
-                println!("{} ({})\n  {}\n", e.title, e.term, e.explanation);
+                output::print_line(&format!("{} ({})\n  {}", e.title, e.term, e.explanation))?;
+                output::print_line("")?;
             }
         }
     }
@@ -157,10 +158,19 @@ fn run_explain(term: Option<&str>) -> Result<()> {
 
 fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     if options.summary {
-        println!("{}", crate::config_summary::scan(path, options.threshold)?);
+        output::print_line(&crate::config_summary::scan(path, options.threshold)?)?;
         return Ok(ExitCode::SUCCESS);
     }
     let diff = build_diff(path, options.diff, options.diff_from.as_deref());
+    let wants_diff = options.diff || options.diff_from.is_some();
+    if wants_diff && diff.changed.is_none() && options.fail_on_new.is_some() {
+        for issue in &diff.issues {
+            eprintln!("[sensez] diff: {}", issue.message);
+        }
+        anyhow::bail!(
+            "--fail-on-new requires a usable diff source; fix the diff error above or drop --fail-on-new"
+        );
+    }
     let (mut report, module_files) = crate::analyze_path(path, options.threshold)?;
     let report_started = std::time::Instant::now();
     if let Some(changed) = diff.changed.as_ref() {
@@ -168,11 +178,22 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     report.meta.issues.extend(diff.issues);
     report.meta.files_skipped = report.meta.issues.len();
+    for issue in &report.meta.issues {
+        match &issue.file {
+            Some(file) => eprintln!(
+                "[sensez] {}: {}: {}",
+                issue.stage,
+                file.display(),
+                issue.message
+            ),
+            None => eprintln!("[sensez] {}: {}", issue.stage, issue.message),
+        }
+    }
     crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
     output::apply(&mut report, options);
 
-    let output = if options.json {
+    let rendered = if options.json {
         crate::reporter::to_json(&report)?
     } else {
         crate::reporter::render(&report, options.explain)
@@ -183,7 +204,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
             report_started.elapsed().as_secs_f64() * 1e3
         );
     }
-    println!("{output}");
+    output::print_line(&rendered)?;
 
     if let Some(level) = options.fail_on_new {
         if report.meta.mode == crate::report::ReportMode::Diff
