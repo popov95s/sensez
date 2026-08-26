@@ -518,6 +518,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cycles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cycles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -990,6 +1001,17 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#cycles" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Cycles
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#boundaries" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1196,6 +1218,10 @@ config fixes a whole class of false positives.</p>
 <p>Opt-in detectors for harder clones: <code>near_miss</code> (consistent renames),
 <code>class_name_duplicates</code>, <code>class_property_overlap_min</code>, and
 <code>[duplication.semantic]</code> (only in builds with the <code>eyez</code> feature).</p>
+<h2 id="cycles">Cycles</h2>
+<div class="highlight"><pre><span></span><code><span class="k">[cycles]</span>
+<span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/vendor/**"</span><span class="p">]</span><span class="w">   </span><span class="c1"># import edges here never report a cycle</span>
+</code></pre></div>
 <h2 id="boundaries">Boundaries</h2>
 <p>Each rule forbids any module matching <code>from</code> from importing any module matching
 <code>to</code>:</p>
