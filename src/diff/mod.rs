@@ -17,6 +17,7 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug, Default)]
 pub struct ChangedLines {
     files: HashMap<PathBuf, Vec<(usize, usize)>>,
+    resolved: std::cell::RefCell<rustc_hash::FxHashMap<PathBuf, PathBuf>>,
 }
 
 impl ChangedLines {
@@ -35,7 +36,15 @@ impl ChangedLines {
 
     /// Record a changed range `[lo, hi]` (1-indexed) for `file`.
     pub fn add(&mut self, file: &Path, lo: usize, hi: usize) {
-        self.files.entry(canon(file)).or_default().push((lo, hi));
+        self.files.entry(self.resolved(file)).or_default().push((lo, hi));
+    }
+
+    fn resolved(&self, path: &Path) -> PathBuf {
+        self.resolved
+            .borrow_mut()
+            .entry(path.to_path_buf())
+            .or_insert_with(|| canon(path))
+            .clone()
     }
 
     /// Mark an entire file as changed (e.g. a freshly-added/untracked file).
@@ -46,13 +55,13 @@ impl ChangedLines {
     /// True if `[lo, hi]` overlaps any changed range in `file`.
     pub fn touches(&self, file: &Path, lo: usize, hi: usize) -> bool {
         self.files
-            .get(&canon(file))
+            .get(&self.resolved(file))
             .is_some_and(|ranges| ranges.iter().any(|&(a, b)| lo <= b && a <= hi))
     }
 
     /// True if `file` has any changed range at all.
     pub fn touches_file(&self, file: &Path) -> bool {
-        self.files.contains_key(&canon(file))
+        self.files.contains_key(&self.resolved(file))
     }
 
     pub fn is_empty(&self) -> bool {

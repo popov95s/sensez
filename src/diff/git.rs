@@ -52,6 +52,7 @@ pub fn changed_paths(scan_path: &Path, base: Option<&str>, staged: bool) -> Resu
         );
     } else {
         if let Some(base) = base {
+            validate_revision(base)?;
             let range = format!("{base}...HEAD");
             extend_names(
                 &mut relative,
@@ -95,13 +96,27 @@ fn extend_names(paths: &mut std::collections::BTreeSet<PathBuf>, output: &str) {
 }
 
 fn untracked_relative(root: &Path) -> Result<Vec<PathBuf>> {
-    let listing = run(&["status", "--porcelain", "--untracked-files=all"], root)?;
-    Ok(listing
-        .lines()
-        .filter_map(|line| line.strip_prefix("?? "))
-        .map(str::trim)
-        .filter(|path| !path.is_empty())
+    Ok(untracked_entries(root)?
+        .into_iter()
         .map(PathBuf::from)
+        .collect())
+}
+
+fn untracked_entries(root: &Path) -> Result<Vec<String>> {
+    let listing = run(
+        &[
+            "status",
+            "--porcelain",
+            "-z",
+            "--untracked-files=all",
+        ],
+        root,
+    )?;
+    Ok(listing
+        .split('\0')
+        .filter(|entry| entry.starts_with("?? "))
+        .map(|entry| entry["?? ".len()..].to_string())
+        .filter(|path| !path.is_empty())
         .collect())
 }
 
@@ -120,12 +135,8 @@ pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
 }
 
 fn untracked_sources(root: &Path) -> Result<Vec<PathBuf>> {
-    let listing = run(&["status", "--porcelain", "--untracked-files=all"], root)?;
-    Ok(listing
-        .lines()
-        .filter(|line| line.starts_with("?? "))
-        .map(|line| line.trim_start_matches("?? ").trim())
-        .filter(|rel| !rel.is_empty())
+    Ok(untracked_entries(root)?
+        .into_iter()
         .map(|rel| root.join(rel))
         .filter(|abs| crate::profiles::registry::parse_for_path(abs).is_some())
         .collect())
@@ -153,6 +164,16 @@ pub fn current_branch(path: &Path) -> Option<String> {
     }
 }
 
+fn validate_revision(rev: &str) -> Result<()> {
+    if rev.is_empty()
+        || rev.starts_with('-')
+        || rev.chars().any(|ch| ch.is_whitespace() || ch.is_control())
+    {
+        anyhow::bail!("invalid revision '{rev}': must be a git ref without options");
+    }
+    Ok(())
+}
+
 fn run(args: &[&str], cwd: &Path) -> Result<String> {
     let output = run_with_timeout(Command::new("git").args(args), cwd)
         .context("failed to run `git` (is it installed and on PATH?)")?;
@@ -170,11 +191,10 @@ fn run(args: &[&str], cwd: &Path) -> Result<String> {
 /// [`GIT_TIMEOUT`] for completion. On timeout the child is killed and the
 /// function returns an error rather than blocking indefinitely.
 ///
-/// We use a `Stdio::piped` redirect for both streams so we can read them
-/// *after* the child exits; if we let the child inherit the parent's stdio,
-/// a child that fills its pipe would block on write and the timeout would
-/// never fire (the kernel would block the child, but `wait_timeout` only
-/// ticks against wall-clock).
+/// Both streams are piped AND drained concurrently on helper threads: a child
+/// whose output exceeds the OS pipe buffer (~64 KB) would otherwise block on
+/// write forever (it cannot exit until the pipe drains, so waiting for exit
+/// first deadlocks until the timeout kills it — which then loses the diff).
 fn run_with_timeout(cmd: &mut Command, cwd: &Path) -> std::io::Result<std::process::Output> {
     use std::io::Read;
     use std::process::Stdio;
@@ -182,16 +202,22 @@ fn run_with_timeout(cmd: &mut Command, cwd: &Path) -> std::io::Result<std::proce
     cmd.stdout(Stdio::piped());
     cmd.stderr(Stdio::piped());
     let mut child = cmd.spawn()?;
+    fn drain<R: Read + Send + 'static>(pipe: Option<R>) -> std::thread::JoinHandle<Vec<u8>> {
+        std::thread::spawn(move || {
+            let mut buf = Vec::new();
+            if let Some(mut pipe) = pipe {
+                let _ = pipe.read_to_end(&mut buf);
+            }
+            buf
+        })
+    }
+    let stdout_reader = drain(child.stdout.take());
+    let stderr_reader = drain(child.stderr.take());
     match child.wait_timeout(GIT_TIMEOUT) {
         Ok(Some(status)) => {
-            let mut stdout = Vec::new();
-            if let Some(mut pipe) = child.stdout.take() {
-                pipe.read_to_end(&mut stdout)?;
-            }
-            let mut stderr = Vec::new();
-            if let Some(mut pipe) = child.stderr.take() {
-                pipe.read_to_end(&mut stderr)?;
-            }
+            // The child exited, so both pipes are at EOF; the joins are prompt.
+            let stdout = stdout_reader.join().unwrap_or_default();
+            let stderr = stderr_reader.join().unwrap_or_default();
             Ok(std::process::Output {
                 status,
                 stdout,

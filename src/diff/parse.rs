@@ -8,10 +8,15 @@
 pub fn parse_unified(text: &str) -> Vec<(String, Vec<(usize, usize)>)> {
     let mut out: Vec<(String, Vec<(usize, usize)>)> = Vec::new();
     let mut current: Option<usize> = None; // index into `out` for the active file
+    let mut in_file_section = false; // saw `diff --git`, awaiting its `+++`
 
     for line in text.lines() {
-        if let Some(path) = line.strip_prefix("+++ ") {
-            current = new_file_path(path).map(|p| {
+        if line.starts_with("diff --git ") {
+            in_file_section = true;
+            current = None;
+        } else if in_file_section && line.starts_with("+++ ") {
+            in_file_section = false;
+            current = new_file_path(line["+++ ".len()..].trim_start()).map(|p| {
                 out.push((p, Vec::new()));
                 out.len() - 1
             });
@@ -50,6 +55,21 @@ fn new_hunk_range(rest: &str) -> Option<(usize, usize)> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn added_content_starting_with_plus_signs_stays_content() {
+        let diff = concat!(
+            "diff --git a/docs/guide.md b/docs/guide.md\n",
+            "--- a/docs/guide.md\n",
+            "+++ b/docs/guide.md\n",
+            "@@ -1,0 +2,1 @@\n",
+            "+++ this added line looks like a header\n",
+        );
+        let parsed = parse_unified(diff);
+        assert_eq!(parsed.len(), 1);
+        assert_eq!(parsed[0].0, "docs/guide.md");
+        assert_eq!(parsed[0].1, vec![(2, 2)]);
+    }
 
     #[test]
     fn parses_added_and_modified_hunks() {
