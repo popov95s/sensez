@@ -94,8 +94,31 @@ jobs:
           }
           NODE
 
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.97.0
+        with:
+          components: rustfmt, clippy
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+
+      - name: Check formatting
+        run: cargo fmt --check
+
+      - name: Lint
+        run: cargo clippy --all-features --all-targets -- -D warnings
+
+      - name: Run tests
+        run: cargo test --all-features
+
   build-pypi-wheels:
-    needs: guard
+    needs: [guard, verify]
     if: ${{ needs.guard.outputs.target == 'pypi' || needs.guard.outputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -130,7 +153,7 @@ jobs:
           if-no-files-found: error
 
   publish-pypi:
-    needs: [guard, build-pypi-wheels]
+    needs: [guard, verify, build-pypi-wheels]
     if: ${{ needs.guard.outputs.target == 'pypi' || needs.guard.outputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
@@ -213,7 +236,7 @@ jobs:
           repository-url: https://test.pypi.org/legacy/
 
   build-npm-packages:
-    needs: guard
+    needs: [guard, verify]
     if: ${{ needs.guard.outputs.target == 'npm' || needs.guard.outputs.target == 'release' }}
     runs-on: ${{ matrix.os }}
     strategy:
@@ -239,7 +262,7 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.97.0
         with:
           components: rustfmt, clippy
 
@@ -273,7 +296,7 @@ jobs:
           if-no-files-found: error
 
   publish-npm:
-    needs: [guard, build-npm-packages]
+    needs: [guard, verify, build-npm-packages]
     if: ${{ needs.guard.outputs.target == 'npm' || needs.guard.outputs.target == 'release' }}
     runs-on: ubuntu-latest
     environment:
@@ -331,7 +354,7 @@ jobs:
           fetch-depth: 0
 
       - name: Set up Rust
-        uses: dtolnay/rust-toolchain@stable
+        uses: dtolnay/rust-toolchain@1.97.0
 
       - name: Cache cargo artifacts
         uses: Swatinem/rust-cache@v2

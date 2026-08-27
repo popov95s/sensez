@@ -69,14 +69,27 @@ rayon = "1.10"
 petgraph = "0.6"
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
+# Comment/formatting-preserving TOML edits for `sensez init --agent codex`
+# (plain `toml` re-serialization would strip every user comment).
 toml = "0.8"
+toml_edit = "0.22"
 anyhow = "1"
 bio = "2"
 libsais = { version = "0.2", default-features = false }
 colored = "2"
-crossterm = "0.28"
+# Interactive prompts for `sensez init` (agent selection, confirmations).
 dialoguer = "0.11"
-tokio = { version = "1", features = ["full"], optional = true }
+# Only what the MCP stdio server uses: runtime + line I/O + timers/signals +
+# the mpsc/semaphore primitives in src/mcp/server.rs.
+tokio = { version = "1", features = [
+    "rt-multi-thread",
+    "macros",
+    "io-util",
+    "io-std",
+    "time",
+    "signal",
+    "sync",
+], optional = true }
 # Bounded waits on the `git` subprocess — a hung `git` on a network filesystem
 # or a misbehaving hook must not stall the scan indefinitely.
 wait-timeout = "0.2"
