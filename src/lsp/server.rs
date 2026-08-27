@@ -20,7 +20,7 @@ const MAX_CONCURRENT_SCANS: usize = 2;
 static IN_FLIGHT: AtomicUsize = AtomicUsize::new(0);
 static SCAN_THREADS: OnceLock<Mutex<Vec<thread::JoinHandle<()>>>> = OnceLock::new();
 
-fn spawn_tracked(build: impl FnOnce() -> () + Send + 'static) {
+fn spawn_tracked(build: impl FnOnce() + Send + 'static) {
     // Fetch-add before spawn keeps the count conservative (never undercounts
     // while a queued thread has not started yet).
     IN_FLIGHT.fetch_add(1, Ordering::AcqRel);
