@@ -202,11 +202,7 @@ fn related(file: &Path, line: usize, message: &str) -> Option<RelatedInformation
 }
 
 fn file_uri(file: &Path) -> Option<String> {
-    let absolute = file
-        .canonicalize()
-        .ok()
-        .unwrap_or_else(|| file.to_path_buf());
-    Url::from_file_path(absolute).ok().map(Into::into)
+    Url::from_file_path(file).ok().map(Into::into)
 }
 
 fn range(start: usize, end: usize) -> Range {

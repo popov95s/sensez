@@ -11,7 +11,38 @@ use lsp_server::{Connection, Message, Request, Response};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
 use std::path::PathBuf;
+use std::sync::atomic::{AtomicUsize, Ordering};
+use std::sync::{Mutex, OnceLock};
 use std::thread;
+
+const MAX_CONCURRENT_SCANS: usize = 2;
+
+static IN_FLIGHT: AtomicUsize = AtomicUsize::new(0);
+static SCAN_THREADS: OnceLock<Mutex<Vec<thread::JoinHandle<()>>>> = OnceLock::new();
+
+fn spawn_tracked(build: impl FnOnce() -> () + Send + 'static) {
+    // Fetch-add before spawn keeps the count conservative (never undercounts
+    // while a queued thread has not started yet).
+    IN_FLIGHT.fetch_add(1, Ordering::AcqRel);
+    let handle = thread::spawn(move || {
+        build();
+        IN_FLIGHT.fetch_sub(1, Ordering::AcqRel);
+    });
+    SCAN_THREADS
+        .get_or_init(|| Mutex::new(Vec::new()))
+        .lock()
+        .unwrap_or_else(|poisoned| poisoned.into_inner())
+        .push(handle);
+}
+
+fn join_scan_threads() {
+    if let Some(handles) = SCAN_THREADS.get() {
+        let mut guards = handles.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        for handle in guards.drain(..) {
+            let _ = handle.join();
+        }
+    }
+}
 
 pub(super) struct Workspace {
     path: PathBuf,
@@ -40,6 +71,10 @@ pub fn serve() -> Result<()> {
         .initialize_finish(id, capabilities())
         .context("sending initialize result")?;
     let result = run(connection, roots, settings);
+    // In-flight scans only write metrics/publish through the (now-closed)
+    // sender; joining them keeps shutdown deterministic and lets bounded
+    // flushes finish.
+    join_scan_threads();
     io_threads.join().context("joining LSP I/O threads")?;
     result
 }
@@ -56,6 +91,7 @@ fn run(connection: Connection, roots: Vec<PathBuf>, mut settings: Settings) -> R
             &completed_tx,
         )?;
     }
+    launch_pending(settings, &connection.sender, &mut workspaces, &completed_tx)?;
     loop {
         crossbeam_channel::select! {
             recv(connection.receiver) -> message => match message {
@@ -63,7 +99,8 @@ fn run(connection: Connection, roots: Vec<PathBuf>, mut settings: Settings) -> R
                 Err(_) => break,
             },
             recv(completed_rx) -> result => if let Ok(result) = result {
-                apply_result(result, settings, &connection.sender, &completed_tx, &mut workspaces)?;
+                apply_result(result, &connection.sender, &mut workspaces)?;
+                launch_pending(settings, &connection.sender, &mut workspaces, &completed_tx)?;
             },
         }
     }
@@ -163,6 +200,10 @@ fn queue(
         workspace.pending = true;
         return Ok(());
     }
+    if IN_FLIGHT.load(Ordering::Acquire) >= MAX_CONCURRENT_SCANS {
+        workspace.pending = true;
+        return Ok(());
+    }
     workspace.running = true;
     send_status(sender, &root, "scanning")?;
     spawn_scan(root, workspace.generation, settings, completed.clone());
@@ -183,7 +224,7 @@ fn rescan_all(
 }
 
 fn spawn_scan(root: PathBuf, generation: u64, settings: Settings, completed: Sender<ScanResult>) {
-    thread::spawn(move || {
+    spawn_tracked(move || {
         let result = match crate::analyze_path_in_service(&root, None) {
             Ok((mut report, module_files)) => {
                 let mut health = settings.health_enabled.then(|| {
@@ -237,11 +278,35 @@ fn send_scan_error(
     });
 }
 
-fn apply_result(
-    result: ScanResult,
+fn launch_pending(
     settings: Settings,
     sender: &Sender<Message>,
+    workspaces: &mut BTreeMap<PathBuf, Workspace>,
     completed: &Sender<ScanResult>,
+) -> Result<()> {
+    while IN_FLIGHT.load(Ordering::Acquire) < MAX_CONCURRENT_SCANS {
+        let next = workspaces
+            .iter()
+            .find(|(_, workspace)| workspace.pending && !workspace.running)
+            .map(|(root, _)| root.clone());
+        let Some(root) = next else {
+            break;
+        };
+        let (generation, path) = {
+            let workspace = workspaces.get_mut(&root).expect("root from iteration");
+            workspace.pending = false;
+            workspace.running = true;
+            (workspace.generation, workspace.path.clone())
+        };
+        send_status(sender, &root, "scanning")?;
+        spawn_scan(path, generation, settings, completed.clone());
+    }
+    Ok(())
+}
+
+fn apply_result(
+    result: ScanResult,
+    sender: &Sender<Message>,
     workspaces: &mut BTreeMap<PathBuf, Workspace>,
 ) -> Result<()> {
     let Some(workspace) = workspaces.get_mut(&result.root) else {
@@ -249,16 +314,6 @@ fn apply_result(
     };
     workspace.running = false;
     if result.generation != workspace.generation {
-        if workspace.pending {
-            workspace.pending = false;
-            workspace.running = true;
-            spawn_scan(
-                workspace.path.clone(),
-                workspace.generation,
-                settings,
-                completed.clone(),
-            );
-        }
         return Ok(());
     }
     if let Some(error) = result.error {
