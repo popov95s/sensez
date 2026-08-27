@@ -11,9 +11,10 @@ use tree_sitter::Node;
 /// comments index as docstrings (they document the following item); plain
 /// comments index as comments.
 pub fn push_comment(out: &mut Walked, module: &str, scope_path: &[&str], node: Node, src: &[u8]) {
-    if let Ok(raw) = node.utf8_text(src) {
+    let raw = super::lossy_text(node, src);
+    {
         let is_doc = raw.starts_with("///") || raw.starts_with("//!") || raw.starts_with("/**");
-        let text = clean(raw);
+        let text = clean(&raw);
         if !text.is_empty() {
             let kind = if is_doc {
                 DocKind::Docstring
