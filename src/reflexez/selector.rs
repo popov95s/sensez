@@ -178,6 +178,8 @@ fn selected_reach(
         source_changes += 1;
         selector_dynamic::walk_reverse(start, dynamic_reverse, &test_nodes, &mut selected);
     }
+    fallback.sort();
+    fallback.dedup();
     if source_changes > 0 && selected.is_empty() {
         fallback.push("changed source code has no provable test dependency".into());
     }

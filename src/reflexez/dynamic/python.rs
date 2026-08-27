@@ -16,28 +16,64 @@ pub fn scan(source: &[u8], module: &str) -> Option<FileFacts> {
 }
 
 fn collect_constants(root: Node, source: &[u8]) -> HashMap<String, String> {
+    let mut bindings: HashMap<String, usize> = HashMap::new();
+    count_binding_targets(root, source, &mut bindings);
     let mut constants = HashMap::new();
-    collect_constant_nodes(root, source, &mut constants);
+    collect_constant_nodes(root, source, &bindings, &mut constants);
     constants
 }
 
-fn collect_constant_nodes(node: Node, source: &[u8], out: &mut HashMap<String, String>) {
+fn is_simple_name(text: Option<String>) -> bool {
+    text.is_some_and(|name| !name.contains(|ch: char| !ch.is_alphanumeric() && ch != '_'))
+}
+
+fn count_binding_targets(node: Node, source: &[u8], counts: &mut HashMap<String, usize>) {
+    match node.kind() {
+        "assignment" | "augmented_assignment" => {
+            if let Some(name) = node.child_by_field_name("left").and_then(|n| text(n, source)) {
+                if is_simple_name(Some(name.clone())) {
+                    *counts.entry(name).or_default() += 1;
+                }
+            }
+        }
+        "for_statement" => {
+            if let Some(name) = node.child_by_field_name("left").and_then(|n| text(n, source)) {
+                if is_simple_name(Some(name.clone())) {
+                    *counts.entry(name).or_default() += usize::MAX; // rebound every iteration
+                }
+            }
+        }
+        _ => {}
+    }
+    let mut cursor = node.walk();
+    for child in node.named_children(&mut cursor) {
+        count_binding_targets(child, source, counts);
+    }
+}
+
+fn collect_constant_nodes(
+    node: Node,
+    source: &[u8],
+    bindings: &HashMap<String, usize>,
+    out: &mut HashMap<String, String>,
+) {
     if node.kind() == "assignment" {
         let name = node
             .child_by_field_name("left")
             .and_then(|n| text(n, source));
-        let value = node
-            .child_by_field_name("right")
-            .and_then(|n| evaluate(n, source, out));
-        if let (Some(name), Some(value)) = (name, value) {
-            if !name.contains(|ch: char| !ch.is_alphanumeric() && ch != '_') {
+        if is_simple_name(name.clone()) && bindings.get(name.as_deref().unwrap_or("")) == Some(&1)
+        {
+            let value = node
+                .child_by_field_name("right")
+                .and_then(|n| evaluate(n, source, out));
+            if let (Some(name), Some(value)) = (name, value) {
                 out.insert(name, value);
             }
         }
     }
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        collect_constant_nodes(child, source, out);
+        collect_constant_nodes(child, source, bindings, out);
     }
 }
 

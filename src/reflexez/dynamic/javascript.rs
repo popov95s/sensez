@@ -31,7 +31,7 @@ fn collect_constants(root: Node, source: &[u8]) -> HashMap<String, String> {
 }
 
 fn collect_constant_nodes(node: Node, source: &[u8], out: &mut HashMap<String, String>) {
-    if node.kind() == "variable_declarator" {
+    if node.kind() == "variable_declarator" && declarator_is_const(node, source) {
         let name = node
             .child_by_field_name("name")
             .and_then(|n| text(n, source));
@@ -46,6 +46,14 @@ fn collect_constant_nodes(node: Node, source: &[u8], out: &mut HashMap<String, S
     for child in node.named_children(&mut cursor) {
         collect_constant_nodes(child, source, out);
     }
+}
+
+fn declarator_is_const(declarator: Node, source: &[u8]) -> bool {
+    declarator
+        .parent()
+        .and_then(|declaration| declaration.child_by_field_name("kind"))
+        .and_then(|kind| kind.utf8_text(source).ok())
+        .is_some_and(|keyword| keyword == "const")
 }
 
 fn visit(
