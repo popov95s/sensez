@@ -19,7 +19,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
-FEATURES="${SENSEZ_FEATURES:-mcp,semantic,all-langs}"
+FEATURES="${SENSEZ_FEATURES:-mcp,eyez,all-langs}"
 BIN="$ROOT/target/release/sensez"
 
 # --- 0. prerequisites ----------------------------------------------------------
