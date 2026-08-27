@@ -44,7 +44,8 @@ pub fn push_docstring(out: &mut Walked, module: &str, scope_path: &[&str], node:
 
 /// Record a comment (`# …`) attributed to the enclosing `scope_path`.
 pub fn push_comment(out: &mut Walked, module: &str, scope_path: &[&str], node: Node, src: &[u8]) {
-    if let Ok(raw) = node.utf8_text(src) {
+    {
+        let raw = super::lossy_text(node, src);
         let text = raw.trim_start_matches('#').trim();
         if !text.is_empty() {
             out.docs.push(RawDoc::new(
@@ -63,9 +64,9 @@ fn string_text(node: Node, src: &[u8]) -> String {
     let mut out = String::new();
     collect_content(node, src, &mut out);
     if out.is_empty() {
-        if let Ok(raw) = node.utf8_text(src) {
-            out = raw.trim_matches(|c| c == '"' || c == '\'').to_string();
-        }
+        out = super::lossy_text(node, src)
+            .trim_matches(|c| c == '"' || c == '\'')
+            .to_string();
     }
     out.trim().to_string()
 }
@@ -75,9 +76,7 @@ fn collect_content(node: Node, src: &[u8], out: &mut String) {
     for child in node.named_children(&mut cursor) {
         match child.kind() {
             "string_content" => {
-                if let Ok(t) = child.utf8_text(src) {
-                    out.push_str(t);
-                }
+                out.push_str(&super::lossy_text(child, src));
             }
             "string" => collect_content(child, src, out),
             _ => {}

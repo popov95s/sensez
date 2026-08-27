@@ -30,6 +30,11 @@ pub fn top_k(vectors: &[Vec<f32>], docs: &[CachedDoc], query: &[f32], k: usize) 
         .enumerate()
         .map(|(i, v)| (dot(query, v), i))
         .collect();
+    if k < scored.len() {
+        scored.select_nth_unstable_by(k - 1, |a, b| {
+            b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal)
+        });
+    }
     scored.sort_unstable_by(|a, b| b.0.partial_cmp(&a.0).unwrap_or(std::cmp::Ordering::Equal));
     scored
         .into_iter()

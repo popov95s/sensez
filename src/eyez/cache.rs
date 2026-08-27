@@ -117,7 +117,15 @@ impl SystemCache {
             .filter(|d| !have.contains_key(&key(d)))
             .collect();
         let texts: Vec<String> = missing.iter().map(|d| d.text.clone()).collect();
-        for (d, vector) in missing.iter().zip(embedder.embed(&texts)) {
+        let embedded = embedder.embed(&texts);
+        if embedded.len() != texts.len() {
+            anyhow::bail!(
+                "embedder returned {}/{} vectors",
+                embedded.len(),
+                texts.len()
+            );
+        }
+        for (d, vector) in missing.iter().zip(embedded) {
             have.insert(key(d), vector);
         }
 
@@ -149,9 +157,14 @@ impl SystemCache {
         crate::dotdir::ensure(root, None)?;
         let path = root.join(CACHE_REL);
         let bytes = postcard::to_allocvec(self).context("serializing eyez cache")?;
-        std::fs::write(&path, bytes).with_context(|| format!("writing {}", path.display()))?;
-        Ok(())
+        write_atomic(&path, &bytes)
     }
+}
+
+pub(super) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
+    let tmp = path.with_extension("tmp");
+    std::fs::write(&tmp, bytes).with_context(|| format!("writing {}", tmp.display()))?;
+    std::fs::rename(&tmp, path).with_context(|| format!("replacing {}", path.display()))
 }
 
 /// Content+identity key: changes whenever the file, symbol path, kind, or text

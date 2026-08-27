@@ -19,7 +19,7 @@ use std::path::Path;
 
 /// An in-memory eyez index over one project's documentation.
 pub struct Index {
-    embedder: embed::Embedder,
+    embedder: std::sync::Arc<embed::Embedder>,
     cache: cache::SystemCache,
 }
 
@@ -46,7 +46,7 @@ pub(crate) fn reindex(root: &Path, force: bool, semantic: bool) -> Result<Reinde
     }
     let index = Index::open(root)?;
     if semantic {
-        let _ = crate::analyze_path(root, None)?;
+        crate::analyze_path(root, None)?;
     }
     Ok(ReindexReport {
         docs: index.len(),

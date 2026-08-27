@@ -7,6 +7,7 @@
 
 use anyhow::{anyhow, Result};
 use model2vec_rs::model::StaticModel;
+use std::sync::{Arc, OnceLock};
 
 /// HuggingFace repo id for the default static retrieval model.
 pub(crate) const MODEL_ID: &str = "minishlab/potion-retrieval-32M";
@@ -16,12 +17,20 @@ pub struct Embedder {
     model: StaticModel,
 }
 
+static CACHED: OnceLock<Arc<Embedder>> = OnceLock::new();
+
 impl Embedder {
-    /// Load the model (downloading on first use). Errors surface as `anyhow`.
-    pub fn load() -> Result<Self> {
-        let model = StaticModel::from_pretrained(MODEL_ID, None, Some(true), None)
-            .map_err(|e| anyhow!("loading Model2Vec model {MODEL_ID}: {e}"))?;
-        Ok(Embedder { model })
+    /// The shared process-wide embedder (downloading on first use).
+    pub fn load() -> Result<Arc<Self>> {
+        if let Some(cached) = CACHED.get() {
+            return Ok(Arc::clone(cached));
+        }
+        let built = Arc::new(Embedder { model: build()? });
+        let _ = CACHED.set(Arc::clone(&built));
+        Ok(match CACHED.get() {
+            Some(cached) => Arc::clone(cached),
+            None => built,
+        })
     }
 
     pub fn model_id(&self) -> &'static str {
@@ -40,4 +49,9 @@ impl Embedder {
     pub fn embed_one(&self, text: &str) -> Vec<f32> {
         self.model.encode_single(text)
     }
+}
+
+fn build() -> Result<StaticModel> {
+    StaticModel::from_pretrained(MODEL_ID, None, Some(true), None)
+        .map_err(|e| anyhow!("loading Model2Vec model {MODEL_ID}: {e}"))
 }

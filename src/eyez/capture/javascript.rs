@@ -10,8 +10,9 @@ use tree_sitter::Node;
 
 /// Record a `//`, `/* … */`, or JSDoc (`/** … */`) comment for `scope_path`.
 pub fn push_comment(out: &mut Walked, module: &str, scope_path: &[&str], node: Node, src: &[u8]) {
-    if let Ok(raw) = node.utf8_text(src) {
-        let text = clean(raw);
+    let raw = super::lossy_text(node, src);
+    {
+        let text = clean(&raw);
         if !text.is_empty() {
             let line = node.start_position().row + 1;
             out.docs.push(RawDoc::new(

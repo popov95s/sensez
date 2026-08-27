@@ -76,16 +76,20 @@ pub(crate) fn vectors(root: &Path, inputs: &[BundleInput]) -> Result<Vec<Vec<f32
     }
 
     let mut out = Vec::with_capacity(inputs.len());
+    for input in inputs {
+        let Some(vector) = existing.get(&input.key) else {
+            anyhow::bail!(
+                "no vector resolved for bundle key {:#x}; cache state is inconsistent",
+                input.key
+            );
+        };
+        out.push(vector.clone());
+    }
     let mut next_cache = SemanticCache {
         schema_version: SCHEMA_VERSION,
         model_id: MODEL_ID.to_string(),
         vectors: Vec::with_capacity(wanted.len()),
     };
-    for input in inputs {
-        if let Some(vector) = existing.get(&input.key) {
-            out.push(vector.clone());
-        }
-    }
     for input in wanted {
         if let Some(vector) = existing.remove(&input.key) {
             next_cache.vectors.push(CachedVector {
@@ -110,10 +114,11 @@ fn load(root: &Path) -> SemanticCache {
 }
 
 fn persist(root: &Path, cache: &SemanticCache) -> Result<()> {
+    use super::cache::write_atomic;
     crate::dotdir::ensure(root, None)?;
     let path = root.join(CACHE_REL);
     let bytes = postcard::to_allocvec(cache).context("serializing semantic duplication cache")?;
-    std::fs::write(&path, bytes).with_context(|| format!("writing {}", path.display()))
+    write_atomic(&path, &bytes)
 }
 
 impl SemanticCache {
