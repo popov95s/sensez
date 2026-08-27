@@ -91,7 +91,7 @@ fn large_output_does_not_deadlock_or_truncate() {
     let mut cmd = Command::new("/bin/sh");
     cmd.arg("-c").arg("head -c 200000 /dev/zero | tr '\\0' 'x'");
     let bytes = run_with_timeout(&mut cmd, tmp.path())
-    .expect("200 KB of stdout must complete, not hit the timeout");
+        .expect("200 KB of stdout must complete, not hit the timeout");
     assert!(bytes.status.success());
     assert_eq!(bytes.stdout.len(), 200_000);
 }

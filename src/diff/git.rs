@@ -104,12 +104,7 @@ fn untracked_relative(root: &Path) -> Result<Vec<PathBuf>> {
 
 fn untracked_entries(root: &Path) -> Result<Vec<String>> {
     let listing = run(
-        &[
-            "status",
-            "--porcelain",
-            "-z",
-            "--untracked-files=all",
-        ],
+        &["status", "--porcelain", "-z", "--untracked-files=all"],
         root,
     )?;
     Ok(listing

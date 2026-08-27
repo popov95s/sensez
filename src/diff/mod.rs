@@ -36,7 +36,10 @@ impl ChangedLines {
 
     /// Record a changed range `[lo, hi]` (1-indexed) for `file`.
     pub fn add(&mut self, file: &Path, lo: usize, hi: usize) {
-        self.files.entry(self.resolved(file)).or_default().push((lo, hi));
+        self.files
+            .entry(self.resolved(file))
+            .or_default()
+            .push((lo, hi));
     }
 
     fn resolved(&self, path: &Path) -> PathBuf {

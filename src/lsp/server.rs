@@ -37,7 +37,9 @@ fn spawn_tracked(build: impl FnOnce() -> () + Send + 'static) {
 
 fn join_scan_threads() {
     if let Some(handles) = SCAN_THREADS.get() {
-        let mut guards = handles.lock().unwrap_or_else(|poisoned| poisoned.into_inner());
+        let mut guards = handles
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner());
         for handle in guards.drain(..) {
             let _ = handle.join();
         }

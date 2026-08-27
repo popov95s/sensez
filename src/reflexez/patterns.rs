@@ -48,9 +48,7 @@ fn collapse_dot_components(pattern: &str) -> String {
         match segment {
             "" | "." => {}
             ".." => {
-                if !absolute
-                    && segments.last().is_none_or(|last| last == "..")
-                {
+                if !absolute && segments.last().is_none_or(|last| last == "..") {
                     segments.push(segment.to_string());
                 } else {
                     segments.pop();

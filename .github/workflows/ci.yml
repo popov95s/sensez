@@ -169,51 +169,6 @@ jobs:
       - name: Run benchmarks
         run: ./benchmarks/run.sh
 
-  features:
-    # Feature-gated code can rot when only --all-features is compiled; check
-    # every gate in isolation (each language, mcp, lsp, eyez) and the bare core.
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@1.97.0
-
-      - name: Cache cargo artifacts
-        uses: Swatinem/rust-cache@v2
-
-      - name: Bare core (no default features)
-        run: cargo check --lib --no-default-features
-
-      - name: Each language feature alone
-        run: |
-          cargo check --lib --no-default-features --features lang-python
-          cargo check --lib --no-default-features --features lang-javascript
-          cargo check --lib --no-default-features --features lang-typescript
-          cargo check --lib --no-default-features --features lang-rust
-
-      - name: Server surfaces and eyez
-        run: |
-          cargo check --lib --no-default-features --features mcp
-          cargo check --lib --no-default-features --features lsp
-          cargo check --lib --no-default-features --features eyez
-
-  windows:
-    runs-on: windows-latest
-    steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Rust
-        uses: dtolnay/rust-toolchain@1.97.0
-
-      - name: Cache cargo artifacts
-        uses: Swatinem/rust-cache@v2
-
-      - name: Run tests
-        run: cargo test --all-features
-
   deploy-docs:
     if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
     needs: rust

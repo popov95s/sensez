@@ -29,19 +29,16 @@ pub(crate) fn load_json_config(path: &Path) -> Result<Option<Value>> {
         Ok(text) => text,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => return Ok(None),
         Err(err) => {
-            return Err(anyhow::Error::new(err)
-                .context(format!("reading {}", path.display())));
+            return Err(anyhow::Error::new(err).context(format!("reading {}", path.display())));
         }
     };
-    serde_json::from_str(&text)
-        .map(Some)
-        .with_context(|| {
-            format!(
-                "parsing {} — refusing to modify an unparseable config \
+    serde_json::from_str(&text).map(Some).with_context(|| {
+        format!(
+            "parsing {} — refusing to modify an unparseable config \
                  (JSONC comments are not supported; register sensez manually)",
-                path.display()
-            )
-        })
+            path.display()
+        )
+    })
 }
 
 /// Mutable child object at `key`, creating it when missing/null and failing
@@ -54,9 +51,7 @@ pub(crate) fn ensure_object<'a>(
     let Some(map) = parent.as_object_mut() else {
         anyhow::bail!("{} must contain a JSON object", display_path.display());
     };
-    let slot = map
-        .entry(key.to_string())
-        .or_insert_with(|| json!({}));
+    let slot = map.entry(key.to_string()).or_insert_with(|| json!({}));
     if !slot.is_object() {
         anyhow::bail!(
             "{}: `{key}` must be a JSON object, found {}",
@@ -101,7 +96,9 @@ mod tests {
         let path = tmp.path().join(".mcp.json");
         std::fs::write(&path, "{ not json }").unwrap();
 
-        let err = McpAdapter::Standard.write(&path, "/bin/sensez").unwrap_err();
+        let err = McpAdapter::Standard
+            .write(&path, "/bin/sensez")
+            .unwrap_err();
         assert!(err.to_string().contains("refusing to modify"), "{err:#}");
 
         let after = std::fs::read_to_string(&path).unwrap();
@@ -128,7 +125,9 @@ mod tests {
         let path = tmp.path().join(".mcp.json");
         std::fs::write(&path, r#"{"mcpServers": []}"#).unwrap();
 
-        let err = McpAdapter::Standard.write(&path, "/bin/sensez").unwrap_err();
+        let err = McpAdapter::Standard
+            .write(&path, "/bin/sensez")
+            .unwrap_err();
         assert!(err.to_string().contains("must be a JSON object"), "{err:#}");
     }
 }

@@ -9,18 +9,15 @@ use toml_edit::{value, Array, DocumentMut, Item, Table};
 
 pub fn write(path: &Path, sensez_bin: &str) -> Result<()> {
     let mut doc = match std::fs::read_to_string(path) {
-        Ok(text) => text
-            .parse::<DocumentMut>()
-            .with_context(|| {
-                format!(
-                    "parsing {} — refusing to modify an unparseable config",
-                    path.display()
-                )
-            })?,
+        Ok(text) => text.parse::<DocumentMut>().with_context(|| {
+            format!(
+                "parsing {} — refusing to modify an unparseable config",
+                path.display()
+            )
+        })?,
         Err(err) if err.kind() == std::io::ErrorKind::NotFound => DocumentMut::new(),
         Err(err) => {
-            return Err(anyhow::Error::new(err)
-                .context(format!("reading {}", path.display())));
+            return Err(anyhow::Error::new(err).context(format!("reading {}", path.display())));
         }
     };
 

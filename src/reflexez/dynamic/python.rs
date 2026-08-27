@@ -30,14 +30,20 @@ fn is_simple_name(text: Option<String>) -> bool {
 fn count_binding_targets(node: Node, source: &[u8], counts: &mut HashMap<String, usize>) {
     match node.kind() {
         "assignment" | "augmented_assignment" => {
-            if let Some(name) = node.child_by_field_name("left").and_then(|n| text(n, source)) {
+            if let Some(name) = node
+                .child_by_field_name("left")
+                .and_then(|n| text(n, source))
+            {
                 if is_simple_name(Some(name.clone())) {
                     *counts.entry(name).or_default() += 1;
                 }
             }
         }
         "for_statement" => {
-            if let Some(name) = node.child_by_field_name("left").and_then(|n| text(n, source)) {
+            if let Some(name) = node
+                .child_by_field_name("left")
+                .and_then(|n| text(n, source))
+            {
                 if is_simple_name(Some(name.clone())) {
                     *counts.entry(name).or_default() += usize::MAX; // rebound every iteration
                 }
@@ -61,8 +67,7 @@ fn collect_constant_nodes(
         let name = node
             .child_by_field_name("left")
             .and_then(|n| text(n, source));
-        if is_simple_name(name.clone()) && bindings.get(name.as_deref().unwrap_or("")) == Some(&1)
-        {
+        if is_simple_name(name.clone()) && bindings.get(name.as_deref().unwrap_or("")) == Some(&1) {
             let value = node
                 .child_by_field_name("right")
                 .and_then(|n| evaluate(n, source, out));
