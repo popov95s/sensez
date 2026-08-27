@@ -1786,7 +1786,6 @@ dependencies = [
  "colored",
  "crossbeam-channel",
  "dialoguer",
- "flate2",
  "fs4",
  "gen-lsp-types",
  "globset",
