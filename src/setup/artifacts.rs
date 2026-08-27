@@ -1,6 +1,15 @@
 use anyhow::{Context, Result};
 use std::path::Path;
 
+fn read_existing(path: &Path) -> Result<String> {
+    match std::fs::read(path) {
+        Ok(bytes) => String::from_utf8(bytes)
+            .map_err(|_| anyhow::anyhow!("{} is not valid UTF-8", path.display())),
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => Ok(String::new()),
+        Err(err) => Err(anyhow::Error::new(err).context(format!("reading {}", path.display()))),
+    }
+}
+
 const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability layer that complements your linter and
 # type-checker (e.g. Ruff/ty for Python, ESLint/tsc for JS/TS): duplication,
 # dead code, import cycles, boundary violations, and design smells. Everything
@@ -91,9 +100,17 @@ pub fn write_config(root: &Path, self_improvement: bool, into_pyproject: bool) -
     }
     if into_pyproject {
         let path = root.join("pyproject.toml");
-        let existing = std::fs::read_to_string(&path).unwrap_or_default();
+        let existing = read_existing(&path)?;
         if existing.contains("[tool.sensez") {
             return Ok("pyproject.toml already has [tool.sensez] — left as is".into());
+        }
+        if !existing.trim().is_empty() {
+            existing.parse::<toml::Value>().with_context(|| {
+                format!(
+                    "validating {} before appending [tool.sensez] — refusing to modify",
+                    path.display()
+                )
+            })?;
         }
         let section: String = body
             .lines()
@@ -174,7 +191,7 @@ pub fn write_gate(root: &Path) -> Result<String> {
 
 pub fn ensure_gitignore(root: &Path) -> Result<String> {
     let path = root.join(".gitignore");
-    let existing = std::fs::read_to_string(&path).unwrap_or_default();
+    let existing = read_existing(&path)?;
     if existing
         .lines()
         .any(|l| l.trim() == ".sensez/" || l.trim() == ".sensez")

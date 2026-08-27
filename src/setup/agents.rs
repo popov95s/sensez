@@ -111,7 +111,7 @@ pub fn find(id: &str) -> Option<&'static AgentSpec> {
 }
 
 pub fn from_choice(choice: usize) -> &'static AgentSpec {
-    &AGENTS[choice]
+    &INTERACTIVE_AGENTS[choice]
 }
 
 pub fn prompt_options() -> Vec<&'static str> {

@@ -164,15 +164,10 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
     }
     if gate {
         done.push(artifacts::write_gate(&root)?);
-        eprintln!(
-            "note: Stop hook is experimental and can be noisy on short sessions \
-             or question-answering turns; it is best used on edit turns."
-        );
-        done.push(
-            "experimental Stop hook enabled: it may be noisy on short sessions \
-             or general question-answering turns; best used on edit turns."
-                .to_string(),
-        );
+        let note = "experimental Stop hook: may be noisy on short sessions or \
+                    general Q&A turns; best used on edit turns";
+        eprintln!("note: {note}.");
+        done.push(format!("{note}."));
     }
     if install_scope == InstallScope::Project {
         done.push(artifacts::ensure_gitignore(&root)?);

@@ -84,3 +84,14 @@ fn diff_is_fast_with_large_gitignored_footprint() {
     assert!(!changed.paths().any(|p| p.starts_with(&venv1)));
     assert!(!changed.paths().any(|p| p.starts_with(&venv2)));
 }
+
+#[test]
+fn large_output_does_not_deadlock_or_truncate() {
+    let tmp = tempfile::tempdir().unwrap();
+    let mut cmd = Command::new("/bin/sh");
+    cmd.arg("-c").arg("head -c 200000 /dev/zero | tr '\\0' 'x'");
+    let bytes = run_with_timeout(&mut cmd, tmp.path())
+    .expect("200 KB of stdout must complete, not hit the timeout");
+    assert!(bytes.status.success());
+    assert_eq!(bytes.stdout.len(), 200_000);
+}

@@ -1,32 +1,43 @@
+//! Codex adapter (`.codex/config.toml`).
+//!
+//! Edits through `toml_edit` so the user's comments and formatting survive;
+//! an existing but unparseable file is a hard error, never a reset.
+
 use anyhow::{Context, Result};
 use std::path::Path;
+use toml_edit::{value, Array, DocumentMut, Item, Table};
 
 pub fn write(path: &Path, sensez_bin: &str) -> Result<()> {
-    let mut config: toml::Value = std::fs::read_to_string(path)
-        .ok()
-        .and_then(|text| toml::from_str(&text).ok())
-        .unwrap_or_else(|| toml::Value::Table(toml::map::Map::new()));
-    let table = config
-        .as_table_mut()
-        .ok_or_else(|| anyhow::anyhow!("{} must be a TOML table", path.display()))?;
-    let mcp = table
-        .entry("mcp_servers")
-        .or_insert_with(|| toml::Value::Table(toml::map::Map::new()))
-        .as_table_mut()
-        .ok_or_else(|| anyhow::anyhow!("mcp_servers must be a TOML table"))?;
-    let mut sensez = toml::map::Map::new();
-    sensez.insert(
-        "command".to_string(),
-        toml::Value::String(sensez_bin.to_string()),
-    );
-    sensez.insert(
-        "args".to_string(),
-        toml::Value::Array(vec![
-            toml::Value::String("mcp".to_string()),
-            toml::Value::String("serve".to_string()),
-        ]),
-    );
-    mcp.insert("sensez".to_string(), toml::Value::Table(sensez));
-    std::fs::write(path, toml::to_string_pretty(&config)?)
-        .with_context(|| format!("writing {}", path.display()))
+    let mut doc = match std::fs::read_to_string(path) {
+        Ok(text) => text
+            .parse::<DocumentMut>()
+            .with_context(|| {
+                format!(
+                    "parsing {} — refusing to modify an unparseable config",
+                    path.display()
+                )
+            })?,
+        Err(err) if err.kind() == std::io::ErrorKind::NotFound => DocumentMut::new(),
+        Err(err) => {
+            return Err(anyhow::Error::new(err)
+                .context(format!("reading {}", path.display())));
+        }
+    };
+
+    if doc.get("mcp_servers").is_none() {
+        doc.insert("mcp_servers", Item::Table(Table::new()));
+    }
+    let Some(servers) = doc["mcp_servers"].as_table_mut() else {
+        anyhow::bail!("{}: `mcp_servers` must be a TOML table", path.display());
+    };
+
+    let mut sensez = Table::new();
+    sensez["command"] = value(sensez_bin);
+    let mut args = Array::new();
+    args.push("mcp");
+    args.push("serve");
+    sensez["args"] = value(args);
+    servers.insert("sensez", Item::Table(sensez));
+
+    std::fs::write(path, doc.to_string()).with_context(|| format!("writing {}", path.display()))
 }
