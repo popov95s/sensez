@@ -1,6 +1,6 @@
 {
   "name": "sensez-darwin-arm64",
-  "version": "0.2.5",
+  "version": "0.3.1",
   "description": "Sensez native binary for macOS arm64",
   "license": "MIT",
   "repository": {
