@@ -44,10 +44,48 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         &mut fallback,
     );
     let selected_paths: HashSet<_> = selected.keys().cloned().collect();
+    let test_paths: HashSet<_> = tests_by_path.keys().cloned().collect();
     let relevant_unresolved = dynamic
         .by_file
         .iter()
-        .filter(|(path, _)| scope.files.contains(path) || selected_paths.contains(*path))
+        .filter(|(path, facts)| {
+            if facts.unresolved == 0 {
+                return false;
+            }
+            if selected_paths.contains(*path) {
+                return true;
+            }
+            if scope.files.contains(*path) {
+                let Some(&start) = nodes_by_path.get(*path) else {
+                    return false;
+                };
+                let test_nodes: HashMap<_, _> = tests_by_path
+                    .keys()
+                    .filter_map(|p| nodes_by_path.get(p).map(|idx| (*idx, p.clone())))
+                    .collect();
+                let mut per_selected = HashMap::new();
+                selector_dynamic::walk_reverse(
+                    start,
+                    &dynamic_reverse,
+                    &test_nodes,
+                    &mut per_selected,
+                );
+                let static_reach = crate::spine::impact::reachable_files(
+                    &graph,
+                    &[(*path).clone()],
+                    crate::spine::impact::DirectionOfImpact::Dependents,
+                    crate::spine::impact::ImpactOptions {
+                        include_type_only: false,
+                    },
+                );
+                let has_static = static_reach
+                    .files
+                    .iter()
+                    .any(|(p, _)| test_paths.contains(p));
+                return has_static || !per_selected.is_empty();
+            }
+            false
+        })
         .map(|(_, facts)| facts.unresolved)
         .sum::<usize>();
     if relevant_unresolved > 0 {
