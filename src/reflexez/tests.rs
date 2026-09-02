@@ -87,6 +87,24 @@ fn opaque_import_in_selected_test_forces_safe_fallback() {
         .any(|reason| reason.contains("dynamic import")));
 }
 
+#[test]
+fn isolated_source_change_selects_no_tests() {
+    let project = Project::new("import './feature'; test('feature', () => 1);\n");
+    write(
+        project.root.path(),
+        "src/isolated.ts",
+        "export const isolated = 1;\n",
+    );
+    git(project.root.path(), &["add", "."]);
+    git(project.root.path(), &["commit", "-m", "add isolated"]);
+    project.change("src/isolated.ts", "export const isolated = 2;\n");
+
+    let plan = project.plan();
+
+    assert!(!plan.full_suite, "{:?}", plan.fallback_reasons);
+    assert!(plan.selected.is_empty());
+}
+
 fn args() -> ReflexezArgs {
     ReflexezArgs {
         path: None,
