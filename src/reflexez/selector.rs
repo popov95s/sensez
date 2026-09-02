@@ -158,7 +158,6 @@ fn selected_reach(
             fallback.push("a changed source file is unavailable for graph analysis".into());
         }
     }
-    let mut source_changes = 0;
     for path in changed {
         if tests.contains_key(path) {
             selected.insert(
@@ -175,14 +174,10 @@ fn selected_reach(
             }
             continue;
         };
-        source_changes += 1;
         selector_dynamic::walk_reverse(start, dynamic_reverse, &test_nodes, &mut selected);
     }
     fallback.sort();
     fallback.dedup();
-    if source_changes > 0 && selected.is_empty() {
-        fallback.push("changed source code has no provable test dependency".into());
-    }
     selected
 }
 

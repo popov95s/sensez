@@ -69,7 +69,6 @@ safe. Current global triggers include:
 - Sensez configuration and common shared test setup/environment files;
 - TypeScript module-resolution configuration;
 - deleted source files or incomplete parsing;
-- changed source code with no provable test dependency;
 - relevant dynamic imports whose targets cannot be resolved.
 
 Literal `import()`, CommonJS `require()`, `importlib.import_module()`, and
