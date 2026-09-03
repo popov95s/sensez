@@ -105,6 +105,50 @@ fn isolated_source_change_selects_no_tests() {
     assert!(plan.selected.is_empty());
 }
 
+#[test]
+fn isolated_opaque_import_does_not_force_fallback() {
+    let project = Project::new("import './feature'; test('feature', () => 1);\n");
+    write(
+        project.root.path(),
+        "src/isolated.ts",
+        "const t = choose(); import(t); export const y = 1;\n",
+    );
+    git(project.root.path(), &["add", "."]);
+    git(project.root.path(), &["commit", "-m", "add isolated"]);
+    project.change(
+        "src/isolated.ts",
+        "const t = choose(); import(t); export const y = 2;\n",
+    );
+
+    let plan = project.plan();
+
+    assert!(!plan.full_suite, "{:?}", plan.fallback_reasons);
+    assert!(plan.selected.is_empty());
+}
+
+#[test]
+fn isolated_opaque_import_combined_with_affected_file_stays_selective() {
+    let project = Project::new("import './feature'; test('feature', () => 1);\n");
+    write(
+        project.root.path(),
+        "src/isolated.ts",
+        "const t = choose(); import(t); export const y = 1;\n",
+    );
+    git(project.root.path(), &["add", "."]);
+    git(project.root.path(), &["commit", "-m", "add isolated"]);
+    project.change(
+        "src/isolated.ts",
+        "const t = choose(); import(t); export const y = 2;\n",
+    );
+    project.change("src/feature.ts", "export const value = 3;\n");
+
+    let plan = project.plan();
+
+    assert!(!plan.full_suite, "{:?}", plan.fallback_reasons);
+    assert_eq!(plan.selected.len(), 1);
+    assert!(plan.selected[0].file.ends_with("feature.test.ts"));
+}
+
 fn args() -> ReflexezArgs {
     ReflexezArgs {
         path: None,
