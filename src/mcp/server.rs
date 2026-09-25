@@ -7,9 +7,10 @@
 
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
+use std::io;
 use std::sync::Arc;
 use std::time::Duration;
-use tokio::io::{AsyncBufReadExt, AsyncWriteExt, BufReader};
+use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{mpsc, Semaphore};
 
 /// Refuse absurdly large frames instead of buffering them whole: nothing in
@@ -25,7 +26,8 @@ const REQUEST_TIMEOUT: Duration = Duration::from_secs(600);
 
 /// Serve the MCP protocol over stdin/stdout until EOF or a shutdown signal.
 pub async fn serve() -> Result<()> {
-    let mut lines = BufReader::new(tokio::io::stdin()).lines();
+    let mut input = BufReader::new(tokio::io::stdin());
+    let mut frame_state = FrameState::default();
     let (tx, rx) = mpsc::channel::<String>(64);
     let writer = tokio::spawn(writer_task(rx));
     let permits = Arc::new(Semaphore::new(MAX_CONCURRENT_REQUESTS));
@@ -36,11 +38,21 @@ pub async fn serve() -> Result<()> {
 
     let served = loop {
         tokio::select! {
-            line = lines.next_line() => match line.context("reading stdin") {
+            frame = read_frame(&mut input, &mut frame_state) => match frame.context("reading stdin") {
                 // Do NOT `?` here: a dispatch error (e.g. broken pipe when the
                 // client exits early) must still reach the final metrics flush.
-                Ok(Some(line)) => {
+                Ok(Some(Frame::Line(line))) => {
                     if let Err(err) = dispatch(&line, &permits, &tx).await {
+                        break Err(err);
+                    }
+                }
+                Ok(Some(Frame::Oversized)) => {
+                    if let Err(err) = send(
+                        &tx,
+                        &error_response(None, -32600, "request exceeds maximum frame size"),
+                    )
+                    .await
+                    {
                         break Err(err);
                     }
                 }
@@ -67,6 +79,57 @@ pub async fn serve() -> Result<()> {
     let _ = tokio::time::timeout(Duration::from_secs(5), writer).await;
     let _ = tokio::task::spawn_blocking(crate::brainz::flush).await;
     served
+}
+
+enum Frame {
+    Line(String),
+    Oversized,
+}
+
+#[derive(Default)]
+struct FrameState {
+    line: Vec<u8>,
+    oversized: bool,
+}
+
+/// Keep partial frames across select! cancellations and discard oversized
+/// frames through their newline without growing the buffer.
+async fn read_frame<R: AsyncBufRead + Unpin>(
+    reader: &mut R,
+    state: &mut FrameState,
+) -> io::Result<Option<Frame>> {
+    loop {
+        let chunk = reader.fill_buf().await?;
+        if chunk.is_empty() && state.line.is_empty() && !state.oversized {
+            return Ok(None);
+        }
+        let newline = chunk.iter().position(|&byte| byte == b'\n');
+        let consumed = newline.map_or(chunk.len(), |index| index + 1);
+        let payload = &chunk[..newline.unwrap_or(chunk.len())];
+        if !state.oversized {
+            if state.line.len() + payload.len() > MAX_LINE_BYTES + 1 {
+                state.oversized = true;
+                state.line.clear();
+            } else {
+                state.line.extend_from_slice(payload);
+            }
+        }
+        reader.consume(consumed);
+        if newline.is_some() || consumed == 0 {
+            let mut line = std::mem::take(&mut state.line);
+            let oversized = std::mem::take(&mut state.oversized);
+            if line.last() == Some(&b'\r') {
+                line.pop();
+            }
+            if oversized || line.len() > MAX_LINE_BYTES {
+                return Ok(Some(Frame::Oversized));
+            }
+            return String::from_utf8(line)
+                .map(Frame::Line)
+                .map(Some)
+                .map_err(|err| io::Error::new(io::ErrorKind::InvalidData, err));
+        }
+    }
 }
 
 /// Validate and route one incoming frame. Cheap parsing happens here so the
@@ -193,6 +256,10 @@ fn error_response(id: Option<Value>, code: i64, message: impl Into<String>) -> V
 fn parse_error() -> Value {
     error_response(None, -32700, "parse error")
 }
+
+#[cfg(test)]
+#[path = "server_frame_tests.rs"]
+mod frame_tests;
 
 #[cfg(test)]
 mod tests {
