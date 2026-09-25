@@ -11,7 +11,8 @@
 use crate::report::{AnalysisReport, ScanIssue, ScanStage};
 use anyhow::{Context, Result};
 use serde_json::Value;
-use std::path::Path;
+use std::collections::HashMap;
+use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
 pub(super) fn full(
@@ -50,9 +51,10 @@ pub(super) fn diff(
     }
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);
-    crate::noze::limit(&mut report, max);
     if let Some(changed) = changed {
-        crate::diff::apply(&mut report, &changed, &module_files);
+        finish_diff(&mut report, &changed, &module_files, max);
+    } else {
+        crate::noze::limit(&mut report, max);
     }
     Ok((report, snapshot, start.elapsed()))
 }
@@ -68,12 +70,55 @@ pub(super) fn diff_changed(
         .with_context(|| format!("scanning {}", path.display()))?;
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);
-    crate::noze::limit(&mut report, max);
-    crate::diff::apply(&mut report, &changed, &module_files);
+    finish_diff(&mut report, &changed, &module_files, max);
     Ok((report, snapshot, start.elapsed()))
 }
 
 fn suppress_scan_issues(report: &mut AnalysisReport) {
     report.meta.issues.clear();
     report.meta.files_skipped = 0;
+}
+
+fn finish_diff(
+    report: &mut AnalysisReport,
+    changed: &crate::diff::ChangedLines,
+    module_files: &HashMap<String, PathBuf>,
+    max: usize,
+) {
+    crate::diff::apply(report, changed, module_files);
+    crate::noze::limit(report, max);
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
+
+    #[test]
+    fn diff_keeps_changed_findings_beyond_the_full_report_limit() {
+        let file = PathBuf::from("changed.py");
+        let mut report = AnalysisReport::default();
+        for line in 1..=3 {
+            report.smells.push(SmellFinding {
+                action: ActionLevel::Warning,
+                kind: SmellKind::LongFunction,
+                message: String::new(),
+                file: file.clone(),
+                line,
+                end_line: line,
+                symbol: format!("f{line}"),
+                severity: Severity::Warning,
+                metric: 1,
+                threshold: 1,
+                reason: String::new(),
+            });
+        }
+        let mut changed = crate::diff::ChangedLines::default();
+        changed.add(&file, 3, 3);
+
+        finish_diff(&mut report, &changed, &HashMap::new(), 1);
+
+        assert_eq!(report.smells.len(), 1);
+        assert_eq!(report.smells[0].line, 3);
+    }
 }
