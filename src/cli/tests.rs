@@ -35,6 +35,17 @@ fn fail_on_new_without_value_defaults_to_must_fix() {
 }
 
 #[test]
+fn fail_on_new_without_diff_requires_a_git_worktree() {
+    let tmp = tempfile::tempdir().unwrap();
+    let options = spec::ScanOptions {
+        fail_on_new: Some(FailOnNewLevel::MustFix),
+        ..scan_options()
+    };
+    let error = run_scan(tmp.path(), &options).unwrap_err();
+    assert!(error.to_string().contains("requires a usable diff source"));
+}
+
+#[test]
 fn bare_path_defaults_to_noze_scan() {
     let cli = spec::Cli::try_parse_from(["sensez", "."]).unwrap();
     assert!(cli.command.is_none());

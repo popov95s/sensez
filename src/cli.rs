@@ -163,8 +163,12 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
         output::print_line(&crate::config_summary::scan(path, options.threshold)?)?;
         return Ok(ExitCode::SUCCESS);
     }
-    let diff = build_diff(path, options.diff, options.diff_from.as_deref());
-    let wants_diff = options.diff || options.diff_from.is_some();
+    let wants_diff = options.diff || options.diff_from.is_some() || options.fail_on_new.is_some();
+    let diff = build_diff(
+        path,
+        wants_diff && options.diff_from.is_none(),
+        options.diff_from.as_deref(),
+    );
     if wants_diff && diff.changed.is_none() && options.fail_on_new.is_some() {
         for issue in &diff.issues {
             eprintln!("[sensez] diff: {}", issue.message);
