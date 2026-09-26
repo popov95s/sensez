@@ -1108,6 +1108,11 @@ Options:
       --diff-from &lt;FILE&gt;
           Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
+      --fail-on [&lt;LEVEL&gt;]
+          Exit non-zero if any finding meets or exceeds the given action level. Defaults to `must_fix` when the flag is present without a value
+
+          [possible values: must_fix, warning, advisory, info]
+
       --fail-on-new [&lt;LEVEL&gt;]
           Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
 
@@ -1196,6 +1201,11 @@ Options:
 
       --diff-from &lt;FILE&gt;
           Keep only findings touching a unified diff read from FILE ("-" = stdin)
+
+      --fail-on [&lt;LEVEL&gt;]
+          Exit non-zero if any finding meets or exceeds the given action level. Defaults to `must_fix` when the flag is present without a value
+
+          [possible values: must_fix, warning, advisory, info]
 
       --fail-on-new [&lt;LEVEL&gt;]
           Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
