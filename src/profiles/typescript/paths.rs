@@ -206,8 +206,9 @@ impl JsoncState {
         if !self.in_string {
             return false;
         }
-        self.escaped = ch == '\\' && !self.escaped;
-        if ch == '"' && !self.escaped {
+        let escaped = self.escaped;
+        self.escaped = ch == '\\' && !escaped;
+        if ch == '"' && !escaped {
             self.in_string = false;
         }
         output.push(ch);
@@ -218,6 +219,15 @@ impl JsoncState {
 #[cfg(test)]
 mod normalize_tests {
     use super::normalize_jsonc;
+
+    #[test]
+    fn preserves_escaped_quotes_and_comment_markers_in_strings() {
+        let input = r#"{ "label": "escaped \" // text", "trailing": 1, }"#;
+        let normalized = normalize_jsonc(input);
+        let value: serde_json::Value = serde_json::from_str(&normalized).unwrap();
+        assert_eq!(value["label"], "escaped \" // text");
+        assert_eq!(value["trailing"], 1);
+    }
 
     #[test]
     fn strips_comments_and_trailing_commas_into_parseable_json() {
