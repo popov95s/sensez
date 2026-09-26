@@ -44,7 +44,7 @@ fn scan_file(path: &Path) -> Option<FileFacts> {
         #[cfg(feature = "lang-python")]
         Some("py") => python::scan(&source, module_name(path)),
         #[cfg(feature = "lang-javascript")]
-        Some("js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx") => {
+        Some("js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts") => {
             javascript::scan(path, &source, module_name(path))
         }
         _ => None,
@@ -52,8 +52,8 @@ fn scan_file(path: &Path) -> Option<FileFacts> {
 }
 
 fn might_contain_dynamic_import(source: &[u8]) -> bool {
-    contains(source, b"import(")
-        || contains(source, b"require(")
+    contains(source, b"import")
+        || contains(source, b"require")
         || contains(source, b"import_module")
         || contains(source, b"__import__")
         || contains(source, b"import.meta.glob")

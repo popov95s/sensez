@@ -88,6 +88,19 @@ fn opaque_import_in_selected_test_forces_safe_fallback() {
 }
 
 #[test]
+fn opaque_import_in_unselected_test_forces_safe_fallback() {
+    let project =
+        Project::new("const target = choose(); test('feature', async () => import (target));\n");
+    project.change("src/feature.ts", "export const value = 3;\n");
+
+    let plan = project.plan();
+
+    assert!(plan.full_suite);
+    assert_eq!(plan.selected.len(), 2);
+    assert_eq!(plan.unresolved_dynamic_imports, 1);
+}
+
+#[test]
 fn isolated_source_change_selects_no_tests() {
     let project = Project::new("import './feature'; test('feature', () => 1);\n");
     write(
@@ -106,7 +119,7 @@ fn isolated_source_change_selects_no_tests() {
 }
 
 #[test]
-fn isolated_opaque_import_does_not_force_fallback() {
+fn isolated_opaque_import_forces_fallback() {
     let project = Project::new("import './feature'; test('feature', () => 1);\n");
     write(
         project.root.path(),
@@ -122,12 +135,12 @@ fn isolated_opaque_import_does_not_force_fallback() {
 
     let plan = project.plan();
 
-    assert!(!plan.full_suite, "{:?}", plan.fallback_reasons);
-    assert!(plan.selected.is_empty());
+    assert!(plan.full_suite, "{:?}", plan.fallback_reasons);
+    assert_eq!(plan.selected.len(), 2);
 }
 
 #[test]
-fn isolated_opaque_import_combined_with_affected_file_stays_selective() {
+fn isolated_opaque_import_combined_with_affected_file_forces_fallback() {
     let project = Project::new("import './feature'; test('feature', () => 1);\n");
     write(
         project.root.path(),
@@ -144,9 +157,8 @@ fn isolated_opaque_import_combined_with_affected_file_stays_selective() {
 
     let plan = project.plan();
 
-    assert!(!plan.full_suite, "{:?}", plan.fallback_reasons);
-    assert_eq!(plan.selected.len(), 1);
-    assert!(plan.selected[0].file.ends_with("feature.test.ts"));
+    assert!(plan.full_suite, "{:?}", plan.fallback_reasons);
+    assert_eq!(plan.selected.len(), 2);
 }
 
 fn args() -> ReflexezArgs {
