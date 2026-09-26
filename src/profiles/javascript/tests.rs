@@ -9,6 +9,20 @@ fn tokens(src: &[u8]) -> Vec<StructuralToken> {
     parse_source(src, 0, "m", &JsProfile).unwrap().syntax.tokens
 }
 
+#[cfg(feature = "eyez")]
+#[test]
+fn jsdoc_before_declaration_belongs_to_function() {
+    let walked = parse_source(
+        b"/** Parse the incoming request into a verified user identity. */\nexport function authenticate() { return true; }\n// This describes the next function and its intent.\nfunction authorize() { return true; }\n",
+        0,
+        "m",
+        &JsProfile,
+    )
+    .unwrap();
+    assert_eq!(walked.docs[0].symbol_path, "m::authenticate");
+    assert_eq!(walked.docs[1].symbol_path, "m::authorize");
+}
+
 /// Two functions with the same control-flow shape but different local names
 /// produce identical structural-token vectors (rename invariance).
 #[test]

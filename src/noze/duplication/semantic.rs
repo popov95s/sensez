@@ -106,9 +106,9 @@ fn collect_units(files: &[&ParsedFile], comment_required: bool) -> Vec<Unit> {
     out
 }
 
-fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, String> {
+fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, (usize, String)> {
     let mut module_context: Vec<&str> = Vec::new();
-    let mut by_symbol: BTreeMap<String, Vec<&str>> = BTreeMap::new();
+    let mut by_symbol: BTreeMap<String, Vec<(usize, &str)>> = BTreeMap::new();
     for doc in &file.walked.docs {
         if !doc.symbol_path.contains("::") && doc.line <= 40 {
             module_context.push(doc.text.as_str());
@@ -116,30 +116,33 @@ fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, String> {
             by_symbol
                 .entry(doc.symbol_path.clone())
                 .or_default()
-                .push(doc.text.as_str());
+                .push((doc.line, doc.text.as_str()));
         }
     }
     by_symbol
         .into_iter()
         .map(|(symbol, docs)| {
             let mut parts = module_context.clone();
-            parts.extend(docs);
-            (symbol, parts.join("\n\n"))
+            parts.extend(docs.iter().map(|(_, text)| *text));
+            (symbol, (docs.last().map_or(0, |(line, _)| *line), parts.join("\n\n")))
         })
         .collect()
 }
 
 fn comment_for(
-    comments: &FxHashMap<String, String>,
+    comments: &FxHashMap<String, (usize, String)>,
     func: &FunctionUnit,
     comment_required: bool,
 ) -> Option<(String, String)> {
     let commented = comments
         .iter()
-        .filter(|(symbol, _)| last_segment(symbol) == func.name)
-        .map(|(symbol, text)| (symbol.as_str(), text.trim()))
-        .find(|(_, text)| text.split_whitespace().count() >= 5)
-        .map(|(symbol, text)| (symbol.to_owned(), text.to_owned()));
+        .filter(|(symbol, (line, text))| {
+            last_segment(symbol) == func.name
+                && *line <= func.end_line
+                && text.split_whitespace().count() >= 5
+        })
+        .min_by_key(|(_, (line, _))| line.abs_diff(func.start_line))
+        .map(|(symbol, (_, text))| (symbol.to_owned(), text.trim().to_owned()));
     if commented.is_some() || comment_required {
         return commented;
     }
@@ -287,5 +290,25 @@ fn occurrence(unit: &Unit) -> CloneOccurrence {
         file: unit.file.clone(),
         start_row: unit.start,
         end_row: unit.end,
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn repeated_method_name_uses_nearest_documentation() {
+        let comments = FxHashMap::from_iter([
+            ("m::First.run".to_string(), (2, "Run the first scheduled job safely".to_string())),
+            ("m::Second.run".to_string(), (21, "Run the second scheduled job safely".to_string())),
+        ]);
+        let func = FunctionUnit {
+            name: "run".into(),
+            start_line: 22,
+            end_line: 29,
+            ..Default::default()
+        };
+        assert_eq!(comment_for(&comments, &func, true).unwrap().0, "m::Second.run");
     }
 }
