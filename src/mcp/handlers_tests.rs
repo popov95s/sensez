@@ -50,7 +50,7 @@ fn scan_tool_omits_duplicate_module_noise() {
     let path = dir.to_string_lossy().into_owned();
 
     let req = json!({"jsonrpc": "2.0", "id": 9, "method": "tools/call", "params": {
-        "name": "noze_sniff", "arguments": {"path": path}
+        "name": "noze_sniff", "arguments": {"path": path, "diff": false}
     }});
     let resp = handle_message(&req).unwrap();
 
@@ -75,7 +75,7 @@ fn scan_tool_omits_scan_diagnostics() {
     let path = dir.to_string_lossy().into_owned();
 
     let req = json!({"jsonrpc": "2.0", "id": 10, "method": "tools/call", "params": {
-        "name": "noze_sniff", "arguments": {"path": path}
+        "name": "noze_sniff", "arguments": {"path": path, "diff": false}
     }});
     let resp = handle_message(&req).unwrap();
 
