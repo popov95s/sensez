@@ -133,7 +133,7 @@ jobs:
       - name: Dogfood and build debug binary
         # Builds target/debug/sensez in this job; docs example verification
         # reuses that binary instead of rebuilding it in a separate workflow.
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         run: cargo run -- noze .
 
       - name: Dogfood PR changes
@@ -141,6 +141,12 @@ jobs:
         run: |
           git diff --unified=0 "${{ github.event.pull_request.base.sha }}" HEAD > "$RUNNER_TEMP/sensez-pr.diff"
           cargo run -- noze . --diff-from "$RUNNER_TEMP/sensez-pr.diff" --fail-on-new must_fix
+
+      - name: Dogfood pushed changes
+        if: github.event_name == 'push'
+        run: |
+          git diff --unified=0 "${{ github.event.before }}" HEAD > "$RUNNER_TEMP/sensez-push.diff"
+          cargo run -- noze . --diff-from "$RUNNER_TEMP/sensez-push.diff" --fail-on-new must_fix
 
       - name: Generate docs reference
         run: uv run --no-project docs/generate.py
