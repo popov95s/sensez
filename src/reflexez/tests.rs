@@ -89,7 +89,8 @@ fn opaque_import_in_selected_test_forces_safe_fallback() {
 
 #[test]
 fn opaque_import_in_unselected_test_forces_safe_fallback() {
-    let project = Project::new("const target = choose(); test('feature', async () => import (target));\n");
+    let project =
+        Project::new("const target = choose(); test('feature', async () => import (target));\n");
     project.change("src/feature.ts", "export const value = 3;\n");
 
     let plan = project.plan();
