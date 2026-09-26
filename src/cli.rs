@@ -197,6 +197,9 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
+    let full_gate_fails = options
+        .fail_on
+        .is_some_and(|level| report_meets_fail_level(&report, level));
     output::apply(&mut report, options);
 
     let rendered = if options.json {
@@ -212,6 +215,9 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     output::print_line(&rendered)?;
 
+    if full_gate_fails {
+        return Ok(ExitCode::FAILURE);
+    }
     if let Some(level) = options.fail_on_new {
         if report.meta.mode == crate::report::ReportMode::Diff
             && report_meets_fail_level(&report, level)
