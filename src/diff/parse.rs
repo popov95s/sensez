@@ -17,8 +17,8 @@ pub fn parse_unified(text: &str) -> Vec<(String, Vec<(usize, usize)>)> {
     sections.into_iter().filter_map(parse_section).collect()
 }
 
-fn parse_section(lines: Vec<&str>) -> Option<(String, Vec<(usize, usize)>)> {
-    let mut lines = lines
+fn parse_section(section: Vec<&str>) -> Option<(String, Vec<(usize, usize)>)> {
+    let mut lines = section
         .into_iter()
         .skip_while(|line| !line.starts_with("+++ "));
     let path = new_file_path(lines.next()?.strip_prefix("+++ ")?.trim_start())?;
