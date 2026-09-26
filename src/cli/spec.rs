@@ -266,6 +266,10 @@ pub struct ScanOptions {
     /// Keep only findings touching a unified diff read from FILE ("-" = stdin).
     #[arg(long, value_name = "FILE", conflicts_with = "diff")]
     pub diff_from: Option<String>,
+    /// Exit non-zero if any finding meets or exceeds the given action level.
+    /// Defaults to `must_fix` when the flag is present without a value.
+    #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1, conflicts_with_all = ["diff", "diff_from", "fail_on_new"])]
+    pub fail_on: Option<FailOnNewLevel>,
     /// Exit non-zero if diff-scoped findings meet or exceed the given action level.
     /// Defaults to `must_fix` when the flag is present without a value.
     #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1)]

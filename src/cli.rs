@@ -163,8 +163,12 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
         output::print_line(&crate::config_summary::scan(path, options.threshold)?)?;
         return Ok(ExitCode::SUCCESS);
     }
-    let diff = build_diff(path, options.diff, options.diff_from.as_deref());
-    let wants_diff = options.diff || options.diff_from.is_some();
+    let wants_diff = options.diff || options.diff_from.is_some() || options.fail_on_new.is_some();
+    let diff = build_diff(
+        path,
+        wants_diff && options.diff_from.is_none(),
+        options.diff_from.as_deref(),
+    );
     if wants_diff && diff.changed.is_none() && options.fail_on_new.is_some() {
         for issue in &diff.issues {
             eprintln!("[sensez] diff: {}", issue.message);
@@ -193,6 +197,9 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
+    let full_gate_fails = options
+        .fail_on
+        .is_some_and(|level| report_meets_fail_level(&report, level));
     output::apply(&mut report, options);
 
     let rendered = if options.json {
@@ -208,6 +215,9 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     output::print_line(&rendered)?;
 
+    if full_gate_fails {
+        return Ok(ExitCode::FAILURE);
+    }
     if let Some(level) = options.fail_on_new {
         if report.meta.mode == crate::report::ReportMode::Diff
             && report_meets_fail_level(&report, level)
