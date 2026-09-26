@@ -6,28 +6,26 @@
 
 /// Parse unified-diff text into `(relative_path, [(lo, hi), ...])` entries.
 pub fn parse_unified(text: &str) -> Vec<(String, Vec<(usize, usize)>)> {
-    let mut out: Vec<(String, Vec<(usize, usize)>)> = Vec::new();
-    let mut current: Option<usize> = None; // index into `out` for the active file
-    let mut in_file_section = false; // saw `diff --git`, awaiting its `+++`
-
+    let mut sections: Vec<Vec<&str>> = Vec::new();
     for line in text.lines() {
         if line.starts_with("diff --git ") {
-            in_file_section = true;
-            current = None;
-        } else if in_file_section && line.starts_with("+++ ") {
-            in_file_section = false;
-            current = new_file_path(line["+++ ".len()..].trim_start()).map(|p| {
-                out.push((p, Vec::new()));
-                out.len() - 1
-            });
-        } else if let Some(rest) = line.strip_prefix("@@") {
-            if let (Some(idx), Some(range)) = (current, new_hunk_range(rest)) {
-                out[idx].1.push(range);
-            }
+            sections.push(Vec::new());
+        } else if let Some(section) = sections.last_mut() {
+            section.push(line);
         }
     }
-    out.retain(|(_, ranges)| !ranges.is_empty());
-    out
+    sections.into_iter().filter_map(parse_section).collect()
+}
+
+fn parse_section(lines: Vec<&str>) -> Option<(String, Vec<(usize, usize)>)> {
+    let mut lines = lines
+        .into_iter()
+        .skip_while(|line| !line.starts_with("+++ "));
+    let path = new_file_path(lines.next()?.strip_prefix("+++ ")?.trim_start())?;
+    let ranges: Vec<_> = lines
+        .filter_map(|line| line.strip_prefix("@@").and_then(new_hunk_range))
+        .collect();
+    (!ranges.is_empty()).then_some((path, ranges))
 }
 
 /// `+++ b/path` → `path`; `+++ /dev/null` (deletion) → None.
