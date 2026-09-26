@@ -8,7 +8,7 @@
 //! 1. drop scan-issues from the report (so they never leak to clients)
 //! 2. cap each pillar to its top-N findings (`max = 0` skips)
 
-use crate::report::{AnalysisReport, ScanIssue, ScanStage};
+use crate::report::AnalysisReport;
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -35,27 +35,13 @@ pub(super) fn diff(
     max: usize,
 ) -> Result<(AnalysisReport, Value, Duration)> {
     let start = Instant::now();
-    let (changed, diff_error) = match crate::diff::git::changed_vs_head(path) {
-        Ok(changed) => (Some(changed), None),
-        Err(err) => (None, Some(format!("{err:#}"))),
-    };
+    let changed = crate::diff::git::changed_vs_head(path)
+        .with_context(|| format!("resolving working-tree diff for {}", path.display()))?;
     let (mut report, module_files) = crate::analyze_path_in_service(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
-    if let Some(message) = diff_error {
-        report.meta.issues.push(ScanIssue {
-            stage: ScanStage::Diff,
-            file: None,
-            message,
-        });
-        report.meta.files_skipped = report.meta.issues.len();
-    }
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);
-    if let Some(changed) = changed {
-        finish_diff(&mut report, &changed, &module_files, max);
-    } else {
-        crate::noze::limit(&mut report, max);
-    }
+    finish_diff(&mut report, &changed, &module_files, max);
     Ok((report, snapshot, start.elapsed()))
 }
 
@@ -93,6 +79,13 @@ fn finish_diff(
 mod tests {
     use super::*;
     use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
+
+    #[test]
+    fn diff_reports_git_errors_instead_of_returning_a_full_scan() {
+        let tmp = tempfile::tempdir().unwrap();
+        let err = diff(tmp.path(), None, 0).unwrap_err();
+        assert!(err.to_string().contains("resolving working-tree diff"));
+    }
 
     #[test]
     fn diff_keeps_changed_findings_beyond_the_full_report_limit() {
