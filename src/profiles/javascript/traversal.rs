@@ -205,12 +205,11 @@ fn leading_function(node: Node, src: &[u8]) -> Option<String> {
         next = next.named_child(0)?;
     }
     match next.kind() {
-        "function_declaration" | "generator_function_declaration" | "method_definition" => {
-            next.child_by_field_name("name")?
-                .utf8_text(src)
-                .ok()
-                .map(str::to_owned)
-        }
+        "function_declaration" | "generator_function_declaration" | "method_definition" => next
+            .child_by_field_name("name")?
+            .utf8_text(src)
+            .ok()
+            .map(str::to_owned),
         _ => None,
     }
 }

@@ -124,7 +124,10 @@ fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, (usize, String)> {
         .map(|(symbol, docs)| {
             let mut parts = module_context.clone();
             parts.extend(docs.iter().map(|(_, text)| *text));
-            (symbol, (docs.last().map_or(0, |(line, _)| *line), parts.join("\n\n")))
+            (
+                symbol,
+                (docs.last().map_or(0, |(line, _)| *line), parts.join("\n\n")),
+            )
         })
         .collect()
 }
@@ -300,8 +303,14 @@ mod tests {
     #[test]
     fn repeated_method_name_uses_nearest_documentation() {
         let comments = FxHashMap::from_iter([
-            ("m::First.run".to_string(), (2, "Run the first scheduled job safely".to_string())),
-            ("m::Second.run".to_string(), (21, "Run the second scheduled job safely".to_string())),
+            (
+                "m::First.run".to_string(),
+                (2, "Run the first scheduled job safely".to_string()),
+            ),
+            (
+                "m::Second.run".to_string(),
+                (21, "Run the second scheduled job safely".to_string()),
+            ),
         ]);
         let func = FunctionUnit {
             name: "run".into(),
@@ -309,6 +318,9 @@ mod tests {
             end_line: 29,
             ..Default::default()
         };
-        assert_eq!(comment_for(&comments, &func, true).unwrap().0, "m::Second.run");
+        assert_eq!(
+            comment_for(&comments, &func, true).unwrap().0,
+            "m::Second.run"
+        );
     }
 }

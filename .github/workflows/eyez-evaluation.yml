@@ -25,9 +25,9 @@ jobs:
         run: |
           git worktree add --detach "$RUNNER_TEMP/before" origin/main
           export CARGO_TARGET_DIR="$RUNNER_TEMP/eyez-target"
-          (cd "$RUNNER_TEMP/before" && cargo build --release --no-default-features --features lang-typescript,eyez)
+          (cd "$RUNNER_TEMP/before" && cargo build --release --features eyez)
           cp "$CARGO_TARGET_DIR/release/sensez" "$RUNNER_TEMP/sensez-before"
-          cargo build --release --no-default-features --features lang-typescript,eyez
+          cargo build --release --features eyez
           cp "$CARGO_TARGET_DIR/release/sensez" "$RUNNER_TEMP/sensez-after"
       - name: Scan pinned repositories
         run: |
