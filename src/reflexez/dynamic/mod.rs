@@ -44,7 +44,7 @@ fn scan_file(path: &Path) -> Option<FileFacts> {
         #[cfg(feature = "lang-python")]
         Some("py") => python::scan(&source, module_name(path)),
         #[cfg(feature = "lang-javascript")]
-        Some("js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx") => {
+        Some("js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts") => {
             javascript::scan(path, &source, module_name(path))
         }
         _ => None,

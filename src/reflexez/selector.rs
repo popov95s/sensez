@@ -215,6 +215,6 @@ fn selections(
 fn is_source(path: &Path) -> bool {
     matches!(
         path.extension().and_then(|ext| ext.to_str()),
-        Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx")
+        Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts")
     )
 }
