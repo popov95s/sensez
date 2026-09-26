@@ -1,0 +1,62 @@
+name: Eyez evaluation (temporary)
+
+on:
+  pull_request:
+    paths:
+      - 'src/eyez/**'
+      - 'src/noze/duplication/semantic.rs'
+      - 'src/profiles/javascript/**'
+      - '.github/workflows/eyez-evaluation.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: dtolnay/rust-toolchain@1.97.0
+      - uses: Swatinem/rust-cache@v2
+      - name: Build before and after
+        run: |
+          git worktree add --detach "$RUNNER_TEMP/before" origin/main
+          export CARGO_TARGET_DIR="$RUNNER_TEMP/eyez-target"
+          (cd "$RUNNER_TEMP/before" && cargo build --release --features eyez)
+          cp "$CARGO_TARGET_DIR/release/sensez" "$RUNNER_TEMP/sensez-before"
+          cargo build --release --features eyez
+          cp "$CARGO_TARGET_DIR/release/sensez" "$RUNNER_TEMP/sensez-after"
+      - name: Scan pinned repositories
+        run: |
+          mkdir -p "$RUNNER_TEMP/eyez-results"
+          while read -r repo sha; do
+            name="${repo##*/}"
+            git clone --quiet --depth=1 "https://github.com/$repo.git" "$RUNNER_TEMP/$name"
+            actual="$(git -C "$RUNNER_TEMP/$name" rev-parse HEAD)"
+            [[ "$actual" == "$sha"* ]] || { echo "$repo moved from $sha to $actual"; exit 1; }
+            printf '[duplication.semantic]\nenabled = true\n' > "$RUNNER_TEMP/$name/sensez.toml"
+            for version in before after; do
+              "$RUNNER_TEMP/sensez-$version" noze "$RUNNER_TEMP/$name" --duplicates --all --json \
+                > "$RUNNER_TEMP/eyez-results/$name-$version.json" \
+                2> "$RUNNER_TEMP/eyez-results/$name-$version.err" || true
+            done
+          done <<'REPOS'
+          colinhacks/zod 2bf7b0630d53
+          honojs/hono ee0622e14487
+          pmndrs/zustand b57db4f86ef1
+          sindresorhus/ky 0d59458a0a58
+          axios/axios 961241f6c197
+          react-hook-form/react-hook-form a43dbac2c4f4
+          ai/nanoid bb68abcd59eb
+          fastify/fastify f7f73aa7d023
+          expressjs/express 9a34acf03cb8
+          date-fns/date-fns 717ce0a807ea
+          REPOS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: eyez-comparison
+          path: ${{ runner.temp }}/eyez-results/

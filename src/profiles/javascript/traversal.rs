@@ -87,10 +87,12 @@ fn visit(
         #[cfg(feature = "eyez")]
         {
             let scope_path: Vec<&str> = ctx.scope.iter().map(|s| s.name.as_str()).collect();
+            let owner = leading_function(node, src);
             crate::eyez::capture::javascript::push_comment(
                 ctx.out,
                 module_name,
                 &scope_path,
+                owner.as_deref(),
                 node,
                 src,
             );
@@ -190,6 +192,25 @@ fn visit(
     }
     if opened {
         ctx.scope.pop();
+    }
+}
+
+#[cfg(feature = "eyez")]
+fn leading_function(node: Node, src: &[u8]) -> Option<String> {
+    let next = std::iter::successors(node.next_named_sibling(), |n| n.next_named_sibling())
+        .find(|n| n.kind() != "comment")?;
+    let declaration = if next.kind() == "export_statement" {
+        next.named_child(0)?
+    } else {
+        next
+    };
+    match declaration.kind() {
+        "function_declaration" | "generator_function_declaration" | "method_definition" => declaration
+            .child_by_field_name("name")?
+            .utf8_text(src)
+            .ok()
+            .map(str::to_owned),
+        _ => None,
     }
 }
 
