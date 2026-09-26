@@ -34,9 +34,9 @@ jobs:
           mkdir -p "$RUNNER_TEMP/eyez-results"
           while read -r repo sha; do
             name="${repo##*/}"
-            git clone --quiet --filter=blob:none --no-checkout "https://github.com/$repo.git" "$RUNNER_TEMP/$name"
-            git -C "$RUNNER_TEMP/$name" fetch --quiet --depth=1 origin "$sha"
-            git -C "$RUNNER_TEMP/$name" checkout --quiet --detach FETCH_HEAD
+            git clone --quiet --depth=1 "https://github.com/$repo.git" "$RUNNER_TEMP/$name"
+            actual="$(git -C "$RUNNER_TEMP/$name" rev-parse HEAD)"
+            [[ "$actual" == "$sha"* ]] || { echo "$repo moved from $sha to $actual"; exit 1; }
             printf '[duplication.semantic]\nenabled = true\n' > "$RUNNER_TEMP/$name/sensez.toml"
             for version in before after; do
               "$RUNNER_TEMP/sensez-$version" noze "$RUNNER_TEMP/$name" --duplicates --all --json \

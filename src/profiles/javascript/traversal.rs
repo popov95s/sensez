@@ -197,15 +197,15 @@ fn visit(
 
 #[cfg(feature = "eyez")]
 fn leading_function(node: Node, src: &[u8]) -> Option<String> {
-    let mut next = node.next_named_sibling()?;
-    while next.kind() == "comment" {
-        next = next.next_named_sibling()?;
-    }
-    if next.kind() == "export_statement" {
-        next = next.named_child(0)?;
-    }
-    match next.kind() {
-        "function_declaration" | "generator_function_declaration" | "method_definition" => next
+    let next = std::iter::successors(node.next_named_sibling(), |n| n.next_named_sibling())
+        .find(|n| n.kind() != "comment")?;
+    let declaration = if next.kind() == "export_statement" {
+        next.named_child(0)?
+    } else {
+        next
+    };
+    match declaration.kind() {
+        "function_declaration" | "generator_function_declaration" | "method_definition" => declaration
             .child_by_field_name("name")?
             .utf8_text(src)
             .ok()
