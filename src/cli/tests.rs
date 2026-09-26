@@ -35,6 +35,22 @@ fn fail_on_new_without_value_defaults_to_must_fix() {
 }
 
 #[test]
+fn fail_on_uses_full_scan_without_a_git_worktree() {
+    let tmp = tempfile::tempdir().unwrap();
+    let options = spec::ScanOptions {
+        fail_on: Some(FailOnNewLevel::MustFix),
+        ..scan_options()
+    };
+    assert_eq!(run_scan(tmp.path(), &options).unwrap(), ExitCode::SUCCESS);
+}
+
+#[test]
+fn fail_on_rejects_diff_flags() {
+    assert!(spec::Cli::try_parse_from(["sensez", "noze", ".", "--diff", "--fail-on"]).is_err());
+    assert!(spec::Cli::try_parse_from(["sensez", "noze", ".", "--fail-on", "--fail-on-new"]).is_err());
+}
+
+#[test]
 fn fail_on_new_without_diff_requires_a_git_worktree() {
     let tmp = tempfile::tempdir().unwrap();
     let options = spec::ScanOptions {
@@ -83,6 +99,7 @@ fn default_output_drops_low_confidence_dead_code() {
         output_glob: Vec::new(),
         diff: false,
         diff_from: None,
+        fail_on: None,
         fail_on_new: None,
         explain: false,
     };
@@ -123,6 +140,7 @@ fn pillar_filter_keeps_only_requested_findings() {
         output_glob: Vec::new(),
         diff: false,
         diff_from: None,
+        fail_on: None,
         fail_on_new: None,
         explain: false,
     };
@@ -274,6 +292,7 @@ fn scan_options() -> spec::ScanOptions {
         output_glob: Vec::new(),
         diff: false,
         diff_from: None,
+        fail_on: None,
         fail_on_new: None,
         explain: false,
     }
