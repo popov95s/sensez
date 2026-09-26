@@ -47,7 +47,9 @@ fn fail_on_uses_full_scan_without_a_git_worktree() {
 #[test]
 fn fail_on_rejects_diff_flags() {
     assert!(spec::Cli::try_parse_from(["sensez", "noze", ".", "--diff", "--fail-on"]).is_err());
-    assert!(spec::Cli::try_parse_from(["sensez", "noze", ".", "--fail-on", "--fail-on-new"]).is_err());
+    assert!(
+        spec::Cli::try_parse_from(["sensez", "noze", ".", "--fail-on", "--fail-on-new"]).is_err()
+    );
 }
 
 #[test]
