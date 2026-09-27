@@ -36,7 +36,7 @@ pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> O
                 .flatten()
         })
         .collect();
-    (params.len() >= 1 && passed? == params.iter().map(String::as_str).collect::<Vec<_>>())
+    (!params.is_empty() && passed? == params.iter().map(String::as_str).collect::<Vec<_>>())
         .then(|| callee.utf8_text(src).ok().map(str::to_string))
         .flatten()
 }
