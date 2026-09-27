@@ -4131,3 +4131,42 @@ action = "warning"
 </table>
 </details>
 
+## Other
+
+### Redundant Wrapper Chain (`redundant_wrapper_chain`)
+
+**What it is**
+
+Several local functions forward the same arguments unchanged — review whether one forwarding hop can be removed.
+
+**Why it's bad**
+
+Multiple unchanged forwarding hops make navigation and change propagation harder.
+
+**Example**
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.redundant_wrapper_chain]
+enabled = true
+action = "warning"
+# This detector has no extra threshold knobs.
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
+</tbody>
+</table>
+</details>
+

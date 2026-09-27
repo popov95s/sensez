@@ -19,6 +19,9 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         is_method,
         ..Default::default()
     };
+    if !is_method {
+        unit.review_risks.forwards_to = super::risk_facts::forward_target(func, src, &unit.param_names);
+    }
     if let Some(body) = func.child_by_field_name("body") {
         let mut acc = Acc::new(&mut unit);
         let mut cursor = body.walk();

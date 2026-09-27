@@ -46,6 +46,7 @@ class SmellTerm(StrEnum):
     NESTED_TERNARY = "nested_ternary"
     REASSIGNED_PARAMETER = "reassigned_parameter"
     REDUNDANT_VALIDATION = "redundant_validation"
+    REDUNDANT_WRAPPER_CHAIN = "redundant_wrapper_chain"
     REFUSED_BEQUEST = "refused_bequest"
     REPEATED_ITERATION = "repeated_iteration"
     SHOTGUN_SURGERY_HAZARD = "shotgun_surgery_hazard"

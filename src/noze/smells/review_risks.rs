@@ -15,7 +15,39 @@ pub fn detect(
         defensive_fallback(ctx, metric, out);
         redundant_validation(ctx, metric, out);
     }
+    wrapper_chains(ctx, metrics, out);
     divergent_abstractions(ctx, classes, out);
+}
+
+fn wrapper_chains(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<SmellFinding>) {
+    // Require two unique, local pass-through hops. A single forwarding function
+    // is commonly a useful compatibility boundary or public API.
+    for outer in metrics.iter().filter(|unit| !unit.is_method && !unit.is_nested) {
+        let Some(middle_name) = outer.review_risks.forwards_to.as_deref() else {
+            continue;
+        };
+        let mut middle = metrics.iter().filter(|unit| unit.name == middle_name && !unit.is_nested);
+        let Some(middle) = middle.next() else { continue };
+        if middle.next().is_some() || middle.name == outer.name {
+            continue;
+        }
+        let Some(target) = middle.review_risks.forwards_to.as_deref() else {
+            continue;
+        };
+        if target == outer.name || target == middle.name || !metrics.iter().any(|unit| unit.name == target && !unit.is_nested) {
+            continue;
+        }
+        out.push(make(
+            SmellKind::RedundantWrapperChain,
+            format!("{} forwards unchanged through {} to {}; consider removing an unnecessary hop", outer.name, middle.name, target),
+            ctx.path,
+            outer.start_line,
+            &outer.name,
+            Severity::Info,
+            2,
+            2,
+        ));
+    }
 }
 
 fn defensive_fallback(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {

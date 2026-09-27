@@ -700,6 +700,13 @@ FindingDocs {
             LanguageBlock { language: "typescript", body: "Validate at the boundary or first use, then rely on the established invariant." },
         ],
     },
+    FindingDocs {
+        kind: RedundantWrapperChain,
+        why_bad: "Multiple unchanged forwarding hops make navigation and change propagation harder.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Keep the intended compatibility boundary and remove only redundant local hops." }, LanguageBlock { language: "typescript", body: "Keep the intended API boundary and remove only redundant local hops." }],
+    },
 ];
 
 pub fn all() -> impl Iterator<Item = &'static FindingDocs> {

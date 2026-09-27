@@ -11,6 +11,8 @@ pub struct ReviewRiskFacts {
     pub broad_handlers: usize,
     pub empty_fallbacks: usize,
     pub repeated_guards: usize,
+    /// Name of a direct callee receiving every parameter unchanged.
+    pub forwards_to: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

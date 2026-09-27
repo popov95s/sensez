@@ -67,6 +67,7 @@ impl Default for Smells {
                 SmellKind::NPlusOneCall,
                 SmellKind::DefensiveFallback,
                 SmellKind::RedundantValidation,
+                SmellKind::RedundantWrapperChain,
             ],
             actions: BTreeMap::new(),
             max_cyclomatic: 10,

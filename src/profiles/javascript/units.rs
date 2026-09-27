@@ -37,7 +37,7 @@ pub struct FunctionFacts {
 
 impl FunctionFacts {
     pub fn start(func: Node, src: &[u8], is_method: bool) -> Self {
-        let unit = FunctionUnit {
+        let mut unit = FunctionUnit {
             name: symbols::def_name(func, src).unwrap_or_default(),
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
@@ -46,6 +46,10 @@ impl FunctionFacts {
             max_tuple_return: super::classunit::tuple_return_arity(func, src),
             ..Default::default()
         };
+        if !is_method && func.kind() == "function_declaration" {
+            unit.review_risks.forwards_to =
+                super::risk_facts::forward_target(func, src, &unit.param_names);
+        }
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
         FunctionFacts {
