@@ -9,19 +9,25 @@ use crate::spine::ir::Walked;
 use tree_sitter::Node;
 
 /// Record a `//`, `/* … */`, or JSDoc (`/** … */`) comment for `scope_path`.
-pub fn push_comment(out: &mut Walked, module: &str, scope_path: &[&str], node: Node, src: &[u8]) {
+pub fn push_comment(
+    out: &mut Walked,
+    module: &str,
+    scope_path: &[&str],
+    owner: Option<&str>,
+    node: Node,
+    src: &[u8],
+) {
     let raw = super::lossy_text(node, src);
     {
         let text = clean(&raw);
         if !text.is_empty() {
             let line = node.start_position().row + 1;
-            out.docs.push(RawDoc::new(
-                module,
-                scope_path,
-                DocKind::Comment,
-                text,
-                line,
-            ));
+            let mut path = scope_path.to_vec();
+            if let Some(owner) = owner {
+                path.push(owner);
+            }
+            out.docs
+                .push(RawDoc::new(module, &path, DocKind::Comment, text, line));
         }
     }
 }

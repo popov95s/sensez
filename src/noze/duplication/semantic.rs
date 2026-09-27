@@ -11,6 +11,7 @@ mod keying;
 use crate::config::model::SemanticDuplication;
 use crate::eyez;
 use crate::eyez::semantic_cache::BundleInput;
+use crate::eyez::DocKind;
 use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
 use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::{FunctionUnit, ParsedFile};
@@ -106,40 +107,51 @@ fn collect_units(files: &[&ParsedFile], comment_required: bool) -> Vec<Unit> {
     out
 }
 
-fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, String> {
-    let mut module_context: Vec<&str> = Vec::new();
-    let mut by_symbol: BTreeMap<String, Vec<&str>> = BTreeMap::new();
+fn comment_bundles(file: &ParsedFile) -> FxHashMap<String, (usize, DocKind, String)> {
+    let mut by_symbol: BTreeMap<String, Vec<&crate::eyez::RawDoc>> = BTreeMap::new();
     for doc in &file.walked.docs {
-        if !doc.symbol_path.contains("::") && doc.line <= 40 {
-            module_context.push(doc.text.as_str());
-        } else if doc.symbol_path.contains("::") {
+        if doc.symbol_path.contains("::") {
             by_symbol
                 .entry(doc.symbol_path.clone())
                 .or_default()
-                .push(doc.text.as_str());
+                .push(doc);
         }
     }
     by_symbol
         .into_iter()
         .map(|(symbol, docs)| {
-            let mut parts = module_context.clone();
-            parts.extend(docs);
-            (symbol, parts.join("\n\n"))
+            (
+                symbol,
+                (
+                    docs.last().map_or(0, |doc| doc.line),
+                    docs.last().map_or(DocKind::Comment, |doc| doc.kind),
+                    docs.iter()
+                        .map(|doc| doc.text.as_str())
+                        .collect::<Vec<_>>()
+                        .join("\n\n"),
+                ),
+            )
         })
         .collect()
 }
 
 fn comment_for(
-    comments: &FxHashMap<String, String>,
+    comments: &FxHashMap<String, (usize, DocKind, String)>,
     func: &FunctionUnit,
     comment_required: bool,
 ) -> Option<(String, String)> {
     let commented = comments
         .iter()
-        .filter(|(symbol, _)| last_segment(symbol) == func.name)
-        .map(|(symbol, text)| (symbol.as_str(), text.trim()))
-        .find(|(_, text)| text.split_whitespace().count() >= 5)
-        .map(|(symbol, text)| (symbol.to_owned(), text.to_owned()));
+        .filter(|(symbol, (line, kind, text))| {
+            last_segment(symbol) == func.name
+                && (match kind {
+                    DocKind::Docstring => *line >= func.start_line && *line <= func.end_line,
+                    DocKind::Comment => *line < func.start_line,
+                })
+                && text.split_whitespace().count() >= 5
+        })
+        .min_by_key(|(_, (line, _, _))| line.abs_diff(func.start_line))
+        .map(|(symbol, (_, _, text))| (symbol.to_owned(), text.trim().to_owned()));
     if commented.is_some() || comment_required {
         return commented;
     }
@@ -289,3 +301,6 @@ fn occurrence(unit: &Unit) -> CloneOccurrence {
         end_row: unit.end,
     }
 }
+
+#[cfg(test)]
+mod tests;
