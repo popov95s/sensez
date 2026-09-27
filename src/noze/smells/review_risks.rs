@@ -27,18 +27,14 @@ fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec
         .unwrap_or("");
     let is_test_file = name.starts_with("test_")
         || name.ends_with("_test.py")
-        || [
-            ".test.js",
-            ".test.ts",
-            ".test.jsx",
-            ".test.tsx",
-            ".spec.js",
-            ".spec.ts",
-            ".spec.jsx",
-            ".spec.tsx",
-        ]
-        .iter()
-        .any(|suffix| name.ends_with(suffix));
+        || name.ends_with(".test.js")
+        || name.ends_with(".test.ts")
+        || name.ends_with(".test.jsx")
+        || name.ends_with(".test.tsx")
+        || name.ends_with(".spec.js")
+        || name.ends_with(".spec.ts")
+        || name.ends_with(".spec.jsx")
+        || name.ends_with(".spec.tsx");
     if !is_test_file
         || metric.review_risks.test_checks > 0
         || metric.review_risks.test_has_nested_function
