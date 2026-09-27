@@ -46,7 +46,7 @@ impl FunctionFacts {
             max_tuple_return: super::classunit::tuple_return_arity(func, src),
             ..Default::default()
         };
-        unit.review_risks.is_test_callback = super::risk_facts::is_test_callback(func, src);
+        unit.review_risks.is_test_case = super::risk_facts::is_test_callback(func, src);
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
         FunctionFacts {

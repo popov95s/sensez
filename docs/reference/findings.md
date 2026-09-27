@@ -4145,6 +4145,68 @@ A test that only executes code can pass when behavior is wrong.
 
 **Example**
 
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def save(value: int) -> int:
+        return value
+
+
+    def test_saves() -> None:
+        save(42)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Assert an observable result or expected exception.
+
+    ```python
+    def save(value: int) -> int:
+        return value
+
+
+    def test_saves() -> None:
+        assert save(42) == 42
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    import test from "node:test";
+
+    function save(value: number): number {
+      return value;
+    }
+
+    test("saves value", () => {
+      save(42);
+    });
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Assert the result, state, or expected rejection with a matcher.
+
+    ```ts
+    import assert from "node:assert/strict";
+    import test from "node:test";
+
+    function save(value: number): number {
+      return value;
+    }
+
+    test("saves value", () => {
+      assert.equal(save(42), 42);
+    });
+    ```
+    </details>
 
 **Tune It**
 

@@ -24,7 +24,7 @@ mod tests;
 
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TestOracleProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
@@ -160,5 +160,11 @@ impl TypeVocabularyProfile for JsProfile {
 
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
         typevocab::is_primitive_scalar_alias(annotation)
+    }
+}
+
+impl TestOracleProfile for JsProfile {
+    fn is_test_source(&self, path: &Path) -> bool {
+        risk_facts::is_test_source(path)
     }
 }

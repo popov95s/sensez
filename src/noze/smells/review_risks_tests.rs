@@ -155,6 +155,10 @@ fn tests_without_behavioral_checks_are_reported() {
             "example.test.js",
             "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n",
         ),
+        (
+            "example.test.ts",
+            "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n",
+        ),
     ] {
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join(name);
@@ -194,6 +198,14 @@ fn assertions_and_expected_exceptions_are_oracles() {
         (
             "example.spec.js",
             "test.skip('later', () => {\n  store.save(42);\n});\n",
+        ),
+        (
+            "test_example.ts",
+            "test('not a JS/TS test file', () => {\n  store.save(42);\n});\n",
+        ),
+        (
+            "example.test.py",
+            "def test_not_a_python_test_file():\n    store.save(42)\n",
         ),
     ] {
         let temp = tempfile::tempdir().unwrap();

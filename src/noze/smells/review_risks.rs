@@ -20,35 +20,14 @@ pub fn detect(
 }
 
 fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {
-    let name = ctx
-        .path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or("");
-    let is_test_file = name.starts_with("test_")
-        || name.ends_with("_test.py")
-        || name.ends_with(".test.js")
-        || name.ends_with(".test.ts")
-        || name.ends_with(".test.jsx")
-        || name.ends_with(".test.tsx")
-        || name.ends_with(".spec.js")
-        || name.ends_with(".spec.ts")
-        || name.ends_with(".spec.jsx")
-        || name.ends_with(".spec.tsx");
-    if !is_test_file
+    if !ctx.test_oracle.is_test_source(ctx.path)
+        || !metric.review_risks.is_test_case
         || metric.review_risks.test_checks > 0
         || metric.review_risks.test_has_nested_function
     {
         return;
     }
-    let is_test = match ctx.language {
-        crate::spine::ir::Language::Python => metric.name.starts_with("test_") && !metric.is_nested,
-        crate::spine::ir::Language::JavaScript | crate::spine::ir::Language::TypeScript => {
-            metric.review_risks.is_test_callback
-        }
-        crate::spine::ir::Language::Rust => false,
-    };
-    if !is_test || metric.end_line <= metric.start_line {
+    if metric.end_line <= metric.start_line {
         return;
     }
     let symbol = if metric.name.is_empty() {

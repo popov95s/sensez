@@ -24,7 +24,7 @@ mod units_tests;
 
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TestOracleProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
@@ -32,6 +32,12 @@ use std::path::{Path, PathBuf};
 
 /// The Rust language profile (zero-sized).
 pub struct RustProfile;
+
+impl TestOracleProfile for RustProfile {
+    fn is_test_source(&self, _path: &Path) -> bool {
+        false
+    }
+}
 
 static RUST_INFO: LanguageInfo = LanguageInfo {
     language: Language::Rust,

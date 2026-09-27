@@ -199,12 +199,28 @@ pub trait TypeVocabularyProfile: Send + Sync {
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool;
 }
 
+/// Language-owned convention for identifying files that contain test cases.
+/// Test syntax is recorded as a language-neutral fact during the AST walk.
+pub trait TestOracleProfile: Send + Sync {
+    fn is_test_source(&self, path: &Path) -> bool;
+}
+
 pub trait LanguageProfile:
-    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
+    ParseProfile
+    + ModuleProfile
+    + DeadCodeProfile
+    + PerformanceProfile
+    + TypeVocabularyProfile
+    + TestOracleProfile
 {
 }
 
 impl<T> LanguageProfile for T where
-    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
+    T: ParseProfile
+        + ModuleProfile
+        + DeadCodeProfile
+        + PerformanceProfile
+        + TypeVocabularyProfile
+        + TestOracleProfile
 {
 }

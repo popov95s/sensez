@@ -4,10 +4,10 @@
 //! share node-kind names; TS-only kinds like `interface_declaration` simply map
 //! to no structural token). TS decorators are a deferred enhancement.
 
-use crate::profiles::javascript::{deadcode, performance, resolve, roots, traversal, typevocab};
+use crate::profiles::javascript::{deadcode, performance, resolve, risk_facts, roots, traversal, typevocab};
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TestOracleProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
@@ -47,6 +47,18 @@ impl ParseProfile for TsProfile {
 
 /// The TSX language profile (zero-sized).
 pub struct TsxProfile;
+
+impl TestOracleProfile for TsProfile {
+    fn is_test_source(&self, path: &Path) -> bool {
+        risk_facts::is_test_source(path)
+    }
+}
+
+impl TestOracleProfile for TsxProfile {
+    fn is_test_source(&self, path: &Path) -> bool {
+        risk_facts::is_test_source(path)
+    }
+}
 
 impl ParseProfile for TsxProfile {
     fn info(&self) -> &'static LanguageInfo {

@@ -1,6 +1,13 @@
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
 use tree_sitter::Node;
+use std::path::Path;
+
+pub(super) fn is_test_source(path: &Path) -> bool {
+    path.file_name()
+        .and_then(|name| name.to_str())
+        .is_some_and(|name| name.starts_with("test_") || name.ends_with("_test.py"))
+}
 
 pub(super) fn scan(
     unit: &mut FunctionUnit,

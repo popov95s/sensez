@@ -13,6 +13,12 @@ The docs are designed to auto-generate through the code.
 
 ## Refresh Flow
 
+Each smell can provide `example.py`/`fixed.py` and `example.ts`/`fixed.ts`.
+For test smells, use `test_example.py`/`fixed_test.py` and
+`example.test.ts`/`fixed.test.ts` so the files remain real test sources.
+Add an `exact-smells` marker when the bad example must emit only its named
+smell; the verifier always requires the fixed example to emit no findings.
+
 Regenerate generated reference pages after changing glossary metadata:
 
 ```bash
