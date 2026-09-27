@@ -3,12 +3,17 @@ use std::collections::HashMap;
 use tree_sitter::Node;
 
 pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> Option<String> {
-    if func.parent().is_some_and(|parent| parent.kind() == "decorated_definition") {
+    if func
+        .parent()
+        .is_some_and(|parent| parent.kind() == "decorated_definition")
+    {
         return None;
     }
     let body = func.child_by_field_name("body")?;
     let mut cursor = body.walk();
-    let mut statements = body.named_children(&mut cursor).filter(|n| n.kind() != "comment");
+    let mut statements = body
+        .named_children(&mut cursor)
+        .filter(|n| n.kind() != "comment");
     let statement = statements.next()?;
     if statement.kind() != "return_statement" || statements.next().is_some() {
         return None;
@@ -25,7 +30,11 @@ pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> O
     let mut cursor = args.walk();
     let passed: Option<Vec<_>> = args
         .named_children(&mut cursor)
-        .map(|arg| (arg.kind() == "identifier").then(|| arg.utf8_text(src).ok()).flatten())
+        .map(|arg| {
+            (arg.kind() == "identifier")
+                .then(|| arg.utf8_text(src).ok())
+                .flatten()
+        })
         .collect();
     (params.len() >= 1 && passed? == params.iter().map(String::as_str).collect::<Vec<_>>())
         .then(|| callee.utf8_text(src).ok().map(str::to_string))

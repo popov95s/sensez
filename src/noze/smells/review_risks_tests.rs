@@ -143,7 +143,9 @@ class XmlEncoder(Encoder):
 #[test]
 fn unchanged_local_wrapper_chain_is_reported() {
     let mut config = Smells::default();
-    config.disabled.retain(|kind| *kind != SmellKind::RedundantWrapperChain);
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::RedundantWrapperChain);
     for (ext, source) in [
         ("py", "def outer(value):\n    return middle(value)\ndef middle(value):\n    return actual(value)\ndef actual(value):\n    return value * 2\n"),
         ("js", "function outer(value) { return middle(value); }\nfunction middle(value) { return actual(value); }\nfunction actual(value) { return value * 2; }\n"),

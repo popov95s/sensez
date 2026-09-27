@@ -22,24 +22,39 @@ pub fn detect(
 fn wrapper_chains(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<SmellFinding>) {
     // Require two unique, local pass-through hops. A single forwarding function
     // is commonly a useful compatibility boundary or public API.
-    for outer in metrics.iter().filter(|unit| !unit.is_method && !unit.is_nested) {
+    for outer in metrics
+        .iter()
+        .filter(|unit| !unit.is_method && !unit.is_nested)
+    {
         let Some(middle_name) = outer.review_risks.forwards_to.as_deref() else {
             continue;
         };
-        let mut middle = metrics.iter().filter(|unit| unit.name == middle_name && !unit.is_nested);
-        let Some(middle) = middle.next() else { continue };
+        let mut middle = metrics
+            .iter()
+            .filter(|unit| unit.name == middle_name && !unit.is_nested);
+        let Some(middle) = middle.next() else {
+            continue;
+        };
         if middle.next().is_some() || middle.name == outer.name {
             continue;
         }
         let Some(target) = middle.review_risks.forwards_to.as_deref() else {
             continue;
         };
-        if target == outer.name || target == middle.name || !metrics.iter().any(|unit| unit.name == target && !unit.is_nested) {
+        if target == outer.name
+            || target == middle.name
+            || !metrics
+                .iter()
+                .any(|unit| unit.name == target && !unit.is_nested)
+        {
             continue;
         }
         out.push(make(
             SmellKind::RedundantWrapperChain,
-            format!("{} forwards unchanged through {} to {}; consider removing an unnecessary hop", outer.name, middle.name, target),
+            format!(
+                "{} forwards unchanged through {} to {}; consider removing an unnecessary hop",
+                outer.name, middle.name, target
+            ),
             ctx.path,
             outer.start_line,
             &outer.name,
