@@ -47,6 +47,18 @@ fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec
     ));
 }
 
+/// Test sources bypass the usual test-file smell exclusions only for this rule.
+pub(super) fn detect_test_oracles(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionUnit],
+) -> Vec<SmellFinding> {
+    let mut out = Vec::new();
+    for metric in metrics {
+        weak_test_oracle(ctx, metric, &mut out);
+    }
+    out
+}
+
 fn defensive_fallback(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {
     let facts = &metric.review_risks;
     if facts.broad_handlers == 0 || facts.empty_fallbacks < 2 {

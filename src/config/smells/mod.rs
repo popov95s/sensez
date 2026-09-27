@@ -18,6 +18,10 @@ use serde::{Deserialize, Serialize};
 pub struct SmellConfig {
     pub enabled: bool,
     pub exclude: Vec<String>,
+    /// User-supplied exclusions, without the automatic baseline patterns.
+    /// Opt-in test analysis still honors these paths.
+    #[serde(skip)]
+    pub explicit_exclude: Vec<String>,
     python: Smells,
     javascript: Smells,
     typescript: Smells,
@@ -58,6 +62,7 @@ impl From<Smells> for SmellConfig {
         SmellConfig {
             enabled: s.enabled,
             exclude: s.exclude.clone(),
+            explicit_exclude: s.exclude.clone(),
             python: s.clone(),
             javascript: s.clone(),
             typescript: s.clone(),

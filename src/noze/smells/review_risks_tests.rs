@@ -202,6 +202,33 @@ fn documented_python_test_example_is_a_test_case() {
 }
 
 #[test]
+fn opt_in_test_rule_bypasses_only_baseline_exclusions() {
+    use super::detect;
+    use crate::config::Config;
+    use crate::spine::graph::CodebaseGraph;
+
+    let temp = tempfile::tempdir().unwrap();
+    let source = include_str!("../../../docs/examples/smells/weak_test_oracle/test_example.py");
+    let path = temp.path().join("test_example.py");
+    fs::write(&path, source).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    fs::write(temp.path().join("sensez.toml"), "[smells.python]\ndisabled = []\n").unwrap();
+    let config = Config::load(temp.path()).unwrap();
+    let findings = detect(&[file], &CodebaseGraph::default(), &config.smells);
+    assert_eq!(findings.len(), 1);
+    assert_eq!(findings[0].kind, SmellKind::WeakTestOracle);
+
+    fs::write(
+        temp.path().join("sensez.toml"),
+        "[smells]\nexclude = [\"**/test_example.py\"]\n[smells.python]\ndisabled = []\n",
+    )
+    .unwrap();
+    let config = Config::load(temp.path()).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    assert!(detect(&[file], &CodebaseGraph::default(), &config.smells).is_empty());
+}
+
+#[test]
 fn assertions_and_expected_exceptions_are_oracles() {
     let mut config = Smells::default();
     config

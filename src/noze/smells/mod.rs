@@ -83,6 +83,31 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
         .flat_map(|f| detect_local(f, cfg.for_language(f.language)))
         .collect();
 
+    // Test files are excluded from ordinary smell analysis by the baseline.
+    // Let the opt-in test rule inspect them while honoring user exclusions.
+    let explicit = build_globset(&cfg.explicit_exclude).unwrap_or_else(|_| GlobSet::empty());
+    out.extend(
+        files
+            .iter()
+            .filter(|file| excluded.is_match(&file.path) && !explicit.is_match(&file.path))
+            .flat_map(|file| {
+                let settings = cfg.for_language(file.language);
+                if settings.disabled.contains(&SmellKind::WeakTestOracle) {
+                    return Vec::new();
+                }
+                let ctx = SmellContext::from_file(file);
+                let mut findings =
+                    review_risks::detect_test_oracles(&ctx, &file.walked.units.functions);
+                for finding in &mut findings {
+                    if let Some(action) = settings.actions.get(&finding.kind) {
+                        finding.action = *action;
+                    }
+                }
+                fill_spans(file, &mut findings);
+                findings
+            }
+    ));
+
     out.extend(clumps::detect(&kept, cfg));
     out.extend(graphy::detect(graph, cfg));
     apply_rule_actions(&mut out, &kept, cfg);
