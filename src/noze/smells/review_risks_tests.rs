@@ -143,34 +143,68 @@ class XmlEncoder(Encoder):
 #[test]
 fn tests_without_behavioral_checks_are_reported() {
     let mut config = Smells::default();
-    config.disabled.retain(|kind| *kind != SmellKind::WeakTestOracle);
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
     for (name, source) in [
-        ("test_example.py", "def test_saves():\n    store.save(42)\n    store.flush()\n"),
-        ("example.test.js", "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n"),
+        (
+            "test_example.py",
+            "def test_saves():\n    store.save(42)\n    store.flush()\n",
+        ),
+        (
+            "example.test.js",
+            "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n",
+        ),
     ] {
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join(name);
         fs::write(&path, source).unwrap();
         let file = parse_file(&path, 0).unwrap();
         let findings = detect_local(&file, &config);
-        assert_eq!(findings.iter().filter(|f| f.kind == SmellKind::WeakTestOracle).count(), 1, "{name}");
+        assert_eq!(
+            findings
+                .iter()
+                .filter(|f| f.kind == SmellKind::WeakTestOracle)
+                .count(),
+            1,
+            "{name}"
+        );
     }
 }
 
 #[test]
 fn assertions_and_expected_exceptions_are_oracles() {
     let mut config = Smells::default();
-    config.disabled.retain(|kind| *kind != SmellKind::WeakTestOracle);
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
     for (name, source) in [
-        ("test_example.py", "def test_saves():\n    store.save(42)\n    assert store.count == 1\n"),
-        ("test_raises.py", "def test_invalid():\n    with pytest.raises(ValueError):\n        parse('bad')\n"),
-        ("example.test.ts", "test('saves', () => {\n  store.save(42);\n  expect(store.count).toBe(1);\n});\n"),
-        ("example.spec.js", "test.skip('later', () => {\n  store.save(42);\n});\n"),
+        (
+            "test_example.py",
+            "def test_saves():\n    store.save(42)\n    assert store.count == 1\n",
+        ),
+        (
+            "test_raises.py",
+            "def test_invalid():\n    with pytest.raises(ValueError):\n        parse('bad')\n",
+        ),
+        (
+            "example.test.ts",
+            "test('saves', () => {\n  store.save(42);\n  expect(store.count).toBe(1);\n});\n",
+        ),
+        (
+            "example.spec.js",
+            "test.skip('later', () => {\n  store.save(42);\n});\n",
+        ),
     ] {
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join(name);
         fs::write(&path, source).unwrap();
         let file = parse_file(&path, 0).unwrap();
-        assert!(!detect_local(&file, &config).iter().any(|f| f.kind == SmellKind::WeakTestOracle), "{name}");
+        assert!(
+            !detect_local(&file, &config)
+                .iter()
+                .any(|f| f.kind == SmellKind::WeakTestOracle),
+            "{name}"
+        );
     }
 }

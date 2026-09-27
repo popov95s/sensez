@@ -24,7 +24,10 @@ pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
     let Some(args) = func.parent().filter(|parent| parent.kind() == "arguments") else {
         return false;
     };
-    let Some(call) = args.parent().filter(|parent| parent.kind() == "call_expression") else {
+    let Some(call) = args
+        .parent()
+        .filter(|parent| parent.kind() == "call_expression")
+    else {
         return false;
     };
     call.child_by_field_name("function")
@@ -33,15 +36,22 @@ pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
 }
 
 fn is_test_check(node: Node<'_>, src: &[u8]) -> bool {
-    let Some(callee) = node.child_by_field_name("function") else { return false };
-    let Ok(name) = callee.utf8_text(src) else { return false };
+    let Some(callee) = node.child_by_field_name("function") else {
+        return false;
+    };
+    let Ok(name) = callee.utf8_text(src) else {
+        return false;
+    };
     if matches!(name, "assert" | "fail") || name.starts_with("assert.") {
         return true;
     }
     if callee.kind() != "member_expression" {
         return false;
     }
-    let Some(property) = callee.child_by_field_name("property").and_then(|p| p.utf8_text(src).ok()) else {
+    let Some(property) = callee
+        .child_by_field_name("property")
+        .and_then(|p| p.utf8_text(src).ok())
+    else {
         return false;
     };
     (property.starts_with("to") || matches!(property, "matchSnapshot"))

@@ -21,8 +21,12 @@ pub(super) fn scan(
 }
 
 fn is_test_check(node: Node<'_>, src: &[u8]) -> bool {
-    let Some(callee) = node.child_by_field_name("function") else { return false };
-    let Ok(name) = callee.utf8_text(src) else { return false };
+    let Some(callee) = node.child_by_field_name("function") else {
+        return false;
+    };
+    let Ok(name) = callee.utf8_text(src) else {
+        return false;
+    };
     name == "pytest.raises"
         || name == "raises"
         || name == "pytest.warns"

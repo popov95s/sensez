@@ -20,23 +20,46 @@ pub fn detect(
 }
 
 fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {
-    let name = ctx.path.file_name().and_then(|name| name.to_str()).unwrap_or("");
+    let name = ctx
+        .path
+        .file_name()
+        .and_then(|name| name.to_str())
+        .unwrap_or("");
     let is_test_file = name.starts_with("test_")
         || name.ends_with("_test.py")
-        || [".test.js", ".test.ts", ".test.jsx", ".test.tsx", ".spec.js", ".spec.ts", ".spec.jsx", ".spec.tsx"]
-            .iter().any(|suffix| name.ends_with(suffix));
-    if !is_test_file || metric.review_risks.test_checks > 0 || metric.review_risks.test_has_nested_function {
+        || [
+            ".test.js",
+            ".test.ts",
+            ".test.jsx",
+            ".test.tsx",
+            ".spec.js",
+            ".spec.ts",
+            ".spec.jsx",
+            ".spec.tsx",
+        ]
+        .iter()
+        .any(|suffix| name.ends_with(suffix));
+    if !is_test_file
+        || metric.review_risks.test_checks > 0
+        || metric.review_risks.test_has_nested_function
+    {
         return;
     }
     let is_test = match ctx.language {
         crate::spine::ir::Language::Python => metric.name.starts_with("test_") && !metric.is_nested,
-        crate::spine::ir::Language::JavaScript | crate::spine::ir::Language::TypeScript => metric.review_risks.is_test_callback,
+        crate::spine::ir::Language::JavaScript | crate::spine::ir::Language::TypeScript => {
+            metric.review_risks.is_test_callback
+        }
         crate::spine::ir::Language::Rust => false,
     };
     if !is_test || metric.end_line <= metric.start_line {
         return;
     }
-    let symbol = if metric.name.is_empty() { "test callback" } else { &metric.name };
+    let symbol = if metric.name.is_empty() {
+        "test callback"
+    } else {
+        &metric.name
+    };
     out.push(make(
         SmellKind::WeakTestOracle,
         "test has no direct assertion, matcher, or expected exception; verify that it checks behavior".to_string(),
