@@ -29,13 +29,13 @@ fn wrapper_chains(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Ve
         let Some(middle_name) = outer.review_risks.forwards_to.as_deref() else {
             continue;
         };
-        let mut middle = metrics
+        let mut matches = metrics
             .iter()
             .filter(|unit| unit.name == middle_name && !unit.is_nested);
-        let Some(middle) = middle.next() else {
+        let Some(middle) = matches.next() else {
             continue;
         };
-        if middle.next().is_some() || middle.name == outer.name {
+        if matches.next().is_some() || middle.name == outer.name {
             continue;
         }
         let Some(target) = middle.review_risks.forwards_to.as_deref() else {
