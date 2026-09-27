@@ -27,17 +27,25 @@
   },
   "selective": {
     "discovered_tests": 24,
-    "fallback_reasons": [],
-    "full_suite": false,
+    "fallback_reasons": [
+      "2 computed dynamic import(s) leave source dependencies unresolved"
+    ],
+    "full_suite": true,
     "runner_kinds": [
       "pytest"
     ],
-    "selected_count": 1,
+    "selected_count": 24,
     "selected_fixtures": [
       {
-        "distance": 1,
+        "distance": 0,
         "file": "tests/test_sensez_reflexez_dynamic.py",
-        "reason": "dynamic_import",
+        "reason": "safety_fallback",
+        "runner": "pytest"
+      },
+      {
+        "distance": 0,
+        "file": "tests/test_sensez_reflexez_unrelated.py",
+        "reason": "safety_fallback",
         "runner": "pytest"
       }
     ],
