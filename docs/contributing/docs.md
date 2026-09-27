@@ -13,6 +13,10 @@ The docs are designed to auto-generate through the code.
 
 ## Refresh Flow
 
+Add an `exact-smells` marker to a smell example folder when its bad examples
+must emit only the named smell. The verifier always requires the fixed examples
+to emit no findings.
+
 Regenerate generated reference pages after changing glossary metadata:
 
 ```bash

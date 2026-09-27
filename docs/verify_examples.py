@@ -174,6 +174,10 @@ def verify_smell_folder(folder: Path, smell_kind: str, failures: FailureList) ->
                 f"{box}/example{suffix}: expected {smell_kind}, "
                 f"saw {sorted(bad_kinds) or 'no smells'}",
             )
+        if (folder / "exact-smells").exists() and bad_kinds != {smell_kind}:
+            failures.append(
+                f"{box}/example{suffix}: expected only {smell_kind}, saw {sorted(bad_kinds)}"
+            )
         shutil.rmtree(bad, ignore_errors=True)
 
         fixed = build_scan_root(folder, "fixed", suffix)

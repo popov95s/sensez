@@ -4145,6 +4145,83 @@ Multiple unchanged forwarding hops make navigation and change propagation harder
 
 **Example**
 
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def normalize(value: int) -> int:
+        return value + 1
+
+
+    def middle(value: int) -> int:
+        return normalize(value)
+
+
+    def outer(value: int) -> int:
+        return middle(value)
+
+
+    result = outer(2)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Keep the intended compatibility boundary and remove only redundant local hops.
+
+    ```python
+    def normalize(value: int) -> int:
+        return value + 1
+
+
+    def outer(value: int) -> int:
+        return normalize(value)
+
+
+    result = outer(2)
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    function normalize(value: number): number {
+      return value + 1;
+    }
+
+    function middle(value: number): number {
+      return normalize(value);
+    }
+
+    function outer(value: number): number {
+      return middle(value);
+    }
+
+    const result = outer(2);
+    console.log(result);
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Keep the intended API boundary and remove only redundant local hops.
+
+    ```ts
+    function normalize(value: number): number {
+      return value + 1;
+    }
+
+    function outer(value: number): number {
+      return normalize(value);
+    }
+
+    const result = outer(2);
+    console.log(result);
+    ```
+    </details>
 
 **Tune It**
 
