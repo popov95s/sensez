@@ -1,7 +1,7 @@
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
-use tree_sitter::Node;
 use std::path::Path;
+use tree_sitter::Node;
 
 pub(super) fn is_test_source(path: &Path) -> bool {
     path.file_name()
