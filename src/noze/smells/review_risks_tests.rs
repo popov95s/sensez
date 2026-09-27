@@ -212,7 +212,11 @@ fn opt_in_test_rule_bypasses_only_baseline_exclusions() {
     let path = temp.path().join("test_example.py");
     fs::write(&path, source).unwrap();
     let file = parse_file(&path, 0).unwrap();
-    fs::write(temp.path().join("sensez.toml"), "[smells.python]\ndisabled = []\n").unwrap();
+    fs::write(
+        temp.path().join("sensez.toml"),
+        "[smells.python]\ndisabled = []\n",
+    )
+    .unwrap();
     let config = Config::load(temp.path()).unwrap();
     let findings = detect(&[file], &CodebaseGraph::default(), &config.smells);
     assert_eq!(findings.len(), 1);

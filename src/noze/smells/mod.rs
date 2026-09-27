@@ -105,8 +105,8 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
                 }
                 fill_spans(file, &mut findings);
                 findings
-            }
-    ));
+            }),
+    );
 
     out.extend(clumps::detect(&kept, cfg));
     out.extend(graphy::detect(graph, cfg));
