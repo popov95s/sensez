@@ -9,6 +9,8 @@ pub(super) fn scan(
     src: &[u8],
 ) {
     match node.kind() {
+        "assert_statement" | "raise_statement" => unit.review_risks.test_checks += 1,
+        "call" if is_test_check(node, src) => unit.review_risks.test_checks += 1,
         "except_clause" => handler(unit, node, src),
         "if_statement" => record_guard(unit, guards, node, src),
         "boolean_operator" if is_empty_fallback(node) => {
@@ -16,6 +18,18 @@ pub(super) fn scan(
         }
         _ => {}
     }
+}
+
+fn is_test_check(node: Node<'_>, src: &[u8]) -> bool {
+    let Some(callee) = node.child_by_field_name("function") else { return false };
+    let Ok(name) = callee.utf8_text(src) else { return false };
+    name == "pytest.raises"
+        || name == "raises"
+        || name == "pytest.warns"
+        || name == "warns"
+        || name.starts_with("self.assert")
+        || name.starts_with("snapshot.assert")
+        || name.starts_with("assert_")
 }
 
 fn record_guard(

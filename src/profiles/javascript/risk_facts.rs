@@ -9,6 +9,8 @@ pub(super) fn scan(
     src: &[u8],
 ) {
     match node.kind() {
+        "throw_statement" => unit.review_risks.test_checks += 1,
+        "call_expression" if is_test_check(node, src) => unit.review_risks.test_checks += 1,
         "catch_clause" => unit.review_risks.broad_handlers += 1,
         "if_statement" => record_guard(unit, guards, node, src),
         "binary_expression" if is_empty_fallback(node) => {
@@ -16,6 +18,35 @@ pub(super) fn scan(
         }
         _ => {}
     }
+}
+
+pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
+    let Some(args) = func.parent().filter(|parent| parent.kind() == "arguments") else {
+        return false;
+    };
+    let Some(call) = args.parent().filter(|parent| parent.kind() == "call_expression") else {
+        return false;
+    };
+    call.child_by_field_name("function")
+        .and_then(|callee| callee.utf8_text(src).ok())
+        .is_some_and(|name| matches!(name, "test" | "it"))
+}
+
+fn is_test_check(node: Node<'_>, src: &[u8]) -> bool {
+    let Some(callee) = node.child_by_field_name("function") else { return false };
+    let Ok(name) = callee.utf8_text(src) else { return false };
+    if matches!(name, "assert" | "fail") || name.starts_with("assert.") {
+        return true;
+    }
+    if callee.kind() != "member_expression" {
+        return false;
+    }
+    let Some(property) = callee.child_by_field_name("property").and_then(|p| p.utf8_text(src).ok()) else {
+        return false;
+    };
+    (property.starts_with("to") || matches!(property, "matchSnapshot"))
+        && name.starts_with("expect(")
+        || (property.starts_with("to") && name.starts_with("expect."))
 }
 
 fn record_guard(

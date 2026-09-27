@@ -4131,3 +4131,42 @@ action = "warning"
 </table>
 </details>
 
+## Other
+
+### Weak Test Oracle (`weak_test_oracle`)
+
+**What it is**
+
+A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code.
+
+**Why it's bad**
+
+A test that only executes code can pass when behavior is wrong.
+
+**Example**
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.weak_test_oracle]
+enabled = true
+action = "warning"
+# This detector has no extra threshold knobs.
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
+</tbody>
+</table>
+</details>
+
