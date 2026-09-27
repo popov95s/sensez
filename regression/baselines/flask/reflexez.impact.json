@@ -2,7 +2,8 @@
   "global_change": {
     "discovered_tests": 24,
     "fallback_reasons": [
-      "a dependency or test-discovery manifest changed"
+      "a dependency or test-discovery manifest changed",
+      "2 computed dynamic import(s) leave source dependencies unresolved"
     ],
     "full_suite": true,
     "runner_kinds": [
