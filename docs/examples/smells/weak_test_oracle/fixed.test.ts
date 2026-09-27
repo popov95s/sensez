@@ -6,5 +6,5 @@ function save(value: number): number {
 }
 
 test("saves value", () => {
-  assert.equal(save(42), 42);
+  assert.equal(save(1), 1);
 });

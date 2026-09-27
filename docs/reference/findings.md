@@ -4155,7 +4155,8 @@ A test that only executes code can pass when behavior is wrong.
 
 
     def test_saves() -> None:
-        save(42)
+        saved = save(1)
+        save(saved)
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -4169,7 +4170,7 @@ A test that only executes code can pass when behavior is wrong.
 
 
     def test_saves() -> None:
-        assert save(42) == 42
+        assert save(1) == 1
     ```
     </details>
 
@@ -4185,7 +4186,7 @@ A test that only executes code can pass when behavior is wrong.
     }
 
     test("saves value", () => {
-      save(42);
+      save(1);
     });
     ```
 
@@ -4203,7 +4204,7 @@ A test that only executes code can pass when behavior is wrong.
     }
 
     test("saves value", () => {
-      assert.equal(save(42), 42);
+      assert.equal(save(1), 1);
     });
     ```
     </details>

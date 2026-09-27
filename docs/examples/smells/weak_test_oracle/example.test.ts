@@ -5,5 +5,5 @@ function save(value: number): number {
 }
 
 test("saves value", () => {
-  save(42);
+  save(1);
 });

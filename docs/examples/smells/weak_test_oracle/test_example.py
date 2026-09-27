@@ -3,4 +3,5 @@ def save(value: int) -> int:
 
 
 def test_saves() -> None:
-    save(42)
+    saved = save(1)
+    save(saved)

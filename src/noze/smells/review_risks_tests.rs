@@ -177,6 +177,31 @@ fn tests_without_behavioral_checks_are_reported() {
 }
 
 #[test]
+fn documented_python_test_example_is_a_test_case() {
+    let source = include_str!("../../../docs/examples/smells/weak_test_oracle/test_example.py");
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("test_example.py");
+    fs::write(&path, source).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    let test = file
+        .walked
+        .units
+        .functions
+        .iter()
+        .find(|unit| unit.name == "test_saves")
+        .unwrap();
+    assert!(test.review_risks.is_test_case, "{test:?}");
+    assert_eq!(test.review_risks.test_checks, 0);
+    let mut config = Smells::default();
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
+    assert!(detect_local(&file, &config)
+        .iter()
+        .any(|finding| finding.kind == SmellKind::WeakTestOracle));
+}
+
+#[test]
 fn assertions_and_expected_exceptions_are_oracles() {
     let mut config = Smells::default();
     config

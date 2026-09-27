@@ -3,4 +3,4 @@ def save(value: int) -> int:
 
 
 def test_saves() -> None:
-    assert save(42) == 42
+    assert save(1) == 1
