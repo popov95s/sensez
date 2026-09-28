@@ -702,10 +702,10 @@ FindingDocs {
     },
     FindingDocs {
         kind: RedundantWrapperChain,
-        why_bad: "Multiple unchanged forwarding hops make navigation and change propagation harder.",
+        why_bad: "An unchanged forwarding layer adds indirection without behavior and makes navigation harder.",
         external_lints: &[],
         references: &[],
-        fixes: &[LanguageBlock { language: "python", body: "Keep the intended compatibility boundary and remove only redundant local hops." }, LanguageBlock { language: "typescript", body: "Keep the intended API boundary and remove only redundant local hops." }],
+        fixes: &[LanguageBlock { language: "python", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }, LanguageBlock { language: "typescript", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }],
     },
 ];
 

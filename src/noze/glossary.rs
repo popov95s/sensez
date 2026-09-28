@@ -95,7 +95,7 @@ pub const SMELLS: [SmellDoc; 37] = {
         SmellDoc { kind: NPlusOneCall, title: "N+1 Loop Call", explanation: "An external-looking call runs once per loop item — prefer a bulk query/request or prefetch so work scales by batch, not item." },
         SmellDoc { kind: ReassignedParameter, title: "Reassigned Parameter", explanation: "A parameter is rebound to a new value inside the body — confusing; use a separate local." },
         SmellDoc { kind: RedundantValidation, title: "Redundant Validation", explanation: "The same condition is checked repeatedly in one function — establish the invariant once and simplify the later path." },
-        SmellDoc { kind: RedundantWrapperChain, title: "Redundant Wrapper Chain", explanation: "Several local functions forward the same arguments unchanged — review whether one forwarding hop can be removed." },
+        SmellDoc { kind: RedundantWrapperChain, title: "Redundant Wrapper Chain", explanation: "A local function forwards arguments unchanged without adding behavior — remove the wrapper or allow a deliberate depth in configuration." },
         SmellDoc { kind: RefusedBequest, title: "Refused Bequest", explanation: "A subclass inherits methods/fields it doesn't use or stubs out — the inheritance is wrong; prefer composition." },
         SmellDoc { kind: RepeatedIteration, title: "Repeated Iteration", explanation: "The same collection is iterated several times in one scope — fuse the passes so the data is scanned once." },
         SmellDoc { kind: ShotgunSurgeryHazard, title: "Shotgun Surgery Hazard", explanation: "A symbol so widely depended-on that one change ripples across many modules — a blast-radius hotspot." },

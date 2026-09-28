@@ -2688,7 +2688,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.message_chain]
 enabled = true
 action = "warning"
-max_depth = 4 # allowed message-chain depth
+max_depth = 4 # allowed depth before flagging
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -4137,11 +4137,11 @@ action = "warning"
 
 **What it is**
 
-Several local functions forward the same arguments unchanged — review whether one forwarding hop can be removed.
+A local function forwards arguments unchanged without adding behavior — remove the wrapper or allow a deliberate depth in configuration.
 
 **Why it's bad**
 
-Multiple unchanged forwarding hops make navigation and change propagation harder.
+An unchanged forwarding layer adds indirection without behavior and makes navigation harder.
 
 **Example**
 
@@ -4168,18 +4168,14 @@ Multiple unchanged forwarding hops make navigation and change propagation harder
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    Keep the intended compatibility boundary and remove only redundant local hops.
+    Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping.
 
     ```python
     def normalize(value: int) -> int:
         return value + 1
 
 
-    def outer(value: int) -> int:
-        return normalize(value)
-
-
-    result = outer(2)
+    result = normalize(2)
     ```
     </details>
 
@@ -4207,18 +4203,14 @@ Multiple unchanged forwarding hops make navigation and change propagation harder
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    Keep the intended API boundary and remove only redundant local hops.
+    Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping.
 
     ```ts
     function normalize(value: number): number {
       return value + 1;
     }
 
-    function outer(value: number): number {
-      return normalize(value);
-    }
-
-    const result = outer(2);
+    const result = normalize(2);
     console.log(result);
     ```
     </details>
@@ -4231,7 +4223,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.redundant_wrapper_chain]
 enabled = true
 action = "warning"
-# This detector has no extra threshold knobs.
+max_depth = 0 # allowed depth before flagging
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -4240,9 +4232,9 @@ action = "warning"
 <table>
 <thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
 <tbody>
-<tr><td>Python</td><td>No</td></tr>
-<tr><td>JS / TS</td><td>No</td></tr>
-<tr><td>Rust</td><td>No</td></tr>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
 </tbody>
 </table>
 </details>

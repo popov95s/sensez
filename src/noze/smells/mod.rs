@@ -104,7 +104,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     size::detect(&ctx, metrics, cfg, classes, &mut out);
     structural::detect(&ctx, metrics, cfg, &mut out);
     cohesion::detect(&ctx, metrics, classes, &mut out);
-    review_risks::detect(&ctx, metrics, classes, &mut out);
+    review_risks::detect(&ctx, metrics, classes, cfg, &mut out);
     coupling::detect(&ctx, metrics, &usage, &locals, cfg, &mut out);
     inherit::detect(&ctx, classes, cfg, &mut out);
     typing::detect(&ctx, metrics, cfg, &mut out);
