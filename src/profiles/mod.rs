@@ -45,11 +45,11 @@ use std::path::{Path, PathBuf};
 /// Compile built-in profile globs once at their call site rather than
 /// duplicating filename conventions in consumers.
 pub(crate) fn compile_profile_globs(patterns: &[&str]) -> globset::GlobSet {
-    let patterns: Vec<String> = patterns
+    let compiled: Vec<String> = patterns
         .iter()
         .map(|pattern| (*pattern).to_string())
         .collect();
-    crate::globs::build_globset(&patterns).expect("built-in profile globs must be valid")
+    crate::globs::build_globset(&compiled).expect("built-in profile globs must be valid")
 }
 
 /// Pure-data facts about a language. Cheap to reference; drives crawler
