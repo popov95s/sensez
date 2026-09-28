@@ -4,9 +4,7 @@
 //! share node-kind names; TS-only kinds like `interface_declaration` simply map
 //! to no structural token). TS decorators are a deferred enhancement.
 
-use crate::profiles::javascript::{
-    deadcode, performance, resolve, roots, traversal, typevocab,
-};
+use crate::profiles::javascript::{deadcode, performance, resolve, roots, traversal, typevocab};
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
     TypeVocabularyProfile,

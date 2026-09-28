@@ -211,19 +211,11 @@ pub trait TypeVocabularyProfile: Send + Sync {
 }
 
 pub trait LanguageProfile:
-    ParseProfile
-    + ModuleProfile
-    + DeadCodeProfile
-    + PerformanceProfile
-    + TypeVocabularyProfile
+    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
 {
 }
 
 impl<T> LanguageProfile for T where
-    T: ParseProfile
-        + ModuleProfile
-        + DeadCodeProfile
-        + PerformanceProfile
-        + TypeVocabularyProfile
+    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
 {
 }

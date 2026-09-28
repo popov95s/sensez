@@ -98,7 +98,11 @@ pub fn is_test_source(language: Language, path: &Path) -> bool {
 
 #[cfg(all(
     test,
-    any(feature = "lang-python", feature = "lang-javascript", feature = "lang-typescript")
+    any(
+        feature = "lang-python",
+        feature = "lang-javascript",
+        feature = "lang-typescript"
+    )
 ))]
 mod tests {
     use super::{is_test_source, Language};
@@ -108,20 +112,44 @@ mod tests {
     fn test_sources_follow_the_owning_profiles() {
         #[cfg(feature = "lang-python")]
         {
-            assert!(is_test_source(Language::Python, Path::new("tests/test_api.py")));
-            assert!(is_test_source(Language::Python, Path::new("src/api_test.py")));
-            assert!(!is_test_source(Language::Python, Path::new("src/api.test.py")));
+            assert!(is_test_source(
+                Language::Python,
+                Path::new("tests/test_api.py")
+            ));
+            assert!(is_test_source(
+                Language::Python,
+                Path::new("src/api_test.py")
+            ));
+            assert!(!is_test_source(
+                Language::Python,
+                Path::new("src/api.test.py")
+            ));
         }
         #[cfg(feature = "lang-javascript")]
         {
-            assert!(is_test_source(Language::JavaScript, Path::new("src/api.test.js")));
-            assert!(is_test_source(Language::JavaScript, Path::new("src/api.spec.jsx")));
+            assert!(is_test_source(
+                Language::JavaScript,
+                Path::new("src/api.test.js")
+            ));
+            assert!(is_test_source(
+                Language::JavaScript,
+                Path::new("src/api.spec.jsx")
+            ));
         }
         #[cfg(feature = "lang-typescript")]
         {
-            assert!(is_test_source(Language::TypeScript, Path::new("src/api.spec.tsx")));
-            assert!(is_test_source(Language::TypeScript, Path::new("__tests__/api.ts")));
-            assert!(!is_test_source(Language::TypeScript, Path::new("src/test_api.ts")));
+            assert!(is_test_source(
+                Language::TypeScript,
+                Path::new("src/api.spec.tsx")
+            ));
+            assert!(is_test_source(
+                Language::TypeScript,
+                Path::new("__tests__/api.ts")
+            ));
+            assert!(!is_test_source(
+                Language::TypeScript,
+                Path::new("src/test_api.ts")
+            ));
         }
     }
 }
