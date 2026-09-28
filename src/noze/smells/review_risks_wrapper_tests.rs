@@ -56,4 +56,3 @@ fn argument_changes_are_not_reported_as_wrappers() {
     let source = "function outer(value) { return actual(value.trim()); }\nfunction actual(value) { return value; }\n";
     assert!(!has(&local("js", source), SmellKind::RedundantWrapperChain));
 }
-
