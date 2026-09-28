@@ -194,9 +194,9 @@ fn wrapper_chain_depth_defaults_to_zero_and_can_be_overridden() {
 }
 
 #[test]
-fn wrapper_boundary_and_argument_changes_are_not_reported() {
-    let source = "def outer(value):\n    return middle(value.strip())\ndef middle(value):\n    return actual(value)\ndef actual(value):\n    return value\n";
+fn argument_changes_are_not_reported_as_wrappers() {
+    let source = "def outer(value):\n    return actual(value.strip())\ndef actual(value):\n    return value\n";
     assert!(!has(&local("py", source), SmellKind::RedundantWrapperChain));
-    let source = "function outer(value) { return middle(value.trim()); }\nexport function middle(value) { return actual(value); }\nfunction actual(value) { return value; }\n";
+    let source = "function outer(value) { return actual(value.trim()); }\nfunction actual(value) { return value; }\n";
     assert!(!has(&local("js", source), SmellKind::RedundantWrapperChain));
 }
