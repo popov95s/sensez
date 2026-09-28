@@ -1,21 +1,46 @@
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::OnceLock;
 use tree_sitter::Node;
 
+static TEST_SOURCE_GLOBS: OnceLock<globset::GlobSet> = OnceLock::new();
+
 pub(crate) fn is_test_source(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|name| name.to_str())
-        .is_some_and(|name| {
-            name.ends_with(".test.js")
-                || name.ends_with(".test.ts")
-                || name.ends_with(".test.jsx")
-                || name.ends_with(".test.tsx")
-                || name.ends_with(".spec.js")
-                || name.ends_with(".spec.ts")
-                || name.ends_with(".spec.jsx")
-                || name.ends_with(".spec.tsx")
+    TEST_SOURCE_GLOBS
+        .get_or_init(|| {
+            let javascript = deadcode::defaults();
+            let typescript = deadcode::typescript_defaults();
+            crate::profiles::compile_profile_globs(
+                &javascript
+                    .test_sources
+                    .iter()
+                    .chain(typescript.test_sources.iter())
+                    .copied()
+                    .collect::<Vec<_>>(),
+            )
         })
+        .is_match(path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_test_source;
+    use std::path::Path;
+
+    #[test]
+    fn test_source_conventions_follow_profile_defaults() {
+        for path in [
+            "src/api.test.js",
+            "src/api.spec.jsx",
+            "src/api.test.ts",
+            "src/api.spec.tsx",
+            "__tests__/api.ts",
+        ] {
+            assert!(is_test_source(Path::new(path)), "{path}");
+        }
+        assert!(!is_test_source(Path::new("src/api.ts")));
+    }
 }
 
 pub(super) fn scan(

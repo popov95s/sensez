@@ -1,12 +1,28 @@
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
 use std::path::Path;
+use std::sync::OnceLock;
 use tree_sitter::Node;
 
+static TEST_SOURCE_GLOBS: OnceLock<globset::GlobSet> = OnceLock::new();
+
 pub(super) fn is_test_source(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|name| name.to_str())
-        .is_some_and(|name| name.starts_with("test_") || name.ends_with("_test.py"))
+    TEST_SOURCE_GLOBS
+        .get_or_init(|| crate::profiles::compile_profile_globs(deadcode::defaults().test_sources))
+        .is_match(path)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::is_test_source;
+    use std::path::Path;
+
+    #[test]
+    fn test_source_conventions_follow_profile_defaults() {
+        assert!(is_test_source(Path::new("tests/test_api.py")));
+        assert!(is_test_source(Path::new("src/api_test.py")));
+        assert!(!is_test_source(Path::new("src/api.py")));
+    }
 }
 
 pub(super) fn scan(
