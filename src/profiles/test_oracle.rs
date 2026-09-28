@@ -40,7 +40,7 @@ pub(crate) fn is_check(node: Node<'_>, source: &[u8], checks: &TestChecks) -> bo
     let member = checks
         .member_kind
         .filter(|kind| *kind == callee.kind())
-        .and_then(|_| checks.member_field)
+        .and(checks.member_field)
         .and_then(|field| callee.child_by_field_name(field))
         .and_then(|property| property.utf8_text(source).ok());
     checks.calls.iter().any(|pattern| match pattern {
