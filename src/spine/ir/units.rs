@@ -11,6 +11,11 @@ pub struct ReviewRiskFacts {
     pub broad_handlers: usize,
     pub empty_fallbacks: usize,
     pub repeated_guards: usize,
+    /// Direct test checks found in this function's own body.
+    pub test_checks: usize,
+    pub test_has_nested_function: bool,
+    /// Whether the language profile identified this unit as a test case.
+    pub is_test_case: bool,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

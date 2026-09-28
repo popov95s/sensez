@@ -48,6 +48,7 @@ impl<'u> Acc<'u> {
         let kind = node.kind();
         // Nested functions/lambdas get their own unit — do not descend.
         if matches!(kind, "function_definition" | "lambda") {
+            self.unit.review_risks.test_has_nested_function = true;
             return;
         }
         let child_loop_depth = loop_depth + usize::from(performance::is_loop(kind));

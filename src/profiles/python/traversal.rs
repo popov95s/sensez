@@ -112,6 +112,7 @@ fn visit(
             unit.is_nested = true;
             unit.parent = enclosing.name.clone();
         }
+        unit.review_risks.is_test_case = !unit.is_nested && unit.name.starts_with("test_");
         out.units.functions.push(unit);
     } else if kind == "class_definition" {
         out.units.classes.push(units::analyze_class(node, src));

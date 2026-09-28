@@ -28,6 +28,7 @@ import tempfile
 from pathlib import Path
 
 from finding_types import SmellTerm
+from generate import discover_examples
 from rust_metadata import smell_kinds, strictness_rules
 from verify_examples_with_strictness import verify_examples_with_strictness
 
@@ -151,39 +152,49 @@ def _fixed_pillar_leaks(
     report: JsonReport,
     folder: Path,
     suffix: str,
+    fixed_name: str,
     failures: FailureList,
 ) -> None:
     box = folder.name
     for block in ("cycles", "dead_code", "boundaries", "duplication"):
-        leaks = _endswith(_block_files(report, block), box, f"fixed{suffix}")
+        leaks = _endswith(_block_files(report, block), box, fixed_name)
         if leaks:
             failures.append(
-                f"{box}/fixed{suffix}: must emit no {block} pillar, saw {len(leaks)} finding(s)",
+                f"{box}/{fixed_name}: must emit no {block} pillar, saw {len(leaks)} finding(s)",
             )
 
 
 def verify_smell_folder(folder: Path, smell_kind: str, failures: FailureList) -> None:
     box = folder.name
+    examples = discover_examples(smell_kind)
     for suffix in SUFFIXES:
+        language = "python" if suffix == ".py" else "typescript"
+        bad_file, fixed_file = examples.get(
+            language, (folder / f"example{suffix}", folder / f"fixed{suffix}")
+        )
         bad = build_scan_root(folder, "bad", suffix)
         bad_report = run_noze(bad)
-        bad_files = _endswith(_smell_files(bad_report), box, f"example{suffix}")
+        bad_files = _endswith(_smell_files(bad_report), box, bad_file.name)
         bad_kinds = _smell_kinds(bad_report, bad_files)
         if smell_kind not in bad_kinds:
             failures.append(
-                f"{box}/example{suffix}: expected {smell_kind}, "
+                f"{box}/{bad_file.name}: expected {smell_kind}, "
                 f"saw {sorted(bad_kinds) or 'no smells'}",
+            )
+        if (folder / "exact-smells").exists() and bad_kinds != {smell_kind}:
+            failures.append(
+                f"{box}/{bad_file.name}: expected only {smell_kind}, saw {sorted(bad_kinds)}"
             )
         shutil.rmtree(bad, ignore_errors=True)
 
         fixed = build_scan_root(folder, "fixed", suffix)
         fixed_report = run_noze(fixed)
-        fixed_files = _endswith(_smell_files(fixed_report), box, f"fixed{suffix}")
+        fixed_files = _endswith(_smell_files(fixed_report), box, fixed_file.name)
         if fixed_files:
             failures.append(
-                f"{box}/fixed{suffix}: must emit no smell, saw {sorted(_smell_kinds(fixed_report, fixed_files))}",
+                f"{box}/{fixed_file.name}: must emit no smell, saw {sorted(_smell_kinds(fixed_report, fixed_files))}",
             )
-        _fixed_pillar_leaks(fixed_report, folder, suffix, failures)
+        _fixed_pillar_leaks(fixed_report, folder, suffix, fixed_file.name, failures)
         shutil.rmtree(fixed, ignore_errors=True)
 
 
@@ -205,7 +216,7 @@ def verify_pillar_folder(folder: Path, pillar: str, failures: FailureList) -> No
             failures.append(
                 f"{box}/fixed{suffix}: must emit no smell, saw {sorted(_smell_kinds(fixed_report, fixed_files))}",
             )
-        _fixed_pillar_leaks(fixed_report, folder, suffix, failures)
+        _fixed_pillar_leaks(fixed_report, folder, suffix, f"fixed{suffix}", failures)
         shutil.rmtree(fixed, ignore_errors=True)
 
 

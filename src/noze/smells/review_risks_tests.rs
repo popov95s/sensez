@@ -139,3 +139,173 @@ class XmlEncoder(Encoder):
 "#;
     assert!(!has(&local("py", valid), SmellKind::DivergentAbstraction));
 }
+
+#[test]
+fn tests_without_behavioral_checks_are_reported() {
+    let mut config = Smells::default();
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
+    for (name, source) in [
+        (
+            "test_example.py",
+            "def test_saves():\n    store.save(42)\n    store.flush()\n",
+        ),
+        (
+            "example.test.js",
+            "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n",
+        ),
+        (
+            "example.test.ts",
+            "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n",
+        ),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join(name);
+        fs::write(&path, source).unwrap();
+        let file = parse_file(&path, 0).unwrap();
+        let findings = detect_local(&file, &config);
+        assert_eq!(
+            findings
+                .iter()
+                .filter(|f| f.kind == SmellKind::WeakTestOracle)
+                .count(),
+            1,
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn documented_python_test_example_is_a_test_case() {
+    let source = include_str!("../../../docs/examples/smells/weak_test_oracle/test_example.py");
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("test_example.py");
+    fs::write(&path, source).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    let test = file
+        .walked
+        .units
+        .functions
+        .iter()
+        .find(|unit| unit.name == "test_saves")
+        .unwrap();
+    assert!(test.review_risks.is_test_case, "{test:?}");
+    assert_eq!(test.review_risks.test_checks, 0);
+    let mut config = Smells::default();
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
+    assert!(detect_local(&file, &config)
+        .iter()
+        .any(|finding| finding.kind == SmellKind::WeakTestOracle));
+}
+
+#[test]
+fn opt_in_test_rule_bypasses_only_baseline_exclusions() {
+    use super::detect;
+    use crate::config::Config;
+    use crate::spine::graph::CodebaseGraph;
+
+    let temp = tempfile::tempdir().unwrap();
+    let source = include_str!("../../../docs/examples/smells/weak_test_oracle/test_example.py");
+    let path = temp.path().join("test_example.py");
+    fs::write(&path, source).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    fs::write(
+        temp.path().join("sensez.toml"),
+        "[smells.python]\ndisabled = []\n",
+    )
+    .unwrap();
+    let config = Config::load(temp.path()).unwrap();
+    let findings = detect(&[file], &CodebaseGraph::default(), &config.smells);
+    assert_eq!(findings.len(), 1);
+    assert_eq!(findings[0].kind, SmellKind::WeakTestOracle);
+
+    fs::write(
+        temp.path().join("sensez.toml"),
+        "[smells]\nexclude = [\"**/test_example.py\"]\n[smells.python]\ndisabled = []\n",
+    )
+    .unwrap();
+    let config = Config::load(temp.path()).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    assert!(detect(&[file], &CodebaseGraph::default(), &config.smells).is_empty());
+}
+
+#[test]
+fn assertions_and_expected_exceptions_are_oracles() {
+    let mut config = Smells::default();
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
+    for (name, source) in [
+        (
+            "test_example.py",
+            "def test_saves():\n    store.save(42)\n    assert store.count == 1\n",
+        ),
+        (
+            "test_raises.py",
+            "def test_invalid():\n    with pytest.raises(ValueError):\n        parse('bad')\n",
+        ),
+        (
+            "example.test.ts",
+            "test('saves', () => {\n  store.save(42);\n  expect(store.count).toBe(1);\n});\n",
+        ),
+        (
+            "example.spec.js",
+            "test.skip('later', () => {\n  store.save(42);\n});\n",
+        ),
+        (
+            "test_example.ts",
+            "test('not a JS/TS test file', () => {\n  store.save(42);\n});\n",
+        ),
+        (
+            "example.test.py",
+            "def test_not_a_python_test_file():\n    store.save(42)\n",
+        ),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join(name);
+        fs::write(&path, source).unwrap();
+        let file = parse_file(&path, 0).unwrap();
+        assert!(
+            !detect_local(&file, &config)
+                .iter()
+                .any(|f| f.kind == SmellKind::WeakTestOracle),
+            "{name}"
+        );
+    }
+}
+
+#[test]
+fn profile_assertion_calls_are_recognized_by_the_shared_matcher() {
+    let mut config = Smells::default();
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
+    for (name, source) in [
+        (
+            "test_checks.py",
+            "def test_checks():\n    assert_equal(save(1), 1)\n",
+        ),
+        (
+            "example.test.ts",
+            "test('checks', () => {\n  assert.equal(save(1), 1);\n});\n",
+        ),
+        (
+            "example.spec.ts",
+            "test('snapshot', () => {\n  expect(save(1)).matchSnapshot();\n});\n",
+        ),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join(name);
+        fs::write(&path, source).unwrap();
+        let file = parse_file(&path, 0).unwrap();
+        assert!(
+            !detect_local(&file, &config)
+                .iter()
+                .any(|finding| finding.kind == SmellKind::WeakTestOracle),
+            "{name}"
+        );
+    }
+}

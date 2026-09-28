@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 36] = {
+pub const ALL_SMELLS: [SmellKind; 37] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -60,10 +60,11 @@ pub const ALL_SMELLS: [SmellKind; 36] = {
         TooManyReturns,
         TuplePacking,
         UnnecessaryNestedIf,
+        WeakTestOracle,
     ]
 };
 
-pub const SMELLS: [SmellDoc; 36] = {
+pub const SMELLS: [SmellDoc; 37] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(True, False)`) — use an enum or keyword args so calls read clearly." },
@@ -102,6 +103,7 @@ pub const SMELLS: [SmellDoc; 36] = {
         SmellDoc { kind: TooManyReturns, title: "Too Many Returns", explanation: "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much." },
         SmellDoc { kind: TuplePacking, title: "Tuple Packing", explanation: "Data passed as positional tuples whose fields aren't named — use a named structure so meaning is explicit." },
         SmellDoc { kind: UnnecessaryNestedIf, title: "Unnecessary Nested If", explanation: "An `if` whose only body is another `if`, with no else path — combine the conditions with `and`/`&&` to flatten the control flow." },
+        SmellDoc { kind: WeakTestOracle, title: "Weak Test Oracle", explanation: "A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code." },
     ]
 };
 

@@ -14,8 +14,49 @@ pub fn detect(
     for metric in metrics {
         defensive_fallback(ctx, metric, out);
         redundant_validation(ctx, metric, out);
+        weak_test_oracle(ctx, metric, out);
     }
     divergent_abstractions(ctx, classes, out);
+}
+
+fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {
+    if !ctx.test_source
+        || !metric.review_risks.is_test_case
+        || metric.review_risks.test_checks > 0
+        || metric.review_risks.test_has_nested_function
+    {
+        return;
+    }
+    if metric.end_line <= metric.start_line {
+        return;
+    }
+    let symbol = if metric.name.is_empty() {
+        "test callback"
+    } else {
+        &metric.name
+    };
+    out.push(make(
+        SmellKind::WeakTestOracle,
+        "test has no direct assertion, matcher, or expected exception; verify that it checks behavior".to_string(),
+        ctx.path,
+        metric.start_line,
+        symbol,
+        Severity::Info,
+        0,
+        1,
+    ));
+}
+
+/// Test sources bypass the usual test-file smell exclusions only for this rule.
+pub(super) fn detect_test_oracles(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionUnit],
+) -> Vec<SmellFinding> {
+    let mut out = Vec::new();
+    for metric in metrics {
+        weak_test_oracle(ctx, metric, &mut out);
+    }
+    out
 }
 
 fn defensive_fallback(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {

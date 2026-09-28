@@ -700,6 +700,13 @@ FindingDocs {
             LanguageBlock { language: "typescript", body: "Validate at the boundary or first use, then rely on the established invariant." },
         ],
     },
+    FindingDocs {
+        kind: WeakTestOracle,
+        why_bad: "A test that only executes code can pass when behavior is wrong.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Assert an observable result or expected exception." }, LanguageBlock { language: "typescript", body: "Assert the result, state, or expected rejection with a matcher." }],
+    },
 ];
 
 pub fn all() -> impl Iterator<Item = &'static FindingDocs> {
