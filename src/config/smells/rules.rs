@@ -132,9 +132,7 @@ fn apply_integer_knob(smells: &mut Smells, kind: SmellKind, key: &str, n: usize)
         (SmellKind::HighCognitiveComplexity, "max_cognitive") => set(&mut smells.max_cognitive, n),
         (SmellKind::DeepNesting, "max_nesting") => set(&mut smells.max_nesting, n),
         (SmellKind::MessageChain, "max_depth") => set(&mut smells.max_chain_depth, n),
-        (SmellKind::RedundantWrapperChain, "max_depth") => {
-            set(&mut smells.max_wrapper_depth, n)
-        }
+        (SmellKind::RedundantWrapperChain, "max_depth") => set(&mut smells.max_wrapper_depth, n),
         (SmellKind::DataClump, "min_fields") => set(&mut smells.data_clump_min_fields, n),
         (SmellKind::DataClump, "min_occurrences") => set(&mut smells.data_clump_min_occurrences, n),
         (SmellKind::ShotgunSurgeryHazard, "min_blast") => {

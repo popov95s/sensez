@@ -165,7 +165,8 @@ fn unchanged_local_wrapper_chain_is_reported() {
 
 #[test]
 fn wrapper_chain_depth_defaults_to_zero_and_can_be_overridden() {
-    let one_wrapper = "def outer(value):\n    return actual(value)\ndef actual(value):\n    return value * 2\n";
+    let one_wrapper =
+        "def outer(value):\n    return actual(value)\ndef actual(value):\n    return value * 2\n";
     let mut config = Smells::default();
     assert_eq!(config.max_wrapper_depth, 0);
     assert!(has(

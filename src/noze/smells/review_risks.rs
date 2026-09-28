@@ -40,7 +40,10 @@ fn wrapper_chains(
 
     let mut by_name = HashMap::new();
     let mut ambiguous = HashSet::new();
-    for unit in metrics.iter().filter(|unit| !unit.is_method && !unit.is_nested) {
+    for unit in metrics
+        .iter()
+        .filter(|unit| !unit.is_method && !unit.is_nested)
+    {
         if by_name.insert(unit.name.as_str(), unit).is_some() {
             ambiguous.insert(unit.name.as_str());
         }
