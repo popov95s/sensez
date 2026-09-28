@@ -56,7 +56,7 @@ def parse_smells() -> list[Smell]:
 
 
 def discover_examples(smell_kind: str) -> dict[str, tuple[Path, Path]]:
-    """Auto-discover ``example.<ext>`` / ``fixed.<ext>`` pairs from disk.
+    """Auto-discover bad/fixed pairs, including conventional test filenames.
 
     The src/ metadata no longer hard-codes docs/ paths; the docs script walks
     ``docs/examples/smells/<kind>/`` to find each language's bad+fixed pair.
@@ -65,11 +65,16 @@ def discover_examples(smell_kind: str) -> dict[str, tuple[Path, Path]]:
     """
     folder = EXAMPLES_ROOT / smell_kind
     out: dict[str, tuple[Path, Path]] = {}
-    for language, ext in (("python", "py"), ("typescript", "ts")):
-        bad = folder / f"example.{ext}"
-        fixed = folder / f"fixed.{ext}"
-        if bad.exists() or fixed.exists():
-            out[language] = (bad, fixed)
+    names = {
+        "python": (("example.py", "fixed.py"), ("test_example.py", "fixed_test.py")),
+        "typescript": (("example.ts", "fixed.ts"), ("example.test.ts", "fixed.test.ts")),
+    }
+    for language, pairs in names.items():
+        for bad_name, fixed_name in pairs:
+            bad, fixed = folder / bad_name, folder / fixed_name
+            if bad.exists() or fixed.exists():
+                out[language] = (bad, fixed)
+                break
     return out
 
 

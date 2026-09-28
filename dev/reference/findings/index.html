@@ -960,6 +960,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#weak-test-oracle-weak_test_oracle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weak Test Oracle (weak_test_oracle)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1804,6 +1832,34 @@
     <span class="md-ellipsis">
       
         Sort In Loop (sort_in_loop)
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#other" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Other
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Other">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#weak-test-oracle-weak_test_oracle" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Weak Test Oracle (weak_test_oracle)
       
     </span>
   </a>
@@ -5196,6 +5252,87 @@
 <tr><td>Python</td><td>Yes</td></tr>
 <tr><td>JS / TS</td><td>Yes</td></tr>
 <tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
+<h2 id="other">Other</h2>
+<h3 id="weak-test-oracle-weak_test_oracle">Weak Test Oracle (<code>weak_test_oracle</code>)</h3>
+<p><strong>What it is</strong></p>
+<p>A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code.</p>
+<p><strong>Why it's bad</strong></p>
+<p>A test that only executes code can pass when behavior is wrong.</p>
+<p><strong>Example</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="40:2"><input checked="checked" id="__tabbed_40_1" name="__tabbed_40" type="radio" /><input id="__tabbed_40_2" name="__tabbed_40" type="radio" /><div class="tabbed-labels"><label for="__tabbed_40_1">Python</label><label for="__tabbed_40_2">JS / TS</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_saves</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">saved</span> <span class="o">=</span> <span class="n">save</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">save</span><span class="p">(</span><span class="n">saved</span><span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Assert an observable result or expected exception.</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">value</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">test_saves</span><span class="p">()</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">assert</span> <span class="n">save</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span> <span class="o">==</span> <span class="mi">1</span>
+</code></pre></div>
+</details></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">test</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:test"</span><span class="p">;</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">save</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">test</span><span class="p">(</span><span class="s2">"saves value"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">save</span><span class="p">(</span><span class="mf">1</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Assert the result, state, or expected rejection with a matcher.</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">import</span><span class="w"> </span><span class="nx">assert</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:assert/strict"</span><span class="p">;</span>
+<span class="k">import</span><span class="w"> </span><span class="nx">test</span><span class="w"> </span><span class="kr">from</span><span class="w"> </span><span class="s2">"node:test"</span><span class="p">;</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">save</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="nx">test</span><span class="p">(</span><span class="s2">"saves value"</span><span class="p">,</span><span class="w"> </span><span class="p">()</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">assert</span><span class="p">.</span><span class="nx">equal</span><span class="p">(</span><span class="nx">save</span><span class="p">(</span><span class="mf">1</span><span class="p">),</span><span class="w"> </span><span class="mf">1</span><span class="p">);</span>
+<span class="p">});</span>
+</code></pre></div>
+</details></p>
+</div>
+</div>
+</div>
+<p><strong>Tune It</strong></p>
+<p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.weak_test_oracle]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="c1"># This detector has no extra threshold knobs.</span>
+</code></pre></div>
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
 </tbody>
 </table>
 </details>

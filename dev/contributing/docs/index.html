@@ -900,6 +900,11 @@
 <li><code>docs/local-metrics.md</code> for the metrics model.</li>
 </ul>
 <h2 id="refresh-flow">Refresh Flow</h2>
+<p>Each smell can provide <code>example.py</code>/<code>fixed.py</code> and <code>example.ts</code>/<code>fixed.ts</code>.
+For test smells, use <code>test_example.py</code>/<code>fixed_test.py</code> and
+<code>example.test.ts</code>/<code>fixed.test.ts</code> so the files remain real test sources.
+Add an <code>exact-smells</code> marker when the bad example must emit only its named
+smell; the verifier always requires the fixed example to emit no findings.</p>
 <p>Regenerate generated reference pages after changing glossary metadata:</p>
 <div class="highlight"><pre><span></span><code>just<span class="w"> </span>docs-generate
 </code></pre></div>
