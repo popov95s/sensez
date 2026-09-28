@@ -13,9 +13,11 @@ The docs are designed to auto-generate through the code.
 
 ## Refresh Flow
 
-Add an `exact-smells` marker to a smell example folder when its bad examples
-must emit only the named smell. The verifier always requires the fixed examples
-to emit no findings.
+Each smell can provide `example.py`/`fixed.py` and `example.ts`/`fixed.ts`.
+For test smells, use `test_example.py`/`fixed_test.py` and
+`example.test.ts`/`fixed.test.ts` so the files remain real test sources.
+Add an `exact-smells` marker when the bad example must emit only its named
+smell; the verifier always requires the fixed example to emit no findings.
 
 Regenerate generated reference pages after changing glossary metadata:
 

@@ -61,6 +61,7 @@ pub const ALL_SMELLS: [SmellKind; 37] = {
         TooManyReturns,
         TuplePacking,
         UnnecessaryNestedIf,
+        WeakTestOracle,
     ]
 };
 
@@ -104,6 +105,7 @@ pub const SMELLS: [SmellDoc; 37] = {
         SmellDoc { kind: TooManyReturns, title: "Too Many Returns", explanation: "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much." },
         SmellDoc { kind: TuplePacking, title: "Tuple Packing", explanation: "Data passed as positional tuples whose fields aren't named — use a named structure so meaning is explicit." },
         SmellDoc { kind: UnnecessaryNestedIf, title: "Unnecessary Nested If", explanation: "An `if` whose only body is another `if`, with no else path — combine the conditions with `and`/`&&` to flatten the control flow." },
+        SmellDoc { kind: WeakTestOracle, title: "Weak Test Oracle", explanation: "A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code." },
     ]
 };
 

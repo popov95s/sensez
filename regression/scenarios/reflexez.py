@@ -143,11 +143,16 @@ def _commit_fixture(repo: Path) -> None:
 
 
 def _assert_selective(plan: ImpactPlan, fixture: Fixture) -> None:
-    assert plan.full_suite is False, plan.fallback_reasons
     selected = {Path(item.file).name: item for item in plan.selected}
     related = Path(fixture.related).name
     unrelated = Path(fixture.unrelated_test).name
     assert related in selected, "computed dynamic import did not select its test"
+    if plan.unresolved_dynamic_imports:
+        assert plan.full_suite is True
+        assert unrelated in selected, "opaque imports must select the full suite"
+        assert selected[related].reason == "safety_fallback"
+        return
+    assert plan.full_suite is False, plan.fallback_reasons
     assert selected[related].reason == "dynamic_import"
     assert unrelated not in selected, "unrelated test was selected"
 

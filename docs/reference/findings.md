@@ -4239,3 +4239,103 @@ max_depth = 0 # allowed depth before flagging
 </table>
 </details>
 
+### Weak Test Oracle (`weak_test_oracle`)
+
+**What it is**
+
+A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code.
+
+**Why it's bad**
+
+A test that only executes code can pass when behavior is wrong.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def save(value: int) -> int:
+        return value
+
+
+    def test_saves() -> None:
+        saved = save(1)
+        save(saved)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Assert an observable result or expected exception.
+
+    ```python
+    def save(value: int) -> int:
+        return value
+
+
+    def test_saves() -> None:
+        assert save(1) == 1
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    import test from "node:test";
+
+    function save(value: number): number {
+      return value;
+    }
+
+    test("saves value", () => {
+      save(1);
+    });
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Assert the result, state, or expected rejection with a matcher.
+
+    ```ts
+    import assert from "node:assert/strict";
+    import test from "node:test";
+
+    function save(value: number): number {
+      return value;
+    }
+
+    test("saves value", () => {
+      assert.equal(save(1), 1);
+    });
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.weak_test_oracle]
+enabled = true
+action = "warning"
+# This detector has no extra threshold knobs.
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>No</td></tr>
+<tr><td>JS / TS</td><td>No</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
+</tbody>
+</table>
+</details>
+

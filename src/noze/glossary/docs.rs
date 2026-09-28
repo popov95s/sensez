@@ -707,6 +707,13 @@ FindingDocs {
         references: &[],
         fixes: &[LanguageBlock { language: "python", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }, LanguageBlock { language: "typescript", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }],
     },
+    FindingDocs {
+        kind: WeakTestOracle,
+        why_bad: "A test that only executes code can pass when behavior is wrong.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Assert an observable result or expected exception." }, LanguageBlock { language: "typescript", body: "Assert the result, state, or expected rejection with a matcher." }],
+    },
 ];
 
 pub fn all() -> impl Iterator<Item = &'static FindingDocs> {

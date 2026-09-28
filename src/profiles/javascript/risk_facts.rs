@@ -1,3 +1,4 @@
+use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
 use tree_sitter::Node;
@@ -40,6 +41,30 @@ pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> O
         .then(|| callee.utf8_text(src).ok().map(str::to_string))
         .flatten()
 }
+const TEST_CHECKS: TestChecks = TestChecks {
+    statement_kinds: &["throw_statement"],
+    call_kind: "call_expression",
+    callee_field: "function",
+    member_kind: Some("member_expression"),
+    member_field: Some("property"),
+    calls: &[
+        CallPattern::Exact("assert"),
+        CallPattern::Exact("fail"),
+        CallPattern::Prefix("assert."),
+        CallPattern::MemberPrefix {
+            callee_prefix: "expect(",
+            member_prefix: "to",
+        },
+        CallPattern::MemberExact {
+            callee_prefix: "expect(",
+            member: "matchSnapshot",
+        },
+        CallPattern::MemberPrefix {
+            callee_prefix: "expect.",
+            member_prefix: "to",
+        },
+    ],
+};
 
 pub(super) fn scan(
     unit: &mut FunctionUnit,
@@ -47,6 +72,9 @@ pub(super) fn scan(
     node: Node,
     src: &[u8],
 ) {
+    if test_oracle::is_check(node, src, &TEST_CHECKS) {
+        unit.review_risks.test_checks += 1;
+    }
     match node.kind() {
         "catch_clause" => unit.review_risks.broad_handlers += 1,
         "if_statement" => record_guard(unit, guards, node, src),
@@ -55,6 +83,21 @@ pub(super) fn scan(
         }
         _ => {}
     }
+}
+
+pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
+    let Some(args) = func.parent().filter(|parent| parent.kind() == "arguments") else {
+        return false;
+    };
+    let Some(call) = args
+        .parent()
+        .filter(|parent| parent.kind() == "call_expression")
+    else {
+        return false;
+    };
+    call.child_by_field_name("function")
+        .and_then(|callee| callee.utf8_text(src).ok())
+        .is_some_and(|name| matches!(name, "test" | "it"))
 }
 
 fn record_guard(

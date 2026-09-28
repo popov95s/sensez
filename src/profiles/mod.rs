@@ -13,6 +13,7 @@ pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
 pub mod registry;
+pub(crate) mod test_oracle;
 pub mod typevocab;
 pub(crate) mod walk;
 
@@ -40,6 +41,16 @@ pub(crate) struct ResolutionCache;
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, PerfLine, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
+
+/// Compile built-in profile globs once at their call site rather than
+/// duplicating filename conventions in consumers.
+pub(crate) fn compile_profile_globs(patterns: &[&str]) -> globset::GlobSet {
+    let compiled: Vec<String> = patterns
+        .iter()
+        .map(|pattern| (*pattern).to_string())
+        .collect();
+    crate::globs::build_globset(&compiled).expect("built-in profile globs must be valid")
+}
 
 /// Pure-data facts about a language. Cheap to reference; drives crawler
 /// discovery and config defaults.

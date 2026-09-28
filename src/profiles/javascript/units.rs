@@ -50,6 +50,7 @@ impl FunctionFacts {
             unit.review_risks.forwards_to =
                 super::risk_facts::forward_target(func, src, &unit.param_names);
         }
+        unit.review_risks.is_test_case = super::risk_facts::is_test_callback(func, src);
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
         FunctionFacts {
@@ -68,6 +69,7 @@ impl FunctionFacts {
             return None;
         }
         if is_function(node.kind()) {
+            self.unit.review_risks.test_has_nested_function = true;
             return None;
         }
         let prev_depth = self.depth;

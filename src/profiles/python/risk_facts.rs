@@ -1,3 +1,4 @@
+use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
 use tree_sitter::Node;
@@ -40,6 +41,22 @@ pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> O
         .then(|| callee.utf8_text(src).ok().map(str::to_string))
         .flatten()
 }
+const TEST_CHECKS: TestChecks = TestChecks {
+    statement_kinds: &["assert_statement", "raise_statement"],
+    call_kind: "call",
+    callee_field: "function",
+    member_kind: None,
+    member_field: None,
+    calls: &[
+        CallPattern::Exact("pytest.raises"),
+        CallPattern::Exact("raises"),
+        CallPattern::Exact("pytest.warns"),
+        CallPattern::Exact("warns"),
+        CallPattern::Prefix("self.assert"),
+        CallPattern::Prefix("snapshot.assert"),
+        CallPattern::Prefix("assert_"),
+    ],
+};
 
 pub(super) fn scan(
     unit: &mut FunctionUnit,
@@ -47,6 +64,9 @@ pub(super) fn scan(
     node: Node,
     src: &[u8],
 ) {
+    if test_oracle::is_check(node, src, &TEST_CHECKS) {
+        unit.review_risks.test_checks += 1;
+    }
     match node.kind() {
         "except_clause" => handler(unit, node, src),
         "if_statement" => record_guard(unit, guards, node, src),

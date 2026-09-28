@@ -55,6 +55,7 @@ class SmellTerm(StrEnum):
     TOO_MANY_RETURNS = "too_many_returns"
     TUPLE_PACKING = "tuple_packing"
     UNNECESSARY_NESTED_IF = "unnecessary_nested_if"
+    WEAK_TEST_ORACLE = "weak_test_oracle"
 
 
 FindingGroup = tuple[FindingGroupTitle, tuple[SmellTerm, ...]]

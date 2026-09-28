@@ -41,6 +41,7 @@ pub enum SmellKind {
     TooManyReturns,
     TuplePacking,
     UnnecessaryNestedIf,
+    WeakTestOracle,
 }
 
 impl SmellKind {
@@ -83,6 +84,7 @@ impl SmellKind {
             SmellKind::TooManyReturns => "too_many_returns",
             SmellKind::TuplePacking => "tuple_packing",
             SmellKind::UnnecessaryNestedIf => "unnecessary_nested_if",
+            SmellKind::WeakTestOracle => "weak_test_oracle",
         }
     }
 }
