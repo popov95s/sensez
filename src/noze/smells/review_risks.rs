@@ -20,7 +20,7 @@ pub fn detect(
 }
 
 fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {
-    if !ctx.test_oracle.is_test_source(ctx.path)
+    if !ctx.test_source
         || !metric.review_risks.is_test_case
         || metric.review_risks.test_checks > 0
         || metric.review_risks.test_has_nested_function

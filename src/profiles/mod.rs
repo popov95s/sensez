@@ -13,6 +13,7 @@ pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
 pub mod registry;
+pub(crate) mod test_oracle;
 pub mod typevocab;
 pub(crate) mod walk;
 
@@ -44,7 +45,10 @@ use std::path::{Path, PathBuf};
 /// Compile built-in profile globs once at their call site rather than
 /// duplicating filename conventions in consumers.
 pub(crate) fn compile_profile_globs(patterns: &[&str]) -> globset::GlobSet {
-    let patterns: Vec<String> = patterns.iter().map(|pattern| (*pattern).to_string()).collect();
+    let patterns: Vec<String> = patterns
+        .iter()
+        .map(|pattern| (*pattern).to_string())
+        .collect();
     crate::globs::build_globset(&patterns).expect("built-in profile globs must be valid")
 }
 
@@ -206,19 +210,12 @@ pub trait TypeVocabularyProfile: Send + Sync {
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool;
 }
 
-/// Language-owned convention for identifying files that contain test cases.
-/// Test syntax is recorded as a language-neutral fact during the AST walk.
-pub trait TestOracleProfile: Send + Sync {
-    fn is_test_source(&self, path: &Path) -> bool;
-}
-
 pub trait LanguageProfile:
     ParseProfile
     + ModuleProfile
     + DeadCodeProfile
     + PerformanceProfile
     + TypeVocabularyProfile
-    + TestOracleProfile
 {
 }
 
@@ -228,6 +225,5 @@ impl<T> LanguageProfile for T where
         + DeadCodeProfile
         + PerformanceProfile
         + TypeVocabularyProfile
-        + TestOracleProfile
 {
 }

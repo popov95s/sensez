@@ -1,47 +1,32 @@
+use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::OnceLock;
 use tree_sitter::Node;
 
-static TEST_SOURCE_GLOBS: OnceLock<globset::GlobSet> = OnceLock::new();
-
-pub(crate) fn is_test_source(path: &Path) -> bool {
-    TEST_SOURCE_GLOBS
-        .get_or_init(|| {
-            let javascript = deadcode::defaults();
-            let typescript = deadcode::typescript_defaults();
-            crate::profiles::compile_profile_globs(
-                &javascript
-                    .test_sources
-                    .iter()
-                    .chain(typescript.test_sources.iter())
-                    .copied()
-                    .collect::<Vec<_>>(),
-            )
-        })
-        .is_match(path)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::is_test_source;
-    use std::path::Path;
-
-    #[test]
-    fn test_source_conventions_follow_profile_defaults() {
-        for path in [
-            "src/api.test.js",
-            "src/api.spec.jsx",
-            "src/api.test.ts",
-            "src/api.spec.tsx",
-            "__tests__/api.ts",
-        ] {
-            assert!(is_test_source(Path::new(path)), "{path}");
-        }
-        assert!(!is_test_source(Path::new("src/api.ts")));
-    }
-}
+const TEST_CHECKS: TestChecks = TestChecks {
+    statement_kinds: &["throw_statement"],
+    call_kind: "call_expression",
+    callee_field: "function",
+    member_kind: Some("member_expression"),
+    member_field: Some("property"),
+    calls: &[
+        CallPattern::Exact("assert"),
+        CallPattern::Exact("fail"),
+        CallPattern::Prefix("assert."),
+        CallPattern::MemberPrefix {
+            callee_prefix: "expect(",
+            member_prefix: "to",
+        },
+        CallPattern::MemberExact {
+            callee_prefix: "expect(",
+            member: "matchSnapshot",
+        },
+        CallPattern::MemberPrefix {
+            callee_prefix: "expect.",
+            member_prefix: "to",
+        },
+    ],
+};
 
 pub(super) fn scan(
     unit: &mut FunctionUnit,
@@ -49,9 +34,10 @@ pub(super) fn scan(
     node: Node,
     src: &[u8],
 ) {
+    if test_oracle::is_check(node, src, &TEST_CHECKS) {
+        unit.review_risks.test_checks += 1;
+    }
     match node.kind() {
-        "throw_statement" => unit.review_risks.test_checks += 1,
-        "call_expression" if is_test_check(node, src) => unit.review_risks.test_checks += 1,
         "catch_clause" => unit.review_risks.broad_handlers += 1,
         "if_statement" => record_guard(unit, guards, node, src),
         "binary_expression" if is_empty_fallback(node) => {
@@ -74,30 +60,6 @@ pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
     call.child_by_field_name("function")
         .and_then(|callee| callee.utf8_text(src).ok())
         .is_some_and(|name| matches!(name, "test" | "it"))
-}
-
-fn is_test_check(node: Node<'_>, src: &[u8]) -> bool {
-    let Some(callee) = node.child_by_field_name("function") else {
-        return false;
-    };
-    let Ok(name) = callee.utf8_text(src) else {
-        return false;
-    };
-    if matches!(name, "assert" | "fail") || name.starts_with("assert.") {
-        return true;
-    }
-    if callee.kind() != "member_expression" {
-        return false;
-    }
-    let Some(property) = callee
-        .child_by_field_name("property")
-        .and_then(|p| p.utf8_text(src).ok())
-    else {
-        return false;
-    };
-    (property.starts_with("to") || matches!(property, "matchSnapshot"))
-        && name.starts_with("expect(")
-        || (property.starts_with("to") && name.starts_with("expect."))
 }
 
 fn record_guard(

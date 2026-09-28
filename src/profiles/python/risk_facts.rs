@@ -1,29 +1,24 @@
+use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
-use std::path::Path;
-use std::sync::OnceLock;
 use tree_sitter::Node;
 
-static TEST_SOURCE_GLOBS: OnceLock<globset::GlobSet> = OnceLock::new();
-
-pub(super) fn is_test_source(path: &Path) -> bool {
-    TEST_SOURCE_GLOBS
-        .get_or_init(|| crate::profiles::compile_profile_globs(deadcode::defaults().test_sources))
-        .is_match(path)
-}
-
-#[cfg(test)]
-mod tests {
-    use super::is_test_source;
-    use std::path::Path;
-
-    #[test]
-    fn test_source_conventions_follow_profile_defaults() {
-        assert!(is_test_source(Path::new("tests/test_api.py")));
-        assert!(is_test_source(Path::new("src/api_test.py")));
-        assert!(!is_test_source(Path::new("src/api.py")));
-    }
-}
+const TEST_CHECKS: TestChecks = TestChecks {
+    statement_kinds: &["assert_statement", "raise_statement"],
+    call_kind: "call",
+    callee_field: "function",
+    member_kind: None,
+    member_field: None,
+    calls: &[
+        CallPattern::Exact("pytest.raises"),
+        CallPattern::Exact("raises"),
+        CallPattern::Exact("pytest.warns"),
+        CallPattern::Exact("warns"),
+        CallPattern::Prefix("self.assert"),
+        CallPattern::Prefix("snapshot.assert"),
+        CallPattern::Prefix("assert_"),
+    ],
+};
 
 pub(super) fn scan(
     unit: &mut FunctionUnit,
@@ -31,9 +26,10 @@ pub(super) fn scan(
     node: Node,
     src: &[u8],
 ) {
+    if test_oracle::is_check(node, src, &TEST_CHECKS) {
+        unit.review_risks.test_checks += 1;
+    }
     match node.kind() {
-        "assert_statement" | "raise_statement" => unit.review_risks.test_checks += 1,
-        "call" if is_test_check(node, src) => unit.review_risks.test_checks += 1,
         "except_clause" => handler(unit, node, src),
         "if_statement" => record_guard(unit, guards, node, src),
         "boolean_operator" if is_empty_fallback(node) => {
@@ -41,22 +37,6 @@ pub(super) fn scan(
         }
         _ => {}
     }
-}
-
-fn is_test_check(node: Node<'_>, src: &[u8]) -> bool {
-    let Some(callee) = node.child_by_field_name("function") else {
-        return false;
-    };
-    let Ok(name) = callee.utf8_text(src) else {
-        return false;
-    };
-    name == "pytest.raises"
-        || name == "raises"
-        || name == "pytest.warns"
-        || name == "warns"
-        || name.starts_with("self.assert")
-        || name.starts_with("snapshot.assert")
-        || name.starts_with("assert_")
 }
 
 fn record_guard(

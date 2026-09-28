@@ -276,3 +276,36 @@ fn assertions_and_expected_exceptions_are_oracles() {
         );
     }
 }
+
+#[test]
+fn profile_assertion_calls_are_recognized_by_the_shared_matcher() {
+    let mut config = Smells::default();
+    config
+        .disabled
+        .retain(|kind| *kind != SmellKind::WeakTestOracle);
+    for (name, source) in [
+        (
+            "test_checks.py",
+            "def test_checks():\n    assert_equal(save(1), 1)\n",
+        ),
+        (
+            "example.test.ts",
+            "test('checks', () => {\n  assert.equal(save(1), 1);\n});\n",
+        ),
+        (
+            "example.spec.ts",
+            "test('snapshot', () => {\n  expect(save(1)).matchSnapshot();\n});\n",
+        ),
+    ] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join(name);
+        fs::write(&path, source).unwrap();
+        let file = parse_file(&path, 0).unwrap();
+        assert!(
+            !detect_local(&file, &config)
+                .iter()
+                .any(|finding| finding.kind == SmellKind::WeakTestOracle),
+            "{name}"
+        );
+    }
+}
