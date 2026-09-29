@@ -107,6 +107,10 @@ fix_text = "const sensezRegressionFixture = 42;\nconsole.log(sensezRegressionFix
 
 This keeps Flask and Zod equivalent from the runner's point of view.
 
+The smells scenario writes minimal bad/fixed fixtures for weak test oracles
+and redundant wrapper chains in each target language. It asserts that each bad
+fixture reports its intended smell and each fixed fixture does not.
+
 ## Baseline Artifacts
 
 Commit only normalized baselines. Never commit cloned targets or local metrics.

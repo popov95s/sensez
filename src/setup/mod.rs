@@ -115,6 +115,19 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
         true
     };
 
+    #[cfg(feature = "eyez")]
+    let semantic_duplication_enabled = install_scope == InstallScope::Project
+        && interactive
+        && !opts.yes
+        && prompts::confirm(
+            "Enable Eyez semantic duplicate detection?\n\
+             It adds a locally cached embedding pass to duplication scans. You can change\n\
+             this later with [duplication.semantic] in sensez.toml.",
+            false,
+        )?;
+    #[cfg(not(feature = "eyez"))]
+    let semantic_duplication_enabled = false;
+
     let has_pyproject = root.join("pyproject.toml").exists();
     let into_pyproject = install_scope == InstallScope::Project
         && has_pyproject
@@ -135,8 +148,11 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
     if install_scope == InstallScope::Project {
         done.push(artifacts::write_config(
             &root,
-            metrics_enabled,
-            into_pyproject,
+            artifacts::WriteConfigOptions {
+                self_improvement: metrics_enabled,
+                into_pyproject,
+                semantic_duplication: semantic_duplication_enabled,
+            },
         )?);
         done.push(artifacts::ensure_sensez_dir(&root)?);
     }

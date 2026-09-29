@@ -66,7 +66,7 @@ jobs:
           cache-dependency-path: editors/vscode/package-lock.json
 
       - name: Build native language server
-        run: cargo build --release --no-default-features --features all-langs,lsp
+        run: cargo build --release --no-default-features --features all-langs,lsp,eyez
 
       - name: Install extension dependencies
         run: npm ci

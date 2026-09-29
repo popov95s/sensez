@@ -5,14 +5,14 @@ name = "flask"
 profile = "py"
 url = "https://github.com/pallets/flask.git"
 commit = "36e4a824f340fdee7ed50937ba8e7f6bc7d17f81"
-scenarios = ["full", "mcp", "diff", "gate", "metrics", "triage"]
+scenarios = ["full", "smells", "mcp", "diff", "gate", "metrics", "triage"]
 
 [[targets]]
 name = "zod"
 profile = "ts"
 url = "https://github.com/colinhacks/zod.git"
 commit = "912f0f51b0ced654d0069741e7160834dca742ee"
-scenarios = ["full", "mcp", "diff", "gate", "metrics"]
+scenarios = ["full", "smells", "mcp", "diff", "gate", "metrics"]
 
 [profiles.py.dead_code_fixture]
 path = "sensez_regression_fixture.py"
