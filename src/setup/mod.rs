@@ -148,9 +148,11 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
     if install_scope == InstallScope::Project {
         done.push(artifacts::write_config(
             &root,
-            metrics_enabled,
-            into_pyproject,
-            semantic_duplication_enabled,
+            artifacts::WriteConfigOptions {
+                self_improvement: metrics_enabled,
+                into_pyproject,
+                semantic_duplication: semantic_duplication_enabled,
+            },
         )?);
         done.push(artifacts::ensure_sensez_dir(&root)?);
     }

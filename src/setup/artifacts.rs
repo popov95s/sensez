@@ -93,17 +93,18 @@ enabled = true
 # "smells/god_module" = ["app.registry"]       # a specific accepted detector hit
 "#;
 
-pub fn write_config(
-    root: &Path,
-    self_improvement: bool,
-    into_pyproject: bool,
-    semantic_duplication: bool,
-) -> Result<String> {
+pub struct WriteConfigOptions {
+    pub self_improvement: bool,
+    pub into_pyproject: bool,
+    pub semantic_duplication: bool,
+}
+
+pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<String> {
     let mut body = CONFIG_TEMPLATE.to_string();
-    if !self_improvement {
+    if !options.self_improvement {
         body = body.replace("\nenabled = true\n", "\nenabled = false\n");
     }
-    if semantic_duplication {
+    if options.semantic_duplication {
         body.push_str(
             "\n[duplication.semantic]\n\
              enabled = true\n\
@@ -112,7 +113,7 @@ pub fn write_config(
              # comment_required = true\n",
         );
     }
-    if into_pyproject {
+    if options.into_pyproject {
         let path = root.join("pyproject.toml");
         let existing = read_existing(&path)?;
         if existing.contains("[tool.sensez") {

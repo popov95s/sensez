@@ -283,7 +283,15 @@ fn codex_init_preserves_other_existing_servers() {
 fn pyproject_mode_appends_tool_sensez() {
     let (_tmp, root) = temp_root();
     fs::write(root.join("pyproject.toml"), "[project]\nname = \"x\"\n").unwrap();
-    let msg = artifacts::write_config(&root, true, true, false).unwrap();
+    let msg = artifacts::write_config(
+        &root,
+        artifacts::WriteConfigOptions {
+            self_improvement: true,
+            into_pyproject: true,
+            semantic_duplication: false,
+        },
+    )
+    .unwrap();
     assert!(msg.contains("pyproject"));
 
     let text = fs::read_to_string(root.join("pyproject.toml")).unwrap();
@@ -298,7 +306,15 @@ fn pyproject_mode_appends_tool_sensez() {
 #[test]
 fn init_can_opt_in_to_eyez_semantic_duplication() {
     let (_tmp, root) = temp_root();
-    artifacts::write_config(&root, false, false, true).unwrap();
+    artifacts::write_config(
+        &root,
+        artifacts::WriteConfigOptions {
+            self_improvement: false,
+            into_pyproject: false,
+            semantic_duplication: true,
+        },
+    )
+    .unwrap();
 
     let text = fs::read_to_string(root.join("sensez.toml")).unwrap();
     let config: toml::Value = toml::from_str(&text).unwrap();
