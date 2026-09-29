@@ -701,6 +701,13 @@ FindingDocs {
         ],
     },
     FindingDocs {
+        kind: RedundantWrapperChain,
+        why_bad: "An unchanged forwarding layer adds indirection without behavior and makes navigation harder.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }, LanguageBlock { language: "typescript", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }],
+    },
+    FindingDocs {
         kind: WeakTestOracle,
         why_bad: "A test that only executes code can pass when behavior is wrong.",
         external_lints: &[],

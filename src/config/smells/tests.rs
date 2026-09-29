@@ -19,6 +19,11 @@ fn defaults_differ_per_language() {
     assert!(py.disabled.contains(&SmellKind::NPlusOneCall));
     assert!(py.disabled.contains(&SmellKind::DefensiveFallback));
     assert!(py.disabled.contains(&SmellKind::RedundantValidation));
+    assert!(
+        !py.disabled.contains(&SmellKind::RedundantWrapperChain),
+        "wrapper chains are checked by default"
+    );
+    assert_eq!(py.max_wrapper_depth, 0);
     assert!(!py.large_class, "python large_class deferred to Ruff");
 
     assert!(ts.large_class, "TS enables large_class (no native rule)");
@@ -134,6 +139,21 @@ fn review_risk_rules_require_explicit_opt_in() {
     let py = cfg.for_language(Language::Python);
     assert!(!py.disabled.contains(&SmellKind::RedundantValidation));
     assert!(py.disabled.contains(&SmellKind::DefensiveFallback));
+}
+
+#[test]
+fn wrapper_chain_depth_is_configurable_and_enables_the_rule() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.redundant_wrapper_chain]
+            max_depth = 1
+        "#,
+    )
+    .unwrap();
+
+    let py = cfg.for_language(Language::Python);
+    assert_eq!(py.max_wrapper_depth, 1);
+    assert!(!py.disabled.contains(&SmellKind::RedundantWrapperChain));
 }
 
 #[test]

@@ -11,6 +11,8 @@ pub struct ReviewRiskFacts {
     pub broad_handlers: usize,
     pub empty_fallbacks: usize,
     pub repeated_guards: usize,
+    /// Name of a direct callee receiving every parameter unchanged.
+    pub forwards_to: Option<String>,
     /// Direct test checks found in this function's own body.
     pub test_checks: usize,
     pub test_has_nested_function: bool,

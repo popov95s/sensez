@@ -1,14 +1,16 @@
 //! Structurally derived risks that warrant focused review.
 
 use super::{make, SmellContext};
+use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
-use std::collections::HashSet;
+use std::collections::{HashMap, HashSet};
 
 pub fn detect(
     ctx: &SmellContext<'_>,
     metrics: &[FunctionUnit],
     classes: &[ClassUnit],
+    config: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
     for metric in metrics {
@@ -16,7 +18,78 @@ pub fn detect(
         redundant_validation(ctx, metric, out);
         weak_test_oracle(ctx, metric, out);
     }
+    wrapper_chains(ctx, metrics, config.max_wrapper_depth, out);
     divergent_abstractions(ctx, classes, out);
+}
+
+fn wrapper_chains(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionUnit],
+    max_depth: usize,
+    out: &mut Vec<SmellFinding>,
+) {
+    let wrappers: Vec<_> = metrics
+        .iter()
+        .filter(|unit| {
+            !unit.is_method && !unit.is_nested && unit.review_risks.forwards_to.is_some()
+        })
+        .collect();
+    let forwarded_to: HashSet<_> = wrappers
+        .iter()
+        .filter_map(|unit| unit.review_risks.forwards_to.as_deref())
+        .collect();
+
+    let mut by_name = HashMap::new();
+    let mut ambiguous = HashSet::new();
+    for unit in metrics
+        .iter()
+        .filter(|unit| !unit.is_method && !unit.is_nested)
+    {
+        if by_name.insert(unit.name.as_str(), unit).is_some() {
+            ambiguous.insert(unit.name.as_str());
+        }
+    }
+
+    // Begin at chain roots so each local forwarding chain produces one finding.
+    for outer in wrappers {
+        if forwarded_to.contains(outer.name.as_str()) || ambiguous.contains(outer.name.as_str()) {
+            continue;
+        }
+        let mut chain = Vec::new();
+        let mut visited = HashSet::new();
+        let mut current = outer;
+        let terminal = loop {
+            if !visited.insert(current.name.as_str()) || ambiguous.contains(current.name.as_str()) {
+                break None;
+            }
+            let Some(target) = current.review_risks.forwards_to.as_deref() else {
+                break Some(current);
+            };
+            chain.push(current);
+            let Some(next) = by_name.get(target).copied() else {
+                break None;
+            };
+            current = next;
+        };
+        if terminal.is_none() || chain.len() <= max_depth {
+            continue;
+        }
+        out.push(make(
+            SmellKind::RedundantWrapperChain,
+            format!(
+                "{} is part of a {}-layer unchanged forwarding chain ending at {}; remove pass-through functions or configure max_depth",
+                outer.name,
+                chain.len(),
+                terminal.unwrap().name
+            ),
+            ctx.path,
+            outer.start_line,
+            &outer.name,
+            Severity::Info,
+            chain.len() as u32,
+            max_depth as u32,
+        ));
+    }
 }
 
 fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {

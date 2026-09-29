@@ -2688,7 +2688,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.message_chain]
 enabled = true
 action = "warning"
-max_depth = 4 # allowed message-chain depth
+max_depth = 4 # allowed depth before flagging
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -4132,6 +4132,112 @@ action = "warning"
 </details>
 
 ## Other
+
+### Redundant Wrapper Chain (`redundant_wrapper_chain`)
+
+**What it is**
+
+A local function forwards arguments unchanged without adding behavior — remove the wrapper or allow a deliberate depth in configuration.
+
+**Why it's bad**
+
+An unchanged forwarding layer adds indirection without behavior and makes navigation harder.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def normalize(value: int) -> int:
+        return value + 1
+
+
+    def middle(value: int) -> int:
+        return normalize(value)
+
+
+    def outer(value: int) -> int:
+        return middle(value)
+
+
+    result = outer(2)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping.
+
+    ```python
+    def normalize(value: int) -> int:
+        return value + 1
+
+
+    result = normalize(2)
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    function normalize(value: number): number {
+      return value + 1;
+    }
+
+    function middle(value: number): number {
+      return normalize(value);
+    }
+
+    function outer(value: number): number {
+      return middle(value);
+    }
+
+    const result = outer(2);
+    console.log(result);
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping.
+
+    ```ts
+    function normalize(value: number): number {
+      return value + 1;
+    }
+
+    const result = normalize(2);
+    console.log(result);
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.redundant_wrapper_chain]
+enabled = true
+action = "warning"
+max_depth = 0 # allowed depth before flagging
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
 
 ### Weak Test Oracle (`weak_test_oracle`)
 

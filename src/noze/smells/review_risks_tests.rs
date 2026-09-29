@@ -5,11 +5,15 @@ use crate::spine::parser::parse_file;
 use std::fs;
 
 fn local(ext: &str, source: &str) -> Vec<SmellFinding> {
+    local_with_config(ext, source, &review_risk_config())
+}
+
+fn local_with_config(ext: &str, source: &str, config: &Smells) -> Vec<SmellFinding> {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join(format!("sample.{ext}"));
     fs::write(&path, source).unwrap();
     let file = parse_file(&path, 0).unwrap();
-    detect_local(&file, &review_risk_config())
+    detect_local(&file, config)
 }
 
 fn review_risk_config() -> Smells {
@@ -139,6 +143,9 @@ class XmlEncoder(Encoder):
 "#;
     assert!(!has(&local("py", valid), SmellKind::DivergentAbstraction));
 }
+
+#[path = "review_risks_wrapper_tests.rs"]
+mod wrapper_tests;
 
 #[test]
 fn tests_without_behavioral_checks_are_reported() {

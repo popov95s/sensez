@@ -3,6 +3,44 @@ use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
 use tree_sitter::Node;
 
+pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> Option<String> {
+    if func
+        .parent()
+        .is_some_and(|parent| parent.kind() == "decorated_definition")
+    {
+        return None;
+    }
+    let body = func.child_by_field_name("body")?;
+    let mut cursor = body.walk();
+    let mut statements = body
+        .named_children(&mut cursor)
+        .filter(|n| n.kind() != "comment");
+    let statement = statements.next()?;
+    if statement.kind() != "return_statement" || statements.next().is_some() {
+        return None;
+    }
+    let call = statement.named_child(0)?;
+    if call.kind() != "call" {
+        return None;
+    }
+    let callee = call.child_by_field_name("function")?;
+    if callee.kind() != "identifier" {
+        return None;
+    }
+    let args = call.child_by_field_name("arguments")?;
+    let mut cursor = args.walk();
+    let passed: Option<Vec<_>> = args
+        .named_children(&mut cursor)
+        .map(|arg| {
+            (arg.kind() == "identifier")
+                .then(|| arg.utf8_text(src).ok())
+                .flatten()
+        })
+        .collect();
+    (!params.is_empty() && passed? == params.iter().map(String::as_str).collect::<Vec<_>>())
+        .then(|| callee.utf8_text(src).ok().map(str::to_string))
+        .flatten()
+}
 const TEST_CHECKS: TestChecks = TestChecks {
     statement_kinds: &["assert_statement", "raise_statement"],
     call_kind: "call",
