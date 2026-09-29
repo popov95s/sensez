@@ -302,6 +302,12 @@ fn init_can_opt_in_to_eyez_semantic_duplication() {
 
     let text = fs::read_to_string(root.join("sensez.toml")).unwrap();
     let config: toml::Value = toml::from_str(&text).unwrap();
-    assert_eq!(config["duplication"]["semantic"]["enabled"], true);
-    assert_eq!(config["self_improvement"]["enabled"], false);
+    assert_eq!(
+        config["duplication"]["semantic"]["enabled"].as_bool(),
+        Some(true)
+    );
+    assert_eq!(
+        config["self_improvement"]["enabled"].as_bool(),
+        Some(false)
+    );
 }
