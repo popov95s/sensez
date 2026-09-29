@@ -306,8 +306,5 @@ fn init_can_opt_in_to_eyez_semantic_duplication() {
         config["duplication"]["semantic"]["enabled"].as_bool(),
         Some(true)
     );
-    assert_eq!(
-        config["self_improvement"]["enabled"].as_bool(),
-        Some(false)
-    );
+    assert_eq!(config["self_improvement"]["enabled"].as_bool(), Some(false));
 }
