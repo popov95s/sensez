@@ -27,7 +27,7 @@ KNOB_COMMENTS = {
     "max_chain_depth": "allowed property/call chain depth",
     "max_cognitive": "allowed cognitive complexity score",
     "max_cyclomatic": "allowed independent control-flow paths",
-    "max_depth": "allowed message-chain depth",
+    "max_depth": "allowed depth before flagging",
     "max_lines": "allowed function or nested-function length",
     "max_methods": "allowed methods before a class is large",
     "max_nesting": "allowed nested block depth",

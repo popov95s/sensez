@@ -973,6 +973,17 @@
       <ul class="md-nav__list">
         
           <li class="md-nav__item">
+  <a href="#redundant-wrapper-chain-redundant_wrapper_chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redundant Wrapper Chain (redundant_wrapper_chain)
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#weak-test-oracle-weak_test_oracle" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -1854,6 +1865,17 @@
   
     <nav class="md-nav" aria-label="Other">
       <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#redundant-wrapper-chain-redundant_wrapper_chain" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Redundant Wrapper Chain (redundant_wrapper_chain)
+      
+    </span>
+  </a>
+  
+</li>
         
           <li class="md-nav__item">
   <a href="#weak-test-oracle-weak_test_oracle" class="md-nav__link">
@@ -4113,7 +4135,7 @@
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.message_chain]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="n">max_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed message-chain depth</span>
+<span class="n">max_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed depth before flagging</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -5257,13 +5279,99 @@
 </details>
 
 <h2 id="other">Other</h2>
+<h3 id="redundant-wrapper-chain-redundant_wrapper_chain">Redundant Wrapper Chain (<code>redundant_wrapper_chain</code>)</h3>
+<p><strong>What it is</strong></p>
+<p>A local function forwards arguments unchanged without adding behavior — remove the wrapper or allow a deliberate depth in configuration.</p>
+<p><strong>Why it's bad</strong></p>
+<p>An unchanged forwarding layer adds indirection without behavior and makes navigation harder.</p>
+<p><strong>Example</strong></p>
+<div class="tabbed-set tabbed-alternate" data-tabs="40:2"><input checked="checked" id="__tabbed_40_1" name="__tabbed_40" type="radio" /><input id="__tabbed_40_2" name="__tabbed_40" type="radio" /><div class="tabbed-labels"><label for="__tabbed_40_1">Python</label><label for="__tabbed_40_2">JS / TS</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">middle</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">normalize</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">outer</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">middle</span><span class="p">(</span><span class="n">value</span><span class="p">)</span>
+
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">outer</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Remove pass-through functions, or raise <code>max_depth</code> when a deliberate boundary is worth keeping.</p>
+<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">normalize</span><span class="p">(</span><span class="n">value</span><span class="p">:</span> <span class="nb">int</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">int</span><span class="p">:</span>
+    <span class="k">return</span> <span class="n">value</span> <span class="o">+</span> <span class="mi">1</span>
+
+
+<span class="n">result</span> <span class="o">=</span> <span class="n">normalize</span><span class="p">(</span><span class="mi">2</span><span class="p">)</span>
+</code></pre></div>
+</details></p>
+</div>
+<div class="tabbed-block">
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">normalize</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">middle</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">normalize</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">function</span><span class="w"> </span><span class="nx">outer</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">middle</span><span class="p">(</span><span class="nx">value</span><span class="p">);</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">outer</span><span class="p">(</span><span class="mf">2</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Remove pass-through functions, or raise <code>max_depth</code> when a deliberate boundary is worth keeping.</p>
+<p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">normalize</span><span class="p">(</span><span class="nx">value</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">value</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<span class="p">}</span>
+
+<span class="kd">const</span><span class="w"> </span><span class="nx">result</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">normalize</span><span class="p">(</span><span class="mf">2</span><span class="p">);</span>
+<span class="nx">console</span><span class="p">.</span><span class="nx">log</span><span class="p">(</span><span class="nx">result</span><span class="p">);</span>
+</code></pre></div>
+</details></p>
+</div>
+</div>
+</div>
+<p><strong>Tune It</strong></p>
+<p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.redundant_wrapper_chain]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">max_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="w"> </span><span class="c1"># allowed depth before flagging</span>
+</code></pre></div>
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 <h3 id="weak-test-oracle-weak_test_oracle">Weak Test Oracle (<code>weak_test_oracle</code>)</h3>
 <p><strong>What it is</strong></p>
 <p>A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code.</p>
 <p><strong>Why it's bad</strong></p>
 <p>A test that only executes code can pass when behavior is wrong.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="40:2"><input checked="checked" id="__tabbed_40_1" name="__tabbed_40" type="radio" /><input id="__tabbed_40_2" name="__tabbed_40" type="radio" /><div class="tabbed-labels"><label for="__tabbed_40_1">Python</label><label for="__tabbed_40_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="41:2"><input checked="checked" id="__tabbed_41_1" name="__tabbed_41" type="radio" /><input id="__tabbed_41_2" name="__tabbed_41" type="radio" /><div class="tabbed-labels"><label for="__tabbed_41_1">Python</label><label for="__tabbed_41_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
