@@ -29,3 +29,7 @@ greater than the previous published version and use `major.minor.patch`.
 The workflow builds native packages for `darwin-arm64`, `darwin-x64`,
 `linux-x64`, and `win32-x64`. Marketplace clients select the matching target
 automatically.
+
+Release binaries include Eyez. During interactive project setup, semantic
+duplicate detection is offered as an opt-in; its local embedding cache remains
+under `.sensez/`.

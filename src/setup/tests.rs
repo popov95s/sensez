@@ -283,7 +283,7 @@ fn codex_init_preserves_other_existing_servers() {
 fn pyproject_mode_appends_tool_sensez() {
     let (_tmp, root) = temp_root();
     fs::write(root.join("pyproject.toml"), "[project]\nname = \"x\"\n").unwrap();
-    let msg = artifacts::write_config(&root, true, true).unwrap();
+    let msg = artifacts::write_config(&root, true, true, false).unwrap();
     assert!(msg.contains("pyproject"));
 
     let text = fs::read_to_string(root.join("pyproject.toml")).unwrap();
@@ -292,4 +292,16 @@ fn pyproject_mode_appends_tool_sensez() {
     // Round-trip: the config layer must actually parse what init wrote.
     let cfg = crate::config::model::Config::load(&root).unwrap();
     assert!(cfg.self_improvement.enabled);
+}
+
+#[cfg(feature = "eyez")]
+#[test]
+fn init_can_opt_in_to_eyez_semantic_duplication() {
+    let (_tmp, root) = temp_root();
+    artifacts::write_config(&root, false, false, true).unwrap();
+
+    let text = fs::read_to_string(root.join("sensez.toml")).unwrap();
+    let config: toml::Value = toml::from_str(&text).unwrap();
+    assert_eq!(config["duplication"]["semantic"]["enabled"], true);
+    assert_eq!(config["self_improvement"]["enabled"], false);
 }

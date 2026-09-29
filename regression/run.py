@@ -22,6 +22,7 @@ from .scenarios.gates import (
 )
 from .scenarios.mcp_flow import run_mcp_scenarios
 from .scenarios.reflexez import run_reflexez_scenario
+from .scenarios.smells import run_smell_regressions
 from .setup_regressions import run_setup_regressions
 
 
@@ -54,7 +55,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument(
         "--scenario",
         action="append",
-        choices=["full", "cache", "reflexez", "mcp", "gate", "branch"],
+        choices=["full", "cache", "reflexez", "smells", "mcp", "gate", "branch"],
         default=[],
     )
     parser.add_argument("--all", action="store_true")
@@ -113,6 +114,8 @@ def run_target(
         run_cache_impact_scenario(context)
     if enabled("reflexez"):
         run_reflexez_scenario(context)
+    if enabled("smells"):
+        run_smell_regressions(context)
     if enabled("mcp"):
         run_mcp_scenarios(context)
     if enabled("gate"):
