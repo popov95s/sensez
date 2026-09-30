@@ -45,8 +45,7 @@ pub fn build(files: &[&ParsedFile]) -> Master {
             text.push(dense.id(*code));
             spans.push(TokenSpan {
                 file_id: file_idx as u32,
-                start_row: span.start_row,
-                end_row: span.end_row,
+                ..*span
             });
         }
         text.push(dense.id(SEP_BASE + file_idx as u64));
@@ -63,6 +62,8 @@ fn non_token_span() -> TokenSpan {
         file_id: NON_TOKEN,
         start_row: 0,
         end_row: 0,
+        start_byte: 0,
+        end_byte: 0,
     }
 }
 

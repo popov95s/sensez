@@ -176,6 +176,8 @@ pub(crate) fn emit(out: &mut Walked, file_id: u32, node: Node, tok: StructuralTo
         file_id,
         start_row: (start.row + 1) as u32,
         end_row: (end.row + 1) as u32,
+        start_byte: node.start_byte() as u32,
+        end_byte: node.end_byte() as u32,
     });
 }
 

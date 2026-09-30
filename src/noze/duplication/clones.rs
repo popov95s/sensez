@@ -175,6 +175,8 @@ mod tests {
             file_id: id,
             start_row: 1,
             end_row: 1,
+            start_byte: 0,
+            end_byte: 0,
         }
     }
 

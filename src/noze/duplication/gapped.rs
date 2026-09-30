@@ -145,6 +145,8 @@ mod tests {
             file_id: id,
             start_row: 1,
             end_row: 1,
+            start_byte: 0,
+            end_byte: 0,
         };
         let mut s: Vec<TokenSpan> = (0..6).map(|_| f(0)).collect();
         s.push(f(u32::MAX)); // separator at index 6

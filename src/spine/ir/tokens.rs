@@ -34,4 +34,6 @@ pub struct TokenSpan {
     pub file_id: u32,
     pub start_row: u32,
     pub end_row: u32,
+    pub start_byte: u32,
+    pub end_byte: u32,
 }

@@ -193,12 +193,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 25,
+          "end_row": 24,
           "file": "<flask>/src/flask/sansio/blueprints.py",
           "start_row": 18
         },
         {
-          "end_row": 35,
+          "end_row": 34,
           "file": "<flask>/src/flask/sansio/scaffold.py",
           "start_row": 28
         }
