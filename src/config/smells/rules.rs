@@ -7,10 +7,8 @@ use std::collections::BTreeMap;
 /// Apply one `rules` scope's knobs/actions/enabled flags to `smells`.
 pub(super) fn apply_rules(
     smells: &mut Smells,
-    scope: &str,
     rules: &BTreeMap<SmellKind, RuleRaw>,
 ) -> Result<(), String> {
-    validate_rule_keys(scope, rules)?;
     for (&kind, rule) in rules {
         let recognized = rule
             .knobs
@@ -23,31 +21,11 @@ pub(super) fn apply_rules(
         }
         if let Some(enabled) = rule.enabled {
             set_rule_enabled(smells, kind, enabled);
-        } else if recognized {
+        } else if recognized || rule.action.is_some() {
             set_rule_enabled(smells, kind, true);
         }
     }
     Ok(())
-}
-
-fn validate_rule_keys(scope: &str, rules: &BTreeMap<SmellKind, RuleRaw>) -> Result<(), String> {
-    let unknown: Vec<_> = rules
-        .iter()
-        .flat_map(|(&kind, rule)| {
-            rule.knobs
-                .keys()
-                .filter(move |key| !is_rule_key(kind, key))
-                .map(move |key| format!("{kind}.{key}"))
-        })
-        .collect();
-    if unknown.is_empty() {
-        Ok(())
-    } else {
-        Err(format!(
-            "unknown [smells.{scope}.rules] key(s): {}",
-            unknown.join(", ")
-        ))
-    }
 }
 
 fn apply_rule_knob(
@@ -158,10 +136,19 @@ fn set(slot: &mut usize, value: usize) -> bool {
     true
 }
 
-fn is_rule_key(kind: SmellKind, key: &str) -> bool {
-    matches!(key, "enabled" | "action")
-        || integer_rule_knobs(kind).contains(&key)
-        || strictness::is_string_rule_knob(kind, key)
+const COMMON_RULE_KEYS: [&str; 2] = ["enabled", "action"];
+
+/// Every key a `[smells.rules.<kind>]` table accepts.
+pub(crate) fn rule_keys(kind: SmellKind) -> Vec<&'static str> {
+    let strictness_knobs = strictness::STRICTNESS_RULES
+        .iter()
+        .filter(|rule| rule.kind == kind)
+        .map(|rule| rule.knob);
+    COMMON_RULE_KEYS
+        .into_iter()
+        .chain(integer_rule_knobs(kind).iter().copied())
+        .chain(strictness_knobs)
+        .collect()
 }
 
 fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
@@ -195,12 +182,13 @@ fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
     }
 }
 
-fn set_rule_enabled(smells: &mut Smells, kind: SmellKind, enabled: bool) {
+pub(super) fn set_rule_enabled(smells: &mut Smells, kind: SmellKind, enabled: bool) {
     match kind {
         SmellKind::MagicNumbers => smells.magic_numbers = enabled,
         SmellKind::NarratingCode => smells.narrating_code = enabled,
         SmellKind::HighComplexity => smells.cyclomatic_complexity = enabled,
         SmellKind::LongFunction => smells.long_function = enabled,
+        SmellKind::LargeClass => smells.large_class = enabled,
         SmellKind::LongParameterList => smells.long_parameter_list = enabled,
         SmellKind::TooManyReturns => smells.too_many_returns = enabled,
         SmellKind::SplitVariable => smells.split_variable = enabled,

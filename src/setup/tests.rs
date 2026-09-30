@@ -4,7 +4,7 @@ use super::*;
 use std::fs;
 use std::path::PathBuf;
 
-fn temp_root() -> (tempfile::TempDir, PathBuf) {
+pub(super) fn temp_root() -> (tempfile::TempDir, PathBuf) {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path().canonicalize().unwrap();
     fs::create_dir(root.join(".git")).unwrap();

@@ -8,7 +8,7 @@ roots = []
 exclude = []   # e.g. ["**/tests/**", "**/migrations/**"]
 
 [cache]
-enable = true
+enabled = true
 
 # Duplication detector: minimum structural-token run length to report a clone.
 # Copy-paste detection. A clone is a run of identical lexemes — real

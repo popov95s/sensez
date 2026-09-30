@@ -26,7 +26,8 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
     let dynamic = dynamic::scan(&project.sources);
     let mut parsed = crate::spine::parser::parse_files(&project.sources);
     add_dynamic_imports(&mut parsed.files, &dynamic);
-    let (config, config_issues) = crate::config::model::Config::load_for_scan(&scope.repository);
+    let (config, settings_warnings) =
+        crate::config::model::Config::load_for_scan(&scope.repository);
     let graph = crate::spine::graph::build(&parsed.files, &config.roots);
     let mut fallback = scope.fallback_reasons;
     let hides_tests = |issue: &ScanIssue| {
@@ -35,7 +36,7 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
             .as_deref()
             .is_none_or(|file| !crate::profiles::registry::is_declaration_only(file))
     };
-    if !config_issues.is_empty() || parsed.issues.iter().any(hides_tests) {
+    if parsed.issues.iter().any(hides_tests) {
         fallback.push("incomplete parsing could hide an affected test".into());
     }
     if args.full {
@@ -116,6 +117,10 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         full_suite,
         fallback_reasons: fallback,
         config_warnings: project.config_warnings,
+        settings_warnings: settings_warnings
+            .into_iter()
+            .map(|issue| issue.message)
+            .collect(),
         unresolved_dynamic_imports: dynamic.unresolved,
         opaque_import_files,
         unmapped_changes: reached.unmapped,

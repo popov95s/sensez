@@ -1,7 +1,7 @@
 //! Aggregated scan summary for configuration tuning surfaces.
 
 use crate::config::Config;
-use crate::report::{AnalysisReport, SmellKind};
+use crate::report::{AnalysisReport, ScanStage, SmellKind};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -50,6 +50,14 @@ pub(crate) fn scan(path: &Path, threshold: Option<usize>) -> Result<String> {
         config.duplication.threshold = value;
     }
     let (report, _) = crate::analyze_path(path, threshold)?;
+    for issue in report
+        .meta
+        .issues
+        .iter()
+        .filter(|issue| issue.stage == ScanStage::Config)
+    {
+        eprintln!("[sensez] config: {}", issue.message);
+    }
     let summary = from_report(path, &report, &config);
     serde_json::to_string_pretty(&summary).context("serializing configuration summary")
 }

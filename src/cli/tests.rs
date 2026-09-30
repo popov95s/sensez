@@ -60,7 +60,7 @@ fn fail_on_new_without_diff_requires_a_git_worktree() {
         ..scan_options()
     };
     let error = run_scan(tmp.path(), &options).unwrap_err();
-    assert!(error.to_string().contains("requires a usable diff source"));
+    assert!(error.to_string().contains("refusing to fall back"));
 }
 
 #[test]
@@ -279,7 +279,7 @@ fn dead(symbol: &str, confidence: Confidence) -> DeadCodeFinding {
     }
 }
 
-fn scan_options() -> spec::ScanOptions {
+pub(super) fn scan_options() -> spec::ScanOptions {
     spec::ScanOptions {
         threshold: None,
         summary: false,
@@ -298,18 +298,4 @@ fn scan_options() -> spec::ScanOptions {
         fail_on_new: None,
         explain: false,
     }
-}
-
-#[test]
-fn diff_selection_degrades_to_warning_outside_git() {
-    let tmp = tempfile::tempdir().unwrap();
-    let selected = build_diff(tmp.path(), true, None);
-    assert!(selected.changed.is_none());
-    assert_eq!(selected.issues.len(), 1);
-    assert_eq!(selected.issues[0].stage, crate::report::ScanStage::Diff);
-    assert!(
-        selected.issues[0].message.contains("git rev-parse"),
-        "{:?}",
-        selected.issues[0]
-    );
 }

@@ -184,41 +184,50 @@ fn signature_is_stable_and_changes_with_knobs() {
     assert_ne!(cfg.signature(), cache_changed.signature());
 }
 
-#[test]
-fn unknown_keys_warn_without_failing() {
+fn write_config(text: &str) -> tempfile::TempDir {
     let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path().to_path_buf();
-    std::fs::write(
-        dir.join("sensez.toml"),
-        "[duplication]\ntreshold = 40\nthreshold = 60\n",
-    )
-    .unwrap();
+    std::fs::write(tmp.path().join("sensez.toml"), text).unwrap();
+    tmp
+}
 
-    // Public load succeeds; the typo is ignored and the real knob applies.
-    let cfg = Config::load(&dir).unwrap();
+fn problems(text: &str) -> Vec<String> {
+    let tmp = write_config(text);
+    let errors = Config::load_with_warnings(tmp.path()).unwrap_err();
+    errors.0.iter().map(ToString::to_string).collect()
+}
+
+#[test]
+fn unknown_keys_outside_smells_and_action_warn_once_with_location() {
+    let tmp = write_config("[duplication]\ntreshold = 40\nthreshold = 60\n");
+
+    let cfg = Config::load(tmp.path()).unwrap();
     assert_eq!(cfg.duplication.threshold, 60);
 
-    // Scan loading surfaces the same problem as a ScanIssue.
-    let (cfg, issues) = Config::load_for_scan(&dir);
+    let (cfg, issues) = Config::load_for_scan(tmp.path());
     assert_eq!(cfg.duplication.threshold, 60);
-    let unknown: Vec<_> = issues
-        .iter()
-        .filter(|issue| issue.message.contains("unknown config key"))
-        .collect();
-    assert_eq!(unknown.len(), 1);
-    assert!(
-        unknown[0].message.contains("duplication.treshold"),
-        "{}",
-        unknown[0].message
+    let messages: Vec<_> = issues.iter().map(|issue| issue.message.as_str()).collect();
+    assert_eq!(
+        messages,
+        vec![
+            "sensez.toml:2:1: unknown key `duplication.treshold` ignored (did you mean `threshold`?)"
+        ]
     );
 }
 
 #[test]
-fn known_config_has_no_unknown_key_warnings() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path().to_path_buf();
-    std::fs::write(
-        dir.join("sensez.toml"),
+fn unknown_top_level_table_warns_with_suggestion() {
+    let tmp = write_config("[deadcode]\nunused_methods = true\n");
+    let (_, warnings) = Config::load_with_warnings(tmp.path()).unwrap();
+    assert_eq!(warnings.len(), 1);
+    assert_eq!(
+        warnings[0].to_string(),
+        "sensez.toml:1:2: unknown key `deadcode` ignored (did you mean `dead_code`?)"
+    );
+}
+
+#[test]
+fn known_config_has_no_warnings() {
+    let tmp = write_config(
         "exclude = [\"**/generated/**\"]\n\
          [cache]\nenabled = false\n\
          [duplication]\nthreshold = 55\n\
@@ -228,14 +237,88 @@ fn known_config_has_no_unknown_key_warnings() {
          [action]\ncycles = \"warning\"\n\
          [gate]\nrepeat_limit = 2\n\
          [self_improvement]\nenabled = true\n",
+    );
+
+    let (_, warnings) = Config::load_with_warnings(tmp.path()).unwrap();
+    assert!(warnings.is_empty(), "{warnings:?}");
+}
+
+#[test]
+fn unknown_smells_and_action_keys_are_errors_listed_together() {
+    let problems = problems(
+        "[action]\ncycle = \"info\"\n\
+         [smells]\ntypo_toggle = true\n\
+         [smells.python]\nmade_up = 1\n\
+         [smells.rules.long_function]\nmax_line = 20\n",
+    );
+    assert_eq!(
+        problems,
+        vec![
+            "sensez.toml:2:1: unknown key `action.cycle` (did you mean `cycles`?)",
+            "sensez.toml:4:1: unknown key `smells.typo_toggle`",
+            "sensez.toml:6:1: unknown key `smells.python.made_up`",
+            "sensez.toml:8:1: unknown key `smells.rules.long_function.max_line` (did you mean `max_lines`?)",
+        ]
+    );
+}
+
+#[test]
+fn invalid_enum_is_error_with_location_and_suggestion() {
+    let problems = problems("[action]\ncycles = \"must_fx\"\n");
+    assert_eq!(problems.len(), 1);
+    assert!(
+        problems[0].starts_with("sensez.toml:2:10: "),
+        "{problems:?}"
+    );
+    assert!(
+        problems[0].ends_with("(did you mean `must_fix`?)"),
+        "{problems:?}"
+    );
+}
+
+#[test]
+fn wrong_type_is_error_with_location() {
+    let problems = problems("[duplication]\nthreshold = \"fifty\"\n");
+    assert_eq!(problems.len(), 1);
+    assert!(
+        problems[0].starts_with("sensez.toml:2:13: "),
+        "{problems:?}"
+    );
+    assert!(problems[0].contains("invalid type"), "{problems:?}");
+}
+
+#[test]
+fn syntax_error_is_error_with_location() {
+    let problems = problems("[duplication\nthreshold = 5\n");
+    assert_eq!(problems.len(), 1);
+    assert!(problems[0].starts_with("sensez.toml:1:"), "{problems:?}");
+}
+
+#[test]
+fn pyproject_problems_point_into_pyproject() {
+    let tmp = tempfile::tempdir().unwrap();
+    std::fs::write(
+        tmp.path().join("pyproject.toml"),
+        "[project]\nname = \"x\"\n\n[tool.sensez.action]\ncycles = \"critical\"\n",
     )
     .unwrap();
-
-    let (_, issues) = Config::load_for_scan(&dir);
+    let errors = Config::load_with_warnings(tmp.path()).unwrap_err();
+    assert_eq!(errors.0.len(), 1);
     assert!(
-        !issues
-            .iter()
-            .any(|issue| issue.message.contains("unknown config key")),
-        "{issues:?}"
+        errors.0[0].to_string().starts_with("pyproject.toml:5:10: "),
+        "{errors}"
     );
+}
+
+#[test]
+fn pyproject_without_tool_sensez_uses_defaults() {
+    let tmp = tempfile::tempdir().unwrap();
+    std::fs::write(
+        tmp.path().join("pyproject.toml"),
+        "[project]\nname = \"x\"\n[tool.ruff]\nline-length = 100\n",
+    )
+    .unwrap();
+    let (cfg, warnings) = Config::load_with_warnings(tmp.path()).unwrap();
+    assert_eq!(cfg.duplication.threshold, 50);
+    assert!(warnings.is_empty());
 }

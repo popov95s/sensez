@@ -5,11 +5,12 @@ use super::triage;
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
-pub fn apply_suppressions(root: &Path, report: &mut crate::report::AnalysisReport) {
+pub fn apply_suppressions(
+    root: &Path,
+    accept: &BTreeMap<String, Vec<String>>,
+    report: &mut crate::report::AnalysisReport,
+) {
     let triaged = triage::load(root);
-    let accept = crate::config::model::Config::load(root)
-        .map(|c| c.accept)
-        .unwrap_or_default();
     if triaged.is_empty() && accept.is_empty() {
         return;
     }
@@ -20,7 +21,7 @@ pub fn apply_suppressions(root: &Path, report: &mut crate::report::AnalysisRepor
     let prints = fingerprint::fingerprints(&value);
     let ctx = Suppress {
         ignore: &ignore,
-        accept: &accept,
+        accept,
     };
     fingerprint::retain_by_fingerprint(
         &mut report.cycles,
@@ -103,7 +104,7 @@ mod tests {
         triage_finding(root, "dead_code", "orphan_two", "false_positive", None).unwrap();
 
         let (mut report, _) = crate::analyze_path(root, None).unwrap();
-        apply_suppressions(root, &mut report);
+        apply_suppressions(root, &BTreeMap::new(), &mut report);
         let symbols: Vec<&str> = report.dead_code.iter().map(|f| f.symbol.as_str()).collect();
         assert!(
             symbols.contains(&"orphan"),
@@ -165,8 +166,7 @@ mod tests {
         )
         .unwrap();
 
-        let (mut report, _) = crate::analyze_path(root, None).unwrap();
-        apply_suppressions(root, &mut report);
+        let (report, _) = crate::analyze_path(root, None).unwrap();
         let symbols: Vec<&str> = report.dead_code.iter().map(|f| f.symbol.as_str()).collect();
         assert!(
             symbols.contains(&"keeper"),

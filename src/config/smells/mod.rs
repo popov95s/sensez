@@ -6,9 +6,9 @@ mod raw;
 mod resolve;
 mod rules;
 mod strictness;
-mod validate;
 
 pub use knobs::{Smells, Strictness};
+pub(crate) use rules::rule_keys;
 
 use crate::spine::ir::Language;
 use serde::{Deserialize, Serialize};

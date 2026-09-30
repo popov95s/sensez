@@ -1800,6 +1800,7 @@ dependencies = [
  "rustc-hash",
  "serde",
  "serde_json",
+ "strsim",
  "tempfile",
  "tokio",
  "toml",

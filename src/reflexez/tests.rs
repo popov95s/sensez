@@ -11,7 +11,7 @@ pub(super) struct Project {
 pub(super) const VITEST_MANIFEST: &str = r#"{"devDependencies":{"vitest":"4"}}"#;
 
 impl Project {
-    fn new(test_source: &str) -> Self {
+    pub(super) fn new(test_source: &str) -> Self {
         Self::with_files(&[
             ("src/feature.ts", "export const value = 1;\n"),
             ("src/other.ts", "export const other = 2;\n"),

@@ -228,3 +228,7 @@ mod global_tests;
 #[cfg(test)]
 #[path = "tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "template_tests.rs"]
+mod template_tests;

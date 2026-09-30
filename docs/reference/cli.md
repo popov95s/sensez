@@ -2,6 +2,18 @@
 
 This page mirrors `src/cli/spec.rs`.
 
+## Exit codes
+
+| Code | Meaning |
+|---|---|
+| `0` | Clean: the scan ran and no gate tripped |
+| `1` | Gate tripped: a finding met `--fail-on` / `--fail-on-new` |
+| `2` | Error: bad arguments, no usable diff for `--diff` / `--diff-from` / `--fail-on-new`, or an incomplete scan under `--fail-on` / `--fail-on-new` (an analyzer such as `[duplication.semantic]` could not run) |
+
+`--diff` and `--diff-from` never fall back to a full scan: outside a git work
+tree, or with an unreadable diff file, they exit `2`. `--fail-on` without a
+diff flag works outside git.
+
 ## `sensez --help`
 
 ```text

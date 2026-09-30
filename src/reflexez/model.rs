@@ -80,6 +80,7 @@ pub struct ImpactPlan {
     pub full_suite: bool,
     pub fallback_reasons: Vec<String>,
     pub config_warnings: Vec<ConfigWarning>,
+    pub settings_warnings: Vec<String>,
     pub unresolved_dynamic_imports: usize,
     pub opaque_import_files: Vec<PathBuf>,
     pub unmapped_changes: Vec<PathBuf>,

@@ -2,19 +2,23 @@
 
 mod brainz;
 pub mod model;
+mod parse;
+mod problem;
 pub mod smells;
 mod source;
-mod warnings;
+mod suggest;
+mod unknown_keys;
 
 pub use brainz::SelfImprovement;
 pub use model::{
     ActionPolicy, Boundaries, Cache, Config, Cycles, DeadCode, Duplication, ForbiddenRule,
     SemanticDuplication,
 };
+pub use problem::{ConfigErrors, ConfigProblem};
 pub use smells::{SmellConfig, Smells};
 
 use crate::report::{ScanIssue, ScanStage};
-use anyhow::{Context, Result};
+use anyhow::Result;
 use std::path::Path;
 
 /// Vendored/generated/build artifacts and documentation applications are not
@@ -53,51 +57,44 @@ pub(crate) const BASELINE_EXCLUDE: [&str; 8] = [
 
 impl Config {
     /// Load configuration: `sensez.toml`, else `[tool.sensez]` from
-    /// `pyproject.toml`, else defaults (see [`source`]).
+    /// `pyproject.toml`, else defaults (see [`source`]). Warnings are dropped.
     pub fn load(project_root: &Path) -> Result<Config> {
-        let (mut config, unknown_keys) = match source::discover(project_root)? {
-            source::Source::SensezToml(text) => parse_source(source::Source::SensezToml(text))?,
-            source::Source::Pyproject(table) => parse_source(source::Source::Pyproject(table))?,
-            source::Source::Defaults => (Config::default(), Vec::new()),
-        };
-        for key in &unknown_keys {
-            eprintln!("[sensez] config: unknown key `{key}` (ignored)");
-        }
-        // Resolve configured roots to absolute paths under the project root.
-        config.roots = config.roots.iter().map(|r| project_root.join(r)).collect();
-        config.apply_baseline_excludes();
-        config.validate_globs()?;
-        Ok(config)
+        Ok(Self::load_with_warnings(project_root)?.0)
     }
 
-    /// Load configuration for a scan. Invalid project-local config degrades to
-    /// defaults and emits structured warnings so analysis can still complete.
+    /// Strict load: `Err` lists every error; `Ok` carries non-fatal warnings.
+    pub fn load_with_warnings(
+        project_root: &Path,
+    ) -> Result<(Config, Vec<ConfigProblem>), ConfigErrors> {
+        let source =
+            source::discover(project_root).map_err(|problem| ConfigErrors(vec![problem]))?;
+        let (mut config, warnings) = parse::parse(&source).map_err(ConfigErrors)?;
+        config.resolve_paths(project_root);
+        config.validate_globs().map_err(|err| {
+            ConfigErrors(vec![ConfigProblem {
+                file: source.file(),
+                position: None,
+                message: format!("{err:#}"),
+            }])
+        })?;
+        Ok((config, warnings))
+    }
+
+    /// Load configuration for a scan; invalid config runs on defaults and every problem becomes a [`ScanIssue`].
     pub(crate) fn load_for_scan(project_root: &Path) -> (Config, Vec<ScanIssue>) {
-        let (source, mut issues) = source::discover_with_issues(project_root);
-        let issue_file = config_issue_file(&source, project_root);
-        let mut config = match parse_source(source) {
-            Ok((config, unknown)) if unknown.is_empty() => config,
-            Ok((config, unknown)) => {
-                issues.push(config_issue(
-                    issue_file.clone(),
-                    format!("unknown config key(s): {} (ignored)", unknown.join(", ")),
-                ));
-                config
+        match Self::load_with_warnings(project_root) {
+            Ok((config, warnings)) => (config, warnings.into_iter().map(config_issue).collect()),
+            Err(errors) => {
+                let mut config = Config::default();
+                config.resolve_paths(project_root);
+                (config, errors.0.into_iter().map(config_issue).collect())
             }
-            Err(err) => {
-                issues.push(config_issue(issue_file.clone(), format!("{err:#}")));
-                Config::default()
-            }
-        };
-        config.roots = config.roots.iter().map(|r| project_root.join(r)).collect();
-        config.apply_baseline_excludes();
-        if let Err(err) = config.validate_globs() {
-            issues.push(config_issue(issue_file, format!("{err:#}")));
-            config = Config::default();
-            config.roots = config.roots.iter().map(|r| project_root.join(r)).collect();
-            config.apply_baseline_excludes();
         }
-        (config, issues)
+    }
+
+    fn resolve_paths(&mut self, project_root: &Path) {
+        self.roots = self.roots.iter().map(|r| project_root.join(r)).collect();
+        self.apply_baseline_excludes();
     }
 
     /// Merge the built-in test/migration globs into both pillars (idempotent).
@@ -133,38 +130,11 @@ impl Config {
     }
 }
 
-fn parse_source(source: source::Source) -> Result<(Config, Vec<String>)> {
-    let (value, label) = match source {
-        source::Source::SensezToml(text) => {
-            let value = text.parse::<toml::Value>().context("parsing sensez.toml")?;
-            (value, "sensez.toml")
-        }
-        source::Source::Pyproject(table) => (table, "[tool.sensez] in pyproject.toml"),
-        source::Source::Defaults => return Ok((Config::default(), Vec::new())),
-    };
-    let unknown_keys = value
-        .as_table()
-        .map(warnings::collect_unknown_keys)
-        .unwrap_or_default();
-    let config: Config = value
-        .try_into()
-        .with_context(|| format!("parsing {label}"))?;
-    Ok((config, unknown_keys))
-}
-
-fn config_issue_file(source: &source::Source, project_root: &Path) -> Option<std::path::PathBuf> {
-    match source {
-        source::Source::SensezToml(_) => Some(project_root.join("sensez.toml")),
-        source::Source::Pyproject(_) => Some(project_root.join("pyproject.toml")),
-        source::Source::Defaults => None,
-    }
-}
-
-fn config_issue(file: Option<std::path::PathBuf>, message: String) -> ScanIssue {
+fn config_issue(problem: ConfigProblem) -> ScanIssue {
     ScanIssue {
         stage: ScanStage::Config,
-        file,
-        message,
+        file: None,
+        message: problem.to_string(),
     }
 }
 
