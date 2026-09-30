@@ -46,7 +46,9 @@ impl ResolutionCache {
     }
 }
 
-use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, PerfLine, Walked};
+use crate::spine::ir::{
+    ClassProperty, ClassUnit, ImportContext, ImportPhase, Language, PerfLine, Walked,
+};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -149,6 +151,15 @@ pub trait ModuleProfile: Send + Sync {
         root: &Path,
         resolution_cache: &mut ResolutionCache,
     ) -> String;
+    /// Phase of the graph edge built from `import`.
+    fn edge_phase(
+        &self,
+        import: &ImportContext,
+        _importer_file: &Path,
+        _resolution_cache: &mut ResolutionCache,
+    ) -> ImportPhase {
+        import.phase
+    }
     /// Give a colliding module identity a profile-specific, workspace-relative
     /// name. Profiles that have no alternate namespace retain `base`.
     fn disambiguated_module_name(&self, file: &Path, workspace_root: &Path, base: &str) -> String {

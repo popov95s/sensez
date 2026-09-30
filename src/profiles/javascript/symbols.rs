@@ -10,6 +10,16 @@ pub fn def_name(node: Node, src: &[u8]) -> Option<String> {
         .map(str::to_string)
 }
 
+/// True when `node` is the declaration of an `export default` statement.
+pub fn is_default_export(node: Node) -> bool {
+    node.parent().is_some_and(|parent| {
+        parent.kind() == "export_statement"
+            && parent
+                .children(&mut parent.walk())
+                .any(|child| child.kind() == "default")
+    })
+}
+
 /// Names declared by a `lexical_declaration` / `variable_declaration`, each with
 /// a kind: `Function` when the initializer is a function/arrow, else `Variable`.
 pub fn declared_vars(node: Node, src: &[u8]) -> Vec<(String, SymbolKind)> {

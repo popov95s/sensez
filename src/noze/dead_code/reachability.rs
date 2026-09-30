@@ -74,7 +74,8 @@ pub(super) fn skip_symbol(
     {
         return true; // referenced within its own module
     }
-    used.contains(symbol)
+    let is_default = file.walked.symbols.default_export.as_deref() == Some(symbol);
+    used.contains(symbol) || (is_default && used.contains("default"))
 }
 
 /// Confidence from what sensez can actually prove (no framework assumptions):

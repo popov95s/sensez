@@ -76,6 +76,8 @@ pub struct SymbolFacts {
     pub methods: Vec<(String, usize)>,
     pub dunder_all: Option<Vec<String>>,
     pub decorators: HashMap<String, Vec<String>>,
+    #[serde(default)]
+    pub default_export: Option<String>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

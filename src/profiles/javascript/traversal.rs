@@ -254,11 +254,13 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
     match kind {
         "function_declaration" | "generator_function_declaration" => {
             if let Some(name) = symbols::def_name(node, src) {
+                record_default_export(node, &name, ctx);
                 declare(ctx.out, name, SymbolKind::Function, line);
             }
         }
         "class_declaration" | "abstract_class_declaration" => {
             if let Some(name) = symbols::def_name(node, src) {
+                record_default_export(node, &name, ctx);
                 declare(ctx.out, name, SymbolKind::Class, line);
             }
         }
@@ -278,5 +280,11 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
             }
         }
         _ => {}
+    }
+}
+
+fn record_default_export(node: Node, name: &str, ctx: &mut VisitCtx) {
+    if symbols::is_default_export(node) {
+        ctx.out.symbols.default_export = Some(name.to_string());
     }
 }

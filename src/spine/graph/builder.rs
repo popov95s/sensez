@@ -3,9 +3,10 @@
 use super::identity;
 use crate::profiles::{registry, ResolutionCache};
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
-use crate::spine::ir::Language;
+use crate::spine::ir::{ImportContext, Language};
 use crate::spine::parser::ParsedFile;
 use petgraph::graph::NodeIndex;
+use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
 use std::path::PathBuf;
 
@@ -58,8 +59,15 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
             .get(&(file.language, identities[i].root.clone()))
             .unwrap_or(&empty_scope);
         for import in &file.walked.symbols.imports {
+            let import = match profile.edge_phase(import, &file.path, &mut resolution_cache) {
+                phase if phase == import.phase => Cow::Borrowed(import),
+                phase => Cow::Owned(ImportContext {
+                    phase,
+                    ..import.clone()
+                }),
+            };
             let resolved = profile.resolve_target(
-                import,
+                &import,
                 &pkg,
                 &file.path,
                 &identities[i].root,
@@ -77,7 +85,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
                 &src_module,
                 file.language,
                 target,
-                import,
+                &import,
                 &file.walked.usage.attribute_accesses,
             );
         }
