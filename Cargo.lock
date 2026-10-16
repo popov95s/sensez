@@ -1796,6 +1796,7 @@ dependencies = [
  "petgraph 0.6.5",
  "postcard",
  "rayon",
+ "regex",
  "rustc-hash",
  "serde",
  "serde_json",

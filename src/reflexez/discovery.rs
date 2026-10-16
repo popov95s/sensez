@@ -1,10 +1,19 @@
-use super::model::RunnerKind;
+use super::model::{ConfigWarning, RunnerKind};
+use super::runner_config::{RunnerConfig, SetupFile};
 use crate::cli::spec::RunnerChoice;
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
 mod pytest;
+
+const REFLEXEZ_EXCLUDE: [&str; 5] = [
+    "**/node_modules/**",
+    "**/.venv/**",
+    "**/venv/**",
+    "**/target/**",
+    "**/.git/**",
+];
 
 #[derive(Clone)]
 pub struct TestFile {
@@ -13,18 +22,37 @@ pub struct TestFile {
     pub runner_root: PathBuf,
 }
 
+/// A directory where one runner is invoked.
+#[derive(Clone)]
+pub struct RunnerRoot {
+    pub kind: RunnerKind,
+    pub root: PathBuf,
+}
+
 pub struct ProjectFiles {
     pub sources: Vec<PathBuf>,
     pub tests: Vec<TestFile>,
+    pub runners: Vec<RunnerRoot>,
+    pub setup_files: Vec<SetupFile>,
+    pub config_warnings: Vec<ConfigWarning>,
 }
 
 struct NodeProject {
     root: PathBuf,
     runner: RunnerKind,
+    config: RunnerConfig,
+}
+
+fn node_project(root: PathBuf, runner: RunnerKind) -> NodeProject {
+    NodeProject {
+        config: RunnerConfig::load(&root, runner),
+        root,
+        runner,
+    }
 }
 
 pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
-    let exclude: Vec<String> = crate::config::GLOBAL_BASELINE_EXCLUDE
+    let exclude: Vec<String> = REFLEXEZ_EXCLUDE
         .iter()
         .map(|glob| glob.to_string())
         .collect();
@@ -52,31 +80,68 @@ pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
                 runner_root: root.to_path_buf(),
             });
         }
-        if is_node_test(file) {
-            if let Some(project) = nearest_project(file, &node_projects) {
-                tests.push(TestFile {
-                    file: file.clone(),
-                    runner: project.runner,
-                    runner_root: project.root.clone(),
-                });
-            }
+        if let Some(project) =
+            nearest_project(file, &node_projects).filter(|project| project.config.is_test(file))
+        {
+            tests.push(TestFile {
+                file: file.clone(),
+                runner: project.runner,
+                runner_root: project.root.clone(),
+            });
         }
     }
     tests.sort_by(|left, right| left.file.cmp(&right.file));
     tests.dedup_by(|left, right| left.file == right.file && left.runner == right.runner);
-    Ok(ProjectFiles { sources, tests })
+    let mut runners = runner_roots(&node_projects);
+    if tests.iter().any(|test| test.runner == RunnerKind::Pytest) {
+        runners.push(RunnerRoot {
+            kind: RunnerKind::Pytest,
+            root: root.to_path_buf(),
+        });
+    }
+    Ok(ProjectFiles {
+        sources,
+        tests,
+        runners,
+        setup_files: node_projects
+            .iter()
+            .flat_map(|project| project.config.setup_files.iter().cloned())
+            .collect(),
+        config_warnings: node_projects
+            .iter()
+            .flat_map(|project| project.config.warnings.iter().cloned())
+            .collect(),
+    })
+}
+
+/// Node runner roots, minus nested roots an enclosing workspace config already runs.
+fn runner_roots(projects: &[NodeProject]) -> Vec<RunnerRoot> {
+    projects
+        .iter()
+        .filter(|project| {
+            !projects.iter().any(|outer| {
+                outer.root != project.root
+                    && outer.runner == project.runner
+                    && outer.config.project_dirs().any(|dir| dir == project.root)
+            })
+        })
+        .map(|project| RunnerRoot {
+            kind: project.runner,
+            root: project.root.clone(),
+        })
+        .collect()
 }
 
 fn node_projects(root: &Path, files: &[PathBuf], forced: RunnerChoice) -> Result<Vec<NodeProject>> {
     if matches!(forced, RunnerChoice::Vitest | RunnerChoice::Jest) {
-        return Ok(vec![NodeProject {
-            root: root.to_path_buf(),
-            runner: if forced == RunnerChoice::Vitest {
+        return Ok(vec![node_project(
+            root.to_path_buf(),
+            if forced == RunnerChoice::Vitest {
                 RunnerKind::Vitest
             } else {
                 RunnerKind::Jest
             },
-        }]);
+        )]);
     }
     if forced == RunnerChoice::Pytest {
         return Ok(Vec::new());
@@ -91,23 +156,14 @@ fn node_projects(root: &Path, files: &[PathBuf], forced: RunnerChoice) -> Result
             continue;
         };
         if let Some(parent) = manifest.parent() {
-            projects.push(NodeProject {
-                root: parent.to_path_buf(),
-                runner,
-            });
+            projects.push(node_project(parent.to_path_buf(), runner));
         }
     }
     if projects.is_empty() {
         if has_config(root, "vitest") {
-            projects.push(NodeProject {
-                root: root.to_path_buf(),
-                runner: RunnerKind::Vitest,
-            });
+            projects.push(node_project(root.to_path_buf(), RunnerKind::Vitest));
         } else if has_config(root, "jest") {
-            projects.push(NodeProject {
-                root: root.to_path_buf(),
-                runner: RunnerKind::Jest,
-            });
+            projects.push(node_project(root.to_path_buf(), RunnerKind::Jest));
         }
     }
     Ok(projects)
@@ -171,16 +227,4 @@ fn is_python_test(path: &Path) -> bool {
     };
     path.extension().is_some_and(|ext| ext == "py")
         && (name.starts_with("test_") || name.ends_with("_test.py"))
-}
-
-fn is_node_test(path: &Path) -> bool {
-    let name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or_default();
-    name.contains(".test.")
-        || name.contains(".spec.")
-        || path
-            .components()
-            .any(|part| part.as_os_str() == "__tests__")
 }

@@ -98,13 +98,13 @@ Arguments:
   [RUNNER_ARGS]...  Arguments passed unchanged to the selected test runner(s)
 
 Options:
-      --base <BASE>          Compare committed changes with the merge-base of this Git revision
+      --base <BASE>          Also include committed changes since the merge-base with this Git revision
       --staged               Consider staged changes only
       --changed-file <PATH>  Analyze this changed path instead of consulting Git. Repeatable
       --plan                 Print the test plan without executing it
       --json                 Emit the plan as machine-readable JSON; implies --plan
-      --full                 Select every discovered test while retaining runner discovery
-      --strict-dynamic       Run the full suite if any computed dynamic import remains unresolved
+      --full                 Run each runner once without file arguments, so the runner discovers every test
+      --strict-dynamic       Run the full suite on any opaque dynamic import or unreadable runner-config key
       --runner <RUNNER>      Force one runner instead of auto-detecting it [default: auto] [possible values: auto, pytest, vitest, jest]
   -h, --help                 Print help
 ```

@@ -14,7 +14,7 @@ pub fn scan(path: &Path, source: &[u8], module: &str) -> Option<FileFacts> {
         .then_some(facts)
 }
 
-fn language(path: &Path) -> tree_sitter::Language {
+pub(in crate::reflexez) fn language(path: &Path) -> tree_sitter::Language {
     match path.extension().and_then(|ext| ext.to_str()) {
         #[cfg(feature = "lang-typescript")]
         Some("ts" | "mts" | "cts") => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
@@ -91,10 +91,14 @@ fn record_call(
     let argument = node
         .child_by_field_name("arguments")
         .and_then(|args| args.named_child(0));
+    if let Some(array) = argument.filter(|arg| glob && arg.kind() == "array") {
+        record_glob_array(array, source, constants, facts);
+        return;
+    }
     let value = argument.and_then(|arg| evaluate(arg, source, constants));
     match value {
-        Some(value) if value.contains('*') => facts.patterns.push(value),
-        Some(value) if glob => facts.patterns.push(value),
+        Some(value) if value.contains('*') => facts.patterns.push(vec![value]),
+        Some(value) if glob => facts.patterns.push(vec![value]),
         Some(value) => {
             let literal_already_collected = argument.is_some_and(|arg| arg.kind() == "string");
             if !literal_already_collected {
@@ -107,7 +111,33 @@ fn record_call(
     }
 }
 
-fn evaluate(node: Node, source: &[u8], constants: &HashMap<String, String>) -> Option<String> {
+fn record_glob_array(
+    array: Node,
+    source: &[u8],
+    constants: &HashMap<String, String>,
+    facts: &mut FileFacts,
+) {
+    let mut patterns = Vec::new();
+    let mut cursor = array.walk();
+    for element in array
+        .named_children(&mut cursor)
+        .filter(|element| element.kind() != "comment")
+    {
+        match evaluate(element, source, constants) {
+            Some(pattern) => patterns.push(pattern),
+            None => facts.unresolved += 1,
+        }
+    }
+    if !patterns.is_empty() {
+        facts.patterns.push(patterns);
+    }
+}
+
+pub(in crate::reflexez) fn evaluate(
+    node: Node,
+    source: &[u8],
+    constants: &HashMap<String, String>,
+) -> Option<String> {
     match node.kind() {
         "string" => unquote(text(node, source)?),
         "template_string" => template_pattern(text(node, source)?),
@@ -164,7 +194,18 @@ mod tests {
             br#"const target = './feature'; import(target); import(`./pages/${name}.ts`);"#;
         let facts = scan(Path::new("sample.ts"), source, "sample").unwrap();
         assert_eq!(facts.imports[0].target_module, "./feature");
-        assert_eq!(facts.patterns, vec!["./pages/*.ts"]);
+        assert_eq!(facts.patterns, vec![vec!["./pages/*.ts"]]);
+        assert_eq!(facts.unresolved, 0);
+    }
+
+    #[test]
+    fn resolves_array_glob_with_negation() {
+        let source = br#"import.meta.glob(["./handlers/*.ts", "!./handlers/skip.ts"]);"#;
+        let facts = scan(Path::new("registry.ts"), source, "registry").unwrap();
+        assert_eq!(
+            facts.patterns,
+            vec![vec!["./handlers/*.ts", "!./handlers/skip.ts"]]
+        );
         assert_eq!(facts.unresolved, 0);
     }
 }

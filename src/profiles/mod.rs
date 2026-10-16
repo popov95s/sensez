@@ -38,6 +38,13 @@ pub(crate) use typescript::ResolutionCache;
 #[derive(Default)]
 pub(crate) struct ResolutionCache;
 
+#[cfg(not(feature = "lang-typescript"))]
+impl ResolutionCache {
+    pub(crate) fn alias_path(&mut self, _root: &Path, _specifier: &str) -> Option<PathBuf> {
+        None
+    }
+}
+
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, PerfLine, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};

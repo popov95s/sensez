@@ -117,7 +117,7 @@ fn record_call(
         .and_then(|arguments| arguments.named_child(0))
         .and_then(|argument| evaluate(argument, source, constants));
     match value {
-        Some(value) if value.contains('*') => facts.patterns.push(value),
+        Some(value) if value.contains('*') => facts.patterns.push(vec![value]),
         Some(value) => facts
             .imports
             .push(context(value, module, node.start_position().row + 1)),
@@ -203,7 +203,7 @@ importlib.import_module(f"pkg.pages.{page}")
 "#;
         let facts = scan(source, "sample").unwrap();
         assert_eq!(facts.imports[0].target_module, "pkg.feature");
-        assert_eq!(facts.patterns, vec!["pkg.pages.*"]);
+        assert_eq!(facts.patterns, vec![vec!["pkg.pages.*"]]);
         assert_eq!(facts.unresolved, 0);
     }
 }

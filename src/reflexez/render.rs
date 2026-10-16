@@ -1,4 +1,4 @@
-use super::model::ImpactPlan;
+use super::model::{ImpactPlan, RunMode};
 use std::fmt::Write;
 use std::path::Path;
 
@@ -19,21 +19,49 @@ pub fn terminal(plan: &ImpactPlan, root: &Path) -> String {
     for reason in &plan.fallback_reasons {
         let _ = writeln!(out, "  safety: {reason}");
     }
-    for runner in &plan.runners {
+    for warning in &plan.config_warnings {
+        let config = warning.file.strip_prefix(root).unwrap_or(&warning.file);
         let _ = writeln!(
             out,
-            "  {}: {} test file(s)",
-            runner.kind.label(),
-            runner.tests.len()
+            "  warning: {} `{}`: {}; using {}",
+            config.display(),
+            warning.key,
+            warning.reason,
+            warning.fallback
         );
+    }
+    for path in &plan.unmapped_changes {
+        let unmapped = path.strip_prefix(root).unwrap_or(path);
+        let _ = writeln!(
+            out,
+            "  unmapped: {} is not in the import graph",
+            unmapped.display()
+        );
+    }
+    for runner in &plan.runners {
+        let runner_root = runner.root.strip_prefix(root).unwrap_or(&runner.root);
+        let _ = match runner.mode {
+            RunMode::Full => writeln!(
+                out,
+                "  {}: full run in ./{}",
+                runner.kind.label(),
+                runner_root.display()
+            ),
+            RunMode::Narrowed => writeln!(
+                out,
+                "  {}: {} test file(s)",
+                runner.kind.label(),
+                runner.tests.len()
+            ),
+        };
     }
     for selection in plan.selected.iter().take(20) {
         let file = selection.file.strip_prefix(root).unwrap_or(&selection.file);
         let _ = writeln!(
             out,
-            "    {}  {:?} (distance {})",
+            "    {}  {} (distance {})",
             file.display(),
-            selection.reason,
+            selection.reason.label(),
             selection.distance
         );
     }

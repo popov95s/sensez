@@ -37,6 +37,11 @@ impl ResolutionCache {
         }
     }
 
+    /// Filesystem path a `tsconfig` alias maps `specifier` to, for modules under `root`.
+    pub(crate) fn alias_path(&mut self, root: &Path, specifier: &str) -> Option<PathBuf> {
+        self.aliases(root).resolve_path(specifier)
+    }
+
     #[cfg(test)]
     pub(super) fn load_count(&self) -> usize {
         self.loads
@@ -68,13 +73,17 @@ struct Entry {
 
 impl Paths {
     pub(super) fn resolve(&self, specifier: &str) -> Option<String> {
+        self.resolve_path(specifier)
+            .map(|path| roots::module_name(&path, &self.root))
+    }
+
+    fn resolve_path(&self, specifier: &str) -> Option<PathBuf> {
         self.entries
             .iter()
             .filter_map(|entry| match_pattern(&entry.pattern, specifier).map(|part| (entry, part)))
             .max_by_key(|(entry, _)| entry.pattern.len())
             .and_then(|(entry, part)| entry.targets.first().map(|target| (target, part)))
             .map(|(target, part)| self.base_url.join(target.replace('*', part)))
-            .map(|path| roots::module_name(&path, &self.root))
     }
 }
 
