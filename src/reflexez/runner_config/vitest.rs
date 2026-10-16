@@ -60,7 +60,14 @@ fn read_config(
         .or_else(|| test.get("workspace"))
         .filter(|value| *value != Value::Other);
     match (projects, workspace) {
-        (Some(projects), _) => read_projects(out, &projects, file, &root, config, depth),
+        (Some(projects), _) => {
+            let before = out.projects.len();
+            read_projects(out, &projects, file, &root, config, depth);
+            if out.projects.len() == before {
+                let project = project(out, &test, file, &root);
+                out.projects.push(project);
+            }
+        }
         (None, Some(workspace)) => read_workspace(out, workspace, config, depth),
         (None, None) => {
             let project = project(out, &test, file, &root);

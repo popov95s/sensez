@@ -46,7 +46,12 @@ fn read_config(out: &mut RunnerConfig, config: &Value, file: &Path, dir: &Path, 
         .filter(|value| *value != Value::Other)
     {
         Some(projects) if depth < MAX_PROJECT_DEPTH => {
-            read_projects(out, &projects, file, &root_dir, depth)
+            let before = out.projects.len();
+            read_projects(out, &projects, file, &root_dir, depth);
+            if out.projects.len() == before {
+                let project = project(out, config, file, &root_dir);
+                out.projects.push(project);
+            }
         }
         Some(_) => {
             out.warn(

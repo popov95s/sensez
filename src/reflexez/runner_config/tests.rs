@@ -1,3 +1,4 @@
+mod empty_projects;
 mod jest;
 
 use super::*;
