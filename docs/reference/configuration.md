@@ -10,6 +10,22 @@ concepts behind it and the common tuning workflows. The
 [sensez.toml Sensez uses on itself](https://github.com/popov95s/sensez/blob/main/sensez.toml)
 is a heavily commented real-world example.
 
+## Validation
+
+Sensez checks the whole file before it scans. Every problem is printed as
+`sensez.toml:LINE:COL: message`, with a "did you mean" hint where one fits.
+
+- **Errors** stop the run (exit `2`, nothing is scanned): TOML syntax errors,
+  wrong value types, invalid values such as `cycles = "critical"`, and unknown
+  keys inside `[smells]` (including `[smells.rules.*]` and the language
+  tables) and `[action]`.
+- **Warnings** are printed once and the scan continues: unknown keys in other
+  tables (`[duplication]`, `[dead_code]`, `[cycles]`, …) and unknown top-level
+  tables.
+
+MCP scan tools return the same problems as an error result. The end-of-turn
+gate and the language server keep working on defaults instead.
+
 ## Action levels
 
 Every finding carries an action level. From quietest to strictest:
@@ -41,8 +57,11 @@ action = "must_fix"
 `typescript`, or `rust` — overrides the base for that language only. (The Rust
 profile is dogfooding-only and not shipped in the published packages.)
 
-Setting any knob implicitly enables the rule; use `enabled = false` for
-explicit suppression.
+Setting any knob, including `action`, enables the rule; use `enabled = false`
+for explicit suppression. A flat threshold under `[smells]` or
+`[smells.<lang>]` (`max_function_lines`, `max_cyclomatic`, `max_nesting`, …)
+also enables its rule, unless the same table sets the rule's toggle (for
+example `long_function = false`) or lists it in `disabled`.
 
 ```toml
 # All languages: long functions warn past 80 lines.
@@ -96,7 +115,11 @@ exclude = ["**/tests/**", "**/migrations/**"]   # clone-only excludes (files sta
 
 Opt-in detectors for harder clones: `near_miss` (consistent renames),
 `class_name_duplicates`, `class_property_overlap_min`, and
-`[duplication.semantic]` (only in builds with the `eyez` feature).
+`[duplication.semantic]` (only in builds with the `eyez` feature). If the
+semantic pass is enabled but its embedding model cannot load (for example
+offline with no cached model), the scan records an `analyze` issue in
+`meta.issues`, and `--fail-on` / `--fail-on-new` exit `2` with "incomplete
+scan" rather than passing.
 
 ## Cycles
 

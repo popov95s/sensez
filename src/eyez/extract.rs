@@ -23,7 +23,10 @@ pub struct Doc {
 
 /// Discover, parse, and flatten every file's docs under `root`.
 pub fn collect(root: &Path) -> Result<Vec<Doc>> {
-    let config = Config::load(root).context("loading sensez.toml")?;
+    let (config, warnings) = Config::load_with_warnings(root).context("loading sensez.toml")?;
+    for warning in warnings {
+        eprintln!("[sensez] config: {warning}");
+    }
     let files = crawler::discover(root, &config.exclude, &|p| {
         crate::profiles::registry::should_parse_path(p)
     })

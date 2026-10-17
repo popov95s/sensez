@@ -87,6 +87,27 @@ fn scan_tool_omits_scan_diagnostics() {
 }
 
 #[test]
+fn sniff_with_invalid_config_runs_on_defaults_and_reports_it() {
+    let _metrics = crate::test_support::metrics_guard();
+    let tmp = tempfile::tempdir().unwrap();
+    std::fs::write(
+        tmp.path().join("sensez.toml"),
+        "[smells]\nmax_cyclomatc = 5\n",
+    )
+    .unwrap();
+    let path = tmp.path().to_string_lossy().into_owned();
+
+    let resp = call_tool("noze_sniff", json!({"path": path, "diff": false}));
+
+    assert_ne!(resp["isError"], true);
+    let text = resp["content"][0]["text"].as_str().unwrap();
+    assert!(
+        text.contains("sensez.toml:2:1: unknown key `smells.max_cyclomatc`"),
+        "{text}"
+    );
+}
+
+#[test]
 fn scan_args_defaults_to_diff_mode() {
     let _metrics = crate::test_support::metrics_guard();
     // The typed struct is the schema — defaults live in `Default` impl,

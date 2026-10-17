@@ -11,7 +11,7 @@
         "unknown",
         "--yes"
       ],
-      "exit_code": 1,
+      "exit_code": 2,
       "stderr": "Error: unknown --agent 'unknown' (claude-code | cursor | cline | codex | opencode | pi | other)\n",
       "stdout": ""
     }

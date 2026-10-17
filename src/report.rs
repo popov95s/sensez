@@ -180,6 +180,7 @@ pub enum ScanStage {
     Diff,
     Parse,
     Graph,
+    Analyze,
 }
 
 impl std::fmt::Display for ScanStage {
@@ -190,6 +191,7 @@ impl std::fmt::Display for ScanStage {
             ScanStage::Diff => f.write_str("diff"),
             ScanStage::Parse => f.write_str("parse"),
             ScanStage::Graph => f.write_str("graph"),
+            ScanStage::Analyze => f.write_str("analyze"),
         }
     }
 }

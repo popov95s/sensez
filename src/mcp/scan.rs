@@ -5,10 +5,10 @@
 //! two things after `analyze_path` (which already applies triaged
 //! suppressions and precision ranking):
 //!
-//! 1. drop scan-issues from the report (so they never leak to clients)
+//! 1. drop scan-issues from the report, except skipped analyzers and config problems
 //! 2. cap each pillar to its top-N findings (`max = 0` skips)
 
-use crate::report::AnalysisReport;
+use crate::report::{AnalysisReport, ScanStage};
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::collections::HashMap;
@@ -61,7 +61,10 @@ pub(super) fn diff_changed(
 }
 
 fn suppress_scan_issues(report: &mut AnalysisReport) {
-    report.meta.issues.clear();
+    report
+        .meta
+        .issues
+        .retain(|issue| matches!(issue.stage, ScanStage::Analyze | ScanStage::Config));
     report.meta.files_skipped = 0;
 }
 
@@ -85,6 +88,28 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let err = diff(tmp.path(), None, 0).unwrap_err();
         assert!(err.to_string().contains("resolving working-tree diff"));
+    }
+
+    #[test]
+    fn only_skipped_analyzer_issues_reach_clients() {
+        let issue = |stage| crate::report::ScanIssue {
+            stage,
+            file: None,
+            message: String::new(),
+        };
+        let mut report = AnalysisReport::default();
+        report.meta.issues = vec![
+            issue(crate::report::ScanStage::Parse),
+            issue(crate::report::ScanStage::Analyze),
+        ];
+
+        suppress_scan_issues(&mut report);
+
+        assert_eq!(report.meta.issues.len(), 1);
+        assert_eq!(
+            report.meta.issues[0].stage,
+            crate::report::ScanStage::Analyze
+        );
     }
 
     #[test]

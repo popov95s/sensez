@@ -2,7 +2,7 @@
 
 use crate::report::{
     AnalysisReport, BoundaryViolation, CloneClass, CycleFinding, DeadCodeFinding, ReportMode,
-    SmellFinding,
+    ScanIssue, SmellFinding,
 };
 use serde::Serialize;
 
@@ -22,6 +22,8 @@ struct CompactMeta {
     boundaries_configured: bool,
     #[serde(skip_serializing_if = "Vec::is_empty")]
     unmatched_boundary_rules: Vec<String>,
+    #[serde(skip_serializing_if = "Vec::is_empty")]
+    issues: Vec<ScanIssue>,
 }
 
 pub(super) fn tool_report(report: AnalysisReport) -> CompactReport {
@@ -30,6 +32,7 @@ pub(super) fn tool_report(report: AnalysisReport) -> CompactReport {
             mode: report.meta.mode,
             boundaries_configured: report.meta.boundaries_configured,
             unmatched_boundary_rules: report.meta.unmatched_boundary_rules,
+            issues: report.meta.issues,
         },
         cycles: report.cycles,
         dead_code: report.dead_code,

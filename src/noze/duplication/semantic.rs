@@ -43,34 +43,32 @@ pub fn detect(
     files: &[&ParsedFile],
     config: &SemanticDuplication,
     root: Option<&Path>,
-) -> Vec<CloneClass> {
+) -> anyhow::Result<Vec<CloneClass>> {
     if !config.enabled {
-        return Vec::new();
+        return Ok(Vec::new());
     }
     let units = collect_units(files, config.comment_required);
     if units.len() < 2 {
-        return Vec::new();
+        return Ok(Vec::new());
     }
     let candidates = candidate_pairs(&units, config.min_shape_score);
     if candidates.is_empty() {
-        return Vec::new();
+        return Ok(Vec::new());
     }
-    let vectors = match vectors_for(root, &units) {
-        Ok(vectors) if vectors.len() == units.len() => vectors,
-        Ok(vectors) => {
-            eprintln!(
-                "[sensez] semantic duplication: embedding returned {}/{} vectors; skipping pass",
-                vectors.len(),
-                units.len()
-            );
-            return Vec::new();
-        }
-        Err(err) => {
-            eprintln!("[sensez] semantic duplication unavailable: {err:#}");
-            return Vec::new();
-        }
-    };
-    findings(units, candidates, &vectors, config.comment_boost_score)
+    let vectors = vectors_for(root, &units)?;
+    if vectors.len() != units.len() {
+        anyhow::bail!(
+            "embedding returned {}/{} vectors",
+            vectors.len(),
+            units.len()
+        );
+    }
+    Ok(findings(
+        units,
+        candidates,
+        &vectors,
+        config.comment_boost_score,
+    ))
 }
 
 fn collect_units(files: &[&ParsedFile], comment_required: bool) -> Vec<Unit> {

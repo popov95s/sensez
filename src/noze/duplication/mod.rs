@@ -23,7 +23,7 @@ mod test_support;
 
 use crate::config::model::Duplication;
 use crate::globs::build_globset;
-use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
+use crate::report::{ActionLevel, CloneClass, CloneOccurrence, ScanIssue};
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::{FunctionUnit, ParsedFile};
 use globset::GlobSet;
@@ -55,7 +55,7 @@ pub(super) fn span_index_range(
 
 #[cfg(test)]
 pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
-    detect_with_root(files, config, None)
+    detect_with_root(files, config, None).0
 }
 
 /// Detect duplication per the config (path excludes, threshold, gap stitching).
@@ -69,9 +69,9 @@ pub fn detect_with_root(
     files: &[ParsedFile],
     config: &Duplication,
     root: Option<&Path>,
-) -> Vec<CloneClass> {
+) -> (Vec<CloneClass>, Vec<ScanIssue>) {
     if files.is_empty() || config.threshold == 0 {
-        return Vec::new();
+        return (Vec::new(), Vec::new());
     }
     // Exclude tests/migrations from the corpus (kept in the graph elsewhere).
     let excluded = build_globset(&config.exclude).unwrap_or_else(|_| GlobSet::empty());
@@ -86,12 +86,19 @@ pub fn detect_with_root(
     }
 
     let partitions: Vec<_> = by_language.into_values().collect();
-    let (mut out, class_shapes) = rayon::join(
+    let ((mut out, mut issues), class_shapes) = rayon::join(
         || {
             partitions
                 .into_par_iter()
-                .flat_map_iter(|partition| detect_partition(&partition, config, root))
-                .collect::<Vec<_>>()
+                .map(|partition| detect_partition(&partition, config, root))
+                .reduce(
+                    || (Vec::new(), Vec::new()),
+                    |(mut classes, mut issues), (more_classes, more_issues)| {
+                        classes.extend(more_classes);
+                        issues.extend(more_issues);
+                        (classes, issues)
+                    },
+                )
         },
         || {
             class_shapes::detect(
@@ -109,7 +116,8 @@ pub fn detect_with_root(
             std::cmp::Reverse(c.token_length * c.occurrences.len()),
         )
     });
-    out
+    issues.dedup_by(|a, b| a.message == b.message);
+    (out, issues)
 }
 
 /// Run the suffix-array clone pipeline over one single-language file cohort.
@@ -117,7 +125,7 @@ fn detect_partition(
     kept: &[&ParsedFile],
     config: &Duplication,
     _root: Option<&Path>,
-) -> Vec<CloneClass> {
+) -> (Vec<CloneClass>, Vec<ScanIssue>) {
     let mut seen: FxHashSet<u64> = FxHashSet::default();
     let mut out: Vec<CloneClass> = Vec::new();
     let mut master = flatten::build(kept);
@@ -166,7 +174,36 @@ fn detect_partition(
     }
 
     #[cfg(feature = "eyez")]
-    for class in semantic::detect(kept, &config.semantic, _root) {
+    let issues = semantic_pass(kept, config, _root, &mut seen, &mut out);
+    #[cfg(not(feature = "eyez"))]
+    let issues = Vec::new();
+
+    (out, issues)
+}
+
+/// Opt-in comment-backed semantic clones; an unusable embedder is a scan issue.
+#[cfg(feature = "eyez")]
+fn semantic_pass(
+    kept: &[&ParsedFile],
+    config: &Duplication,
+    root: Option<&Path>,
+    seen: &mut FxHashSet<u64>,
+    out: &mut Vec<CloneClass>,
+) -> Vec<ScanIssue> {
+    let classes = match semantic::detect(kept, &config.semantic, root) {
+        Ok(classes) => classes,
+        Err(err) => {
+            return vec![ScanIssue {
+                stage: crate::report::ScanStage::Analyze,
+                file: None,
+                message: format!(
+                    "duplication.semantic skipped: {err:#}; set [duplication.semantic] \
+                     enabled = false to run without it"
+                ),
+            }]
+        }
+    };
+    for class in classes {
         let semantic_occurrences = suppress_overlaps(class.occurrences);
         if semantic_occurrences.len() < 2 {
             continue;
@@ -180,8 +217,7 @@ fn detect_partition(
             ..class
         });
     }
-
-    out
+    Vec::new()
 }
 
 /// Map a master-buffer token range `[start, end)` to a concrete file/line span.

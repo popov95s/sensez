@@ -11,7 +11,7 @@
         "codex",
         "--yes"
       ],
-      "exit_code": 1,
+      "exit_code": 2,
       "stderr": "warning: <repo> is not part of a Git repository.\nError: cannot install globally: user home directory is unavailable\n",
       "stdout": ""
     }

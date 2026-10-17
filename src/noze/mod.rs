@@ -39,6 +39,7 @@ pub fn run_with_root(
         boundaries: mut boundary_audit,
         mut duplication,
         mut smells,
+        issues,
     } = parallel::detect(files, graph, config, root);
 
     for cycle in &mut cycles {
@@ -88,7 +89,7 @@ pub fn run_with_root(
             smells_total: smells.len(),
             smell_totals: smell_totals(&smells),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
-            issues: Vec::new(),
+            issues,
             glossary: Vec::new(),
         },
         cycles,

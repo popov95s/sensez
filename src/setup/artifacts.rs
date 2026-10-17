@@ -46,7 +46,7 @@ enabled = true
 [dead_code]
 # unused_imports = false
 # unused_methods = false
-# unused_properties = true
+# unused_properties = false
 # unused_variables = false
 # entrypoints = []       # user-added decorator names; profile defaults are language-scoped
 # entrypoint_names = []  # user-added dynamic function/class names
@@ -62,22 +62,24 @@ enabled = true
 
 [smells]
 # enabled = true
-# Per-rule thresholds; 0 disables a rule. The main knobs:
-# max_cyclomatic, max_cognitive, max_function_lines, max_nesting,
-# max_params, max_returns, max_class_methods, max_chain_depth
-# param_attr_mutation = false  # also flag mutation through a param's attribute
-#                              # (msg.kwargs[k] = v); stricter, opt-in
-
-# Preferred per-smell shape: one table owns detection knobs + agent action.
-# Setting a threshold/knob implicitly enables that smell; use enabled = false
-# for explicit suppression.
+#
+# One [smells.rules.<name>] table per smell holds its detection knobs and its
+# agent action. Setting any knob, including `action`, enables the rule, and
+# `enabled = false` turns it off.
+# [smells.rules.long_function]
+# max_lines = 50
+# action = "warning"
+#
+# [smells.rules.high_complexity]
+# max_cyclomatic = 10
+#
 # [smells.rules.split_variable]
-# min_assigns = 3
+# min_assigns = 2
 # action = "info"
 #
-# [smells.rules.long_function]
-# max_lines = 80
-# action = "warning"
+# [smells.rules.mutated_parameter]
+# include_attributes = false  # also flag mutation through a param's attribute
+#                             # (msg.kwargs[k] = v); stricter, opt-in
 
 # Architectural contracts ("core must never import api"):
 # [[boundaries.forbidden]]

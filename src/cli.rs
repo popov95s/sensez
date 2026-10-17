@@ -164,26 +164,20 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
         return Ok(ExitCode::SUCCESS);
     }
     let wants_diff = options.diff || options.diff_from.is_some() || options.fail_on_new.is_some();
-    let diff = build_diff(
+    let changed = build_diff(
         path,
         wants_diff && options.diff_from.is_none(),
         options.diff_from.as_deref(),
-    );
-    if wants_diff && diff.changed.is_none() && options.fail_on_new.is_some() {
-        for issue in &diff.issues {
-            eprintln!("[sensez] diff: {}", issue.message);
-        }
-        anyhow::bail!(
-            "--fail-on-new requires a usable diff source; fix the diff error above or drop --fail-on-new"
-        );
-    }
+    )
+    .context(
+        "diff mode was requested but no diff could be read; refusing to fall back to a full scan \
+         (run inside a git work tree, pass --diff-from FILE, or drop --diff/--fail-on-new)",
+    )?;
     let (mut report, module_files) = crate::analyze_path(path, options.threshold)?;
     let report_started = std::time::Instant::now();
-    if let Some(changed) = diff.changed.as_ref() {
+    if let Some(changed) = changed.as_ref() {
         crate::diff::apply(&mut report, changed, &module_files);
     }
-    report.meta.issues.extend(diff.issues);
-    report.meta.files_skipped = report.meta.issues.len();
     for issue in &report.meta.issues {
         match &issue.file {
             Some(file) => eprintln!(
@@ -215,6 +209,7 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     output::print_line(&rendered)?;
 
+    ensure_complete_for_gate(&report, options)?;
     if full_gate_fails {
         return Ok(ExitCode::FAILURE);
     }
@@ -228,6 +223,25 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     Ok(ExitCode::SUCCESS)
 }
 
+/// A gated run fails when an analyzer was skipped, instead of passing on partial results.
+fn ensure_complete_for_gate(
+    report: &crate::report::AnalysisReport,
+    options: &ScanOptions,
+) -> Result<()> {
+    if options.fail_on.is_none() && options.fail_on_new.is_none() {
+        return Ok(());
+    }
+    match report
+        .meta
+        .issues
+        .iter()
+        .find(|issue| issue.stage == crate::report::ScanStage::Analyze)
+    {
+        Some(issue) => anyhow::bail!("incomplete scan: {}", issue.message),
+        None => Ok(()),
+    }
+}
+
 fn report_meets_fail_level(report: &crate::report::AnalysisReport, level: FailOnNewLevel) -> bool {
     let threshold = match level {
         FailOnNewLevel::MustFix => crate::report::ActionLevel::MustFix,
@@ -238,72 +252,27 @@ fn report_meets_fail_level(report: &crate::report::AnalysisReport, level: FailOn
     report.actions().any(|action| action <= threshold)
 }
 
-struct DiffSelection {
-    changed: Option<ChangedLines>,
-    issues: Vec<crate::report::ScanIssue>,
-}
-
 /// Resolve the optional diff source into a [`ChangedLines`] set.
-fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> DiffSelection {
+fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> Result<Option<ChangedLines>> {
     if diff {
-        return match crate::diff::git::changed_vs_head(path) {
-            Ok(changed) => DiffSelection {
-                changed: Some(changed),
-                issues: Vec::new(),
-            },
-            Err(err) => DiffSelection {
-                changed: None,
-                issues: vec![diff_issue(None, format!("{err:#}"))],
-            },
-        };
+        return crate::diff::git::changed_vs_head(path).map(Some);
     }
-    if let Some(src) = diff_from {
-        let text = if src == "-" {
-            let mut buf = String::new();
-            match std::io::stdin().read_to_string(&mut buf) {
-                Ok(_) => buf,
-                Err(err) => {
-                    return DiffSelection {
-                        changed: None,
-                        issues: vec![diff_issue(
-                            None,
-                            format!("reading unified diff from stdin: {err}"),
-                        )],
-                    };
-                }
-            }
-        } else {
-            match std::fs::read_to_string(src) {
-                Ok(text) => text,
-                Err(err) => {
-                    return DiffSelection {
-                        changed: None,
-                        issues: vec![diff_issue(
-                            Some(PathBuf::from(src)),
-                            format!("reading diff file {src}: {err}"),
-                        )],
-                    };
-                }
-            }
-        };
-        return DiffSelection {
-            changed: Some(ChangedLines::from_unified(&text, path)),
-            issues: Vec::new(),
-        };
-    }
-    DiffSelection {
-        changed: None,
-        issues: Vec::new(),
-    }
+    let Some(src) = diff_from else {
+        return Ok(None);
+    };
+    let text = if src == "-" {
+        let mut buf = String::new();
+        std::io::stdin()
+            .read_to_string(&mut buf)
+            .context("reading unified diff from stdin")?;
+        buf
+    } else {
+        std::fs::read_to_string(src).with_context(|| format!("reading diff file {src}"))?
+    };
+    Ok(Some(ChangedLines::from_unified(&text, path)))
 }
-
-fn diff_issue(file: Option<PathBuf>, message: String) -> crate::report::ScanIssue {
-    crate::report::ScanIssue {
-        stage: crate::report::ScanStage::Diff,
-        file,
-        message,
-    }
-}
+#[cfg(test)]
+mod gate_tests;
 #[cfg(test)]
 mod reflexez_tests;
 #[cfg(test)]

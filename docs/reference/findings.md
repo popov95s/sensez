@@ -1633,9 +1633,9 @@ max_methods = 20 # allowed methods before a class is large
 <table>
 <thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
 <tbody>
-<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>Python</td><td>No</td></tr>
 <tr><td>JS / TS</td><td>Yes</td></tr>
-<tr><td>Rust</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>No</td></tr>
 </tbody>
 </table>
 </details>

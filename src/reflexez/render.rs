@@ -19,6 +19,9 @@ pub fn terminal(plan: &ImpactPlan, root: &Path) -> String {
     for reason in &plan.fallback_reasons {
         let _ = writeln!(out, "  safety: {reason}");
     }
+    for warning in &plan.settings_warnings {
+        let _ = writeln!(out, "  warning: {warning}");
+    }
     for warning in &plan.config_warnings {
         let config = warning.file.strip_prefix(root).unwrap_or(&warning.file);
         let _ = writeln!(

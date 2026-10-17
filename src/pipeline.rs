@@ -43,12 +43,7 @@ pub(crate) fn analyze_path_in_service(
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
     let session = SERVICE_SESSION.get_or_init(AnalysisSession::default);
-    let loaded = Config::load_for_scan(path);
-    if loaded.0.cache_enabled() {
-        analyze_with_config(path, threshold, Some(session), loaded)
-    } else {
-        analyze_path(path, threshold)
-    }
+    analyze_loaded_in_service(session, path, threshold, Config::load_for_scan(path))
 }
 
 #[cfg(test)]
@@ -57,12 +52,17 @@ fn analyze_path_in_service_with_session(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    let loaded = Config::load_for_scan(path);
-    if loaded.0.cache_enabled() {
-        analyze_with_config(path, threshold, Some(session), loaded)
-    } else {
-        analyze_path(path, threshold)
-    }
+    analyze_loaded_in_service(session, path, threshold, Config::load_for_scan(path))
+}
+
+fn analyze_loaded_in_service(
+    session: &AnalysisSession,
+    path: &Path,
+    threshold: Option<usize>,
+    loaded: (Config, Vec<crate::report::ScanIssue>),
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    let cached_session = loaded.0.cache_enabled().then_some(session);
+    analyze_with_config(path, threshold, cached_session, loaded)
 }
 
 fn analyze_path_inner(
@@ -151,7 +151,7 @@ fn analyze_with_config(
             .or_insert_with(|| n.file_path.clone());
     }
 
-    crate::brainz::apply_suppressions(path, &mut report);
+    crate::brainz::apply_suppressions(path, &config.accept, &mut report);
     crate::brainz::rank_by_precision(path, &mut report);
 
     Ok((report, module_files))
