@@ -4,6 +4,7 @@
 //! `compilerOptions.paths` behavior. The shared graph receives only the
 //! resulting, language-neutral module target.
 
+use super::type_imports::{self, TypeOnlyImports};
 use crate::profiles::javascript::{resolve, roots};
 use crate::spine::ir::ImportContext;
 use serde_json::Value;
@@ -19,6 +20,7 @@ use std::path::{Path, PathBuf};
 #[derive(Default)]
 pub(crate) struct ResolutionCache {
     aliases_by_root: HashMap<PathBuf, Paths>,
+    type_only_imports_by_dir: HashMap<PathBuf, TypeOnlyImports>,
     #[cfg(test)]
     loads: usize,
 }
@@ -40,6 +42,24 @@ impl ResolutionCache {
     /// Filesystem path a `tsconfig` alias maps `specifier` to, for modules under `root`.
     pub(crate) fn alias_path(&mut self, root: &Path, specifier: &str) -> Option<PathBuf> {
         self.aliases(root).resolve_path(specifier)
+    }
+
+    /// Emit mode of inline type-only imports under the nearest `tsconfig.json` above `dir`.
+    pub(super) fn type_only_imports(&mut self, dir: &Path) -> TypeOnlyImports {
+        if let Some(&mode) = self.type_only_imports_by_dir.get(dir) {
+            return mode;
+        }
+        let config = dir.join("tsconfig.json");
+        let mode = if config.is_file() {
+            type_imports::load(&config)
+        } else if let Some(parent) = dir.parent() {
+            self.type_only_imports(parent)
+        } else {
+            TypeOnlyImports::Erased
+        };
+        self.type_only_imports_by_dir
+            .insert(dir.to_path_buf(), mode);
+        mode
     }
 
     #[cfg(test)]
@@ -87,17 +107,14 @@ impl Paths {
     }
 }
 
+/// Parsed JSONC contents of a `tsconfig.json`.
+pub(super) fn read_tsconfig(path: &Path) -> Option<Value> {
+    let text = std::fs::read_to_string(path).ok()?;
+    serde_json::from_str(&normalize_jsonc(&text)).ok()
+}
+
 fn load_aliases(root: &Path) -> Paths {
-    let path = root.join("tsconfig.json");
-    let Ok(text) = std::fs::read_to_string(path) else {
-        return Paths {
-            root: root.to_path_buf(),
-            base_url: root.to_path_buf(),
-            entries: Vec::new(),
-        };
-    };
-    let normalized = normalize_jsonc(&text);
-    let Ok(value) = serde_json::from_str::<Value>(&normalized) else {
+    let Some(value) = read_tsconfig(&root.join("tsconfig.json")) else {
         return Paths {
             root: root.to_path_buf(),
             base_url: root.to_path_buf(),

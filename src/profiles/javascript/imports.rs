@@ -53,9 +53,17 @@ pub fn require_import(
         .named_children(&mut cursor)
         .find(|c| c.kind() == "string")
         .and_then(|s| string_value(s, src))?;
+    let clause = match variable_declarator(node) {
+        Some(declarator) => declarator_clause(declarator, src),
+        None if callee.kind() == "import" => ImportClause {
+            symbols: vec!["default".to_string()],
+            ..ImportClause::default()
+        },
+        None => ImportClause::default(),
+    };
     Some(context(
         source,
-        initializer_clause(node, src),
+        clause,
         node,
         source_module,
         scope,
@@ -63,10 +71,7 @@ pub fn require_import(
     ))
 }
 
-fn initializer_clause(node: Node, src: &[u8]) -> ImportClause {
-    let Some(declarator) = variable_declarator(node) else {
-        return ImportClause::default();
-    };
+fn declarator_clause(declarator: Node, src: &[u8]) -> ImportClause {
     let Some(name) = declarator.child_by_field_name("name") else {
         return ImportClause::default();
     };
@@ -91,7 +96,10 @@ fn variable_declarator(node: Node) -> Option<Node> {
                 })
                 .map(|_| parent);
         }
-        if matches!(parent.kind(), "statement_block" | "program") {
+        if matches!(
+            parent.kind(),
+            "statement_block" | "program" | "arrow_function"
+        ) {
             return None;
         }
         current = parent.parent();
