@@ -1,5 +1,5 @@
 mod empty_projects;
-mod jest;
+mod jest_config;
 
 use super::*;
 use std::fs;
@@ -19,8 +19,12 @@ impl Fixture {
         Self { root }
     }
 
-    fn load(&self, runner: RunnerKind) -> RunnerConfig {
-        RunnerConfig::load(self.root.path(), runner)
+    fn vitest(&self) -> RunnerConfig {
+        super::vitest::read(self.root.path())
+    }
+
+    fn jest(&self) -> RunnerConfig {
+        super::jest::read(self.root.path())
     }
 
     fn path(&self, relative: &str) -> PathBuf {
@@ -75,7 +79,7 @@ export default defineConfig({
         ),
     ]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert_eq!(fixture.tests(&config, &CANDIDATES), ["src/a.test.ts"]);
@@ -86,7 +90,7 @@ export default defineConfig({
 fn applies_vitest_defaults_without_config() {
     let fixture = Fixture::new(&[]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert_eq!(
         fixture.tests(&config, &CANDIDATES),
@@ -114,7 +118,7 @@ export default config;"#,
     ] {
         let fixture = Fixture::new(&[("vitest.config.ts", source)]);
 
-        let config = fixture.load(RunnerKind::Vitest);
+        let config = fixture.vitest();
 
         assert!(
             config.warnings.is_empty(),
@@ -143,7 +147,7 @@ fn reads_plain_esm_and_commonjs_exports() {
     ] {
         let fixture = Fixture::new(&[(file, source)]);
 
-        let config = fixture.load(RunnerKind::Vitest);
+        let config = fixture.vitest();
 
         assert_eq!(
             fixture.tests(&config, &CANDIDATES),
@@ -169,7 +173,7 @@ export default mergeConfig(base, defineConfig({ test: { setupFiles: ["./src/setu
         ),
     ]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert_eq!(
@@ -200,7 +204,7 @@ export default defineConfig({
 });"#,
     )]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert_eq!(
@@ -225,7 +229,7 @@ export default defineConfig({
         ),
     ]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert!(config.is_test(&fixture.path("app/src/a.test.ts")));
@@ -252,7 +256,7 @@ fn reads_workspace_file_with_globs_paths_and_inline_projects() {
         ("packages/skip/index.ts", ""),
     ]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert!(config.is_test(&fixture.path("packages/app/src/x.unit.ts")));
@@ -287,7 +291,7 @@ fn reads_test_projects_with_config_paths_and_extends() {
         ),
     ]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert!(config.is_test(&fixture.path("tools/a.check.ts")));
@@ -309,7 +313,7 @@ export default defineConfig({
 });"#,
     )]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     let keys: Vec<_> = config
         .warnings

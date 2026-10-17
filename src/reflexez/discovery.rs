@@ -1,5 +1,5 @@
 use super::model::{ConfigWarning, RunnerKind};
-use super::runner_config::{RunnerConfig, SetupFile};
+use super::runner_config::{self, RunnerConfig, SetupFile};
 use crate::cli::spec::RunnerChoice;
 use anyhow::{Context, Result};
 use serde_json::Value;
@@ -45,7 +45,7 @@ struct NodeProject {
 
 fn node_project(root: PathBuf, runner: RunnerKind) -> NodeProject {
     NodeProject {
-        config: RunnerConfig::load(&root, runner),
+        config: runner_config::load(&root, runner),
         root,
         runner,
     }

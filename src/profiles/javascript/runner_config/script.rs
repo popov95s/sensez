@@ -22,21 +22,13 @@ pub struct ModuleIndex<'t> {
     pub default_export: Option<Node<'t>>,
 }
 
-#[cfg(feature = "lang-javascript")]
-fn language(path: &Path) -> Option<tree_sitter::Language> {
-    Some(crate::reflexez::dynamic::javascript::language(path))
-}
-
-#[cfg(not(feature = "lang-javascript"))]
-fn language(_path: &Path) -> Option<tree_sitter::Language> {
-    None
-}
-
 impl Script {
     pub fn load(path: &Path) -> Option<Self> {
         let source = std::fs::read(path).ok()?;
         let mut parser = tree_sitter::Parser::new();
-        parser.set_language(&language(path)?).ok()?;
+        parser
+            .set_language(&crate::profiles::javascript::grammar::language(path))
+            .ok()?;
         let tree = parser.parse(&source, None)?;
         Some(Self {
             path: path.to_path_buf(),
@@ -63,15 +55,9 @@ impl Script {
         node.utf8_text(&self.source).unwrap_or_default().to_string()
     }
 
-    #[cfg(feature = "lang-javascript")]
     pub fn string(&self, node: Node) -> Option<String> {
-        crate::reflexez::dynamic::javascript::evaluate(node, &self.source, &HashMap::new())
+        crate::profiles::javascript::const_eval::evaluate(node, &self.source, &HashMap::new())
             .filter(|_| node.kind() == "string")
-    }
-
-    #[cfg(not(feature = "lang-javascript"))]
-    pub fn string(&self, _node: Node) -> Option<String> {
-        None
     }
 
     fn index_statement<'t>(&'t self, statement: Node<'t>, index: &mut ModuleIndex<'t>) {

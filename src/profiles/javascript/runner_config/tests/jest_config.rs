@@ -15,7 +15,7 @@ fn reads_jest_config_keys() {
         ),
     ]);
 
-    let config = fixture.load(RunnerKind::Jest);
+    let config = fixture.jest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert_eq!(
@@ -33,7 +33,7 @@ fn reads_jest_package_json_key_with_test_regex() {
         r#"{"jest": {"rootDir": "src", "testRegex": "\\.test\\.ts$"}}"#,
     )]);
 
-    let config = fixture.load(RunnerKind::Jest);
+    let config = fixture.jest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert_eq!(
@@ -51,7 +51,7 @@ const config: Config = { verbose: true };
 export default config;"#,
     )]);
 
-    let config = fixture.load(RunnerKind::Jest);
+    let config = fixture.jest();
 
     assert!(config.warnings.is_empty(), "{:?}", config.warnings);
     assert!(config.is_test(&fixture.path("src/__tests__/thing.js")));

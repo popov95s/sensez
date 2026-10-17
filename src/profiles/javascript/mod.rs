@@ -3,7 +3,9 @@
 
 pub(crate) mod classunit;
 pub(crate) mod conditionals;
+pub(crate) mod const_eval;
 pub(crate) mod deadcode;
+pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
 pub(crate) mod obsession;
@@ -11,6 +13,7 @@ pub(crate) mod performance;
 pub(crate) mod resolve;
 pub(crate) mod risk_facts;
 pub(crate) mod roots;
+pub(crate) mod runner_config;
 pub(crate) mod scope;
 pub(crate) mod symbols;
 pub(crate) mod tokens;

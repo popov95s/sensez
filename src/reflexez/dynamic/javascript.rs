@@ -1,4 +1,6 @@
 use super::{context, FileFacts};
+use crate::profiles::javascript::const_eval::{evaluate, text};
+use crate::profiles::javascript::grammar::language;
 use std::collections::HashMap;
 use std::path::Path;
 use tree_sitter::Node;
@@ -12,16 +14,6 @@ pub fn scan(path: &Path, source: &[u8], module: &str) -> Option<FileFacts> {
     visit(tree.root_node(), source, module, &constants, &mut facts);
     (!facts.imports.is_empty() || !facts.patterns.is_empty() || facts.unresolved > 0)
         .then_some(facts)
-}
-
-pub(in crate::reflexez) fn language(path: &Path) -> tree_sitter::Language {
-    match path.extension().and_then(|ext| ext.to_str()) {
-        #[cfg(feature = "lang-typescript")]
-        Some("ts" | "mts" | "cts") => tree_sitter_typescript::LANGUAGE_TYPESCRIPT.into(),
-        #[cfg(feature = "lang-typescript")]
-        Some("tsx") => tree_sitter_typescript::LANGUAGE_TSX.into(),
-        _ => tree_sitter_javascript::LANGUAGE.into(),
-    }
 }
 
 fn collect_constants(root: Node, source: &[u8]) -> HashMap<String, String> {
@@ -131,57 +123,6 @@ fn record_glob_array(
     if !patterns.is_empty() {
         facts.patterns.push(patterns);
     }
-}
-
-pub(in crate::reflexez) fn evaluate(
-    node: Node,
-    source: &[u8],
-    constants: &HashMap<String, String>,
-) -> Option<String> {
-    match node.kind() {
-        "string" => unquote(text(node, source)?),
-        "template_string" => template_pattern(text(node, source)?),
-        "identifier" => constants.get(&text(node, source)?).cloned(),
-        "parenthesized_expression" => node
-            .named_child(0)
-            .and_then(|child| evaluate(child, source, constants)),
-        "binary_expression" => {
-            let left = node.child_by_field_name("left")?;
-            let right = node.child_by_field_name("right")?;
-            Some(format!(
-                "{}{}",
-                evaluate(left, source, constants)?,
-                evaluate(right, source, constants)?
-            ))
-        }
-        _ => None,
-    }
-}
-
-fn template_pattern(raw: String) -> Option<String> {
-    let body = raw.strip_prefix('`')?.strip_suffix('`')?;
-    let mut pattern = String::new();
-    let mut rest = body;
-    while let Some(start) = rest.find("${") {
-        pattern.push_str(&rest[..start]);
-        pattern.push('*');
-        let tail = &rest[start + 2..];
-        let end = tail.find('}')?;
-        rest = &tail[end + 1..];
-    }
-    pattern.push_str(rest);
-    Some(pattern)
-}
-
-fn unquote(raw: String) -> Option<String> {
-    let first = raw.chars().next()?;
-    let last = raw.chars().last()?;
-    (matches!(first, '\'' | '"') && first == last)
-        .then(|| raw[1..raw.len().saturating_sub(1)].to_string())
-}
-
-fn text(node: Node, source: &[u8]) -> Option<String> {
-    node.utf8_text(source).ok().map(str::to_string)
 }
 
 #[cfg(test)]

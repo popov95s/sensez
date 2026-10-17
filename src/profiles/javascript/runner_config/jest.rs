@@ -6,7 +6,7 @@ use super::project::{Exclude, Include, PathBase, TestProject};
 use super::projects::{self, Entry};
 use super::value::{Object, Value};
 use super::{glob_set, RunnerConfig, HEURISTIC_FALLBACK};
-use crate::reflexez::patterns::normalize_path;
+use crate::profiles::javascript::roots::normalize as normalize_path;
 use regex::Regex;
 use std::path::{Path, PathBuf};
 

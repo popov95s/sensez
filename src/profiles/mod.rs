@@ -13,6 +13,7 @@ pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
 pub mod registry;
+pub(crate) mod runner_config;
 pub(crate) mod test_oracle;
 pub mod typevocab;
 pub(crate) mod walk;

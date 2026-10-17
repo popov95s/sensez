@@ -1,6 +1,6 @@
 use super::evaluate::{named_children, Evaluator, Scope};
 use super::value::{merge, Value};
-use crate::reflexez::patterns::normalize_path;
+use crate::profiles::javascript::roots::normalize as normalize_path;
 use std::path::PathBuf;
 use tree_sitter::Node;
 

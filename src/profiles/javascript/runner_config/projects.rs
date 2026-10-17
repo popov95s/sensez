@@ -1,6 +1,6 @@
 use super::glob_set;
 use super::value::Value;
-use crate::reflexez::patterns::normalize_path;
+use crate::profiles::javascript::roots::normalize as normalize_path;
 use std::path::{Path, PathBuf};
 
 /// One entry of a `projects`/workspace array.

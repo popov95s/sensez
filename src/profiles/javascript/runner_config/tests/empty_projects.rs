@@ -7,7 +7,7 @@ fn vitest_projects_matching_nothing_keep_the_config_as_one_project() {
         r#"export default { test: { projects: ["packages/*"] } };"#,
     )]);
 
-    let config = fixture.load(RunnerKind::Vitest);
+    let config = fixture.vitest();
 
     assert!(config.is_test(&fixture.path("src/a.test.ts")));
 }
@@ -19,7 +19,7 @@ fn jest_projects_matching_nothing_keep_the_config_as_one_project() {
         r#"module.exports = { projects: ["<rootDir>/packages/*"] };"#,
     )]);
 
-    let config = fixture.load(RunnerKind::Jest);
+    let config = fixture.jest();
 
     assert!(config.is_test(&fixture.path("src/a.test.ts")));
 }

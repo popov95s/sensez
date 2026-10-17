@@ -68,14 +68,7 @@ pub struct RunnerPlan {
     pub tests: Vec<PathBuf>,
 }
 
-/// A runner-config key that could not be read statically.
-#[derive(Clone, Debug, Eq, PartialEq, Serialize)]
-pub struct ConfigWarning {
-    pub file: PathBuf,
-    pub key: String,
-    pub reason: String,
-    pub fallback: String,
-}
+pub use crate::profiles::runner_config::ConfigWarning;
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ImpactPlan {
