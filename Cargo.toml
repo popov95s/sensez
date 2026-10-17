@@ -64,6 +64,7 @@ tree-sitter-typescript = { version = "0.23", optional = true }
 tree-sitter-rust = { version = "0.24", optional = true }
 ignore = "0.4"
 globset = "0.4"
+regex = "1"
 rustc-hash = "2"  # FxHasher; replaced unmaintained fxhash (RUSTSEC-2025-0057)
 rayon = "1.10"
 petgraph = "0.6"

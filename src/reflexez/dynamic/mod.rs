@@ -1,7 +1,7 @@
 //! On-demand dynamic-import extraction. This module is never reached by Noze scans.
 
 #[cfg(feature = "lang-javascript")]
-mod javascript;
+pub(super) mod javascript;
 #[cfg(feature = "lang-python")]
 mod python;
 
@@ -13,7 +13,8 @@ use std::path::{Path, PathBuf};
 #[derive(Default)]
 pub struct FileFacts {
     pub imports: Vec<ImportContext>,
-    pub patterns: Vec<String>,
+    /// One entry per glob call; `!`-prefixed patterns exclude matches.
+    pub patterns: Vec<Vec<String>>,
     pub unresolved: usize,
 }
 

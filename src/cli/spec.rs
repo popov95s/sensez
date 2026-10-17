@@ -67,7 +67,7 @@ pub enum Command {
 pub struct ReflexezArgs {
     /// Repository root (default: current directory).
     pub path: Option<PathBuf>,
-    /// Compare committed changes with the merge-base of this Git revision.
+    /// Also include committed changes since the merge-base with this Git revision.
     #[arg(long, conflicts_with = "staged")]
     pub base: Option<String>,
     /// Consider staged changes only.
@@ -82,10 +82,10 @@ pub struct ReflexezArgs {
     /// Emit the plan as machine-readable JSON; implies --plan.
     #[arg(long)]
     pub json: bool,
-    /// Select every discovered test while retaining runner discovery.
+    /// Run each runner once without file arguments, so the runner discovers every test.
     #[arg(long)]
     pub full: bool,
-    /// Run the full suite if any computed dynamic import remains unresolved.
+    /// Run the full suite on any opaque dynamic import or unreadable runner-config key.
     #[arg(long)]
     pub strict_dynamic: bool,
     /// Force one runner instead of auto-detecting it.

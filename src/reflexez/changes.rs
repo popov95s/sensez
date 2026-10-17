@@ -55,7 +55,7 @@ fn fallback_reasons(files: &[PathBuf], deleted: &[PathBuf]) -> Vec<String> {
     reasons
 }
 
-fn global_trigger(path: &Path) -> Option<&'static str> {
+pub(super) fn global_trigger(path: &Path) -> Option<&'static str> {
     let name = path.file_name()?.to_str()?;
     if matches!(
         name,
@@ -99,6 +99,13 @@ fn global_trigger(path: &Path) -> Option<&'static str> {
         return Some("shared test environment setup changed");
     }
     None
+}
+
+pub(super) fn is_source(path: &Path) -> bool {
+    matches!(
+        path.extension().and_then(|ext| ext.to_str()),
+        Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts")
+    )
 }
 
 #[cfg(test)]

@@ -1,5 +1,8 @@
 use super::dynamic::DynamicFacts;
+use super::module_root::module_root;
+use crate::profiles::ResolutionCache;
 use crate::spine::graph::CodebaseGraph;
+use crate::spine::ir::ImportPhase;
 use petgraph::graph::NodeIndex;
 use petgraph::visit::EdgeRef;
 use std::collections::{HashMap, HashSet, VecDeque};
@@ -11,37 +14,53 @@ pub(super) struct Reach {
     pub(super) dynamic: bool,
 }
 
+/// Importers of each node over runtime graph edges and glob matches; the flag marks dynamic edges.
 pub(super) fn reverse_edges(
     graph: &CodebaseGraph,
     dynamic: &DynamicFacts,
     nodes: &HashMap<PathBuf, NodeIndex>,
     root: &Path,
+    configured_roots: &[PathBuf],
 ) -> HashMap<NodeIndex, Vec<(NodeIndex, bool)>> {
-    let dynamic_files: HashSet<_> = dynamic
+    let computed: HashSet<(&PathBuf, usize)> = dynamic
         .by_file
         .iter()
-        .filter(|(_, facts)| !facts.imports.is_empty())
-        .map(|(path, _)| path)
+        .flat_map(|(path, facts)| facts.imports.iter().map(move |import| (path, import.line)))
         .collect();
     let mut reverse: HashMap<NodeIndex, Vec<(NodeIndex, bool)>> = HashMap::new();
     for edge in graph.graph.edge_references() {
-        let importer = edge.source();
-        if edge.weight().phase == crate::spine::ir::ImportPhase::TypeOnly
-            || !dynamic_files.contains(&graph.graph[importer].file_path)
-        {
+        let import = edge.weight();
+        if import.phase == ImportPhase::TypeOnly {
             continue;
         }
+        let importer = edge.source();
+        let is_computed =
+            import.is_inline && computed.contains(&(&graph.graph[importer].file_path, import.line));
         reverse
             .entry(edge.target())
             .or_default()
-            .push((importer, true));
+            .push((importer, is_computed));
     }
+    let mut aliases = ResolutionCache::default();
     for (importer_path, facts) in &dynamic.by_file {
         let Some(&importer) = nodes.get(importer_path) else {
             continue;
         };
-        for pattern in &facts.patterns {
-            for target in super::patterns::matching_nodes(importer_path, pattern, nodes, root) {
+        let alias_root = module_root(
+            importer_path,
+            graph.graph[importer].language,
+            configured_roots,
+        );
+        let mut resolve_alias = |specifier: &str| aliases.alias_path(&alias_root, specifier);
+        for patterns in &facts.patterns {
+            let targets = super::patterns::matching_nodes(
+                importer_path,
+                patterns,
+                nodes,
+                root,
+                &mut resolve_alias,
+            );
+            for target in targets {
                 reverse.entry(target).or_default().push((importer, true));
             }
         }
@@ -49,20 +68,25 @@ pub(super) fn reverse_edges(
     reverse
 }
 
+/// Breadth-first walk from `seeds` to every test that imports them.
 pub(super) fn walk_reverse(
-    start: NodeIndex,
+    mut seeds: Vec<(NodeIndex, Reach)>,
     reverse: &HashMap<NodeIndex, Vec<(NodeIndex, bool)>>,
     tests: &HashMap<NodeIndex, PathBuf>,
     selected: &mut HashMap<PathBuf, Reach>,
 ) {
-    let mut queue = VecDeque::from([(
-        start,
-        Reach {
-            distance: 0,
-            dynamic: false,
-        },
-    )]);
-    let mut visited = HashMap::from([(start, 0usize)]);
+    seeds.sort_by_key(|(_, reach)| reach.distance);
+    let mut visited: HashMap<NodeIndex, usize> = HashMap::new();
+    let mut queue = VecDeque::new();
+    for (node, reach) in seeds {
+        if visited
+            .get(&node)
+            .is_none_or(|distance| reach.distance < *distance)
+        {
+            visited.insert(node, reach.distance);
+            queue.push_back((node, reach));
+        }
+    }
     while let Some((node, reach)) = queue.pop_front() {
         if let Some(path) = tests.get(&node) {
             selected

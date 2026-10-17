@@ -13,6 +13,7 @@ pub(crate) mod lexeme;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
 pub mod registry;
+pub(crate) mod runner_config;
 pub(crate) mod test_oracle;
 pub mod typevocab;
 pub(crate) mod walk;
@@ -37,6 +38,13 @@ pub(crate) use typescript::ResolutionCache;
 #[cfg(not(feature = "lang-typescript"))]
 #[derive(Default)]
 pub(crate) struct ResolutionCache;
+
+#[cfg(not(feature = "lang-typescript"))]
+impl ResolutionCache {
+    pub(crate) fn alias_path(&mut self, _root: &Path, _specifier: &str) -> Option<PathBuf> {
+        None
+    }
+}
 
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Language, PerfLine, Walked};
 use std::collections::HashSet;

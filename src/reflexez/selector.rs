@@ -1,8 +1,11 @@
+use super::assets::asset_nodes;
 use super::changes;
 use super::discovery::{self, TestFile};
 use super::dynamic::{self, DynamicFacts};
-use super::model::{ImpactPlan, PlanReason, Selection};
+use super::model::{ImpactPlan, PlanReason, RunMode, Selection};
+use super::reach::ChangeReach;
 use super::selector_dynamic::{self, Reach};
+use super::setup_trigger::setup_fallback;
 use crate::cli::spec::ReflexezArgs;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
@@ -31,30 +34,42 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
     if args.full {
         fallback.push("full-suite execution was explicitly requested".into());
     }
+    fallback.extend(setup_fallback(
+        &graph,
+        &project.setup_files,
+        &scope.files,
+        &scope.repository,
+    ));
     let tests_by_path = tests_by_path(&project.tests);
     let nodes_by_path = nodes_by_path(&graph);
-    let dynamic_reverse =
-        selector_dynamic::reverse_edges(&graph, &dynamic, &nodes_by_path, &scope.repository);
-    let mut selected = selected_reach(
-        &scope.files,
-        &tests_by_path,
-        &graph,
-        &nodes_by_path,
-        &dynamic_reverse,
-        &mut fallback,
-    );
-    if dynamic.unresolved > 0 && scope.files.iter().any(|path| is_source(path)) {
-        fallback.push(format!(
-            "{} computed dynamic import(s) leave source dependencies unresolved",
-            dynamic.unresolved
+    let opaque_import_files = opaque_files(&dynamic);
+    let reached = ChangeReach {
+        tests: &tests_by_path,
+        nodes: &nodes_by_path,
+        reverse: &selector_dynamic::reverse_edges(
+            &graph,
+            &dynamic,
+            &nodes_by_path,
+            &scope.repository,
+            &config.roots,
+        ),
+        assets: &asset_nodes(&graph, &config.roots),
+        opaque_files: &opaque_import_files,
+    }
+    .reach(&scope.files);
+    let mut selected = reached.selected;
+    if reached.missing_source {
+        fallback.push("a changed source file is unavailable for graph analysis".into());
+    }
+    if args.strict_dynamic {
+        fallback.extend(strict_reasons(
+            dynamic.unresolved,
+            project.config_warnings.len(),
+            &reached.unmapped,
         ));
     }
-    if args.strict_dynamic && dynamic.unresolved > 0 {
-        fallback.push(format!(
-            "strict dynamic safety found {} unresolved computed import(s)",
-            dynamic.unresolved
-        ));
-    }
+    fallback.sort();
+    fallback.dedup();
     let full_suite = !fallback.is_empty();
     if full_suite {
         selected = project
@@ -71,9 +86,20 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
             })
             .collect();
     }
+    let mode = if full_suite {
+        RunMode::Full
+    } else {
+        RunMode::Narrowed
+    };
     let selected_paths: HashSet<_> = selected.keys().cloned().collect();
     let selections = selections(selected, &tests_by_path, full_suite, args.full);
-    let runners = super::runners::plans(&scope.repository, &project.tests, &selected_paths);
+    let runners = super::runners::plans(
+        &scope.repository,
+        &project.runners,
+        &project.tests,
+        &selected_paths,
+        mode,
+    );
     Ok(ImpactPlan {
         repository: scope.repository,
         changed_files: scope.files,
@@ -82,9 +108,43 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         runners,
         full_suite,
         fallback_reasons: fallback,
+        config_warnings: project.config_warnings,
         unresolved_dynamic_imports: dynamic.unresolved,
+        opaque_import_files,
+        unmapped_changes: reached.unmapped,
         selection_ms: started.elapsed().as_millis(),
     })
+}
+
+fn strict_reasons(unresolved: usize, config_warnings: usize, unmapped: &[PathBuf]) -> Vec<String> {
+    let mut reasons = Vec::new();
+    if unresolved > 0 {
+        reasons.push(format!(
+            "strict dynamic safety found {unresolved} unresolved computed import(s)"
+        ));
+    }
+    if config_warnings > 0 {
+        reasons.push(format!(
+            "strict dynamic safety found {config_warnings} runner config key(s) that are not statically readable"
+        ));
+    }
+    if unmapped.iter().any(|path| changes::is_source(path)) {
+        reasons.push(
+            "strict dynamic safety found a changed source file outside the import graph".into(),
+        );
+    }
+    reasons
+}
+
+fn opaque_files(dynamic: &DynamicFacts) -> Vec<PathBuf> {
+    let mut files: Vec<_> = dynamic
+        .by_file
+        .iter()
+        .filter(|(_, facts)| facts.unresolved > 0)
+        .map(|(path, _)| path.clone())
+        .collect();
+    files.sort();
+    files
 }
 
 fn add_dynamic_imports(files: &mut [ParsedFile], dynamic: &DynamicFacts) {
@@ -111,68 +171,6 @@ fn nodes_by_path(graph: &CodebaseGraph) -> HashMap<PathBuf, NodeIndex> {
             (!node.is_external).then(|| (node.file_path.clone(), index))
         })
         .collect()
-}
-
-fn selected_reach(
-    changed: &[PathBuf],
-    tests: &HashMap<PathBuf, &TestFile>,
-    graph: &CodebaseGraph,
-    nodes: &HashMap<PathBuf, NodeIndex>,
-    dynamic_reverse: &HashMap<NodeIndex, Vec<(NodeIndex, bool)>>,
-    fallback: &mut Vec<String>,
-) -> HashMap<PathBuf, Reach> {
-    let static_reach = crate::spine::impact::reachable_files(
-        graph,
-        changed,
-        crate::spine::impact::DirectionOfImpact::Dependents,
-        crate::spine::impact::ImpactOptions {
-            include_type_only: false,
-        },
-    );
-    let test_nodes: HashMap<_, _> = tests
-        .keys()
-        .filter_map(|path| nodes.get(path).map(|index| (*index, path.clone())))
-        .collect();
-    let mut selected: HashMap<_, _> = static_reach
-        .files
-        .into_iter()
-        .filter(|(path, _)| tests.contains_key(path))
-        .map(|(path, distance)| {
-            (
-                path,
-                Reach {
-                    distance,
-                    dynamic: false,
-                },
-            )
-        })
-        .collect();
-    for path in static_reach.unmapped {
-        if is_source(&path) && !path.exists() {
-            fallback.push("a changed source file is unavailable for graph analysis".into());
-        }
-    }
-    for path in changed {
-        if tests.contains_key(path) {
-            selected.insert(
-                path.clone(),
-                Reach {
-                    distance: 0,
-                    dynamic: false,
-                },
-            );
-        }
-        let Some(&start) = nodes.get(path) else {
-            if is_source(path) && !path.exists() {
-                fallback.push("a changed source file is unavailable for graph analysis".into());
-            }
-            continue;
-        };
-        selector_dynamic::walk_reverse(start, dynamic_reverse, &test_nodes, &mut selected);
-    }
-    fallback.sort();
-    fallback.dedup();
-    selected
 }
 
 fn selections(
@@ -210,11 +208,4 @@ fn selections(
         .collect();
     selected.sort_by(|left, right| left.file.cmp(&right.file));
     selected
-}
-
-fn is_source(path: &Path) -> bool {
-    matches!(
-        path.extension().and_then(|ext| ext.to_str()),
-        Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts")
-    )
 }

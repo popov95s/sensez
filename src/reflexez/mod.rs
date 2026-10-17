@@ -1,14 +1,19 @@
 //! Changed-code test impact analysis that delegates execution to existing runners.
 
+mod assets;
 mod changes;
 mod discovery;
 mod dynamic;
 mod model;
+mod module_root;
 mod patterns;
+mod reach;
 mod render;
+mod runner_config;
 mod runners;
 mod selector;
 mod selector_dynamic;
+mod setup_trigger;
 
 use crate::cli::spec::ReflexezArgs;
 use anyhow::Result;
@@ -32,3 +37,7 @@ pub(crate) fn run(args: ReflexezArgs) -> Result<ExitCode> {
 
 #[cfg(test)]
 mod tests;
+#[cfg(test)]
+mod tests_config;
+#[cfg(test)]
+mod tests_graph;
