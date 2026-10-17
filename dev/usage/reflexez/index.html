@@ -616,6 +616,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Runner integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#runner-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runner configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -838,6 +855,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="Runner integration">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#runner-configuration" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Runner configuration
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -885,13 +919,22 @@ plugin, fixture, or runner command needs replacing.</p>
 a branch or CI job, select an explicit base:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--base<span class="w"> </span>origin/main
 </code></pre></div>
+<p><code>--base</code> adds the commits since the merge-base; staged, unstaged, and untracked
+files are still included, so a local run also covers uncommitted edits.</p>
 <h2 id="inspect-before-executing">Inspect before executing</h2>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--plan
 sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--plan<span class="w"> </span>--json
 </code></pre></div>
-<p>Every selected file includes a reason and dependency distance. Reasons distinguish
-changed tests, direct dependencies, transitive dependencies, computed dynamic
-imports, explicit full runs, and safety fallbacks.</p>
+<p>Every selected file includes a reason (<code>changed_test</code>, <code>direct_dependency</code>,
+<code>transitive_dependency</code>, <code>dynamic_import</code>, <code>full_requested</code>, <code>safety_fallback</code>)
+and a dependency distance. The JSON plan also lists:</p>
+<ul>
+<li><code>config_warnings</code>: runner-config keys that could not be read statically, with
+  the file, key, reason, and the fallback used for that key;</li>
+<li><code>opaque_import_files</code>: files whose computed imports could not be resolved;</li>
+<li><code>unmapped_changes</code>: changed files that exist but are not in the import graph
+  (for example an asset nothing imports), so "0 tests" is never silent.</li>
+</ul>
 <h2 id="runner-integration">Runner integration</h2>
 <p>Reflexez detects local Vitest and Jest installations from <code>package.json</code> and
 detects pytest tests by its standard file conventions. Force a runner only when
@@ -903,34 +946,72 @@ sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> 
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--<span class="w"> </span>--maxfail<span class="o">=</span><span class="m">1</span><span class="w">      </span><span class="c1"># pytest</span>
 sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--<span class="w"> </span>--reporter<span class="o">=</span>dot<span class="w">   </span><span class="c1"># Vitest</span>
 </code></pre></div>
+<p>Narrowed Vitest and Jest runs add <code>--passWithNoTests</code>, and a narrowed pytest run
+treats exit code 5 (no tests collected) as success. Full runs keep the runner's
+default, so an empty full suite still fails.</p>
+<h3 id="runner-configuration">Runner configuration</h3>
+<p>Reflexez reads Vitest and Jest configs statically (it never runs Node) to learn
+which files are tests and which files are shared setup:</p>
+<ul>
+<li>Vitest: <code>vitest.config.*</code>, else <code>vite.config.*</code> (the <code>test</code> key), plus
+  <code>vitest.workspace.*</code> and <code>test.projects</code>. Keys: <code>include</code>, <code>exclude</code>,
+  <code>setupFiles</code>, <code>globalSetup</code>, <code>root</code>, <code>dir</code>. Project entries may be inline
+  objects (with <code>extends</code>), config paths, directories, or globs with <code>!</code>
+  negations.</li>
+<li>Jest: <code>jest.config.*</code>, else the <code>package.json</code> <code>"jest"</code> key, plus <code>projects</code>.
+  Keys: <code>testMatch</code>, <code>testRegex</code>, <code>testPathIgnorePatterns</code>, <code>roots</code>, <code>rootDir</code>,
+  <code>setupFiles</code>, <code>setupFilesAfterEnv</code>, <code>globalSetup</code>.</li>
+</ul>
+<p>Supported config shapes: <code>export default</code> / <code>module.exports</code> objects,
+<code>defineConfig</code>/<code>defineProject</code>/<code>defineWorkspace</code> with an object or a function
+returning one, <code>mergeConfig(a, b)</code> (a relatively imported base config is
+followed), module-level <code>const</code> indirection, string concatenation and
+templates, spreads of local arrays and <code>configDefaults.exclude</code>, and
+<code>path.resolve(__dirname, ...)</code>. Missing keys use the runner defaults.</p>
+<p>A key that cannot be read (for example a helper call, an environment
+conditional, or a non-relative import) is reported as a config warning, and
+only that key falls back: <code>include</code>/<code>testMatch</code> to the <code>*.test.*</code>/<code>*.spec.*</code>/
+<code>__tests__/</code> file-name heuristic, <code>exclude</code> to the runner default, setup keys to
+no setup tracking. With <code>--strict-dynamic</code>, any such warning widens to a full
+run.</p>
 <p>Use explicit paths in editor and staged-file integrations:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--changed-file<span class="w"> </span>src/service.ts
 </code></pre></div>
 <h2 id="safety-model">Safety model</h2>
-<p>Reflexez widens to the full discovered suite when a narrow plan cannot be proven
-safe. Current global triggers include:</p>
+<p>Reflexez runs the full suite when a narrow plan cannot be proven safe. Current
+global triggers include:</p>
 <ul>
 <li>dependency manifests and lockfiles;</li>
 <li>pytest configuration and <code>conftest.py</code>;</li>
 <li>Vitest/Jest configuration;</li>
-<li>Sensez configuration and common shared test setup/environment files;</li>
+<li>Sensez configuration and conventionally named test setup/environment files
+  (<code>setupTests.*</code>, <code>test-setup.*</code>, <code>.env.test*</code>);</li>
+<li>the configured <code>setupFiles</code>, <code>setupFilesAfterEnv</code>, and <code>globalSetup</code> modules,
+  or anything they import;</li>
 <li>TypeScript module-resolution configuration;</li>
-<li>deleted source files or incomplete parsing;</li>
-<li>relevant dynamic imports whose targets cannot be resolved.</li>
+<li>deleted source files or incomplete parsing.</li>
 </ul>
 <p>Literal <code>import()</code>, CommonJS <code>require()</code>, <code>importlib.import_module()</code>, and
 <code>__import__()</code> targets use the normal import graph. Reflexez additionally resolves
 simple constant indirection, concatenation, template/f-string patterns, and
-<code>import.meta.glob</code> patterns. This work is isolated to the <code>reflexez</code> command;
-ordinary <code>noze</code> scans do not invoke the dynamic-import pass.</p>
-<p>The plan always reports the repository-wide count of opaque computed imports.
-By default, only an opaque import in the selected impact path widens execution;
-this matches the practical safety model of native changed-test tools. Use
-<code>--strict-dynamic</code> in high-assurance CI to widen on any opaque computed import:</p>
+<code>import.meta.glob</code> patterns, including arrays with <code>!</code> negations and <code>tsconfig</code>
+path aliases. Static imports of assets (<code>.css</code>, <code>.json</code>, <code>.svg</code>, ..., including
+<code>?raw</code>/<code>?url</code> suffixes and aliases) are edges too, so changing an asset selects
+the tests that import it. Assets loaded through <code>new URL(...)</code> or filesystem reads
+are not tracked. This work is isolated to the <code>reflexez</code> command; ordinary <code>noze</code>
+scans do not invoke the dynamic-import pass.</p>
+<p>The plan always lists files with opaque computed imports. An opaque import in a
+file can load any module, so when source files change, reflexez also selects the
+tests that can execute that file (or the file itself when it is a test). Opaque
+imports in tooling that no test reaches do not widen the plan. Use
+<code>--strict-dynamic</code> in high-assurance CI to run the full suite on any opaque
+computed import, unreadable runner-config key, or changed source file outside
+the import graph:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--base<span class="w"> </span>origin/main<span class="w"> </span>--strict-dynamic
 </code></pre></div>
-<p><code>--full</code> is useful for validating the integration while retaining runner
-discovery:</p>
+<p>Full runs, from <code>--full</code> or a safety fallback, invoke each runner once in its
+root with no file arguments, so the runner's own discovery decides what runs.
+<code>--full</code> is useful for validating the integration:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--full
 </code></pre></div>
 <p>Reflexez intentionally does not enable unsafe runner optimizations such as
