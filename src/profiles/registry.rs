@@ -48,6 +48,10 @@ pub fn should_parse_path(path: &Path) -> bool {
     parse_for_path(path).is_some_and(|profile| !profile.is_generated_or_data_source(path))
 }
 
+pub fn is_declaration_only(path: &Path) -> bool {
+    parse_for_path(path).is_some_and(|profile| profile.is_declaration_only(path))
+}
+
 fn profile(language: Language) -> &'static dyn LanguageProfile {
     match PROFILES
         .iter()

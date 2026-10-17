@@ -108,16 +108,6 @@ pub(super) fn is_source(path: &Path) -> bool {
     )
 }
 
-pub(super) fn is_declaration_file(path: &Path) -> bool {
-    path.file_name()
-        .and_then(|name| name.to_str())
-        .is_some_and(|name| {
-            [".d.ts", ".d.mts", ".d.cts"]
-                .iter()
-                .any(|suffix| name.ends_with(suffix))
-        })
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -5,6 +5,7 @@ pub(crate) mod classunit;
 pub(crate) mod conditionals;
 pub(crate) mod const_eval;
 pub(crate) mod deadcode;
+pub(crate) mod declaration;
 pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;

@@ -127,6 +127,9 @@ pub trait ParseProfile: Send + Sync {
     fn is_generated_or_data_source(&self, _path: &Path) -> bool {
         false
     }
+    fn is_declaration_only(&self, _path: &Path) -> bool {
+        false
+    }
 }
 
 pub trait ModuleProfile: Send + Sync {

@@ -33,7 +33,7 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         issue
             .file
             .as_deref()
-            .is_none_or(|file| !changes::is_declaration_file(file))
+            .is_none_or(|file| !crate::profiles::registry::is_declaration_only(file))
     };
     if !config_issues.is_empty() || parsed.issues.iter().any(hides_tests) {
         fallback.push("incomplete parsing could hide an affected test".into());
