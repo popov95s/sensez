@@ -14,6 +14,8 @@ mod clones;
 mod flatten;
 mod gapped;
 mod near_miss;
+#[cfg(test)]
+mod range_tests;
 #[cfg(feature = "eyez")]
 mod semantic;
 #[cfg(test)]
@@ -198,8 +200,23 @@ fn occurrence(
     Some(CloneOccurrence {
         file,
         start_row: first.start_row as usize,
-        end_row: last.end_row as usize,
+        end_row: last_closed_row(spans, start, end).unwrap_or(last.start_row) as usize,
     })
+}
+
+fn last_closed_row(spans: &[TokenSpan], start: usize, end: usize) -> Option<u32> {
+    (start..end)
+        .filter(|&t| closes_within(spans, start, end, t))
+        .map(|t| spans[t].end_row)
+        .max()
+}
+
+/// Whether token `t`'s node ends before the token after match `[start, end)` in the same file.
+fn closes_within(spans: &[TokenSpan], start: usize, end: usize, t: usize) -> bool {
+    match spans.get(end) {
+        Some(next) if next.file_id == spans[start].file_id => spans[t].end_byte <= next.start_byte,
+        _ => true,
+    }
 }
 
 /// Drop occurrences that overlap an already-kept one in the same file.

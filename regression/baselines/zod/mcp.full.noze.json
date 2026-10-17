@@ -552,12 +552,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 114,
+          "end_row": 116,
           "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
           "start_row": 93
         },
         {
-          "end_row": 130,
+          "end_row": 132,
           "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
           "start_row": 109
         }
@@ -568,12 +568,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 1494,
+          "end_row": 1482,
           "file": "<zod>/packages/zod/src/v3/types.ts",
           "start_row": 1459
         },
         {
-          "end_row": 1746,
+          "end_row": 1734,
           "file": "<zod>/packages/zod/src/v3/types.ts",
           "start_row": 1711
         }
@@ -584,12 +584,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 1594,
+          "end_row": 1595,
           "file": "<zod>/packages/zod/src/v3/types.ts",
           "start_row": 1573
         },
         {
-          "end_row": 1817,
+          "end_row": 1818,
           "file": "<zod>/packages/zod/src/v3/types.ts",
           "start_row": 1796
         }
@@ -600,12 +600,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 1878,
+          "end_row": 1864,
           "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
           "start_row": 1861
         },
         {
-          "end_row": 1910,
+          "end_row": 1898,
           "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
           "start_row": 1895
         }
@@ -680,12 +680,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 3652,
+          "end_row": 3648,
           "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
           "start_row": 3634
         },
         {
-          "end_row": 3716,
+          "end_row": 3715,
           "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
           "start_row": 3701
         }
@@ -744,12 +744,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 43,
+          "end_row": 44,
           "file": "<zod>/packages/bench/ipv4-regex.ts",
           "start_row": 18
         },
         {
-          "end_row": 45,
+          "end_row": 46,
           "file": "<zod>/packages/zod/src/v3/benchmarks/ipv4.ts",
           "start_row": 20
         }
@@ -760,12 +760,28 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 49,
+          "end_row": 485,
+          "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_row": 472
+        },
+        {
+          "end_row": 504,
+          "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+          "start_row": 491
+        }
+      ],
+      "token_length": 51
+    },
+    {
+      "action": "advisory",
+      "occurrences": [
+        {
+          "end_row": 50,
           "file": "<zod>/packages/bench/datetime-regex.ts",
           "start_row": 16
         },
         {
-          "end_row": 49,
+          "end_row": 50,
           "file": "<zod>/packages/zod/src/v3/benchmarks/datetime.ts",
           "start_row": 16
         }

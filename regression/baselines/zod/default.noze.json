@@ -552,12 +552,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 1494,
+          "end_row": 1482,
           "file": "<zod>/packages/zod/src/v3/types.ts",
           "start_row": 1459
         },
         {
-          "end_row": 1746,
+          "end_row": 1734,
           "file": "<zod>/packages/zod/src/v3/types.ts",
           "start_row": 1711
         }
@@ -568,12 +568,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 43,
+          "end_row": 44,
           "file": "<zod>/packages/bench/ipv4-regex.ts",
           "start_row": 18
         },
         {
-          "end_row": 45,
+          "end_row": 46,
           "file": "<zod>/packages/zod/src/v3/benchmarks/ipv4.ts",
           "start_row": 20
         }
@@ -584,12 +584,12 @@
       "action": "advisory",
       "occurrences": [
         {
-          "end_row": 49,
+          "end_row": 50,
           "file": "<zod>/packages/bench/datetime-regex.ts",
           "start_row": 16
         },
         {
-          "end_row": 49,
+          "end_row": 50,
           "file": "<zod>/packages/zod/src/v3/benchmarks/datetime.ts",
           "start_row": 16
         }
@@ -635,7 +635,7 @@
     "boundaries_total": 0,
     "cycles_total": 2,
     "dead_code_total": 1,
-    "duplication_total": 16,
+    "duplication_total": 17,
     "external_edges": 461,
     "internal_edges": 521,
     "mode": "full",
