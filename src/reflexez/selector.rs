@@ -7,6 +7,7 @@ use super::reach::ChangeReach;
 use super::selector_dynamic::{self, Reach};
 use super::setup_trigger::setup_fallback;
 use crate::cli::spec::ReflexezArgs;
+use crate::report::ScanIssue;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
 use anyhow::{bail, Result};
@@ -28,7 +29,13 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
     let (config, config_issues) = crate::config::model::Config::load_for_scan(&scope.repository);
     let graph = crate::spine::graph::build(&parsed.files, &config.roots);
     let mut fallback = scope.fallback_reasons;
-    if !config_issues.is_empty() || !parsed.issues.is_empty() {
+    let hides_tests = |issue: &ScanIssue| {
+        issue
+            .file
+            .as_deref()
+            .is_none_or(|file| !changes::is_declaration_file(file))
+    };
+    if !config_issues.is_empty() || parsed.issues.iter().any(hides_tests) {
         fallback.push("incomplete parsing could hide an affected test".into());
     }
     if args.full {

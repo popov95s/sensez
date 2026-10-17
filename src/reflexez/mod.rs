@@ -40,4 +40,6 @@ mod tests;
 #[cfg(test)]
 mod tests_config;
 #[cfg(test)]
+mod tests_declaration;
+#[cfg(test)]
 mod tests_graph;
