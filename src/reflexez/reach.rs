@@ -3,7 +3,7 @@ use super::discovery::TestFile;
 use super::selector_dynamic::{walk_reverse, Reach};
 use petgraph::graph::NodeIndex;
 use std::collections::HashMap;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 const CHANGED: Reach = Reach {
     distance: 0,
@@ -24,48 +24,82 @@ pub(super) struct ChangeReach<'a> {
     pub opaque_files: &'a [PathBuf],
 }
 
+#[derive(Default)]
 pub(super) struct Reached {
     pub selected: HashMap<PathBuf, Reach>,
     pub unmapped: Vec<PathBuf>,
     pub missing_source: bool,
 }
 
+enum Placement<'a> {
+    Graph(NodeIndex),
+    Assets(&'a [NodeIndex]),
+    MissingSource,
+    Unmapped,
+    Ignored,
+}
+
 impl ChangeReach<'_> {
     pub fn reach(&self, changed: &[PathBuf]) -> Reached {
-        let mut reached = Reached {
-            selected: HashMap::new(),
-            unmapped: Vec::new(),
-            missing_source: false,
-        };
+        let mut reached = Reached::default();
         let mut seeds = Vec::new();
         for path in changed {
             if self.tests.contains_key(path) {
                 reached.selected.insert(path.clone(), CHANGED);
             }
-            if let Some(&node) = self.nodes.get(path) {
-                seeds.push((node, CHANGED));
-            } else if let Some(assets) = self.assets.get(path) {
-                seeds.extend(assets.iter().map(|asset| (*asset, CHANGED)));
-            } else if !path.exists() {
-                reached.missing_source |= is_source(path);
-            } else if global_trigger(path).is_none() {
-                reached.unmapped.push(path.clone());
+            match self.place(path) {
+                Placement::Graph(node) => seeds.push((node, CHANGED)),
+                Placement::Assets(assets) => {
+                    seeds.extend(assets.iter().map(|asset| (*asset, CHANGED)))
+                }
+                Placement::MissingSource => reached.missing_source = true,
+                Placement::Unmapped => reached.unmapped.push(path.clone()),
+                Placement::Ignored => {}
             }
         }
         if changed.iter().any(|path| is_source(path)) {
-            seeds.extend(
-                self.opaque_files
-                    .iter()
-                    .filter_map(|path| self.nodes.get(path))
-                    .map(|node| (*node, OPAQUE_IMPORTER)),
-            );
+            seeds.extend(self.opaque_importers());
         }
-        let test_nodes: HashMap<_, _> = self
-            .tests
-            .keys()
-            .filter_map(|path| self.nodes.get(path).map(|index| (*index, path.clone())))
-            .collect();
-        walk_reverse(seeds, self.reverse, &test_nodes, &mut reached.selected);
+        walk_reverse(
+            seeds,
+            self.reverse,
+            &self.test_nodes(),
+            &mut reached.selected,
+        );
         reached
+    }
+
+    fn place(&self, path: &Path) -> Placement<'_> {
+        if let Some(&node) = self.nodes.get(path) {
+            return Placement::Graph(node);
+        }
+        if let Some(assets) = self.assets.get(path) {
+            return Placement::Assets(assets);
+        }
+        if !path.exists() {
+            return if is_source(path) {
+                Placement::MissingSource
+            } else {
+                Placement::Ignored
+            };
+        }
+        if global_trigger(path).is_some() {
+            return Placement::Ignored;
+        }
+        Placement::Unmapped
+    }
+
+    fn opaque_importers(&self) -> impl Iterator<Item = (NodeIndex, Reach)> + '_ {
+        self.opaque_files
+            .iter()
+            .filter_map(|path| self.nodes.get(path))
+            .map(|node| (*node, OPAQUE_IMPORTER))
+    }
+
+    fn test_nodes(&self) -> HashMap<NodeIndex, PathBuf> {
+        self.tests
+            .keys()
+            .filter_map(|path| self.nodes.get(path).map(|node| (*node, path.clone())))
+            .collect()
     }
 }
