@@ -4,7 +4,9 @@
 //! share node-kind names; TS-only kinds like `interface_declaration` simply map
 //! to no structural token). TS decorators are a deferred enhancement.
 
-use crate::profiles::javascript::{deadcode, performance, resolve, roots, traversal, typevocab};
+use crate::profiles::javascript::{
+    deadcode, declaration, performance, resolve, roots, traversal, typevocab,
+};
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
     TypeVocabularyProfile,
@@ -42,6 +44,10 @@ impl ParseProfile for TsProfile {
 
     fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         traversal::walk(root, src, file_id, module_name)
+    }
+
+    fn is_declaration_only(&self, path: &Path) -> bool {
+        declaration::is_declaration_file(path)
     }
 }
 
