@@ -87,8 +87,8 @@ fn thin_page_composing_many_siblings_is_not_a_god_module() {
     assert_eq!(god_modules(&files, no_size_gate), vec!["Page".to_string()]);
 }
 
-#[test]
-fn large_balanced_hub_is_a_god_module() {
+/// A 400-line `service` with 12 internal runtime imports, plus its dependencies.
+fn hub() -> Vec<(String, String)> {
     let mut service = String::new();
     let mut files = Vec::new();
     for i in 0..12 {
@@ -103,9 +103,27 @@ fn large_balanced_hub_is_a_god_module() {
     }
     service.push_str("export const x = d0;\n");
     files.push(file("service", service));
+    files
+}
+
+#[test]
+fn large_balanced_hub_is_a_god_module() {
+    let mut files = hub();
     files.extend(importers("caller", 15, "service"));
     assert_eq!(
         god_modules(&files, no_shotgun()),
         vec!["service".to_string()]
     );
+}
+
+#[test]
+fn type_only_importers_are_not_fan_in() {
+    let mut files = hub();
+    files.extend((0..15).map(|i| {
+        file(
+            &format!("caller{i}"),
+            format!("import type {{ x }} from \"./service\";\nexport type Y{i} = typeof x;\n"),
+        )
+    }));
+    assert!(god_modules(&files, no_shotgun()).is_empty());
 }
