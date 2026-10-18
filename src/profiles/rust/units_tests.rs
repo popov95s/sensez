@@ -73,6 +73,26 @@ fn scan(items: &[String], code: &str) {
 }
 
 #[test]
+fn literal_membership_needs_a_membership_call() {
+    let w = walked(
+        r#"
+fn keys(code: &str) -> Vec<String> {
+    let _hit = ["a", "b"].iter().any(|k| *k == code);
+    let _keep = ["c", "d"].contains(&code);
+    let _names: Vec<String> = ["x", "y"].map(String::from).to_vec();
+    ["e", "f"].into_iter().map(String::from).collect()
+}
+"#,
+    );
+    let lines: Vec<(usize, Option<&str>)> = w.units.functions[0]
+        .literal_memberships
+        .iter()
+        .map(|m| (m.line, m.operand.as_deref()))
+        .collect();
+    assert_eq!(lines, vec![(3, None), (4, Some("code"))]);
+}
+
+#[test]
 fn records_nested_loop_and_sort_in_loop() {
     let w = walked(
         r#"
