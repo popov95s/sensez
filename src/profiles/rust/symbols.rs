@@ -16,12 +16,12 @@ pub fn def_name(node: Node, src: &[u8]) -> Option<String> {
 }
 
 /// Display name for a scope opener: the `name` field, or the implemented type
-/// for an `impl` block, or `<anon>` (closures).
+/// for an `impl` block, or [`crate::spine::ir::ANONYMOUS`] (closures).
 pub fn scope_name(node: Node, src: &[u8]) -> String {
     node.child_by_field_name("name")
         .or_else(|| node.child_by_field_name("type"))
         .and_then(|n| n.utf8_text(src).ok())
-        .unwrap_or("<anon>")
+        .unwrap_or(crate::spine::ir::ANONYMOUS)
         .to_string()
 }
 

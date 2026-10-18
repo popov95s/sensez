@@ -41,7 +41,7 @@ pub struct FunctionFacts {
 impl FunctionFacts {
     pub fn start(func: Node, src: &[u8], is_method: bool) -> Self {
         let mut unit = FunctionUnit {
-            name: symbols::def_name(func, src).unwrap_or_default(),
+            name: symbols::function_name(func, src).unwrap_or_default(),
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
             param_names: param_names(func, src),

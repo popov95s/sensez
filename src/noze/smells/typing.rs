@@ -55,14 +55,10 @@ fn loose_typing(
                 if m.validated_names.contains(p) {
                     return (labels, escape);
                 }
-                let next = ctx
-                    .type_hints
-                    .param_types
-                    .get(&(m.name.clone(), p.clone()))
-                    .and_then(|ty| {
-                        reportable_loose(ctx, ty, cfg.loose_typing_strictness)
-                            .map(|kind| (format!("{p}: {ty}"), kind))
-                    });
+                let next = ctx.type_hints.param_type(m, p).and_then(|ty| {
+                    reportable_loose(ctx, ty, cfg.loose_typing_strictness)
+                        .map(|kind| (format!("{p}: {ty}"), kind))
+                });
                 if let Some((label, kind)) = next {
                     labels.push(label);
                     (labels, escape || kind == LooseTypeKind::EscapeHatch)
@@ -73,8 +69,7 @@ fn loose_typing(
     // Tuple returns are tuple_packing's finding — don't double-report here.
     let ret = ctx
         .type_hints
-        .return_types
-        .get(&m.name)
+        .return_type(m)
         .and_then(|ty| reportable_return(ctx, ty, cfg.loose_typing_strictness));
     if offenders.is_empty() && ret.is_none() {
         return;
@@ -141,7 +136,7 @@ fn boolean_blindness(
     let bools = m
         .param_names
         .iter()
-        .filter_map(|p| ctx.type_hints.param_types.get(&(m.name.clone(), p.clone())))
+        .filter_map(|p| ctx.type_hints.param_type(m, p))
         .filter(|ty| ctx.type_vocabulary.is_bool(ty))
         .count();
     if bools > cfg.max_bool_params {
@@ -168,8 +163,7 @@ fn tuple_packing(
 ) {
     let annotated = ctx
         .type_hints
-        .return_types
-        .get(&m.name)
+        .return_type(m)
         .filter(|ty| matches!(base_type(ty), "tuple" | "Tuple"))
         .map(|ty| tuple_arity(ty))
         .unwrap_or(0);

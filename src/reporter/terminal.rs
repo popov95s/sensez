@@ -167,7 +167,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             "    [{}] {}  {} — {}",
             action_label(finding.action),
             smell_loc,
-            finding.symbol,
+            display_symbol(&finding.symbol),
             rendered_message
         );
     }
@@ -255,6 +255,14 @@ fn location(file: &std::path::Path, line: usize) -> String {
         format!("{}:{}", file.display(), line)
     } else {
         file.display().to_string()
+    }
+}
+
+fn display_symbol(symbol: &str) -> &str {
+    if symbol.is_empty() {
+        crate::spine::ir::ANONYMOUS
+    } else {
+        symbol
     }
 }
 

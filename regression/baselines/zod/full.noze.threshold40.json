@@ -1147,12 +1147,12 @@
       "god_module": 1,
       "heavy_nested_function": 3,
       "large_class": 2,
-      "loose_typing": 79,
+      "loose_typing": 118,
       "magic_string_default": 58,
       "message_chain": 1,
       "mutated_parameter": 3,
       "narrating_code": 3,
-      "nested_loop": 27,
+      "nested_loop": 33,
       "nested_ternary": 8,
       "repeated_iteration": 3,
       "shotgun_surgery_hazard": 3,
@@ -1163,7 +1163,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 221,
+    "smells_total": 266,
     "source_lines": 71956
   },
   "smells": [
@@ -1174,7 +1174,7 @@
       "line": 104,
       "message": "7 comment line(s), 54% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
       "metric": 54,
-      "symbol": "",
+      "symbol": "makeData callback",
       "threshold": 30
     },
     {
@@ -1215,6 +1215,16 @@
       "message": "params [value: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "assert",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/string.ts",
+      "kind": "loose_typing",
+      "line": 11,
+      "message": "params [str: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "manual",
       "threshold": 0
     },
     {
@@ -1441,6 +1451,16 @@
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "loose_typing",
+      "line": 309,
+      "message": "params [value: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "validate",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
       "line": 3478,
       "message": "params [input: unknown] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1464,7 +1484,7 @@
       "line": 482,
       "message": "1 nested if(s) can be combined with a boolean AND",
       "metric": 1,
-      "symbol": "",
+      "symbol": "check",
       "threshold": 0
     },
     {
@@ -1535,6 +1555,116 @@
       "message": "params [factory: object | (() => any)]; returns any[] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "makeData",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 21,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "instanceofClass",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 22,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "instanceofPromise",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 23,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "keyin",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 25,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "typeofThenCheckSymbol",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 26,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "typeofThenCheckTag",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 27,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "instanceofObjectThenCheckSymbol",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 28,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "instanceofObjectThenCheckTag",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 29,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "falsyThenCheckTag",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 30,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "falsyThenCheckSymbol",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 31,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "nullChainCheckSymbol",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/bench/instanceof.ts",
+      "kind": "loose_typing",
+      "line": 32,
+      "message": "params [x: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "nullChainCheckTag",
       "threshold": 0
     },
     {
@@ -1710,6 +1840,16 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/ZodError.ts",
       "kind": "loose_typing",
+      "line": 175,
+      "message": "params [obj: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "quotelessJson",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "loose_typing",
       "line": 217,
       "message": "params [_mapper: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1733,7 +1873,7 @@
       "line": 237,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "symbol": "",
+      "symbol": "processError",
       "threshold": 1
     },
     {
@@ -1768,12 +1908,92 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+      "kind": "loose_typing",
+      "line": 172,
+      "message": "params [x: ParseReturnType<any>] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "isAborted",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
+      "kind": "loose_typing",
+      "line": 6,
+      "message": "params [params: {\n  data: any;\n  path: (string | number)[];\n  errorMaps: ZodErrorMap[];\n  issueData: IssueData;\n}] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "makeIssue",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "loose_typing",
+      "line": 175,
+      "message": "params [data: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "getParsedType",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "loose_typing",
+      "line": 24,
+      "message": "params [obj: any]; returns any[] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "getValidEnumValues",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "loose_typing",
+      "line": 25,
+      "message": "params [k: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "filter callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "loose_typing",
+      "line": 33,
+      "message": "params [obj: any]; returns any[] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "objectValues",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "loose_typing",
+      "line": 52,
+      "message": "params [checker: (arg: T) => any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "find",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "loose_typing",
+      "line": 73,
+      "message": "params [value: any]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "jsonStringifyReplacer",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v3/locales/en.ts",
       "kind": "nested_ternary",
       "line": 62,
       "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 10,
-      "symbol": "",
+      "symbol": "errorMap",
       "threshold": 0
     },
     {
@@ -1930,6 +2150,16 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
+      "line": 2446,
+      "message": "params [item: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "schema.items.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
       "line": 2823,
       "message": "params [mask: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1971,8 +2201,8 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 3559,
-      "message": "params [first: any, second: any, third: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
-      "metric": 3,
+      "message": "params [first: any, second: any, third: any]; returns ZodRecord<any, any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 4,
       "symbol": "create",
       "threshold": 0
     },
@@ -1990,10 +2220,70 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
+      "line": 3822,
+      "message": "returns ParseReturnType<any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
       "line": 3847,
       "message": "params [returns: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "makeReturnsIssue",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4258,
+      "message": "params [data: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "promisified.then callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4374,
+      "message": "params [acc: unknown]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "executeRefinement",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4702,
+      "message": "returns ParseReturnType<any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4748,
+      "message": "returns ParseReturnType<any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 4782,
+      "message": "returns ParseReturnType<any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_parse",
       "threshold": 0
     },
     {
@@ -2098,6 +2388,46 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
+      "kind": "loose_typing",
+      "line": 30,
+      "message": "params [mapper: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "value",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
+      "kind": "loose_typing",
+      "line": 34,
+      "message": "params [mapper: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "value",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
+      "kind": "loose_typing",
+      "line": 38,
+      "message": "params [issue: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "value",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
+      "kind": "loose_typing",
+      "line": 45,
+      "message": "params [issues: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "value",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
       "kind": "nested_loop",
       "line": 380,
@@ -2153,7 +2483,7 @@
       "line": 1123,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "symbol": "",
+      "symbol": "core.$constructor(\"ZodNumber\") callback",
       "threshold": 0
     },
     {
@@ -2207,6 +2537,16 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/core.ts",
+      "kind": "loose_typing",
+      "line": 70,
+      "message": "params [inst: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "value",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/doc.ts",
       "kind": "divergent_change",
       "line": 3,
@@ -2248,11 +2588,21 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "loose_typing",
+      "line": 428,
+      "message": "params [seg: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_path.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
       "kind": "nested_loop",
       "line": 310,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "symbol": "",
+      "symbol": "processError",
       "threshold": 1
     },
     {
@@ -2262,7 +2612,7 @@
       "line": 367,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "symbol": "",
+      "symbol": "processError",
       "threshold": 1
     },
     {
@@ -2308,6 +2658,16 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "loose_typing",
+      "line": 365,
+      "message": "params [val: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "isSimpleIntersection",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "loose_typing",
       "line": 621,
       "message": "returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
@@ -2321,7 +2681,7 @@
       "line": 380,
       "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 2,
-      "symbol": "",
+      "symbol": "tupleProcessor",
       "threshold": 0
     },
     {
@@ -2331,7 +2691,7 @@
       "line": 532,
       "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 1,
-      "symbol": "",
+      "symbol": "pipeProcessor",
       "threshold": 0
     },
     {
@@ -2341,7 +2701,7 @@
       "line": 135,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "symbol": "",
+      "symbol": "string",
       "threshold": 0
     },
     {
@@ -2351,7 +2711,7 @@
       "line": 70,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "symbol": "",
+      "symbol": "mac",
       "threshold": 0
     },
     {
@@ -2392,6 +2752,16 @@
       "message": "params [proms: Promise<any>[], input: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "handleCatchall",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 1990,
+      "message": "params [shape: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "generateFastpass",
       "threshold": 0
     },
     {
@@ -2457,11 +2827,21 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 4480,
+      "message": "returns $ZodFunction<any, any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "input",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "magic_string_default",
       "line": 959,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "symbol": "",
+      "symbol": "data.replace callback",
       "threshold": 0
     },
     {
@@ -2471,7 +2851,7 @@
       "line": 4458,
       "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
       "metric": 5,
-      "symbol": "",
+      "symbol": "parse",
       "threshold": 4
     },
     {
@@ -2491,7 +2871,7 @@
       "line": 1931,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "symbol": "",
+      "symbol": "util.defineLazy callback",
       "threshold": 1
     },
     {
@@ -2501,7 +2881,7 @@
       "line": 205,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "symbol": "",
+      "symbol": "core.$constructor(\"$ZodType\") callback",
       "threshold": 1
     },
     {
@@ -2511,7 +2891,7 @@
       "line": 2374,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 2,
-      "symbol": "",
+      "symbol": "util.defineLazy callback",
       "threshold": 1
     },
     {
@@ -2521,7 +2901,7 @@
       "line": 2391,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
       "metric": 1,
-      "symbol": "",
+      "symbol": "util.cached callback",
       "threshold": 1
     },
     {
@@ -2541,7 +2921,7 @@
       "line": 1136,
       "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 2,
-      "symbol": "",
+      "symbol": "parse",
       "threshold": 0
     },
     {
@@ -2551,7 +2931,7 @@
       "line": 3287,
       "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 1,
-      "symbol": "",
+      "symbol": "map callback",
       "threshold": 0
     },
     {
@@ -2571,7 +2951,67 @@
       "line": 2211,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "symbol": "",
+      "symbol": "util.defineLazy callback",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 321,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "symbol": "extractDefs",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 329,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "symbol": "extractDefs",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 337,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "symbol": "extractDefs",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 344,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "symbol": "extractDefs",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 351,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 2,
+      "symbol": "extractDefs",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 450,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 4,
+      "symbol": "finalize",
       "threshold": 1
     },
     {
@@ -2682,6 +3122,16 @@
       "message": "params [data: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "numKeys",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "loose_typing",
+      "line": 424,
+      "message": "params [data: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "getParsedType",
       "threshold": 0
     },
     {
@@ -2970,7 +3420,7 @@
       "line": 51,
       "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "symbol": "",
+      "symbol": "verbFor",
       "threshold": 0
     },
     {
@@ -3088,7 +3538,7 @@
       "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
       "kind": "heavy_nested_function",
       "line": 100,
-      "message": "nested function inside `<anon>` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `<anon>`), so extract it to module/class level",
+      "message": "nested function inside `error` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `error`), so extract it to module/class level",
       "metric": 17,
       "symbol": "getSizing",
       "threshold": 15

@@ -148,11 +148,8 @@ fn visit(
 
     let opened = token_map::is_scope(kind);
     if opened {
-        let name = node
-            .child_by_field_name("name")
-            .and_then(|n| n.utf8_text(src).ok())
-            .unwrap_or("<anon>")
-            .to_string();
+        let name = symbols::function_name(node, src)
+            .unwrap_or_else(|| crate::spine::ir::ANONYMOUS.to_string());
         ctx.scope.push(Scope {
             name,
             is_class: token_map::is_class(kind),

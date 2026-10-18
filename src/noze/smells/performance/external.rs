@@ -7,7 +7,7 @@ pub(super) fn external_calls<'a>(
     ctx: &SmellContext<'_>,
     owner: &FunctionUnit,
     calls: &'a [CallFact],
-    functions: &BTreeMap<&str, &FunctionUnit>,
+    functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
     profile: &dyn PerformanceProfile,
 ) -> BTreeMap<&'a str, &'a CallFact> {
     let mut out = BTreeMap::new();
@@ -34,8 +34,7 @@ fn is_external(
     let root = profile.receiver_root(&call.base);
     let receiver_hint = ctx
         .type_hints
-        .param_types
-        .get(&(owner.name.clone(), root.to_string()))
+        .param_type(owner, root)
         .or_else(|| ctx.type_hints.var_types.get(root));
     profile.is_external_loop_call(
         &call.method,

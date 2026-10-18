@@ -289,7 +289,7 @@
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
       "literal_membership": 5,
-      "loose_typing": 94,
+      "loose_typing": 95,
       "magic_string_default": 4,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
@@ -303,7 +303,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 153,
+    "smells_total": 154,
     "source_lines": 18315
   },
   "smells": [

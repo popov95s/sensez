@@ -18,7 +18,8 @@ pub use performance::{CallFact, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
 pub use units::{
-    ClassProperty, ClassUnit, CommentSpan, FunctionUnit, SchemaCall, TypeAlias, TypeHints,
+    ClassProperty, ClassUnit, CommentSpan, FunctionKey, FunctionUnit, SchemaCall, TypeAlias,
+    TypeHints, ANONYMOUS,
 };
 
 use std::collections::{HashMap, HashSet};

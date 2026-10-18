@@ -69,7 +69,7 @@ fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<
             continue;
         }
         // Resolve the receiver's type; skip if unknown (precision over recall).
-        let Some(ty) = resolve_type(&m.name, receiver, ctx.type_hints) else {
+        let Some(ty) = resolve_type(m, receiver, ctx.type_hints) else {
             continue;
         };
         out.push(make(
@@ -134,10 +134,9 @@ fn private_attrs(attrs: &std::collections::HashSet<String>) -> Vec<&str> {
 }
 
 /// Resolve `name` within `func`: a typed parameter first, else a typed/instantiated variable.
-fn resolve_type(func: &str, name: &str, hints: &TypeHints) -> Option<String> {
+fn resolve_type(func: &FunctionUnit, name: &str, hints: &TypeHints) -> Option<String> {
     hints
-        .param_types
-        .get(&(func.to_string(), name.to_string()))
+        .param_type(func, name)
         .or_else(|| hints.var_types.get(name))
         .cloned()
 }

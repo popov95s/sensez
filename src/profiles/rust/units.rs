@@ -1,7 +1,7 @@
 //! Per-function structural metrics for Rust smells.
 
 use crate::profiles::walk;
-use crate::spine::ir::{FunctionUnit, TypeHints};
+use crate::spine::ir::{FunctionKey, FunctionUnit, TypeHints};
 use tree_sitter::Node;
 
 use super::params::param_names;
@@ -33,12 +33,15 @@ pub fn analyze_function(
     is_method: bool,
     hints: &mut TypeHints,
 ) -> FunctionUnit {
-    let name = super::symbols::def_name(func, src).unwrap_or_default();
-    let mut unit = FunctionUnit {
-        name: name.clone(),
+    let key = FunctionKey {
+        name: super::symbols::def_name(func, src).unwrap_or_default(),
         start_line: func.start_position().row + 1,
+    };
+    let mut unit = FunctionUnit {
+        name: key.name.clone(),
+        start_line: key.start_line,
         end_line: func.end_position().row + 1,
-        param_names: param_names(func, src, &name, hints),
+        param_names: param_names(func, src, &key, hints),
         is_method,
         ..Default::default()
     };
@@ -46,7 +49,7 @@ pub fn analyze_function(
         .child_by_field_name("return_type")
         .and_then(|n| type_text(n, src))
     {
-        hints.return_types.insert(name.clone(), ret.clone());
+        hints.record_return(key, ret.clone());
         unit.max_tuple_return = tuple_type_arity(&ret);
     }
     if let Some(body) = func.child_by_field_name("body") {

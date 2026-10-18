@@ -17,7 +17,7 @@ fn fused_collector_nested_arrows_and_declarations() {
     assert_eq!(functions[0].name, "top");
     // arrow appears first in body (variable_declarator → arrow_function),
     // then the named function_declaration helper.
-    assert_eq!(functions[1].name, "");
+    assert_eq!(functions[1].name, "f");
     assert_eq!(functions[2].name, "helper");
     assert!(functions[2].is_nested);
     assert_eq!(functions[2].parent, "top");

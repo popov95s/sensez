@@ -115,3 +115,24 @@ fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
     assert!(text.contains("params [cfg]"));
     assert!(text.contains("returns Record<string, any>"));
 }
+
+#[test]
+fn smell_output_names_empty_symbol_anonymous() {
+    let mut report = AnalysisReport::default();
+    report.smells.push(crate::report::SmellFinding {
+        action: ActionLevel::Warning,
+        kind: crate::report::SmellKind::MagicNumbers,
+        message: "threshold".into(),
+        file: "z.ts".into(),
+        line: 3,
+        end_line: 3,
+        symbol: String::new(),
+        severity: Severity::Info,
+        metric: 1,
+        threshold: 0,
+        reason: String::new(),
+    });
+
+    let text = render(&report, false);
+    assert!(text.contains("z.ts:3  <anonymous> — threshold"));
+}

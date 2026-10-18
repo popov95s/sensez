@@ -1,16 +1,16 @@
 //! Parameter names and type hints of a function node.
 
 use super::unit_helpers::{pattern_name, type_text};
-use crate::spine::ir::TypeHints;
+use crate::spine::ir::{FunctionKey, TypeHints};
 use tree_sitter::Node;
 
 pub(super) fn param_names(
-    func: Node,
+    node: Node,
     src: &[u8],
-    func_name: &str,
+    func: &FunctionKey,
     hints: &mut TypeHints,
 ) -> Vec<String> {
-    let Some(params) = func.child_by_field_name("parameters") else {
+    let Some(params) = node.child_by_field_name("parameters") else {
         return Vec::new();
     };
     let mut out = Vec::new();
@@ -27,9 +27,7 @@ pub(super) fn param_names(
             .child_by_field_name("type")
             .and_then(|n| type_text(n, src))
         {
-            hints
-                .param_types
-                .insert((func_name.to_string(), name.clone()), ty);
+            hints.record_param(func, &name, ty);
         }
         out.push(name);
     }

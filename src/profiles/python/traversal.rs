@@ -142,7 +142,7 @@ fn visit(
         let name = node
             .child_by_field_name("name")
             .and_then(|n| n.utf8_text(src).ok())
-            .unwrap_or("<anon>")
+            .unwrap_or(crate::spine::ir::ANONYMOUS)
             .to_string();
         scope.push(Scope {
             name,
