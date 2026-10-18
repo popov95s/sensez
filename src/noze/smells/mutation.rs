@@ -5,11 +5,13 @@
 //! - `implicit_schema`: one receiver subscripted with many distinct string keys.
 //! - `literal_membership`: branching on `x in ["a", "b"]` string lists.
 
+use super::external_vocab::is_external_vocabulary;
+use super::lines::{hit_lines, line_list};
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{CallbackPosition, FunctionUnit, LiteralMembership, Visibility};
 use std::collections::{HashMap, HashSet};
 
 pub fn detect(
@@ -29,23 +31,68 @@ pub fn detect(
         if cfg.implicit_schema_min_keys > 0 {
             implicit_schema(ctx, m, &schemas[index], cfg, out);
         }
-        if cfg.literal_membership && m.literal_membership_tests > 0 {
-            out.push(make(
-                SmellKind::LiteralMembership,
-                format!(
-                    "{} membership test(s) against literal string lists — stringly-typed categories; consider {}",
-                    m.literal_membership_tests,
-                    ctx.wording.category
-                ),
-                ctx.path,
-                m.start_line,
-                &m.name,
-                Severity::Info,
-                m.literal_membership_tests as u32,
-                0,
-            ));
+        if cfg.literal_membership {
+            literal_membership(ctx, m, cfg, out);
         }
     }
+}
+
+fn literal_membership(
+    ctx: &SmellContext<'_>,
+    m: &FunctionUnit,
+    cfg: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    let hits: Vec<&LiteralMembership> = m
+        .literal_memberships
+        .iter()
+        .filter(|test| {
+            !(cfg.literal_membership_skip_external_vocab && is_external_vocabulary(&test.literals))
+        })
+        .filter(|test| {
+            test.operand
+                .as_deref()
+                .is_none_or(|operand| !has_literal_union_type(ctx, m, operand))
+        })
+        .collect();
+    let lines = hit_lines(hits.iter().map(|test| test.line));
+    let Some(&first) = lines.first() else {
+        return;
+    };
+    let finding = make(
+        SmellKind::LiteralMembership,
+        format!(
+            "{} membership test(s) against literal string lists at {} — stringly-typed categories; consider {}",
+            hits.len(),
+            line_list(&lines),
+            ctx.wording.category
+        ),
+        ctx.path,
+        first,
+        &m.name,
+        Severity::Info,
+        hits.len() as u32,
+        0,
+    );
+    out.push(SmellFinding { lines, ..finding });
+}
+
+/// The operand is already annotated with a closed literal type (inline or a same-file alias).
+fn has_literal_union_type(ctx: &SmellContext<'_>, m: &FunctionUnit, operand: &str) -> bool {
+    let Some(annotation) = ctx
+        .type_hints
+        .param_type(m, operand)
+        .or_else(|| ctx.type_hints.var_types.get(operand))
+    else {
+        return false;
+    };
+    let vocab = ctx.type_vocabulary;
+    vocab.is_literal_union(annotation)
+        || ctx
+            .type_hints
+            .type_aliases
+            .iter()
+            .any(|alias| alias.name == annotation.trim() && vocab.is_literal_union(&alias.target))
 }
 
 /// Parameters whose *object* is mutated in the body (subscript-assign, `del`,
@@ -58,12 +105,17 @@ fn mutated_params(
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
+    // An inline callback's params are elements of the caller's own data.
+    if m.callback_position == CallbackPosition::Argument {
+        return;
+    }
     let mutated: Vec<&str> = m
         .param_names
         .iter()
         .filter(|p| !matches!(p.as_str(), "self" | "cls"))
         .filter(|p| {
             m.mutated_names.contains(*p)
+                || is_method_mutated(ctx, m, p)
                 || (cfg.param_attr_mutation && m.attr_mutated_names.contains(*p))
         })
         .map(String::as_str)
@@ -71,19 +123,61 @@ fn mutated_params(
     if mutated.is_empty() {
         return;
     }
+    let (severity, advice) = mutation_advice(ctx, m, &mutated);
     out.push(make(
         SmellKind::MutatedParameter,
         format!(
-            "mutates input parameter(s) [{}] — caller-visible side effect; return a new value instead",
+            "mutates input parameter(s) [{}] — {advice}",
             mutated.join(", ")
         ),
         ctx.path,
         m.start_line,
         &m.name,
-        Severity::Warning,
+        severity,
         mutated.len() as u32,
         0,
     ));
+}
+
+/// A mutating method call counts only when the param's declared type (if any)
+/// is a built-in collection that method family mutates.
+fn is_method_mutated(ctx: &SmellContext<'_>, m: &FunctionUnit, param: &str) -> bool {
+    let declared = ctx.type_hints.param_type(m, param);
+    m.method_mutations.iter().any(|(name, family)| {
+        name == param
+            && declared.is_none_or(|ty| ctx.type_vocabulary.is_mutable_collection(ty, *family))
+    })
+}
+
+fn mutation_advice(
+    ctx: &SmellContext<'_>,
+    m: &FunctionUnit,
+    mutated: &[&str],
+) -> (Severity, &'static str) {
+    if mutated.iter().any(|p| m.returned_names.contains(*p)) {
+        return (
+            Severity::Warning,
+            "mutates and returns its input; callers can't tell whether it copies",
+        );
+    }
+    let returns_nothing = ctx
+        .type_hints
+        .return_type(m)
+        .is_none_or(|ty| ctx.type_vocabulary.is_void(ty));
+    let only_last = m
+        .param_names
+        .last()
+        .is_some_and(|last| mutated == [last.as_str()]);
+    if m.visibility == Visibility::Private && returns_nothing && only_last {
+        return (
+            Severity::Info,
+            "output parameter — acceptable in private collectors",
+        );
+    }
+    (
+        Severity::Warning,
+        "caller-visible side effect; return a new value instead",
+    )
 }
 
 /// Parameters rebound with plain assignment (opt-in: `x = x or []` is idiomatic).
@@ -142,7 +236,7 @@ fn implicit_schema(
                 ctx.wording.structure
             ),
             ctx.path,
-            m.start_line,
+            m.str_key_lines.get(recv).copied().unwrap_or(m.start_line),
             &m.name,
             Severity::Info,
             keys.len() as u32,

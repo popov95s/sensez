@@ -1,6 +1,6 @@
 //! Small Rust AST helpers for unit extraction.
 
-use crate::profiles::walk;
+use crate::profiles::walk::{self, MutationTarget};
 use crate::spine::ir::CallFact;
 use tree_sitter::Node;
 
@@ -87,13 +87,13 @@ fn control_region(node: Node<'_>) -> usize {
     0
 }
 
-pub(super) fn target_root(node: Node, src: &[u8]) -> Option<(String, bool)> {
+pub(super) fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
     match node.kind() {
-        "identifier" => walk::node_text(node, src).map(|id| (id.to_string(), false)),
-        "self" => Some(("self".to_string(), false)),
+        "identifier" => walk::node_text(node, src).map(|id| MutationTarget::Direct(id.to_string())),
+        "self" => Some(MutationTarget::Direct("self".to_string())),
         "index_expression" => target_root(node.named_child(0)?, src),
         "field_expression" => {
-            target_root(node.child_by_field_name("value")?, src).map(|(root, _)| (root, true))
+            target_root(node.child_by_field_name("value")?, src).map(MutationTarget::via_attribute)
         }
         _ => None,
     }
@@ -152,6 +152,24 @@ pub(super) fn chain_len(node: Node) -> usize {
     match node.child_by_field_name("value") {
         Some(value) if value.kind() == "field_expression" => chain_len(value) + 1,
         _ => 1,
+    }
+}
+
+/// True when `node` is the value of an enclosing field access, so only the
+/// outermost field of `a.b.c` records a chain.
+pub(super) fn is_chain_inner(node: Node) -> bool {
+    node.parent().is_some_and(|p| {
+        p.kind() == "field_expression"
+            && p.child_by_field_name("value").map(|v| v.id()) == Some(node.id())
+    })
+}
+
+pub(super) fn chain_root(node: Node, src: &[u8]) -> Option<String> {
+    let value = node.child_by_field_name("value")?;
+    match value.kind() {
+        "field_expression" => chain_root(value, src),
+        "identifier" | "self" => value.utf8_text(src).ok().map(str::to_string),
+        _ => None,
     }
 }
 

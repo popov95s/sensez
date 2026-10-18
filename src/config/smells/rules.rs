@@ -34,6 +34,9 @@ fn apply_rule_knob(
     key: &str,
     value: &toml::Value,
 ) -> Result<bool, String> {
+    if list_rule_knobs(kind).contains(&key) {
+        return apply_list_knob(smells, kind, key, value);
+    }
     if let Some(s) = value.as_str() {
         return apply_string_knob(smells, kind, key, s);
     }
@@ -48,6 +51,10 @@ fn apply_rule_knob(
             }
             (SmellKind::RepeatedIteration, "include_tests") => {
                 smells.repeated_iteration_include_tests = b;
+                true
+            }
+            (SmellKind::LiteralMembership, "skip_external_vocab") => {
+                smells.literal_membership_skip_external_vocab = b;
                 true
             }
             _ => false,
@@ -68,6 +75,30 @@ fn apply_rule_knob(
         return Err(format!("[smells.rules.{kind}] {key} must be non-negative"));
     }
     Ok(apply_integer_knob(smells, kind, key, n as usize))
+}
+
+fn apply_list_knob(
+    smells: &mut Smells,
+    kind: SmellKind,
+    key: &str,
+    value: &toml::Value,
+) -> Result<bool, String> {
+    let items: Option<Vec<String>> = value.as_array().and_then(|items| {
+        items
+            .iter()
+            .map(|item| item.as_str().map(str::to_string))
+            .collect()
+    });
+    let Some(items) = items else {
+        return Err(format!(
+            "[smells.rules.{kind}] {key} must be a list of strings"
+        ));
+    };
+    match (kind, key) {
+        (SmellKind::MessageChain, "ignore_roots") => smells.message_chain_ignore_roots = items,
+        _ => return Ok(false),
+    }
+    Ok(true)
 }
 
 fn apply_string_knob(
@@ -129,6 +160,10 @@ fn apply_integer_knob(smells: &mut Smells, kind: SmellKind, key: &str, n: usize)
             set(&mut smells.shotgun_blast_threshold, n)
         }
         (SmellKind::GodModule, "min_fan") => set(&mut smells.god_module_fan, n),
+        (SmellKind::GodModule, "min_fan_in") => set(&mut smells.god_module_min_fan_in, n),
+        (SmellKind::GodModule, "min_fan_out") => set(&mut smells.god_module_min_fan_out, n),
+        (SmellKind::GodModule, "min_lines") => set(&mut smells.god_module_min_lines, n),
+        (SmellKind::GodModule, "min_units") => set(&mut smells.god_module_min_units, n),
         (SmellKind::NarratingCode, "min_comment_lines") => set(&mut smells.min_comment_lines, n),
         (SmellKind::NarratingCode, "max_comment_ratio_percent") => {
             set(&mut smells.max_comment_ratio_percent, n)
@@ -177,10 +212,17 @@ fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::HighComplexity => &["max_cyclomatic"],
         SmellKind::HighCognitiveComplexity => &["max_cognitive"],
         SmellKind::DeepNesting => &["max_nesting"],
-        SmellKind::MessageChain | SmellKind::RedundantWrapperChain => &["max_depth"],
+        SmellKind::MessageChain => &["max_depth", "ignore_roots"],
+        SmellKind::RedundantWrapperChain => &["max_depth"],
         SmellKind::DataClump => &["min_fields", "min_occurrences"],
         SmellKind::ShotgunSurgeryHazard => &["min_blast"],
-        SmellKind::GodModule => &["min_fan"],
+        SmellKind::GodModule => &[
+            "min_fan",
+            "min_fan_in",
+            "min_fan_out",
+            "min_lines",
+            "min_units",
+        ],
         SmellKind::NarratingCode => &[
             "min_comment_lines",
             "max_comment_ratio_percent",
@@ -191,6 +233,7 @@ fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::RepeatedIteration => &["include_tests"],
         SmellKind::TuplePacking => &["max_tuple_return"],
         SmellKind::ImplicitSchema => &["min_keys"],
+        SmellKind::LiteralMembership => &["skip_external_vocab"],
         _ => &[],
     }
 }
@@ -199,6 +242,14 @@ fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
     match kind {
         SmellKind::MutatedParameter => &["include_attributes"],
         SmellKind::RepeatedIteration => &["include_tests"],
+        SmellKind::LiteralMembership => &["skip_external_vocab"],
+        _ => &[],
+    }
+}
+
+fn list_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
+    match kind {
+        SmellKind::MessageChain => &["ignore_roots"],
         _ => &[],
     }
 }

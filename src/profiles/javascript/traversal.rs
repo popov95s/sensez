@@ -45,6 +45,7 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
     };
     visit(root, src, file_id, module_name, false, &mut ctx);
     let free_reads = ctx.free_reads;
+    units::discount_namespace_hops(&mut out);
     namespaces::narrow(&free_reads, &mut out.symbols.imports);
     crate::profiles::comments::attach(&mut out);
     walk::attach_method_attrs(&mut out);
@@ -134,23 +135,7 @@ fn visit<'tree>(
     record_units(node, src, kind, ctx);
 
     if units::is_function(kind) {
-        let is_method = ctx.scope.last().is_some_and(|s| s.is_class);
-        let lineage = Lineage::new(&ctx.path, node);
-        let mut collector = units::FunctionFacts::start(lineage, src, is_method);
-        let enclosed_by_fn = ctx.scope.last().is_some_and(|s| !s.is_class);
-        if enclosed_by_fn
-            && matches!(
-                kind,
-                "function_declaration" | "generator_function_declaration"
-            )
-        {
-            collector.unit.is_nested = true;
-            collector.unit.parent = ctx.scope.last().map(|s| s.name.clone()).unwrap_or_default();
-        }
-        let index = ctx.out.units.functions.len();
-        ctx.out.units.functions.push(Default::default());
-        typehints::record_function(lineage, src, &mut ctx.out.units.type_hints);
-        ctx.active_fns.push(ActiveFn { collector, index });
+        start_function(node, src, kind, ctx);
     }
 
     if token_map::is_leaf(kind) {
@@ -206,6 +191,28 @@ fn visit<'tree>(
     if opened {
         ctx.scope.pop();
     }
+}
+
+// Kept out of `visit` so the large collector never sits in each recursive frame.
+#[inline(never)]
+fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut VisitCtx<'_, 'tree>) {
+    let lineage = Lineage::new(&ctx.path, node);
+    let is_method = ctx.scope.last().is_some_and(|s| s.is_class);
+    let mut collector = units::FunctionFacts::start(lineage, src, is_method);
+    let enclosed_by_fn = ctx.scope.last().is_some_and(|s| !s.is_class);
+    if enclosed_by_fn
+        && matches!(
+            kind,
+            "function_declaration" | "generator_function_declaration"
+        )
+    {
+        collector.unit.is_nested = true;
+        collector.unit.parent = ctx.scope.last().map(|s| s.name.clone()).unwrap_or_default();
+    }
+    let index = ctx.out.units.functions.len();
+    ctx.out.units.functions.push(Default::default());
+    typehints::record_function(lineage, src, &mut ctx.out.units.type_hints);
+    ctx.active_fns.push(ActiveFn { collector, index });
 }
 
 #[cfg(feature = "eyez")]

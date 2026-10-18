@@ -186,6 +186,9 @@ pub struct SmellFinding {
     pub line: usize,
     #[serde(skip)]
     pub(crate) end_line: usize,
+    /// Every offending line when the finding aggregates several hits.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub lines: Vec<usize>,
     pub symbol: String,
     #[serde(skip)]
     pub severity: Severity,
@@ -193,6 +196,18 @@ pub struct SmellFinding {
     pub threshold: u32,
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub reason: String,
+}
+
+impl SmellFinding {
+    /// One `(start, end)` span per offending line, else the finding's own range.
+    pub(crate) fn spans(&self) -> impl Iterator<Item = (usize, usize)> + '_ {
+        let own = self
+            .lines
+            .is_empty()
+            .then(|| (self.line, self.end_line.max(self.line)));
+        own.into_iter()
+            .chain(self.lines.iter().map(|&line| (line, line)))
+    }
 }
 
 /// Whether a report covers the whole repo or is filtered to a change.

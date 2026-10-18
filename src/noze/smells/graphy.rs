@@ -9,6 +9,8 @@ use crate::config::smells::{SmellConfig, Smells};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
+use crate::spine::ir::{ImportPhase, SymbolKind};
+use crate::spine::parser::ParsedFile;
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use rayon::prelude::*;
@@ -22,6 +24,7 @@ const BLAST_FLOOR_REPO_PERCENT: usize = 15;
 /// `in_scope` drops skipped files both as candidates and as importers.
 pub fn detect(
     graph: &CodebaseGraph,
+    files: &[ParsedFile],
     cfg: &SmellConfig,
     in_scope: &(dyn Fn(&ModuleNode) -> bool + Sync),
 ) -> Vec<SmellFinding> {
@@ -44,7 +47,12 @@ pub fn detect(
                 .max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
             let blast = afferent(graph, idx, &node.module_name, in_scope);
             let ce = efferent(graph, idx);
-            shotgun(node, blast, blast_floor, lcfg).or_else(|| god_module(node, blast, ce, lcfg))
+            let size = node
+                .source_index
+                .and_then(|i| files.get(i))
+                .map(module_size);
+            shotgun(node, blast, blast_floor, lcfg)
+                .or_else(|| god_module(node, blast, ce, size.unwrap_or_default(), lcfg))
         })
         .collect()
 }
@@ -79,12 +87,14 @@ fn afferent(
     sources.len()
 }
 
-/// Efferent coupling: distinct modules depended upon via real coupling edges.
+/// Efferent coupling: distinct internal modules depended upon at runtime.
+/// Packages and type-only imports don't make a module change with its targets.
 fn efferent(graph: &CodebaseGraph, idx: petgraph::graph::NodeIndex) -> usize {
     let mut targets: Vec<_> = graph
         .graph
         .edges_directed(idx, Direction::Outgoing)
-        .filter(|e| !e.weight().is_module_decl)
+        .filter(|e| !e.weight().is_module_decl && e.weight().phase == ImportPhase::Runtime)
+        .filter(|e| !graph.graph[e.target()].is_external)
         .map(|e| e.target())
         .collect();
     targets.sort_unstable();
@@ -118,24 +128,43 @@ fn shotgun(
     ))
 }
 
-/// Minimum fan-in *and* fan-out for a true hub. Excludes composition roots /
-/// entrypoints (huge fan-out, ~zero fan-in) that aren't god modules.
-const GOD_MODULE_MIN_SIDE: usize = 4;
+/// Source lines and top-level functions + classes of one module.
+#[derive(Default, Clone, Copy)]
+struct ModuleSize {
+    lines: usize,
+    units: usize,
+}
+
+fn module_size(file: &ParsedFile) -> ModuleSize {
+    let units = file
+        .walked
+        .symbols
+        .declared_kinds
+        .values()
+        .filter(|kind| matches!(kind, SymbolKind::Function | SymbolKind::Class))
+        .count();
+    ModuleSize {
+        lines: file.lines as usize,
+        units,
+    }
+}
 
 fn god_module(
     node: &crate::spine::graph::ModuleNode,
     ca: usize,
     ce: usize,
+    size: ModuleSize,
     cfg: &Smells,
 ) -> Option<SmellFinding> {
     let fan = ca + ce;
-    // A god module is a hub: depended upon *and* depending widely. Requiring both
-    // sides rules out entrypoints (fan-in ~0) and leaf utilities (fan-out ~0).
-    if cfg.disabled.contains(&SmellKind::GodModule)
-        || fan < cfg.god_module_fan
-        || ca < GOD_MODULE_MIN_SIDE
-        || ce < GOD_MODULE_MIN_SIDE
-    {
+    // A god module is a sizeable hub: depended upon *and* depending widely.
+    // Requiring both sides rules out entrypoints (fan-in ~0) and leaf utilities
+    // (fan-out ~0); the size gate rules out small, widely imported leaves.
+    let hub = ca >= cfg.god_module_min_fan_in
+        && ce >= cfg.god_module_min_fan_out
+        && fan >= cfg.god_module_fan;
+    let sizeable = size.lines >= cfg.god_module_min_lines || size.units >= cfg.god_module_min_units;
+    if cfg.disabled.contains(&SmellKind::GodModule) || !hub || !sizeable {
         return None;
     }
     Some(make(

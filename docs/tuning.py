@@ -22,6 +22,7 @@ EXAMPLE_LANGUAGES = (
 )
 
 KNOB_COMMENTS = {
+    "ignore_roots": "chain roots never reported, e.g. a generated API client",
     "include_attributes": "also flag mutation of fields on parameters",
     "include_tests": "also flag test code and assertion arguments",
     "max_bool_params": "allowed boolean parameters before flagging",
@@ -38,10 +39,15 @@ KNOB_COMMENTS = {
     "min_assigns": "assignments to one local before flagging",
     "min_blast": "dependent modules before shotgun-surgery risk",
     "min_fan": "combined incoming/outgoing fan before god-module risk",
+    "min_fan_in": "importing modules required for a god module",
+    "min_fan_out": "internal runtime imports required for a god module",
     "min_fields": "shared fields required for a data clump",
     "min_function_lines": "shorter functions are flagged only for commented-out code",
     "min_keys": "string keys on one object before implicit-schema risk",
+    "min_lines": "module lines required for a god module (or min_units)",
     "min_occurrences": "functions sharing the clump before flagging",
+    "min_units": "top-level functions and classes required (or min_lines)",
+    "skip_external_vocab": "ignore extension, MIME, path, and error-code lists",
 }
 
 

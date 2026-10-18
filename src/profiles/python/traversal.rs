@@ -112,14 +112,7 @@ fn visit(
     // reflects the *enclosing* scope here (the current node is pushed below),
     // so a function directly inside a class is a method.
     if kind == "function_definition" {
-        let is_method = scope.last().is_some_and(|s| s.is_class);
-        let mut unit = units::analyze_function(node, src, is_method);
-        if let Some(enclosing) = scope.last().filter(|s| !s.is_class) {
-            unit.is_nested = true;
-            unit.parent = enclosing.name.clone();
-        }
-        unit.review_risks.is_test_case = !unit.is_nested && unit.name.starts_with("test_");
-        out.units.functions.push(unit);
+        record_function_unit(node, src, scope, out);
     } else if kind == "class_definition" {
         out.units.classes.push(units::analyze_class(node, src));
     }
@@ -172,6 +165,19 @@ fn visit(
     if opened {
         scope.pop();
     }
+}
+
+// Kept out of `visit` so the large unit never sits in each recursive frame.
+#[inline(never)]
+fn record_function_unit(node: Node, src: &[u8], scope: &[Scope], out: &mut Walked) {
+    let is_method = scope.last().is_some_and(|s| s.is_class);
+    let mut unit = units::analyze_function(node, src, is_method);
+    if let Some(enclosing) = scope.last().filter(|s| !s.is_class) {
+        unit.is_nested = true;
+        unit.parent = enclosing.name.clone();
+    }
+    unit.review_risks.is_test_case = !unit.is_nested && unit.name.starts_with("test_");
+    out.units.functions.push(unit);
 }
 
 fn credit_call_result_attr(out: &mut Walked, node: Node, src: &[u8]) {

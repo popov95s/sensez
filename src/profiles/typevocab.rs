@@ -11,6 +11,47 @@ pub enum LooseTypeKind {
     EscapeHatch,
     SchemaErasing,
     PrimitiveCollection,
+    /// A top type that forces narrowing before use (TS `unknown`).
+    SafeTop,
+}
+
+/// Split `text` on `sep` outside any bracket pair, trimming each part.
+pub(crate) fn split_top_level(text: &str, sep: char) -> Vec<&str> {
+    let mut depth = BracketDepth::default();
+    let mut parts = Vec::new();
+    let mut start = 0;
+    for (i, c) in text.char_indices() {
+        match c {
+            '<' | '[' | '(' | '{' => depth.open(),
+            '>' | ']' | ')' | '}' => depth.close(),
+            _ if c == sep && depth.is_top_level() => {
+                parts.push(text[start..i].trim());
+                start = i + c.len_utf8();
+            }
+            _ => {}
+        }
+    }
+    parts.push(text[start..].trim());
+    parts
+}
+
+#[derive(Default)]
+struct BracketDepth {
+    value: usize,
+}
+
+impl BracketDepth {
+    fn open(&mut self) {
+        self.value += 1;
+    }
+
+    fn close(&mut self) {
+        self.value = self.value.saturating_sub(1);
+    }
+
+    fn is_top_level(&self) -> bool {
+        self.value == 0
+    }
 }
 
 /// Base name of an annotation: `dict[str, Any]` → `dict`,

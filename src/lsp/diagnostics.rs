@@ -143,18 +143,20 @@ pub fn from_report(report: &AnalysisReport) -> BTreeMap<String, Vec<Diagnostic>>
         }
     }
     for finding in &report.smells {
-        push(
-            &mut diagnostics,
-            &finding.file,
-            FindingDetails {
-                start_line: finding.line,
-                end_line: finding.end_line,
-                action: finding.action,
-                code: format!("smell/{}", finding.kind),
-                message: finding.message.clone(),
-                related_information: Vec::new(),
-            },
-        );
+        for (start_line, end_line) in finding.spans() {
+            push(
+                &mut diagnostics,
+                &finding.file,
+                FindingDetails {
+                    start_line,
+                    end_line,
+                    action: finding.action,
+                    code: format!("smell/{}", finding.kind),
+                    message: finding.message.clone(),
+                    related_information: Vec::new(),
+                },
+            );
+        }
     }
     diagnostics
 }
@@ -249,5 +251,33 @@ mod tests {
     #[test]
     fn off_never_publishes_diagnostics() {
         assert!(!is_visible(ActionLevel::MustFix, DisplayLevel::Off));
+    }
+
+    #[test]
+    fn listed_smell_lines_publish_one_diagnostic_each() {
+        let report = AnalysisReport {
+            smells: vec![crate::report::SmellFinding {
+                action: ActionLevel::Warning,
+                kind: crate::report::SmellKind::MessageChain,
+                message: "chain".into(),
+                file: std::env::temp_dir().join("chain.ts"),
+                line: 3,
+                end_line: 3,
+                lines: vec![3, 9],
+                symbol: "f".into(),
+                severity: crate::report::Severity::Warning,
+                metric: 5,
+                threshold: 4,
+                reason: String::new(),
+            }],
+            ..Default::default()
+        };
+
+        let spans: Vec<(usize, usize)> = from_report(&report)
+            .into_values()
+            .flatten()
+            .map(|d| (d.range.start.line, d.range.end.line))
+            .collect();
+        assert_eq!(spans, vec![(2, 3), (8, 9)]);
     }
 }

@@ -27,7 +27,7 @@ use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
     TypeVocabularyProfile, WordingProfile,
 };
-use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Walked};
+use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -182,6 +182,18 @@ impl TypeVocabularyProfile for PythonProfile {
 
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
         typevocab::is_primitive_scalar_alias(annotation)
+    }
+
+    fn is_literal_union(&self, annotation: &str) -> bool {
+        typevocab::is_literal_union(annotation)
+    }
+
+    fn is_mutable_collection(&self, annotation: &str, family: MutatorFamily) -> bool {
+        typevocab::is_mutable_collection(annotation, family)
+    }
+
+    fn is_void(&self, annotation: &str) -> bool {
+        typevocab::is_void(annotation)
     }
 }
 

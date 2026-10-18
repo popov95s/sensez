@@ -124,6 +124,7 @@ mod tests {
                 file: file.clone(),
                 line,
                 end_line: line,
+                lines: Vec::new(),
                 symbol: format!("f{line}"),
                 severity: Severity::Warning,
                 metric: 1,

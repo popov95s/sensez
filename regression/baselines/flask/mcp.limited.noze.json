@@ -214,15 +214,6 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
-      "kind": "god_module",
-      "message": "fan-in 6 + fan-out 33 = 39 (threshold 25)",
-      "metric": 39,
-      "symbol": "flask.app",
-      "threshold": 25
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/app.py",
       "kind": "high_cognitive_complexity",
       "line": 1102,
       "message": "cognitive complexity 20 (threshold 15)",
@@ -252,6 +243,16 @@
     },
     {
       "action": "warning",
+      "file": "<flask>/src/flask/blueprints.py",
+      "kind": "divergent_change",
+      "line": 18,
+      "message": "class splits into 3 cohesion clusters (low LCOM) \u2014 prone to divergent change",
+      "metric": 3,
+      "symbol": "Blueprint",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "boolean_blindness",
       "line": 563,
@@ -263,11 +264,12 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
-      "kind": "god_module",
-      "message": "fan-in 4 + fan-out 29 = 33 (threshold 25)",
-      "metric": 33,
-      "symbol": "flask.cli",
-      "threshold": 25
+      "kind": "boolean_blindness",
+      "line": 935,
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
+      "metric": 3,
+      "symbol": "run_command",
+      "threshold": 2
     },
     {
       "action": "warning",
@@ -311,6 +313,16 @@
     },
     {
       "action": "warning",
+      "file": "<flask>/src/flask/debughelpers.py",
+      "kind": "nested_loop",
+      "line": 153,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 3,
+      "symbol": "explain_template_loading_attempts",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
       "file": "<flask>/src/flask/globals.py",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 12 distinct modules \u2014 a change here scatters edits widely",
@@ -337,15 +349,6 @@
       "metric": 5,
       "symbol": "App",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "god_module",
-      "message": "fan-in 7 + fan-out 21 = 28 (threshold 25)",
-      "metric": 28,
-      "symbol": "flask.sansio.app",
-      "threshold": 25
     },
     {
       "action": "warning",

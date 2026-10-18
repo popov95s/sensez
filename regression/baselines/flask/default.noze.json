@@ -195,10 +195,9 @@
       "boolean_blindness": 4,
       "divergent_change": 8,
       "feature_envy": 1,
-      "god_module": 3,
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
-      "literal_membership": 5,
+      "literal_membership": 4,
       "loose_typing": 95,
       "magic_string_default": 3,
       "mutated_parameter": 3,
@@ -212,7 +211,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 149,
+    "smells_total": 145,
     "source_lines": 18315
   },
   "smells": [
@@ -220,28 +219,24 @@
       "action": "advisory",
       "file": "<flask>/src/flask/app.py",
       "kind": "literal_membership",
-      "line": 414,
-      "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
+      "line": 437,
+      "lines": [
+        437
+      ],
+      "message": "1 membership test(s) against literal string lists at L437 \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
       "symbol": "open_resource",
       "threshold": 0
     },
     {
       "action": "advisory",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "literal_membership",
-      "line": 562,
-      "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
-      "metric": 1,
-      "symbol": "raise_routing_exception",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
       "file": "<flask>/src/flask/blueprints.py",
       "kind": "literal_membership",
-      "line": 104,
-      "message": "1 membership test(s) against literal string lists \u2014 stringly-typed categories; consider an Enum",
+      "line": 120,
+      "lines": [
+        120
+      ],
+      "message": "1 membership test(s) against literal string lists at L120 \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
       "symbol": "open_resource",
       "threshold": 0
@@ -255,6 +250,19 @@
       "metric": 1,
       "symbol": "_load_plugin_commands",
       "threshold": 1
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "literal_membership",
+      "line": 33,
+      "lines": [
+        33
+      ],
+      "message": "1 membership test(s) against literal string lists at L33 \u2014 stringly-typed categories; consider an Enum",
+      "metric": 1,
+      "symbol": "get_debug_flag",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -315,15 +323,6 @@
       "metric": 4,
       "symbol": "raise_routing_exception",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "god_module",
-      "message": "fan-in 6 + fan-out 33 = 39 (threshold 25)",
-      "metric": 39,
-      "symbol": "flask.app",
-      "threshold": 25
     },
     {
       "action": "warning",
@@ -418,15 +417,6 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
-      "kind": "god_module",
-      "message": "fan-in 4 + fan-out 29 = 33 (threshold 25)",
-      "metric": 33,
-      "symbol": "flask.cli",
-      "threshold": 25
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/cli.py",
       "kind": "loose_typing",
       "line": 791,
       "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
@@ -502,15 +492,6 @@
       "metric": 5,
       "symbol": "App",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "god_module",
-      "message": "fan-in 7 + fan-out 21 = 28 (threshold 25)",
-      "metric": 28,
-      "symbol": "flask.sansio.app",
-      "threshold": 25
     },
     {
       "action": "warning",

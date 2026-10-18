@@ -10,6 +10,8 @@ pub struct SmellWording {
     pub category: &'static str,
     /// Replacement for boolean flags (`boolean_blindness`).
     pub options: &'static str,
+    /// Advice for a param typed as the safe top type (`loose_typing`).
+    pub safe_top_advice: &'static str,
     /// Idiomatic string fallback syntax (`magic_string_default`).
     pub fallback_example: &'static str,
     /// Advice for a string fallback (`magic_string_default`).

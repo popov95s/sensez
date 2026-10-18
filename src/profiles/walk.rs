@@ -28,10 +28,26 @@ pub(crate) type LexemeFn = fn(Node, StructuralToken, &[u8], &[BoundNames]) -> u6
 pub(crate) type VisitFn =
     fn(Node, &[u8], u32, &str, &mut Vec<Scope>, &mut Vec<BoundNames>, &mut Walked);
 
-/// A language's mutation-target resolver: the root identifier of a
-/// subscript/member chain plus whether the path crossed a member/attribute
-/// access (the node kinds and field names are per-grammar).
-pub(crate) type TargetRootFn = fn(Node, &[u8]) -> Option<(String, bool)>;
+/// Root identifier of a mutated subscript/member chain.
+pub(crate) enum MutationTarget {
+    /// `d["a"]["b"]`: the root itself is mutated.
+    Direct(String),
+    /// `m.items.push(...)`: the path crossed a member/attribute access.
+    ViaAttribute(String),
+}
+
+impl MutationTarget {
+    pub(crate) fn via_attribute(self) -> Self {
+        match self {
+            MutationTarget::Direct(root) | MutationTarget::ViaAttribute(root) => {
+                MutationTarget::ViaAttribute(root)
+            }
+        }
+    }
+}
+
+/// A language's mutation-target resolver (node kinds and field names are per-grammar).
+pub(crate) type TargetRootFn = fn(Node, &[u8]) -> Option<MutationTarget>;
 
 /// Drive one file's walk: set up the scope/bound-name stacks, run the
 /// language's `visit` from the root, and return the populated [`Walked`].
@@ -242,13 +258,20 @@ pub(crate) fn record_mutation_root(
     src: &[u8],
     target_root: TargetRootFn,
 ) {
-    if let Some((root, via_attr)) = target_root(node, src) {
-        if via_attr {
+    match target_root(node, src) {
+        Some(MutationTarget::ViaAttribute(root)) => {
             unit.attr_mutated_names.insert(root);
-        } else {
+        }
+        Some(MutationTarget::Direct(root)) => {
             unit.mutated_names.insert(root);
         }
+        None => {}
     }
+}
+
+/// Remember the first line `recv` was subscripted with a string-literal key.
+pub(crate) fn record_str_key_line(unit: &mut FunctionUnit, recv: &str, line: usize) {
+    unit.str_key_lines.entry(recv.to_string()).or_insert(line);
 }
 
 /// Record a string-literal fallback; non-literal fallbacks are ignored.

@@ -235,7 +235,7 @@ Hard-coded string sets become a hidden enum that tools cannot help with.
     <details class="sensez-proposed-fix" markdown="1">
     <summary>Proposed fix</summary>
 
-    Use a union type, enum, or const object with a derived type.
+    Use a string-literal union type or a named `as const` set shared with its type.
 
     ```ts
     enum InvoiceStatus {
@@ -260,7 +260,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.literal_membership]
 enabled = true
 action = "warning"
-# This detector has no extra threshold knobs.
+skip_external_vocab = true # ignore extension, MIME, path, and error-code lists
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -1515,7 +1515,7 @@ action = "warning"
 
 **What it is**
 
-A module that too much of the codebase depends on (high centrality) — a coupling and change-risk hotspot; split its responsibilities.
+A sizeable module that many modules depend on and that itself depends on many internal modules at runtime (high centrality) — a coupling and change-risk hotspot; split its responsibilities.
 
 **Why it's bad**
 
@@ -1609,6 +1609,10 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 enabled = true
 action = "warning"
 min_fan = 25 # combined incoming/outgoing fan before god-module risk
+min_fan_in = 5 # importing modules required for a god module
+min_fan_out = 10 # internal runtime imports required for a god module
+min_lines = 150 # module lines required for a god module (or min_units)
+min_units = 12 # top-level functions and classes required (or min_lines)
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -2921,6 +2925,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 enabled = true
 action = "warning"
 max_depth = 4 # allowed depth before flagging
+ignore_roots = [] # chain roots never reported, e.g. a generated API client
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -3328,7 +3333,7 @@ Weak types make invalid states look valid until runtime.
 
     === "High"
 
-        Flags everything in medium, primitive-only collections, and shallow aliases.
+        Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.
 
         **Problem**
 
@@ -3382,7 +3387,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3416,7 +3421,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3435,7 +3440,7 @@ Weak types make invalid states look valid until runtime.
 
     === "High"
 
-        Flags everything in medium, primitive-only collections, and shallow aliases.
+        Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.
 
         **Problem**
 
@@ -3452,7 +3457,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3505,7 +3510,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     strictness = "high"
     ```
 
-    Flags everything in medium, primitive-only collections, and shallow aliases.
+    Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.
 
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>

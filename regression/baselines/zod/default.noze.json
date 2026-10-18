@@ -263,10 +263,9 @@
       "data_clump": 3,
       "divergent_change": 7,
       "feature_envy": 7,
-      "god_module": 1,
       "heavy_nested_function": 3,
       "large_class": 2,
-      "loose_typing": 118,
+      "loose_typing": 81,
       "magic_string_default": 4,
       "message_chain": 1,
       "mutated_parameter": 3,
@@ -281,7 +280,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 209,
+    "smells_total": 171,
     "source_lines": 72099
   },
   "smells": [
@@ -299,8 +298,11 @@
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "unnecessary_nested_if",
-      "line": 1309,
-      "message": "1 nested if(s) can be combined with a boolean AND",
+      "line": 1312,
+      "lines": [
+        1312
+      ],
+      "message": "1 nested if(s) at L1312 can be combined with a boolean AND",
       "metric": 1,
       "symbol": "minLength",
       "threshold": 0
@@ -309,8 +311,12 @@
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "unnecessary_nested_if",
-      "line": 2241,
-      "message": "2 nested if(s) can be combined with a boolean AND",
+      "line": 2272,
+      "lines": [
+        2272,
+        2286
+      ],
+      "message": "2 nested if(s) at L2272, L2286 can be combined with a boolean AND",
       "metric": 2,
       "symbol": "_parse",
       "threshold": 0
@@ -319,8 +325,12 @@
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "unnecessary_nested_if",
-      "line": 3691,
-      "message": "2 nested if(s) can be combined with a boolean AND",
+      "line": 3704,
+      "lines": [
+        3704,
+        3718
+      ],
+      "message": "2 nested if(s) at L3704, L3718 can be combined with a boolean AND",
       "metric": 2,
       "symbol": "_parse",
       "threshold": 0
@@ -377,12 +387,13 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/bench/metabench.ts",
-      "kind": "god_module",
-      "message": "fan-in 29 + fan-out 6 = 35 (threshold 25)",
-      "metric": 35,
-      "symbol": "metabench",
-      "threshold": 25
+      "file": "<zod>/packages/bench/benchUtil.ts",
+      "kind": "loose_typing",
+      "line": 23,
+      "message": "params [options: any[]]; returns any \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "randomPick",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -496,16 +507,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "loose_typing",
-      "line": 3559,
-      "message": "params [first: any, second: any, third: any]; returns ZodRecord<any, any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
-      "metric": 4,
-      "symbol": "create",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
       "kind": "nested_loop",
       "line": 380,
@@ -606,8 +607,11 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "message_chain",
-      "line": 4458,
-      "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
+      "line": 4470,
+      "lines": [
+        4470
+      ],
+      "message": "attribute chain depth 5 (threshold 4) at L4470 \u2014 Law of Demeter",
       "metric": 5,
       "symbol": "parse",
       "threshold": 4

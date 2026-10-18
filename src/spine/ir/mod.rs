@@ -20,8 +20,9 @@ pub use performance::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
 pub use units::{
-    ClassProperty, ClassUnit, CommentClass, CommentSpan, FunctionKey, FunctionUnit, NestedTernary,
-    SchemaCall, TypeAlias, TypeHints, ANONYMOUS,
+    CallbackPosition, ChainHit, ClassProperty, ClassUnit, CommentClass, CommentSpan, FunctionKey,
+    FunctionUnit, LiteralMembership, MutatorFamily, NestedTernary, SchemaCall, TypeAlias,
+    TypeHints, Visibility, ANONYMOUS,
 };
 
 use std::collections::{HashMap, HashSet};

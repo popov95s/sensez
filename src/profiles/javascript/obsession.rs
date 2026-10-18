@@ -4,13 +4,14 @@
 //! severity live in `noze::smells`.
 
 use super::fallback_sink::fallback_sink;
+use super::membership;
 use crate::profiles::fallback_guard::{guards_own_value, GuardSyntax};
-use crate::profiles::walk;
-use crate::spine::ir::{record_attr, FunctionUnit, SchemaCall};
+use crate::profiles::walk::{self, MutationTarget};
+use crate::spine::ir::{record_attr, FunctionUnit, MutatorFamily, SchemaCall};
 use tree_sitter::Node;
 
-/// Methods whose call mutates the receiver in place (Array / Map / Set).
-const MUTATORS: [&str; 14] = [
+/// Methods whose call mutates an array receiver in place.
+const ARRAY_MUTATORS: [&str; 9] = [
     "push",
     "pop",
     "shift",
@@ -20,11 +21,6 @@ const MUTATORS: [&str; 14] = [
     "reverse",
     "fill",
     "copyWithin",
-    "set",
-    "add",
-    "delete",
-    "clear",
-    "remove",
 ];
 
 const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
@@ -39,6 +35,9 @@ const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
     ],
     accessors: &[".", "?.", "["],
 };
+
+/// Methods whose call mutates a Map / Set style receiver in place.
+const COLLECTION_MUTATORS: [&str; 5] = ["set", "add", "delete", "clear", "remove"];
 
 /// Record everything this node contributes to the discipline smells.
 pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
@@ -138,6 +137,7 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         .and_then(|k| k.utf8_text(src).ok());
     if let (Some(recv), Some(key)) = (recv, key) {
         record_attr(&mut unit.str_keys, recv, key.trim_matches(['"', '\'', '`']));
+        walk::record_str_key_line(unit, recv, node.start_position().row + 1);
     }
 }
 
@@ -174,9 +174,32 @@ fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         return;
     };
     match method {
-        Some(m) if MUTATORS.contains(&m) => record_root(unit, object, src),
-        Some("includes") if is_string_array(object) => unit.literal_membership_tests += 1,
+        Some(m) if ARRAY_MUTATORS.contains(&m) => {
+            record_method_mutation(unit, object, src, MutatorFamily::Array)
+        }
+        Some(m) if COLLECTION_MUTATORS.contains(&m) => {
+            record_method_mutation(unit, object, src, MutatorFamily::Collection)
+        }
+        Some("includes") => membership::record(unit, node, membership::literal_array(object), src),
+        Some("has") => membership::record(unit, node, membership::literal_set(object, src), src),
         _ => {}
+    }
+}
+
+fn record_method_mutation(
+    unit: &mut FunctionUnit,
+    object: Node,
+    src: &[u8],
+    family: MutatorFamily,
+) {
+    match target_root(object, src) {
+        Some(MutationTarget::ViaAttribute(root)) => {
+            unit.attr_mutated_names.insert(root);
+        }
+        Some(MutationTarget::Direct(root)) => {
+            unit.method_mutations.insert((root, family));
+        }
+        None => {}
     }
 }
 
@@ -217,33 +240,23 @@ fn identifier_arguments(node: Node, src: &[u8]) -> Vec<String> {
         .collect()
 }
 
-/// True for `["a", "b", ...]` — a non-empty array literal of only strings.
-fn is_string_array(node: Node) -> bool {
-    if node.kind() != "array" || node.named_child_count() == 0 {
-        return false;
-    }
-    let mut cursor = node.walk();
-    let all_strings = node
-        .named_children(&mut cursor)
-        .all(|e| e.kind() == "string");
-    all_strings
-}
-
 /// Resolve `node` to its root identifier (via [`target_root`]) and record it as
 /// a direct or attribute-deep mutation. See [`walk::record_mutation_root`].
 fn record_root(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     walk::record_mutation_root(unit, node, src, target_root);
 }
 
-/// Root identifier of a subscript/member chain and whether it crossed a member:
-/// `d["a"]["b"]` → `(d, false)`; `m.items.push` → `(m, true)`; `this.x` → `(self, true)`.
-fn target_root(node: Node, src: &[u8]) -> Option<(String, bool)> {
+/// Root of a subscript/member chain: `d["a"]` → `Direct(d)`, `this.x` → `ViaAttribute(self)`.
+fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
     match node.kind() {
-        "identifier" => node.utf8_text(src).ok().map(|id| (id.to_string(), false)),
-        "this" => Some(("self".to_string(), false)),
+        "identifier" => node
+            .utf8_text(src)
+            .ok()
+            .map(|id| MutationTarget::Direct(id.to_string())),
+        "this" => Some(MutationTarget::Direct("self".to_string())),
         "subscript_expression" => target_root(node.child_by_field_name("object")?, src),
         "member_expression" => {
-            target_root(node.child_by_field_name("object")?, src).map(|(root, _)| (root, true))
+            target_root(node.child_by_field_name("object")?, src).map(MutationTarget::via_attribute)
         }
         _ => None,
     }

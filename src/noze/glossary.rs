@@ -75,7 +75,7 @@ pub const SMELLS: [SmellDoc; 38] = {
         SmellDoc { kind: DivergentAbstraction, title: "Divergent Abstraction", explanation: "An abstraction has only two implementations that grow in different directions — remove the forced common type or narrow it to genuine shared behavior." },
         SmellDoc { kind: DivergentChange, title: "Divergent Change", explanation: "One module gets edited for many unrelated reasons — it has too many responsibilities; split it along those axes." },
         SmellDoc { kind: FeatureEnvy, title: "Feature Envy", explanation: "A method uses another object's data more than its own — move it onto the class that owns that data." },
-        SmellDoc { kind: GodModule, title: "God Module", explanation: "A module that too much of the codebase depends on (high centrality) — a coupling and change-risk hotspot; split its responsibilities." },
+        SmellDoc { kind: GodModule, title: "God Module", explanation: "A sizeable module that many modules depend on and that itself depends on many internal modules at runtime (high centrality) — a coupling and change-risk hotspot; split its responsibilities." },
         SmellDoc { kind: HeavyNestedFunction, title: "Heavy Nested Function", explanation: "An inner/nested function that grew large and logic-heavy — promote it to a top-level, testable function." },
         SmellDoc { kind: HighCognitiveComplexity, title: "High Cognitive Complexity", explanation: "Hard for a human to follow — nested branches and loops weighted by depth; simplify or break it up." },
         SmellDoc { kind: HighComplexity, title: "High Cyclomatic Complexity", explanation: "Many independent paths through the function, so it's hard to test fully — decompose it." },

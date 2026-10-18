@@ -191,6 +191,23 @@ fn narrating_code_rule_knobs_parse() {
 }
 
 #[test]
+fn ignore_roots_must_be_a_string_list() {
+    let err = toml::from_str::<SmellConfig>(
+        r#"
+            [rules.message_chain]
+            ignore_roots = "api"
+        "#,
+    )
+    .unwrap_err()
+    .to_string();
+
+    assert!(
+        err.contains("ignore_roots must be a list of strings"),
+        "{err}"
+    );
+}
+
+#[test]
 fn language_rule_tables_override_base_rules() {
     let cfg: SmellConfig = toml::from_str(
         r#"

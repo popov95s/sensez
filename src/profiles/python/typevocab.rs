@@ -3,6 +3,7 @@
 //! Python's conventions (`dict[str, Any]`, `Optional[...]`, `Literal`, ...).
 
 use crate::profiles::typevocab::{base_type, has_domain_type, has_token, LooseTypeKind};
+use crate::spine::ir::MutatorFamily;
 
 /// Annotation bases that are loose collections (a missing domain type).
 /// Sets are included: `set[int]` / `set[str]` is the same "collection of bare
@@ -70,6 +71,10 @@ pub(crate) fn is_loose(annotation: &str) -> bool {
     loose_kind(annotation).is_some()
 }
 
+pub(crate) fn is_void(annotation: &str) -> bool {
+    annotation.trim() == "None"
+}
+
 pub(crate) fn is_bool(annotation: &str) -> bool {
     base_type(annotation) == "bool"
 }
@@ -90,6 +95,19 @@ pub(crate) fn is_primitive_scalar_alias(annotation: &str) -> bool {
         base_type(annotation),
         "str" | "int" | "float" | "bool" | "bytes"
     )
+}
+
+pub(crate) fn is_literal_union(annotation: &str) -> bool {
+    base_type(annotation) == "Literal"
+}
+
+pub(crate) fn is_mutable_collection(annotation: &str, family: MutatorFamily) -> bool {
+    match family {
+        MutatorFamily::Array => matches!(base_type(annotation), "list" | "List" | "deque"),
+        MutatorFamily::Collection => {
+            matches!(base_type(annotation), "set" | "Set") || is_dictish(annotation)
+        }
+    }
 }
 
 /// `Optional[dict[str, Any]]` → `dict[str, Any]` (best effort).
