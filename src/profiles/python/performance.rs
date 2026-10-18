@@ -31,32 +31,26 @@ const EXTERNAL_TYPE_PARTS: &[&str] = &[
     "session",
     "transport",
 ];
-pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: usize) {
-    let kind = node.kind();
-    if is_loop(kind) {
-        let loop_line = line(node, src);
-        facts.loops.push(loop_line.clone());
-        if loop_depth > 0 {
-            facts.nested_loops.push(loop_line);
-        }
-    }
-    if kind != "call" {
+pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], frame: Option<usize>) {
+    if node.kind() != "call" {
         return;
     }
-    let Some(call) = call_fact(node, src) else {
+    let Some(mut call) = call_fact(node, src) else {
         return;
     };
     facts.calls.push(call.clone());
     if let Some(iter) = iteration_call(node, src, &call) {
         facts.iteration_calls.push(iter);
     }
-    if loop_depth == 0 {
+    if frame.is_none() {
         return;
     }
+    call.frame = frame;
     if call.member && call.method == "sort" {
         facts.sorts_in_loops.push(PerfLine {
             line: call.line,
             subject: call.base.clone(),
+            frame,
         });
     } else {
         facts.loop_calls.push(call);
@@ -86,6 +80,7 @@ fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
     }?;
     call.region = control_region(node);
     call.offset = node.start_byte();
+    call.awaited = node.parent().is_some_and(|parent| parent.kind() == "await");
     Some(call)
 }
 
@@ -146,7 +141,7 @@ fn control_region(node: Node<'_>) -> usize {
     0
 }
 
-fn line(node: Node, src: &[u8]) -> PerfLine {
+pub fn loop_line(node: Node, src: &[u8]) -> PerfLine {
     walk::perf_line(node, src, &["right"])
 }
 

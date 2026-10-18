@@ -1,5 +1,7 @@
 //! Language-neutral facts for performance-oriented smell detection.
 
+use super::LoopFrame;
+
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PerformanceFacts {
     pub loops: Vec<PerfLine>,
@@ -12,12 +14,15 @@ pub struct PerformanceFacts {
     pub exits: Vec<usize>,
     /// Declared local names with the byte offset where the declaration ends.
     pub bindings: Vec<(String, usize)>,
+    pub loop_frames: Vec<LoopFrame>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct PerfLine {
     pub line: usize,
     pub subject: String,
+    /// Innermost enclosing loop frame; a nested loop's own frame.
+    pub frame: Option<usize>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -36,6 +41,9 @@ pub struct CallFact {
     pub in_assertion: bool,
     /// Identifiers read by the call's arguments.
     pub arg_idents: Vec<String>,
+    /// Innermost enclosing loop frame.
+    pub frame: Option<usize>,
+    pub awaited: bool,
 }
 
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
@@ -43,8 +51,6 @@ pub struct CallFact {
 pub enum IterationPass {
     #[default]
     Full,
-    /// `some` / `find`-style calls that can stop early.
-    ShortCircuit,
     /// `map(x => x.field)`.
     Projection,
 }

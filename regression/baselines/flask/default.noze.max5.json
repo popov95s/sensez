@@ -211,7 +211,7 @@
       "magic_string_default": 3,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
-      "nested_loop": 13,
+      "nested_loop": 6,
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
@@ -220,7 +220,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 145,
+    "smells_total": 138,
     "source_lines": 18315
   },
   "smells": [
@@ -418,16 +418,6 @@
     },
     {
       "action": "warning",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "nested_loop",
-      "line": 1381,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "preprocess_request",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
       "file": "<flask>/src/flask/blueprints.py",
       "kind": "divergent_change",
       "line": 18,
@@ -538,6 +528,16 @@
     },
     {
       "action": "warning",
+      "file": "<flask>/src/flask/config.py",
+      "kind": "nested_loop",
+      "line": 176,
+      "message": "inner loop over `parts` walks an independent collection for each item of `sorted(os.environ)`; combine the work or use a bulk operation.",
+      "metric": 1,
+      "symbol": "from_prefixed_env",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
       "file": "<flask>/src/flask/debughelpers.py",
       "kind": "magic_string_default",
       "line": 159,
@@ -590,7 +590,7 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "nested_loop",
       "line": 880,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `names` walks an independent collection for each item of `(code, None) if code is not None else (None,)`; combine the work or use a bulk operation.",
       "metric": 2,
       "symbol": "_find_error_handler",
       "threshold": 1

@@ -5,6 +5,31 @@ fn walked(src: &str) -> Walked {
     parse_source(src.as_bytes(), 0, "m", &super::super::PythonProfile).unwrap()
 }
 
+fn loop_declared(src: &str) -> Vec<String> {
+    let w = walked(src);
+    let frame = &w.units.functions[0].performance.loop_frames[0];
+    frame.declared.iter().cloned().collect()
+}
+
+#[test]
+fn reassigning_a_parameter_in_a_loop_is_not_a_declaration() {
+    let src = "def grow(xs, acc):\n    for x in xs:\n        acc = acc + [x]\n        acc.sort()\n";
+    assert!(loop_declared(src).is_empty());
+}
+
+#[test]
+fn reassigning_an_earlier_local_in_a_loop_is_not_a_declaration() {
+    let src = "def grow(xs):\n    acc = []\n    for x in xs:\n        acc = acc + [x]\n";
+    assert!(loop_declared(src).is_empty());
+}
+
+#[test]
+fn first_binding_in_a_loop_is_a_declaration() {
+    let src =
+        "def per_item(xs):\n    for x in xs:\n        local = list(x)\n        local.sort()\n";
+    assert_eq!(loop_declared(src), vec!["local"]);
+}
+
 fn function(src: &str, name: &str) -> crate::spine::ir::FunctionUnit {
     walked(src)
         .units

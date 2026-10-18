@@ -84,6 +84,10 @@ pub fn type_vocabulary(language: Language) -> &'static dyn TypeVocabularyProfile
     profile(language) as &dyn TypeVocabularyProfile
 }
 
+pub fn identifier_extra_chars(language: Language) -> &'static [char] {
+    smell_wording(language).identifier_extra_chars
+}
+
 pub fn smell_wording(language: Language) -> &'static SmellWording {
     WordingProfile::smell_wording(profile(language))
 }

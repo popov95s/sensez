@@ -3,7 +3,8 @@
 //! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
 use super::chains::{chain_len, chain_root, is_chain_inner};
-use super::{classunit, conditionals, performance, symbols};
+use super::{classunit, conditionals, loops, performance, symbols};
+use crate::profiles::walk;
 use crate::spine::ir::{ChainHit, ClassUnit, FunctionUnit};
 use std::collections::HashMap;
 use tree_sitter::Node;
@@ -30,7 +31,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         let mut acc = Acc::new(&mut unit);
         let mut cursor = body.walk();
         for child in body.named_children(&mut cursor) {
-            acc.visit(child, src, 0, 0);
+            acc.visit(child, src, 0, None);
         }
     }
     unit
@@ -51,16 +52,20 @@ impl<'u> Acc<'u> {
     }
 
     /// Recurse a body node at block-nesting `depth`, accumulating metrics.
-    fn visit(&mut self, node: Node, src: &[u8], depth: usize, loop_depth: usize) {
+    fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind();
         // Nested functions/lambdas get their own unit — do not descend.
         if matches!(kind, "function_definition" | "lambda") {
             self.unit.review_risks.test_has_nested_function = true;
             return;
         }
-        let child_loop_depth = loop_depth + usize::from(performance::is_loop(kind));
+        let loop_frame = performance::is_loop(kind).then(|| {
+            let opened = loops::loop_frame(node, src, frame);
+            let line = performance::loop_line(node, src);
+            self.unit.performance.open_loop(line, opened)
+        });
         super::obsession::scan(self.unit, node, src);
-        performance::scan(&mut self.unit.performance, node, src, loop_depth);
+        performance::scan(&mut self.unit.performance, node, src, frame);
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
@@ -131,27 +136,52 @@ impl<'u> Acc<'u> {
                     }
                 }
             }
-            "assignment" => self.record_assignment(node, src),
+            "assignment" => self.record_assignment(node, src, frame),
             _ => {}
         }
 
         let mut cursor = node.walk();
         for child in node.named_children(&mut cursor) {
-            self.visit(child, src, child_depth, child_loop_depth);
+            let child_frame = match loop_frame {
+                Some(id) if walk::is_field_child(node, child, &["body"]) => Some(id),
+                _ => frame,
+            };
+            self.visit(child, src, child_depth, child_frame);
         }
     }
 
     /// Count a plain (non-augmented) assignment to each simple-identifier target.
-    fn record_assignment(&mut self, node: Node, src: &[u8]) {
+    fn record_assignment(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
         if node
             .child_by_field_name("left")
             .is_some_and(|left| symbols::is_self_attribute(left, src))
         {
             self.unit.self_writes += 1;
         }
-        for target in symbols::assignment_targets(node, src) {
+        let targets = symbols::assignment_targets(node, src);
+        let declared: Vec<String> = targets
+            .iter()
+            .filter(|target| !self.is_bound(target))
+            .cloned()
+            .collect();
+        self.unit.performance.note_declared(frame, &declared);
+        if frame.is_some()
+            && node.child_by_field_name("right").is_some_and(|value| {
+                walk::fed_by_call(&self.unit.performance, frame, value, src, "call")
+            })
+        {
+            self.unit.performance.note_call_results(frame, &targets);
+            self.unit.performance.note_advanced(frame, &targets);
+        }
+        for target in targets {
             *self.unit.local_reassigns.entry(target).or_insert(0) += 1;
         }
+    }
+
+    /// `name` is a parameter or was assigned earlier in the body.
+    fn is_bound(&self, name: &str) -> bool {
+        self.unit.local_reassigns.contains_key(name)
+            || self.unit.param_names.iter().any(|param| param == name)
     }
 }
 

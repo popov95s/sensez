@@ -4,7 +4,9 @@
 //! one grammar's node kinds), but the bookkeeping that targets the shared
 //! [`Walked`] output is identical everywhere and lives here once.
 
-pub(crate) use super::node_query::{node_text, perf_line};
+pub(crate) use super::node_query::{
+    fed_by_call, identifiers, is_field_child, loop_subject, node_text, perf_line,
+};
 use crate::profiles::comment_class::{self, CommentSyntax};
 use crate::profiles::comments;
 use crate::profiles::lexeme::BoundNames;

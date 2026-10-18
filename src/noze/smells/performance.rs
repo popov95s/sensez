@@ -1,13 +1,15 @@
 //! Performance-oriented local smells.
 
 mod external;
+mod loop_context;
 
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::{registry, PerformanceProfile};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{CallFact, FunctionUnit, IterationPass};
-use external::external_calls;
+use crate::spine::ir::{CallFact, FunctionUnit, IterationPass, PerfLine};
+use external::{external_calls, LoopCallRules};
+use loop_context::{nested_loop_reason, owned_by_loop, repeats_per_item, walks_outer_item};
 use std::collections::BTreeMap;
 
 pub fn detect(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], cfg: &Smells) -> Vec<SmellFinding> {
@@ -18,11 +20,12 @@ pub fn detect(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], cfg: &Smells) ->
         functions.entry(m.name.as_str()).or_default().push(m);
     }
     let profile = registry::performance_profile(ctx.language);
+    let rules = LoopCallRules::new(cfg);
     metrics
         .iter()
         .flat_map(|m| {
-            let mut findings = direct_findings(ctx, m, cfg, &functions, profile);
-            findings.extend(helper_findings(ctx, m, &functions, profile));
+            let mut findings = direct_findings(ctx, m, cfg, &functions, profile, &rules);
+            findings.extend(helper_findings(ctx, m, cfg, &functions, profile, &rules));
             findings
         })
         .collect()
@@ -34,9 +37,16 @@ fn direct_findings(
     cfg: &Smells,
     functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
     profile: &dyn PerformanceProfile,
+    rules: &LoopCallRules,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
-    let nested_loops = significant_loops(profile, &m.performance.nested_loops);
+    let facts = &m.performance;
+    let nested_loops: Vec<&PerfLine> = significant_loops(profile, &facts.nested_loops)
+        .into_iter()
+        .filter(|inner| {
+            !walks_outer_item(facts, inner, registry::identifier_extra_chars(ctx.language))
+        })
+        .collect();
     if let Some(first) = nested_loops.first() {
         out.push(finding(
             SmellKind::NestedLoop,
@@ -44,17 +54,22 @@ fn direct_findings(
             m,
             first.line,
             nested_loops.len(),
-            "nested loop multiplies work per input item",
+            &nested_loop_reason(facts, first),
             Severity::Warning,
         ));
     }
-    if let Some(first) = m.performance.sorts_in_loops.first() {
+    let sorts: Vec<&PerfLine> = facts
+        .sorts_in_loops
+        .iter()
+        .filter(|sort| !owned_by_loop(facts, sort.frame, profile.receiver_root(&sort.subject)))
+        .collect();
+    if let Some(first) = sorts.first() {
         out.push(finding(
             SmellKind::SortInLoop,
             ctx,
             m,
             first.line,
-            m.performance.sorts_in_loops.len(),
+            sorts.len(),
             "sort inside a loop repeats O(n log n) work",
             Severity::Warning,
         ));
@@ -73,7 +88,11 @@ fn direct_findings(
             ));
         }
     }
-    for call in external_calls(ctx, m, &m.performance.loop_calls, functions, profile).values() {
+    let per_item = facts
+        .loop_calls
+        .iter()
+        .filter(|call| repeats_per_item(facts, call.frame, cfg.n_plus_one_max_constant_bound));
+    for call in external_calls(ctx, m, per_item, functions, profile, rules).values() {
         out.push(finding(
             SmellKind::NPlusOneCall,
             ctx,
@@ -90,11 +109,14 @@ fn direct_findings(
 fn helper_findings(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
+    cfg: &Smells,
     functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
     profile: &dyn PerformanceProfile,
+    rules: &LoopCallRules,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
-    for call in &m.performance.loop_calls {
+    let facts = &m.performance;
+    for call in &facts.loop_calls {
         if call.target == m.name {
             continue;
         }
@@ -102,7 +124,7 @@ fn helper_findings(
             continue;
         };
         let callee_loops = significant_loops(profile, &callee.performance.loops);
-        if !callee_loops.is_empty() {
+        if !callee_loops.is_empty() && facts.in_loop_statement(call.frame) {
             out.push(finding(
                 SmellKind::NestedLoop,
                 ctx,
@@ -113,7 +135,17 @@ fn helper_findings(
                 Severity::Warning,
             ));
         }
-        if !external_calls(ctx, callee, &callee.performance.calls, functions, profile).is_empty() {
+        if repeats_per_item(facts, call.frame, cfg.n_plus_one_max_constant_bound)
+            && !external_calls(
+                ctx,
+                callee,
+                &callee.performance.calls,
+                functions,
+                profile,
+                rules,
+            )
+            .is_empty()
+        {
             out.push(finding(
                 SmellKind::NPlusOneCall,
                 ctx,
@@ -135,9 +167,7 @@ fn repeated_iterations<'a>(
 ) -> Vec<Vec<&'a CallFact>> {
     let mut by_base: BTreeMap<(&str, usize), Vec<&CallFact>> = BTreeMap::new();
     let counted = m.performance.iteration_calls.iter().filter(|call| {
-        !call.base.is_empty()
-            && call.pass != IterationPass::ShortCircuit
-            && (cfg.repeated_iteration_include_tests || !call.in_assertion)
+        !call.base.is_empty() && (cfg.repeated_iteration_include_tests || !call.in_assertion)
     });
     for call in counted {
         by_base
@@ -147,12 +177,12 @@ fn repeated_iterations<'a>(
     }
     by_base
         .into_iter()
-        .filter(|(_, calls)| {
+        .filter(|((base, _), calls)| {
             calls
                 .iter()
                 .any(|call| call.pass != IterationPass::Projection)
+                && has_fusable_pair(m, profile, base, calls)
         })
-        .filter(|((base, _), calls)| has_fusable_pair(m, profile, base, calls))
         .map(|(_, calls)| calls)
         .collect()
 }
@@ -222,8 +252,8 @@ fn repeated_iteration_reason(calls: &[&CallFact]) -> String {
 
 fn significant_loops<'a>(
     profile: &dyn PerformanceProfile,
-    loops: &'a [crate::spine::ir::PerfLine],
-) -> Vec<&'a crate::spine::ir::PerfLine> {
+    loops: &'a [PerfLine],
+) -> Vec<&'a PerfLine> {
     loops
         .iter()
         .filter(|line| !profile.is_bounded_loop(&line.subject))

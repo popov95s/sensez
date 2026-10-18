@@ -11,6 +11,7 @@ pub(crate) mod comments;
 pub(crate) mod conditionals;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod fallback_guard;
+pub(crate) mod for_loop;
 pub(crate) mod guard_fingerprint;
 pub(crate) mod lexeme;
 pub(crate) mod lineage;

@@ -27,6 +27,9 @@ pub(super) fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
     }?;
     call.region = control_region(node);
     call.offset = node.start_byte();
+    call.awaited = node
+        .parent()
+        .is_some_and(|parent| parent.kind() == "await_expression");
     Some(call)
 }
 

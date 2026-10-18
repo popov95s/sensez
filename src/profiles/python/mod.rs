@@ -8,6 +8,7 @@ mod deadcode;
 mod generated;
 mod imports;
 mod lexeme;
+mod loops;
 mod nested;
 mod obsession;
 mod performance;

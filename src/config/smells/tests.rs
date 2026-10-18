@@ -219,6 +219,11 @@ fn opt_in_rule_knobs_parse() {
 
             [rules.weak_test_oracle]
             assertion_functions = ["check*"]
+
+            [rules.n_plus_one_call]
+            callees = ["*.db.*"]
+            max_constant_bound = 3
+            await_in_loop = true
         "#,
     )
     .unwrap();
@@ -228,6 +233,10 @@ fn opt_in_rule_knobs_parse() {
     assert!(!py.tuple_allow_homogeneous);
     assert_eq!(py.assertion_functions, vec!["check*".to_string()]);
     assert!(!py.disabled.contains(&SmellKind::WeakTestOracle));
+    assert_eq!(py.n_plus_one_callees, vec!["*.db.*".to_string()]);
+    assert_eq!(py.n_plus_one_max_constant_bound, 3);
+    assert!(py.n_plus_one_await_in_loop);
+    assert!(!py.disabled.contains(&SmellKind::NPlusOneCall));
 }
 
 #[test]
@@ -240,6 +249,14 @@ fn assertion_functions_must_be_a_string_list() {
         .to_string();
         assert!(err.contains("assertion_functions"), "{value}: {err}");
     }
+}
+
+#[test]
+fn n_plus_one_callees_must_be_valid_globs() {
+    let err = toml::from_str::<SmellConfig>("[rules.n_plus_one_call]\ncallees = [\"a{\"]\n")
+        .unwrap_err()
+        .to_string();
+    assert!(err.contains("callees"), "{err}");
 }
 
 #[test]

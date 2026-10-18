@@ -1072,46 +1072,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/bench/key-iteration.ts",
-      "kind": "nested_loop",
-      "line": 30,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "for_in_no_symbols",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/bench/key-iteration.ts",
-      "kind": "nested_loop",
-      "line": 35,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "reflect_no_symbols",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/bench/key-iteration.ts",
-      "kind": "nested_loop",
-      "line": 40,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "for_in_with_symbols",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/bench/key-iteration.ts",
-      "kind": "nested_loop",
-      "line": 45,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "reflect_with_symbols",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/bench/metabench.ts",
       "kind": "loose_typing",
       "line": 74,
@@ -1205,7 +1165,7 @@
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "nested_loop",
       "line": 86,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `fields` walks an independent collection for each item of `names`; combine the work or use a bulk operation.",
       "metric": 9,
       "symbol": "generate",
       "threshold": 1
@@ -1239,16 +1199,6 @@
       "metric": 1,
       "symbol": "quotelessJson",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
-      "kind": "nested_loop",
-      "line": 237,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "processError",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -1635,7 +1585,7 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "nested_loop",
       "line": 3204,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `discriminatorValues` walks an independent collection for each item of `options`; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "create",
       "threshold": 1
@@ -2016,7 +1966,7 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "nested_loop",
       "line": 1931,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `field.values` walks an independent collection for each item of `shape`; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "util.defineLazy callback",
       "threshold": 1
@@ -2025,19 +1975,9 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "nested_loop",
-      "line": 205,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "core.$constructor(\"$ZodType\") callback",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "nested_loop",
       "line": 2374,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 2,
+      "message": "inner loop over `Object.entries(pv!)` walks an independent collection for each item of `def.options`; combine the work or use a bulk operation.",
+      "metric": 1,
       "symbol": "util.defineLazy callback",
       "threshold": 1
     },
@@ -2046,19 +1986,9 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "nested_loop",
       "line": 2391,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `values` walks an independent collection for each item of `opts`; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "util.cached callback",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "nested_loop",
-      "line": 2561,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "handleIntersectionResults",
       "threshold": 1
     },
     {

@@ -69,6 +69,9 @@ pub struct Smells {
     pub max_nested_function_lines: usize,
     pub nested_function_skip_capturing: bool,
     pub assertion_functions: Vec<String>,
+    pub n_plus_one_callees: Vec<String>,
+    pub n_plus_one_max_constant_bound: usize,
+    pub n_plus_one_await_in_loop: bool,
 }
 
 impl Default for Smells {
@@ -133,6 +136,9 @@ impl Default for Smells {
             max_nested_function_lines: 15,
             nested_function_skip_capturing: false,
             assertion_functions: ["expect*", "assert*", "verify*"].map(String::from).to_vec(),
+            n_plus_one_callees: Vec::new(),
+            n_plus_one_max_constant_bound: 10,
+            n_plus_one_await_in_loop: false,
         }
     }
 }

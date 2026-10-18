@@ -13,7 +13,6 @@ const FULL_PASS_METHODS: &[&str] = &[
     "forEach",
     "flatMap",
 ];
-const SHORT_CIRCUIT_METHODS: &[&str] = &["some", "every", "find", "findIndex"];
 const ASSERTION_CALLEES: &[&str] = &["expect", "assert"];
 const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "all", "execute", "fetch", "fetchOne", "find", "findOne", "load", "query", "request", "save",
@@ -47,39 +46,46 @@ const EXTERNAL_TYPE_PARTS: &[&str] = &[
     "session",
     "transport",
 ];
-pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], loop_depth: usize) {
+pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: Option<usize>) {
     let node = lineage.node();
     let kind = node.kind();
-    if is_loop(kind) {
-        let loop_line = line(node, src);
-        facts.loops.push(loop_line.clone());
-        if loop_depth > 0 {
-            facts.nested_loops.push(loop_line);
-        }
-    }
     match kind {
         "return_statement" | "throw_statement" => facts.exits.push(node.end_byte()),
-        "variable_declarator" => record_bindings(facts, node, src),
+        "variable_declarator" => {
+            record_bindings(facts, node, src);
+            let names = super::loops::declared_names(node, src);
+            facts.note_declared(frame, &names);
+            if node
+                .child_by_field_name("value")
+                .is_some_and(|value| walk::fed_by_call(facts, frame, value, src, "call_expression"))
+            {
+                facts.note_call_results(frame, &names);
+            }
+        }
         _ => {}
     }
     if kind != "call_expression" {
         return;
     }
-    let Some(call) = call_fact(lineage, src) else {
+    let Some(mut call) = call_fact(lineage, src) else {
         return;
     };
     facts.calls.push(call.clone());
     if let Some(iteration) = iteration_call(lineage, src, &call) {
         facts.iteration_calls.push(iteration);
     }
-    if loop_depth == 0 {
+    if frame.is_none() {
         return;
     }
+    call.frame = frame;
     if call.member && call.method == "sort" {
-        facts.sorts_in_loops.push(PerfLine {
-            line: call.line,
-            subject: call.base.clone(),
-        });
+        if facts.in_loop_statement(frame) {
+            facts.sorts_in_loops.push(PerfLine {
+                line: call.line,
+                subject: call.base.clone(),
+                frame,
+            });
+        }
     } else {
         facts.loop_calls.push(call);
     }
@@ -112,6 +118,9 @@ fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     }?;
     call.region = control_region(lineage);
     call.offset = node.start_byte();
+    call.awaited = node
+        .parent()
+        .is_some_and(|parent| parent.kind() == "await_expression");
     Some(call)
 }
 
@@ -121,7 +130,6 @@ fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> Option<CallF
         return None;
     }
     let pass = match call.method.as_str() {
-        method if SHORT_CIRCUIT_METHODS.contains(&method) => IterationPass::ShortCircuit,
         "map" if is_trivial_projection(node, src) => IterationPass::Projection,
         method if FULL_PASS_METHODS.contains(&method) => IterationPass::Full,
         _ => return None,
@@ -131,7 +139,7 @@ fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> Option<CallF
         in_assertion: in_assertion(lineage, src),
         arg_idents: node
             .child_by_field_name("arguments")
-            .map(|args| identifiers(args, src))
+            .map(|args| super::loops::names(Some(args), src))
             .unwrap_or_default(),
         ..call.clone()
     })
@@ -202,27 +210,12 @@ fn is_assertion_call(call: Node, src: &[u8]) -> bool {
 fn record_bindings(facts: &mut PerformanceFacts, declarator: Node, src: &[u8]) {
     let end = declarator.end_byte();
     if let Some(name) = declarator.child_by_field_name("name") {
-        facts
-            .bindings
-            .extend(identifiers(name, src).into_iter().map(|ident| (ident, end)));
+        facts.bindings.extend(
+            super::loops::names(Some(name), src)
+                .into_iter()
+                .map(|ident| (ident, end)),
+        );
     }
-}
-
-fn identifiers(node: Node, src: &[u8]) -> Vec<String> {
-    if matches!(
-        node.kind(),
-        "identifier" | "shorthand_property_identifier_pattern"
-    ) {
-        return walk::node_text(node, src)
-            .map(|name| vec![name.to_string()])
-            .unwrap_or_default();
-    }
-    let mut cursor = node.walk();
-    let children: Vec<Node> = node.named_children(&mut cursor).collect();
-    children
-        .into_iter()
-        .flat_map(|child| identifiers(child, src))
-        .collect()
 }
 
 fn stable_receiver(node: &Node<'_>) -> bool {
@@ -257,7 +250,7 @@ fn control_region(lineage: Lineage) -> usize {
     0
 }
 
-fn line(node: Node, src: &[u8]) -> PerfLine {
+pub fn loop_line(node: Node, src: &[u8]) -> PerfLine {
     walk::perf_line(node, src, &["right", "value"])
 }
 

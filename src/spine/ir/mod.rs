@@ -7,6 +7,7 @@
 mod fallback;
 mod import_context;
 mod lang;
+mod loop_frame;
 mod performance;
 pub mod tokens;
 mod units;
@@ -16,6 +17,7 @@ use crate::eyez::RawDoc;
 pub use fallback::{FallbackSink, StringFallback};
 pub use import_context::{ImportContext, ImportPhase};
 pub use lang::Language;
+pub use loop_frame::{LoopBound, LoopFrame, LoopKind};
 pub use performance::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
