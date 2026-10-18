@@ -30,9 +30,10 @@ mod schema_tests;
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
+use crate::noze::source_scope::SourceScope;
 use crate::profiles::{registry, TypeVocabularyProfile};
 use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
-use crate::spine::graph::CodebaseGraph;
+use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::Language;
 use crate::spine::ir::{FunctionUnit, TypeHints};
 use crate::spine::parser::ParsedFile;
@@ -72,11 +73,8 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
     if !cfg.enabled {
         return Vec::new();
     }
-    let excluded = build_globset(&cfg.exclude).unwrap_or_else(|_| GlobSet::empty());
-    let kept: Vec<&ParsedFile> = files
-        .iter()
-        .filter(|f| !excluded.is_match(&f.path))
-        .collect();
+    let scope = SourceScope::for_smells(cfg);
+    let kept: Vec<&ParsedFile> = files.iter().filter(|f| scope.includes(f)).collect();
 
     let mut out: Vec<SmellFinding> = kept
         .par_iter()
@@ -89,7 +87,7 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
     out.extend(
         files
             .iter()
-            .filter(|file| excluded.is_match(&file.path) && !explicit.is_match(&file.path))
+            .filter(|file| !scope.includes(file) && !explicit.is_match(&file.path))
             .flat_map(|file| {
                 let settings = cfg.for_language(file.language);
                 if settings.disabled.contains(&SmellKind::WeakTestOracle) {
@@ -109,7 +107,11 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
     );
 
     out.extend(clumps::detect(&kept, cfg));
-    out.extend(graphy::detect(graph, cfg));
+    out.extend(graphy::detect(graph, cfg, &|node: &ModuleNode| {
+        node.source_index
+            .and_then(|index| files.get(index))
+            .is_some_and(|file| scope.includes(file))
+    }));
     apply_rule_actions(&mut out, &kept, cfg);
     out
 }

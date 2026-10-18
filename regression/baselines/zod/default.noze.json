@@ -650,6 +650,11 @@
     "boundaries_total": 0,
     "cycles_total": 2,
     "dead_code_total": 1,
+    "duplication_skipped": {
+      "config_exclude": 0,
+      "generated": 0,
+      "tests": 171
+    },
     "duplication_total": 17,
     "external_edges": 461,
     "internal_edges": 521,
@@ -662,7 +667,7 @@
       "heavy_nested_function": 3,
       "large_class": 2,
       "loose_typing": 79,
-      "magic_string_default": 59,
+      "magic_string_default": 58,
       "message_chain": 1,
       "mutated_parameter": 3,
       "narrating_code": 3,
@@ -672,7 +677,12 @@
       "shotgun_surgery_hazard": 3,
       "unnecessary_nested_if": 13
     },
-    "smells_total": 222,
+    "smells_skipped": {
+      "config_exclude": 0,
+      "generated": 0,
+      "tests": 171
+    },
+    "smells_total": 221,
     "source_lines": 71956
   },
   "smells": [
@@ -1047,8 +1057,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "shotgun_surgery_hazard",
-      "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
-      "metric": 65,
+      "message": "depended on by 63 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
     },

@@ -37,6 +37,7 @@ pub struct RustProfile;
 static RUST_INFO: LanguageInfo = LanguageInfo {
     language: Language::Rust,
     extensions: &["rs"],
+    test_support: &[],
 };
 impl ParseProfile for RustProfile {
     fn info(&self) -> &'static LanguageInfo {

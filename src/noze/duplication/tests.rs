@@ -179,18 +179,15 @@ fn exclude_globs_drop_matches() {
     let dir = tmp.path().to_path_buf();
     let body =
         "def handler(a, b):\n    d = module_a.run(b)\n    e = module_c.run(a)\n    return e\n";
-    let files = write_files(
-        &dir,
-        &[("tests/test_x.py", body), ("tests/test_y.py", body)],
-    );
-    // Without excludes: the identical test bodies clone.
-    assert!(touches(&detect(&files, &cfg(8)), "test_x.py"));
-    // With the tests exclude: nothing reported.
+    let files = write_files(&dir, &[("scripts/x.py", body), ("scripts/y.py", body)]);
+    // Without excludes: the identical bodies clone.
+    assert!(touches(&detect(&files, &cfg(8)), "x.py"));
+    // With the scripts exclude: nothing reported.
     let excluded = Duplication {
-        exclude: vec!["**/tests/**".to_string()],
+        exclude: vec!["**/scripts/**".to_string()],
         threshold: 8,
         max_gap: 0,
         ..Default::default()
     };
-    assert!(detect(&files, &excluded).is_empty(), "tests excluded");
+    assert!(detect(&files, &excluded).is_empty(), "scripts excluded");
 }

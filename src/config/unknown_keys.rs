@@ -106,6 +106,7 @@ fn smells(table: &dyn TableLike, out: &mut Vec<UnknownKey>) {
     let with_rules = || knobs.iter().cloned().chain(["rules".to_string()]);
     let base: Vec<String> = with_rules()
         .chain(SMELL_LANGUAGES.map(String::from))
+        .chain(["include_tests".to_string()])
         .collect();
     check("smells", table, &base, KeyPolicy::Reject, out);
     rules("smells.rules", table, out);

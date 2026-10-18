@@ -37,9 +37,7 @@ fn cache_config_is_opt_in() {
     assert!(Config::load(tmp.path()).unwrap().cache.enabled);
 }
 
-/// The test/migration baseline is applied to duplication/smell exclusions even
-/// when a config is minimal. Dead-code entry-point globs are profile-scoped
-/// instead, so Python runner conventions do not leak into JS/TS/Rust config.
+/// Migration globs join pillar excludes even for a minimal config; test layouts never do.
 #[test]
 fn baseline_excludes_survive_empty_config() {
     let tmp = tempfile::tempdir().unwrap();
@@ -53,7 +51,14 @@ fn baseline_excludes_survive_empty_config() {
 
     let cfg = Config::load(&dir).unwrap();
     assert!(cfg.dead_code.entry_points.is_empty());
-    assert!(cfg.duplication.exclude.contains(&"**/tests/**".to_string()));
+    assert!(!cfg.duplication.exclude.contains(&"**/tests/**".to_string()));
+    assert!(!cfg.smells.exclude.contains(&"**/tests/**".to_string()));
+    assert!(!cfg.cycles.exclude.contains(&"**/tests/**".to_string()));
+    assert!(cfg.cycles.exclude.contains(&"**/migrations/**".to_string()));
+    assert!(cfg
+        .duplication
+        .exclude
+        .contains(&"**/versions/**/*.py".to_string()));
     assert!(cfg.exclude.contains(&"**/vendor/**".to_string()));
     assert!(cfg.exclude.contains(&"**/docs/**".to_string()));
     assert!(cfg.exclude.contains(&"**/*.min.js".to_string()));

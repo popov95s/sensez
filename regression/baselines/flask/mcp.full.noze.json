@@ -273,46 +273,6 @@
   "smells": [
     {
       "action": "advisory",
-      "file": "<flask>/examples/celery/src/task_app/views.py",
-      "kind": "loose_typing",
-      "line": 11,
-      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
-      "metric": 1,
-      "symbol": "result",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/examples/celery/src/task_app/views.py",
-      "kind": "loose_typing",
-      "line": 22,
-      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
-      "metric": 1,
-      "symbol": "add",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/examples/celery/src/task_app/views.py",
-      "kind": "loose_typing",
-      "line": 30,
-      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
-      "metric": 1,
-      "symbol": "block",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/examples/celery/src/task_app/views.py",
-      "kind": "loose_typing",
-      "line": 36,
-      "message": "returns dict[str, object] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
-      "metric": 1,
-      "symbol": "process",
-      "threshold": 0
-    },
-    {
-      "action": "advisory",
       "file": "<flask>/src/flask/app.py",
       "kind": "literal_membership",
       "line": 414,
@@ -684,8 +644,8 @@
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "god_module",
-      "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
-      "metric": 35,
+      "message": "fan-in 4 + fan-out 29 = 33 (threshold 25)",
+      "metric": 33,
       "symbol": "flask.cli",
       "threshold": 25
     },
@@ -1063,8 +1023,8 @@
       "action": "warning",
       "file": "<flask>/src/flask/globals.py",
       "kind": "shotgun_surgery_hazard",
-      "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
-      "metric": 16,
+      "message": "depended on by 12 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 12,
       "symbol": "flask.globals",
       "threshold": 12
     },

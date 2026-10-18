@@ -40,19 +40,21 @@ pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 13] = [
     "**/*.min.css",
 ];
 
-/// Tests and migration scripts are reached outside normal product flow, so their
-/// boilerplate isn't actionable duplication/smell noise. Language-specific
-/// dead-code entry points live on the profiles instead, where pytest/alembic
-/// conventions cannot leak into JS/TS/Rust.
-pub(crate) const BASELINE_EXCLUDE: [&str; 8] = [
+/// Test layouts outside profile test globs; skipped by duplication/smells unless `include_tests`.
+pub(crate) const BASELINE_TEST_EXCLUDE: [&str; 5] = [
     "**/tests/**",
     "**/test/**",
     "**/conftest.py",
     "**/test_*.py",
     "**/*_test.py",
-    "**/alembic/**",
+];
+
+/// Migration scripts are generated and often cyclic by design; `alembic` and
+/// `versions` are Python conventions, so they never hide JS/TS/Rust sources.
+pub(crate) const BASELINE_MIGRATION_EXCLUDE: [&str; 3] = [
+    "**/alembic/**/*.py",
     "**/migrations/**",
-    "**/versions/**",
+    "**/versions/**/*.py",
 ];
 
 impl Config {
@@ -97,26 +99,12 @@ impl Config {
         self.apply_baseline_excludes();
     }
 
-    /// Merge the built-in test/migration globs into both pillars (idempotent).
+    /// Merge the built-in global and migration globs into the pillar excludes (idempotent).
     fn apply_baseline_excludes(&mut self) {
-        for glob in GLOBAL_BASELINE_EXCLUDE {
-            let g = glob.to_string();
-            if !self.exclude.contains(&g) {
-                self.exclude.push(g);
-            }
-        }
-        for glob in BASELINE_EXCLUDE {
-            let g = glob.to_string();
-            if !self.duplication.exclude.contains(&g) {
-                self.duplication.exclude.push(g.clone());
-            }
-            if !self.smells.exclude.contains(&g) {
-                self.smells.exclude.push(g.clone());
-            }
-            if !self.cycles.exclude.contains(&g) {
-                self.cycles.exclude.push(g);
-            }
-        }
+        push_unique(&mut self.exclude, &GLOBAL_BASELINE_EXCLUDE);
+        push_unique(&mut self.duplication.exclude, &BASELINE_MIGRATION_EXCLUDE);
+        push_unique(&mut self.smells.exclude, &BASELINE_MIGRATION_EXCLUDE);
+        push_unique(&mut self.cycles.exclude, &BASELINE_MIGRATION_EXCLUDE);
     }
 
     fn validate(&self) -> Result<()> {
@@ -149,6 +137,14 @@ impl Config {
         crate::globs::validate_patterns("cycles.exclude", &self.cycles.exclude)?;
         crate::globs::validate_patterns("smells.exclude", &self.smells.exclude)?;
         Ok(())
+    }
+}
+
+fn push_unique(target: &mut Vec<String>, globs: &[&str]) {
+    for glob in globs {
+        if !target.iter().any(|existing| existing == glob) {
+            target.push((*glob).to_string());
+        }
     }
 }
 

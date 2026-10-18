@@ -6,6 +6,7 @@ pub mod duplication;
 pub mod glossary;
 mod parallel;
 pub mod smells;
+mod source_scope;
 
 use crate::report::{
     ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, Severity, SmellFinding,
@@ -14,6 +15,7 @@ use crate::report::{
 use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
+use source_scope::SourceScope;
 use std::collections::BTreeMap;
 use std::path::Path;
 
@@ -87,6 +89,9 @@ pub fn run_with_root(
             duplication_total: duplication.len(),
             boundaries_total: boundary_audit.violations.len(),
             smells_total: smells.len(),
+            duplication_skipped: SourceScope::for_duplication(&config.duplication)
+                .skip_counts(files),
+            smells_skipped: SourceScope::for_smells(&config.smells).skip_counts(files),
             smell_totals: smell_totals(&smells),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues,

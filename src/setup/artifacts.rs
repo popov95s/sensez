@@ -36,6 +36,9 @@ enabled = true
 # near_miss = false  # consistent-rename clone detection (opt-in)
 # class_name_duplicates = false  # same-name class duplication. Can be noisy for teams that follow same patterns for business logic services, stores, etc.(opt-in)
 # class_property_overlap_min = 4  # same-name/same-type class fields (0 = off)
+# include_tests = false      # true also compares test files (profile test globs, tests/, test/)
+# include_generated = false  # true also compares generated files (_generated/, *.gen.*, @generated headers)
+# exclude = ["**/fixtures/**"]  # extra clone-only excludes (files stay in the graph)
 #
 # [duplication.semantic]  # opt-in, requires the `eyez` feature
 # enabled = false
@@ -62,6 +65,7 @@ enabled = true
 
 [smells]
 # enabled = true
+# include_tests = false  # true also runs smells on test files (profile test globs, tests/, test/)
 #
 # One [smells.rules.<name>] table per smell holds its detection knobs and its
 # agent action. Setting any knob, including `action`, enables the rule, and

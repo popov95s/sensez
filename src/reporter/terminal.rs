@@ -1,6 +1,6 @@
 //! Human-readable colored terminal renderer (a view over [`AnalysisReport`]).
 
-use crate::report::{ActionLevel, AnalysisReport, Confidence};
+use crate::report::{ActionLevel, AnalysisReport, Confidence, SkipCounts};
 use colored::Colorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -75,6 +75,9 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         report.duplication.len(),
         report.meta.duplication_total,
     );
+    if let Some(line) = skipped_line(&report.meta.duplication_skipped) {
+        let _ = writeln!(out, "    {}", line.dimmed());
+    }
     for class in &report.duplication {
         let detail = class.hint.as_deref().unwrap_or("structural clone");
         if class.token_length > 0 {
@@ -227,6 +230,16 @@ fn section(out: &mut String, title: &str, shown: usize, total: usize) {
         String::new()
     };
     let _ = writeln!(out, "\n{} ({}){}", title.bold().cyan(), colored, suffix);
+}
+
+fn skipped_line(skipped: &SkipCounts) -> Option<String> {
+    if skipped.is_empty() {
+        return None;
+    }
+    Some(format!(
+        "skipped {} test, {} generated and {} excluded file(s) (duplication.include_tests / include_generated / exclude)",
+        skipped.tests, skipped.generated, skipped.config_exclude
+    ))
 }
 
 fn confidence_label(confidence: Confidence) -> colored::ColoredString {

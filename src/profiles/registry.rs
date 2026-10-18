@@ -84,20 +84,34 @@ pub fn is_test_source(language: Language, path: &Path) -> bool {
     static TEST_SOURCES: OnceLock<HashMap<Language, GlobSet>> = OnceLock::new();
     TEST_SOURCES
         .get_or_init(|| {
-            PROFILES
-                .iter()
-                .map(|profile| {
-                    let info = ParseProfile::info(*profile);
-                    let defaults = DeadCodeProfile::dead_code_defaults(*profile);
-                    (
-                        info.language,
-                        super::compile_profile_globs(defaults.test_sources),
-                    )
-                })
-                .collect()
+            globs_by_language(|profile| DeadCodeProfile::dead_code_defaults(profile).test_sources)
         })
         .get(&language)
         .is_some_and(|patterns| patterns.is_match(path))
+}
+
+/// Test sources plus the profile's test-support layouts (mocks, fixtures, stories).
+pub fn is_test_or_support_source(language: Language, path: &Path) -> bool {
+    static TEST_SUPPORT: OnceLock<HashMap<Language, GlobSet>> = OnceLock::new();
+    is_test_source(language, path)
+        || TEST_SUPPORT
+            .get_or_init(|| globs_by_language(|profile| ParseProfile::info(profile).test_support))
+            .get(&language)
+            .is_some_and(|patterns| patterns.is_match(path))
+}
+
+fn globs_by_language(
+    patterns: impl Fn(&'static dyn LanguageProfile) -> &'static [&'static str],
+) -> HashMap<Language, GlobSet> {
+    PROFILES
+        .iter()
+        .map(|profile| {
+            (
+                ParseProfile::info(*profile).language,
+                super::compile_profile_globs(patterns(*profile)),
+            )
+        })
+        .collect()
 }
 
 #[cfg(all(
@@ -155,5 +169,32 @@ mod tests {
                 Path::new("src/test_api.ts")
             ));
         }
+    }
+
+    #[cfg(feature = "lang-typescript")]
+    #[test]
+    fn test_support_layouts_are_test_code_but_not_test_sources() {
+        use super::is_test_or_support_source;
+        for path in [
+            "src/__mocks__/api.ts",
+            "src/__fixtures__/user.ts",
+            "e2e/login.ts",
+            "src/test-utils/render.tsx",
+            "src/Button.stories.tsx",
+        ] {
+            assert!(is_test_or_support_source(
+                Language::TypeScript,
+                Path::new(path)
+            ));
+            assert!(!is_test_source(Language::TypeScript, Path::new(path)));
+        }
+        assert!(is_test_or_support_source(
+            Language::TypeScript,
+            Path::new("src/a.test.ts")
+        ));
+        assert!(!is_test_or_support_source(
+            Language::TypeScript,
+            Path::new("src/lib/testing-utils.ts")
+        ));
     }
 }

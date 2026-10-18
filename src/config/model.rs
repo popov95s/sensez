@@ -33,6 +33,8 @@ pub struct Cache {
 #[serde(default)]
 pub struct Duplication {
     pub exclude: Vec<String>,
+    pub include_tests: bool,
+    pub include_generated: bool,
     pub threshold: usize,
     pub max_gap: usize,
     pub near_miss: bool,
@@ -115,10 +117,9 @@ impl Default for Config {
             roots: Vec::new(),
             exclude: Vec::new(),
             duplication: Duplication {
-                exclude: super::BASELINE_EXCLUDE
-                    .iter()
-                    .map(|s| s.to_string())
-                    .collect(),
+                exclude: Vec::new(),
+                include_tests: false,
+                include_generated: false,
                 threshold: 50,
                 max_gap: 10,
                 near_miss: false,

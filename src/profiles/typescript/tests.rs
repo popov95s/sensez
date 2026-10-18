@@ -69,6 +69,7 @@ pub(super) fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
             src,
         ),
         walked: std::sync::Arc::new(walked),
+        is_generated: false,
     };
     detect_local(&file, cfg)
 }

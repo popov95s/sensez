@@ -22,7 +22,7 @@
       "smells/heavy_nested_function": 3,
       "smells/large_class": 2,
       "smells/loose_typing": 79,
-      "smells/magic_string_default": 59,
+      "smells/magic_string_default": 58,
       "smells/message_chain": 1,
       "smells/mutated_parameter": 3,
       "smells/narrating_code": 3,
@@ -52,7 +52,7 @@
     "changes": 0,
     "scope": {
       "boundary_rules": 0,
-      "duplication_exclude_globs": 8,
+      "duplication_exclude_globs": 3,
       "duplication_threshold": 50,
       "exclude_globs": 13
     }

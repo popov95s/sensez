@@ -1048,8 +1048,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "shotgun_surgery_hazard",
-      "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
-      "metric": 65,
+      "message": "depended on by 63 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
     },

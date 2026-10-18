@@ -272,6 +272,11 @@
     "boundaries_total": 0,
     "cycles_total": 2,
     "dead_code_total": 4,
+    "duplication_skipped": {
+      "config_exclude": 0,
+      "generated": 0,
+      "tests": 58
+    },
     "duplication_total": 4,
     "external_edges": 329,
     "internal_edges": 304,
@@ -284,7 +289,7 @@
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
       "literal_membership": 5,
-      "loose_typing": 98,
+      "loose_typing": 94,
       "magic_string_default": 4,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
@@ -293,7 +298,12 @@
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
-    "smells_total": 157,
+    "smells_skipped": {
+      "config_exclude": 0,
+      "generated": 0,
+      "tests": 58
+    },
+    "smells_total": 153,
     "source_lines": 18315
   },
   "smells": [
@@ -530,8 +540,8 @@
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "god_module",
-      "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
-      "metric": 35,
+      "message": "fan-in 4 + fan-out 29 = 33 (threshold 25)",
+      "metric": 33,
       "symbol": "flask.cli",
       "threshold": 25
     },
@@ -589,8 +599,8 @@
       "action": "warning",
       "file": "<flask>/src/flask/globals.py",
       "kind": "shotgun_surgery_hazard",
-      "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
-      "metric": 16,
+      "message": "depended on by 12 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 12,
       "symbol": "flask.globals",
       "threshold": 12
     },
