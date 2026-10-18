@@ -83,7 +83,7 @@ fn visit_node(
     // Comments never map to a structural token, so capturing their text for the
     // eyez index cannot affect duplication.
     if kind == "line_comment" || kind == "block_comment" {
-        walk::record_comment_span(out, node);
+        walk::record_comment_span(out, node, src, &super::comment_syntax::COMMENT_SYNTAX);
         #[cfg(feature = "eyez")]
         {
             let scope_path: Vec<&str> = state.scope.iter().map(|s| s.name.as_str()).collect();

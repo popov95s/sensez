@@ -6,15 +6,11 @@ use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::{registry, PerformanceProfile};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{CallFact, FunctionUnit};
+use crate::spine::ir::{CallFact, FunctionUnit, IterationPass};
 use external::external_calls;
 use std::collections::BTreeMap;
 
-pub fn detect(
-    ctx: &SmellContext<'_>,
-    metrics: &[FunctionUnit],
-    _cfg: &Smells,
-) -> Vec<SmellFinding> {
+pub fn detect(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], cfg: &Smells) -> Vec<SmellFinding> {
     // Performance smells need to look up callees by name to attribute
     // helper-in-loop work to the caller; same-named units stay ambiguous.
     let mut functions: BTreeMap<&str, Vec<&FunctionUnit>> = BTreeMap::new();
@@ -25,7 +21,7 @@ pub fn detect(
     metrics
         .iter()
         .flat_map(|m| {
-            let mut findings = direct_findings(ctx, m, &functions, profile);
+            let mut findings = direct_findings(ctx, m, cfg, &functions, profile);
             findings.extend(helper_findings(ctx, m, &functions, profile));
             findings
         })
@@ -35,6 +31,7 @@ pub fn detect(
 fn direct_findings(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
+    cfg: &Smells,
     functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
     profile: &dyn PerformanceProfile,
 ) -> Vec<SmellFinding> {
@@ -62,16 +59,19 @@ fn direct_findings(
             Severity::Warning,
         ));
     }
-    for calls in repeated_iterations(m, profile).values() {
-        out.push(finding(
-            SmellKind::RepeatedIteration,
-            ctx,
-            m,
-            calls[0].line,
-            calls.len(),
-            "same collection is iterated multiple times in this scope",
-            Severity::Warning,
-        ));
+    let in_tests = ctx.test_source || m.review_risks.is_test_case;
+    if cfg.repeated_iteration_include_tests || !in_tests {
+        for calls in repeated_iterations(m, cfg, profile) {
+            out.push(finding(
+                SmellKind::RepeatedIteration,
+                ctx,
+                m,
+                calls[0].line,
+                calls.len(),
+                &repeated_iteration_reason(&calls),
+                Severity::Warning,
+            ));
+        }
     }
     for call in external_calls(ctx, m, &m.performance.loop_calls, functions, profile).values() {
         out.push(finding(
@@ -130,37 +130,94 @@ fn helper_findings(
 
 fn repeated_iterations<'a>(
     m: &'a FunctionUnit,
+    cfg: &Smells,
     profile: &dyn PerformanceProfile,
-) -> BTreeMap<(&'a str, usize), Vec<&'a CallFact>> {
+) -> Vec<Vec<&'a CallFact>> {
     let mut by_base: BTreeMap<(&str, usize), Vec<&CallFact>> = BTreeMap::new();
-    for call in &m.performance.iteration_calls {
-        if !call.base.is_empty() {
-            by_base
-                .entry((call.base.as_str(), call.region))
-                .or_default()
-                .push(call);
-        }
-    }
-    by_base.retain(|(base, _), calls| {
-        calls.len() > 1 && !mutation_between(profile, &m.performance.calls, base, calls)
+    let counted = m.performance.iteration_calls.iter().filter(|call| {
+        !call.base.is_empty()
+            && call.pass != IterationPass::ShortCircuit
+            && (cfg.repeated_iteration_include_tests || !call.in_assertion)
     });
+    for call in counted {
+        by_base
+            .entry((call.base.as_str(), call.region))
+            .or_default()
+            .push(call);
+    }
     by_base
+        .into_iter()
+        .filter(|(_, calls)| {
+            calls
+                .iter()
+                .any(|call| call.pass != IterationPass::Projection)
+        })
+        .filter(|((base, _), calls)| has_fusable_pair(m, profile, base, calls))
+        .map(|(_, calls)| calls)
+        .collect()
 }
 
+fn has_fusable_pair(
+    m: &FunctionUnit,
+    profile: &dyn PerformanceProfile,
+    base: &str,
+    calls: &[&CallFact],
+) -> bool {
+    let mut ordered = calls.to_vec();
+    ordered.sort_by_key(|call| (call.line, call.offset));
+    ordered.iter().enumerate().any(|(index, first)| {
+        ordered[index + 1..].iter().any(|second| {
+            !mutation_between(profile, &m.performance.calls, base, first, second)
+                && !exit_between(m, first, second)
+                && !depends_on_binding_since(m, first, second)
+        })
+    })
+}
+
+/// True when `base` is mutated on any line from the first pass through the second.
 fn mutation_between(
     profile: &dyn PerformanceProfile,
     all_calls: &[CallFact],
     base: &str,
-    iterations: &[&CallFact],
+    first: &CallFact,
+    second: &CallFact,
 ) -> bool {
-    let first = iterations.iter().map(|call| call.line).min().unwrap_or(0);
-    let last = iterations.iter().map(|call| call.line).max().unwrap_or(0);
     all_calls.iter().any(|call| {
         call.base == base
-            && first < call.line
-            && call.line < last
+            && (first.offset..=second.offset).contains(&call.offset)
             && profile.is_mutating_call(&call.method)
     })
+}
+
+fn exit_between(m: &FunctionUnit, first: &CallFact, second: &CallFact) -> bool {
+    m.performance
+        .exits
+        .iter()
+        .any(|&offset| first.offset < offset && offset < second.offset)
+}
+
+fn depends_on_binding_since(m: &FunctionUnit, first: &CallFact, second: &CallFact) -> bool {
+    m.performance.bindings.iter().any(|(name, end)| {
+        first.offset < *end && *end <= second.offset && second.arg_idents.contains(name)
+    })
+}
+
+fn repeated_iteration_reason(calls: &[&CallFact]) -> String {
+    let lines = super::lines::hit_lines(calls.iter().map(|call| call.line));
+    let mut methods: Vec<&str> = calls.iter().map(|call| call.method.as_str()).collect();
+    methods.sort_unstable();
+    methods.dedup();
+    let lines = lines
+        .iter()
+        .map(usize::to_string)
+        .collect::<Vec<_>>()
+        .join(", ");
+    format!(
+        "`{}` is iterated {} times in this scope (lines {lines}: {})",
+        calls[0].base,
+        calls.len(),
+        methods.join(", ")
+    )
 }
 
 fn significant_loops<'a>(

@@ -65,7 +65,7 @@ export function f(api, ids, items) {
     items.sort();
     api.fetch(id);
   }
-  const found = items.some(Boolean);
+  const found = items.filter(Boolean);
   return found || items.filter(Boolean).length > 0;
 }
 ";
@@ -214,6 +214,16 @@ def summarize(items):
 }
 
 #[test]
+fn mutation_on_the_same_line_as_the_passes_suppresses_finding() {
+    let src = "export function f(xs: number[]) { const a = xs.map(g); xs.push(1); return xs.filter(h).length + a.length; }\n";
+    let findings = local("ts", src);
+    assert!(
+        !has(&findings, SmellKind::RepeatedIteration),
+        "{findings:?}"
+    );
+}
+
+#[test]
 fn mutually_exclusive_iteration_passes_are_not_combined() {
     let src = "\
 def summarize(items, detailed):
@@ -227,6 +237,71 @@ def summarize(items, detailed):
         !has(&findings, SmellKind::RepeatedIteration),
         "{findings:?}"
     );
+}
+
+#[test]
+fn js_repeated_iteration_false_positive_shapes_are_quiet() {
+    for src in [
+        "it(\"splits\", () => { expect(xs.filter(x => x.ok)).toHaveLength(3); expect(xs.filter(x => !x.ok)).toHaveLength(1); });\n",
+        "export function check(xs: X[]) { expect(xs.filter(x => x.ok)).toHaveLength(3); assert.equal(xs.filter(x => !x.ok).length, 1); }\n",
+        "export const mixed = (xs: X[]) => xs.some(x => !x.ok) && xs.every(x => x.n > 0);\n",
+        "export function rel(xs: X[]) { const f = xs.find(x => x.ok); if (!f) return []; return xs.map(x => x.n - f.n); }\n",
+        "export function early(xs: X[]) { const a = xs.filter(x => x.ok); if (!a.length) return []; return xs.map(x => x.n); }\n",
+        "export async function keep(xs: X[]) { const k = await load(xs.map(x => x.id)); return xs.filter(x => k.includes(x.id)); }\n",
+        "export const mid = (ps: P[]) => [median(ps.map(p => p.x)), median(ps.map(p => p.y))];\n",
+        "export const box = (ps: P[]) => [max(ps.map((p) => p.x)), max(ps.map((p: P) => p.y))];\n",
+    ] {
+        assert!(!has(&local("ts", src), SmellKind::RepeatedIteration), "{src}");
+    }
+}
+
+#[test]
+fn js_repeated_iteration_true_positives_keep_firing() {
+    for src in [
+        "export function buckets(xs: X[]) { const a = xs.filter(x => x.k === \"a\"); const b = xs.filter(x => x.k === \"b\"); const c = xs.filter(x => x.k === \"c\"); return [a, b, c]; }\n",
+        "export function totals(xs: X[]) { const n = xs.filter(x => x.ok).length; const s = xs.map(x => x.v).reduce((p, q) => p + q, 0); return [n, s]; }\n",
+        "export function spread(xs: X[][]) { return [xs.flatMap(x => x), xs.flatMap(x => x.slice(1))]; }\n",
+    ] {
+        assert!(has(&local("ts", src), SmellKind::RepeatedIteration), "{src}");
+    }
+}
+
+#[test]
+fn repeated_iteration_message_lists_lines_and_methods() {
+    let src = "export function buckets(xs: X[]) {\n  const a = xs.filter(x => x.k === \"a\");\n  const b = xs.filter(x => x.k === \"b\");\n  return [a, b];\n}\n";
+    let finding = local("ts", src)
+        .into_iter()
+        .find(|f| f.kind == SmellKind::RepeatedIteration)
+        .expect("partition must fire");
+    assert_eq!(finding.line, 2);
+    assert!(
+        finding
+            .message
+            .contains("`xs` is iterated 2 times in this scope (lines 2, 3: filter)"),
+        "{}",
+        finding.message
+    );
+}
+
+#[test]
+fn include_tests_restores_assertion_passes() {
+    let src = "it(\"splits\", () => { expect(xs.filter(x => x.ok)).toHaveLength(3); expect(xs.filter(x => !x.ok)).toHaveLength(1); });\n";
+    let tmp = tempfile::tempdir().unwrap();
+    let path = tmp.path().join("rows.test.ts");
+    fs::write(&path, src).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    let cfg = Smells {
+        repeated_iteration_include_tests: true,
+        ..Smells::default()
+    };
+    assert!(has(
+        &detect_local(&file, &cfg),
+        SmellKind::RepeatedIteration
+    ));
+    assert!(!has(
+        &detect_local(&file, &Smells::default()),
+        SmellKind::RepeatedIteration
+    ));
 }
 
 #[test]

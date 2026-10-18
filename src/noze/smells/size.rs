@@ -72,21 +72,34 @@ fn narrating_code(
     m: &FunctionUnit,
     lines: usize,
 ) {
-    if m.comment_lines < cfg.min_comment_lines || lines == 0 {
+    let noisy = m.narration_comment_lines + m.code_comment_lines;
+    let only_narration = m.code_comment_lines == 0;
+    if noisy < cfg.min_comment_lines
+        || (only_narration
+            && (lines < cfg.narrating_min_function_lines || m.review_risks.is_test_case))
+    {
         return;
     }
-    let ratio = (m.comment_lines * 100).div_ceil(lines);
+    let ratio = (noisy * 100).div_ceil(lines.saturating_sub(m.comment_lines).max(1));
     if ratio <= cfg.max_comment_ratio_percent {
         return;
     }
+    let message = if m.code_comment_lines >= m.narration_comment_lines {
+        format!(
+            "{} line(s) of commented-out code, {ratio}% of code lines (threshold {}%) — delete them; version control keeps the history",
+            m.code_comment_lines, cfg.max_comment_ratio_percent
+        )
+    } else {
+        format!(
+            "{noisy} narrating comment line(s), {ratio}% of code lines (threshold {}%) — prefer clearer names or extracted helpers; keep comments for why",
+            cfg.max_comment_ratio_percent
+        )
+    };
     out.push(make(
         SmellKind::NarratingCode,
-        format!(
-            "{} comment line(s), {ratio}% of function (threshold {}%) — prefer clearer names or extracted helpers unless the comment explains why",
-            m.comment_lines, cfg.max_comment_ratio_percent
-        ),
+        message,
         ctx.path,
-        m.start_line,
+        m.first_noisy_comment_line.unwrap_or(m.start_line),
         &m.name,
         Severity::Info,
         ratio as u32,

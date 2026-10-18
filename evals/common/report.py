@@ -109,13 +109,16 @@ def usage(agent_stdout: str) -> AgentUsage:
     return AgentUsage()
 
 
+UNKNOWN_KIND = "unknown"
+
+
 def summarize(runs: list[ReportRun]) -> ReportSummary:
     by_variant = defaultdict(list)
     smell_kinds = defaultdict(Counter)
     for run in runs:
         by_variant[run.variant].append(run)
         for smell in run.smells:
-            smell_kinds[run.variant][smell.kind or "unknown"] += 1
+            smell_kinds[run.variant][smell.kind or UNKNOWN_KIND] += 1
     return ReportSummary(dict(by_variant), dict(smell_kinds))
 
 

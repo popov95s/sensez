@@ -517,16 +517,6 @@
   "smells": [
     {
       "action": "advisory",
-      "file": "<zod>/packages/bench/discriminated-union.ts",
-      "kind": "narrating_code",
-      "line": 104,
-      "message": "7 comment line(s), 54% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 54,
-      "symbol": "makeData callback",
-      "threshold": 30
-    },
-    {
-      "action": "advisory",
       "file": "<zod>/packages/bench/safe.ts",
       "kind": "loose_typing",
       "line": 11,
@@ -549,9 +539,9 @@
       "action": "advisory",
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "narrating_code",
-      "line": 327,
-      "message": "12 comment line(s), 42% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 42,
+      "line": 330,
+      "message": "6 line(s) of commented-out code, 71% of code lines (threshold 30%) \u2014 delete them; version control keeps the history",
+      "metric": 71,
       "symbol": "generateFields",
       "threshold": 30
     },
@@ -737,6 +727,16 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
+      "kind": "narrating_code",
+      "line": 31,
+      "message": "10 narrating comment line(s), 35% of code lines (threshold 30%) \u2014 prefer clearer names or extracted helpers; keep comments for why",
+      "metric": 35,
+      "symbol": "initializer",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "loose_typing",
       "line": 2632,
@@ -759,9 +759,9 @@
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "narrating_code",
-      "line": 1355,
-      "message": "11 comment line(s), 55% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 55,
+      "line": 1357,
+      "message": "11 line(s) of commented-out code, 123% of code lines (threshold 30%) \u2014 delete them; version control keeps the history",
+      "metric": 123,
       "symbol": "_enum",
       "threshold": 30
     },
@@ -1339,8 +1339,8 @@
       "file": "<zod>/packages/zod/src/v3/locales/en.ts",
       "kind": "nested_ternary",
       "line": 62,
-      "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 10,
+      "message": "10 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
       "symbol": "errorMap",
       "threshold": 0
     },
@@ -1677,36 +1677,6 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "magic_string_default",
-      "line": 1355,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "floatSafeRemainder",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "magic_string_default",
-      "line": 660,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "timeRegexSource",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "magic_string_default",
-      "line": 681,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "datetimeRegex",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "nested_loop",
       "line": 2862,
       "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
@@ -1729,8 +1699,8 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "nested_ternary",
       "line": 4909,
-      "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 1,
+      "message": "1 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
       "symbol": "cleanParams",
       "threshold": 0
     },
@@ -1827,16 +1797,6 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
-      "kind": "magic_string_default",
-      "line": 1123,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "core.$constructor(\"ZodNumber\") callback",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "mutated_parameter",
       "line": 278,
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
@@ -1922,16 +1882,6 @@
       "metric": 1,
       "symbol": "compile",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
-      "kind": "repeated_iteration",
-      "line": 29,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "write",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -2027,7 +1977,7 @@
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "nested_ternary",
       "line": 380,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "message": "1 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 2,
       "symbol": "tupleProcessor",
       "threshold": 0
@@ -2037,8 +1987,8 @@
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "nested_ternary",
       "line": 532,
-      "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 1,
+      "message": "1 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
       "symbol": "pipeProcessor",
       "threshold": 0
     },
@@ -2046,18 +1996,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
       "kind": "magic_string_default",
-      "line": 135,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "string",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
-      "kind": "magic_string_default",
       "line": 70,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\":\"` stored or sent at line 70) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
       "metric": 1,
       "symbol": "mac",
       "threshold": 0
@@ -2067,8 +2007,8 @@
       "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
       "kind": "nested_ternary",
       "line": 103,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 2,
+      "message": "1 nested ternary chain(s), deepest 3 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 3,
       "symbol": "timeSource",
       "threshold": 0
     },
@@ -2185,16 +2125,6 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "magic_string_default",
-      "line": 959,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "data.replace callback",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "message_chain",
       "line": 4458,
       "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
@@ -2267,8 +2197,8 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "nested_ternary",
       "line": 1136,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 2,
+      "message": "1 nested ternary chain(s), deepest 3 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 3,
       "symbol": "parse",
       "threshold": 0
     },
@@ -2277,30 +2207,10 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "nested_ternary",
       "line": 3287,
-      "message": "1 nested ternary expression is hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 1,
+      "message": "1 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
       "symbol": "map callback",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "repeated_iteration",
-      "line": 2175,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "handleUnionResults",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "repeated_iteration",
-      "line": 2211,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "util.defineLazy callback",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -2593,171 +2503,11 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
-      "kind": "magic_string_default",
-      "line": 72,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/az.ts",
-      "kind": "magic_string_default",
-      "line": 71,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/be.ts",
-      "kind": "magic_string_default",
-      "line": 129,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/bg.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ca.ts",
-      "kind": "magic_string_default",
-      "line": 99,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/cs.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/da.ts",
-      "kind": "magic_string_default",
-      "line": 78,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/de.ts",
-      "kind": "magic_string_default",
-      "line": 73,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/el.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/en.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/eo.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/es.ts",
-      "kind": "magic_string_default",
-      "line": 96,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/fa.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/fi.ts",
-      "kind": "magic_string_default",
-      "line": 76,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
-      "kind": "magic_string_default",
-      "line": 71,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
-      "kind": "magic_string_default",
-      "line": 91,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/locales/he.ts",
       "kind": "magic_string_default",
       "line": 106,
-      "message": "12 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 12,
+      "message": "2 fallback string sentinel(s) (first: `\"\"` used at line 106) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "metric": 2,
       "symbol": "",
       "threshold": 0
     },
@@ -2766,119 +2516,9 @@
       "file": "<zod>/packages/zod/src/v4/locales/he.ts",
       "kind": "magic_string_default",
       "line": 51,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"m\"` used at line 51) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
       "metric": 1,
       "symbol": "verbFor",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/hr.ts",
-      "kind": "magic_string_default",
-      "line": 86,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/hu.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
-      "kind": "magic_string_default",
-      "line": 117,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
-      "kind": "magic_string_default",
-      "line": 13,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "withDefiniteArticle",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/id.ts",
-      "kind": "magic_string_default",
-      "line": 72,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/is.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/it.ts",
-      "kind": "magic_string_default",
-      "line": 73,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ja.ts",
-      "kind": "magic_string_default",
-      "line": 76,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ka.ts",
-      "kind": "magic_string_default",
-      "line": 78,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/km.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ko.ts",
-      "kind": "magic_string_default",
-      "line": 76,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
       "threshold": 0
     },
     {
@@ -2893,221 +2533,11 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/mk.ts",
-      "kind": "magic_string_default",
-      "line": 73,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ms.ts",
-      "kind": "magic_string_default",
-      "line": 72,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
-      "kind": "magic_string_default",
-      "line": 72,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
       "kind": "nested_ternary",
       "line": 74,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "message": "2 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/no.ts",
-      "kind": "magic_string_default",
-      "line": 73,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ota.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/pl.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ps.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/pt.ts",
-      "kind": "magic_string_default",
-      "line": 73,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ro.ts",
-      "kind": "magic_string_default",
-      "line": 84,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ru.ts",
-      "kind": "magic_string_default",
-      "line": 129,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/sl.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/sv.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ta.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/tr.ts",
-      "kind": "magic_string_default",
-      "line": 71,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/uk.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ur.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/uz.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "3 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 3,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/vi.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/yo.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "2 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/zh-CN.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/zh-TW.ts",
-      "kind": "magic_string_default",
-      "line": 71,
-      "message": "5 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 5,
       "symbol": "",
       "threshold": 0
     },
@@ -3166,7 +2596,7 @@
       "file": "<zod>/scripts/write-stub-package-jsons.ts",
       "kind": "magic_string_default",
       "line": 38,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\".\"` stored or sent at line 38) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
       "metric": 1,
       "symbol": "findIndexJsFiles",
       "threshold": 0

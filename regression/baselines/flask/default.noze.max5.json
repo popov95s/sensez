@@ -200,10 +200,9 @@
       "high_cognitive_complexity": 8,
       "literal_membership": 5,
       "loose_typing": 95,
-      "magic_string_default": 4,
+      "magic_string_default": 3,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
-      "narrating_code": 4,
       "nested_loop": 13,
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
@@ -213,7 +212,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 154,
+    "smells_total": 149,
     "source_lines": 18315
   },
   "smells": [
@@ -259,16 +258,6 @@
     },
     {
       "action": "advisory",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "narrating_code",
-      "line": 636,
-      "message": "7 comment line(s), 35% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 35,
-      "symbol": "list_commands",
-      "threshold": 30
-    },
-    {
-      "action": "advisory",
       "file": "<flask>/src/flask/helpers.py",
       "kind": "literal_membership",
       "line": 28,
@@ -286,36 +275,6 @@
       "metric": 1,
       "symbol": "get_load_dotenv",
       "threshold": 0
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "narrating_code",
-      "line": 279,
-      "message": "62 comment line(s), 48% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 48,
-      "symbol": "__init__",
-      "threshold": 30
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/sansio/blueprints.py",
-      "kind": "narrating_code",
-      "line": 41,
-      "message": "14 comment line(s), 32% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 32,
-      "symbol": "__init__",
-      "threshold": 30
-    },
-    {
-      "action": "advisory",
-      "file": "<flask>/src/flask/sansio/scaffold.py",
-      "kind": "narrating_code",
-      "line": 75,
-      "message": "90 comment line(s), 64% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 64,
-      "symbol": "__init__",
-      "threshold": 30
     },
     {
       "action": "advisory",
@@ -352,7 +311,7 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "boolean_blindness",
       "line": 310,
-      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
       "metric": 3,
       "symbol": "__init__",
       "threshold": 2
@@ -431,7 +390,7 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "magic_string_default",
       "line": 546,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"\"` used at line 546) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "create_url_adapter",
       "threshold": 0
@@ -471,7 +430,7 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "boolean_blindness",
       "line": 563,
-      "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
       "metric": 4,
       "symbol": "__init__",
       "threshold": 2
@@ -481,7 +440,7 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "boolean_blindness",
       "line": 935,
-      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
       "metric": 3,
       "symbol": "run_command",
       "threshold": 2
@@ -550,19 +509,9 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "magic_string_default",
       "line": 1081,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"\"` used at line 1081) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "routes_command",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/cli.py",
-      "kind": "magic_string_default",
-      "line": 481,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "_set_debug",
       "threshold": 0
     },
     {
@@ -584,6 +533,16 @@
       "metric": 2,
       "symbol": "find_best_app",
       "threshold": 1
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/debughelpers.py",
+      "kind": "magic_string_default",
+      "line": 159,
+      "message": "1 fallback string sentinel(s) (first: `\"<string>\"` used at line 159) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "symbol": "explain_template_loading_attempts",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -619,7 +578,7 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "boolean_blindness",
       "line": 279,
-      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
       "metric": 3,
       "symbol": "__init__",
       "threshold": 2
@@ -662,16 +621,6 @@
       "metric": 28,
       "symbol": "register",
       "threshold": 15
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/blueprints.py",
-      "kind": "magic_string_default",
-      "line": 308,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "register",
-      "threshold": 0
     },
     {
       "action": "warning",

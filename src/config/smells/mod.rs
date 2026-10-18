@@ -76,4 +76,6 @@ impl From<Smells> for SmellConfig {
 #[cfg(test)]
 mod flat_knob_tests;
 #[cfg(test)]
+mod noise_rule_tests;
+#[cfg(test)]
 mod tests;

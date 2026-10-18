@@ -4,6 +4,7 @@
 //! but the smell semantics are language-neutral: an outer `if` with no
 //! alternative whose entire then-body is one inner `if` with no alternative.
 
+use crate::spine::ir::NestedTernary;
 use tree_sitter::Node;
 
 pub(crate) struct IfShape<'a> {
@@ -27,11 +28,34 @@ pub(crate) fn is_collapsible_nested_if(node: Node<'_>, shape: &IfShape<'_>) -> b
     inner.kind() == shape.if_kind && !has_else(inner, shape)
 }
 
-pub(crate) fn is_nested_conditional(
-    node: Node<'_>,
-    conditional_kind: &str,
-    function_kinds: &[&str],
-) -> bool {
+pub(crate) struct TernaryShape<'a> {
+    pub(crate) conditional_kind: &'a str,
+    pub(crate) transparent_kinds: &'a [&'a str],
+    pub(crate) function_kinds: &'a [&'a str],
+}
+
+/// Chain position of `node` through transparent parents, else a lexical-only record.
+pub(crate) fn ternary_nesting(node: Node<'_>, shape: &TernaryShape<'_>) -> Option<NestedTernary> {
+    let (mut depth, mut root, mut current) = (0, node, node);
+    while let Some(parent) = current.parent() {
+        if parent.kind() == shape.conditional_kind {
+            depth += 1;
+            root = parent;
+        } else if !shape.transparent_kinds.contains(&parent.kind()) {
+            break;
+        }
+        current = parent;
+    }
+    let nested =
+        depth > 0 || is_nested_conditional(node, shape.conditional_kind, shape.function_kinds);
+    nested.then(|| NestedTernary {
+        line: node.start_position().row + 1,
+        root_line: root.start_position().row + 1,
+        depth,
+    })
+}
+
+fn is_nested_conditional(node: Node<'_>, conditional_kind: &str, function_kinds: &[&str]) -> bool {
     let mut parent = node.parent();
     while let Some(current) = parent {
         if current.kind() == conditional_kind {

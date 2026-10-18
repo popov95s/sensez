@@ -1,7 +1,7 @@
 //! Per-function structural metrics for Rust smells.
 
 use crate::profiles::walk;
-use crate::spine::ir::{FunctionKey, FunctionUnit, TypeHints};
+use crate::spine::ir::{FallbackSink, FunctionKey, FunctionUnit, TypeHints};
 use tree_sitter::Node;
 
 use super::params::param_names;
@@ -248,9 +248,10 @@ impl Acc<'_> {
         let Some(arg) = args.named_child(0).filter(|n| is_string(n.kind())) else {
             return;
         };
-        walk::record_short_string_fallback(
+        walk::record_string_fallback(
             self.unit,
-            arg.utf8_text(src).ok().map(|s| unquote(s).chars().count()),
+            arg.utf8_text(src).ok().map(unquote),
+            FallbackSink::Unclassified,
             arg.start_position().row + 1,
         );
     }

@@ -5,7 +5,7 @@
 //! - `implicit_schema`: one receiver subscripted with many distinct string keys.
 //! - `literal_membership`: branching on `x in ["a", "b"]` string lists.
 
-use super::{make, structure_target, SmellContext};
+use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -33,8 +33,9 @@ pub fn detect(
             out.push(make(
                 SmellKind::LiteralMembership,
                 format!(
-                    "{} membership test(s) against literal string lists — stringly-typed categories; consider an Enum",
-                    m.literal_membership_tests
+                    "{} membership test(s) against literal string lists — stringly-typed categories; consider {}",
+                    m.literal_membership_tests,
+                    ctx.wording.category
                 ),
                 ctx.path,
                 m.start_line,
@@ -138,7 +139,7 @@ fn implicit_schema(
             format!(
                 "`{recv}` accessed via {} distinct string keys — implicit schema; consider {}",
                 keys.len(),
-                structure_target(ctx.language)
+                ctx.wording.structure
             ),
             ctx.path,
             m.start_line,

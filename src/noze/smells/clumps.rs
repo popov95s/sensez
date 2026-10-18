@@ -7,9 +7,10 @@
 //! a sign the fields want to become one object. Per-file scoping also avoids
 //! ubiquitous fields (`id`, `org_id`) chaining unrelated bundles together.
 
+use super::make;
 use super::union_find::{find, union};
-use super::{make, structure_target};
 use crate::config::smells::{SmellConfig, Smells};
+use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::parser::ParsedFile;
 use std::collections::{BTreeMap, BTreeSet};
@@ -76,7 +77,7 @@ fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
                     "fields ({}) recur together across {} signatures — consider {}",
                     fields.join(", "),
                     group.support,
-                    structure_target(file.language)
+                    registry::smell_wording(file.language).structure
                 ),
                 &group.file,
                 group.line,

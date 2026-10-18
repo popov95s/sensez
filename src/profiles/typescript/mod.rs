@@ -6,11 +6,12 @@
 
 use crate::profiles::javascript::{
     deadcode, declaration, generated, performance, resolve, roots, test_support, traversal,
-    typevocab,
+    typevocab, wording,
 };
+use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TypeVocabularyProfile, WordingProfile,
 };
 use crate::spine::ir::{ImportContext, ImportPhase, Walked};
 use std::collections::HashSet;
@@ -32,6 +33,10 @@ mod type_imports_tests;
 #[cfg(test)]
 #[path = "default_export_tests.rs"]
 mod default_export_tests;
+
+#[cfg(test)]
+#[path = "wording_tests.rs"]
+mod wording_tests;
 
 #[cfg(test)]
 #[path = "arrow_name_tests.rs"]
@@ -227,6 +232,12 @@ macro_rules! impl_ts_traits {
 
             fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
                 typevocab::is_primitive_scalar_alias(annotation)
+            }
+        }
+
+        impl WordingProfile for $name {
+            fn smell_wording(&self) -> &'static SmellWording {
+                &wording::WORDING
             }
         }
     };

@@ -8,6 +8,10 @@ pub struct PerformanceFacts {
     pub iteration_calls: Vec<CallFact>,
     pub calls: Vec<CallFact>,
     pub loop_calls: Vec<CallFact>,
+    /// End byte offsets of `return` / `throw` in this unit's own body.
+    pub exits: Vec<usize>,
+    /// Declared local names with the byte offset where the declaration ends.
+    pub bindings: Vec<(String, usize)>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -25,6 +29,24 @@ pub struct CallFact {
     pub member: bool,
     /// Nearest conditional branch start line; zero means unconditional.
     pub region: usize,
+    /// Start byte of the call expression.
+    pub offset: usize,
+    pub pass: IterationPass,
+    /// Nested in an `expect(...)` / `assert(...)` call.
+    pub in_assertion: bool,
+    /// Identifiers read by the call's arguments.
+    pub arg_idents: Vec<String>,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum IterationPass {
+    #[default]
+    Full,
+    /// `some` / `find`-style calls that can stop early.
+    ShortCircuit,
+    /// `map(x => x.field)`.
+    Projection,
 }
 
 impl CallFact {
@@ -44,7 +66,7 @@ impl CallFact {
             method: method.to_string(),
             line,
             member: true,
-            region: 0,
+            ..CallFact::default()
         }
     }
 }

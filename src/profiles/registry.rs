@@ -4,9 +4,10 @@
 //! enabled. The default build enables every supported profile; smaller builds
 //! can opt into individual language features.
 
+use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TypeVocabularyProfile, WordingProfile,
 };
 use globset::GlobSet;
 use std::collections::HashMap;
@@ -77,6 +78,10 @@ pub fn performance_profile(language: Language) -> &'static dyn PerformanceProfil
 
 pub fn type_vocabulary(language: Language) -> &'static dyn TypeVocabularyProfile {
     profile(language) as &dyn TypeVocabularyProfile
+}
+
+pub fn smell_wording(language: Language) -> &'static SmellWording {
+    WordingProfile::smell_wording(profile(language))
 }
 
 /// Match file conventions from the owning language profile, compiled once.

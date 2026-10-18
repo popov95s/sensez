@@ -23,6 +23,7 @@ EXAMPLE_LANGUAGES = (
 
 KNOB_COMMENTS = {
     "include_attributes": "also flag mutation of fields on parameters",
+    "include_tests": "also flag test code and assertion arguments",
     "max_bool_params": "allowed boolean parameters before flagging",
     "max_chain_depth": "allowed property/call chain depth",
     "max_cognitive": "allowed cognitive complexity score",
@@ -38,6 +39,7 @@ KNOB_COMMENTS = {
     "min_blast": "dependent modules before shotgun-surgery risk",
     "min_fan": "combined incoming/outgoing fan before god-module risk",
     "min_fields": "shared fields required for a data clump",
+    "min_function_lines": "shorter functions are flagged only for commented-out code",
     "min_keys": "string keys on one object before implicit-schema risk",
     "min_occurrences": "functions sharing the clump before flagging",
 }

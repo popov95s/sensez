@@ -34,11 +34,54 @@ pub const LOOSE_TYPING_LEVELS: &[StrictnessLevelDoc] = &[
     },
 ];
 
-pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[StrictnessRuleDoc {
-    kind: SmellKind::LooseTyping,
-    knob: "strictness",
-    levels: LOOSE_TYPING_LEVELS,
-}];
+pub const MAGIC_STRING_DEFAULT_LEVELS: &[StrictnessLevelDoc] = &[
+    StrictnessLevelDoc {
+        title: "Low",
+        value: "low",
+        description: "Flags empty, one-character, or sentinel-word fallbacks that are stored, sent, or compared.",
+    },
+    StrictnessLevelDoc {
+        title: "Medium",
+        value: "medium",
+        description: "Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.",
+    },
+    StrictnessLevelDoc {
+        title: "High",
+        value: "high",
+        description: "Flags every empty, one-character, or sentinel-word fallback wherever it flows.",
+    },
+];
+
+pub const NESTED_TERNARY_LEVELS: &[StrictnessLevelDoc] = &[
+    StrictnessLevelDoc {
+        title: "Medium",
+        value: "medium",
+        description: "Flags direct chains, where one conditional is a branch or condition of another.",
+    },
+    StrictnessLevelDoc {
+        title: "High",
+        value: "high",
+        description: "Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.",
+    },
+];
+
+pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
+    StrictnessRuleDoc {
+        kind: SmellKind::LooseTyping,
+        knob: "strictness",
+        levels: LOOSE_TYPING_LEVELS,
+    },
+    StrictnessRuleDoc {
+        kind: SmellKind::MagicStringDefault,
+        knob: "strictness",
+        levels: MAGIC_STRING_DEFAULT_LEVELS,
+    },
+    StrictnessRuleDoc {
+        kind: SmellKind::NestedTernary,
+        knob: "strictness",
+        levels: NESTED_TERNARY_LEVELS,
+    },
+];
 
 pub fn is_string_rule_knob(kind: SmellKind, key: &str) -> bool {
     strictness_rule(kind, key).is_some()
@@ -60,19 +103,16 @@ pub fn parse_strictness(kind: SmellKind, key: &str, value: &str) -> Result<Stric
             "[smells.rules.{kind}] {key} is not a strictness knob"
         ));
     };
-    match level_index(rule.levels, value) {
-        Some(0) => Ok(Strictness::Low),
-        Some(1) => Ok(Strictness::Medium),
-        Some(2) => Ok(Strictness::High),
+    let listed = rule.levels.iter().any(|level| level.value == value);
+    match value {
+        "low" if listed => Ok(Strictness::Low),
+        "medium" if listed => Ok(Strictness::Medium),
+        "high" if listed => Ok(Strictness::High),
         _ => Err(format!(
             "[smells.rules.{kind}] {key} must be one of: {}",
             valid_values(kind, key).unwrap_or_default()
         )),
     }
-}
-
-fn level_index(levels: &[StrictnessLevelDoc], value: &str) -> Option<usize> {
-    levels.iter().position(|level| level.value == value)
 }
 
 fn strictness_rule(kind: SmellKind, key: &str) -> Option<&'static StrictnessRuleDoc> {

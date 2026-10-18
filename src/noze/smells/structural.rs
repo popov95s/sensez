@@ -2,9 +2,10 @@
 //! magic numbers, message chains (Law of Demeter), and split variables.
 
 use super::{make, SmellContext};
-use crate::config::smells::Smells;
+use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionUnit;
+use std::collections::BTreeMap;
 
 pub fn detect(
     ctx: &SmellContext<'_>,
@@ -147,25 +148,32 @@ impl StructuralDetector<'_, '_> {
     }
 
     fn nested_ternary(&mut self, m: &FunctionUnit) {
-        let Some(&line) = m.nested_ternary_lines.first() else {
+        let lexical = self.cfg.nested_ternary_strictness == Strictness::High;
+        let counted = m
+            .nested_ternaries
+            .iter()
+            .filter(|ternary| ternary.depth > 0 || lexical);
+        let mut chains: BTreeMap<usize, usize> = BTreeMap::new();
+        let mut anchor: Option<usize> = None;
+        for ternary in counted {
+            let levels = chains.entry(ternary.root_line).or_default();
+            *levels = (*levels).max(ternary.depth.max(1) + 1);
+            anchor = Some(anchor.map_or(ternary.line, |line| line.min(ternary.line)));
+        }
+        let (Some(line), Some(&deepest)) = (anchor, chains.values().max()) else {
             return;
-        };
-        let count = m.nested_ternary_lines.len();
-        let noun = if count == 1 {
-            "expression is"
-        } else {
-            "expressions are"
         };
         self.out.push(make(
             SmellKind::NestedTernary,
             format!(
-                "{count} nested ternary {noun} hard to follow — extract the result into a named helper or flatten it with if statements and early returns"
+                "{} nested ternary chain(s), deepest {deepest} levels — extract the result into a named helper or flatten it with if statements and early returns",
+                chains.len()
             ),
             self.ctx.path,
             line,
             &m.name,
             Severity::Warning,
-            count as u32,
+            deepest as u32,
             0,
         ));
     }

@@ -2,9 +2,16 @@
 //! single body walk in [`super::units`] (no second traversal). Collects raw
 //! structure only — thresholds and severity live in `noze::smells`.
 
+use crate::profiles::fallback_guard::{guards_own_value, GuardSyntax};
 use crate::profiles::walk;
-use crate::spine::ir::{FunctionUnit, SchemaCall};
+use crate::spine::ir::{FallbackSink, FunctionUnit, SchemaCall};
 use tree_sitter::Node;
+
+const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
+    truthy_prefixes: &[],
+    presence_suffixes: &[" is not None", " != None", " != \"\"", " != ''"],
+    accessors: &[".", "["],
+};
 
 /// Method names whose call mutates the receiver in place (list/dict/set/deque).
 const MUTATORS: [&str; 13] = [
@@ -106,37 +113,49 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(right) = node.child_by_field_name("right") else {
         return;
     };
-    walk::record_short_string_fallback(
+    walk::record_string_fallback(
         unit,
-        string_literal_len(right, src),
+        string_literal_text(right, src),
+        FallbackSink::Unclassified,
         right.start_position().row + 1,
     );
 }
 
-/// `value if condition else "?"` — Python leaves the branches unnamed, but the
-/// grammar fixes the `else` branch as the last named child.
+/// `value if value else "?"` — Python leaves the branches unnamed, but the
+/// grammar fixes them as value, condition, fallback.
 fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let Some(fallback) = node.named_child(node.named_child_count().saturating_sub(1)) else {
+    let (Some(value), Some(condition), Some(fallback)) = (
+        node.named_child(0),
+        node.named_child(1),
+        node.named_child(2),
+    ) else {
         return;
     };
-    walk::record_short_string_fallback(
+    let guarded = walk::node_text(condition, src)
+        .zip(walk::node_text(value, src))
+        .is_some_and(|(condition, value)| guards_own_value(condition, value, &GUARD_SYNTAX));
+    if !guarded {
+        return;
+    }
+    walk::record_string_fallback(
         unit,
-        string_literal_len(fallback, src),
+        string_literal_text(fallback, src),
+        FallbackSink::Unclassified,
         fallback.start_position().row + 1,
     );
 }
 
-fn string_literal_len(node: Node, src: &[u8]) -> Option<usize> {
+fn string_literal_text(node: Node, src: &[u8]) -> Option<String> {
     match node.kind() {
         "parenthesized_expression" => node
             .named_child(0)
-            .and_then(|child| string_literal_len(child, src)),
-        "string" => python_string_len(node.utf8_text(src).ok()?),
+            .and_then(|child| string_literal_text(child, src)),
+        "string" => python_string_body(node.utf8_text(src).ok()?),
         _ => None,
     }
 }
 
-fn python_string_len(text: &str) -> Option<usize> {
+fn python_string_body(text: &str) -> Option<String> {
     let start = text.find(['"', '\''])?;
     let quoted = &text[start..];
     let quote = quoted.chars().next()?;
@@ -144,7 +163,7 @@ fn python_string_len(text: &str) -> Option<usize> {
     let delimiter_len = if triple { 3 } else { 1 };
     let body = quoted.get(delimiter_len..)?;
     let suffix = quote.to_string().repeat(delimiter_len);
-    Some(body.strip_suffix(&suffix)?.chars().count())
+    Some(body.strip_suffix(&suffix)?.to_string())
 }
 
 /// `recv["key"]` — record the distinct string-literal key per receiver.

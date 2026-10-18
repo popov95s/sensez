@@ -1,6 +1,6 @@
 //! Shared comment-to-function attachment for smells.
 
-use crate::spine::ir::Walked;
+use crate::spine::ir::{CommentClass, CommentSpan, FunctionUnit, Walked};
 use std::cmp::Reverse;
 
 /// Attach each recorded comment span to the innermost function that contains
@@ -20,7 +20,6 @@ pub(crate) fn attach(out: &mut Walked) {
     let mut comments: Vec<usize> = (0..out.units.comment_spans.len()).collect();
     comments.sort_by_key(|&i| out.units.comment_spans[i].start_line);
 
-    let mut counts = vec![0usize; out.units.functions.len()];
     let mut active: Vec<usize> = Vec::new();
     let mut next_function = 0;
 
@@ -34,16 +33,27 @@ pub(crate) fn attach(out: &mut Walked) {
         }
         active.retain(|&i| comment.end_line <= out.units.functions[i].end_line);
 
-        if let Some(index) = active
+        let owner = active
             .iter()
             .copied()
-            .max_by_key(|&i| out.units.functions[i].start_line)
-        {
-            counts[index] += comment.end_line - comment.start_line + 1;
+            .max_by_key(|&i| out.units.functions[i].start_line);
+        if let Some(index) = owner {
+            credit(&mut out.units.functions[index], comment);
         }
     }
+}
 
-    for (function, count) in out.units.functions.iter_mut().zip(counts) {
-        function.comment_lines = count;
+fn credit(function: &mut FunctionUnit, comment: &CommentSpan) {
+    let lines = comment.end_line - comment.start_line + 1;
+    function.comment_lines += lines;
+    match comment.class {
+        CommentClass::Narration => function.narration_comment_lines += lines,
+        CommentClass::Code => function.code_comment_lines += lines,
+        CommentClass::Directive | CommentClass::Markup | CommentClass::Rationale => return,
     }
+    function.first_noisy_comment_line = Some(
+        function
+            .first_noisy_comment_line
+            .map_or(comment.start_line, |line| line.min(comment.start_line)),
+    );
 }

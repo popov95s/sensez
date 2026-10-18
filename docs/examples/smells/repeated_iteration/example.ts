@@ -1,5 +1,5 @@
 function summarize(items: Items): Summary {
-  const hasItems = items.some(Boolean);
+  const paid = items.filter((item) => item.paid).length;
   const total = items.reduce((sum, item) => sum + item.price, 0);
-  return { hasItems, total };
+  return { paid, total };
 }

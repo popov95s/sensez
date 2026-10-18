@@ -129,5 +129,5 @@ fn fused_collector_json_identity() {
     assert_eq!(f.review_risks.empty_fallbacks, 0);
     assert_eq!(f.review_risks.repeated_guards, 0);
     assert_eq!(f.literal_membership_tests, 0);
-    assert!(f.short_string_fallback_lines.is_empty());
+    assert!(f.string_fallbacks.is_empty());
 }

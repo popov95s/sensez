@@ -46,6 +46,10 @@ fn apply_rule_knob(
                 smells.param_attr_mutation = b;
                 true
             }
+            (SmellKind::RepeatedIteration, "include_tests") => {
+                smells.repeated_iteration_include_tests = b;
+                true
+            }
             _ => false,
         };
         return Ok(matched);
@@ -95,6 +99,14 @@ fn set_strictness_knob(
             smells.loose_typing_strictness = value;
             Ok(true)
         }
+        SmellKind::MagicStringDefault => {
+            smells.magic_string_default_strictness = value;
+            Ok(true)
+        }
+        SmellKind::NestedTernary => {
+            smells.nested_ternary_strictness = value;
+            Ok(true)
+        }
         _ => Err(format!("[smells.rules.{kind}] has no strictness storage")),
     }
 }
@@ -120,6 +132,9 @@ fn apply_integer_knob(smells: &mut Smells, kind: SmellKind, key: &str, n: usize)
         (SmellKind::NarratingCode, "min_comment_lines") => set(&mut smells.min_comment_lines, n),
         (SmellKind::NarratingCode, "max_comment_ratio_percent") => {
             set(&mut smells.max_comment_ratio_percent, n)
+        }
+        (SmellKind::NarratingCode, "min_function_lines") => {
+            set(&mut smells.narrating_min_function_lines, n)
         }
         (SmellKind::BooleanBlindness, "max_bool_params") => set(&mut smells.max_bool_params, n),
         (SmellKind::TuplePacking, "max_tuple_return") => set(&mut smells.max_tuple_return, n),
@@ -166,9 +181,14 @@ fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::DataClump => &["min_fields", "min_occurrences"],
         SmellKind::ShotgunSurgeryHazard => &["min_blast"],
         SmellKind::GodModule => &["min_fan"],
-        SmellKind::NarratingCode => &["min_comment_lines", "max_comment_ratio_percent"],
+        SmellKind::NarratingCode => &[
+            "min_comment_lines",
+            "max_comment_ratio_percent",
+            "min_function_lines",
+        ],
         SmellKind::BooleanBlindness => &["max_bool_params"],
         SmellKind::MagicStringDefault => &[],
+        SmellKind::RepeatedIteration => &["include_tests"],
         SmellKind::TuplePacking => &["max_tuple_return"],
         SmellKind::ImplicitSchema => &["min_keys"],
         _ => &[],
@@ -178,6 +198,7 @@ fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
 fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
     match kind {
         SmellKind::MutatedParameter => &["include_attributes"],
+        SmellKind::RepeatedIteration => &["include_tests"],
         _ => &[],
     }
 }

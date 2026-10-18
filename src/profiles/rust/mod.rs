@@ -3,6 +3,7 @@
 //! already owns private ones), and Rust-native unit extraction for smells that
 //! complement Clippy instead of re-reporting its local style lints.
 
+pub(crate) mod comment_syntax;
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
@@ -17,15 +18,17 @@ pub(crate) mod traversal;
 pub(crate) mod typevocab;
 mod unit_helpers;
 pub(crate) mod units;
+pub(crate) mod wording;
 
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
 mod units_tests;
 
+use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TypeVocabularyProfile, WordingProfile,
 };
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
@@ -165,5 +168,11 @@ impl TypeVocabularyProfile for RustProfile {
 
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
         typevocab::is_primitive_scalar_alias(annotation)
+    }
+}
+
+impl WordingProfile for RustProfile {
+    fn smell_wording(&self) -> &'static SmellWording {
+        &wording::WORDING
     }
 }

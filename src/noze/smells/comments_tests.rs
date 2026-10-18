@@ -22,6 +22,7 @@ fn cfg() -> Smells {
     Smells {
         min_comment_lines: 3,
         max_comment_ratio_percent: 30,
+        narrating_min_function_lines: 0,
         ..Smells::default()
     }
 }
@@ -35,7 +36,7 @@ fn python_flags_dense_explanatory_comments() {
     );
     let found = findings(&file, &cfg());
     assert_eq!(found.len(), 1, "{found:?}");
-    assert_eq!(found[0].metric, 43);
+    assert_eq!(found[0].metric, 75);
 }
 
 #[test]
@@ -80,6 +81,68 @@ fn rust_counts_line_comments_in_functions() {
         "pub fn ship(order: &Order) -> bool {\n    // read customer\n    let customer = order.customer();\n    // read plan\n    let plan = customer.plan();\n    // read active\n    plan.active()\n}\n",
     );
     assert_eq!(findings(&file, &cfg()).len(), 1);
+}
+
+#[test]
+fn rationale_directives_and_markup_do_not_count() {
+    let cases = [
+        (
+            "ts",
+            "export function ncRationale(items: number[]) {\n  // The upstream API rejects zero values, so we keep them\n  // as-is here and let the caller decide. Changing this\n  // broke the nightly import once (see incident notes).\n  // Do not normalise here.\n  // Keep this in sync with the server.\n  const kept = items.slice();\n  const first = kept[0];\n  const last = kept[kept.length - 1];\n  const size = kept.length;\n  return { kept, first, last, size };\n}\n",
+        ),
+        (
+            "ts",
+            "export function ncDirectives5(a: Legacy) {\n  // eslint-disable-next-line no-console\n  console.log(a);\n  // @ts-expect-error legacy shape\n  const b = a.x;\n  // prettier-ignore\n  const c = [1,2,3];\n  // eslint-disable-next-line no-unused-vars\n  const d = b;\n  // biome-ignore lint: legacy\n  const e = d;\n  return [b, c, e];\n}\n",
+        ),
+        (
+            "tsx",
+            "export function Page() {\n  return (\n    <div>\n      {/* header */}\n      <h1>t</h1>\n      {/* body */}\n      <p>b</p>\n      {/* list */}\n      <ul />\n      {/* footer */}\n      <footer />\n      {/* end */}\n    </div>\n  );\n}\n",
+        ),
+        (
+            "ts",
+            "export function wrap(items: number[]) {\n  return items.map((v) => {\n    // parse the value\n    // check the value\n    // keep the value\n    // map the value\n    // return the value\n    return v;\n  });\n}\n",
+        ),
+        (
+            "ts",
+            "it(\"keeps rows\", () => {\n  // load the rows\n  // filter the rows\n  // count the rows\n  // check the count\n  // done\n  const rows = load();\n  const kept = rows.filter(Boolean);\n  const count = kept.length;\n  const total = rows.length;\n  const ratio = count / total;\n  expect(ratio).toBe(1);\n});\n",
+        ),
+    ];
+    for (ext, body) in cases {
+        let file = parsed("quiet", ext, body);
+        let found = findings(&file, &Smells::default());
+        assert!(found.is_empty(), "{body}\n{found:?}");
+    }
+}
+
+#[test]
+fn step_narration_and_commented_out_code_keep_firing() {
+    let narration = parsed(
+        "narration",
+        "ts",
+        "export function parse(raw: string): number {\n  // parse the integer\n  const n = parseInt(raw, 10);\n  // check if negative\n  if (n < 0) {\n    // return zero\n    return 0;\n  }\n  // double it\n  const d = n * 2;\n  // return the result\n  return d;\n}\n",
+    );
+    let found = findings(&narration, &Smells::default());
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line, 2);
+    assert!(
+        found[0].message.contains("narrating"),
+        "{}",
+        found[0].message
+    );
+
+    let code = parsed(
+        "code",
+        "ts",
+        "export function old(x: number): number {\n  // const y = x * 3;\n  // if (y > 10) {\n  //   return y;\n  // }\n  // console.log(y);\n  return x;\n}\n",
+    );
+    let found = findings(&code, &Smells::default());
+    assert_eq!(found.len(), 1, "{found:?}");
+    assert_eq!(found[0].line, 2);
+    assert!(
+        found[0].message.contains("5 line(s) of commented-out code"),
+        "{}",
+        found[0].message
+    );
 }
 
 #[test]

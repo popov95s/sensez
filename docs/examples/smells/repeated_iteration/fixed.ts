@@ -1,9 +1,11 @@
 function summarize(items: Items): Summary {
-  let hasItems = false;
+  let paid = 0;
   let total = 0;
   for (const item of items) {
-    hasItems = true;
+    if (item.paid) {
+      paid += 1;
+    }
     total += item.price;
   }
-  return { hasItems, total };
+  return { paid, total };
 }

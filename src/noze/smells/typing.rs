@@ -2,13 +2,11 @@
 //!
 //! - `loose_typing`: params/return typed as bare collections or `Any` where a
 //!   dataclass/model almost always belongs.
-//! - `magic_string_default`: fallback string literals (`or ""`, `|| "?"`,
-//!   `cond ? value : "?"`, or any other empty / 1-char sentinel) that hide
-//!   optionality behind a mandatory string contract.
+//! - `magic_string_default`: see [`super::magic_string`].
 //! - `boolean_blindness`: more than `max_bool_params` bool parameters.
 //! - `tuple_packing`: position-based grouped data in returns.
 
-use super::{grouped_value_target, make, structure_target, SmellContext};
+use super::{magic_string, make, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::typevocab::{base_type, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -26,8 +24,8 @@ pub fn detect(
         if cfg.loose_typing {
             loose_typing(ctx, m, cfg, out);
         }
-        if cfg.magic_string_default && !m.short_string_fallback_lines.is_empty() {
-            magic_string_default(ctx, m, out);
+        if cfg.magic_string_default {
+            magic_string::detect(ctx, m, cfg, out);
         }
         if cfg.tuple_packing {
             tuple_packing(ctx, m, cfg, out);
@@ -92,36 +90,13 @@ fn loose_typing(
         format!(
             "{} — replace loose types with {}; do not silence this with a shallow type alias",
             parts.join("; "),
-            structure_target(ctx.language)
+            ctx.wording.structure
         ),
         ctx.path,
         m.start_line,
         &m.name,
         severity,
         (offenders.len() + ret.is_some() as usize) as u32,
-        0,
-    ));
-}
-
-/// Fallback string literals used to paper over optional/nullable values.
-fn magic_string_default(ctx: &SmellContext<'_>, m: &FunctionUnit, out: &mut Vec<SmellFinding>) {
-    let line = m
-        .short_string_fallback_lines
-        .first()
-        .copied()
-        .unwrap_or(m.start_line);
-    let count = m.short_string_fallback_lines.len();
-    out.push(make(
-        SmellKind::MagicStringDefault,
-        format!(
-            "{} fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) — hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-            count
-        ),
-        ctx.path,
-        line,
-        &m.name,
-        Severity::Warning,
-        count as u32,
         0,
     ));
 }
@@ -142,7 +117,10 @@ fn boolean_blindness(
     if bools > cfg.max_bool_params {
         out.push(make(
             SmellKind::BooleanBlindness,
-            format!("{bools} boolean parameters — call sites are unreadable; consider an Enum or splitting the function"),
+            format!(
+                "{bools} boolean parameters — call sites are unreadable; consider {}, or split the function",
+                ctx.wording.options
+            ),
             ctx.path,
             m.start_line,
             &m.name,
@@ -173,7 +151,7 @@ fn tuple_packing(
             SmellKind::TuplePacking,
             format!(
                 "returns a {arity}-element tuple — positional grouped data; consider {}",
-                grouped_value_target(ctx.language)
+                ctx.wording.grouped_value
             ),
             ctx.path,
             m.start_line,
@@ -223,7 +201,7 @@ fn type_hiding_aliases(ctx: &SmellContext<'_>, out: &mut Vec<SmellFinding>) {
                 "type alias {} = {} hides a loose type-safety contract — replace it with {} instead of a shallow alias",
                 alias.name,
                 alias.target,
-                structure_target(ctx.language)
+                ctx.wording.structure
             ),
             ctx.path,
             alias.line,

@@ -186,7 +186,7 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "boolean_blindness",
       "line": 310,
-      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
       "metric": 3,
       "symbol": "__init__",
       "threshold": 2
@@ -255,7 +255,7 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "boolean_blindness",
       "line": 563,
-      "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum or splitting the function",
+      "message": "4 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
       "metric": 4,
       "symbol": "__init__",
       "threshold": 2
