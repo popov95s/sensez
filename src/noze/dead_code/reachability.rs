@@ -1,65 +1,15 @@
-//! Reachability/usage evidence used to decide and rank dead-code candidates.
+//! Symbol-level evidence used to decide dead-code candidates.
 
+use super::demand::Demand;
 use crate::profiles::DeadCodeProfile;
-use crate::report::Confidence;
-use crate::spine::graph::{CodebaseGraph, ModuleNode};
-use crate::spine::ir::ImportPhase;
 use crate::spine::parser::ParsedFile;
-use globset::GlobSet;
-use petgraph::graph::NodeIndex;
-use petgraph::visit::EdgeRef;
-use petgraph::Direction;
-use std::collections::HashSet;
-
-/// Inbound import evidence for a module.
-pub(super) struct Inbound {
-    /// Symbols imported by name across all inbound edges.
-    pub used: HashSet<String>,
-    /// Any inbound `from mod import *`.
-    pub star: bool,
-    /// Any inbound type-only star (`import type * as ns` used as a whole): caps confidence.
-    pub type_star: bool,
-    /// Number of inbound import edges.
-    pub count: usize,
-}
-
-pub(super) fn inbound_usage(
-    cg: &CodebaseGraph,
-    idx: NodeIndex,
-    skip_source: impl Fn(&ModuleNode) -> bool,
-) -> Inbound {
-    let mut used = HashSet::new();
-    let (mut star, mut type_star, mut count) = (false, false, 0usize);
-    for edge in cg.graph.edges_directed(idx, Direction::Incoming) {
-        let source = &cg.graph[edge.source()];
-        if skip_source(source) {
-            continue;
-        }
-        count += 1;
-        for sym in &edge.weight().imported_symbols {
-            match (sym.as_str(), edge.weight().phase) {
-                ("*", ImportPhase::TypeOnly) => type_star = true,
-                ("*", ImportPhase::Runtime) => star = true,
-                _ => {
-                    used.insert(sym.clone());
-                }
-            }
-        }
-    }
-    Inbound {
-        used,
-        star,
-        type_star,
-        count,
-    }
-}
 
 /// Cheap, decoration-independent reasons a symbol is not a dead candidate.
 pub(super) fn skip_symbol(
     file: &ParsedFile,
     profile: &dyn DeadCodeProfile,
     symbol: &str,
-    used: &HashSet<String>,
+    used: &Demand,
 ) -> bool {
     if profile.is_conventionally_private(symbol) {
         return true;
@@ -84,41 +34,11 @@ pub(super) fn skip_symbol(
     {
         return true; // referenced within its own module
     }
+    is_asked(file, symbol, used)
+}
+
+/// `demand` names `symbol`, directly or as the module's default export.
+pub(super) fn is_asked(file: &ParsedFile, symbol: &str, demand: &Demand) -> bool {
     let is_default = file.walked.symbols.default_export.as_deref() == Some(symbol);
-    used.contains(symbol) || (is_default && used.contains("default"))
-}
-
-/// Confidence from what sensez can actually prove (no framework assumptions):
-/// - the module is imported *by name* somewhere, yet this symbol never is → **High**;
-/// - the module is imported only plainly (`import mod`) or referenced as a whole type
-///   namespace → **Medium** (attribute access may hide use);
-/// - nothing imports the module → **Low** (it may be an undeclared entry point).
-pub(super) fn confidence_of(inbound: &Inbound) -> Confidence {
-    if inbound.count == 0 {
-        Confidence::Low
-    } else if !inbound.used.is_empty() && !inbound.type_star {
-        Confidence::High
-    } else {
-        Confidence::Medium
-    }
-}
-
-/// Entry-point modules whose symbols are reached outside the import graph.
-/// File-stem conventions come from the language profile; package manifests feed
-/// `entry_modules`; and profile/user globs feed `entry_points`.
-pub(super) fn is_entry_module(
-    node: &ModuleNode,
-    profile: &dyn DeadCodeProfile,
-    entry_modules: &HashSet<&str>,
-    entry_globs: &GlobSet,
-) -> bool {
-    let stem = node
-        .file_path
-        .file_stem()
-        .map(|s| s.to_string_lossy().into_owned())
-        .unwrap_or_default();
-    if profile.is_entry_file_stem(&stem) {
-        return true;
-    }
-    entry_modules.contains(node.module_name.as_str()) || entry_globs.is_match(&node.file_path)
+    demand.contains(symbol) || (is_default && demand.contains("default"))
 }

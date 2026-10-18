@@ -11,7 +11,7 @@
 //! - **Unknown**: a bare custom/unrecognized decorator (`@lru_cache`,
 //!   `@my_wrapper`). ⇒ downgrade.
 
-use crate::globs::matches_name;
+use crate::globs::matches_any;
 use crate::profiles::{DeadCodeDefaults, DecoratorClass};
 use crate::spine::ir::{ClassProperty, ClassUnit};
 use std::collections::HashSet;
@@ -47,19 +47,7 @@ pub fn defaults() -> DeadCodeDefaults {
         entrypoints: &["route", "fixture", "task", "command", "app", "cli"],
         entrypoint_names: &["register", "main", "setup"],
         entrypoint_bases: &["AppConfig"],
-        entry_points: &[
-            "**/alembic/**",
-            "**/docs/**",
-            "**/docs_src/**",
-            "**/examples/**",
-            "**/example/**",
-            "**/migrations/**",
-            "**/tests/**",
-            "**/test/**",
-            "**/conftest.py",
-            "**/test_*.py",
-            "**/*_test.py",
-        ],
+        entry_points: &["**/alembic/**", "**/migrations/**"],
         test_sources: &[
             "**/docs/**",
             "**/docs_src/**",
@@ -87,10 +75,7 @@ pub fn classify(paths: Option<&Vec<String>>, user_entrypoints: &HashSet<String>)
         let head = path.split('.').next().unwrap_or(path);
         let is_attr = path.contains('.');
 
-        if user_entrypoints
-            .iter()
-            .any(|pattern| matches_name(pattern, trailing))
-        {
+        if matches_any(user_entrypoints, trailing) {
             return DecoratorClass::Registration;
         }
         // Attribute-access decorator on a non-neutral object ⇒ registration.

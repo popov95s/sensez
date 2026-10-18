@@ -235,7 +235,13 @@ fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
             }
             "namespace_import" => clause.namespace = first_identifier(child, src),
             "named_imports" | "export_clause" => collect_specifiers(child, src, phase, &mut clause),
-            "namespace_export" => clause.symbols.push("*".to_string()),
+            "namespace_export" => {
+                clause.symbols.push("*".to_string());
+                if let Some(name) = first_identifier(child, src) {
+                    clause.bindings.push(name);
+                    clause.binding_phases.push(phase);
+                }
+            }
             _ => {}
         }
     }

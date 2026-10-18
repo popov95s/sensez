@@ -9,6 +9,7 @@ use std::path::Path;
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
+        entry_points: &["**/examples/**"],
         test_sources: &["tests/**", "benches/**", "**/*_test.rs"],
         ..DeadCodeDefaults::EMPTY
     }
@@ -26,7 +27,7 @@ pub fn is_conventionally_private(symbol: &str) -> bool {
 
 /// Crate entry files Cargo invokes directly (no inbound import edge needed).
 pub fn is_entry_file_stem(stem: &str) -> bool {
-    matches!(stem, "main" | "build")
+    matches!(stem, "main" | "build" | "lib")
 }
 
 /// Module keys of binary targets declared in `root/Cargo.toml` (`[[bin]]`

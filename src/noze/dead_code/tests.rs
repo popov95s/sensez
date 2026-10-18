@@ -1,6 +1,6 @@
 use super::*;
 use crate::report::Confidence;
-use crate::spine::parser::parse_file;
+use crate::spine::parser::{parse_file, SymbolKind};
 use std::fs;
 
 fn cfg() -> DeadCode {
@@ -9,7 +9,10 @@ fn cfg() -> DeadCode {
         entrypoint_names: vec![],
         entrypoint_bases: vec![],
         entry_points: vec![],
+        test_sources: vec![],
+        test_support: vec![],
         entry_modules: vec![],
+        orphan_modules: true,
         unused_imports: false,
         unused_methods: false,
         unused_properties: false,
@@ -268,10 +271,9 @@ fn module_attribute_access_is_credited_precisely() {
 }
 
 /// An unimported "app" module with a decorated route handler must NOT flag the
-/// handler, and a plain unused function there is Low (the module might be an
-/// undeclared entry point) — never High.
+/// handler, and a plain unused function there is an unreachable-module Medium.
 #[test]
-fn decorated_handlers_live_unimported_module_is_low() {
+fn decorated_handlers_live_unimported_module_is_medium() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     fs::create_dir_all(&dir).unwrap();
@@ -293,9 +295,6 @@ fn decorated_handlers_live_unimported_module_is_low() {
         .iter()
         .find(|f| f.symbol == "plain")
         .expect("plain is unused");
-    assert_eq!(
-        plain.confidence,
-        Confidence::Low,
-        "0-inbound module ⇒ Low, not High"
-    );
+    assert_eq!(plain.confidence, Confidence::Medium);
+    assert_eq!(plain.reason, "unreachable_module");
 }

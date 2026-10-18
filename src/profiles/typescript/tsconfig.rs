@@ -9,20 +9,47 @@ pub(super) fn read_tsconfig(path: &Path) -> Option<Value> {
     serde_json::from_str(&normalize_jsonc(&text)).ok()
 }
 
+enum Jsonc {
+    Code,
+    Text { escaped: bool },
+}
+
 fn normalize_jsonc(text: &str) -> String {
     let mut output = String::with_capacity(text.len());
     let mut chars = text.chars().peekable();
-    let mut state = JsoncState::default();
+    let mut state = Jsonc::Code;
     while let Some(ch) = chars.next() {
-        if state.push_string_char(ch, &mut output) {
-            continue;
-        }
-        if ch == '"' {
-            state.start_string();
+        state = match state {
+            Jsonc::Text { escaped } => {
+                output.push(ch);
+                after_text_char(ch, escaped)
+            }
+            Jsonc::Code => after_code_char(ch, &mut chars, &mut output),
+        };
+    }
+    output
+}
+
+fn after_text_char(ch: char, escaped: bool) -> Jsonc {
+    if ch == '"' && !escaped {
+        return Jsonc::Code;
+    }
+    Jsonc::Text {
+        escaped: ch == '\\' && !escaped,
+    }
+}
+
+fn after_code_char(
+    ch: char,
+    chars: &mut std::iter::Peekable<std::str::Chars<'_>>,
+    output: &mut String,
+) -> Jsonc {
+    match (ch, chars.peek()) {
+        ('"', _) => {
             output.push(ch);
-            continue;
+            return Jsonc::Text { escaped: false };
         }
-        if ch == '/' && chars.peek() == Some(&'/') {
+        ('/', Some('/')) => {
             chars.next();
             for next in chars.by_ref() {
                 if next == '\n' {
@@ -30,9 +57,8 @@ fn normalize_jsonc(text: &str) -> String {
                     break;
                 }
             }
-            continue;
         }
-        if ch == '/' && chars.peek() == Some(&'*') {
+        ('/', Some('*')) => {
             chars.next();
             while let Some(next) = chars.next() {
                 if next == '*' && chars.peek() == Some(&'/') {
@@ -43,9 +69,8 @@ fn normalize_jsonc(text: &str) -> String {
                     output.push('\n');
                 }
             }
-            continue;
         }
-        if ch == ',' {
+        (',', _) => {
             let keep_before_comma = output.len();
             output.push(ch);
             while let Some(next) = chars.next_if(|next| next.is_whitespace()) {
@@ -54,37 +79,10 @@ fn normalize_jsonc(text: &str) -> String {
             if matches!(chars.peek(), Some('}' | ']')) {
                 output.truncate(keep_before_comma);
             }
-            continue;
         }
-        output.push(ch);
+        _ => output.push(ch),
     }
-    output
-}
-
-#[derive(Default)]
-struct JsoncState {
-    in_string: bool,
-    escaped: bool,
-}
-
-impl JsoncState {
-    fn start_string(&mut self) {
-        self.in_string = true;
-        self.escaped = false;
-    }
-
-    fn push_string_char(&mut self, ch: char, output: &mut String) -> bool {
-        if !self.in_string {
-            return false;
-        }
-        let escaped = self.escaped;
-        self.escaped = ch == '\\' && !escaped;
-        if ch == '"' && !escaped {
-            self.in_string = false;
-        }
-        output.push(ch);
-        true
-    }
+    Jsonc::Code
 }
 
 #[cfg(test)]

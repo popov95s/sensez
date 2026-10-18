@@ -133,6 +133,8 @@ impl Config {
         crate::globs::validate_patterns("duplication.exclude", &self.duplication.exclude)?;
         crate::globs::validate_patterns("dead_code.entry_points", &self.dead_code.entry_points)?;
         crate::globs::validate_patterns("dead_code.entrypoints", &self.dead_code.entrypoints)?;
+        crate::globs::validate_patterns("dead_code.test_sources", &self.dead_code.test_sources)?;
+        crate::globs::validate_patterns("dead_code.test_support", &self.dead_code.test_support)?;
         crate::globs::validate_patterns("cycles.exclude", &self.cycles.exclude)?;
         crate::globs::validate_patterns("smells.exclude", &self.smells.exclude)?;
         Ok(())

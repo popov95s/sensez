@@ -14,6 +14,7 @@ pub(crate) mod generated;
 pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
+pub(crate) mod manifest;
 mod member_visibility;
 mod membership;
 mod namespaces;
@@ -136,9 +137,8 @@ impl DeadCodeProfile for JsProfile {
         deadcode::defaults()
     }
 
-    fn entry_modules(&self, _project_root: &Path) -> Vec<String> {
-        // package.json bin/main derivation: deferred milestone.
-        Vec::new()
+    fn manifest_entry_files(&self, files: &[&Path]) -> Vec<PathBuf> {
+        manifest::entry_files(files)
     }
 }
 

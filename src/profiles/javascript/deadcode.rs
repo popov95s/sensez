@@ -1,9 +1,9 @@
 //! JS/TS dead-code conventions. Decorators (a TS feature) and Python-style
 //! naming conventions don't apply; exported initializer callees stand in for
-//! registration decorators. Full JS dead-code fidelity (barrel/re-export
-//! forwarding) is a deferred milestone.
+//! registration decorators.
 
-use crate::globs::matches_name;
+use super::symbols;
+use crate::globs::matches_any;
 use crate::profiles::{DeadCodeDefaults, DecoratorClass, ExternalBases};
 use std::collections::HashSet;
 
@@ -36,22 +36,26 @@ const CALLBACK_NAMES: &[&str] = &[
     "onError",
 ];
 
+/// Files a tool loads by path convention (jest manual mocks, Storybook stories).
+const RUNNER_LOADED: &[&str] = &["**/__mocks__/**", "**/*.stories.{js,jsx,ts,tsx,mjs,mts}"];
+
+const TEST_SUPPORT: &[&str] = &[
+    "**/e2e/**",
+    "**/test-utils/**",
+    "**/fixtures/**",
+    "**/__fixtures__/**",
+];
+
+const RUNNER_CONFIGS: &[&str] = &["**/*.config.{js,cjs,mjs,ts,cts,mts}"];
+
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
         entrypoints: &[],
         entrypoint_names: &[],
         method_entrypoint_names: CALLBACK_NAMES,
-        external_bases: ExternalBases::ImplyContract { except: &[] },
+        external_bases: ExternalBases::ImplyContract,
         entrypoint_bases: &[],
-        entry_points: &[
-            "**/__tests__/**",
-            "**/tests/**",
-            "**/test/**",
-            "**/*.test.js",
-            "**/*.spec.js",
-            "**/*.test.jsx",
-            "**/*.spec.jsx",
-        ],
+        entry_points: RUNNER_LOADED,
         test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
@@ -61,6 +65,8 @@ pub fn defaults() -> DeadCodeDefaults {
             "**/*.test.jsx",
             "**/*.spec.jsx",
         ],
+        test_support: TEST_SUPPORT,
+        runner_configs: RUNNER_CONFIGS,
     }
 }
 
@@ -69,17 +75,9 @@ pub fn typescript_defaults() -> DeadCodeDefaults {
         entrypoints: &[],
         entrypoint_names: &[],
         method_entrypoint_names: CALLBACK_NAMES,
-        external_bases: ExternalBases::ImplyContract { except: &[] },
+        external_bases: ExternalBases::ImplyContract,
         entrypoint_bases: &[],
-        entry_points: &[
-            "**/__tests__/**",
-            "**/tests/**",
-            "**/test/**",
-            "**/*.test.ts",
-            "**/*.spec.ts",
-            "**/*.test.tsx",
-            "**/*.spec.tsx",
-        ],
+        entry_points: RUNNER_LOADED,
         test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
@@ -93,6 +91,8 @@ pub fn typescript_defaults() -> DeadCodeDefaults {
             "**/*.test.cts",
             "**/*.spec.cts",
         ],
+        test_support: TEST_SUPPORT,
+        runner_configs: RUNNER_CONFIGS,
     }
 }
 
@@ -100,10 +100,9 @@ pub fn typescript_defaults() -> DeadCodeDefaults {
 /// trailing name marks a registration; anything else stays unclassified, never unknown.
 pub fn classify(paths: Option<&Vec<String>>, user: &HashSet<String>) -> DecoratorClass {
     let registered = paths.is_some_and(|paths| {
-        paths.iter().any(|path| {
-            let trailing = path.rsplit('.').next().unwrap_or(path);
-            user.iter().any(|pattern| matches_name(pattern, trailing))
-        })
+        paths
+            .iter()
+            .any(|path| matches_any(user, symbols::last_segment(path)))
     });
     if registered {
         DecoratorClass::Registration

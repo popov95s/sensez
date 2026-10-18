@@ -15,6 +15,7 @@ mod resolve;
 mod risk_facts;
 mod roots;
 mod scope;
+mod script_imports;
 mod symbols;
 mod tokens;
 mod traversal;
@@ -79,12 +80,12 @@ impl ModuleProfile for PythonProfile {
         &self,
         import: &ImportContext,
         importer_package: &str,
-        _importer_file: &Path,
+        importer_file: &Path,
         _root: &Path,
         _resolution_cache: &mut crate::profiles::ResolutionCache,
     ) -> String {
-        // Dotted-package semantics: resolution needs only the importer's package.
-        resolve::resolve_target(import, importer_package)
+        script_imports::sibling_module(&import.target_module, importer_package, importer_file)
+            .unwrap_or_else(|| resolve::resolve_target(import, importer_package))
     }
 
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String> {

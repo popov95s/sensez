@@ -30,7 +30,9 @@ pub fn resolve_target(import: &ImportContext, importer_file: &Path, root: &Path)
     }
     let base = importer_file.parent().unwrap_or(Path::new("."));
     let joined = roots::normalize(&base.join(target));
-    let rel = joined.strip_prefix(root).unwrap_or(&joined);
+    let rel = joined
+        .strip_prefix(roots::normalize(root))
+        .unwrap_or(&joined);
     let parts: Vec<String> = rel
         .components()
         .map(|c| c.as_os_str().to_string_lossy().into_owned())
@@ -77,6 +79,13 @@ mod tests {
             resolve_target(&ctx("../db/index"), &importer, root),
             "src/db"
         );
+    }
+
+    #[test]
+    fn relative_resolves_under_dot_prefixed_package_root() {
+        let root = Path::new("./editors/ext");
+        let importer = PathBuf::from("./editors/ext/src/main.ts");
+        assert_eq!(resolve_target(&ctx("./util"), &importer, root), "src/util");
     }
 
     #[test]

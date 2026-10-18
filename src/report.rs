@@ -35,11 +35,11 @@ pub struct CycleEdge {
 /// How likely a dead-code candidate is a true positive.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 pub enum Confidence {
-    /// Nothing in the scan tree imports the module at all.
+    /// Reached from a root, and no importer asks for this symbol.
     High,
-    /// The module is imported, but never this symbol by name.
+    /// Unused, but evidence suggests hidden use or the module has no root (see `reason`).
     Medium,
-    /// A plain module import may hide use via attribute access.
+    /// Likely used where sensez cannot see (e.g. unresolved member access); dropped by every consumer.
     Low,
 }
 
@@ -55,7 +55,7 @@ pub struct DeadCodeFinding {
     /// 1-indexed source line; 0 is an internal "unknown/not applicable" sentinel.
     #[serde(skip_serializing_if = "line_is_unknown", default)]
     pub line: usize,
-    /// Diff-mode provenance (e.g. "added_unreferenced"); empty otherwise.
+    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance ("added_unreferenced").
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub reason: String,
 }

@@ -187,12 +187,11 @@ pub struct CommentSpan {
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CommentClass {
-    Directive,
-    Markup,
+    /// Directive, markup or rationale: never counted as noise.
+    Exempt,
     Code,
     #[default]
     Narration,
-    Rationale,
 }
 
 /// A nested conditional expression; `depth` 0 means nested only across an expression boundary.

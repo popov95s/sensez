@@ -71,7 +71,7 @@ fn callback_name(lineage: Lineage, args: Node, src: &[u8]) -> Option<String> {
     })
 }
 
-fn last_segment(path: &str) -> &str {
+pub(super) fn last_segment(path: &str) -> &str {
     path.rsplit('.').next().unwrap_or(path)
 }
 

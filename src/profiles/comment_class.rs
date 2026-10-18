@@ -70,10 +70,10 @@ pub(crate) fn classify_in(
 ) -> CommentClass {
     let lines = body_lines(node, src, syntax);
     if lines.first().is_some_and(|line| is_directive(line, syntax)) {
-        return CommentClass::Directive;
+        return CommentClass::Exempt;
     }
     if parent.is_some_and(|p| syntax.markup_parents.contains(&p.kind())) {
-        return CommentClass::Markup;
+        return CommentClass::Exempt;
     }
     let block_lines: Vec<&str> = block
         .iter()
@@ -87,7 +87,7 @@ pub(crate) fn classify_in(
         return CommentClass::Code;
     }
     if has_rationale(&block_lines.join(" ")) {
-        return CommentClass::Rationale;
+        return CommentClass::Exempt;
     }
     CommentClass::Narration
 }

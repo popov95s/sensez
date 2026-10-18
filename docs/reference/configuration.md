@@ -89,7 +89,37 @@ entrypoints = ["route", "fixture", "task"]   # decorator trailing names that reg
 entrypoint_names = ["register", "main"]      # function/class names invoked dynamically
 entrypoint_bases = ["AppConfig"]             # base classes loaded dynamically
 entry_points = ["**/scripts/**"]             # file globs reached outside the import graph
+test_sources = ["**/*.e2e.ts"]               # extra test-runner globs (test roots)
+test_support = ["**/testing/**"]             # extra test-helper globs
+orphan_modules = true                        # report modules no root reaches
 ```
+
+Dead code walks the import graph from two kinds of roots:
+
+- **Production roots:** `entry_points` globs, manifest entries (`pyproject.toml`
+  scripts, Cargo binaries and `lib.rs`, `package.json` `main` / `module` / `bin`
+  / `exports`, where a `dist/`, `lib/`, `build/` or `out/` target also names its
+  `src/` twin), and tool configs such as `*.config.ts`. An entry-point file is
+  never reported, and its imports count as usage.
+- **Test roots:** `test_sources` globs plus the profile's test files.
+
+A symbol that only tests import is reported at Medium with `reason =
+"test_only"`. Files matching `test_support` (JS/TS default: `**/e2e/**`,
+`**/test-utils/**`, `**/fixtures/**`, `**/__fixtures__/**`) are test helpers:
+their test importers count as users, so only truly unused helpers are reported.
+A module that nothing imports and no root reaches is reported at Medium with
+`reason = "unreachable_module"`; add its path to `entry_points` if a tool runs
+it, or set `orphan_modules = false`.
+
+Names a barrel re-exports (`export { x } from "./x"`) count as used in their
+defining module only when someone imports them from the barrel (chains and
+`export *` included). A re-export nobody imports is reported with kind
+`reexport`.
+
+Confidence is High unless evidence suggests hidden use, then Medium: a default
+export, an importer that binds the module whole or not at all (`import()`,
+`import mod`), a type-only namespace reference, an import from a tool config,
+test-only use, or an unreachable module.
 
 `entrypoints` and `entrypoint_names` accept a trailing `*` as a prefix pattern
 (`entrypoint_names = ["on*"]`). `entrypoint_names` also applies to methods under

@@ -42,6 +42,13 @@ pub fn compile_validated(patterns: &[impl AsRef<str>]) -> GlobSet {
     })
 }
 
+/// Whether `name` matches any of `patterns` (see [`matches_name`]).
+pub fn matches_any<'a>(patterns: impl IntoIterator<Item = &'a String>, name: &str) -> bool {
+    patterns
+        .into_iter()
+        .any(|pattern| matches_name(pattern, name))
+}
+
 /// Symbol-name pattern: exact, or a prefix when it ends in `*` (`on*`).
 pub fn matches_name(pattern: &str, name: &str) -> bool {
     match pattern.strip_suffix('*') {
