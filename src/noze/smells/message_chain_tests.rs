@@ -51,3 +51,14 @@ export class Invoice {
     let py = "def f(a):\n    return a.b.c.d.e.f\n";
     assert_eq!(chains("py", py, &Smells::default()), vec![5]);
 }
+
+#[test]
+fn named_imports_from_generated_modules_are_api_navigation() {
+    let generated = "\
+import { api } from './_generated/api';
+export function list() { return api.admin.billing.invoices.controller.list; }
+";
+    assert!(chains("ts", generated, &Smells::default()).is_empty());
+    let handwritten = generated.replace("./_generated/api", "./client");
+    assert_eq!(chains("ts", &handwritten, &Smells::default()), vec![5]);
+}
