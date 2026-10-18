@@ -1,5 +1,6 @@
 //! Python language profile.
 
+mod chains;
 mod classunit;
 mod conditionals;
 mod deadcode;

@@ -127,6 +127,7 @@ fn pillar_filter_keeps_only_requested_findings() {
             end_row: 1,
         }],
         hint: None,
+        ..Default::default()
     });
     let options = spec::ScanOptions {
         threshold: None,
@@ -262,11 +263,12 @@ fn fail_on_new_blocks_at_configured_level() {
                 end_row: 1,
             }],
             hint: None,
+            ..Default::default()
         },
     );
 }
 
-fn dead(symbol: &str, confidence: Confidence) -> DeadCodeFinding {
+pub(super) fn dead(symbol: &str, confidence: Confidence) -> DeadCodeFinding {
     DeadCodeFinding {
         action: ActionLevel::Advisory,
         module: "m".into(),

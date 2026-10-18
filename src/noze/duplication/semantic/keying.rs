@@ -1,7 +1,6 @@
 use super::Unit;
-use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::FunctionUnit;
-use std::collections::BTreeMap;
+use rustc_hash::FxHashSet;
 use std::hash::{Hash, Hasher};
 use std::path::{Path, PathBuf};
 
@@ -39,7 +38,7 @@ pub(super) fn bundle_key(
     symbol_path: &str,
     func: &FunctionUnit,
     tokens: usize,
-    shape: &BTreeMap<StructuralToken, usize>,
+    shingles: &FxHashSet<u64>,
     comment: &str,
 ) -> u64 {
     let mut h = rustc_hash::FxHasher::default();
@@ -49,10 +48,8 @@ pub(super) fn bundle_key(
     func.start_line.hash(&mut h);
     func.end_line.hash(&mut h);
     tokens.hash(&mut h);
-    for (token, count) in shape {
-        token.hash(&mut h);
-        count.hash(&mut h);
-    }
+    shingles.len().hash(&mut h);
+    shingles.iter().fold(0u64, |acc, s| acc ^ s).hash(&mut h);
     comment.hash(&mut h);
     h.finish()
 }
@@ -70,11 +67,8 @@ mod tests {
         }
     }
 
-    fn shape(assigns: usize) -> BTreeMap<StructuralToken, usize> {
-        let mut shape = BTreeMap::new();
-        shape.insert(StructuralToken::FunctionDef, 1);
-        shape.insert(StructuralToken::Assign, assigns);
-        shape
+    fn shape(first: u64) -> FxHashSet<u64> {
+        FxHashSet::from_iter([first, 7, 9])
     }
 
     #[test]

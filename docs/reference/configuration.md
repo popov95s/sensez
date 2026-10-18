@@ -121,6 +121,28 @@ offline with no cached model), the scan records an `analyze` issue in
 `meta.issues`, and `--fail-on` / `--fail-on-new` exit `2` with "incomplete
 scan" rather than passing.
 
+```toml
+[duplication.semantic]
+enabled = true
+min_shape_score = 50       # token 4-gram overlap (0-100) for an edited copy; above 100 is an error
+comment_boost_score = 85   # doc similarity (50-100) an edited copy needs; below 50 is an error
+comment_required = true    # false also pairs undocumented functions (overlap >= 70 needed)
+```
+
+Semantic groups only consider functions of at least `threshold` tokens and
+carry one of two verdicts:
+
+- `semantic: edited copy (structure 0.76, docs 0.91)`: overlap at least
+  `min_shape_score` and matching docs (`docs n/a` when neither function has
+  one). Reported at the duplication action level.
+- `semantic: near-identical docs on structurally different code (structure 0.01, docs 0.95)`:
+  a rewrite, or a copy-pasted doc comment. Reported as `info`. Only doc
+  comments sharing at least half their words are compared.
+
+When several detectors report the same code, the widest group is kept, its
+line ranges grow to cover the others, and the folded groups are listed under
+`absorbed` in JSON output. Each group's source is in `detector`.
+
 ## Cycles
 
 ```toml

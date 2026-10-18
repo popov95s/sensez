@@ -4,6 +4,7 @@ use crate::profiles::walk;
 use crate::spine::ir::{FunctionUnit, TypeHints};
 use tree_sitter::Node;
 
+use super::params::param_names;
 use super::unit_helpers::{
     call_fact, chain_len, cognitive_weight, is_branch, is_loop, is_nesting, is_string,
     pattern_name, target_root, tuple_type_arity, type_text, unquote,
@@ -53,33 +54,6 @@ pub fn analyze_function(
         acc.visit(body, src, 0, 0);
     }
     unit
-}
-
-fn param_names(func: Node, src: &[u8], func_name: &str, hints: &mut TypeHints) -> Vec<String> {
-    let Some(params) = func.child_by_field_name("parameters") else {
-        return Vec::new();
-    };
-    let mut out = Vec::new();
-    let mut cursor = params.walk();
-    for param in params.named_children(&mut cursor) {
-        if param.kind() == "self_parameter" {
-            continue;
-        }
-        let Some(pattern) = param.child_by_field_name("pattern") else {
-            continue;
-        };
-        let name = pattern_name(pattern, src).unwrap_or_else(|| "{}".to_string());
-        if let Some(ty) = param
-            .child_by_field_name("type")
-            .and_then(|n| type_text(n, src))
-        {
-            hints
-                .param_types
-                .insert((func_name.to_string(), name.clone()), ty);
-        }
-        out.push(name);
-    }
-    out
 }
 
 struct Acc<'a> {

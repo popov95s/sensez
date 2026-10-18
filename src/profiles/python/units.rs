@@ -2,6 +2,7 @@
 //!
 //! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
+use super::chains::chain_len;
 use super::{classunit, conditionals, performance, symbols};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use std::collections::HashMap;
@@ -252,19 +253,6 @@ fn is_docstring(node: Node, src: &[u8]) -> bool {
             .map(|c| matches!(c.kind(), "string" | "concatenated_string"))
             .unwrap_or(false)
         && node.utf8_text(src).is_ok()
-}
-
-/// Length of the pure attribute chain `a.b.c.d` ending at this `attribute` node.
-///
-/// Only consecutive attribute accesses count — the chain does **not** traverse
-/// through `call` results, so fluent/builder APIs (`q.filter().limit().all()`)
-/// are not mistaken for Law-of-Demeter data navigation.
-fn chain_len(node: Node) -> usize {
-    let base = match node.child_by_field_name("object") {
-        Some(obj) if obj.kind() == "attribute" => chain_len(obj),
-        _ => 0,
-    };
-    base + 1
 }
 
 /// Kinds that increase block-nesting depth.

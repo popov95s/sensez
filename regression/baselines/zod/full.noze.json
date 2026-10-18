@@ -550,6 +550,9 @@
   "duplication": [
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 116,
@@ -566,6 +569,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1482,
@@ -582,6 +588,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1595,
@@ -598,6 +607,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1864,
@@ -614,6 +626,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 2237,
@@ -630,6 +645,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 238,
@@ -646,6 +664,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 2697,
@@ -662,6 +683,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 306,
@@ -678,6 +702,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 3648,
@@ -694,6 +721,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 37,
@@ -710,6 +740,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 39,
@@ -726,6 +759,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 4021,
@@ -742,6 +778,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 44,
@@ -758,6 +797,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 485,
@@ -774,6 +816,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 50,
@@ -790,6 +835,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 79,
@@ -806,6 +854,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 89,

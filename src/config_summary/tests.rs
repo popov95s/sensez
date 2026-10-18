@@ -22,6 +22,7 @@ fn groups_duplication_without_listing_every_occurrence() {
             },
         ],
         hint: None,
+        ..Default::default()
     });
     report.duplication.push(CloneClass {
         action: ActionLevel::Advisory,
@@ -32,6 +33,7 @@ fn groups_duplication_without_listing_every_occurrence() {
             end_row: 3,
         }],
         hint: None,
+        ..Default::default()
     });
 
     let summary = from_report(root, &report, &config);

@@ -7,10 +7,10 @@
 //! ordinal) while keeping operators and control-flow structure verbatim. Two
 //! functions share a key iff a consistent rename maps one onto the other.
 
-use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
+use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence};
 use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::ParsedFile;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 
 /// Tag bit marking a kept (non-renameable) structural/operator code, so it can
 /// never collide with a small rename ordinal.
@@ -24,7 +24,7 @@ struct Member {
 
 /// Detect consistent-rename clone classes across `files` (function granularity).
 pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
-    let mut groups: HashMap<Vec<u64>, Vec<Member>> = HashMap::new();
+    let mut groups: BTreeMap<Vec<u64>, Vec<Member>> = BTreeMap::new();
 
     for (idx, file) in files.iter().enumerate() {
         for func in super::top_level_functions(file) {
@@ -63,6 +63,8 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
             token_length,
             occurrences,
             hint: Some("consistent-rename clone".to_string()),
+            detector: CloneDetector::NearMiss,
+            absorbed: Vec::new(),
         });
     }
     out
@@ -70,7 +72,7 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
 
 /// Tokens (kind, lexeme) of one top-level function, sliced by binary search
 /// over the file's row-sorted spans (see [`super::span_index_range`]).
-fn function_tokens(
+pub(super) fn function_tokens(
     file: &ParsedFile,
     func: &crate::spine::parser::FunctionUnit,
 ) -> Vec<(StructuralToken, u64)> {
@@ -86,7 +88,7 @@ fn function_tokens(
 /// Alpha-canonical key: renameable tokens (identifiers/literals) become their
 /// first-occurrence ordinal; everything else (operators, calls, control flow)
 /// keeps its verbatim code, tagged so the two namespaces never collide.
-fn canonical_key(tokens: &[(StructuralToken, u64)]) -> Vec<u64> {
+pub(super) fn canonical_key(tokens: &[(StructuralToken, u64)]) -> Vec<u64> {
     let mut ordinal: HashMap<u64, u64> = HashMap::new();
     tokens
         .iter()
@@ -107,3 +109,7 @@ fn is_renameable(tok: StructuralToken) -> bool {
         StructuralToken::GenericIdentifier | StructuralToken::GenericLiteral
     )
 }
+
+#[cfg(test)]
+#[path = "near_miss_tests.rs"]
+mod tests;

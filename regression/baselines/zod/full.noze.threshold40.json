@@ -549,7 +549,44 @@
   ],
   "duplication": [
     {
+      "absorbed": [
+        {
+          "copies": 2,
+          "detector": {
+            "kind": "structural"
+          },
+          "token_length": 225
+        }
+      ],
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "hint": "structural clone; also structural clone (225 tokens, 2 of 3 copies)",
+      "occurrences": [
+        {
+          "end_row": 39,
+          "file": "<zod>/packages/bench/init.ts",
+          "start_row": 27
+        },
+        {
+          "end_row": 89,
+          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
+          "start_row": 14
+        },
+        {
+          "end_row": 81,
+          "file": "<zod>/packages/bench/object-moltar.ts",
+          "start_row": 6
+        }
+      ],
+      "token_length": 43
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1023,
@@ -566,6 +603,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 116,
@@ -582,6 +622,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1482,
@@ -598,6 +641,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1595,
@@ -614,6 +660,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 1864,
@@ -630,6 +679,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 21,
@@ -646,6 +698,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 2237,
@@ -662,6 +717,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 238,
@@ -678,6 +736,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 2697,
@@ -694,6 +755,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 2925,
@@ -710,6 +774,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 306,
@@ -726,6 +793,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 3639,
@@ -742,6 +812,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 3648,
@@ -758,6 +831,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 37,
@@ -774,27 +850,9 @@
     },
     {
       "action": "advisory",
-      "occurrences": [
-        {
-          "end_row": 39,
-          "file": "<zod>/packages/bench/init.ts",
-          "start_row": 27
-        },
-        {
-          "end_row": 26,
-          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
-          "start_row": 14
-        },
-        {
-          "end_row": 18,
-          "file": "<zod>/packages/bench/object-moltar.ts",
-          "start_row": 6
-        }
-      ],
-      "token_length": 43
-    },
-    {
-      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 4021,
@@ -811,6 +869,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 44,
@@ -827,6 +888,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 466,
@@ -843,6 +907,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 472,
@@ -859,6 +926,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 485,
@@ -875,6 +945,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 50,
@@ -891,6 +964,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 522,
@@ -907,6 +983,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 60,
@@ -928,6 +1007,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 61,
@@ -944,6 +1026,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 62,
@@ -960,6 +1045,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 620,
@@ -976,6 +1064,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 64,
@@ -992,6 +1083,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 79,
@@ -1008,6 +1102,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 81,
@@ -1026,22 +1123,6 @@
         }
       ],
       "token_length": 43
-    },
-    {
-      "action": "advisory",
-      "occurrences": [
-        {
-          "end_row": 89,
-          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
-          "start_row": 14
-        },
-        {
-          "end_row": 81,
-          "file": "<zod>/packages/bench/object-moltar.ts",
-          "start_row": 6
-        }
-      ],
-      "token_length": 225
     }
   ],
   "meta": {
@@ -1050,7 +1131,7 @@
     "boundaries_total": 0,
     "cycles_total": 2,
     "dead_code_total": 1,
-    "duplication_total": 30,
+    "duplication_total": 29,
     "external_edges": 461,
     "internal_edges": 521,
     "mode": "full",

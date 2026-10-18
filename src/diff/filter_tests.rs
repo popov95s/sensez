@@ -48,6 +48,7 @@ fn clone_class(occ: &[(&str, usize, usize)]) -> CloneClass {
             })
             .collect(),
         hint: None,
+        ..Default::default()
     }
 }
 

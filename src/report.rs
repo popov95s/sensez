@@ -80,7 +80,7 @@ pub struct CloneOccurrence {
 }
 
 /// A set of locations sharing an identical structural-token run.
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct CloneClass {
     pub action: ActionLevel,
     pub token_length: usize,
@@ -88,6 +88,39 @@ pub struct CloneClass {
     /// Diff-mode guidance for an agent; empty in full scans.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub hint: Option<String>,
+    #[serde(default)]
+    pub detector: CloneDetector,
+    /// Overlapping classes folded into this one.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub absorbed: Vec<AbsorbedClone>,
+}
+
+/// Which duplication pass produced a clone class.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum CloneDetector {
+    #[default]
+    Structural,
+    NearMiss,
+    Semantic {
+        verdict: SemanticVerdict,
+    },
+    ClassShape,
+}
+
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum SemanticVerdict {
+    EditedCopy,
+    SameIntentDifferentCode,
+}
+
+/// Evidence from a clone class folded into an overlapping one.
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
+pub struct AbsorbedClone {
+    pub detector: CloneDetector,
+    pub token_length: usize,
+    pub copies: usize,
 }
 
 /// How serious a smell finding is (drives ordering and rendering).

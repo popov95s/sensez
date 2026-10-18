@@ -1,6 +1,6 @@
 //! Class-shape duplication: same names and overlapping typed properties.
 
-use crate::report::{ActionLevel, CloneClass, CloneOccurrence};
+use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence};
 use crate::spine::ir::Language;
 use crate::spine::parser::{ClassProperty, ParsedFile};
 use std::collections::{BTreeMap, BTreeSet};
@@ -100,6 +100,8 @@ fn same_name_findings(classes: &[ClassShape]) -> Vec<CloneClass> {
                 "class name `{}` appears in multiple places",
                 group[0].name
             )),
+            detector: CloneDetector::ClassShape,
+            absorbed: Vec::new(),
         })
         .collect()
 }
@@ -128,6 +130,8 @@ fn property_overlap_findings(classes: &[ClassShape], min_overlap: usize) -> Vec<
                     shared.len(),
                     shared.join(", ")
                 )),
+                detector: CloneDetector::ClassShape,
+                absorbed: Vec::new(),
             });
         }
     }

@@ -4,6 +4,9 @@
 //! [`FunctionUnit`] — and `this.<attr>` is normalized to the canonical `"self"`
 //! receiver so the language-neutral detectors work unchanged.
 
+use super::chains::chain_len;
+use super::nesting::{cognitive_weight, is_branch, is_nesting};
+use super::params::param_names;
 use super::{conditionals, obsession, performance, symbols};
 use crate::spine::ir::{bump, FunctionUnit};
 use std::collections::HashMap;
@@ -170,44 +173,6 @@ impl FunctionFacts {
     }
 }
 
-fn param_names(func: Node, src: &[u8]) -> Vec<String> {
-    let mut out = Vec::new();
-    if let Some(p) = func.child_by_field_name("parameter") {
-        push_param(p, src, &mut out); // single-identifier arrow
-    }
-    if let Some(params) = func.child_by_field_name("parameters") {
-        let mut cursor = params.walk();
-        for p in params.named_children(&mut cursor) {
-            push_param(p, src, &mut out);
-        }
-    }
-    out
-}
-
-fn push_param(p: Node, src: &[u8], out: &mut Vec<String>) {
-    let pat = match p.kind() {
-        "required_parameter" | "optional_parameter" => p.child_by_field_name("pattern"),
-        _ => Some(p),
-    };
-    if let Some(name) = pat.and_then(|n| pattern_name(n, src)) {
-        out.push(name);
-    }
-}
-
-fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
-    match node.kind() {
-        "identifier" | "shorthand_property_identifier_pattern" => {
-            node.utf8_text(src).ok().map(str::to_string)
-        }
-        "assignment_pattern" => node
-            .child_by_field_name("left")
-            .and_then(|l| pattern_name(l, src)),
-        "rest_pattern" => node.named_child(0).and_then(|c| pattern_name(c, src)),
-        "object_pattern" | "array_pattern" => Some("{}".to_string()),
-        _ => None,
-    }
-}
-
 fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
     if node.kind() != "call_expression" {
         return None;
@@ -236,59 +201,4 @@ fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
     (function.kind() == "identifier")
         .then(|| function.utf8_text(src).ok().map(str::to_string))
         .flatten()
-}
-
-/// Length of the pure attribute chain `a.b.c.d` ending at this `member_expression`
-/// — does not traverse through call results, so fluent APIs aren't mistaken for
-/// data navigation (same rule as the Python walk).
-fn chain_len(node: Node) -> usize {
-    let base = match node.child_by_field_name("object") {
-        Some(obj) if obj.kind() == "member_expression" => chain_len(obj),
-        _ => 0,
-    };
-    base + 1
-}
-
-/// Kinds that increase block-nesting depth.
-fn is_nesting(kind: &str) -> bool {
-    matches!(
-        kind,
-        "if_statement"
-            | "for_statement"
-            | "for_in_statement"
-            | "while_statement"
-            | "do_statement"
-            | "switch_statement"
-            | "try_statement"
-    )
-}
-
-/// `&&` / `||` / `??` short-circuit operators add a decision point.
-fn is_logical(node: Node, src: &[u8]) -> bool {
-    node.child_by_field_name("operator")
-        .and_then(|o| o.utf8_text(src).ok())
-        .is_some_and(|op| matches!(op, "&&" | "||" | "??"))
-}
-
-/// Cyclomatic decision points.
-fn is_branch(kind: &str, node: Node, src: &[u8]) -> bool {
-    match kind {
-        "if_statement" | "for_statement" | "for_in_statement" | "while_statement"
-        | "do_statement" | "catch_clause" | "switch_case" | "ternary_expression" => true,
-        "binary_expression" => is_logical(node, src),
-        _ => false,
-    }
-}
-
-/// Cognitive-complexity increment (Sonar-style): control structures cost
-/// `1 + nesting`; logical operators a flat `1`.
-fn cognitive_weight(kind: &str, node: Node, src: &[u8], depth: usize) -> Option<usize> {
-    match kind {
-        "if_statement" | "for_statement" | "for_in_statement" | "while_statement"
-        | "do_statement" | "switch_statement" | "ternary_expression" | "catch_clause" => {
-            Some(1 + depth)
-        }
-        "binary_expression" if is_logical(node, src) => Some(1),
-        _ => None,
-    }
 }

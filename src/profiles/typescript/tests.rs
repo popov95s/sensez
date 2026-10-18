@@ -57,7 +57,7 @@ fn graph_resolves_tsconfig_paths_and_keeps_workspace_module_ids_unique() {
 }
 
 /// Build a `ParsedFile` for a TS source and return the smells `cfg` produces.
-fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
+pub(super) fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
     let walked = parse_source(src, 0, "m", &TsProfile).unwrap();
     let file = ParsedFile {
         path: PathBuf::from("m.ts"),

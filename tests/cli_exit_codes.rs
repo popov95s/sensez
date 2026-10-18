@@ -55,6 +55,18 @@ fn invalid_config_warns_once_and_scans_on_defaults() {
 }
 
 #[test]
+fn out_of_range_semantic_score_warns_and_scans_on_defaults() {
+    let tmp = project("[duplication.semantic]\nmin_shape_score = 101\n");
+    let out = sensez(tmp.path(), &[]);
+    let stderr = String::from_utf8_lossy(&out.stderr);
+    assert_eq!(out.status.code(), Some(0), "{stderr}");
+    assert!(
+        stderr.contains("min_shape_score must be at most 100"),
+        "{stderr}"
+    );
+}
+
+#[test]
 fn config_warning_is_printed_once() {
     let tmp = project("[duplication]\ntreshold = 40\n");
     let out = sensez(tmp.path(), &[]);

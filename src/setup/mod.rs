@@ -232,3 +232,7 @@ mod tests;
 #[cfg(test)]
 #[path = "template_tests.rs"]
 mod template_tests;
+
+#[cfg(test)]
+#[path = "mcp_config_tests.rs"]
+mod mcp_config_tests;
