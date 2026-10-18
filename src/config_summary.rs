@@ -12,7 +12,13 @@ use std::path::{Path, PathBuf};
 struct ConfigurationSummary {
     total_count: usize,
     by_rule: BTreeMap<String, RuleSummary>,
-    scope: BTreeMap<&'static str, PillarScope>,
+    scope: Scope,
+}
+
+#[derive(Debug, Serialize)]
+struct Scope {
+    duplication: PillarScope,
+    smells: PillarScope,
 }
 
 /// Files a source-level pillar leaves out, and why.
@@ -83,27 +89,21 @@ fn from_report(root: &Path, report: &AnalysisReport, config: &Config) -> Configu
     }
 }
 
-fn scope(report: &AnalysisReport, config: &Config) -> BTreeMap<&'static str, PillarScope> {
-    BTreeMap::from([
-        (
-            "duplication",
-            PillarScope {
-                exclude_effective: config.duplication.exclude.clone(),
-                include_tests: config.duplication.include_tests,
-                include_generated: config.duplication.include_generated,
-                skipped: report.meta.duplication_skipped,
-            },
-        ),
-        (
-            "smells",
-            PillarScope {
-                exclude_effective: config.smells.exclude.clone(),
-                include_tests: config.smells.include_tests,
-                include_generated: false,
-                skipped: report.meta.smells_skipped,
-            },
-        ),
-    ])
+fn scope(report: &AnalysisReport, config: &Config) -> Scope {
+    Scope {
+        duplication: PillarScope {
+            exclude_effective: config.duplication.exclude.clone(),
+            include_tests: config.duplication.include_tests,
+            include_generated: config.duplication.include_generated,
+            skipped: report.meta.duplication_skipped,
+        },
+        smells: PillarScope {
+            exclude_effective: config.smells.exclude.clone(),
+            include_tests: config.smells.include_tests,
+            include_generated: false,
+            skipped: report.meta.smells_skipped,
+        },
+    }
 }
 
 fn add_cycles(root: &Path, report: &AnalysisReport, by_rule: &mut BTreeMap<String, RuleSummary>) {

@@ -52,14 +52,13 @@ pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: O
     match kind {
         "return_statement" | "throw_statement" => facts.exits.push(node.end_byte()),
         "variable_declarator" => {
-            record_bindings(facts, node, src);
             let names = super::loops::declared_names(node, src);
-            facts.note_declared(frame, &names);
-            if node
-                .child_by_field_name("value")
-                .is_some_and(|value| walk::fed_by_call(facts, frame, value, src, "call_expression"))
-            {
-                facts.note_call_results(frame, &names);
+            let end = node.end_byte();
+            facts
+                .bindings
+                .extend(names.iter().map(|name| (name.clone(), end)));
+            if frame.is_some() {
+                record_loop_declaration(facts, frame, node, &names, src);
             }
         }
         _ => {}
@@ -207,14 +206,20 @@ fn is_assertion_call(call: Node, src: &[u8]) -> bool {
     false
 }
 
-fn record_bindings(facts: &mut PerformanceFacts, declarator: Node, src: &[u8]) {
-    let end = declarator.end_byte();
-    if let Some(name) = declarator.child_by_field_name("name") {
-        facts.bindings.extend(
-            super::loops::names(Some(name), src)
-                .into_iter()
-                .map(|ident| (ident, end)),
-        );
+/// Names a loop body declares, and which of them hold call results.
+fn record_loop_declaration(
+    facts: &mut PerformanceFacts,
+    frame: Option<usize>,
+    declarator: Node,
+    names: &[String],
+    src: &[u8],
+) {
+    facts.note_declared(frame, names);
+    if declarator
+        .child_by_field_name("value")
+        .is_some_and(|value| walk::fed_by_call(facts, frame, value, src, "call_expression"))
+    {
+        facts.note_call_results(frame, names);
     }
 }
 

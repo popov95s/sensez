@@ -15,6 +15,6 @@ pub(super) const GUARD_CLAUSE: GuardClauseSyntax = GuardClauseSyntax {
     is_function,
 };
 
-fn is_function(kind: &str) -> bool {
+pub(super) fn is_function(kind: &str) -> bool {
     matches!(kind, "function_item" | "closure_expression")
 }

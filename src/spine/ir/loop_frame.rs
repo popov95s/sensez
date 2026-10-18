@@ -109,7 +109,11 @@ impl PerformanceFacts {
     }
 
     pub fn note_call_results(&mut self, innermost: Option<usize>, names: &[String]) {
-        self.note_in_frame(innermost, names, |frame| &mut frame.call_results);
+        if let Some(id) = innermost {
+            self.loop_frames[id]
+                .call_results
+                .extend(names.iter().cloned());
+        }
     }
 
     pub fn is_call_result(&self, innermost: Option<usize>, name: &str) -> bool {
@@ -118,17 +122,8 @@ impl PerformanceFacts {
     }
 
     pub fn note_declared(&mut self, innermost: Option<usize>, names: &[String]) {
-        self.note_in_frame(innermost, names, |frame| &mut frame.declared);
-    }
-
-    fn note_in_frame(
-        &mut self,
-        innermost: Option<usize>,
-        names: &[String],
-        set: fn(&mut LoopFrame) -> &mut BTreeSet<String>,
-    ) {
         if let Some(id) = innermost {
-            set(&mut self.loop_frames[id]).extend(names.iter().cloned());
+            self.loop_frames[id].declared.extend(names.iter().cloned());
         }
     }
 }

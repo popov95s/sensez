@@ -230,7 +230,7 @@ fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut Vi
             .is_some_and(|parent| parent.is_test_framework_callback);
         if let Some(parent_bounds) = ctx.fn_bounds.last() {
             let own = scope::bound_names(node, src);
-            collector.watch_captures(parent_bounds.difference(&own).copied().collect());
+            collector.outer_names = parent_bounds.difference(&own).copied().collect();
         }
     }
     let index = ctx.out.units.functions.len();
