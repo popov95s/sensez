@@ -164,3 +164,17 @@ fn diff_mode_is_announced_in_header() {
     report.meta.mode = crate::report::ReportMode::Diff;
     assert!(render(&report, false).contains("diff mode: only findings touching changed lines"));
 }
+
+#[test]
+fn each_pillar_names_the_files_it_skipped() {
+    let mut report = AnalysisReport::default();
+    report.meta.smells_skipped.tests = 2;
+    report.meta.duplication_skipped.generated = 1;
+
+    let text = render(&report, false);
+
+    assert!(text.contains(
+        "skipped 2 test, 0 generated and 0 excluded file(s) (smells.include_tests / exclude)"
+    ));
+    assert!(text.contains("skipped 0 test, 1 generated and 0 excluded file(s) (duplication."));
+}

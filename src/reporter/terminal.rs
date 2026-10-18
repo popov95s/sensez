@@ -86,7 +86,10 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             report.duplication.len(),
             report.meta.duplication_total,
         );
-        if let Some(line) = skipped_line(&report.meta.duplication_skipped) {
+        if let Some(line) = skipped_line(
+            &report.meta.duplication_skipped,
+            "duplication.include_tests / include_generated / exclude",
+        ) {
             let _ = writeln!(out, "    {}", line.dimmed());
         }
     }
@@ -144,6 +147,12 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             report.smells.len(),
             report.meta.smells_total,
         );
+        if let Some(line) = skipped_line(
+            &report.meta.smells_skipped,
+            "smells.include_tests / exclude",
+        ) {
+            let _ = writeln!(out, "    {}", line.dimmed());
+        }
     }
     let mut seen_suggestions: HashSet<String> = HashSet::new();
     let shown_by_kind: HashMap<&str, usize> = {
@@ -255,12 +264,13 @@ fn boundaries_header(out: &mut String, report: &AnalysisReport) {
     }
 }
 
-fn skipped_line(skipped: &SkipCounts) -> Option<String> {
+/// One dimmed line naming how many files a pillar skipped and the knobs that control it.
+fn skipped_line(skipped: &SkipCounts, knobs: &str) -> Option<String> {
     if skipped.is_empty() {
         return None;
     }
     Some(format!(
-        "skipped {} test, {} generated and {} excluded file(s) (duplication.include_tests / include_generated / exclude)",
+        "skipped {} test, {} generated and {} excluded file(s) ({knobs})",
         skipped.tests, skipped.generated, skipped.config_exclude
     ))
 }
