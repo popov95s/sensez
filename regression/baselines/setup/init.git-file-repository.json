@@ -18,7 +18,7 @@
         "--yes"
       ],
       "exit_code": 0,
-      "stderr": "",
+      "stderr": "note: the MCP config stores this machine's absolute sensez path; add sensez as a project dependency or put it on PATH to make it portable.\n",
       "stdout": "\nSensez is set up in <repo>:\n  \u2022 wrote sensez.toml with commented defaults\n  \u2022 created .sensez/ for local metrics and caches\n  \u2022 registered Sensez MCP server as `sensez` in <repo>/.codex/config.toml\n  \u2022 installed Sensez skill in <repo>/.codex/skills/sensez\n  \u2022 added .sensez/ to .gitignore\n\nYou're running on defaults. Everything sensez does \u2014 thresholds, excludes, boundaries, self-improvement \u2014 is configured in sensez.toml.\nRestart your agent to pick up the MCP server.\n"
     }
   ],

@@ -49,7 +49,7 @@ Options:
           Emit machine-readable JSON instead of a human-readable report
 
       --max <MAX>
-          Cap each pillar to its top-N ranked findings (0 = unlimited)
+          Cap each pillar to its top-N ranked findings; smells are capped per kind (0 = unlimited)
 
       --all
           Print every finding instead of the default top offenders
@@ -149,7 +149,7 @@ Options:
           Emit machine-readable JSON instead of a human-readable report
 
       --max <MAX>
-          Cap each pillar to its top-N ranked findings (0 = unlimited)
+          Cap each pillar to its top-N ranked findings; smells are capped per kind (0 = unlimited)
 
       --all
           Print every finding instead of the default top offenders
@@ -199,6 +199,17 @@ Examples:
   sensez noze . --diff --fail-on-new warning
   sensez noze . --diff --fail-on-new must_fix
 ```
+
+### Output limits and gates
+
+- By default each pillar shows its top 5 findings and smells show their top 3
+  per kind. `--max N` sets that cap for every pillar and every smell kind, so
+  `--smells --max 1` prints one finding per smell kind. `--all` prints every
+  finding and cannot be combined with `--max`.
+- `--fail-on` and `--fail-on-new` see the findings this run selected: pillar
+  flags such as `--dead-code` and `--output-glob` filter the gate too, and
+  low-confidence dead code never trips it. The display cap does not: a
+  finding hidden by `--max` still fails the gate.
 
 ## `sensez noze explain --help`
 
@@ -340,7 +351,7 @@ Arguments:
 
 Options:
       --top-k <TOP_K>
-          Number of results to return
+          Number of results to return (at least 1)
           
           [default: 10]
 

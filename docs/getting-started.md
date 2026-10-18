@@ -57,6 +57,12 @@ What `init` writes for each supported agent:
 | Pi | `.pi/mcp.json` | `.pi/skills/sensez` | — |
 | Other / none | — (init prints guidance instead) | — | — |
 
+The MCP config starts `node_modules/.bin/sensez` when Sensez is a project
+dependency and the agent launches servers from the workspace root (Claude
+Code), or `sensez` when the running binary is the one on `PATH`. Otherwise it
+stores this machine's absolute path and `init` prints a note, since that entry
+will not work for teammates.
+
 ## 3. Restart your agent
 
 Agents load MCP servers at startup. Restart the agent (or reload the window)

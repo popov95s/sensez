@@ -58,7 +58,7 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
                 query,
                 top_k,
                 json,
-            } => run_search(&path, &query, top_k, json).map(|()| ExitCode::SUCCESS),
+            } => run_search(&path, &query, usize::from(top_k), json).map(|()| ExitCode::SUCCESS),
             spec::EyezAction::Reindex {
                 path,
                 force,
@@ -191,10 +191,9 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     }
     crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
-    let full_gate_fails = options
-        .fail_on
-        .is_some_and(|level| report_meets_fail_level(&report, level));
-    output::apply(&mut report, options);
+    output::select(&mut report, options);
+    let gate_fails = gate_fails(&report, options);
+    output::shape(&mut report, options);
 
     let rendered = if options.json {
         crate::reporter::to_json(&report)?
@@ -210,15 +209,8 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     output::print_line(&rendered)?;
 
     ensure_complete_for_gate(&report, options)?;
-    if full_gate_fails {
+    if gate_fails {
         return Ok(ExitCode::FAILURE);
-    }
-    if let Some(level) = options.fail_on_new {
-        if report.meta.mode == crate::report::ReportMode::Diff
-            && report_meets_fail_level(&report, level)
-        {
-            return Ok(ExitCode::FAILURE);
-        }
     }
     Ok(ExitCode::SUCCESS)
 }
@@ -240,6 +232,17 @@ fn ensure_complete_for_gate(
         Some(issue) => anyhow::bail!("incomplete scan: {}", issue.message),
         None => Ok(()),
     }
+}
+
+fn gate_fails(report: &crate::report::AnalysisReport, options: &ScanOptions) -> bool {
+    let full = options
+        .fail_on
+        .is_some_and(|level| report_meets_fail_level(report, level));
+    let new = options.fail_on_new.is_some_and(|level| {
+        report.meta.mode == crate::report::ReportMode::Diff
+            && report_meets_fail_level(report, level)
+    });
+    full || new
 }
 
 fn report_meets_fail_level(report: &crate::report::AnalysisReport, level: FailOnNewLevel) -> bool {
@@ -272,7 +275,11 @@ fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> Result<Option
     Ok(Some(ChangedLines::from_unified(&text, path)))
 }
 #[cfg(test)]
+mod gate_filter_tests;
+#[cfg(test)]
 mod gate_tests;
+#[cfg(test)]
+mod parse_tests;
 #[cfg(test)]
 mod reflexez_tests;
 #[cfg(test)]

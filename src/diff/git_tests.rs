@@ -95,3 +95,15 @@ fn large_output_does_not_deadlock_or_truncate() {
     assert!(bytes.status.success());
     assert_eq!(bytes.stdout.len(), 200_000);
 }
+
+#[test]
+fn run_in_missing_dir_reports_directory() {
+    let tmp = tempfile::tempdir().unwrap();
+    let missing = tmp.path().join("missing");
+    let message = format!("{:#}", run(&["status"], &missing).unwrap_err());
+    assert!(
+        message.contains("is not an existing directory"),
+        "{message}"
+    );
+    assert!(!message.contains("is it installed"), "{message}");
+}

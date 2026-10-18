@@ -110,22 +110,52 @@ fn sniff_with_invalid_config_runs_on_defaults_and_reports_it() {
 #[test]
 fn scan_args_defaults_to_diff_mode() {
     let _metrics = crate::test_support::metrics_guard();
-    // The typed struct is the schema — defaults live in `Default` impl,
-    // not buried in a `Value::get` chain. Empty args, explicit
-    // `true`, and explicit `false` all deserialize to the right
-    // `diff`/`record` booleans.
-    let from_empty: ScanArgs = serde_json::from_value(json!({})).unwrap();
-    assert!(from_empty.path.is_empty());
-    assert_eq!(from_empty.threshold, None);
-    assert_eq!(from_empty.limit, 0);
-    assert!(from_empty.diff);
-    assert!(from_empty.record);
+    let from_path_only: ScanArgs = serde_json::from_value(json!({"path": "."})).unwrap();
+    assert_eq!(from_path_only.threshold, None);
+    assert_eq!(from_path_only.limit, 0);
+    assert!(from_path_only.diff);
+    assert!(from_path_only.record);
 
-    let from_true: ScanArgs = serde_json::from_value(json!({"diff": true})).unwrap();
+    let from_true: ScanArgs = serde_json::from_value(json!({"path": ".", "diff": true})).unwrap();
     assert!(from_true.diff);
 
-    let from_false: ScanArgs = serde_json::from_value(json!({"diff": false})).unwrap();
+    let from_false: ScanArgs = serde_json::from_value(json!({"path": ".", "diff": false})).unwrap();
     assert!(!from_false.diff);
+}
+
+#[test]
+fn sniff_without_path_is_invalid_params() {
+    let Err((code, message)) = super::call("noze_sniff", &json!({})) else {
+        panic!("expected invalid params");
+    };
+    assert_eq!(code, -32602);
+    assert!(message.contains("path"), "{message}");
+}
+
+#[test]
+fn sniff_nonexistent_path_names_the_path() {
+    let _metrics = crate::test_support::metrics_guard();
+    let tmp = tempfile::tempdir().unwrap();
+    let missing = tmp.path().join("missing").to_string_lossy().into_owned();
+
+    let resp = call_tool("noze_sniff", json!({"path": missing}));
+
+    assert_eq!(resp["isError"], true);
+    let text = resp["content"][0]["text"].as_str().unwrap();
+    assert!(text.contains("not an existing directory"), "{text}");
+    assert!(!text.contains("is it installed"), "{text}");
+}
+
+#[cfg(feature = "eyez")]
+#[test]
+fn search_docs_top_k_zero_is_invalid_params() {
+    for top_k in [json!(0), json!(-1), json!(2.5)] {
+        let args = json!({"path": ".", "query": "parse", "top_k": top_k});
+        let Err((code, _)) = super::call("eyez_search_docs", &args) else {
+            panic!("expected invalid params for top_k {top_k}");
+        };
+        assert_eq!(code, -32602);
+    }
 }
 
 #[test]

@@ -16,7 +16,6 @@ def run_full_scans(context: RegressionRun) -> None:
                 "full.noze.threshold40.json",
                 ["--all", "--threshold", "40"],
             ),
-            ("full.noze.max5.json", ["--all", "--max", "5"]),
         )
         for artifact, options in scans:
             report = run_json(

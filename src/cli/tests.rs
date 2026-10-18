@@ -106,7 +106,7 @@ fn default_output_drops_low_confidence_dead_code() {
         explain: false,
     };
 
-    output::apply(&mut report, &options);
+    output::select(&mut report, &options);
 
     assert_eq!(report.dead_code.len(), 2);
     assert_eq!(report.dead_code[0].symbol, "sure");
@@ -148,7 +148,7 @@ fn pillar_filter_keeps_only_requested_findings() {
         explain: false,
     };
 
-    output::apply(&mut report, &options);
+    output::select(&mut report, &options);
 
     assert!(report.dead_code.is_empty());
     assert_eq!(report.duplication.len(), 1);
@@ -187,7 +187,8 @@ fn default_output_caps_pillars_at_five_and_smells_at_three_per_kind() {
     }
     let options = scan_options();
 
-    output::apply(&mut report, &options);
+    output::select(&mut report, &options);
+    output::shape(&mut report, &options);
 
     assert_eq!(report.cycles.len(), 5);
     assert_eq!(report.smells.len(), 3);
