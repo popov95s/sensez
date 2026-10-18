@@ -4,6 +4,14 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::{Mutex, MutexGuard, OnceLock};
 
+/// Write `body` to `dir/rel`, creating parent directories.
+pub(crate) fn write(dir: &Path, rel: &str, body: &str) -> PathBuf {
+    let path = dir.join(rel);
+    std::fs::create_dir_all(path.parent().unwrap()).unwrap();
+    std::fs::write(&path, body).unwrap();
+    path
+}
+
 pub(crate) fn metrics_guard() -> MutexGuard<'static, ()> {
     static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
     LOCK.get_or_init(|| Mutex::new(()))

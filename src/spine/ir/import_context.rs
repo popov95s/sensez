@@ -24,6 +24,9 @@ pub struct ImportContext {
     /// from cycle detection — parent declares child + child uses `super::` is
     /// the idiomatic Rust layout, not a circular dependency.
     pub is_module_decl: bool,
+    /// True for a re-export (`export { x } from "./y"`): forwards names, binds none locally.
+    #[serde(default)]
+    pub is_reexport: bool,
     /// Name of the nearest enclosing function/class, if any.
     pub enclosing_scope: Option<String>,
 }

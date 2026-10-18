@@ -67,6 +67,7 @@ mod tests {
             phase: crate::spine::ir::ImportPhase::Runtime,
             is_inline: false,
             is_module_decl: false,
+            is_reexport: false,
             enclosing_scope: None,
         }
     }

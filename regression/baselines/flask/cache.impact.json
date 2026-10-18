@@ -5,16 +5,16 @@
         "action": "warning",
         "edges": [
           {
-            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
-            "from_module": "flask.sensez_cache_cycle_b",
-            "line": 1,
-            "to_module": "flask.sensez_cache_cycle_a"
-          },
-          {
             "file": "<flask>/src/flask/sensez_cache_cycle_a.py",
             "from_module": "flask.sensez_cache_cycle_a",
             "line": 1,
             "to_module": "flask.sensez_cache_cycle_b"
+          },
+          {
+            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
+            "from_module": "flask.sensez_cache_cycle_b",
+            "line": 1,
+            "to_module": "flask.sensez_cache_cycle_a"
           }
         ],
         "modules": [
@@ -62,16 +62,16 @@
         "action": "warning",
         "edges": [
           {
-            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
-            "from_module": "flask.sensez_cache_cycle_b",
-            "line": 1,
-            "to_module": "flask.sensez_cache_cycle_a"
-          },
-          {
             "file": "<flask>/src/flask/sensez_cache_cycle_a.py",
             "from_module": "flask.sensez_cache_cycle_a",
             "line": 1,
             "to_module": "flask.sensez_cache_cycle_b"
+          },
+          {
+            "file": "<flask>/src/flask/sensez_cache_cycle_b.py",
+            "from_module": "flask.sensez_cache_cycle_b",
+            "line": 1,
+            "to_module": "flask.sensez_cache_cycle_a"
           }
         ],
         "modules": [

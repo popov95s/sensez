@@ -136,7 +136,7 @@ impl Default for Config {
                 unused_imports: false,
                 unused_methods: false,
                 unused_properties: false,
-                unused_variables: false,
+                unused_variables: true,
             },
             boundaries: Boundaries {
                 forbidden: Vec::new(),

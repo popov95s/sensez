@@ -50,9 +50,9 @@ enabled = true
 # unused_imports = false
 # unused_methods = false
 # unused_properties = false
-# unused_variables = false
-# entrypoints = []       # user-added decorator names; profile defaults are language-scoped
-# entrypoint_names = []  # user-added dynamic function/class names
+# unused_variables = true
+# entrypoints = []       # user-added decorator names (JS/TS: `export const x = name(...)` callees); `prefix*` allowed
+# entrypoint_names = []  # user-added dynamic function/class/method names; `prefix*` allowed
 # entrypoint_bases = []  # user-added dynamic base classes
 # entry_points = []      # user-added file globs reached outside the import graph
 

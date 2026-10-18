@@ -5,16 +5,16 @@
       "action": "warning",
       "edges": [
         {
-          "file": "<flask>/examples/javascript/js_example/views.py",
-          "from_module": "js_example.views",
-          "line": 5,
-          "to_module": "js_example"
-        },
-        {
           "file": "<flask>/examples/javascript/js_example/__init__.py",
           "from_module": "js_example",
           "line": 5,
           "to_module": "js_example.views"
+        },
+        {
+          "file": "<flask>/examples/javascript/js_example/views.py",
+          "from_module": "js_example.views",
+          "line": 5,
+          "to_module": "js_example"
         }
       ],
       "modules": [
@@ -26,106 +26,16 @@
       "action": "info",
       "edges": [
         {
-          "file": "<flask>/src/flask/cli.py",
-          "from_module": "flask.cli",
-          "line": 34,
-          "to_module": "flask.app"
-        },
-        {
-          "file": "<flask>/src/flask/testing.py",
-          "from_module": "flask.testing",
-          "line": 24,
-          "to_module": "flask.app"
-        },
-        {
-          "file": "<flask>/src/flask/sansio/scaffold.py",
-          "from_module": "flask.sansio.scaffold",
-          "line": 19,
-          "to_module": "flask.templating"
-        },
-        {
-          "file": "<flask>/src/flask/sansio/blueprints.py",
-          "from_module": "flask.sansio.blueprints",
-          "line": 15,
-          "to_module": "flask.sansio.app"
-        },
-        {
-          "file": "<flask>/src/flask/logging.py",
-          "from_module": "flask.logging",
-          "line": 12,
-          "to_module": "flask.sansio.app"
-        },
-        {
-          "file": "<flask>/src/flask/json/provider.py",
-          "from_module": "flask.json.provider",
-          "line": 16,
-          "to_module": "flask.sansio.app"
-        },
-        {
-          "file": "<flask>/src/flask/ctx.py",
-          "from_module": "flask.ctx",
-          "line": 23,
-          "to_module": "flask.wrappers"
-        },
-        {
-          "file": "<flask>/src/flask/config.py",
-          "from_module": "flask.config",
-          "line": 14,
-          "to_module": "flask.sansio.app"
-        },
-        {
-          "file": "<flask>/src/flask/sansio/app.py",
-          "from_module": "flask.sansio.app",
-          "line": 41,
-          "to_module": "flask.sansio.blueprints"
-        },
-        {
-          "file": "<flask>/src/flask/templating.py",
-          "from_module": "flask.templating",
-          "line": 18,
-          "to_module": "flask.sansio.scaffold"
-        },
-        {
           "file": "<flask>/src/flask/app.py",
           "from_module": "flask.app",
           "line": 61,
           "to_module": "flask.testing"
         },
         {
-          "file": "<flask>/src/flask/json/__init__.py",
-          "from_module": "flask.json",
-          "line": 10,
-          "to_module": "flask.wrappers"
-        },
-        {
-          "file": "<flask>/src/flask/json/tag.py",
-          "from_module": "flask.json.tag",
-          "line": 57,
-          "to_module": "flask.json"
-        },
-        {
-          "file": "<flask>/src/flask/sessions.py",
-          "from_module": "flask.sessions",
-          "line": 21,
-          "to_module": "flask.wrappers"
-        },
-        {
-          "file": "<flask>/src/flask/globals.py",
-          "from_module": "flask.globals",
-          "line": 13,
-          "to_module": "flask.wrappers"
-        },
-        {
-          "file": "<flask>/src/flask/helpers.py",
-          "from_module": "flask.helpers",
-          "line": 25,
-          "to_module": "flask.wrappers"
-        },
-        {
-          "file": "<flask>/src/flask/wrappers.py",
-          "from_module": "flask.wrappers",
-          "line": 12,
-          "to_module": "flask.helpers"
+          "file": "<flask>/src/flask/testing.py",
+          "from_module": "flask.testing",
+          "line": 24,
+          "to_module": "flask.app"
         }
       ],
       "hint": "type-only cycle: may indicate type coupling and dependent abstractions",

@@ -42,6 +42,14 @@ pub fn compile_validated(patterns: &[impl AsRef<str>]) -> GlobSet {
     })
 }
 
+/// Symbol-name pattern: exact, or a prefix when it ends in `*` (`on*`).
+pub fn matches_name(pattern: &str, name: &str) -> bool {
+    match pattern.strip_suffix('*') {
+        Some(prefix) => name.starts_with(prefix),
+        None => pattern == name,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -54,6 +62,14 @@ mod tests {
         let python_tests = build_globset(&["**/test_*.py".to_string()]).unwrap();
         assert!(python_tests.is_match("src/test_api.py"));
         assert!(!python_tests.is_match("src/test_helpers/example.py"));
+    }
+
+    #[test]
+    fn name_patterns_match_exact_or_prefix() {
+        assert!(matches_name("register", "register"));
+        assert!(!matches_name("register", "registerAll"));
+        assert!(matches_name("on*", "onTestEnd"));
+        assert!(!matches_name("on*", "render"));
     }
 
     #[test]

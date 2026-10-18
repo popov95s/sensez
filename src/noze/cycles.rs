@@ -3,21 +3,21 @@
 use crate::globs::build_globset;
 use crate::report::{ActionLevel, CycleEdge, CycleFinding};
 use crate::spine::graph::CodebaseGraph;
-use crate::spine::ir::ImportPhase;
+use crate::spine::ir::{ImportContext, ImportPhase};
 use petgraph::algo::tarjan_scc;
-use petgraph::graph::NodeIndex;
+use petgraph::graph::{EdgeIndex, EdgeReference, NodeIndex};
 use petgraph::visit::{EdgeFiltered, EdgeRef};
 use petgraph::Direction;
-use std::collections::{HashMap, HashSet};
+use std::collections::hash_map::Entry;
+use std::collections::{HashMap, HashSet, VecDeque};
 
-/// Find strongly connected module components and report one clickable edge per module.
+const RUNTIME: &[ImportPhase] = &[ImportPhase::Runtime];
+const TYPE_LEVEL: &[ImportPhase] = &[ImportPhase::Runtime, ImportPhase::TypeOnly];
+
+/// Find strongly connected module components; each finding lists every member and one closed loop.
 pub fn detect(cg: &CodebaseGraph, exclude: &[String]) -> Vec<CycleFinding> {
     let excluded = build_globset(exclude).unwrap_or_else(|_| globset::GlobSet::empty());
-    let runtime = EdgeFiltered::from_fn(&cg.graph, |edge| {
-        edge.weight().phase == ImportPhase::Runtime
-            && !edge.weight().is_inline
-            && !edge.weight().is_module_decl
-    });
+    let runtime = EdgeFiltered::from_fn(&cg.graph, |edge| is_cycle_edge(edge, RUNTIME));
     let runtime_sccs: Vec<Vec<NodeIndex>> = filter_reportable_sccs(
         cg,
         tarjan_scc(&runtime)
@@ -25,16 +25,10 @@ pub fn detect(cg: &CodebaseGraph, exclude: &[String]) -> Vec<CycleFinding> {
             .filter(|scc| scc.len() >= 2),
         &excluded,
     );
-    let mut findings = findings_for(cg, &runtime_sccs, ActionLevel::Warning, None, false);
+    let mut findings = findings_for(cg, &runtime_sccs, ActionLevel::Warning, None, RUNTIME);
     let runtime_keys: HashSet<String> = runtime_sccs.iter().map(|scc| scc_key(cg, scc)).collect();
 
-    let type_level = EdgeFiltered::from_fn(&cg.graph, |edge| {
-        matches!(
-            edge.weight().phase,
-            ImportPhase::Runtime | ImportPhase::TypeOnly
-        ) && !edge.weight().is_inline
-            && !edge.weight().is_module_decl
-    });
+    let type_level = EdgeFiltered::from_fn(&cg.graph, |edge| is_cycle_edge(edge, TYPE_LEVEL));
     let hint = "type-only cycle: may indicate type coupling and dependent abstractions".to_string();
     findings.extend(
         filter_reportable_sccs(
@@ -47,7 +41,7 @@ pub fn detect(cg: &CodebaseGraph, exclude: &[String]) -> Vec<CycleFinding> {
         .into_iter()
         .filter(|scc| !runtime_keys.contains(&scc_key(cg, scc)))
         .filter(|scc| has_type_only_internal_edge(cg, scc))
-        .map(|scc| finding_for(cg, &scc, ActionLevel::Info, Some(hint.clone()), true)),
+        .map(|scc| finding_for(cg, &scc, ActionLevel::Info, Some(hint.clone()), TYPE_LEVEL)),
     );
     findings
 }
@@ -66,29 +60,17 @@ fn findings_for(
     sccs: &[Vec<NodeIndex>],
     action: ActionLevel,
     hint: Option<String>,
-    include_type_only: bool,
+    phases: &[ImportPhase],
 ) -> Vec<CycleFinding> {
-    // node -> index of the SCC it belongs to (only the >=2 ones).
-    let mut scc_of: HashMap<NodeIndex, usize> = HashMap::new();
-    for (i, scc) in sccs.iter().enumerate() {
-        for &n in scc {
-            scc_of.insert(n, i);
-        }
-    }
-
     sccs.iter()
-        .enumerate()
-        .map(|(i, scc)| CycleFinding {
+        .map(|scc| CycleFinding {
             action,
             modules: scc
                 .iter()
                 .map(|&n| cg.graph[n].module_name.clone())
                 .collect(),
             hint: hint.clone(),
-            edges: scc
-                .iter()
-                .filter_map(|&n| next_hop(cg, n, i, &scc_of, include_type_only))
-                .collect(),
+            edges: shortest_cycle(cg, scc, phases),
         })
         .collect()
 }
@@ -98,9 +80,9 @@ fn finding_for(
     scc: &[NodeIndex],
     action: ActionLevel,
     hint: Option<String>,
-    include_type_only: bool,
+    phases: &[ImportPhase],
 ) -> CycleFinding {
-    findings_for(cg, &[scc.to_vec()], action, hint, include_type_only)
+    findings_for(cg, &[scc.to_vec()], action, hint, phases)
         .pop()
         .unwrap_or_else(|| CycleFinding {
             action,
@@ -115,28 +97,73 @@ fn is_reportable_scc(cg: &CodebaseGraph, scc: &[NodeIndex], excluded: &globset::
         .any(|&n| !excluded.is_match(&cg.graph[n].file_path))
 }
 
-/// The first module-level import from `node` to another member of its cycle.
-fn next_hop(
+/// Shortest closed import path through the SCC's lexicographically smallest
+/// module (BFS), over the same edges the SCC pass used.
+fn shortest_cycle(cg: &CodebaseGraph, scc: &[NodeIndex], phases: &[ImportPhase]) -> Vec<CycleEdge> {
+    let members: HashSet<NodeIndex> = scc.iter().copied().collect();
+    let Some(&start) = scc
+        .iter()
+        .min_by_key(|&&n| cg.graph[n].module_name.as_str())
+    else {
+        return Vec::new();
+    };
+    let mut prev: HashMap<NodeIndex, EdgeIndex> = HashMap::new();
+    let mut queue = VecDeque::from([start]);
+    while let Some(node) = queue.pop_front() {
+        for edge in cg
+            .graph
+            .edges_directed(node, Direction::Outgoing)
+            .filter(|e| members.contains(&e.target()) && is_cycle_edge(*e, phases))
+        {
+            if edge.target() == start {
+                return unwind(cg, &prev, edge.id(), start);
+            }
+            if let Entry::Vacant(slot) = prev.entry(edge.target()) {
+                slot.insert(edge.id());
+                queue.push_back(edge.target());
+            }
+        }
+    }
+    Vec::new()
+}
+
+fn is_cycle_edge(edge: EdgeReference<'_, ImportContext>, phases: &[ImportPhase]) -> bool {
+    let import = edge.weight();
+    edge.source() != edge.target()
+        && !import.is_inline
+        && !import.is_module_decl
+        && phases.contains(&import.phase)
+}
+
+fn unwind(
     cg: &CodebaseGraph,
-    node: NodeIndex,
-    scc: usize,
-    scc_of: &HashMap<NodeIndex, usize>,
-    include_type_only: bool,
-) -> Option<CycleEdge> {
-    cg.graph
-        .edges_directed(node, Direction::Outgoing)
-        .filter(|e| {
-            !e.weight().is_inline
-                && (e.weight().phase == ImportPhase::Runtime
-                    || (include_type_only && e.weight().phase == ImportPhase::TypeOnly))
-        })
-        .find(|e| scc_of.get(&e.target()) == Some(&scc))
-        .map(|e| CycleEdge {
-            from_module: cg.graph[node].module_name.clone(),
-            to_module: cg.graph[e.target()].module_name.clone(),
-            file: cg.graph[node].file_path.clone(),
-            line: e.weight().line,
-        })
+    prev: &HashMap<NodeIndex, EdgeIndex>,
+    closing: EdgeIndex,
+    start: NodeIndex,
+) -> Vec<CycleEdge> {
+    let mut path = vec![closing];
+    let mut node = cg.graph.edge_endpoints(closing).map(|(from, _)| from);
+    while let Some(current) = node.filter(|&n| n != start) {
+        let edge = *prev
+            .get(&current)
+            .expect("BFS records a predecessor for every reached node");
+        path.push(edge);
+        node = cg.graph.edge_endpoints(edge).map(|(from, _)| from);
+    }
+    path.reverse();
+    path.into_iter()
+        .filter_map(|edge| cycle_edge(cg, edge))
+        .collect()
+}
+
+fn cycle_edge(cg: &CodebaseGraph, edge: EdgeIndex) -> Option<CycleEdge> {
+    let (from, to) = cg.graph.edge_endpoints(edge)?;
+    Some(CycleEdge {
+        from_module: cg.graph[from].module_name.clone(),
+        to_module: cg.graph[to].module_name.clone(),
+        file: cg.graph[from].file_path.clone(),
+        line: cg.graph[edge].line,
+    })
 }
 
 fn has_type_only_internal_edge(cg: &CodebaseGraph, scc: &[NodeIndex]) -> bool {
@@ -147,8 +174,7 @@ fn has_type_only_internal_edge(cg: &CodebaseGraph, scc: &[NodeIndex]) -> bool {
             .any(|edge| {
                 members.contains(&edge.target())
                     && edge.weight().phase == ImportPhase::TypeOnly
-                    && !edge.weight().is_inline
-                    && !edge.weight().is_module_decl
+                    && is_cycle_edge(edge, TYPE_LEVEL)
             })
     })
 }

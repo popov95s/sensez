@@ -82,6 +82,7 @@ pub(super) fn context(target: String, source: &str, line: usize) -> ImportContex
         phase: crate::spine::ir::ImportPhase::Runtime,
         is_inline: true,
         is_module_decl: false,
+        is_reexport: false,
         enclosing_scope: None,
     }
 }

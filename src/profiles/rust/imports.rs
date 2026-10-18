@@ -234,6 +234,7 @@ fn context(
         phase: ImportPhase::Runtime,
         is_inline: scope.is_some(),
         is_module_decl,
+        is_reexport: false,
         enclosing_scope: scope.map(str::to_string),
     }
 }

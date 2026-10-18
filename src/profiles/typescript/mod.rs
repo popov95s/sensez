@@ -16,6 +16,9 @@ use crate::spine::ir::{ImportContext, ImportPhase, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+#[cfg(test)]
+#[path = "dead_code_tests.rs"]
+mod dead_code_tests;
 mod paths;
 pub(crate) use paths::ResolutionCache;
 #[cfg(test)]
@@ -36,7 +39,7 @@ mod arrow_name_tests;
 
 static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
-    extensions: &["ts"],
+    extensions: &["ts", "mts", "cts"],
     test_support: test_support::TEST_SUPPORT,
 };
 

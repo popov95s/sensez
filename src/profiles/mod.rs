@@ -84,6 +84,9 @@ pub struct LanguageInfo {
 pub struct DeadCodeDefaults {
     pub entrypoints: &'static [&'static str],
     pub entrypoint_names: &'static [&'static str],
+    /// Names live when they are class methods only (framework callbacks).
+    pub method_entrypoint_names: &'static [&'static str],
+    pub external_bases: ExternalBases,
     pub entrypoint_bases: &'static [&'static str],
     pub entry_points: &'static [&'static str],
     pub test_sources: &'static [&'static str],
@@ -97,10 +100,21 @@ impl DeadCodeDefaults {
     pub const EMPTY: DeadCodeDefaults = DeadCodeDefaults {
         entrypoints: &[],
         entrypoint_names: &[],
+        method_entrypoint_names: &[],
+        external_bases: ExternalBases::Ignored,
         entrypoint_bases: &[],
         entry_points: &[],
         test_sources: &[],
     };
+}
+
+/// Whether a class base that is not in the scan may call its methods (framework hooks).
+#[derive(Debug, Clone, Copy)]
+pub enum ExternalBases {
+    /// Out-of-scan bases say nothing about method liveness.
+    Ignored,
+    /// Any out-of-scan base or interface may call methods, except the listed names.
+    ImplyContract { except: &'static [&'static str] },
 }
 
 /// Result of classifying a symbol's decorator set for dead-code liveness.

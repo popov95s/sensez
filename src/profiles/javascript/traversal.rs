@@ -3,7 +3,7 @@
 //! metric collection is fused into this single walk — there is no second
 //! per-function body pass.
 
-use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
+use super::{imports, lexeme, namespaces, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::walk::{
@@ -41,6 +41,7 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         path: Vec::new(),
     };
     visit(root, src, file_id, module_name, false, &mut ctx);
+    namespaces::narrow(root, src, &mut out.symbols.imports);
     crate::profiles::comments::attach(&mut out);
     walk::attach_method_attrs(&mut out);
     out
@@ -123,6 +124,9 @@ fn visit<'tree>(
     }
     if kind == "member_expression" {
         credit_attr(ctx.out, node, src, "object", "property");
+    }
+    if kind == "nested_type_identifier" {
+        credit_attr(ctx.out, node, src, "module", "name");
     }
 
     record_declarations(node, src, kind, ctx);
@@ -282,6 +286,19 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
                     .entry(name.clone())
                     .or_insert(line);
                 ctx.out.symbols.declared.push(name);
+            }
+            if node
+                .parent()
+                .is_some_and(|p| p.kind() == "export_statement")
+            {
+                for (name, callee) in symbols::initializer_callees(node, src) {
+                    ctx.out
+                        .symbols
+                        .decorators
+                        .entry(name)
+                        .or_default()
+                        .push(callee);
+                }
             }
         }
         _ => {}

@@ -27,6 +27,7 @@ pub fn extract(
             phase,
             is_inline: scope.is_some(),
             is_module_decl: false,
+            is_reexport: false,
             enclosing_scope: scope.map(str::to_string),
         }
     };

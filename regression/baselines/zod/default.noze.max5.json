@@ -5,400 +5,16 @@
       "action": "info",
       "edges": [
         {
-          "file": "<zod>/packages/zod/src/v4/core/core.ts",
-          "from_module": "src/v4/core/core",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
-          "from_module": "src/v4/core/regexes",
-          "line": 1,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/checks.ts",
-          "from_module": "src/v4/core/checks",
-          "line": 7,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/errors.ts",
-          "from_module": "src/v4/core/errors",
-          "line": 5,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/util.ts",
-          "from_module": "src/v4/core/util",
-          "line": 5,
-          "to_module": "src/v4/core/schemas"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/parse.ts",
-          "from_module": "src/v4/core/parse",
-          "line": 4,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/registries.ts",
-          "from_module": "src/v4/core/registries",
-          "line": 2,
-          "to_module": "src/v4/core/schemas"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/api.ts",
-          "from_module": "src/v4/core/api",
-          "line": 6,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-          "from_module": "src/v4/core/schemas",
-          "line": 322,
-          "to_module": "src/v4/core/util"
+          "file": "<zod>/packages/zod/src/v4/core/index.ts",
+          "from_module": "src/v4/core",
+          "line": 13,
+          "to_module": "src/v4/core/to-json-schema"
         },
         {
           "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
           "from_module": "src/v4/core/to-json-schema",
-          "line": 4,
-          "to_module": "src/v4/core/schemas"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
-          "from_module": "src/v4/core/json-schema-processors",
-          "line": 15,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
-          "from_module": "src/v4/core/json-schema-generator",
-          "line": 5,
-          "to_module": "src/v4/core/to-json-schema"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/yo.ts",
-          "from_module": "src/v4/locales/yo",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/zh-TW.ts",
-          "from_module": "src/v4/locales/zh-TW",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/zh-CN.ts",
-          "from_module": "src/v4/locales/zh-CN",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/vi.ts",
-          "from_module": "src/v4/locales/vi",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/uz.ts",
-          "from_module": "src/v4/locales/uz",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ur.ts",
-          "from_module": "src/v4/locales/ur",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/uk.ts",
-          "from_module": "src/v4/locales/uk",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ua.ts",
-          "from_module": "src/v4/locales/ua",
-          "line": 2,
-          "to_module": "src/v4/locales/uk"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/tr.ts",
-          "from_module": "src/v4/locales/tr",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/th.ts",
-          "from_module": "src/v4/locales/th",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ta.ts",
-          "from_module": "src/v4/locales/ta",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/sv.ts",
-          "from_module": "src/v4/locales/sv",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/sl.ts",
-          "from_module": "src/v4/locales/sl",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ru.ts",
-          "from_module": "src/v4/locales/ru",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ro.ts",
-          "from_module": "src/v4/locales/ro",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/pt.ts",
-          "from_module": "src/v4/locales/pt",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/pl.ts",
-          "from_module": "src/v4/locales/pl",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ps.ts",
-          "from_module": "src/v4/locales/ps",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ota.ts",
-          "from_module": "src/v4/locales/ota",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/no.ts",
-          "from_module": "src/v4/locales/no",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
-          "from_module": "src/v4/locales/nl",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ms.ts",
-          "from_module": "src/v4/locales/ms",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/mk.ts",
-          "from_module": "src/v4/locales/mk",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
-          "from_module": "src/v4/locales/lt",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ko.ts",
-          "from_module": "src/v4/locales/ko",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/km.ts",
-          "from_module": "src/v4/locales/km",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/kh.ts",
-          "from_module": "src/v4/locales/kh",
-          "line": 2,
-          "to_module": "src/v4/locales/km"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ka.ts",
-          "from_module": "src/v4/locales/ka",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ja.ts",
-          "from_module": "src/v4/locales/ja",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/it.ts",
-          "from_module": "src/v4/locales/it",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/is.ts",
-          "from_module": "src/v4/locales/is",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/id.ts",
-          "from_module": "src/v4/locales/id",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/hy.ts",
-          "from_module": "src/v4/locales/hy",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/hu.ts",
-          "from_module": "src/v4/locales/hu",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/hr.ts",
-          "from_module": "src/v4/locales/hr",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/he.ts",
-          "from_module": "src/v4/locales/he",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
-          "from_module": "src/v4/locales/fr-CA",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
-          "from_module": "src/v4/locales/fr",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/fi.ts",
-          "from_module": "src/v4/locales/fi",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/fa.ts",
-          "from_module": "src/v4/locales/fa",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/es.ts",
-          "from_module": "src/v4/locales/es",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/eo.ts",
-          "from_module": "src/v4/locales/eo",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/en.ts",
-          "from_module": "src/v4/locales/en",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/el.ts",
-          "from_module": "src/v4/locales/el",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/de.ts",
-          "from_module": "src/v4/locales/de",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/da.ts",
-          "from_module": "src/v4/locales/da",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/cs.ts",
-          "from_module": "src/v4/locales/cs",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ca.ts",
-          "from_module": "src/v4/locales/ca",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/bg.ts",
-          "from_module": "src/v4/locales/bg",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/be.ts",
-          "from_module": "src/v4/locales/be",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/az.ts",
-          "from_module": "src/v4/locales/az",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
-          "from_module": "src/v4/locales/ar",
-          "line": 3,
-          "to_module": "src/v4/core/util"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/locales/index.ts",
-          "from_module": "src/v4/locales",
-          "line": 52,
-          "to_module": "src/v4/locales/yo"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v4/core/index.ts",
-          "from_module": "src/v4/core",
-          "line": 15,
-          "to_module": "src/v4/core/json-schema-generator"
+          "line": 1,
+          "to_module": "src/v4/core"
         }
       ],
       "hint": "type-only cycle: may indicate type coupling and dependent abstractions",
@@ -475,46 +91,16 @@
       "action": "info",
       "edges": [
         {
-          "file": "<zod>/packages/zod/src/v3/helpers/partialUtil.ts",
-          "from_module": "src/v3/helpers/partialUtil",
-          "line": 1,
-          "to_module": "src/v3/types"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/locales/en.ts",
-          "from_module": "src/v3/locales/en",
-          "line": 1,
-          "to_module": "src/v3/ZodError"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/errors.ts",
-          "from_module": "src/v3/errors",
+          "file": "<zod>/packages/zod/src/v3/index.ts",
+          "from_module": "src/v3",
           "line": 2,
-          "to_module": "src/v3/locales/en"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/helpers/parseUtil.ts",
-          "from_module": "src/v3/helpers/parseUtil",
-          "line": 3,
-          "to_module": "src/v3/locales/en"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/types.ts",
-          "from_module": "src/v3/types",
-          "line": 32,
-          "to_module": "src/v3/helpers/partialUtil"
+          "to_module": "src/v3/external"
         },
         {
           "file": "<zod>/packages/zod/src/v3/external.ts",
           "from_module": "src/v3/external",
           "line": 6,
           "to_module": "src/v3/ZodError"
-        },
-        {
-          "file": "<zod>/packages/zod/src/v3/index.ts",
-          "from_module": "src/v3",
-          "line": 2,
-          "to_module": "src/v3/external"
         },
         {
           "file": "<zod>/packages/zod/src/v3/ZodError.ts",
@@ -545,6 +131,15 @@
       "line": 5,
       "module": "rollup.config",
       "symbol": "bundleSize"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "variable",
+      "line": 16,
+      "module": "generate",
+      "symbol": "VALIBOT"
     }
   ],
   "duplication": [
@@ -555,17 +150,22 @@
       },
       "occurrences": [
         {
-          "end_row": 1482,
-          "file": "<zod>/packages/zod/src/v3/types.ts",
-          "start_row": 1459
+          "end_row": 37,
+          "file": "<zod>/packages/resolution/src/index.cts",
+          "start_row": 11
         },
         {
-          "end_row": 1734,
-          "file": "<zod>/packages/zod/src/v3/types.ts",
-          "start_row": 1711
+          "end_row": 37,
+          "file": "<zod>/packages/resolution/src/index.mts",
+          "start_row": 11
+        },
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/resolution/src/index.ts",
+          "start_row": 11
         }
       ],
-      "token_length": 79
+      "token_length": 119
     },
     {
       "action": "advisory",
@@ -574,17 +174,17 @@
       },
       "occurrences": [
         {
-          "end_row": 44,
-          "file": "<zod>/packages/bench/ipv4-regex.ts",
-          "start_row": 18
+          "end_row": 41,
+          "file": "<zod>/packages/integration/fixtures/internal-types/cjs-test.cts",
+          "start_row": 6
         },
         {
-          "end_row": 46,
-          "file": "<zod>/packages/zod/src/v3/benchmarks/ipv4.ts",
-          "start_row": 20
+          "end_row": 42,
+          "file": "<zod>/packages/integration/fixtures/internal-types/index.ts",
+          "start_row": 7
         }
       ],
-      "token_length": 72
+      "token_length": 148
     },
     {
       "action": "advisory",
@@ -645,18 +245,18 @@
     }
   ],
   "meta": {
-    "analyzed_files": 365,
+    "analyzed_files": 368,
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 1,
+    "dead_code_total": 2,
     "duplication_skipped": {
       "config_exclude": 0,
       "generated": 0,
       "tests": 171
     },
-    "duplication_total": 17,
-    "external_edges": 461,
+    "duplication_total": 19,
+    "external_edges": 462,
     "internal_edges": 521,
     "mode": "full",
     "smell_totals": {
@@ -683,7 +283,7 @@
       "tests": 171
     },
     "smells_total": 266,
-    "source_lines": 71956
+    "source_lines": 72099
   },
   "smells": [
     {
