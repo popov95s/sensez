@@ -5,7 +5,7 @@
 //! and a vanished false positive is never counted as resolved value.
 
 use super::file_lock;
-use super::fingerprint::Namespace;
+use super::fingerprint::Pillar;
 use super::store;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
@@ -65,7 +65,7 @@ pub fn mark(
     let needle = pattern.to_lowercase();
     // (fingerprint key, label, detector) for each matched finding.
     let namespace =
-        Namespace::from_name(pillar).ok_or_else(|| anyhow!("unknown pillar '{pillar}'"))?;
+        Pillar::from_name(pillar).ok_or_else(|| anyhow!("unknown pillar '{pillar}'"))?;
     let matches: Vec<(String, String, String)> = aged
         .get(&namespace)
         .map(|prints| {
@@ -125,7 +125,7 @@ pub fn ignored_keys(triage: &Triage) -> std::collections::HashSet<String> {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::brainz::fingerprint::{Aged, AgedEntry, Detector, Label, Namespace};
+    use crate::brainz::fingerprint::{Aged, AgedEntry, Detector, Label, Pillar};
 
     #[test]
     fn mark_matches_by_label_and_clears() {
@@ -134,7 +134,7 @@ mod tests {
         fs::create_dir_all(&root).unwrap();
 
         let aged: Aged = BTreeMap::from([(
-            Namespace::DeadCode,
+            Pillar::DeadCode,
             BTreeMap::from([(
                 "abc1".to_string(),
                 AgedEntry {

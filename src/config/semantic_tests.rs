@@ -21,8 +21,8 @@ fn semantic_duplication_config_parses() {
     assert_eq!(cfg.duplication.semantic.min_shape_score, 84);
     assert_eq!(cfg.duplication.semantic.comment_boost_score, 91);
     assert!(
-        cfg.duplication.semantic.comment_required,
-        "omitting comment_required keeps the safe default"
+        !cfg.duplication.semantic.comment_required,
+        "omitting comment_required compares undocumented functions too"
     );
 }
 
@@ -31,7 +31,11 @@ fn semantic_score_out_of_range_is_a_config_error() {
     for (knob, message) in [
         (
             "comment_boost_score = 0",
-            "comment_boost_score must be at least 50",
+            "comment_boost_score must be between 50 and 100",
+        ),
+        (
+            "comment_boost_score = 101",
+            "comment_boost_score must be between 50 and 100",
         ),
         (
             "min_shape_score = 101",

@@ -37,15 +37,7 @@ pub struct CodebaseGraph {
 mod tests {
     use super::*;
     use crate::spine::parser::parse_file;
-    use std::fs;
-    use std::path::Path;
-
-    fn write(dir: &Path, rel: &str, body: &str) -> PathBuf {
-        let path = dir.join(rel);
-        fs::create_dir_all(path.parent().unwrap()).unwrap();
-        fs::write(&path, body).unwrap();
-        path
-    }
+    use crate::test_support::write;
 
     #[test]
     fn builds_nodes_and_resolves_edges() {

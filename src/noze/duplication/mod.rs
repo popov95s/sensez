@@ -20,7 +20,7 @@ mod range_tests;
 #[cfg(feature = "eyez")]
 mod semantic;
 #[cfg(test)]
-mod test_support;
+pub(crate) mod test_support;
 
 use crate::config::model::Duplication;
 use crate::noze::source_scope::SourceScope;
@@ -196,8 +196,8 @@ fn semantic_pass(
     seen: &mut FxHashSet<u64>,
     out: &mut Vec<CloneClass>,
 ) -> Vec<ScanIssue> {
-    let classes = match semantic::detect(kept, &config.semantic, config.threshold, root) {
-        Ok(classes) => classes,
+    let (classes, issues) = match semantic::detect(kept, &config.semantic, config.threshold, root) {
+        Ok(found) => found,
         Err(err) => {
             return vec![ScanIssue {
                 stage: crate::report::ScanStage::Analyze,
@@ -222,7 +222,7 @@ fn semantic_pass(
             ..class
         });
     }
-    Vec::new()
+    issues
 }
 
 /// Map a master-buffer token range `[start, end)` to a concrete file/line span.

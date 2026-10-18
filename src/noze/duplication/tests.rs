@@ -1,5 +1,5 @@
 use super::detect;
-use super::test_support::write_files;
+use super::test_support::{pairs, write_files};
 use crate::config::model::Duplication;
 use crate::report::CloneClass;
 
@@ -201,21 +201,6 @@ const SUMMARY_TAIL: &str = "    if len(ranked) > limit:\n        ranked = ranked
 const INSERT_METRICS: &str = "    metrics.increment(\"orders.summarized\", len(orders))\n";
 const INSERT_TRACE: &str = "    tracing.mark(\"ranked\")\n";
 
-/// Default config with no excludes (stitching on).
-fn cfg_default() -> Duplication {
-    Duplication {
-        exclude: vec![],
-        ..Default::default()
-    }
-}
-
-fn pairs(clones: &[CloneClass], left: &str, right: &str) -> bool {
-    clones.iter().any(|class| {
-        let has = |name: &str| class.occurrences.iter().any(|o| o.file.ends_with(name));
-        has(left) && has(right)
-    })
-}
-
 fn original() -> String {
     [
         SUMMARY_HEAD,
@@ -247,7 +232,13 @@ fn one_statement_insert_is_stitched_at_defaults() {
         detect(&files, &cfg(50)).is_empty(),
         "each exact half must stay below the threshold"
     );
-    let clones = detect(&files, &cfg_default());
+    let clones = detect(
+        &files,
+        &Duplication {
+            exclude: vec![],
+            ..Default::default()
+        },
+    );
     assert!(pairs(&clones, "a.py", "b.py"), "{clones:?}");
 }
 
@@ -266,7 +257,13 @@ fn two_small_inserts_chain_into_one_clone() {
     ]
     .concat();
     let files = write_files(tmp.path(), &[("a.py", &original), ("b.py", &edited)]);
-    let clones = detect(&files, &cfg_default());
+    let clones = detect(
+        &files,
+        &Duplication {
+            exclude: vec![],
+            ..Default::default()
+        },
+    );
     let stitched = clones
         .iter()
         .find(|class| class.occurrences.len() == 2)

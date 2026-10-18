@@ -169,9 +169,9 @@ impl Default for SemanticDuplication {
     fn default() -> Self {
         SemanticDuplication {
             enabled: false,
-            min_shape_score: 50,
+            min_shape_score: 30,
             comment_boost_score: 85,
-            comment_required: true,
+            comment_required: false,
         }
     }
 }

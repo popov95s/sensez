@@ -63,7 +63,10 @@ impl OutputPathFilter {
         let mut excludes = Vec::new();
         for pattern in patterns {
             match pattern.strip_prefix('!') {
-                Some(body) => excludes.push(exclude_body(pattern, body)?),
+                Some(body) if body.is_empty() || body.starts_with('!') => anyhow::bail!(
+                    "--output-glob {pattern:?} can never match: write one leading '!' followed by a glob"
+                ),
+                Some(body) => excludes.push(body),
                 None => includes.push(pattern.as_str()),
             }
         }
@@ -82,15 +85,6 @@ impl OutputPathFilter {
     fn excludes(&self, path: &Path) -> bool {
         self.exclude.hits(&self.root, path)
     }
-}
-
-fn exclude_body<'a>(pattern: &str, body: &'a str) -> Result<&'a str> {
-    if body.is_empty() || body.starts_with('!') {
-        anyhow::bail!(
-            "--output-glob {pattern:?} can never match: write one leading '!' followed by a glob"
-        );
-    }
-    Ok(body)
 }
 
 /// Globs plus bare directory names; a path hits when either strategy does.

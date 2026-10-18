@@ -1,17 +1,11 @@
 use super::*;
 use crate::report::SmellKind;
-use std::fs;
+use crate::test_support::write;
 
 const CHAIN: &str =
     "export function country(invoice: any) {\n  return invoice.customer.profile.address.region.country.code;\n}\n";
 
 const CLONE: &str = "export function handler(a: number, b: number) {\n  const d = moduleA.run(b, 'alpha');\n  const e = moduleC.run(a, 'beta');\n  const f = moduleD.merge(d, e, 'gamma');\n  return moduleE.finish(f, d, e);\n}\n";
-
-fn write(dir: &Path, rel: &str, body: &str) {
-    let path = dir.join(rel);
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, body).unwrap();
-}
 
 fn smells_in(report: &AnalysisReport, suffix: &str) -> Vec<SmellKind> {
     report

@@ -109,9 +109,9 @@ impl Config {
 
     fn validate_semantic(&self) -> Result<()> {
         let semantic = &self.duplication.semantic;
-        if semantic.comment_boost_score < 50 {
+        if !(50..=100).contains(&semantic.comment_boost_score) {
             anyhow::bail!(
-                "duplication.semantic.comment_boost_score must be at least 50, got {}",
+                "duplication.semantic.comment_boost_score must be between 50 and 100, got {}",
                 semantic.comment_boost_score
             );
         }

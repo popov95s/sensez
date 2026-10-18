@@ -27,10 +27,9 @@ pub(crate) mod typevocab;
 mod units;
 mod wording;
 
-use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile, WordingProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -43,6 +42,7 @@ static PYTHON_INFO: LanguageInfo = LanguageInfo {
     language: Language::Python,
     extensions: &["py", "pyi"],
     test_support: &[],
+    wording: &wording::WORDING,
 };
 impl ParseProfile for PythonProfile {
     fn info(&self) -> &'static LanguageInfo {
@@ -203,12 +203,6 @@ impl TypeVocabularyProfile for PythonProfile {
 
     fn is_void(&self, annotation: &str) -> bool {
         typevocab::is_void(annotation)
-    }
-}
-
-impl WordingProfile for PythonProfile {
-    fn smell_wording(&self) -> &'static SmellWording {
-        &wording::WORDING
     }
 }
 

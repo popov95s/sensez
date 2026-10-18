@@ -20,8 +20,8 @@ fn defaults_when_missing() {
         "semantic duplication stays opt-in until the detector is enabled"
     );
     assert!(
-        cfg.duplication.semantic.comment_required,
-        "comment-backed semantic duplication requires comments by default"
+        !cfg.duplication.semantic.comment_required,
+        "semantic duplication compares undocumented functions by default"
     );
     assert!(
         cfg.dead_code.entrypoints.is_empty(),

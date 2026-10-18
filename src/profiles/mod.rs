@@ -84,6 +84,7 @@ pub struct LanguageInfo {
     pub extensions: &'static [&'static str],
     /// Test helpers, mocks, fixtures and stories: skipped by smells and duplication, still live for dead code.
     pub test_support: &'static [&'static str],
+    pub wording: &'static wording::SmellWording,
 }
 
 /// Dead-code conventions supplied by a language profile.
@@ -302,27 +303,12 @@ pub trait TypeVocabularyProfile: Send + Sync {
     }
 }
 
-/// Language-owned phrases spliced into smell messages.
-pub trait WordingProfile: Send + Sync {
-    fn smell_wording(&self) -> &'static wording::SmellWording;
-}
-
 pub trait LanguageProfile:
-    ParseProfile
-    + ModuleProfile
-    + DeadCodeProfile
-    + PerformanceProfile
-    + TypeVocabularyProfile
-    + WordingProfile
+    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
 {
 }
 
 impl<T> LanguageProfile for T where
-    T: ParseProfile
-        + ModuleProfile
-        + DeadCodeProfile
-        + PerformanceProfile
-        + TypeVocabularyProfile
-        + WordingProfile
+    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
 {
 }

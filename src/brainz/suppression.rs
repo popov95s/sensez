@@ -29,27 +29,27 @@ pub fn apply_suppressions(
     };
     fingerprint::retain_by_fingerprint(
         &mut report.cycles,
-        prints.get(&fingerprint::Namespace::Cycles),
+        prints.get(&fingerprint::Pillar::Cycles),
         |p| !ctx.hides(p, "cycles"),
     );
     fingerprint::retain_by_fingerprint(
         &mut report.dead_code,
-        prints.get(&fingerprint::Namespace::DeadCode),
+        prints.get(&fingerprint::Pillar::DeadCode),
         |p| !ctx.hides(p, "dead_code"),
     );
     fingerprint::retain_by_fingerprint(
         &mut report.boundaries,
-        prints.get(&fingerprint::Namespace::Boundaries),
+        prints.get(&fingerprint::Pillar::Boundaries),
         |p| !ctx.hides(p, "boundaries"),
     );
     fingerprint::retain_by_fingerprint(
         &mut report.duplication,
-        prints.get(&fingerprint::Namespace::Duplication),
+        prints.get(&fingerprint::Pillar::Duplication),
         |p| !ctx.hides(p, "duplication"),
     );
     fingerprint::retain_by_fingerprint(
         &mut report.smells,
-        prints.get(&fingerprint::Namespace::Smells),
+        prints.get(&fingerprint::Pillar::Smells),
         |p| !ctx.hides(p, "smells"),
     );
 }

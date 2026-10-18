@@ -35,7 +35,7 @@ pub(crate) fn embed_texts(texts: &[String]) -> anyhow::Result<Vec<Vec<f32>>> {
 
 pub(crate) fn semantic_vectors(
     root: &Path,
-    inputs: &[semantic_cache::BundleInput],
+    inputs: &[semantic_cache::BundleInput<'_>],
 ) -> anyhow::Result<Vec<Vec<f32>>> {
     semantic_cache::vectors(root, inputs)
 }

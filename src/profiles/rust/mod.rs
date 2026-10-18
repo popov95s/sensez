@@ -27,10 +27,9 @@ mod tests;
 #[cfg(test)]
 mod units_tests;
 
-use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile, WordingProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -43,6 +42,7 @@ static RUST_INFO: LanguageInfo = LanguageInfo {
     language: Language::Rust,
     extensions: &["rs"],
     test_support: &[],
+    wording: &wording::WORDING,
 };
 impl ParseProfile for RustProfile {
     fn info(&self) -> &'static LanguageInfo {
@@ -178,11 +178,5 @@ impl TypeVocabularyProfile for RustProfile {
 
     fn is_void(&self, annotation: &str) -> bool {
         typevocab::is_void(annotation)
-    }
-}
-
-impl WordingProfile for RustProfile {
-    fn smell_wording(&self) -> &'static SmellWording {
-        &wording::WORDING
     }
 }

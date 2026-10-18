@@ -8,10 +8,9 @@ use crate::profiles::javascript::{
     deadcode, declaration, generated, manifest, performance, resolve, roots, test_support,
     traversal, typevocab, wording,
 };
-use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile, WordingProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, ImportPhase, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -70,12 +69,14 @@ static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["ts", "mts", "cts"],
     test_support: test_support::TEST_SUPPORT,
+    wording: &wording::WORDING,
 };
 
 static TSX_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["tsx"],
     test_support: test_support::TEST_SUPPORT,
+    wording: &wording::WORDING,
 };
 /// The TypeScript language profile (zero-sized).
 pub struct TsProfile;
@@ -288,12 +289,6 @@ macro_rules! impl_ts_traits {
 
             fn is_void(&self, annotation: &str) -> bool {
                 typevocab::is_void(annotation)
-            }
-        }
-
-        impl WordingProfile for $name {
-            fn smell_wording(&self) -> &'static SmellWording {
-                &wording::WORDING
             }
         }
     };

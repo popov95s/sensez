@@ -42,9 +42,9 @@ enabled = true
 #
 # [duplication.semantic]  # opt-in, requires the `eyez` feature
 # enabled = false
-# min_shape_score = 50       # token 4-gram overlap (0-100) for an edited copy
-# comment_boost_score = 85   # doc similarity (50-100) an edited copy needs
-# comment_required = true    # false also pairs undocumented near-copies
+# min_shape_score = 30       # token 4-gram overlap (0-100) separating edited copies from rewrites
+# comment_boost_score = 85   # doc similarity (50-100) that confirms an edited copy
+# comment_required = false   # true compares documented functions only
 
 [dead_code]
 # unused_imports = false
@@ -144,9 +144,9 @@ pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<ConfigWr
         body.push_str(
             "\n[duplication.semantic]\n\
              enabled = true\n\
-             # min_shape_score = 50\n\
+             # min_shape_score = 30\n\
              # comment_boost_score = 85\n\
-             # comment_required = true\n",
+             # comment_required = false\n",
         );
     }
     if options.into_pyproject {

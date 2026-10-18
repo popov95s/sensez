@@ -1,4 +1,4 @@
-//! Embedding backend. Default: Model2Vec `potion-retrieval-32M` — a pure-Rust
+//! Embedding backend. Default: Model2Vec `potion-code-16M-v2` — a pure-Rust
 //! static embedding model (token lookup + pool, no ONNX runtime), located or
 //! downloaded by [`super::model`].
 //!
@@ -9,8 +9,8 @@ use anyhow::{anyhow, Result};
 use model2vec_rs::model::StaticModel;
 use std::sync::{Arc, OnceLock};
 
-/// HuggingFace repo id for the default static retrieval model.
-pub(crate) const MODEL_ID: &str = "minishlab/potion-retrieval-32M";
+/// HuggingFace repo id for the default static code embedding model.
+pub(crate) const MODEL_ID: &str = "minishlab/potion-code-16M-v2";
 
 /// Loaded embedding model. Cheap to call; load once and reuse.
 pub struct Embedder {

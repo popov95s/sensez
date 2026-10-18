@@ -21,3 +21,11 @@ pub struct SmellWording {
     /// Placeholder words treated as missing-value sentinels (`magic_string_default`).
     pub sentinel_words: &'static [&'static str],
 }
+
+/// Missing-value placeholders shared by languages without `null`/`undefined` literals.
+pub(crate) const SENTINEL_WORDS: &[&str] =
+    &["n/a", "na", "none", "unknown", "tbd", "-", "--", "?", "??"];
+
+/// String-fallback advice shared by languages with an optional type.
+pub(crate) const FALLBACK_ADVICE: &str =
+    "prefer a tighter contract with an optional string value or a dedicated default";

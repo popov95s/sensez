@@ -14,15 +14,16 @@ use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
 
-pub use types::{Detector, Label, Namespace};
+pub use crate::report::Pillar;
+pub use types::{Detector, Label};
 
 /// One scan's findings: pillar → fingerprints in report order.
-pub type Prints = fingerprints::Groups<Namespace, Label, Detector>;
+pub type Prints = fingerprints::Groups<Pillar, Label, Detector>;
 
 /// A single finding's stable identity for a scan: a content hash, a
 /// human-readable label, and the detector that produced it (`pillar/<kind>`,
 /// or just the pillar for detectors without sub-kinds).
-pub type Print = Fingerprint<Namespace, Label, Detector>;
+pub type Print = Fingerprint<Pillar, Label, Detector>;
 
 /// A fingerprint persisted across scans with its age, label, and detector.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
@@ -47,7 +48,7 @@ pub struct ResolvedRecord {
 
 /// Pillar → fingerprint (hex string; JSON keys must be strings) → entry.
 /// Persisted as `last-scan.json`.
-pub type Aged = BTreeMap<Namespace, BTreeMap<String, AgedEntry>>;
+pub type Aged = BTreeMap<Pillar, BTreeMap<String, AgedEntry>>;
 
 /// Fingerprint every pillar of a JSON-serialized `AnalysisReport`.
 pub fn fingerprints(report: &Value) -> Prints {
@@ -127,19 +128,19 @@ pub fn detector_counts(report: &Value) -> BTreeMap<String, u64> {
 /// Stable identity fields for one finding.
 struct FingerprintKey {
     hash: u64,
-    namespace: Namespace,
+    namespace: Pillar,
     label: Label,
     detector: Detector,
 }
 
 type KeyFn = fn(&Value) -> FingerprintKey;
 
-const PILLARS: [(Namespace, &str, KeyFn); 5] = [
-    (Namespace::Cycles, "cycles", cycle_key),
-    (Namespace::DeadCode, "dead_code", dead_code_key),
-    (Namespace::Boundaries, "boundaries", boundary_key),
-    (Namespace::Duplication, "duplication", clone_key),
-    (Namespace::Smells, "smells", smell_key),
+const PILLARS: [(Pillar, &str, KeyFn); 5] = [
+    (Pillar::Cycles, "cycles", cycle_key),
+    (Pillar::DeadCode, "dead_code", dead_code_key),
+    (Pillar::Boundaries, "boundaries", boundary_key),
+    (Pillar::Duplication, "duplication", clone_key),
+    (Pillar::Smells, "smells", smell_key),
 ];
 
 fn hash_parts(parts: &[&str]) -> u64 {
@@ -162,7 +163,7 @@ fn cycle_key(finding: &Value) -> FingerprintKey {
     FingerprintKey {
         hash: hash_parts(&modules),
         label: Label::Cycle { modules: label },
-        namespace: Namespace::Cycles,
+        namespace: Pillar::Cycles,
         detector: Detector::Cycles,
     }
 }
@@ -182,7 +183,7 @@ fn dead_code_key(finding: &Value) -> FingerprintKey {
             symbol: symbol.to_string(),
             symbol_kind: kind.to_string(),
         },
-        namespace: Namespace::DeadCode,
+        namespace: Pillar::DeadCode,
         detector: Detector::DeadCode {
             symbol_kind: kind.to_string(),
         },
@@ -203,7 +204,7 @@ fn boundary_key(finding: &Value) -> FingerprintKey {
             to: to.to_string(),
             rule: rule.to_string(),
         },
-        namespace: Namespace::Boundaries,
+        namespace: Pillar::Boundaries,
         detector: Detector::Boundaries,
     }
 }
@@ -227,7 +228,7 @@ fn clone_key(finding: &Value) -> FingerprintKey {
             arity: arity.parse().unwrap_or_default(),
             files: label,
         },
-        namespace: Namespace::Duplication,
+        namespace: Pillar::Duplication,
         detector: Detector::Duplication,
     }
 }
@@ -249,7 +250,7 @@ fn smell_key(finding: &Value) -> FingerprintKey {
             file: file.to_string(),
             symbol: symbol.to_string(),
         },
-        namespace: Namespace::Smells,
+        namespace: Pillar::Smells,
         detector: Detector::Smell { smell },
     }
 }
