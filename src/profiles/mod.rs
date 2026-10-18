@@ -158,6 +158,10 @@ pub trait ParseProfile: Send + Sync {
     fn is_generated(&self, _path: &Path, _src: &[u8]) -> bool {
         false
     }
+    /// Languages sharing a clone family are compared as one duplication cohort.
+    fn clone_family(&self) -> Language {
+        self.info().language
+    }
 }
 
 pub trait ModuleProfile: Send + Sync {

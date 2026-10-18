@@ -144,10 +144,20 @@
   ],
   "duplication": [
     {
+      "absorbed": [
+        {
+          "copies": 2,
+          "detector": {
+            "kind": "structural"
+          },
+          "token_length": 120
+        }
+      ],
       "action": "advisory",
       "detector": {
         "kind": "structural"
       },
+      "hint": "structural clone; also structural clone (120 tokens, 2 of 3 copies)",
       "occurrences": [
         {
           "end_row": 37,
@@ -166,6 +176,40 @@
         }
       ],
       "token_length": 119
+    },
+    {
+      "absorbed": [
+        {
+          "copies": 2,
+          "detector": {
+            "kind": "structural"
+          },
+          "token_length": 225
+        }
+      ],
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "hint": "structural clone; also structural clone (225 tokens, 2 of 3 copies)",
+      "occurrences": [
+        {
+          "end_row": 81,
+          "file": "<zod>/packages/bench/init.ts",
+          "start_row": 27
+        },
+        {
+          "end_row": 89,
+          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
+          "start_row": 14
+        },
+        {
+          "end_row": 81,
+          "file": "<zod>/packages/bench/object-moltar.ts",
+          "start_row": 6
+        }
+      ],
+      "token_length": 129
     },
     {
       "action": "advisory",
@@ -195,15 +239,15 @@
         {
           "end_row": 50,
           "file": "<zod>/packages/bench/datetime-regex.ts",
-          "start_row": 16
+          "start_row": 5
         },
         {
           "end_row": 50,
           "file": "<zod>/packages/zod/src/v3/benchmarks/datetime.ts",
-          "start_row": 16
+          "start_row": 5
         }
       ],
-      "token_length": 122
+      "token_length": 156
     },
     {
       "action": "advisory",
@@ -222,26 +266,7 @@
           "start_row": 8
         }
       ],
-      "token_length": 166
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 89,
-          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
-          "start_row": 14
-        },
-        {
-          "end_row": 81,
-          "file": "<zod>/packages/bench/object-moltar.ts",
-          "start_row": 6
-        }
-      ],
-      "token_length": 225
+      "token_length": 164
     }
   ],
   "meta": {
@@ -255,7 +280,7 @@
       "generated": 0,
       "tests": 171
     },
-    "duplication_total": 19,
+    "duplication_total": 22,
     "external_edges": 462,
     "internal_edges": 521,
     "mode": "full",

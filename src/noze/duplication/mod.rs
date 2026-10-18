@@ -60,11 +60,11 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
 
 /// Detect duplication per the config (path excludes, threshold, gap stitching).
 ///
-/// Files are partitioned by language before flattening: the master token buffer
-/// uses a shared code alphabet, so mixing languages would let a Python and a JS
-/// function of the same control-flow shape match as a "clone". Detecting within
-/// each language cohort keeps clones meaningful and lets each partition map its
-/// occurrences back through its own file slice.
+/// Files are partitioned by the profile's clone family before flattening: the
+/// master token buffer uses a shared code alphabet, so mixing languages would
+/// let a Python and a JS function of the same control-flow shape match as a
+/// "clone". Detecting within each family keeps clones meaningful and lets each
+/// partition map its occurrences back through its own file slice.
 pub fn detect_with_root(
     files: &[ParsedFile],
     config: &Duplication,
@@ -77,12 +77,15 @@ pub fn detect_with_root(
     let scope = SourceScope::for_duplication(config);
     let kept: Vec<&ParsedFile> = files.iter().filter(|f| scope.includes(f)).collect();
 
-    let mut by_language: BTreeMap<crate::spine::ir::Language, Vec<&ParsedFile>> = BTreeMap::new();
+    let mut by_family: BTreeMap<crate::spine::ir::Language, Vec<&ParsedFile>> = BTreeMap::new();
     for file in &kept {
-        by_language.entry(file.language).or_default().push(*file);
+        by_family
+            .entry(crate::profiles::registry::clone_family(file.language))
+            .or_default()
+            .push(*file);
     }
 
-    let partitions: Vec<_> = by_language.into_values().collect();
+    let partitions: Vec<_> = by_family.into_values().collect();
     let ((mut out, mut issues), class_shapes) = rayon::join(
         || {
             partitions
@@ -117,7 +120,7 @@ pub fn detect_with_root(
     (out, issues)
 }
 
-/// Run the suffix-array clone pipeline over one single-language file cohort.
+/// Run the suffix-array clone pipeline over one clone-family file cohort.
 fn detect_partition(
     kept: &[&ParsedFile],
     config: &Duplication,
@@ -126,10 +129,14 @@ fn detect_partition(
     let mut seen: FxHashSet<u64> = FxHashSet::default();
     let mut out: Vec<CloneClass> = Vec::new();
     let mut master = flatten::build(kept);
-    let groups = clones::extract(&mut master, config.threshold);
+    let (seed, nesting) = gapped::seed(config.threshold, config.max_gap);
+    let groups = clones::extract(&mut master, seed, nesting);
     let clusters = gapped::stitch(groups, &master.spans, config.max_gap);
 
-    for cluster in clusters {
+    for cluster in clusters
+        .into_iter()
+        .filter(|cluster| cluster.matched >= config.threshold)
+    {
         let cluster_occurrences: Vec<CloneOccurrence> = cluster
             .occ
             .iter()

@@ -163,17 +163,17 @@
       },
       "occurrences": [
         {
-          "end_row": 415,
+          "end_row": 445,
           "file": "<flask>/src/flask/app.py",
           "start_row": 382
         },
         {
-          "end_row": 105,
+          "end_row": 128,
           "file": "<flask>/src/flask/blueprints.py",
           "start_row": 72
         }
       ],
-      "token_length": 63
+      "token_length": 101
     },
     {
       "action": "advisory",

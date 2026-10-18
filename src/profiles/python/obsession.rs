@@ -2,7 +2,7 @@
 //! single body walk in [`super::units`] (no second traversal). Collects raw
 //! structure only — thresholds and severity live in `noze::smells`.
 
-use crate::profiles::fallback_guard::{guards_own_value, GuardSyntax};
+use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
 use crate::profiles::walk::{self, MutationTarget};
 use crate::spine::ir::{FallbackSink, FunctionUnit, LiteralMembership, SchemaCall};
 use tree_sitter::Node;
@@ -10,6 +10,8 @@ use tree_sitter::Node;
 const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
     truthy_prefixes: &[],
     presence_suffixes: &[" is not None", " != None", " != \"\"", " != ''"],
+    absence_prefixes: &["not "],
+    absence_suffixes: &[" is None", " == None", " == \"\"", " == ''"],
     accessors: &[".", "["],
 };
 
@@ -121,22 +123,19 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     );
 }
 
-/// `value if value else "?"` — Python leaves the branches unnamed, but the
-/// grammar fixes them as value, condition, fallback.
+/// `value if value else "?"` or `"?" if value is None else value` — Python leaves
+/// the branches unnamed, but the grammar fixes them as then, condition, otherwise.
 fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let (Some(value), Some(condition), Some(fallback)) = (
+    let (Some(then), Some(condition), Some(otherwise)) = (
         node.named_child(0),
         node.named_child(1),
         node.named_child(2),
     ) else {
         return;
     };
-    let guarded = walk::node_text(condition, src)
-        .zip(walk::node_text(value, src))
-        .is_some_and(|(condition, value)| guards_own_value(condition, value, &GUARD_SYNTAX));
-    if !guarded {
+    let Some(fallback) = fallback_branch(condition, then, otherwise, src, &GUARD_SYNTAX) else {
         return;
-    }
+    };
     walk::record_string_fallback(
         unit,
         string_literal_text(fallback, src),

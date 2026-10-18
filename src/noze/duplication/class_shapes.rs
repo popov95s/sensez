@@ -24,7 +24,7 @@ pub fn detect(
 }
 
 struct ClassShape {
-    language: Language,
+    family: Language,
     name: String,
     occurrence: CloneOccurrence,
     properties: BTreeMap<PropertyKey, usize>,
@@ -52,7 +52,7 @@ fn collect_classes(files: &[&ParsedFile]) -> Vec<ClassShape> {
                 continue;
             }
             out.push(ClassShape {
-                language: file.language,
+                family: crate::profiles::registry::clone_family(file.language),
                 name: class.name.clone(),
                 occurrence: CloneOccurrence {
                     file: file.path.clone(),
@@ -85,7 +85,7 @@ fn same_name_findings(classes: &[ClassShape]) -> Vec<CloneClass> {
     let mut groups: BTreeMap<(Language, &str), Vec<&ClassShape>> = BTreeMap::new();
     for class in classes {
         groups
-            .entry((class.language, class.name.as_str()))
+            .entry((class.family, class.name.as_str()))
             .or_default()
             .push(class);
     }
@@ -114,7 +114,7 @@ fn property_overlap_findings(classes: &[ClassShape], min_overlap: usize) -> Vec<
             continue;
         }
         for right in classes.iter().skip(i + 1) {
-            if left.language != right.language || right.properties.len() < min_overlap {
+            if left.family != right.family || right.properties.len() < min_overlap {
                 continue;
             }
             let shared = shared_properties(left, right);

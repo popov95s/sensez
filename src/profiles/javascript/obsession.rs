@@ -5,7 +5,7 @@
 
 use super::fallback_sink::fallback_sink;
 use super::membership;
-use crate::profiles::fallback_guard::{guards_own_value, GuardSyntax};
+use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
 use crate::profiles::walk::{self, MutationTarget};
 use crate::spine::ir::{record_attr, FunctionUnit, MutatorFamily, SchemaCall};
 use tree_sitter::Node;
@@ -32,6 +32,15 @@ const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
         " !== undefined",
         " !== \"\"",
         " !== ''",
+    ],
+    absence_prefixes: &["!"],
+    absence_suffixes: &[
+        " == null",
+        " === null",
+        " == undefined",
+        " === undefined",
+        " === \"\"",
+        " === ''",
     ],
     accessors: &[".", "?.", "["],
 };
@@ -78,21 +87,18 @@ fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     );
 }
 
-/// `x ? x : "?"` — a ternary is a fallback only when it guards its own value.
+/// `x ? x : "?"` or `!x ? "?" : x` — a ternary is a fallback only when it guards its own value.
 fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let (Some(condition), Some(value), Some(fallback)) = (
+    let (Some(condition), Some(then), Some(otherwise)) = (
         node.child_by_field_name("condition"),
         node.child_by_field_name("consequence"),
         node.child_by_field_name("alternative"),
     ) else {
         return;
     };
-    let guarded = walk::node_text(condition, src)
-        .zip(walk::node_text(value, src))
-        .is_some_and(|(condition, value)| guards_own_value(condition, value, &GUARD_SYNTAX));
-    if !guarded {
+    let Some(fallback) = fallback_branch(condition, then, otherwise, src, &GUARD_SYNTAX) else {
         return;
-    }
+    };
     walk::record_string_fallback(
         unit,
         string_literal_text(fallback, src),

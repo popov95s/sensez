@@ -23,6 +23,9 @@ mod dead_code_tests;
 mod paths;
 pub(crate) use paths::ResolutionCache;
 #[cfg(test)]
+#[path = "duplication_tests.rs"]
+mod duplication_tests;
+#[cfg(test)]
 #[path = "paths_tests.rs"]
 mod paths_tests;
 mod type_imports;
@@ -92,6 +95,10 @@ impl ParseProfile for TsProfile {
     fn is_generated(&self, path: &Path, src: &[u8]) -> bool {
         generated::is_generated(path, src)
     }
+
+    fn clone_family(&self) -> Language {
+        Language::JavaScript
+    }
 }
 
 /// The TSX language profile (zero-sized).
@@ -112,6 +119,10 @@ impl ParseProfile for TsxProfile {
 
     fn is_generated(&self, path: &Path, src: &[u8]) -> bool {
         generated::is_generated(path, src)
+    }
+
+    fn clone_family(&self) -> Language {
+        Language::JavaScript
     }
 }
 

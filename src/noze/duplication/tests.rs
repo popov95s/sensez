@@ -191,3 +191,125 @@ fn exclude_globs_drop_matches() {
     };
     assert!(detect(&files, &excluded).is_empty(), "scripts excluded");
 }
+
+const SUMMARY_HEAD: &str = "def summarize(orders, limit):\n    totals = {}\n    for order in orders:\n        key = order.customer.id\n        entry = totals.get(key, Entry())\n        entry.count += 1\n        entry.amount += order.total * order.quantity\n        totals[key] = entry\n";
+const SUMMARY_SORT: &str = "    ranked = sorted(totals.items(), key=by_amount)\n";
+const SUMMARY_REPORT: &str = "    report.write(ranked, header=\"summary\")\n";
+const SUMMARY_SHIP: &str =
+    "    shipping.notify(ranked, channel=\"ops\")\n    cache.store(ranked, ttl=300)\n";
+const SUMMARY_TAIL: &str = "    if len(ranked) > limit:\n        ranked = ranked[:limit]\n    audit.log(\"summarized\", len(ranked))\n    archive.save(ranked, bucket=\"reports\", compress=True)\n    return ranked\n";
+const INSERT_METRICS: &str = "    metrics.increment(\"orders.summarized\", len(orders))\n";
+const INSERT_TRACE: &str = "    tracing.mark(\"ranked\")\n";
+
+/// Default config with no excludes (stitching on).
+fn cfg_default() -> Duplication {
+    Duplication {
+        exclude: vec![],
+        ..Default::default()
+    }
+}
+
+fn pairs(clones: &[CloneClass], left: &str, right: &str) -> bool {
+    clones.iter().any(|class| {
+        let has = |name: &str| class.occurrences.iter().any(|o| o.file.ends_with(name));
+        has(left) && has(right)
+    })
+}
+
+fn original() -> String {
+    [
+        SUMMARY_HEAD,
+        SUMMARY_SORT,
+        SUMMARY_REPORT,
+        SUMMARY_SHIP,
+        SUMMARY_TAIL,
+    ]
+    .concat()
+}
+
+/// Both halves around a one-statement insert are below the threshold, so only
+/// seed extraction plus stitching reports the copy.
+#[test]
+fn one_statement_insert_is_stitched_at_defaults() {
+    let tmp = tempfile::tempdir().unwrap();
+    let original = original();
+    let edited = [
+        SUMMARY_HEAD,
+        SUMMARY_SORT,
+        INSERT_METRICS,
+        SUMMARY_REPORT,
+        SUMMARY_SHIP,
+        SUMMARY_TAIL,
+    ]
+    .concat();
+    let files = write_files(tmp.path(), &[("a.py", &original), ("b.py", &edited)]);
+    assert!(
+        detect(&files, &cfg(50)).is_empty(),
+        "each exact half must stay below the threshold"
+    );
+    let clones = detect(&files, &cfg_default());
+    assert!(pairs(&clones, "a.py", "b.py"), "{clones:?}");
+}
+
+#[test]
+fn two_small_inserts_chain_into_one_clone() {
+    let tmp = tempfile::tempdir().unwrap();
+    let original = original();
+    let edited = [
+        SUMMARY_HEAD,
+        INSERT_METRICS,
+        SUMMARY_SORT,
+        SUMMARY_REPORT,
+        SUMMARY_SHIP,
+        INSERT_TRACE,
+        SUMMARY_TAIL,
+    ]
+    .concat();
+    let files = write_files(tmp.path(), &[("a.py", &original), ("b.py", &edited)]);
+    let clones = detect(&files, &cfg_default());
+    let stitched = clones
+        .iter()
+        .find(|class| class.occurrences.len() == 2)
+        .unwrap_or_else(|| panic!("no stitched clone in {clones:?}"));
+    let spans: Vec<_> = stitched
+        .occurrences
+        .iter()
+        .map(|o| (o.start_row, o.end_row))
+        .collect();
+    let whole = [(1, original.lines().count()), (1, edited.lines().count())];
+    assert_eq!(spans, whole, "{clones:?}");
+}
+
+const IDIOM_FETCH: &str = "    try:\n        payload = client.fetch(url, timeout=30)\n    except TimeoutError:\n        log.warning(\"fetch timed out\", url)\n        raise\n";
+const IDIOM_STORE: &str =
+    "    for row in payload.rows:\n        store.put(row.key, row.value, ttl=600)\n";
+const FILLER_USERS: &str = "    users = directory.lookup(payload.owner)\n    if users.active:\n        mailer.send(users.email, subject=\"welcome\")\n    audit.touch(users.id)\n    cache.drop(users.id)\n";
+const FILLER_LEDGER: &str = "    total = sum(item.price for item in payload.items)\n    ledger.record(total, currency=\"EUR\")\n    ledger.flush(batch=True)\n    ledger.close()\n";
+
+/// Two unrelated functions sharing two short idioms: the gap outweighs the
+/// matched tokens, so the density guard refuses to stitch them.
+#[test]
+fn sparse_shared_idioms_are_not_stitched() {
+    let tmp = tempfile::tempdir().unwrap();
+    let users = [
+        "def load_users(url):\n",
+        IDIOM_FETCH,
+        FILLER_USERS,
+        IDIOM_STORE,
+    ]
+    .concat();
+    let ledger = [
+        "def load_ledger(url):\n",
+        IDIOM_FETCH,
+        FILLER_LEDGER,
+        IDIOM_STORE,
+    ]
+    .concat();
+    let files = write_files(tmp.path(), &[("users.py", &users), ("ledger.py", &ledger)]);
+    let config = Duplication {
+        max_gap: 25,
+        ..cfg(24)
+    };
+    let clones = detect(&files, &config);
+    assert!(clones.is_empty(), "{clones:?}");
+}

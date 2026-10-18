@@ -103,14 +103,19 @@ fn hash_operator(operator: &str) -> u64 {
     HASH_BASE + (hasher.finish() % (HASH_SPAN - HASH_BASE))
 }
 
+/// Rehash a code for a type-declaration position so it rarely equals the value code.
+pub(crate) fn type_position(code: u64) -> u64 {
+    HASH_BASE + ((code ^ 0x9e37_79b9_7f4a_7c15) % (HASH_SPAN - HASH_BASE))
+}
+
 pub(crate) fn hash(text: &str) -> u64 {
     // Non-cryptographic: lexeme codes are an internal equality alphabet, never
     // exposed to adversarial input, so SipHash's DoS-resistance is wasted cost.
     // fxhash is a single multiply-rotate per word — ~2-3x faster in this
     // per-identifier hot loop. Folded into [HASH_BASE, HASH_SPAN) so codes stay
     // below the separator namespace and clear of the reserved structural codes.
-    // Within-language only (duplication partitions by language before flatten),
-    // so codes are never compared across languages and need not agree.
+    // Within-family only (duplication partitions by clone family before flatten),
+    // so codes are never compared across families and need not agree.
     use std::hash::BuildHasher;
     HASH_BASE + (rustc_hash::FxBuildHasher.hash_one(text) % (HASH_SPAN - HASH_BASE))
 }

@@ -31,6 +31,7 @@ pub(crate) mod test_support;
 pub(crate) mod tokens;
 pub(crate) mod traversal;
 pub(crate) mod typehints;
+pub(crate) mod typespace;
 pub(crate) mod typevocab;
 pub(crate) mod units;
 pub(crate) mod wording;

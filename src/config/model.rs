@@ -121,7 +121,7 @@ impl Default for Config {
                 include_tests: false,
                 include_generated: false,
                 threshold: 50,
-                max_gap: 10,
+                max_gap: 25,
                 near_miss: false,
                 semantic: SemanticDuplication::default(),
                 class_name_duplicates: false,
