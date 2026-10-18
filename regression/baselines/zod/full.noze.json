@@ -285,7 +285,7 @@
           "start_row": 1967
         }
       ],
-      "token_length": 52
+      "token_length": 51
     },
     {
       "action": "advisory",
@@ -342,26 +342,7 @@
           "start_row": 1711
         }
       ],
-      "token_length": 73
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 1864,
-          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
-          "start_row": 1861
-        },
-        {
-          "end_row": 1898,
-          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
-          "start_row": 1895
-        }
-      ],
-      "token_length": 50
+      "token_length": 72
     },
     {
       "action": "advisory",
@@ -456,7 +437,7 @@
           "start_row": 349
         }
       ],
-      "token_length": 96
+      "token_length": 95
     },
     {
       "action": "advisory",
@@ -475,7 +456,7 @@
           "start_row": 3701
         }
       ],
-      "token_length": 55
+      "token_length": 54
     },
     {
       "action": "advisory",
@@ -532,7 +513,7 @@
           "start_row": 7
         }
       ],
-      "token_length": 148
+      "token_length": 147
     },
     {
       "action": "advisory",
@@ -552,25 +533,6 @@
         }
       ],
       "token_length": 102
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 485,
-          "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
-          "start_row": 472
-        },
-        {
-          "end_row": 504,
-          "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
-          "start_row": 491
-        }
-      ],
-      "token_length": 50
     },
     {
       "action": "advisory",
@@ -651,7 +613,7 @@
           "start_row": 84
         }
       ],
-      "token_length": 59
+      "token_length": 58
     }
   ],
   "meta": {
@@ -665,7 +627,7 @@
       "generated": 0,
       "tests": 171
     },
-    "duplication_total": 22,
+    "duplication_total": 20,
     "external_edges": 462,
     "internal_edges": 521,
     "mode": "full",

@@ -15,6 +15,7 @@ mod consolidate;
 mod flatten;
 mod gapped;
 mod near_miss;
+mod open_tail;
 #[cfg(test)]
 mod range_tests;
 #[cfg(feature = "eyez")]
@@ -135,6 +136,7 @@ fn detect_partition(
 
     for cluster in clusters
         .into_iter()
+        .map(|cluster| open_tail::close_tails(cluster, &master.spans))
         .filter(|cluster| cluster.matched >= config.threshold)
     {
         let cluster_occurrences: Vec<CloneOccurrence> = cluster
