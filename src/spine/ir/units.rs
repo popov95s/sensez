@@ -2,7 +2,7 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
-use super::{PerformanceFacts, StringFallback};
+use super::{MagicNumber, PerformanceFacts, StringFallback};
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
@@ -71,6 +71,9 @@ pub enum CallbackPosition {
     Argument,
 }
 
+/// Enclosing `(conditional node id, arm index)` pairs, outermost first.
+pub type BranchPath = Vec<(usize, usize)>;
+
 /// Display name of a scope or function that has none in source.
 pub const ANONYMOUS: &str = "<anonymous>";
 
@@ -85,6 +88,8 @@ pub struct FunctionUnit {
     /// Deepest block nesting within the body (if/for/while/try/with).
     pub max_nesting: usize,
     pub return_count: usize,
+    /// Returns that are the sole statement of a top-level `if` with no else.
+    pub guard_returns: usize,
     /// Decision points (cyclomatic basis): cyclomatic complexity = 1 + this.
     pub branch_count: usize,
     /// Outer-`if` lines of `if x { if y { ... } }` shapes with no else/default path.
@@ -93,8 +98,8 @@ pub struct FunctionUnit {
     pub nested_ternaries: Vec<NestedTernary>,
     /// Nesting-weighted cognitive-complexity accumulator (Sonar-style).
     pub cognitive: usize,
-    /// Count of "magic" numeric literals (not 0/1/2).
-    pub magic_numbers: usize,
+    /// "Magic" numeric literals (not 0/1/2) outside always-named contexts.
+    pub magic_numbers: Vec<MagicNumber>,
     /// Number of source lines occupied by comments inside this function body.
     pub comment_lines: usize,
     /// Comment lines classed as step-by-step narration.
@@ -106,8 +111,8 @@ pub struct FunctionUnit {
     /// Outermost `a.b.c.d` attribute chains (Law of Demeter / message chains).
     pub chain_hits: Vec<ChainHit>,
     pub is_method: bool,
-    /// Local name → number of plain (non-augmented) assignments to it.
-    pub local_reassigns: HashMap<String, usize>,
+    /// Local name → branch path of each plain (non-augmented) assignment to it.
+    pub local_reassigns: HashMap<String, Vec<BranchPath>>,
     /// Receiver identifier → number of member accesses on it (feature envy).
     /// Includes `self` so callers can compare external vs. own access.
     pub receiver_access: HashMap<String, usize>,

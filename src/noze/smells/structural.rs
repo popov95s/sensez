@@ -1,11 +1,12 @@
 //! Structural smells: deep nesting, long parameter lists, too many returns,
 //! magic numbers, message chains (Law of Demeter), and split variables.
 
+use super::exclusive_paths::max_on_one_path;
 use super::lines::{hit_lines, line_list};
 use super::{make, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{FunctionUnit, MagicContext, MagicNumber};
 use std::collections::BTreeMap;
 
 pub fn detect(
@@ -31,7 +32,7 @@ impl StructuralDetector<'_, '_> {
         self.deep_nesting(m);
         self.long_params(m);
         self.too_many_returns(m);
-        if self.cfg.magic_numbers && m.magic_numbers > 0 {
+        if self.cfg.magic_numbers {
             self.magic_numbers(m);
         }
         self.message_chains(m);
@@ -79,35 +80,87 @@ impl StructuralDetector<'_, '_> {
     }
 
     fn too_many_returns(&mut self, m: &FunctionUnit) {
-        if !self.cfg.too_many_returns || m.return_count <= self.cfg.max_returns {
+        let excluded = if self.cfg.count_guard_clauses {
+            0
+        } else {
+            m.guard_returns
+        };
+        let counted = m.return_count - excluded;
+        if !self.cfg.too_many_returns || counted <= self.cfg.max_returns {
             return;
         }
+        let guards = if excluded > 0 {
+            format!(", {excluded} guard clause(s) excluded")
+        } else {
+            String::new()
+        };
         self.out.push(make(
             SmellKind::TooManyReturns,
             format!(
-                "{} return statements (threshold {})",
-                m.return_count, self.cfg.max_returns
+                "{counted} return statements (threshold {}{guards})",
+                self.cfg.max_returns
             ),
             self.ctx.path,
             m.start_line,
             &m.name,
             Severity::Warning,
-            m.return_count as u32,
+            counted as u32,
             self.cfg.max_returns as u32,
         ));
     }
 
     fn magic_numbers(&mut self, m: &FunctionUnit) {
-        self.out.push(make(
+        let sites: Vec<&MagicNumber> = m
+            .magic_numbers
+            .iter()
+            .filter(|site| self.reports_magic(site))
+            .collect();
+        let Some(first) = sites.first() else {
+            return;
+        };
+        let shown: Vec<String> = sites
+            .iter()
+            .take(3)
+            .map(|site| format!("{}@L{}", site.text, site.line))
+            .collect();
+        let more = match sites.len().saturating_sub(3) {
+            0 => String::new(),
+            rest => format!(" (+{rest} more)"),
+        };
+        let finding = make(
             SmellKind::MagicNumbers,
-            format!("{} magic numeric literal(s)", m.magic_numbers),
+            format!(
+                "{} magic numeric literal(s): {}{more}",
+                sites.len(),
+                shown.join(", ")
+            ),
             self.ctx.path,
-            m.start_line,
+            first.line,
             &m.name,
             Severity::Info,
-            m.magic_numbers as u32,
+            sites.len() as u32,
             0,
-        ));
+        );
+        self.out.push(SmellFinding {
+            lines: hit_lines(sites.iter().map(|site| site.line)),
+            ..finding
+        });
+    }
+
+    fn reports_magic(&self, site: &MagicNumber) -> bool {
+        let waived = match site.context {
+            MagicContext::Plain => false,
+            MagicContext::ArrayIndex => self.cfg.magic_number_ignore_array_indexes,
+            MagicContext::DefaultValue => self.cfg.magic_number_ignore_default_values,
+            MagicContext::HttpStatus => self.cfg.magic_number_allow_http_status,
+        };
+        let value = site.text.parse::<f64>().ok();
+        let ignored = self
+            .cfg
+            .magic_number_ignore
+            .iter()
+            .any(|ignore| ignore.parse::<f64>().ok() == value && value.is_some());
+        !waived && !ignored
     }
 
     fn message_chains(&mut self, m: &FunctionUnit) {
@@ -203,7 +256,10 @@ impl StructuralDetector<'_, '_> {
     /// (extract a helper that returns the value).
     fn split_variables(&mut self, m: &FunctionUnit) {
         let min_assigns = self.cfg.split_variable_min_assigns.max(2);
-        for (name, &count) in &m.local_reassigns {
+        let mut locals: Vec<_> = m.local_reassigns.iter().collect();
+        locals.sort_unstable_by_key(|(name, _)| *name);
+        for (name, paths) in locals {
+            let count = max_on_one_path(paths);
             if count < min_assigns {
                 continue;
             }

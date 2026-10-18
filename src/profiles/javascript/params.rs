@@ -26,7 +26,7 @@ fn push_param(p: Node, src: &[u8], out: &mut Vec<String>) {
     }
 }
 
-pub(super) fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
+fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
     match node.kind() {
         "identifier" | "shorthand_property_identifier_pattern" => {
             node.utf8_text(src).ok().map(str::to_string)

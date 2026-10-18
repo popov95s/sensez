@@ -1,7 +1,12 @@
 //! Read-only queries over tree-sitter nodes shared by the walkers.
 
-use crate::spine::ir::{PerfLine, PerformanceFacts};
+use crate::spine::ir::{ChainHit, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
+
+/// Text after the last `.`: `pkg.mod.Name` → `Name`.
+pub(crate) fn last_segment(path: &str) -> &str {
+    path.rsplit_once('.').map_or(path, |(_, last)| last)
+}
 
 pub(crate) fn node_text<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
     node.utf8_text(src).ok()
@@ -76,4 +81,46 @@ pub(crate) fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> O
         .and_then(|n| node_text(n, src))
         .filter(|text| text.len() <= 120)
         .map(str::to_string)
+}
+
+/// One grammar's member-access node: its kind, object field and chain-root kinds.
+pub(crate) struct ChainShape {
+    pub(crate) member_kind: &'static str,
+    pub(crate) object_field: &'static str,
+    pub(crate) root_kinds: &'static [&'static str],
+}
+
+/// The chain hit for the outermost member of a pure `a.b.c.d` access; inner members yield `None`.
+pub(crate) fn chain_hit(node: Node, src: &[u8], shape: &ChainShape) -> Option<ChainHit> {
+    let is_inner = node.parent().is_some_and(|p| {
+        p.kind() == shape.member_kind
+            && p.child_by_field_name(shape.object_field).map(|o| o.id()) == Some(node.id())
+    });
+    if is_inner {
+        return None;
+    }
+    Some(ChainHit {
+        line: node.start_position().row + 1,
+        depth: chain_len(node, shape),
+        root: chain_root(node, src, shape),
+    })
+}
+
+fn chain_len(node: Node, shape: &ChainShape) -> usize {
+    match node.child_by_field_name(shape.object_field) {
+        Some(obj) if obj.kind() == shape.member_kind => chain_len(obj, shape) + 1,
+        _ => 1,
+    }
+}
+
+fn chain_root(node: Node, src: &[u8], shape: &ChainShape) -> Option<String> {
+    let obj = node.child_by_field_name(shape.object_field)?;
+    if obj.kind() == shape.member_kind {
+        return chain_root(obj, src, shape);
+    }
+    shape
+        .root_kinds
+        .contains(&obj.kind())
+        .then(|| node_text(obj, src).map(str::to_string))
+        .flatten()
 }

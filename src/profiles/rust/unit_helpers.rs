@@ -151,30 +151,11 @@ impl ArityScan {
     }
 }
 
-pub(super) fn chain_len(node: Node) -> usize {
-    match node.child_by_field_name("value") {
-        Some(value) if value.kind() == "field_expression" => chain_len(value) + 1,
-        _ => 1,
-    }
-}
-
-/// True when `node` is the value of an enclosing field access, so only the
-/// outermost field of `a.b.c` records a chain.
-pub(super) fn is_chain_inner(node: Node) -> bool {
-    node.parent().is_some_and(|p| {
-        p.kind() == "field_expression"
-            && p.child_by_field_name("value").map(|v| v.id()) == Some(node.id())
-    })
-}
-
-pub(super) fn chain_root(node: Node, src: &[u8]) -> Option<String> {
-    let value = node.child_by_field_name("value")?;
-    match value.kind() {
-        "field_expression" => chain_root(value, src),
-        "identifier" | "self" => value.utf8_text(src).ok().map(str::to_string),
-        _ => None,
-    }
-}
+pub(super) const CHAIN: walk::ChainShape = walk::ChainShape {
+    member_kind: "field_expression",
+    object_field: "value",
+    root_kinds: &["identifier", "self"],
+};
 
 pub(super) fn is_loop(kind: &str) -> bool {
     matches!(
@@ -220,4 +201,13 @@ pub(super) fn is_string(kind: &str) -> bool {
 
 pub(super) fn unquote(text: &str) -> String {
     text.trim_matches('"').trim_matches('\'').to_string()
+}
+
+/// Method name and receiver of a `receiver.method(..)` call.
+pub(super) fn method_call<'a>(call: Node<'a>, src: &'a [u8]) -> Option<(&'a str, Node<'a>)> {
+    let function = call
+        .child_by_field_name("function")
+        .filter(|f| f.kind() == "field_expression")?;
+    let method = function.child_by_field_name("field")?.utf8_text(src).ok()?;
+    Some((method, function.child_by_field_name("value")?))
 }

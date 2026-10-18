@@ -583,7 +583,10 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.magic_numbers]
 enabled = true
 action = "warning"
-# This detector has no extra threshold knobs.
+ignore = [] # numeric literals never reported
+ignore_array_indexes = true # skip literal array indexes such as x[3]
+ignore_default_values = true # skip literals in parameter default values
+allow_http_status = true # skip 100-599 compared or assigned to a status field
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -1044,11 +1047,11 @@ Many exit points make the function harder to follow and test.
     def status_for(order: Order) -> str:
         if order.cancelled:
             return "cancelled"
-        if order.refunded:
+        elif order.refunded:
             return "refunded"
-        if order.failed:
+        elif order.failed:
             return "failed"
-        if order.paid:
+        elif order.paid:
             return "paid"
         return "open"
     ```
@@ -1081,14 +1084,11 @@ Many exit points make the function harder to follow and test.
     function statusFor(order: Order): string {
       if (order.cancelled) {
         return "cancelled";
-      }
-      if (order.refunded) {
+      } else if (order.refunded) {
         return "refunded";
-      }
-      if (order.failed) {
+      } else if (order.failed) {
         return "failed";
-      }
-      if (order.paid) {
+      } else if (order.paid) {
         return "paid";
       }
       return "open";
@@ -1128,6 +1128,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 enabled = true
 action = "warning"
 max_returns = 4 # allowed return statements before flagging
+count_guard_clauses = false # also count top-level guard-clause returns
 ```
 
 <details class="sensez-proposed-fix" markdown="1">

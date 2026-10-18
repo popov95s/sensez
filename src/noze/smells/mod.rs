@@ -9,6 +9,7 @@ mod clumps;
 mod cohesion;
 mod complexity;
 mod coupling;
+mod exclusive_paths;
 mod external_vocab;
 mod graphy;
 mod inherit;
@@ -27,6 +28,8 @@ mod cohesion_tests;
 #[cfg(test)]
 mod coupling_tests;
 #[cfg(test)]
+mod defensive_code_tests;
+#[cfg(test)]
 mod god_module_tests;
 #[cfg(test)]
 mod graph_tests;
@@ -34,6 +37,8 @@ mod graph_tests;
 mod review_risks_tests;
 #[cfg(test)]
 mod schema_tests;
+#[cfg(test)]
+mod structural_tests;
 #[cfg(test)]
 mod test_oracle_tests;
 #[cfg(test)]

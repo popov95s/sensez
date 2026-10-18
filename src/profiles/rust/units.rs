@@ -1,16 +1,18 @@
 //! Per-function structural metrics for Rust smells.
 
+use super::control_shapes;
+use crate::profiles::branch_path::branch_path;
+use crate::profiles::guard_clause::is_guard_return;
 use crate::profiles::walk;
 use crate::spine::ir::{
-    ChainHit, FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
+    FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
 };
 use tree_sitter::Node;
 
-use super::method_call::method_call;
 use super::params::param_names;
 use super::unit_helpers::{
-    call_fact, chain_len, chain_root, cognitive_weight, is_branch, is_chain_inner, is_loop,
-    is_nesting, is_string, pattern_name, target_root, tuple_type_arity, type_text, unquote,
+    call_fact, cognitive_weight, is_branch, is_loop, is_nesting, is_string, method_call,
+    pattern_name, target_root, tuple_type_arity, type_text, unquote, CHAIN,
 };
 
 const ITER_METHODS: &[&str] = &["fold", "any", "all", "count", "sum", "position"];
@@ -104,6 +106,9 @@ impl Acc<'_> {
         match node.kind() {
             "return_expression" => {
                 self.unit.return_count += 1;
+                if is_guard_return(node, &control_shapes::GUARD_CLAUSE) {
+                    self.unit.guard_returns += 1;
+                }
                 self.record_tuple_return(node);
             }
             "let_declaration" => self.record_let(node, src, frame),
@@ -135,8 +140,16 @@ impl Acc<'_> {
             .child_by_field_name("pattern")
             .and_then(|p| pattern_name(p, src))
         {
-            *self.unit.local_reassigns.entry(pat).or_insert(0) += 1;
+            self.record_local(pat, node);
         }
+    }
+
+    fn record_local(&mut self, name: String, node: Node) {
+        self.unit
+            .local_reassigns
+            .entry(name)
+            .or_default()
+            .push(branch_path(node, &control_shapes::BRANCH_ARMS));
     }
 
     fn record_assignment(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
@@ -153,19 +166,15 @@ impl Acc<'_> {
                     .performance
                     .note_advanced(frame, std::slice::from_ref(&name));
             }
-            *self.unit.local_reassigns.entry(name).or_insert(0) += 1;
+            self.record_local(name, node);
         }
         walk::record_mutation_root(self.unit, left, src, target_root);
     }
 
     fn record_field(&mut self, node: Node, src: &[u8]) {
-        if !is_chain_inner(node) {
-            self.unit.chain_hits.push(ChainHit {
-                line: node.start_position().row + 1,
-                depth: chain_len(node),
-                root: chain_root(node, src),
-            });
-        }
+        self.unit
+            .chain_hits
+            .extend(walk::chain_hit(node, src, &CHAIN));
         let Some(base) = node
             .child_by_field_name("value")
             .filter(|n| matches!(n.kind(), "identifier" | "self"))

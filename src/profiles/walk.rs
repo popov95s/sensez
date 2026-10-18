@@ -5,7 +5,8 @@
 //! [`Walked`] output is identical everywhere and lives here once.
 
 pub(crate) use super::node_query::{
-    fed_by_call, identifiers, is_field_child, loop_subject, node_text, perf_line,
+    chain_hit, fed_by_call, identifiers, is_field_child, loop_subject, node_text, perf_line,
+    ChainShape,
 };
 use crate::profiles::comment_class::{self, CommentSyntax};
 use crate::profiles::comments;

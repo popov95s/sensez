@@ -22,10 +22,15 @@ EXAMPLE_LANGUAGES = (
 )
 
 KNOB_COMMENTS = {
+    "allow_http_status": "skip 100-599 compared or assigned to a status field",
     "allow_homogeneous": "allow same-primitive tuples of up to 4 items",
     "assertion_functions": "globs for imported helpers that count as checks",
     "await_in_loop": "also flag awaited per-item calls on outside receivers",
     "callees": "globs for base.method or plain calls that hit a backend",
+    "count_guard_clauses": "also count top-level guard-clause returns",
+    "ignore": "numeric literals never reported",
+    "ignore_array_indexes": "skip literal array indexes such as x[3]",
+    "ignore_default_values": "skip literals in parameter default values",
     "ignore_roots": "chain roots never reported, e.g. a generated API client",
     "include_attributes": "also flag mutation of fields on parameters",
     "include_tests": "also flag test code and assertion arguments",

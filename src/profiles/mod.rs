@@ -6,21 +6,27 @@
 //! Each language module is `#[cfg(feature)]`-gated so an unbuilt language
 //! compiles to nothing.
 
+pub(crate) mod branch_path;
 pub(crate) mod comment_class;
 pub(crate) mod comments;
 pub(crate) mod conditionals;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod fallback_guard;
 pub(crate) mod for_loop;
+pub(crate) mod guard_clause;
 pub(crate) mod guard_fingerprint;
 pub(crate) mod lexeme;
 pub(crate) mod lineage;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
+pub(crate) mod magic_number;
 pub(crate) mod node_query;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;
 pub mod registry;
 pub(crate) mod runner_config;
 pub(crate) mod test_oracle;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
+pub(crate) mod try_handling;
 pub mod typevocab;
 pub(crate) mod walk;
 pub mod wording;

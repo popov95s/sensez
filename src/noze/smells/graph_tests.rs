@@ -217,9 +217,7 @@ fn package_index_barrels_are_not_graph_hotspots() {
 }
 
 #[test]
-fn split_variable_flags_branch_bound_local_at_min_two() {
-    // The motivating case: one name bound in both arms of an if/else. At
-    // min_assigns = 2 this enforces single-binding locals.
+fn split_variable_counts_exclusive_arms_once() {
     let cfg = Smells {
         split_variable: true,
         split_variable_min_assigns: 2,
@@ -227,17 +225,16 @@ fn split_variable_flags_branch_bound_local_at_min_two() {
     };
     let body = "def f(x):\n    if x:\n        plan = make(x)\n    else:\n        plan = load()\n    return plan\n";
     let f = local("sv_branch", body, &cfg);
-    assert!(has(&f, "split_variable"), "kinds: {:?}", kinds(&f));
+    assert!(!has(&f, "split_variable"), "kinds: {:?}", kinds(&f));
 }
 
 #[test]
 fn split_variable_default_min_flags_double_assignment() {
-    // Default min_assigns is 2: enabling the smell catches branch-bound locals.
     let cfg = Smells {
         split_variable: true,
         ..Smells::default()
     };
-    let body = "def f(x):\n    if x:\n        plan = make(x)\n    else:\n        plan = load()\n    return plan\n";
+    let body = "def f(x):\n    plan = make(x)\n    if x:\n        plan = load()\n    return plan\n";
     assert!(has(&local("sv_default", body, &cfg), "split_variable"));
 }
 

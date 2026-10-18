@@ -4,20 +4,23 @@
 //! [`FunctionUnit`] — and `this.<attr>` is normalized to the canonical `"self"`
 //! receiver so the language-neutral detectors work unchanged.
 
-use super::chains::{chain_len, chain_root, is_chain_inner};
+use super::chains::CHAIN;
 use super::member_visibility::{function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
-use super::{classunit, conditionals, loops, obsession, performance, symbols};
+use super::{
+    classunit, conditionals, control_shapes, loops, magic_numbers, obsession, performance, symbols,
+};
+use crate::profiles::branch_path::branch_path;
+use crate::profiles::guard_clause::is_guard_return;
+use crate::profiles::guard_fingerprint::GuardLog;
 use crate::profiles::lexeme::{self, BoundNames};
 use crate::profiles::lineage::Lineage;
+use crate::profiles::magic_number::{default_values, magic_number};
 use crate::profiles::walk;
-use crate::spine::ir::{bump, CallbackPosition, ChainHit, FunctionUnit, Walked};
-use std::collections::{HashMap, HashSet};
+use crate::spine::ir::{bump, CallbackPosition, FunctionUnit, Walked};
+use std::collections::HashSet;
 use tree_sitter::Node;
-
-/// Numeric literals that are never "magic".
-const ALLOWED_NUMS: [&str; 5] = ["0", "1", "2", "0.0", "1.0"];
 
 /// Every JS/TS node kind that opens its own function scope.
 pub fn is_function(kind: &str) -> bool {
@@ -35,7 +38,7 @@ pub fn is_function(kind: &str) -> bool {
 
 pub struct FunctionFacts {
     pub(crate) unit: FunctionUnit,
-    guards: HashMap<u64, usize>,
+    guards: GuardLog,
     body_start: usize,
     body_end: usize,
     depth: usize,
@@ -62,6 +65,7 @@ impl FunctionFacts {
                 function_visibility(lineage)
             },
             homogeneous_tuple_return: classunit::is_homogeneous_primitive_tuple(&tuple_return),
+            magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
             ..Default::default()
         };
         if !is_method && func.kind() == "function_declaration" {
@@ -78,7 +82,7 @@ impl FunctionFacts {
             .collect();
         FunctionFacts {
             unit,
-            guards: HashMap::new(),
+            guards: GuardLog::new(super::wording::WORDING.identifier_extra_chars),
             body_start: range.start,
             body_end: range.end,
             depth: 0,
@@ -143,6 +147,9 @@ impl FunctionFacts {
                 .extend(conditionals::nested_ternary(node)),
             "return_statement" => {
                 self.unit.return_count += 1;
+                if is_guard_return(node, &control_shapes::GUARD_CLAUSE) {
+                    self.unit.guard_returns += 1;
+                }
                 if let Some(constructor) = returned_constructor(node, src) {
                     self.unit.returned_constructors.insert(constructor);
                 }
@@ -151,13 +158,11 @@ impl FunctionFacts {
                 }
             }
             "number" => {
-                if let Ok(t) = node.utf8_text(src) {
-                    if !ALLOWED_NUMS.contains(&t) {
-                        self.unit.magic_numbers += 1;
-                    }
-                }
+                self.unit
+                    .magic_numbers
+                    .extend(magic_number(node, src, &magic_numbers::SYNTAX))
             }
-            "member_expression" => self.record_member(node, lineage.parent(node), src),
+            "member_expression" => self.record_member(node, src),
             "assignment_expression" => self.record_assignment(node, src),
             "identifier" | "shorthand_property_identifier" => self.record_capture(node, src),
             _ => {}
@@ -204,14 +209,10 @@ impl FunctionFacts {
         true
     }
 
-    fn record_member(&mut self, node: Node, parent: Option<Node>, src: &[u8]) {
-        if !is_chain_inner(node, parent) {
-            self.unit.chain_hits.push(ChainHit {
-                line: node.start_position().row + 1,
-                depth: chain_len(node),
-                root: chain_root(node, src),
-            });
-        }
+    fn record_member(&mut self, node: Node, src: &[u8]) {
+        self.unit
+            .chain_hits
+            .extend(walk::chain_hit(node, src, &CHAIN));
         let Some(obj) = node.child_by_field_name("object") else {
             return;
         };
@@ -254,7 +255,11 @@ impl FunctionFacts {
             .then(|| left.utf8_text(src).ok())
             .flatten()
         {
-            bump(&mut self.unit.local_reassigns, name);
+            self.unit
+                .local_reassigns
+                .entry(name.to_string())
+                .or_default()
+                .push(branch_path(node, &control_shapes::BRANCH_ARMS));
         }
     }
 

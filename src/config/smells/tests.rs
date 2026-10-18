@@ -240,6 +240,40 @@ fn opt_in_rule_knobs_parse() {
 }
 
 #[test]
+fn magic_number_and_return_knobs_parse() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.magic_numbers]
+            ignore = [7, 1.5]
+            ignore_array_indexes = false
+            ignore_default_values = false
+            allow_http_status = false
+
+            [rules.too_many_returns]
+            count_guard_clauses = true
+        "#,
+    )
+    .unwrap();
+
+    let ts = cfg.for_language(Language::TypeScript);
+    assert!(ts.magic_numbers);
+    assert_eq!(
+        ts.magic_number_ignore,
+        vec!["7".to_string(), "1.5".to_string()]
+    );
+    assert!(!ts.magic_number_ignore_array_indexes);
+    assert!(!ts.magic_number_ignore_default_values);
+    assert!(!ts.magic_number_allow_http_status);
+    assert!(ts.too_many_returns);
+    assert!(ts.count_guard_clauses);
+
+    let err = toml::from_str::<SmellConfig>("[rules.magic_numbers]\nignore = [\"7\"]\n")
+        .unwrap_err()
+        .to_string();
+    assert!(err.contains("ignore must be a list of numbers"), "{err}");
+}
+
+#[test]
 fn assertion_functions_must_be_a_string_list() {
     for value in ["\"expect*\"", "[1]", "[\"a{\"]"] {
         let err = toml::from_str::<SmellConfig>(&format!(
