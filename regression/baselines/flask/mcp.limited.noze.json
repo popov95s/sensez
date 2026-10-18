@@ -197,7 +197,15 @@
   ],
   "meta": {
     "boundaries_configured": false,
-    "mode": "full"
+    "mode": "full",
+    "totals": {
+      "boundaries": 0,
+      "cycles": 2,
+      "dead_code": 6,
+      "duplication": 4,
+      "smells": 138
+    },
+    "truncated": true
   },
   "smells": [
     {

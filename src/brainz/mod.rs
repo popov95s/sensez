@@ -36,6 +36,7 @@ pub(crate) fn observe_source_state(
     hub::observe_source_state(root, state);
 }
 pub use suppression::apply_suppressions;
+pub use triage::VERDICTS;
 pub use usage::usage_report;
 
 pub fn recapture() {

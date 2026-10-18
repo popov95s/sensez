@@ -28,7 +28,7 @@ fn cycle_actions(x_import: &str, configs: &[(&str, &str)]) -> Vec<ActionLevel> {
         .map(|(i, name)| parse_file(&dir.join(name), i as u32).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
-    crate::noze::cycles::detect(&cg, &[])
+    crate::noze::cycles::detect(&cg, &crate::config::Cycles::default())
         .into_iter()
         .map(|finding| finding.action)
         .collect()

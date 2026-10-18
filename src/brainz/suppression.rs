@@ -2,6 +2,7 @@
 
 use super::fingerprint::{self, Print};
 use super::triage;
+use crate::report::CloneClass;
 use std::collections::{BTreeMap, HashSet};
 use std::path::Path;
 
@@ -10,6 +11,9 @@ pub fn apply_suppressions(
     accept: &BTreeMap<String, Vec<String>>,
     report: &mut crate::report::AnalysisReport,
 ) {
+    if let Some(patterns) = accept.get("duplication") {
+        prune_accepted_occurrences(&mut report.duplication, patterns);
+    }
     let triaged = triage::load(root);
     if triaged.is_empty() && accept.is_empty() {
         return;
@@ -50,6 +54,38 @@ pub fn apply_suppressions(
     );
 }
 
+/// Drop clone occurrences under an accepted path; `a + b` label patterns keep hiding whole groups.
+fn prune_accepted_occurrences(classes: &mut Vec<CloneClass>, patterns: &[String]) {
+    let paths: Vec<&str> = patterns
+        .iter()
+        .map(String::as_str)
+        .filter(|pattern| !is_group_label(pattern))
+        .collect();
+    if paths.is_empty() {
+        return;
+    }
+    classes.retain_mut(|class| {
+        class.keep_occurrences(|occurrence| {
+            !paths.iter().any(|path| is_under(&occurrence.file, path))
+        })
+    });
+}
+
+/// `a + b`: a duplication pattern naming a whole clone group; anything else is a path.
+fn is_group_label(pattern: &str) -> bool {
+    pattern.contains(" + ")
+}
+
+/// Whether `file` contains the whole path components of `pattern` in a row.
+fn is_under(file: &Path, pattern: &str) -> bool {
+    let file_parts: Vec<_> = file.components().collect();
+    let pattern_parts: Vec<_> = Path::new(pattern).components().collect();
+    !pattern_parts.is_empty()
+        && file_parts
+            .windows(pattern_parts.len())
+            .any(|window| window == pattern_parts)
+}
+
 struct Suppress<'a> {
     ignore: &'a HashSet<String>,
     accept: &'a BTreeMap<String, Vec<String>>,
@@ -62,9 +98,11 @@ impl Suppress<'_> {
             return true;
         }
         let matches = |key: &str| {
-            self.accept
-                .get(key)
-                .is_some_and(|pats| pats.iter().any(|p| rendered.label.contains(p.as_str())))
+            self.accept.get(key).is_some_and(|pats| {
+                pats.iter()
+                    .filter(|p| key != "duplication" || is_group_label(p))
+                    .any(|p| rendered.label.contains(p.as_str()))
+            })
         };
         matches(pillar) || matches(&rendered.class)
     }
@@ -176,5 +214,65 @@ mod tests {
             !symbols.contains(&"orphan"),
             "accept-listed finding suppressed: {symbols:?}"
         );
+    }
+
+    #[test]
+    fn accepted_duplication_path_drops_only_that_occurrence() {
+        let tmp = tempfile::tempdir().unwrap();
+        let mut report = three_way_clone();
+
+        apply_suppressions(tmp.path(), &accept_duplication("forkv2/"), &mut report);
+
+        let files: Vec<_> = report.duplication[0]
+            .occurrences
+            .iter()
+            .map(|occurrence| occurrence.file.to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(files, ["core/util.ts", "other/util.ts"]);
+    }
+
+    #[test]
+    fn accepted_duplication_path_matches_whole_components() {
+        let tmp = tempfile::tempdir().unwrap();
+        let mut report = three_way_clone();
+
+        apply_suppressions(tmp.path(), &accept_duplication("v2/"), &mut report);
+
+        assert_eq!(report.duplication[0].occurrences.len(), 3);
+    }
+
+    #[test]
+    fn accepted_duplication_label_hides_the_whole_group() {
+        let tmp = tempfile::tempdir().unwrap();
+        let mut report = three_way_clone();
+        let label = "core/util.ts + forkv2/util.ts + other/util.ts";
+
+        apply_suppressions(tmp.path(), &accept_duplication(label), &mut report);
+
+        assert!(report.duplication.is_empty());
+    }
+
+    fn accept_duplication(pattern: &str) -> BTreeMap<String, Vec<String>> {
+        BTreeMap::from([("duplication".to_string(), vec![pattern.to_string()])])
+    }
+
+    fn three_way_clone() -> crate::report::AnalysisReport {
+        let occurrence = |file: &str| crate::report::CloneOccurrence {
+            file: file.into(),
+            start_row: 1,
+            end_row: 20,
+        };
+        crate::report::AnalysisReport {
+            duplication: vec![CloneClass {
+                token_length: 77,
+                occurrences: vec![
+                    occurrence("core/util.ts"),
+                    occurrence("forkv2/util.ts"),
+                    occurrence("other/util.ts"),
+                ],
+                ..CloneClass::default()
+            }],
+            ..crate::report::AnalysisReport::default()
+        }
     }
 }

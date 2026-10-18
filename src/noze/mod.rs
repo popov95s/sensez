@@ -16,7 +16,6 @@ use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
 use source_scope::SourceScope;
-use std::collections::BTreeMap;
 use std::path::Path;
 
 /// Run every analyzer pillar without project-root context. Test seam for
@@ -84,18 +83,12 @@ pub fn run_with_root(
             files_skipped: 0,
             analyzed_files: files.len(),
             source_lines: files.iter().map(|f| f.lines as usize).sum(),
-            cycles_total: cycles.len(),
-            dead_code_total: dead_code.len(),
-            duplication_total: duplication.len(),
-            boundaries_total: boundary_audit.violations.len(),
-            smells_total: smells.len(),
             duplication_skipped: SourceScope::for_duplication(&config.duplication)
                 .skip_counts(files),
             smells_skipped: SourceScope::for_smells(&config.smells).skip_counts(files),
-            smell_totals: smell_totals(&smells),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues,
-            glossary: Vec::new(),
+            ..ReportMeta::default()
         },
         cycles,
         dead_code,
@@ -103,16 +96,9 @@ pub fn run_with_root(
         duplication,
         smells,
     };
+    report.refresh_totals();
     report.meta.glossary = crate::noze::glossary::for_report(&report);
     report
-}
-
-fn smell_totals(smells: &[SmellFinding]) -> BTreeMap<String, usize> {
-    let mut totals = BTreeMap::new();
-    for smell in smells {
-        *totals.entry(smell.kind.as_str().to_string()).or_default() += 1;
-    }
-    totals
 }
 
 fn apply_smell_actions(smells: &mut [SmellFinding], policy: &ActionPolicy) {

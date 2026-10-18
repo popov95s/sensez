@@ -55,7 +55,7 @@ fn detect_graph_findings(
     config: &Config,
 ) -> GraphFindings {
     let (cycles, (dead_code, boundaries)) = rayon::join(
-        || cycles::detect(graph, &config.cycles.exclude),
+        || cycles::detect(graph, &config.cycles),
         || {
             rayon::join(
                 || dead_code::detect(graph, files, &config.dead_code),

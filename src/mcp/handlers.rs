@@ -36,13 +36,17 @@ pub(super) fn text_result(text: String, is_error: bool) -> Value {
 
 fn configuration_summary(args: &Value) -> ToolResult {
     let path = required_str(args, "path")?;
-    match run_summary_command(path) {
+    let mut command_args = vec!["noze", path, "--summary"];
+    if args.get("diff").and_then(Value::as_bool).unwrap_or(false) {
+        command_args.push("--diff");
+    }
+    match run_summary_command(&command_args) {
         Ok(text) => Ok(text_result(text, false)),
         Err(err) => Ok(text_result(format!("{err:#}"), true)),
     }
 }
 
-fn run_summary_command(path: &str) -> anyhow::Result<String> {
+fn run_summary_command(args: &[&str]) -> anyhow::Result<String> {
     use std::process::Stdio;
     use std::time::Duration;
     use wait_timeout::ChildExt;
@@ -51,7 +55,7 @@ fn run_summary_command(path: &str) -> anyhow::Result<String> {
 
     let exe = std::env::current_exe().context("resolving current executable")?;
     let mut child = Command::new(exe)
-        .args(["noze", path, "--summary"])
+        .args(args)
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
@@ -206,7 +210,16 @@ fn explain(args: &Value) -> ToolResult {
     let entries = match args.get("term").and_then(Value::as_str) {
         Some(term) => match crate::noze::glossary::lookup(term) {
             Some(entry) => vec![entry],
-            None => return Err((-32602, format!("unknown term '{term}' (omit to list all)"))),
+            None => {
+                let known: Vec<String> = crate::noze::glossary::all()
+                    .into_iter()
+                    .map(|entry| entry.term)
+                    .collect();
+                return Ok(text_result(
+                    format!("unknown term '{term}'. Known: {}", known.join(", ")),
+                    true,
+                ));
+            }
         },
         None => crate::noze::glossary::all(),
     };

@@ -40,7 +40,7 @@ Arguments:
 
 Options:
       --threshold <THRESHOLD>
-          Minimum structural-token run length for the duplication detector
+          Minimum structural-token run length for the duplication detector (0 = off)
 
       --summary
           Emit aggregated per-rule JSON for configuration tuning
@@ -79,14 +79,10 @@ Options:
           Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
       --fail-on [<LEVEL>]
-          Exit non-zero if any finding meets or exceeds the given action level. Defaults to `must_fix` when the flag is present without a value
-          
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if any finding meets or exceeds the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --fail-on-new [<LEVEL>]
-          Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
-          
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if diff-scoped findings meet or exceed the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --explain
           Append a plain-English legend defining each finding category shown
@@ -140,7 +136,7 @@ Arguments:
 
 Options:
       --threshold <THRESHOLD>
-          Minimum structural-token run length for the duplication detector
+          Minimum structural-token run length for the duplication detector (0 = off)
 
       --summary
           Emit aggregated per-rule JSON for configuration tuning
@@ -179,14 +175,10 @@ Options:
           Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
       --fail-on [<LEVEL>]
-          Exit non-zero if any finding meets or exceeds the given action level. Defaults to `must_fix` when the flag is present without a value
-          
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if any finding meets or exceeds the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --fail-on-new [<LEVEL>]
-          Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
-          
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if diff-scoped findings meet or exceed the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --explain
           Append a plain-English legend defining each finding category shown
@@ -210,6 +202,23 @@ Examples:
   flags such as `--dead-code` and `--output-glob` filter the gate too, and
   low-confidence dead code never trips it. The display cap does not: a
   finding hidden by `--max` still fails the gate.
+- Pillar flags leave the other pillars out of the report: the terminal omits
+  their sections, and JSON lists them in `meta.filtered_pillars`, so a `0`
+  total there means "not asked", not "clean".
+- `--summary` counts the same selected findings: it honours `--diff`,
+  `--diff-from`, `--fail-on-new`, the pillar flags and `--output-glob`, and
+  its exit code follows `--fail-on` / `--fail-on-new` like a normal run.
+- `--output-glob '!PATTERN'` excludes matching files (quote it for the shell).
+  Includes and excludes combine: a finding is kept when its file matches an
+  include (or no include is given) and no exclude. A clone group drops only its
+  excluded occurrences and stays while two or more remain. `!` alone or `!!…`
+  is rejected (exit `2`).
+- `--fail-on-new` implies `--diff` and says so on stderr. In diff mode the
+  terminal report starts with "diff mode: only findings touching changed
+  lines".
+- A level that is not `must_fix`, `warning`, `advisory` or `info` is rejected.
+  `--fail-on` takes the next word as its level, so write `sensez noze . --fail-on`
+  or `--fail-on=must_fix .`, not `--fail-on .`.
 
 ## `sensez noze explain --help`
 
@@ -340,14 +349,11 @@ Options:
 ```text
 Semantic search over docstrings + comments
 
-Usage: search [OPTIONS] <PATH> <QUERY>
+Usage: sensez eyez search [OPTIONS] [PATH] <QUERY>
 
 Arguments:
-  <PATH>
-          Root directory of the target project
-
-  <QUERY>
-          Natural-language intent query
+  <PATH> <QUERY>...
+          Project root (default: current directory), then a natural-language intent query
 
 Options:
       --top-k <TOP_K>
@@ -361,3 +367,40 @@ Options:
   -h, --help
           Print help
 ```
+
+## `sensez eyez reindex --help`
+
+```text
+Refresh eyez caches for the repository
+
+Usage: reindex [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]
+          Root directory of the target project (default: current directory)
+
+Options:
+      --force
+          Delete existing eyez caches before rebuilding
+
+      --semantic
+          Also warm semantic-duplication bundles when configured
+
+  -h, --help
+          Print help
+```
+
+### Embedding model
+
+`eyez search`, `eyez reindex` and `[duplication.semantic]` use the
+`minishlab/potion-retrieval-32M` model at a pinned revision. It is looked up,
+in order:
+
+1. `SENSEZ_EYEZ_MODEL_DIR`: a directory holding `config.json`,
+   `tokenizer.json` and `model.safetensors`. Nothing is downloaded.
+2. The HuggingFace cache: `$HF_HOME/hub`, else `~/.cache/huggingface/hub`.
+3. A download (about 130 MB) into that cache. Sensez prints one line to
+   stderr before it starts; `HF_ENDPOINT` changes the host.
+
+With `HF_HUB_OFFLINE=1` or `SENSEZ_OFFLINE=1`, step 3 is skipped and a missing
+model is an error that names the cache it checked.

@@ -8,6 +8,7 @@ pub(crate) mod capture;
 mod docs;
 mod embed;
 pub(crate) mod extract;
+mod model;
 mod search;
 pub(crate) mod semantic_cache;
 

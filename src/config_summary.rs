@@ -1,7 +1,7 @@
 //! Aggregated scan summary for configuration tuning surfaces.
 
 use crate::config::Config;
-use crate::report::{AnalysisReport, ScanStage, SkipCounts, SmellKind};
+use crate::report::{AnalysisReport, SkipCounts, SmellKind};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -54,21 +54,17 @@ impl RuleSummary {
     }
 }
 
-pub(crate) fn scan(path: &Path, threshold: Option<usize>) -> Result<String> {
+/// Per-rule summary JSON of an already selected report.
+pub(crate) fn render(
+    path: &Path,
+    report: &AnalysisReport,
+    threshold: Option<usize>,
+) -> Result<String> {
     let mut config = Config::load(path).context("loading configuration for summary")?;
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
-    let (report, _) = crate::analyze_path(path, threshold)?;
-    for issue in report
-        .meta
-        .issues
-        .iter()
-        .filter(|issue| issue.stage == ScanStage::Config)
-    {
-        eprintln!("[sensez] config: {}", issue.message);
-    }
-    let summary = from_report(path, &report, &config);
+    let summary = from_report(path, report, &config);
     serde_json::to_string_pretty(&summary).context("serializing configuration summary")
 }
 

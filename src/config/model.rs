@@ -70,10 +70,12 @@ pub struct DeadCode {
     pub unused_variables: bool,
 }
 
-#[derive(Debug, Clone, Default, Hash, Serialize, Deserialize)]
+#[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct Cycles {
     pub exclude: Vec<String>,
+    /// Also report cycles closed only by type-level imports (at `info`).
+    pub include_type_only: bool,
 }
 
 #[derive(Debug, Clone, Default, Hash, Serialize, Deserialize)]
@@ -177,6 +179,15 @@ impl Default for SemanticDuplication {
 impl Default for DeadCode {
     fn default() -> Self {
         Config::default().dead_code
+    }
+}
+
+impl Default for Cycles {
+    fn default() -> Self {
+        Cycles {
+            exclude: Vec::new(),
+            include_type_only: true,
+        }
     }
 }
 

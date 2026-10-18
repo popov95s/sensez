@@ -53,17 +53,20 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
         },
         #[cfg(feature = "eyez")]
         Some(Command::Eyez(args)) => match args.action {
-            spec::EyezAction::Search {
-                path,
-                query,
-                top_k,
-                json,
-            } => run_search(&path, &query, usize::from(top_k), json).map(|()| ExitCode::SUCCESS),
+            spec::EyezAction::Search { args, top_k, json } => {
+                let (path, query) = match args.as_slice() {
+                    [path, query] => (PathBuf::from(path), query.as_str()),
+                    [query] => (PathBuf::from("."), query.as_str()),
+                    _ => anyhow::bail!("eyez search takes [PATH] QUERY"),
+                };
+                run_search(&path, query, usize::from(top_k), json).map(|()| ExitCode::SUCCESS)
+            }
             spec::EyezAction::Reindex {
                 path,
                 force,
                 semantic,
-            } => run_reindex(&path, force, semantic).map(|()| ExitCode::SUCCESS),
+            } => run_reindex(&path.unwrap_or_else(|| PathBuf::from(".")), force, semantic)
+                .map(|()| ExitCode::SUCCESS),
         },
         None => {
             let path = cli.path.unwrap_or_else(|| PathBuf::from("."));
@@ -159,11 +162,38 @@ fn run_explain(term: Option<&str>) -> Result<()> {
 }
 
 fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
-    if options.summary {
-        output::print_line(&crate::config_summary::scan(path, options.threshold)?)?;
-        return Ok(ExitCode::SUCCESS);
+    let mut report = selected_report(path, options)?;
+    let report_started = std::time::Instant::now();
+    let gate_fails = gate_fails(&report, options);
+    let rendered = if options.summary {
+        crate::config_summary::render(path, &report, options.threshold)?
+    } else {
+        output::shape(&mut report, options);
+        render_report(&report, options)?
+    };
+    if std::env::var_os("SENSEZ_TIMING").is_some() {
+        eprintln!(
+            "[timing] report           {:>7.1}ms",
+            report_started.elapsed().as_secs_f64() * 1e3
+        );
     }
+    output::print_line(&rendered)?;
+
+    ensure_complete_for_gate(&report, options)?;
+    if gate_fails {
+        return Ok(ExitCode::FAILURE);
+    }
+    Ok(ExitCode::SUCCESS)
+}
+
+/// Analyze `path` and keep what this run asked for: diff scope, output globs, pillars.
+fn selected_report(path: &Path, options: &ScanOptions) -> Result<crate::report::AnalysisReport> {
     let wants_diff = options.diff || options.diff_from.is_some() || options.fail_on_new.is_some();
+    if options.fail_on_new.is_some() && !options.diff && options.diff_from.is_none() {
+        eprintln!(
+            "note: --fail-on-new implies --diff (findings limited to working-tree changes vs HEAD)"
+        );
+    }
     let changed = build_diff(
         path,
         wants_diff && options.diff_from.is_none(),
@@ -174,7 +204,6 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
          (run inside a git work tree, pass --diff-from FILE, or drop --diff/--fail-on-new)",
     )?;
     let (mut report, module_files) = crate::analyze_path(path, options.threshold)?;
-    let report_started = std::time::Instant::now();
     if let Some(changed) = changed.as_ref() {
         crate::diff::apply(&mut report, changed, &module_files);
     }
@@ -192,27 +221,14 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
     output::select(&mut report, options);
-    let gate_fails = gate_fails(&report, options);
-    output::shape(&mut report, options);
+    Ok(report)
+}
 
-    let rendered = if options.json {
-        crate::reporter::to_json(&report)?
-    } else {
-        crate::reporter::render(&report, options.explain)
-    };
-    if std::env::var_os("SENSEZ_TIMING").is_some() {
-        eprintln!(
-            "[timing] report           {:>7.1}ms",
-            report_started.elapsed().as_secs_f64() * 1e3
-        );
+fn render_report(report: &crate::report::AnalysisReport, options: &ScanOptions) -> Result<String> {
+    if options.json {
+        return crate::reporter::to_json(report);
     }
-    output::print_line(&rendered)?;
-
-    ensure_complete_for_gate(&report, options)?;
-    if gate_fails {
-        return Ok(ExitCode::FAILURE);
-    }
-    Ok(ExitCode::SUCCESS)
+    Ok(crate::reporter::render(report, options.explain))
 }
 
 /// A gated run fails when an analyzer was skipped, instead of passing on partial results.
@@ -282,5 +298,7 @@ mod gate_tests;
 mod parse_tests;
 #[cfg(test)]
 mod reflexez_tests;
+#[cfg(test)]
+mod summary_tests;
 #[cfg(test)]
 mod tests;

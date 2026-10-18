@@ -1,6 +1,6 @@
 {
   "home_files": {
-    ".cursor/mcp.json": "{\n  \"mcpServers\": {\n    \"existing\": {\n      \"args\": [],\n      \"command\": \"/bin/existing\"\n    },\n    \"sensez\": {\n      \"args\": [\n        \"mcp\",\n        \"serve\"\n      ],\n      \"command\": \"<sensez>\"\n    }\n  }\n}"
+    ".cursor/mcp.json": "{\n  \"mcpServers\": {\n    \"existing\": {\n      \"command\": \"/bin/existing\",\n      \"args\": []\n    },\n    \"sensez\": {\n      \"command\": \"<sensez>\",\n      \"args\": [\n        \"mcp\",\n        \"serve\"\n      ]\n    }\n  }\n}\n"
   },
   "repo_files": {},
   "runs": [

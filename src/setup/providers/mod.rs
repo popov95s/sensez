@@ -41,6 +41,13 @@ pub(crate) fn load_json_config(path: &Path) -> Result<Option<Value>> {
     })
 }
 
+/// Write `value` as pretty JSON with a trailing newline.
+pub(crate) fn write_json(path: &Path, value: &Value) -> Result<()> {
+    let mut text = serde_json::to_string_pretty(value)?;
+    text.push('\n');
+    std::fs::write(path, text).with_context(|| format!("writing {}", path.display()))
+}
+
 /// Mutable child object at `key`, creating it when missing/null and failing
 /// with a typed error when the key holds any other JSON type.
 pub(crate) fn ensure_object<'a>(

@@ -23,6 +23,22 @@ impl AnalysisReport {
             .chain(self.smells.iter().map(|finding| finding.action))
     }
 
+    /// Recount the per-pillar and per-smell-kind totals from the findings held now.
+    pub fn refresh_totals(&mut self) {
+        self.meta.cycles_total = self.cycles.len();
+        self.meta.dead_code_total = self.dead_code.len();
+        self.meta.boundaries_total = self.boundaries.len();
+        self.meta.duplication_total = self.duplication.len();
+        self.meta.smells_total = self.smells.len();
+        let mut smell_totals = std::collections::BTreeMap::new();
+        for smell in &self.smells {
+            *smell_totals
+                .entry(smell.kind.as_str().to_string())
+                .or_default() += 1;
+        }
+        self.meta.smell_totals = smell_totals;
+    }
+
     pub fn finding_count(&self) -> usize {
         self.actions().count()
     }

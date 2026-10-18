@@ -41,7 +41,10 @@ fn flag_driven_init_writes_all_artifacts() {
         stop.contains("mcp_tool"),
         "gate runs via the warm MCP server"
     );
-    assert!(stop.contains("stop_hook_active"), "soft-block escape wired");
+    assert!(
+        !stop.contains("stop_hook_active"),
+        "unused hook input dropped"
+    );
     assert!(
         stop.contains("transcript_path"),
         "main transcript is forwarded"
@@ -176,6 +179,24 @@ fn codex_init_is_idempotent_and_preserves_existing_mcp_table() {
 }
 
 #[test]
+fn init_with_existing_config_does_not_claim_defaults() {
+    let (_tmp, root) = temp_root();
+    fs::write(root.join("sensez.toml"), "[duplication]\nthreshold = 80\n").unwrap();
+    let options = || artifacts::WriteConfigOptions {
+        self_improvement: true,
+        into_pyproject: false,
+        semantic_duplication: false,
+    };
+
+    let kept = artifacts::write_config(&root, options()).unwrap();
+
+    assert!(matches!(kept, artifacts::ConfigWrite::Kept(_)));
+    fs::remove_file(root.join("sensez.toml")).unwrap();
+    let created = artifacts::write_config(&root, options()).unwrap();
+    assert!(matches!(created, artifacts::ConfigWrite::Created(_)));
+}
+
+#[test]
 fn codex_init_preserves_other_existing_servers() {
     let (_tmp, root) = temp_root();
     fs::create_dir_all(root.join(".codex")).unwrap();
@@ -209,7 +230,7 @@ fn pyproject_mode_appends_tool_sensez() {
         },
     )
     .unwrap();
-    assert!(msg.contains("pyproject"));
+    assert!(msg.message().contains("pyproject"));
 
     let text = fs::read_to_string(root.join("pyproject.toml")).unwrap();
     assert!(text.contains("[tool.sensez.self_improvement]"));

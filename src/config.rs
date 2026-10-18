@@ -21,9 +21,7 @@ use crate::report::{ScanIssue, ScanStage};
 use anyhow::Result;
 use std::path::Path;
 
-/// Vendored/generated/build artifacts and documentation applications are not
-/// owned product source. Exclude them from discovery for every pillar so they
-/// never dominate repository findings.
+/// Vendored, generated, build and docs paths, excluded from discovery for every pillar.
 pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 13] = [
     "**/node_modules/**",
     "**/.venv/**",
@@ -71,13 +69,16 @@ impl Config {
             source::discover(project_root).map_err(|problem| ConfigErrors(vec![problem]))?;
         let (mut config, warnings) = parse::parse(&source).map_err(ConfigErrors)?;
         config.resolve_paths(project_root);
-        config.validate().map_err(|err| {
-            ConfigErrors(vec![ConfigProblem {
-                file: source.file(),
-                position: None,
-                message: format!("{err:#}"),
-            }])
-        })?;
+        config
+            .validate_globs()
+            .and_then(|()| config.validate_semantic())
+            .map_err(|err| {
+                ConfigErrors(vec![ConfigProblem {
+                    file: source.file(),
+                    position: None,
+                    message: format!("{err:#}"),
+                }])
+            })?;
         Ok((config, warnings))
     }
 
@@ -104,11 +105,6 @@ impl Config {
         push_unique(&mut self.duplication.exclude, &BASELINE_MIGRATION_EXCLUDE);
         push_unique(&mut self.smells.exclude, &BASELINE_MIGRATION_EXCLUDE);
         push_unique(&mut self.cycles.exclude, &BASELINE_MIGRATION_EXCLUDE);
-    }
-
-    fn validate(&self) -> Result<()> {
-        self.validate_globs()?;
-        self.validate_semantic()
     }
 
     fn validate_semantic(&self) -> Result<()> {

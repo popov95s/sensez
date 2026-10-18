@@ -1,7 +1,7 @@
 //! CLI-only report shaping: pillar selection plus concise default output.
 
 use super::spec::ScanOptions;
-use crate::report::{AnalysisReport, Confidence, SmellFinding};
+use crate::report::{AnalysisReport, Confidence, Pillar, SmellFinding};
 use std::collections::BTreeMap;
 use std::io::{self, Write};
 
@@ -32,8 +32,7 @@ pub fn select(report: &mut AnalysisReport, options: &ScanOptions) {
     report
         .dead_code
         .retain(|finding| finding.confidence != Confidence::Low);
-    refresh_totals(report);
-    report.meta.smell_totals = smell_totals(&report.smells);
+    report.refresh_totals();
 }
 
 /// Truncates selected findings for display and attaches the glossary.
@@ -59,27 +58,24 @@ fn apply_pillar_filter(report: &mut AnalysisReport, options: &ScanOptions) {
     }
     if !options.cycles {
         report.cycles.clear();
+        report.meta.filtered_pillars.push(Pillar::Cycles);
     }
     if !options.dead_code {
         report.dead_code.clear();
+        report.meta.filtered_pillars.push(Pillar::DeadCode);
     }
     if !options.boundaries {
         report.boundaries.clear();
+        report.meta.filtered_pillars.push(Pillar::Boundaries);
     }
     if !options.duplicates {
         report.duplication.clear();
+        report.meta.filtered_pillars.push(Pillar::Duplication);
     }
     if !options.smells {
         report.smells.clear();
+        report.meta.filtered_pillars.push(Pillar::Smells);
     }
-}
-
-fn refresh_totals(report: &mut AnalysisReport) {
-    report.meta.cycles_total = report.cycles.len();
-    report.meta.dead_code_total = report.dead_code.len();
-    report.meta.boundaries_total = report.boundaries.len();
-    report.meta.duplication_total = report.duplication.len();
-    report.meta.smells_total = report.smells.len();
 }
 
 fn limit_top(report: &mut AnalysisReport, pillar_max: usize, smell_kind_max: usize) {
@@ -112,12 +108,4 @@ fn limit_smells_by_kind(smells: &mut Vec<SmellFinding>, max: usize) {
             .then(a.action.cmp(&b.action))
             .then(b.metric.cmp(&a.metric))
     });
-}
-
-fn smell_totals(smells: &[SmellFinding]) -> BTreeMap<String, usize> {
-    let mut totals = BTreeMap::new();
-    for smell in smells {
-        *totals.entry(smell.kind.as_str().to_string()).or_default() += 1;
-    }
-    totals
 }

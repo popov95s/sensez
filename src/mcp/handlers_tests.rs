@@ -22,6 +22,44 @@ fn tools_list_includes_metrics_tools() {
 }
 
 #[test]
+fn tools_list_schemas_are_typed() {
+    let tools = super::super::tools::tools_list();
+    let by_name = |name: &str| {
+        tools["tools"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .find(|tool| tool["name"] == name)
+            .unwrap()["inputSchema"]["properties"]
+            .clone()
+    };
+    for tool in tools["tools"].as_array().unwrap() {
+        for (key, property) in tool["inputSchema"]["properties"].as_object().unwrap() {
+            assert!(property.get("type").is_some(), "{}.{key}", tool["name"]);
+        }
+    }
+    let triage = by_name("brainz_triage");
+    let pillars: Vec<&str> = crate::report::Pillar::ALL
+        .iter()
+        .map(|pillar| pillar.as_str())
+        .collect();
+    assert_eq!(triage["pillar"]["enum"], json!(pillars));
+    assert_eq!(triage["verdict"]["enum"], json!(crate::brainz::VERDICTS));
+    assert_eq!(by_name("noze_sniff")["limit"]["minimum"], 0);
+    #[cfg(feature = "eyez")]
+    assert_eq!(by_name("eyez_search_docs")["top_k"]["minimum"], 1);
+}
+
+#[test]
+fn explain_unknown_term_is_tool_error_listing_terms() {
+    let resp = super::call("noze_explain", &json!({"term": "nope"})).unwrap();
+    assert_eq!(resp["isError"], true);
+    let text = resp["content"][0]["text"].as_str().unwrap();
+    assert!(text.starts_with("unknown term 'nope'. Known: "), "{text}");
+    assert!(text.contains("dead_code"), "{text}");
+}
+
+#[test]
 fn usage_report_serves_a_clean_repo() {
     let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();

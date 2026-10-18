@@ -148,15 +148,20 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
         &std::env::current_exe().context("locating the sensez executable")?,
     );
     let mut done = Vec::new();
-    if install_scope == InstallScope::Project {
-        done.push(artifacts::write_config(
+    let config_write = if install_scope == InstallScope::Project {
+        Some(artifacts::write_config(
             &root,
             artifacts::WriteConfigOptions {
                 self_improvement: metrics_enabled,
                 into_pyproject,
                 semantic_duplication: semantic_duplication_enabled,
             },
-        )?);
+        )?)
+    } else {
+        None
+    };
+    if let Some(written) = &config_write {
+        done.push(written.message().to_string());
         done.push(artifacts::ensure_sensez_dir(&root)?);
     }
     if matches!(agent_spec.kind, agents::AgentKind::Other) {
@@ -214,18 +219,19 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
     } else {
         "Restart your agent to pick up the MCP server."
     };
-    if install_scope == InstallScope::Global {
-        println!("\nSensez will use each repository's configuration, or built-in defaults when none exists.\n{restart}");
+    let config_file = if into_pyproject {
+        "pyproject.toml [tool.sensez]"
     } else {
-        println!(
-            "\nYou're running on defaults. Everything sensez does — thresholds, excludes, boundaries, self-improvement — is configured in {}.\n{}",
-            if into_pyproject {
-                "pyproject.toml [tool.sensez]"
-            } else {
-                "sensez.toml"
-            },
-            restart
-        );
+        "sensez.toml"
+    };
+    match config_write {
+        None => println!("\nSensez will use each repository's configuration, or built-in defaults when none exists.\n{restart}"),
+        Some(artifacts::ConfigWrite::Created(_)) => println!(
+            "\nYou're running on defaults. Everything sensez does — thresholds, excludes, boundaries, self-improvement — is configured in {config_file}.\n{restart}"
+        ),
+        Some(artifacts::ConfigWrite::Kept(_)) => println!(
+            "\nYour existing configuration is unchanged; tune it in {config_file}.\n{restart}"
+        ),
     }
     Ok(())
 }
