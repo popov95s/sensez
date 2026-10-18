@@ -172,8 +172,13 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         .child_by_field_name("value")
         .filter(|v| v.kind() == "identifier")
         .and_then(|v| v.utf8_text(src).ok());
-    let key = node
-        .child_by_field_name("subscript")
+    let index = node.child_by_field_name("subscript");
+    if let (Some(recv), Some(index)) = (recv, index) {
+        if is_computed_key(index) {
+            unit.dynamic_key_receivers.insert(recv.to_string());
+        }
+    }
+    let key = index
         .filter(|k| k.kind() == "string")
         .and_then(|k| k.utf8_text(src).ok());
     if let (Some(recv), Some(key)) = (recv, key) {
@@ -182,6 +187,17 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
             .or_default()
             .insert(key.trim_matches(['"', '\'']).to_string());
         walk::record_str_key_line(unit, recv, node.start_position().row + 1);
+    }
+}
+
+/// `recv[cat]`, `recv[row.cat]`, `recv[f"{a}"]`: a data-driven key, not a record field.
+fn is_computed_key(index: Node) -> bool {
+    match index.kind() {
+        "string" => index
+            .named_children(&mut index.walk())
+            .any(|c| c.kind() == "interpolation"),
+        "integer" | "float" | "slice" | "unary_operator" | "true" | "false" | "none" => false,
+        _ => true,
     }
 }
 

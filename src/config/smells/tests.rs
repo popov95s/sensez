@@ -208,6 +208,41 @@ fn ignore_roots_must_be_a_string_list() {
 }
 
 #[test]
+fn opt_in_rule_knobs_parse() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.heavy_nested_function]
+            skip_capturing = true
+
+            [rules.tuple_packing]
+            allow_homogeneous = false
+
+            [rules.weak_test_oracle]
+            assertion_functions = ["check*"]
+        "#,
+    )
+    .unwrap();
+
+    let py = cfg.for_language(Language::Python);
+    assert!(py.nested_function_skip_capturing);
+    assert!(!py.tuple_allow_homogeneous);
+    assert_eq!(py.assertion_functions, vec!["check*".to_string()]);
+    assert!(!py.disabled.contains(&SmellKind::WeakTestOracle));
+}
+
+#[test]
+fn assertion_functions_must_be_a_string_list() {
+    for value in ["\"expect*\"", "[1]", "[\"a{\"]"] {
+        let err = toml::from_str::<SmellConfig>(&format!(
+            "[rules.weak_test_oracle]\nassertion_functions = {value}\n"
+        ))
+        .unwrap_err()
+        .to_string();
+        assert!(err.contains("assertion_functions"), "{value}: {err}");
+    }
+}
+
+#[test]
 fn language_rule_tables_override_base_rules() {
     let cfg: SmellConfig = toml::from_str(
         r#"

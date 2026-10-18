@@ -31,21 +31,13 @@ pub fn detect(
             narrating_code(ctx, cfg, out, m, lines);
         }
         // A nested def carrying real logic is hidden inside its parent.
-        if cfg.max_nested_function_lines > 0 && m.is_nested && lines > cfg.max_nested_function_lines
+        if cfg.max_nested_function_lines > 0
+            && m.is_nested
+            && lines > cfg.max_nested_function_lines
+            && !m.parent_is_test_callback
+            && !(m.captures_parent && cfg.nested_function_skip_capturing)
         {
-            out.push(make(
-                SmellKind::HeavyNestedFunction,
-                format!(
-                    "nested function inside `{p}` spans {lines} lines — not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `{p}`), so extract it to module/class level",
-                    p = m.parent
-                ),
-                ctx.path,
-                m.start_line,
-                &m.name,
-                Severity::Warning,
-                lines as u32,
-                cfg.max_nested_function_lines as u32,
-            ));
+            out.push(heavy_nested_function(ctx, cfg, m, lines));
         }
     }
     for class in classes {
@@ -63,6 +55,36 @@ pub fn detect(
             ));
         }
     }
+}
+
+fn heavy_nested_function(
+    ctx: &SmellContext<'_>,
+    cfg: &Smells,
+    m: &FunctionUnit,
+    lines: usize,
+) -> SmellFinding {
+    let p = &m.parent;
+    let (message, severity) = if m.captures_parent {
+        (
+            format!("nested function inside `{p}` spans {lines} lines and reads `{p}`'s locals — extract with explicit parameters so it can be tested on its own"),
+            Severity::Info,
+        )
+    } else {
+        (
+            format!("nested function inside `{p}` spans {lines} lines — not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `{p}`), so extract it to module/class level"),
+            Severity::Warning,
+        )
+    };
+    make(
+        SmellKind::HeavyNestedFunction,
+        message,
+        ctx.path,
+        m.start_line,
+        &m.name,
+        severity,
+        lines as u32,
+        cfg.max_nested_function_lines as u32,
+    )
 }
 
 fn narrating_code(

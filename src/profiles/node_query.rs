@@ -14,6 +14,15 @@ pub(crate) fn perf_line(node: Node, src: &[u8], subject_fields: &[&str]) -> Perf
     }
 }
 
+/// `child` is `parent`'s value for one of `fields`.
+pub(crate) fn is_field_child(parent: Node, child: Node, fields: &[&str]) -> bool {
+    fields.iter().any(|field| {
+        parent
+            .child_by_field_name(field)
+            .is_some_and(|node| node.id() == child.id())
+    })
+}
+
 fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<String> {
     subject_fields
         .iter()

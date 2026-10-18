@@ -22,6 +22,23 @@ pub(crate) struct TestChecks {
     pub member_kind: Option<&'static str>,
     pub member_field: Option<&'static str>,
     pub calls: &'static [CallPattern],
+    /// Framework check roots that never count as helper calls on their own (`expect`).
+    pub framework_calls: &'static [&'static str],
+}
+
+/// Callee name of a plain call to a helper function, excluding framework check roots.
+pub(crate) fn helper_call<'a>(
+    node: Node<'_>,
+    source: &'a [u8],
+    checks: &TestChecks,
+) -> Option<&'a str> {
+    if node.kind() != checks.call_kind {
+        return None;
+    }
+    node.child_by_field_name(checks.callee_field)
+        .filter(|callee| callee.kind() == "identifier")
+        .and_then(|callee| callee.utf8_text(source).ok())
+        .filter(|name| !checks.framework_calls.contains(name))
 }
 
 pub(crate) fn is_check(node: Node<'_>, source: &[u8], checks: &TestChecks) -> bool {

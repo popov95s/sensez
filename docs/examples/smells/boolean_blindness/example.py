@@ -2,6 +2,7 @@ def publish_invoice(
     invoice_id: str,
     email_customer: bool,
     archive_pdf: bool,
+    notify_owner: bool,
 ) -> None:
     invoice = repo.load(invoice_id)
     if email_customer:
@@ -10,3 +11,5 @@ def publish_invoice(
         review_queue.add(invoice)
     if archive_pdf:
         archive.store(render_pdf(invoice))
+    if notify_owner:
+        notifier.ping(invoice.owner)

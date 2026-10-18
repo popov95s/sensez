@@ -1,8 +1,9 @@
 use crate::profiles::wording::SmellWording;
 
 pub(crate) const WORDING: SmellWording = SmellWording {
+    identifier_extra_chars: &['$'],
     structure: "a typed object or interface",
-    grouped_value: "an interface or named object type",
+    grouped_value: "an object type or a labeled tuple (`[r: number, g: number]`)",
     category: "a string-literal union or `as const` object",
     options: "an options object or a string-literal union",
     safe_top_advice: "narrow it with a type guard or schema parse at the boundary",

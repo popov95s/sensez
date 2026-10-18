@@ -37,6 +37,7 @@ pub(super) fn is_branch(kind: &str, node: Node, src: &[u8]) -> bool {
 /// `1 + nesting`; logical operators a flat `1`.
 pub(super) fn cognitive_weight(kind: &str, node: Node, src: &[u8], depth: usize) -> Option<usize> {
     match kind {
+        "if_statement" if is_else_if(node) => Some(1),
         "if_statement" | "for_statement" | "for_in_statement" | "while_statement"
         | "do_statement" | "switch_statement" | "ternary_expression" | "catch_clause" => {
             Some(1 + depth)
@@ -44,4 +45,12 @@ pub(super) fn cognitive_weight(kind: &str, node: Node, src: &[u8], depth: usize)
         "binary_expression" if is_logical(node, src) => Some(1),
         _ => None,
     }
+}
+
+/// `else if`: an `if` that is the `alternative` of another `if`.
+pub(super) fn is_else_if(node: Node) -> bool {
+    node.parent()
+        .filter(|parent| parent.kind() == "else_clause")
+        .and_then(|clause| clause.parent())
+        .is_some_and(|grand| grand.kind() == "if_statement")
 }

@@ -4,7 +4,9 @@
 //! per-function body pass.
 
 use super::comment_runs::CommentRun;
-use super::{imports, lexeme, namespaces, scope, symbols, tokens as token_map, typehints, units};
+use super::{
+    imports, lexeme, namespaces, risk_facts, scope, symbols, tokens as token_map, typehints, units,
+};
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::walk::{
@@ -17,6 +19,7 @@ use tree_sitter::Node;
 struct ActiveFn {
     collector: units::FunctionFacts,
     index: usize,
+    is_test_framework_callback: bool,
 }
 
 struct VisitCtx<'a, 'tree> {
@@ -208,11 +211,23 @@ fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut Vi
     {
         collector.unit.is_nested = true;
         collector.unit.parent = ctx.scope.last().map(|s| s.name.clone()).unwrap_or_default();
+        collector.unit.parent_is_test_callback = ctx
+            .active_fns
+            .last()
+            .is_some_and(|parent| parent.is_test_framework_callback);
+        if let Some(parent_bounds) = ctx.fn_bounds.last() {
+            let own = scope::bound_names(node, src);
+            collector.watch_captures(parent_bounds.difference(&own).copied().collect());
+        }
     }
     let index = ctx.out.units.functions.len();
     ctx.out.units.functions.push(Default::default());
     typehints::record_function(lineage, src, &mut ctx.out.units.type_hints);
-    ctx.active_fns.push(ActiveFn { collector, index });
+    ctx.active_fns.push(ActiveFn {
+        collector,
+        index,
+        is_test_framework_callback: risk_facts::is_test_framework_callback(node, src),
+    });
 }
 
 #[cfg(feature = "eyez")]

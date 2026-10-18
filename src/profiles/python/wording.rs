@@ -1,6 +1,7 @@
 use crate::profiles::wording::SmellWording;
 
 pub(crate) const WORDING: SmellWording = SmellWording {
+    identifier_extra_chars: &[],
     structure: "a dataclass or model",
     grouped_value: "a NamedTuple or dataclass",
     category: "an Enum",

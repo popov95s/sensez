@@ -56,6 +56,7 @@ const TEST_CHECKS: TestChecks = TestChecks {
         CallPattern::Prefix("snapshot.assert"),
         CallPattern::Prefix("assert_"),
     ],
+    framework_calls: &[],
 };
 
 pub(super) fn scan(
@@ -66,6 +67,9 @@ pub(super) fn scan(
 ) {
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
+    }
+    if let Some(helper) = test_oracle::helper_call(node, src, &TEST_CHECKS) {
+        unit.review_risks.helper_calls.push(helper.to_string());
     }
     match node.kind() {
         "except_clause" => handler(unit, node, src),

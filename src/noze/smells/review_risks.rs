@@ -2,8 +2,10 @@
 
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
+use crate::globs::build_globset;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
+use globset::GlobSet;
 use std::collections::{HashMap, HashSet};
 
 pub fn detect(
@@ -16,8 +18,8 @@ pub fn detect(
     for metric in metrics {
         defensive_fallback(ctx, metric, out);
         redundant_validation(ctx, metric, out);
-        weak_test_oracle(ctx, metric, out);
     }
+    weak_test_oracles(ctx, metrics, config, out);
     wrapper_chains(ctx, metrics, config.max_wrapper_depth, out);
     divergent_abstractions(ctx, classes, out);
 }
@@ -124,12 +126,69 @@ fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec
 pub(super) fn detect_test_oracles(
     ctx: &SmellContext<'_>,
     metrics: &[FunctionUnit],
+    config: &Smells,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
-    for metric in metrics {
-        weak_test_oracle(ctx, metric, &mut out);
-    }
+    weak_test_oracles(ctx, metrics, config, &mut out);
     out
+}
+
+fn weak_test_oracles(
+    ctx: &SmellContext<'_>,
+    metrics: &[FunctionUnit],
+    config: &Smells,
+    out: &mut Vec<SmellFinding>,
+) {
+    if !ctx.test_source {
+        return;
+    }
+    let assertion_functions =
+        build_globset(&config.assertion_functions).unwrap_or_else(|_| GlobSet::empty());
+    let checked = checked_helpers(metrics, &assertion_functions);
+    for metric in metrics
+        .iter()
+        .filter(|metric| !calls_check(metric, &checked, &assertion_functions))
+    {
+        weak_test_oracle(ctx, metric, out);
+    }
+}
+
+/// Same-file non-test helpers that check directly or through another checked helper.
+fn checked_helpers<'a>(
+    metrics: &'a [FunctionUnit],
+    assertion_functions: &GlobSet,
+) -> HashSet<&'a str> {
+    let helpers = metrics
+        .iter()
+        .filter(|unit| !unit.review_risks.is_test_case && !unit.name.is_empty());
+    let mut checked: HashSet<&str> = helpers
+        .clone()
+        .filter(|unit| unit.review_risks.test_checks > 0)
+        .map(|unit| unit.name.as_str())
+        .collect();
+    loop {
+        let found: Vec<&str> = helpers
+            .clone()
+            .filter(|unit| !checked.contains(unit.name.as_str()))
+            .filter(|unit| calls_check(unit, &checked, assertion_functions))
+            .map(|unit| unit.name.as_str())
+            .collect();
+        if found.is_empty() {
+            return checked;
+        }
+        checked.extend(found);
+    }
+}
+
+fn calls_check(
+    unit: &FunctionUnit,
+    checked: &HashSet<&str>,
+    assertion_functions: &GlobSet,
+) -> bool {
+    unit.review_risks
+        .helper_calls
+        .iter()
+        .any(|name| checked.contains(name.as_str()) || assertion_functions.is_match(name))
 }
 
 fn defensive_fallback(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec<SmellFinding>) {

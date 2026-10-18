@@ -1,8 +1,7 @@
-//! Per-class structural summary for the design-smell pillar (JS/TS), plus the
-//! tuple-return-arity helper used by `units::analyze_function`. Split from
-//! `units` to keep each file within the module size budget.
+//! Per-class structural summary (JS/TS) and tuple return annotation helpers.
 
 use super::symbols;
+use crate::profiles::typevocab::split_top_level;
 use crate::spine::ir::{ClassProperty, ClassUnit};
 use tree_sitter::Node;
 
@@ -13,6 +12,7 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
         start_line: class.start_position().row + 1,
         end_line: class.end_position().row + 1,
         bases: base_classes(class, src),
+        implements: implemented_interfaces(class, src),
         is_abstract: class.kind() == "abstract_class_declaration",
         ..Default::default()
     };
@@ -101,6 +101,25 @@ fn base_classes(class: Node, src: &[u8]) -> Vec<String> {
     out
 }
 
+/// TS `implements I1, I2` names only.
+fn implemented_interfaces(class: Node, src: &[u8]) -> Vec<String> {
+    let mut out = Vec::new();
+    let mut cursor = class.walk();
+    for heritage in class
+        .children(&mut cursor)
+        .filter(|child| child.kind() == "class_heritage")
+    {
+        let mut inner = heritage.walk();
+        for clause in heritage
+            .children(&mut inner)
+            .filter(|clause| clause.kind() == "implements_clause")
+        {
+            collect_idents(clause, src, &mut out);
+        }
+    }
+    out
+}
+
 fn collect_idents(node: Node, src: &[u8], out: &mut Vec<String>) {
     if matches!(node.kind(), "identifier" | "type_identifier") {
         if let Ok(t) = node.utf8_text(src) {
@@ -125,53 +144,42 @@ fn is_stub_body(body: Node) -> bool {
     matches!(stmts.as_slice(), [one] if one.kind() == "throw_statement")
 }
 
-/// Top-level element count of a tuple return annotation `(): [A, B, C]`, else 0.
-/// JS array returns are too common to treat as tuples, so only the annotation
-/// counts — the analog of Python's bare `return a, b, c`.
-pub fn tuple_return_arity(func: Node, src: &[u8]) -> usize {
+/// Element count of an unlabeled tuple return annotation `(): [A, B, C]`, else 0.
+pub fn tuple_return_arity(elements: &[&str]) -> usize {
+    if elements.iter().any(|element| is_labeled(element)) {
+        return 0;
+    }
+    elements.len()
+}
+
+/// `(): [number, number, number]` — every element is the same primitive.
+pub fn is_homogeneous_primitive_tuple(elements: &[&str]) -> bool {
+    elements.first().is_some_and(|first| {
+        matches!(*first, "number" | "string" | "boolean" | "bigint")
+            && elements.iter().all(|element| element == first)
+    })
+}
+
+/// Top-level elements of a tuple return annotation `(): [A, B]`.
+pub fn tuple_return_elements<'a>(func: Node, src: &'a [u8]) -> Vec<&'a str> {
     let Some(text) = func
         .child_by_field_name("return_type")
         .and_then(|n| n.utf8_text(src).ok())
     else {
-        return 0;
+        return Vec::new();
     };
-    let body = match text
+    match text
         .trim_start_matches(':')
         .trim()
         .strip_prefix('[')
         .and_then(|s| s.strip_suffix(']'))
     {
-        Some(b) if !b.trim().is_empty() => b,
-        _ => return 0,
-    };
-    let mut depth = BracketDepth::default();
-    let mut count = 1usize;
-    for c in body.chars() {
-        match c {
-            '[' | '(' | '<' | '{' => depth.open(),
-            ']' | ')' | '>' | '}' => depth.close(),
-            ',' if depth.is_top_level() => count += 1,
-            _ => {}
-        }
+        Some(body) if !body.trim().is_empty() => split_top_level(body, ','),
+        _ => Vec::new(),
     }
-    count
 }
 
-#[derive(Default)]
-struct BracketDepth {
-    value: usize,
-}
-
-impl BracketDepth {
-    fn open(&mut self) {
-        self.value += 1;
-    }
-
-    fn close(&mut self) {
-        self.value = self.value.saturating_sub(1);
-    }
-
-    fn is_top_level(&self) -> bool {
-        self.value == 0
-    }
+/// `r: number` / `r?: number` — a named tuple member.
+fn is_labeled(element: &str) -> bool {
+    split_top_level(element, ':').len() > 1
 }

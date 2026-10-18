@@ -1,7 +1,7 @@
 //! Pre-order AST traversal: emits the genericized token stream + spans, and
 //! extracts imports/declarations while tracking an explicit lexical scope stack.
 
-use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
+use super::{imports, lexeme, nested, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::walk::{
     self, credit_attr_with_base_path, credit_name, credit_string, declare, emit_mapped,
@@ -112,7 +112,7 @@ fn visit(
     // reflects the *enclosing* scope here (the current node is pushed below),
     // so a function directly inside a class is a method.
     if kind == "function_definition" {
-        record_function_unit(node, src, scope, out);
+        record_function_unit(node, src, scope, fn_bounds, out);
     } else if kind == "class_definition" {
         out.units.classes.push(units::analyze_class(node, src));
     }
@@ -169,12 +169,17 @@ fn visit(
 
 // Kept out of `visit` so the large unit never sits in each recursive frame.
 #[inline(never)]
-fn record_function_unit(node: Node, src: &[u8], scope: &[Scope], out: &mut Walked) {
+fn record_function_unit(
+    node: Node,
+    src: &[u8],
+    scope: &[Scope],
+    fn_bounds: &[BoundNames],
+    out: &mut Walked,
+) {
     let is_method = scope.last().is_some_and(|s| s.is_class);
     let mut unit = units::analyze_function(node, src, is_method);
     if let Some(enclosing) = scope.last().filter(|s| !s.is_class) {
-        unit.is_nested = true;
-        unit.parent = enclosing.name.clone();
+        nested::record(&mut unit, node, src, &enclosing.name, fn_bounds.last());
     }
     unit.review_risks.is_test_case = !unit.is_nested && unit.name.starts_with("test_");
     out.units.functions.push(unit);

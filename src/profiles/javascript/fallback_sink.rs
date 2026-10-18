@@ -39,18 +39,21 @@ pub(super) fn fallback_sink(node: Node, src: &[u8]) -> FallbackSink {
         return match parent.kind() {
             "template_substitution" | "jsx_expression" => FallbackSink::Rendered,
             "member_expression" => FallbackSink::StringOp,
-            "arguments"
-                if callee_name(parent, src).is_some_and(|c| STRING_CONSUMERS.contains(&c)) =>
-            {
-                FallbackSink::StringOp
-            }
+            "arguments" => arguments_sink(parent, src),
             "binary_expression" => binary_sink(parent, src),
-            "pair" | "assignment_expression" | "arguments" => FallbackSink::Stored,
+            "pair" | "assignment_expression" => FallbackSink::Stored,
             "return_statement" | "arrow_function" => FallbackSink::Returned,
             _ => FallbackSink::Other,
         };
     }
     FallbackSink::Other
+}
+
+fn arguments_sink(arguments: Node, src: &[u8]) -> FallbackSink {
+    match callee_name(arguments, src) {
+        Some(callee) if STRING_CONSUMERS.contains(&callee) => FallbackSink::StringOp,
+        _ => FallbackSink::Stored,
+    }
 }
 
 fn binary_sink(node: Node, src: &[u8]) -> FallbackSink {

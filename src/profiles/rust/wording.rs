@@ -1,6 +1,7 @@
 use crate::profiles::wording::SmellWording;
 
 pub(crate) const WORDING: SmellWording = SmellWording {
+    identifier_extra_chars: &[],
     structure: "a struct",
     grouped_value: "a struct",
     category: "an enum",

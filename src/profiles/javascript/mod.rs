@@ -178,6 +178,14 @@ impl TypeVocabularyProfile for JsProfile {
         typevocab::is_dictish(annotation)
     }
 
+    fn is_open_map(&self, annotation: &str) -> bool {
+        typevocab::is_open_map(annotation)
+    }
+
+    fn is_nominal_type(&self, annotation: &str) -> bool {
+        typevocab::is_nominal_type(annotation)
+    }
+
     fn has_domain_model(&self, annotation: &str) -> bool {
         typevocab::has_domain_model(annotation)
     }

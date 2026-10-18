@@ -27,6 +27,7 @@ Call sites stop reading like code and start reading like truth tables.
         invoice_id: str,
         email_customer: bool,
         archive_pdf: bool,
+        notify_owner: bool,
     ) -> None:
         invoice = repo.load(invoice_id)
         if email_customer:
@@ -35,6 +36,8 @@ Call sites stop reading like code and start reading like truth tables.
             review_queue.add(invoice)
         if archive_pdf:
             archive.store(render_pdf(invoice))
+        if notify_owner:
+            notifier.ping(invoice.owner)
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -50,8 +53,8 @@ Call sites stop reading like code and start reading like truth tables.
         def deliver(self, invoice: Invoice) -> None: ...
 
 
-    class InvoiceArchival(Protocol):
-        def archive(self, invoice: Invoice) -> None: ...
+    class InvoiceFollowUp(Protocol):
+        def run(self, invoice: Invoice) -> None: ...
 
 
     class EmailDelivery:
@@ -65,23 +68,24 @@ Call sites stop reading like code and start reading like truth tables.
 
 
     class PdfArchival:
-        def archive(self, invoice: Invoice) -> None:
+        def run(self, invoice: Invoice) -> None:
             archive.store(render_pdf(invoice))
 
 
-    class SkipArchival:
-        def archive(self, invoice: Invoice) -> None:
-            return None
+    class OwnerNotification:
+        def run(self, invoice: Invoice) -> None:
+            notifier.ping(invoice.owner)
 
 
     def publish_invoice(
         invoice_id: str,
         delivery: InvoiceDelivery,
-        archival: InvoiceArchival,
+        follow_ups: list[InvoiceFollowUp],
     ) -> None:
         invoice = repo.load(invoice_id)
         delivery.deliver(invoice)
-        archival.archive(invoice)
+        for follow_up in follow_ups:
+            follow_up.run(invoice)
     ```
     </details>
 
@@ -90,7 +94,12 @@ Call sites stop reading like code and start reading like truth tables.
     **Problem**
 
     ```ts
-    function publishInvoice(invoiceId: string, emailCustomer: boolean, archivePdf: boolean): void {
+    function publishInvoice(
+      invoiceId: string,
+      emailCustomer: boolean,
+      archivePdf: boolean,
+      notifyOwner: boolean,
+    ): void {
       const invoice = repo.load(invoiceId);
       if (emailCustomer) {
         mailer.send(invoice);
@@ -99,6 +108,9 @@ Call sites stop reading like code and start reading like truth tables.
       }
       if (archivePdf) {
         archive.store(renderPdf(invoice));
+      }
+      if (notifyOwner) {
+        notifier.ping(invoice.owner);
       }
     }
     ```
@@ -113,8 +125,8 @@ Call sites stop reading like code and start reading like truth tables.
       deliver(invoice: Invoice): void;
     }
 
-    interface InvoiceArchival {
-      archive(invoice: Invoice): void;
+    interface InvoiceFollowUp {
+      run(invoice: Invoice): void;
     }
 
     class EmailDelivery implements InvoiceDelivery {
@@ -129,26 +141,28 @@ Call sites stop reading like code and start reading like truth tables.
       }
     }
 
-    class PdfArchival implements InvoiceArchival {
-      archive(invoice: Invoice): void {
+    class PdfArchival implements InvoiceFollowUp {
+      run(invoice: Invoice): void {
         archive.store(renderPdf(invoice));
       }
     }
 
-    class SkipArchival implements InvoiceArchival {
-      archive(invoice: Invoice): void {
-        return;
+    class OwnerNotification implements InvoiceFollowUp {
+      run(invoice: Invoice): void {
+        notifier.ping(invoice.owner);
       }
     }
 
     function publishInvoice(
       invoiceId: string,
       delivery: InvoiceDelivery,
-      archival: InvoiceArchival,
+      followUps: InvoiceFollowUp[],
     ): void {
       const invoice = repo.load(invoiceId);
       delivery.deliver(invoice);
-      archival.archive(invoice);
+      for (const followUp of followUps) {
+        followUp.run(invoice);
+      }
     }
     ```
     </details>
@@ -1722,6 +1736,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 enabled = true
 action = "warning"
 max_lines = 15 # allowed function or nested-function length
+skip_capturing = false # drop nested functions that read parent locals
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -3542,8 +3557,8 @@ Positional bundles hide meaning and make the code brittle to reorderings.
     **Problem**
 
     ```python
-    def summarize(user: User) -> tuple[str, str, str]:
-        return user.name, user.email, user.plan
+    def summarize(user: User) -> tuple[str, str, int]:
+        return user.name, user.email, user.seats
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -3559,11 +3574,11 @@ Positional bundles hide meaning and make the code brittle to reorderings.
     class UserSummary:
         name: str
         email: str
-        plan: str
+        seats: int
 
 
     def summarize(user: User) -> UserSummary:
-        return UserSummary(name=user.name, email=user.email, plan=user.plan)
+        return UserSummary(name=user.name, email=user.email, seats=user.seats)
     ```
     </details>
 
@@ -3572,8 +3587,8 @@ Positional bundles hide meaning and make the code brittle to reorderings.
     **Problem**
 
     ```ts
-    function summarize(user: User): [string, string, string] {
-      return [user.name, user.email, user.plan];
+    function summarize(user: User): [string, string, number] {
+      return [user.name, user.email, user.seats];
     }
     ```
 
@@ -3586,11 +3601,11 @@ Positional bundles hide meaning and make the code brittle to reorderings.
     interface UserSummary {
       name: string;
       email: string;
-      plan: string;
+      seats: number;
     }
 
     function summarize(user: User): UserSummary {
-      return { name: user.name, email: user.email, plan: user.plan };
+      return { name: user.name, email: user.email, seats: user.seats };
     }
     ```
     </details>
@@ -3604,6 +3619,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 enabled = true
 action = "warning"
 max_tuple_return = 2 # allowed positional tuple items in a return
+allow_homogeneous = true # allow same-primitive tuples of up to 4 items
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -4562,7 +4578,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.weak_test_oracle]
 enabled = true
 action = "warning"
-# This detector has no extra threshold knobs.
+assertion_functions = 10 # globs for imported helpers that count as checks
 ```
 
 <details class="sensez-proposed-fix" markdown="1">

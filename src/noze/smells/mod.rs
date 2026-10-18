@@ -25,6 +25,8 @@ mod union_find;
 #[cfg(test)]
 mod cohesion_tests;
 #[cfg(test)]
+mod coupling_tests;
+#[cfg(test)]
 mod god_module_tests;
 #[cfg(test)]
 mod graph_tests;
@@ -32,6 +34,10 @@ mod graph_tests;
 mod review_risks_tests;
 #[cfg(test)]
 mod schema_tests;
+#[cfg(test)]
+mod test_oracle_tests;
+#[cfg(test)]
+mod test_support;
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
@@ -103,7 +109,7 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
                 }
                 let ctx = SmellContext::from_file(file);
                 let mut findings =
-                    review_risks::detect_test_oracles(&ctx, &file.walked.units.functions);
+                    review_risks::detect_test_oracles(&ctx, &file.walked.units.functions, settings);
                 for finding in &mut findings {
                     if let Some(action) = settings.actions.get(&finding.kind) {
                         finding.action = *action;

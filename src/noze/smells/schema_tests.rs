@@ -59,3 +59,40 @@ def parse_user(payload: dict[str, object]) -> User:
     let findings = local(source);
     assert!(!has(&findings, SmellKind::ImplicitSchema), "{findings:?}");
 }
+
+fn local_ts(source: &str) -> Vec<SmellFinding> {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("sample.ts");
+    fs::write(&path, source).unwrap();
+    let file = parse_file(&path, 0).unwrap();
+    detect_local(&file, &Smells::default())
+}
+
+#[test]
+fn data_keyed_and_open_maps_are_not_implicit_schemas() {
+    for source in [
+        "export function tally(rows: Row[]) {\n  const counts: Record<string, number> = {};\n  counts[\"alpha\"] = 0;\n  counts[\"beta\"] = 0;\n  counts[\"gamma\"] = 0;\n  counts[\"delta\"] = 0;\n  for (const r of rows) counts[r.cat] += 1;\n  return counts;\n}\n",
+        "export function sum(m: Record<\"a\" | \"b\" | \"c\" | \"d\", number>) {\n  return m[\"a\"] + m[\"b\"] + m[\"c\"] + m[\"d\"];\n}\n",
+        "export function label(attrs: { [k: string]: string }) {\n  return attrs[\"id\"] + attrs[\"role\"] + attrs[\"title\"] + attrs[\"lang\"];\n}\n",
+    ] {
+        let findings = local_ts(source);
+        assert!(
+            !has(&findings, SmellKind::ImplicitSchema),
+            "{source}\n{findings:?}"
+        );
+    }
+}
+
+#[test]
+fn loose_or_unannotated_string_keyed_receivers_stay_implicit_schemas() {
+    for source in [
+        "export function f(cfg: any) {\n  return cfg[\"host\"] + cfg[\"port\"] + cfg[\"user\"] + cfg[\"pass\"];\n}\n",
+        "export function f(cfg) {\n  return cfg[\"host\"] + cfg[\"port\"] + cfg[\"user\"] + cfg[\"pass\"];\n}\n",
+    ] {
+        let findings = local_ts(source);
+        assert!(
+            has(&findings, SmellKind::ImplicitSchema),
+            "{source}\n{findings:?}"
+        );
+    }
+}

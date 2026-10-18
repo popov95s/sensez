@@ -59,6 +59,7 @@ pub struct Smells {
     pub max_bool_params: usize,
     pub tuple_packing: bool,
     pub max_tuple_return: usize,
+    pub tuple_allow_homogeneous: bool,
     pub param_mutation: bool,
     pub param_attr_mutation: bool,
     pub param_reassignment: bool,
@@ -66,6 +67,8 @@ pub struct Smells {
     pub literal_membership: bool,
     pub literal_membership_skip_external_vocab: bool,
     pub max_nested_function_lines: usize,
+    pub nested_function_skip_capturing: bool,
+    pub assertion_functions: Vec<String>,
 }
 
 impl Default for Smells {
@@ -120,6 +123,7 @@ impl Default for Smells {
             max_bool_params: 2,
             tuple_packing: true,
             max_tuple_return: 2,
+            tuple_allow_homogeneous: true,
             param_mutation: true,
             param_attr_mutation: false,
             param_reassignment: false,
@@ -127,6 +131,8 @@ impl Default for Smells {
             literal_membership: true,
             literal_membership_skip_external_vocab: true,
             max_nested_function_lines: 15,
+            nested_function_skip_capturing: false,
+            assertion_functions: ["expect*", "assert*", "verify*"].map(String::from).to_vec(),
         }
     }
 }

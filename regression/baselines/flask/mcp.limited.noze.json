@@ -332,13 +332,13 @@
     },
     {
       "action": "warning",
-      "file": "<flask>/src/flask/helpers.py",
-      "kind": "heavy_nested_function",
-      "line": 126,
-      "message": "nested function inside `stream_with_context` spans 16 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `stream_with_context`), so extract it to module/class level",
-      "metric": 16,
-      "symbol": "generator",
-      "threshold": 15
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "boolean_blindness",
+      "line": 279,
+      "message": "3 boolean parameters \u2014 call sites are unreadable; consider an Enum, or split the function",
+      "metric": 3,
+      "symbol": "__init__",
+      "threshold": 2
     },
     {
       "action": "warning",

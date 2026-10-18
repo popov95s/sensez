@@ -12,6 +12,9 @@ use crate::profiles::typevocab::{base_type, split_top_level, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionUnit;
 
+/// Widest same-primitive tuple still read as a vector, colour or range.
+const MAX_HOMOGENEOUS_TUPLE: usize = 4;
+
 pub fn detect(
     ctx: &SmellContext<'_>,
     metrics: &[FunctionUnit],
@@ -145,7 +148,9 @@ fn tuple_packing(
         .map(|ty| tuple_arity(ty))
         .unwrap_or(0);
     let arity = m.max_tuple_return.max(annotated);
-    if arity > cfg.max_tuple_return {
+    let vector_like =
+        cfg.tuple_allow_homogeneous && m.homogeneous_tuple_return && arity <= MAX_HOMOGENEOUS_TUPLE;
+    if arity > cfg.max_tuple_return && !vector_like {
         out.push(make(
             SmellKind::TuplePacking,
             format!(

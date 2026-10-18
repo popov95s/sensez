@@ -63,7 +63,15 @@ const TEST_CHECKS: TestChecks = TestChecks {
             callee_prefix: "expect.",
             member_prefix: "to",
         },
+        CallPattern::MemberPrefix {
+            callee_prefix: "expectTypeOf(",
+            member_prefix: "to",
+        },
+        CallPattern::Exact("assertType"),
+        CallPattern::Exact("expect.assertions"),
+        CallPattern::Exact("expect.hasAssertions"),
     ],
+    framework_calls: &["expect", "expectTypeOf"],
 };
 
 pub(super) fn scan(
@@ -74,6 +82,9 @@ pub(super) fn scan(
 ) {
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
+    }
+    if let Some(helper) = test_oracle::helper_call(node, src, &TEST_CHECKS) {
+        unit.review_risks.helper_calls.push(helper.to_string());
     }
     match node.kind() {
         "catch_clause" => unit.review_risks.broad_handlers += 1,
@@ -86,18 +97,27 @@ pub(super) fn scan(
 }
 
 pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
-    let Some(args) = func.parent().filter(|parent| parent.kind() == "arguments") else {
-        return false;
-    };
-    let Some(call) = args
+    test_callee(func, src).is_some_and(|name| matches!(name, "test" | "it"))
+}
+
+pub(super) fn is_test_framework_callback(func: Node<'_>, src: &[u8]) -> bool {
+    test_callee(func, src).is_some_and(|name| {
+        matches!(
+            name,
+            "describe" | "it" | "test" | "beforeEach" | "afterEach" | "beforeAll" | "afterAll"
+        )
+    })
+}
+
+/// Base name of the test-framework call receiving `func` (`it.only`, `test.each(...)` → `it`, `test`).
+fn test_callee<'a>(func: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
+    let args = func
         .parent()
-        .filter(|parent| parent.kind() == "call_expression")
-    else {
-        return false;
-    };
-    call.child_by_field_name("function")
-        .and_then(|callee| callee.utf8_text(src).ok())
-        .is_some_and(|name| matches!(name, "test" | "it"))
+        .filter(|parent| parent.kind() == "arguments")?;
+    let call = args
+        .parent()
+        .filter(|parent| parent.kind() == "call_expression")?;
+    base_callee(call.child_by_field_name("function")?, src)
 }
 
 fn record_guard(
@@ -143,4 +163,23 @@ fn is_empty_fallback(node: Node<'_>) -> bool {
 fn is_empty_value(node: Node<'_>) -> bool {
     matches!(node.kind(), "null" | "array" | "object")
         && (node.kind() == "null" || node.named_child_count() == 0)
+}
+
+/// Identifier under `.only` / `.each` / `.concurrent` modifiers and curried calls.
+fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
+    match callee.kind() {
+        "identifier" => callee.utf8_text(src).ok(),
+        "call_expression" => base_callee(callee.child_by_field_name("function")?, src),
+        "member_expression" => {
+            let modifier = callee
+                .child_by_field_name("property")?
+                .utf8_text(src)
+                .ok()?;
+            if !matches!(modifier, "only" | "each" | "concurrent") {
+                return None;
+            }
+            base_callee(callee.child_by_field_name("object")?, src)
+        }
+        _ => None,
+    }
 }

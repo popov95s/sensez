@@ -2,6 +2,8 @@
 
 #[derive(Debug)]
 pub struct SmellWording {
+    /// Characters besides alphanumerics and `_` that identifiers may contain.
+    pub identifier_extra_chars: &'static [char],
     /// Named structure replacing loose maps (`loose_typing`, `data_clump`).
     pub structure: &'static str,
     /// Named structure replacing positional tuples (`tuple_packing`).

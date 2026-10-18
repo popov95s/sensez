@@ -15,6 +15,8 @@ pub struct ReviewRiskFacts {
     pub forwards_to: Option<String>,
     /// Direct test checks found in this function's own body.
     pub test_checks: usize,
+    /// Plain calls to helper functions (framework check roots excluded).
+    pub helper_calls: Vec<String>,
     pub test_has_nested_function: bool,
     /// Whether the language profile identified this unit as a test case.
     pub is_test_case: bool,
@@ -159,6 +161,18 @@ pub struct FunctionUnit {
     pub parent: String,
     pub callback_position: CallbackPosition,
     pub visibility: Visibility,
+    /// The enclosing function is a test-framework callback (`describe`, `it`, hooks).
+    pub parent_is_test_callback: bool,
+    /// A nested function reads a name bound in its enclosing function.
+    pub captures_parent: bool,
+    /// Constructor of its class.
+    pub is_constructor: bool,
+    /// Plain assignments to own-instance members (`this.x = …`).
+    pub self_writes: usize,
+    /// Receivers also subscripted with a computed (non-literal) key.
+    pub dynamic_key_receivers: HashSet<String>,
+    /// The tuple return annotation repeats one primitive type.
+    pub homogeneous_tuple_return: bool,
 }
 
 /// Source span for a comment node. Language profiles record these during the
@@ -197,6 +211,8 @@ pub struct ClassUnit {
     pub end_line: usize,
     /// Base-class names (for refused-bequest analysis).
     pub bases: Vec<String>,
+    /// Interfaces the class declares it implements.
+    pub implements: Vec<String>,
     /// True if the class is itself abstract (inherits `ABC`/`Protocol`/`ABCMeta`
     /// or declares any `@abstractmethod`) — abstract stubs are not a smell.
     pub is_abstract: bool,

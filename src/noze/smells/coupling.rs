@@ -44,12 +44,13 @@ fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<
     for m in metrics {
         // Feature envy is about a *method* neglecting its own object's data. Free
         // functions (endpoints, helpers) have no "own data", so they can't envy.
-        if !m.is_method {
+        if !m.is_method || m.is_constructor {
             continue;
         }
         let self_uses = m.receiver_access.get("self").copied().unwrap_or(0);
-        if self_uses == 0 {
-            continue; // a method that never touches self has no own data to neglect
+        // Never touching self, or only writing it (mapping a foreign object in), is not envy.
+        if self_uses == 0 || self_uses == m.self_writes {
+            continue;
         }
         // The most-touched non-self receiver. Tie-break on the receiver name
         // (smallest wins) so the pick is deterministic: `receiver_access` is a
@@ -69,7 +70,10 @@ fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<
             continue;
         }
         // Resolve the receiver's type; skip if unknown (precision over recall).
-        let Some(ty) = resolve_type(m, receiver, ctx.type_hints) else {
+        let Some(ty) = resolve_type(m, receiver, ctx.type_hints)
+            .filter(|ty| ctx.type_vocabulary.is_nominal_type(ty))
+            .map(|ty| display_type(&ty))
+        else {
             continue;
         };
         out.push(make(
@@ -131,6 +135,16 @@ fn private_attrs(attrs: &std::collections::HashSet<String>) -> Vec<&str> {
         .collect();
     privates.sort_unstable();
     privates
+}
+
+/// Whitespace-collapsed type text, capped for one-line messages.
+fn display_type(ty: &str) -> String {
+    const MAX_CHARS: usize = 60;
+    let collapsed = ty.split_whitespace().collect::<Vec<_>>().join(" ");
+    match collapsed.char_indices().nth(MAX_CHARS) {
+        Some((cut, _)) => format!("{}…", &collapsed[..cut]),
+        None => collapsed,
+    }
 }
 
 /// Resolve `name` within `func`: a typed parameter first, else a typed/instantiated variable.

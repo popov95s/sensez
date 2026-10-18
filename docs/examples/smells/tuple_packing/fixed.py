@@ -5,8 +5,8 @@ from dataclasses import dataclass
 class UserSummary:
     name: str
     email: str
-    plan: str
+    seats: int
 
 
 def summarize(user: User) -> UserSummary:
-    return UserSummary(name=user.name, email=user.email, plan=user.plan)
+    return UserSummary(name=user.name, email=user.email, seats=user.seats)

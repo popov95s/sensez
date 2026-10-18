@@ -1,5 +1,6 @@
 use super::knobs::{Smells, Strictness};
 use super::raw::RuleRaw;
+use super::rule_lists::string_list;
 use super::strictness;
 use crate::report::SmellKind;
 use std::collections::BTreeMap;
@@ -57,6 +58,14 @@ fn apply_rule_knob(
                 smells.literal_membership_skip_external_vocab = b;
                 true
             }
+            (SmellKind::HeavyNestedFunction, "skip_capturing") => {
+                smells.nested_function_skip_capturing = b;
+                true
+            }
+            (SmellKind::TuplePacking, "allow_homogeneous") => {
+                smells.tuple_allow_homogeneous = b;
+                true
+            }
             _ => false,
         };
         return Ok(matched);
@@ -65,7 +74,7 @@ fn apply_rule_knob(
         return Err(format!("[smells.rules.{kind}] {key} must be a boolean"));
     }
     let Some(n) = value.as_integer() else {
-        return if integer_rule_knobs(kind).contains(&key) {
+        return if rule_knob_names(kind).contains(&key) {
             Err(format!("[smells.rules.{kind}] {key} must be an integer"))
         } else {
             Ok(false)
@@ -83,19 +92,15 @@ fn apply_list_knob(
     key: &str,
     value: &toml::Value,
 ) -> Result<bool, String> {
-    let items: Option<Vec<String>> = value.as_array().and_then(|items| {
-        items
-            .iter()
-            .map(|item| item.as_str().map(str::to_string))
-            .collect()
-    });
-    let Some(items) = items else {
-        return Err(format!(
-            "[smells.rules.{kind}] {key} must be a list of strings"
-        ));
-    };
+    let items = string_list(value)
+        .ok_or_else(|| format!("[smells.rules.{kind}] {key} must be a list of strings"))?;
     match (kind, key) {
         (SmellKind::MessageChain, "ignore_roots") => smells.message_chain_ignore_roots = items,
+        (SmellKind::WeakTestOracle, "assertion_functions") => {
+            crate::globs::build_globset(&items)
+                .map_err(|err| format!("[smells.rules.{kind}] {key}: {err}"))?;
+            smells.assertion_functions = items;
+        }
         _ => return Ok(false),
     }
     Ok(true)
@@ -113,7 +118,7 @@ fn apply_string_knob(
             kind,
             strictness::parse_strictness(kind, key, value)?,
         ),
-        _ if integer_rule_knobs(kind).contains(&key) => {
+        _ if rule_knob_names(kind).contains(&key) => {
             Err(format!("[smells.rules.{kind}] {key} must be an integer"))
         }
         _ => Ok(false),
@@ -196,16 +201,17 @@ pub(crate) fn rule_keys(kind: SmellKind) -> Vec<&'static str> {
         .map(|rule| rule.knob);
     COMMON_RULE_KEYS
         .into_iter()
-        .chain(integer_rule_knobs(kind).iter().copied())
+        .chain(rule_knob_names(kind).iter().copied())
         .chain(strictness_knobs)
         .collect()
 }
 
-fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
+fn rule_knob_names(kind: SmellKind) -> &'static [&'static str] {
     match kind {
         SmellKind::SplitVariable => &["min_assigns"],
         SmellKind::MutatedParameter => &["include_attributes"],
-        SmellKind::LongFunction | SmellKind::HeavyNestedFunction => &["max_lines"],
+        SmellKind::LongFunction => &["max_lines"],
+        SmellKind::HeavyNestedFunction => &["max_lines", "skip_capturing"],
         SmellKind::LargeClass => &["max_methods"],
         SmellKind::LongParameterList => &["max_params"],
         SmellKind::TooManyReturns => &["max_returns"],
@@ -231,9 +237,10 @@ fn integer_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::BooleanBlindness => &["max_bool_params"],
         SmellKind::MagicStringDefault => &[],
         SmellKind::RepeatedIteration => &["include_tests"],
-        SmellKind::TuplePacking => &["max_tuple_return"],
+        SmellKind::TuplePacking => &["max_tuple_return", "allow_homogeneous"],
         SmellKind::ImplicitSchema => &["min_keys"],
         SmellKind::LiteralMembership => &["skip_external_vocab"],
+        SmellKind::WeakTestOracle => &["assertion_functions"],
         _ => &[],
     }
 }
@@ -243,6 +250,8 @@ fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::MutatedParameter => &["include_attributes"],
         SmellKind::RepeatedIteration => &["include_tests"],
         SmellKind::LiteralMembership => &["skip_external_vocab"],
+        SmellKind::HeavyNestedFunction => &["skip_capturing"],
+        SmellKind::TuplePacking => &["allow_homogeneous"],
         _ => &[],
     }
 }
@@ -250,6 +259,7 @@ fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
 fn list_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
     match kind {
         SmellKind::MessageChain => &["ignore_roots"],
+        SmellKind::WeakTestOracle => &["assertion_functions"],
         _ => &[],
     }
 }
