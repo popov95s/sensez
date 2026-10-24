@@ -303,9 +303,11 @@ pub struct GlossaryEntry {
 }
 
 mod analysis;
+mod limit;
 mod pillar;
 mod skip_counts;
 pub use analysis::AnalysisReport;
+pub use limit::{limit, LimitPolicy, SmellCap};
 pub use pillar::Pillar;
 pub use skip_counts::SkipCounts;
 fn line_is_unknown(value: &usize) -> bool {

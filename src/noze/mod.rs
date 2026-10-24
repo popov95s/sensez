@@ -9,7 +9,7 @@ pub mod smells;
 mod source_scope;
 
 use crate::report::{
-    ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, SmellFinding,
+    ActionLevel, AnalysisReport, Confidence, LimitPolicy, ReportMeta, ReportMode, SmellFinding,
 };
 
 use crate::config::model::{ActionPolicy, Config};
@@ -111,16 +111,12 @@ fn apply_smell_actions(smells: &mut [SmellFinding], policy: &ActionPolicy) {
     }
 }
 
-/// Truncate each pillar to the top `max` ranked findings (0 = unlimited).
+/// Cap every pillar, smells included, to the top `max` ranked findings (0 = unlimited).
 pub fn limit(report: &mut AnalysisReport, max: usize) {
     if max == 0 {
         return;
     }
-    report.cycles.truncate(max);
-    report.dead_code.truncate(max);
-    report.boundaries.truncate(max);
-    report.duplication.truncate(max);
-    report.smells.truncate(max);
+    crate::report::limit(report, LimitPolicy::flat(max));
     report.meta.glossary = crate::noze::glossary::for_report(report);
 }
 
