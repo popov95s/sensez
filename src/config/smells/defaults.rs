@@ -1,9 +1,8 @@
 //! Built-in per-language smell defaults.
 //!
-//! Python (and Rust, which has no unit extraction yet) use the baseline
-//! [`Smells::default`]. JavaScript/TypeScript defer the rules ESLint /
-//! typescript-eslint / SonarJS own and keep the heuristic, cross-file, and
-//! type-discipline smells.
+//! Python and Rust use the baseline [`Smells::default`]. JavaScript/TypeScript
+//! defer the rules ESLint / typescript-eslint / SonarJS own and keep the
+//! heuristic, cross-file, and type-discipline smells.
 
 use super::knobs::Smells;
 use crate::report::SmellKind;
@@ -13,9 +12,6 @@ use crate::spine::ir::Language;
 pub fn default_for(lang: Language) -> Smells {
     match lang {
         Language::JavaScript | Language::TypeScript => js_ts_default(),
-        // Python: the canonical baseline. Rust: no unit extraction yet, so the
-        // per-function smells produce nothing regardless; the baseline keeps the
-        // graph smells (god_module / shotgun) live, matching today's behavior.
         Language::Python | Language::Rust => Smells::default(),
     }
 }
