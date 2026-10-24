@@ -16,9 +16,18 @@ pub(super) fn changes(root: &Path, transcript: &Path) -> Result<ChangedLines> {
     let text = std::fs::read_to_string(transcript)
         .with_context(|| format!("reading Claude transcript {}", transcript.display()))?;
     let mut changed = ChangedLines::default();
+    let mut unreadable = 0;
     for line in text.lines().filter(|line| !line.trim().is_empty()) {
-        let value: Value = serde_json::from_str(line).context("parsing Claude transcript JSONL")?;
-        collect(root, &value, &mut changed);
+        match serde_json::from_str::<Value>(line) {
+            Ok(value) => collect(root, &value, &mut changed),
+            Err(_) => unreadable += 1,
+        }
+    }
+    if unreadable > 0 {
+        eprintln!(
+            "[sensez gate] skipped {unreadable} unparseable line(s) in {}",
+            transcript.display()
+        );
     }
     Ok(changed)
 }
@@ -57,6 +66,13 @@ fn record(root: &Path, object: &Map<String, Value>, changed: &mut ChangedLines) 
     match name {
         "Write" => changed.add_full_file(&file),
         "Edit" => record_edit(&file, input, changed),
+        "MultiEdit" => input
+            .get("edits")
+            .and_then(Value::as_array)
+            .into_iter()
+            .flatten()
+            .filter_map(Value::as_object)
+            .for_each(|edit| record_edit(&file, edit, changed)),
         _ => {}
     }
 }
@@ -70,32 +86,37 @@ fn resolve(root: &Path, raw: &str) -> PathBuf {
     }
 }
 
-fn record_edit(file: &Path, input: &Map<String, Value>, changed: &mut ChangedLines) {
-    let replacement = input
+/// Scope an edit to where its replacement sits now, or to the whole file when that is ambiguous.
+fn record_edit(file: &Path, edit: &Map<String, Value>, changed: &mut ChangedLines) {
+    let replacement = edit
         .get("new_string")
         .and_then(Value::as_str)
         .unwrap_or_default();
-    if replacement.is_empty() {
-        // A deletion has no replacement span to locate after the edit. Scan
-        // the file rather than silently omitting a change that can alter a
-        // structural finding.
+    let replace_all = edit
+        .get("replace_all")
+        .and_then(Value::as_bool)
+        .unwrap_or(false);
+    let text = std::fs::read_to_string(file).unwrap_or_default();
+    let ranges: Vec<(usize, usize)> = if replacement.is_empty() {
+        Vec::new()
+    } else {
+        text.match_indices(replacement)
+            .map(|(offset, _)| line_range(&text, offset, replacement))
+            .collect()
+    };
+    if ranges.len() == 1 || (replace_all && !ranges.is_empty()) {
+        ranges
+            .into_iter()
+            .for_each(|(start, end)| changed.add(file, start, end));
+    } else {
         changed.add_full_file(file);
-        return;
-    }
-    let range = std::fs::read_to_string(file)
-        .ok()
-        .and_then(|text| line_range(&text, replacement));
-    match range {
-        Some((start, end)) => changed.add(file, start, end),
-        None => changed.add_full_file(file),
     }
 }
 
-fn line_range(text: &str, replacement: &str) -> Option<(usize, usize)> {
-    let offset = text.find(replacement)?;
+fn line_range(text: &str, offset: usize, replacement: &str) -> (usize, usize) {
     let start = text[..offset].bytes().filter(|byte| *byte == b'\n').count() + 1;
     let end = start + replacement.bytes().filter(|byte| *byte == b'\n').count();
-    Some((start, end.max(start)))
+    (start, end)
 }
 
 #[cfg(test)]
@@ -126,6 +147,72 @@ mod tests {
             id(Some("session-123")).as_deref(),
             Some("session:session-123")
         );
+    }
+
+    #[test]
+    fn edit_whose_replacement_also_appears_earlier_scopes_the_whole_file() {
+        let (_tmp, root, file) =
+            module("def live():\n    return 1\n\n\ndef orphan():\n    return 1\n");
+        let edit = json!({"name": "Edit", "input": {"file_path": file, "old_string": "x", "new_string": "    return 1\n"}});
+        let changed = changes(&root, &log(&root, &[edit.to_string()])).unwrap();
+        assert!(
+            changed.touches(&file, 5, 5),
+            "the second definition is in scope"
+        );
+    }
+
+    #[test]
+    fn edit_with_a_unique_replacement_scopes_only_its_lines() {
+        let (_tmp, root, file) =
+            module("def live():\n    return 1\n\n\ndef orphan():\n    return 2\n");
+        let edit = json!({"name": "Edit", "input": {"file_path": file, "old_string": "x", "new_string": "    return 2\n"}});
+        let changed = changes(&root, &log(&root, &[edit.to_string()])).unwrap();
+        assert!(changed.touches(&file, 6, 6));
+        assert!(!changed.touches(&file, 1, 2));
+    }
+
+    #[test]
+    fn replace_all_scopes_every_occurrence() {
+        let (_tmp, root, file) = module("a = old\nb = 1\nc = old\n");
+        let edit = json!({"name": "Edit", "input": {"file_path": file, "old_string": "x", "new_string": "old", "replace_all": true}});
+        let changed = changes(&root, &log(&root, &[edit.to_string()])).unwrap();
+        assert!(changed.touches(&file, 1, 1) && changed.touches(&file, 3, 3));
+        assert!(!changed.touches(&file, 2, 2));
+    }
+
+    #[test]
+    fn multi_edit_scopes_each_edit() {
+        let (_tmp, root, file) = module("first = 1\nmiddle = 2\nlast = 3\n");
+        let edits = json!([
+            {"old_string": "x", "new_string": "first = 1"},
+            {"old_string": "y", "new_string": "last = 3"}
+        ]);
+        let edit = json!({"name": "MultiEdit", "input": {"file_path": file, "edits": edits}});
+        let changed = changes(&root, &log(&root, &[edit.to_string()])).unwrap();
+        assert!(changed.touches(&file, 1, 1) && changed.touches(&file, 3, 3));
+        assert!(!changed.touches(&file, 2, 2));
+    }
+
+    #[test]
+    fn malformed_transcript_line_keeps_the_other_edits() {
+        let (_tmp, root, file) = module("x = 1\n");
+        let write = json!({"name": "Write", "input": {"file_path": file}});
+        let changed = changes(&root, &log(&root, &[write.to_string(), "not json".into()])).unwrap();
+        assert!(changed.touches_file(&file));
+    }
+
+    fn module(source: &str) -> (tempfile::TempDir, PathBuf, PathBuf) {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path().to_path_buf();
+        let file = root.join("module.py");
+        std::fs::write(&file, source).unwrap();
+        (tmp, root, file)
+    }
+
+    fn log(root: &Path, lines: &[String]) -> PathBuf {
+        let path = root.join("session.jsonl");
+        std::fs::write(&path, lines.join("\n")).unwrap();
+        path
     }
 
     fn transcript(root: &Path, name: &str, file: &Path) -> PathBuf {
