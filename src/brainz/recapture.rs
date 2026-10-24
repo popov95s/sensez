@@ -75,14 +75,13 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u
     let ignore = super::triage::ignored_keys(&super::triage::load(root));
     let now = hub::now();
     let aging = aging::age(&previous, &current, &history, now, &ignore);
-    match store::save_fingerprints_if_current(
-        root,
+    let write = store::BranchWrite {
         branch,
-        baseline_ts,
-        &aging.aged,
-        &aging.history,
+        prints: aging.aged,
+        history: aging.history,
         now,
-    ) {
+    };
+    match store::save_fingerprints_if_current(root, write, baseline_ts) {
         Ok(true) => {}
         Ok(false) => {
             hub::mark_rescanned(root, hub::now());
