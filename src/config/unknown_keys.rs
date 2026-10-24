@@ -8,12 +8,12 @@ use super::smells::{rule_keys, Smells};
 use super::suggest::suggest;
 use super::SelfImprovement;
 use crate::report::SmellKind;
+use crate::spine::ir::Language;
 use std::ops::Range;
 use toml_edit::{Item, TableLike};
 
 /// Allowed keys inside one `[[boundaries.forbidden]]` entry.
 const FORBIDDEN_KEYS: [&str; 2] = ["from", "to"];
-const SMELL_LANGUAGES: [&str; 4] = ["python", "javascript", "typescript", "rust"];
 
 /// Whether an unknown key makes the configuration invalid or is only reported.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
@@ -105,13 +105,13 @@ fn smells(table: &dyn TableLike, out: &mut Vec<UnknownKey>) {
     let knobs = allowed_keys::<Smells>();
     let with_rules = || knobs.iter().cloned().chain(["rules".to_string()]);
     let base: Vec<String> = with_rules()
-        .chain(SMELL_LANGUAGES.map(String::from))
+        .chain(Language::ALL.map(|lang| lang.key().to_string()))
         .chain(["include_tests".to_string()])
         .collect();
     check("smells", table, &base, KeyPolicy::Reject, out);
     rules("smells.rules", table, out);
     let language: Vec<String> = with_rules().collect();
-    for lang in SMELL_LANGUAGES {
+    for lang in Language::ALL.map(Language::key) {
         if let Some(lang_table) = sub_table(table, lang) {
             let scope = format!("smells.{lang}");
             check(&scope, lang_table, &language, KeyPolicy::Reject, out);
