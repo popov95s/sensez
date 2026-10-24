@@ -68,6 +68,7 @@ static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["ts", "mts", "cts"],
     test_support: test_support::TEST_SUPPORT,
+    migration_layouts: &[],
     wording: &wording::WORDING,
 };
 
@@ -75,6 +76,7 @@ static TSX_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["tsx"],
     test_support: test_support::TEST_SUPPORT,
+    migration_layouts: &[],
     wording: &wording::WORDING,
 };
 /// The TypeScript language profile (zero-sized).

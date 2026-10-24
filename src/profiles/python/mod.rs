@@ -43,6 +43,7 @@ static PYTHON_INFO: LanguageInfo = LanguageInfo {
     language: Language::Python,
     extensions: &["py", "pyi"],
     test_support: &[],
+    migration_layouts: &["**/alembic/**/*.py", "**/versions/**/*.py"],
     wording: &wording::WORDING,
 };
 impl ParseProfile for PythonProfile {

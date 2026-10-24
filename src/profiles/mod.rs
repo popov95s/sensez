@@ -67,6 +67,8 @@ pub struct LanguageInfo {
     pub extensions: &'static [&'static str],
     /// Test helpers, mocks, fixtures and stories: skipped by smells and duplication, still live for dead code.
     pub test_support: &'static [&'static str],
+    /// Generated, often cyclic migration scripts: skipped by duplication, smells and cycles.
+    pub migration_layouts: &'static [&'static str],
     pub wording: &'static wording::SmellWording,
 }
 

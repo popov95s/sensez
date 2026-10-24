@@ -46,6 +46,7 @@ static RUST_INFO: LanguageInfo = LanguageInfo {
     language: Language::Rust,
     extensions: &["rs"],
     test_support: &[],
+    migration_layouts: &[],
     wording: &wording::WORDING,
 };
 impl ParseProfile for RustProfile {

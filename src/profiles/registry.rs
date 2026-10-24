@@ -118,6 +118,14 @@ pub fn smell_wording(language: Language) -> &'static SmellWording {
     profile(language).info().wording
 }
 
+/// Migration-script globs of every compiled-in language.
+pub fn migration_layouts() -> impl Iterator<Item = &'static str> {
+    PROFILES
+        .iter()
+        .flat_map(|profile| ParseProfile::info(*profile).migration_layouts)
+        .copied()
+}
+
 /// Match file conventions from the owning language profile, compiled once.
 pub fn is_test_source(language: Language, path: &Path) -> bool {
     static TEST_SOURCES: OnceLock<HashMap<Language, GlobSet>> = OnceLock::new();

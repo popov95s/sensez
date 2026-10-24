@@ -60,6 +60,7 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     language: Language::JavaScript,
     extensions: &["js", "jsx", "mjs", "cjs"],
     test_support: test_support::TEST_SUPPORT,
+    migration_layouts: &[],
     wording: &wording::WORDING,
 };
 impl ParseProfile for JsProfile {
