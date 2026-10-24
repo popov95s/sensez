@@ -15,7 +15,7 @@ use crate::report::{
 use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
-use source_scope::SourceScope;
+use source_scope::PillarScopes;
 use std::path::Path;
 
 /// Run every analyzer pillar without project-root context. Test seam for
@@ -34,7 +34,7 @@ pub fn run_with_root(
     config: &Config,
     root: Option<&Path>,
 ) -> AnalysisReport {
-    let smells_scope = SourceScope::for_smells(&config.smells);
+    let scopes = PillarScopes::new(config);
     let parallel::AnalyzerFindings {
         mut cycles,
         mut dead_code,
@@ -42,7 +42,7 @@ pub fn run_with_root(
         mut duplication,
         mut smells,
         issues,
-    } = parallel::detect(files, graph, config, root, &smells_scope);
+    } = parallel::detect(files, graph, config, root, &scopes);
 
     for cycle in &mut cycles {
         if cycle.action != ActionLevel::Info {
@@ -84,9 +84,8 @@ pub fn run_with_root(
             files_skipped: 0,
             analyzed_files: files.len(),
             source_lines: files.iter().map(|f| f.lines as usize).sum(),
-            duplication_skipped: SourceScope::for_duplication(&config.duplication)
-                .skip_counts(files),
-            smells_skipped: smells_scope.skip_counts(files),
+            duplication_skipped: scopes.duplication.skip_counts(files),
+            smells_skipped: scopes.smells.skip_counts(files),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues,
             ..ReportMeta::default()

@@ -1,6 +1,6 @@
 //! Which parsed files the source-level pillars (smells, duplication) analyse.
 
-use crate::config::model::Duplication;
+use crate::config::model::{Config, Duplication};
 use crate::config::smells::SmellConfig;
 use crate::globs::compile_validated;
 use crate::profiles::registry;
@@ -40,6 +40,21 @@ pub(crate) struct SourceScope {
     excluded: GlobSet,
     tests: Inclusion,
     generated: Inclusion,
+}
+
+/// The file scopes of the source-level pillars, compiled once per scan.
+pub(crate) struct PillarScopes {
+    pub(crate) duplication: SourceScope,
+    pub(crate) smells: SourceScope,
+}
+
+impl PillarScopes {
+    pub(crate) fn new(config: &Config) -> Self {
+        Self {
+            duplication: SourceScope::for_duplication(&config.duplication),
+            smells: SourceScope::for_smells(&config.smells),
+        }
+    }
 }
 
 impl SourceScope {
