@@ -114,17 +114,28 @@ fn untracked_entries(root: &Path) -> Result<Vec<String>> {
         .collect())
 }
 
-/// Working-tree changes vs `HEAD`, including untracked source files.
+/// Working-tree changes vs `HEAD`, including untracked source files; before the first commit, every file.
 pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
     let root = run(&["rev-parse", "--show-toplevel"], scan_path)?;
     let root = Path::new(root.trim());
 
-    let diff = run(&["diff", "--unified=0", "HEAD"], root)?;
-    let mut changed = ChangedLines::from_unified(&diff, root);
-
+    let mut changed = if run(&["rev-parse", "--verify", "--quiet", "HEAD"], root).is_ok() {
+        ChangedLines::from_unified(&run(&["diff", "--unified=0", "HEAD"], root)?, root)
+    } else {
+        staged_before_first_commit(root)?
+    };
     for file in untracked_sources(root)? {
         changed.add_full_file(&file);
     }
+    Ok(changed)
+}
+
+fn staged_before_first_commit(root: &Path) -> Result<ChangedLines> {
+    let mut changed = ChangedLines::default();
+    run(&["ls-files", "-z"], root)?
+        .split('\0')
+        .filter(|path| !path.is_empty())
+        .for_each(|path| changed.add_full_file(&root.join(path)));
     Ok(changed)
 }
 

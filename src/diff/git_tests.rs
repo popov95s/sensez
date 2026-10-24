@@ -107,3 +107,29 @@ fn run_in_missing_dir_reports_directory() {
     );
     assert!(!message.contains("is it installed"), "{message}");
 }
+
+#[test]
+fn repository_without_commits_treats_every_file_as_changed() {
+    let tmp = tempfile::tempdir().unwrap();
+    let root = tmp.path().canonicalize().unwrap();
+    if !Command::new("git")
+        .arg("init")
+        .current_dir(&root)
+        .output()
+        .is_ok_and(|out| out.status.success())
+    {
+        return;
+    }
+    fs::write(root.join("staged.py"), "def f():\n    pass\n").unwrap();
+    fs::write(root.join("loose.py"), "def g():\n    pass\n").unwrap();
+    assert!(Command::new("git")
+        .args(["add", "staged.py"])
+        .current_dir(&root)
+        .status()
+        .unwrap()
+        .success());
+
+    let changed = changed_vs_head(&root).unwrap();
+    assert!(changed.touches_file(&root.join("staged.py")));
+    assert!(changed.touches_file(&root.join("loose.py")));
+}
