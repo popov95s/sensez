@@ -1,5 +1,6 @@
 //! Unknown-key detection for sensez configuration tables.
 
+use super::field_names::accepted_fields;
 use super::model::{
     ActionPolicy, Boundaries, Cache, Config, Cycles, DeadCode, Duplication, Gate,
     SemanticDuplication,
@@ -185,11 +186,18 @@ fn qualify(scope: &str, key: &str) -> String {
     }
 }
 
-fn allowed_keys<T: Default + serde::Serialize>() -> Vec<String> {
-    match toml::Value::try_from(T::default()) {
+/// Serialized keys of `T`'s default, plus any deserialize-only aliases.
+fn allowed_keys<T: Default + serde::Serialize + serde::de::DeserializeOwned>() -> Vec<String> {
+    let mut keys = match toml::Value::try_from(T::default()) {
         Ok(toml::Value::Table(table)) => table.keys().cloned().collect(),
         _ => Vec::new(),
+    };
+    for field in accepted_fields::<T>() {
+        if !keys.iter().any(|key| key == field) {
+            keys.push((*field).to_string());
+        }
     }
+    keys
 }
 
 #[cfg(test)]
@@ -276,5 +284,13 @@ mod tests {
         assert_eq!(unknown.len(), 1);
         assert_eq!(unknown[0].span, Some(29..37));
         assert_eq!(unknown[0].suggestion.as_deref(), Some("max_lines"));
+    }
+
+    #[test]
+    fn renamed_dead_code_keys_accept_their_old_names() {
+        let renamed = "[dead_code]\nregistration_decorators = []\nentry_globs = []\n";
+        let old = "[dead_code]\nentrypoints = []\nentry_points = []\n";
+        assert!(paths(renamed).is_empty());
+        assert!(paths(old).is_empty());
     }
 }

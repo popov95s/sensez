@@ -55,10 +55,14 @@ pub struct SemanticDuplication {
 #[derive(Debug, Clone, Hash, Serialize, Deserialize)]
 #[serde(default)]
 pub struct DeadCode {
-    pub entrypoints: Vec<String>,
+    /// Decorator (JS/TS: initializer callee) names that register a symbol, keeping it live.
+    #[serde(alias = "entrypoints")]
+    pub registration_decorators: Vec<String>,
     pub entrypoint_names: Vec<String>,
     pub entrypoint_bases: Vec<String>,
-    pub entry_points: Vec<String>,
+    /// File globs whose modules are reached outside the import graph.
+    #[serde(alias = "entry_points")]
+    pub entry_globs: Vec<String>,
     pub test_sources: Vec<String>,
     pub test_support: Vec<String>,
     #[serde(skip)]
@@ -133,10 +137,10 @@ impl Default for Config {
                 class_property_overlap_min: 4,
             },
             dead_code: DeadCode {
-                entrypoints: Vec::new(),
+                registration_decorators: Vec::new(),
                 entrypoint_names: Vec::new(),
                 entrypoint_bases: Vec::new(),
-                entry_points: Vec::new(),
+                entry_globs: Vec::new(),
                 test_sources: Vec::new(),
                 test_support: Vec::new(),
                 entry_modules: Vec::new(),

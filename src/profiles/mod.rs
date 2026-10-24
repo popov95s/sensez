@@ -79,13 +79,13 @@ pub struct LanguageInfo {
 /// never leak into JS/TS/Rust findings in mixed repositories.
 #[derive(Debug, Clone, Copy)]
 pub struct DeadCodeDefaults {
-    pub entrypoints: &'static [&'static str],
+    pub registration_decorators: &'static [&'static str],
     pub entrypoint_names: &'static [&'static str],
     /// Names live when they are class methods only (framework callbacks).
     pub method_entrypoint_names: &'static [&'static str],
     pub external_bases: ExternalBases,
     pub entrypoint_bases: &'static [&'static str],
-    pub entry_points: &'static [&'static str],
+    pub entry_globs: &'static [&'static str],
     /// Runner-executed files (test roots).
     pub test_sources: &'static [&'static str],
     /// Test helpers whose test importers count as users.
@@ -100,12 +100,12 @@ impl DeadCodeDefaults {
     /// `..DeadCodeDefaults::EMPTY` and only fill the fields that differ.
     #[cfg_attr(not(feature = "lang-rust"), allow(dead_code))]
     pub const EMPTY: DeadCodeDefaults = DeadCodeDefaults {
-        entrypoints: &[],
+        registration_decorators: &[],
         entrypoint_names: &[],
         method_entrypoint_names: &[],
         external_bases: ExternalBases::Ignored,
         entrypoint_bases: &[],
-        entry_points: &[],
+        entry_globs: &[],
         test_sources: &[],
         test_support: &[],
         runner_configs: &[],

@@ -1,6 +1,7 @@
 //! `sensez.toml` facade: public config API plus load/normalization plumbing.
 
 mod brainz;
+mod field_names;
 pub mod model;
 mod parse;
 mod problem;
@@ -118,8 +119,11 @@ impl Config {
     fn validate_globs(&self) -> Result<()> {
         crate::globs::validate_patterns("exclude", &self.exclude)?;
         crate::globs::validate_patterns("duplication.exclude", &self.duplication.exclude)?;
-        crate::globs::validate_patterns("dead_code.entry_points", &self.dead_code.entry_points)?;
-        crate::globs::validate_patterns("dead_code.entrypoints", &self.dead_code.entrypoints)?;
+        crate::globs::validate_patterns("dead_code.entry_globs", &self.dead_code.entry_globs)?;
+        crate::globs::validate_patterns(
+            "dead_code.registration_decorators",
+            &self.dead_code.registration_decorators,
+        )?;
         crate::globs::validate_patterns("dead_code.test_sources", &self.dead_code.test_sources)?;
         crate::globs::validate_patterns("dead_code.test_support", &self.dead_code.test_support)?;
         crate::globs::validate_patterns("cycles.exclude", &self.cycles.exclude)?;

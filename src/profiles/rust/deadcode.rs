@@ -9,7 +9,7 @@ use std::path::Path;
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entry_points: &["**/examples/**"],
+        entry_globs: &["**/examples/**"],
         test_sources: &["tests/**", "benches/**", "**/*_test.rs"],
         ..DeadCodeDefaults::EMPTY
     }

@@ -50,12 +50,12 @@ const RUNNER_CONFIGS: &[&str] = &["**/*.config.{js,cjs,mjs,ts,cts,mts}"];
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entrypoints: &[],
+        registration_decorators: &[],
         entrypoint_names: &[],
         method_entrypoint_names: CALLBACK_NAMES,
         external_bases: ExternalBases::ImplyContract,
         entrypoint_bases: &[],
-        entry_points: RUNNER_LOADED,
+        entry_globs: RUNNER_LOADED,
         test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
@@ -72,12 +72,12 @@ pub fn defaults() -> DeadCodeDefaults {
 
 pub fn typescript_defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entrypoints: &[],
+        registration_decorators: &[],
         entrypoint_names: &[],
         method_entrypoint_names: CALLBACK_NAMES,
         external_bases: ExternalBases::ImplyContract,
         entrypoint_bases: &[],
-        entry_points: RUNNER_LOADED,
+        entry_globs: RUNNER_LOADED,
         test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
