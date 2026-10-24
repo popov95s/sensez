@@ -22,7 +22,7 @@ const MAX_LINE_BYTES: usize = 10 * 1024 * 1024;
 const MAX_CONCURRENT_REQUESTS: usize = 8;
 /// Hard deadline for one request's work. A timed-out scan keeps running on
 /// the blocking pool, but the server stays responsive and answers the client.
-const REQUEST_TIMEOUT: Duration = Duration::from_secs(600);
+const REQUEST_TIMEOUT: Duration = Duration::from_secs(crate::setup::MCP_REQUEST_TIMEOUT_SECS);
 
 /// Serve the MCP protocol over stdin/stdout until EOF or a shutdown signal.
 pub async fn serve() -> Result<()> {
@@ -158,6 +158,13 @@ async fn dispatch(line: &str, permits: &Arc<Semaphore>, tx: &mpsc::Sender<String
         )
         .await;
     }
+    if !message.is_object() {
+        return send(
+            tx,
+            &error_response(None, -32600, "invalid request: expected a JSON object"),
+        )
+        .await;
+    }
 
     let id = message.get("id").cloned();
     match permits.clone().try_acquire_owned() {
@@ -288,6 +295,17 @@ mod tests {
             .await
             .expect("batches must be answered, not dropped");
         assert_eq!(response["error"]["code"], -32600);
+    }
+
+    #[tokio::test]
+    async fn non_object_frames_get_an_invalid_request_error() {
+        for frame in ["42", "\"str\""] {
+            let response = round_trip(frame)
+                .await
+                .expect("non-object frames must be answered");
+            assert_eq!(response["error"]["code"], -32600, "{frame}");
+            assert_eq!(response["id"], Value::Null, "{frame}");
+        }
     }
 
     #[tokio::test]

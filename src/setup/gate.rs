@@ -5,6 +5,9 @@ use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::path::Path;
 
+/// How long the MCP server works on one request; the gate hook waits as long.
+pub(crate) const MCP_REQUEST_TIMEOUT_SECS: u64 = 600;
+
 pub(super) fn write(root: &Path) -> Result<String> {
     let path = root.join(".claude/settings.json");
     if let Some(parent) = path.parent() {
@@ -63,7 +66,7 @@ fn gate_hook() -> Value {
     });
     json!({"hooks": [{
         "type": "mcp_tool", "server": "sensez", "tool": "noze_gate", "input": input,
-        "timeout": 60,
+        "timeout": MCP_REQUEST_TIMEOUT_SECS,
         "statusMessage": "sensez: experimental stop hook scans this session's transcript"
     }]})
 }

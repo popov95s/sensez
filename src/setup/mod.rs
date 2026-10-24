@@ -7,6 +7,9 @@ mod providers;
 mod scope;
 mod skills;
 
+#[cfg(feature = "mcp")]
+pub(crate) use gate::MCP_REQUEST_TIMEOUT_SECS;
+
 use anyhow::{bail, Context, Result};
 use scope::InstallScope;
 use std::path::PathBuf;
