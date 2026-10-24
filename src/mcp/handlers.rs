@@ -44,7 +44,8 @@ fn configuration_summary(args: &Value) -> ToolResult {
     };
     let summary =
         super::scan::run(path, None, 0, scope).and_then(|(report, _snapshot, _elapsed)| {
-            crate::config_summary::render(path, &report, None)
+            let (config, _issues) = crate::config::model::Config::load_for_scan(path);
+            crate::config_summary::render(path, &report, &config)
         });
     match summary {
         Ok(text) => Ok(text_result(text, false)),

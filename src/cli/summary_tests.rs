@@ -24,7 +24,27 @@ fn summary_counts_only_selected_pillars() {
 
     output::select(&mut report, &options);
 
-    assert_eq!(summary_total(tmp.path(), &report), 2);
+    assert_eq!(
+        summary_total(tmp.path(), &report, &crate::config::Config::default()),
+        2
+    );
+}
+
+#[test]
+fn summary_renders_on_scan_defaults_when_config_is_invalid() {
+    let tmp = tempfile::tempdir().unwrap();
+    std::fs::write(tmp.path().join("sensez.toml"), "exclude = [\"[bad\"]\n").unwrap();
+    std::fs::write(tmp.path().join("app.py"), "def run():\n    return 1\n").unwrap();
+    let options = spec::ScanOptions {
+        summary: true,
+        threshold: Some(7),
+        ..scan_options()
+    };
+
+    let (report, config) = selected_report(tmp.path(), &options).unwrap();
+
+    assert_eq!(config.duplication.threshold, 7);
+    assert!(crate::config_summary::render(tmp.path(), &report, &config).is_ok());
 }
 
 #[test]
@@ -54,15 +74,19 @@ fn summary_with_diff_in_clean_repo_is_empty() {
         ..scan_options()
     };
 
-    let full_report = selected_report(&repo.root, &full).unwrap();
-    let diff_report = selected_report(&repo.root, &diff).unwrap();
+    let (full_report, config) = selected_report(&repo.root, &full).unwrap();
+    let (diff_report, _) = selected_report(&repo.root, &diff).unwrap();
 
-    assert!(summary_total(&repo.root, &full_report) >= 1);
-    assert_eq!(summary_total(&repo.root, &diff_report), 0);
+    assert!(summary_total(&repo.root, &full_report, &config) >= 1);
+    assert_eq!(summary_total(&repo.root, &diff_report, &config), 0);
 }
 
-fn summary_total(root: &std::path::Path, report: &AnalysisReport) -> u64 {
-    let summary = crate::config_summary::render(root, report, None).unwrap();
+fn summary_total(
+    root: &std::path::Path,
+    report: &AnalysisReport,
+    config: &crate::config::Config,
+) -> u64 {
+    let summary = crate::config_summary::render(root, report, config).unwrap();
     serde_json::from_str::<serde_json::Value>(&summary).unwrap()["total_count"]
         .as_u64()
         .unwrap()
