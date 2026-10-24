@@ -3,6 +3,7 @@ use super::health::HealthSummary;
 use super::protocol::{
     capabilities, health as send_health, log, publish, status as send_status, RESCAN,
 };
+use super::schedule::{mark_dirty, take_pending, Workspace};
 use super::settings::{AnalysisScope, Settings};
 use super::workspace::{notification_path, roots as workspace_roots};
 use anyhow::{Context, Result};
@@ -14,8 +15,6 @@ use std::path::PathBuf;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use std::sync::{Mutex, OnceLock};
 use std::thread;
-
-const MAX_CONCURRENT_SCANS: usize = 2;
 
 static IN_FLIGHT: AtomicUsize = AtomicUsize::new(0);
 static SCAN_THREADS: OnceLock<Mutex<Vec<thread::JoinHandle<()>>>> = OnceLock::new();
@@ -44,14 +43,6 @@ fn join_scan_threads() {
             let _ = handle.join();
         }
     }
-}
-
-pub(super) struct Workspace {
-    path: PathBuf,
-    generation: u64,
-    running: bool,
-    pending: bool,
-    published: BTreeSet<String>,
 }
 
 struct ScanResult {
@@ -190,25 +181,11 @@ fn queue(
     sender: &Sender<Message>,
     completed: &Sender<ScanResult>,
 ) -> Result<()> {
-    let workspace = workspaces.entry(root.clone()).or_insert(Workspace {
-        path: root.clone(),
-        generation: 0,
-        running: false,
-        pending: false,
-        published: BTreeSet::new(),
-    });
-    workspace.generation = workspace.generation.saturating_add(1);
-    if workspace.running {
-        workspace.pending = true;
+    let Some(generation) = mark_dirty(workspaces, &root, IN_FLIGHT.load(Ordering::Acquire)) else {
         return Ok(());
-    }
-    if IN_FLIGHT.load(Ordering::Acquire) >= MAX_CONCURRENT_SCANS {
-        workspace.pending = true;
-        return Ok(());
-    }
-    workspace.running = true;
+    };
     send_status(sender, &root, "scanning")?;
-    spawn_scan(root, workspace.generation, settings, completed.clone());
+    spawn_scan(root, generation, settings, completed.clone());
     Ok(())
 }
 
@@ -286,21 +263,9 @@ fn launch_pending(
     workspaces: &mut BTreeMap<PathBuf, Workspace>,
     completed: &Sender<ScanResult>,
 ) -> Result<()> {
-    while IN_FLIGHT.load(Ordering::Acquire) < MAX_CONCURRENT_SCANS {
-        let next = workspaces
-            .iter()
-            .find(|(_, workspace)| workspace.pending && !workspace.running)
-            .map(|(root, _)| root.clone());
-        let Some(root) = next else {
-            break;
-        };
-        let (generation, path) = {
-            let workspace = workspaces.get_mut(&root).expect("root from iteration");
-            workspace.pending = false;
-            workspace.running = true;
-            (workspace.generation, workspace.path.clone())
-        };
-        send_status(sender, &root, "scanning")?;
+    while let Some((path, generation)) = take_pending(workspaces, IN_FLIGHT.load(Ordering::Acquire))
+    {
+        send_status(sender, &path, "scanning")?;
         spawn_scan(path, generation, settings, completed.clone());
     }
     Ok(())
@@ -341,3 +306,7 @@ fn apply_result(
     }
     send_status(sender, &result.root, "idle")
 }
+
+#[cfg(test)]
+#[path = "server_tests.rs"]
+mod tests;

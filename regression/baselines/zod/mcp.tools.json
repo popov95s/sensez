@@ -139,7 +139,7 @@
           },
           "limit": {
             "default": 0,
-            "description": "Cap each pillar to top-N ranked findings (0 = unlimited)",
+            "description": "Cap each pillar to top-N ranked findings (0 = unlimited); the same knob as CLI `--max`, except smells are capped in total rather than per kind",
             "minimum": 0,
             "type": "integer"
           },
