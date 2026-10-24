@@ -10,7 +10,6 @@ use super::store;
 use anyhow::{anyhow, Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
-use std::fs;
 use std::path::Path;
 
 /// One human verdict on a finding.
@@ -34,10 +33,7 @@ pub const VERDICTS: [&str; 3] = ["debt", "false_positive", "clear"];
 pub type Triage = BTreeMap<String, Verdict>;
 
 pub fn load(root: &Path) -> Triage {
-    fs::read(store::dir(root).join("triage.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+    super::json_file::load_or_default(&store::dir(root).join("triage.json"))
 }
 
 fn save(root: &Path, triage: &Triage) -> Result<()> {
@@ -126,6 +122,7 @@ pub fn ignored_keys(triage: &Triage) -> std::collections::HashSet<String> {
 mod tests {
     use super::*;
     use crate::brainz::fingerprint::{Aged, AgedEntry, Detector, Label, Pillar};
+    use std::fs;
 
     #[test]
     fn mark_matches_by_label_and_clears() {

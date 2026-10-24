@@ -5,6 +5,7 @@
 use super::events::{Event, Totals};
 use super::file_lock;
 use super::fingerprint::{Aged, ResolvedHistory};
+use super::json_file;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -22,10 +23,7 @@ pub(super) fn dir(root: &Path) -> PathBuf {
 /// Load the repo's all-time aggregates (default-empty when missing/corrupt —
 /// metrics must never fail the server).
 pub fn load_totals(root: &Path) -> Totals {
-    fs::read(dir(root).join("totals.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+    json_file::load_or_default(&dir(root).join("totals.json"))
 }
 
 /// Atomically replace the repo's all-time aggregates.
@@ -140,12 +138,7 @@ struct BranchBaselines {
 }
 
 fn load_baselines(root: &Path) -> BranchBaselines {
-    // A pre-branch (flat `Aged`) file no longer parses here and degrades to an
-    // empty set — the next scan simply rebuilds that branch's baseline.
-    fs::read(dir(root).join("last-scan.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+    json_file::load_or_default(&dir(root).join("last-scan.json"))
 }
 
 /// Last persisted update time for `branch`, if a baseline exists.

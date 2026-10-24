@@ -8,6 +8,7 @@ mod fingerprint;
 mod flush;
 mod gate_memory;
 mod hub;
+mod json_file;
 mod ranking;
 mod recapture;
 mod recapture_state;
