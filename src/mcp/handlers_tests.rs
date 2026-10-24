@@ -60,6 +60,15 @@ fn explain_unknown_term_is_tool_error_listing_terms() {
 }
 
 #[test]
+fn triage_with_unknown_verdict_is_tool_error() {
+    let args = json!({"path": ".", "pillar": "dead_code", "match": "x", "verdict": "bogus"});
+    let resp = super::call("brainz_triage", &args).unwrap();
+    assert_eq!(resp["isError"], true);
+    let text = resp["content"][0]["text"].as_str().unwrap();
+    assert_eq!(text, "verdict must be debt | false_positive | clear");
+}
+
+#[test]
 fn usage_report_serves_a_clean_repo() {
     let _metrics = crate::test_support::metrics_guard();
     let tmp = tempfile::tempdir().unwrap();

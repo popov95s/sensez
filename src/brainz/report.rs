@@ -5,6 +5,7 @@
 //! surfaces, so the storage layer stays a plain ledger.
 
 use super::events::{OutcomeKey, Resolved, Totals};
+use super::verdict::TriageVerdict;
 use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
@@ -63,8 +64,8 @@ pub fn precision_by_detector(totals: &Totals) -> Value {
             .resolved_by_detector
             .get(detector)
             .map_or(0, |r| r.count);
-        let debt = outcome(totals, "debt", detector);
-        let fp = outcome(totals, "false_positive", detector);
+        let debt = outcome(totals, TriageVerdict::Debt, detector);
+        let fp = outcome(totals, TriageVerdict::FalsePositive, detector);
         let real = resolved + debt;
         let adjudicated = real + fp;
         if adjudicated == 0 {
@@ -84,7 +85,7 @@ pub fn precision_by_detector(totals: &Totals) -> Value {
 }
 
 /// One outcome count keyed by verdict and detector.
-fn outcome(totals: &Totals, verdict: &str, detector: &str) -> u64 {
+fn outcome(totals: &Totals, verdict: TriageVerdict, detector: &str) -> u64 {
     totals
         .outcomes
         .get(&OutcomeKey::new(verdict, detector))
@@ -112,8 +113,8 @@ pub fn low_precision_detectors(totals: &Totals) -> BTreeSet<String> {
         .into_iter()
         .filter(|d| {
             let real = totals.resolved_by_detector.get(*d).map_or(0, |r| r.count)
-                + outcome(totals, "debt", d);
-            let adjudicated = real + outcome(totals, "false_positive", d);
+                + outcome(totals, TriageVerdict::Debt, d);
+            let adjudicated = real + outcome(totals, TriageVerdict::FalsePositive, d);
             adjudicated >= MIN_ADJUDICATED && (real as f64 / adjudicated as f64) < PRECISION_FLOOR
         })
         .map(str::to_string)
@@ -126,7 +127,7 @@ pub fn low_precision_detectors(totals: &Totals) -> BTreeSet<String> {
 pub fn calibration_suggestions(totals: &Totals, config: &crate::config::model::Config) -> Value {
     let mut tips = Vec::new();
     for detector in low_precision_detectors(totals) {
-        let fp = outcome(totals, "false_positive", &detector);
+        let fp = outcome(totals, TriageVerdict::FalsePositive, &detector);
         tips.push(format!(
             "{detector}: low precision ({fp} false-positive verdict(s)) — consider tuning the \
              threshold or adding an exclude glob"

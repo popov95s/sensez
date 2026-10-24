@@ -21,6 +21,7 @@ mod store_tests;
 mod suppression;
 mod triage;
 mod usage;
+mod verdict;
 
 pub use events::Origin;
 pub use flush::flush;
@@ -37,8 +38,8 @@ pub(crate) fn observe_source_state(
     hub::observe_source_state(root, state);
 }
 pub use suppression::apply_suppressions;
-pub use triage::VERDICTS;
 pub use usage::usage_report;
+pub use verdict::{TriageVerdict, VERDICTS};
 
 pub fn recapture() {
     recapture::run();

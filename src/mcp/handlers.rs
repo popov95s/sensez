@@ -195,6 +195,13 @@ fn triage_finding(args: &Value) -> ToolResult {
     let pattern = required_str(args, "match")?;
     let verdict = required_str(args, "verdict")?;
     let note = args.get("note").and_then(Value::as_str).map(str::to_string);
+    let Some(pillar) = crate::report::Pillar::from_name(pillar) else {
+        return Ok(text_result(format!("unknown pillar '{pillar}'"), true));
+    };
+    let Some(verdict) = crate::brainz::TriageVerdict::from_name(verdict) else {
+        let accepted = crate::brainz::VERDICTS.join(" | ");
+        return Ok(text_result(format!("verdict must be {accepted}"), true));
+    };
     match crate::brainz::triage_finding(Path::new(path), pillar, pattern, verdict, note) {
         Ok(labels) => Ok(text_result(
             format!("marked {verdict}: {}", labels.join(" | ")),
