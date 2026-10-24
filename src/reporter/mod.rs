@@ -2,10 +2,12 @@
 //! truth. JSON is the machine contract; the terminal renderer is a human
 //! view; the path filter is a narrower slice. All three live here.
 
+mod diagnostics;
 mod filter;
 mod json;
 mod terminal;
 
+pub use diagnostics::ScanDiagnostics;
 pub use filter::apply;
 pub use json::to_json;
 pub use terminal::render;

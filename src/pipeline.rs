@@ -286,7 +286,7 @@ pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -
     let (mut report, _module_files) = analyze_path(path, threshold)?;
     noze::limit(&mut report, max);
     match format {
-        Format::Json => reporter::to_json(&report),
+        Format::Json => reporter::to_json(&report, reporter::ScanDiagnostics::from_env()),
         Format::Terminal => Ok(reporter::render(&report, false)),
     }
 }

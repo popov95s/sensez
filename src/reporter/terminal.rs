@@ -19,7 +19,9 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             "diff mode: only findings touching changed lines".dimmed()
         );
     }
-    if report.meta.files_skipped > 0 && crate::report::scan_diagnostics_enabled() {
+    if report.meta.files_skipped > 0
+        && super::ScanDiagnostics::from_env() == super::ScanDiagnostics::Show
+    {
         let _ = writeln!(
             out,
             "{}",

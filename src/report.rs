@@ -268,7 +268,7 @@ pub struct ReportMeta {
     pub boundaries_configured: bool,
     pub internal_edges: usize,
     pub external_edges: usize,
-    #[serde(skip_serializing_if = "hide_scan_diagnostic_count", default)]
+    #[serde(skip_serializing_if = "is_zero", default)]
     pub files_skipped: usize,
     pub analyzed_files: usize,
     pub source_lines: usize,
@@ -288,7 +288,7 @@ pub struct ReportMeta {
     /// Pillars this run left out on request; their totals are 0 by filter, not by a clean scan.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub filtered_pillars: Vec<Pillar>,
-    #[serde(skip_serializing_if = "hide_scan_diagnostics", default)]
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub issues: Vec<ScanIssue>,
     #[serde(skip)]
     pub glossary: Vec<GlossaryEntry>,
@@ -312,15 +312,6 @@ fn line_is_unknown(value: &usize) -> bool {
     *value == 0
 }
 
-fn hide_scan_diagnostic_count(value: &usize) -> bool {
-    *value == 0 || !scan_diagnostics_enabled()
-}
-
-fn hide_scan_diagnostics(value: &[ScanIssue]) -> bool {
-    value.is_empty() || !scan_diagnostics_enabled()
-}
-
-pub fn scan_diagnostics_enabled() -> bool {
-    std::env::var_os("SENSEZ_SCAN_DIAGNOSTICS").is_some()
-        || std::env::var_os("SENSEZ_TIMING").is_some()
+fn is_zero(value: &usize) -> bool {
+    *value == 0
 }

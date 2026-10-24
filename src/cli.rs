@@ -226,7 +226,7 @@ fn selected_report(path: &Path, options: &ScanOptions) -> Result<crate::report::
 
 fn render_report(report: &crate::report::AnalysisReport, options: &ScanOptions) -> Result<String> {
     if options.json {
-        return crate::reporter::to_json(report);
+        return crate::reporter::to_json(report, crate::reporter::ScanDiagnostics::from_env());
     }
     Ok(crate::reporter::render(report, options.explain))
 }
