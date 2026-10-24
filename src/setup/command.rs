@@ -7,25 +7,52 @@ use std::path::{Path, PathBuf};
 const PROJECT_SHIM: &str = "node_modules/.bin/sensez";
 const NPM_WRAPPER: &str = "sensez/bin/sensez.js";
 
+/// How an MCP config launches sensez.
+#[derive(Debug, PartialEq, Eq)]
+pub enum McpCommand {
+    ProjectShim,
+    OnPath,
+    Absolute(PathBuf),
+}
+
+impl McpCommand {
+    /// The command string stored in the MCP config.
+    pub fn as_config_value(&self) -> String {
+        match self {
+            McpCommand::ProjectShim => PROJECT_SHIM.to_string(),
+            McpCommand::OnPath => "sensez".to_string(),
+            McpCommand::Absolute(exe) => exe.display().to_string(),
+        }
+    }
+}
+
 /// Project shim, then bare `sensez` on PATH, then the absolute executable path.
 pub fn mcp_command(
     root: &Path,
     scope: InstallScope,
     launch_dir: McpLaunchDir,
     exe: &Path,
-) -> String {
+) -> McpCommand {
     let in_project_modules = exe.starts_with(root.join("node_modules"));
-    if scope == InstallScope::Project
+    if uses_project_shim(root, scope, launch_dir, in_project_modules) {
+        return McpCommand::ProjectShim;
+    }
+    if !in_project_modules && sensez_on_path().is_some_and(|found| launches(&found, exe)) {
+        return McpCommand::OnPath;
+    }
+    McpCommand::Absolute(exe.to_path_buf())
+}
+
+fn uses_project_shim(
+    root: &Path,
+    scope: InstallScope,
+    launch_dir: McpLaunchDir,
+    in_project_modules: bool,
+) -> bool {
+    scope == InstallScope::Project
         && launch_dir == McpLaunchDir::WorkspaceRoot
         && in_project_modules
         && root.join(PROJECT_SHIM).exists()
-    {
-        return PROJECT_SHIM.to_string();
-    }
-    if !in_project_modules && sensez_on_path().is_some_and(|found| launches(&found, exe)) {
-        return "sensez".to_string();
-    }
-    exe.display().to_string()
 }
 
 /// Whether running `on_path` ends up executing `exe`, directly or via the npm wrapper.

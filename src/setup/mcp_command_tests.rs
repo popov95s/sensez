@@ -24,7 +24,7 @@ fn mcp_command_prefers_project_shim() {
         agents::McpLaunchDir::WorkspaceRoot,
         &exe,
     );
-    assert_eq!(command, "node_modules/.bin/sensez");
+    assert_eq!(command, command::McpCommand::ProjectShim);
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn mcp_command_skips_shim_when_client_launch_dir_is_unknown() {
         agents::McpLaunchDir::Unknown,
         &exe,
     );
-    assert_eq!(command, exe.display().to_string());
+    assert_eq!(command, command::McpCommand::Absolute(exe));
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn mcp_command_uses_absolute_for_global_scope() {
         agents::McpLaunchDir::WorkspaceRoot,
         &exe,
     );
-    assert_eq!(command, exe.display().to_string());
+    assert_eq!(command, command::McpCommand::Absolute(exe));
 }
 
 #[cfg(unix)]
