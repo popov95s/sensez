@@ -93,6 +93,18 @@ pub fn identifier_extra_chars(language: Language) -> &'static [char] {
     smell_wording(language).identifier_extra_chars
 }
 
+/// Extra identifier characters of `path`'s language; every compiled-in language's when it has none.
+pub fn identifier_extra_chars_for_path(path: Option<&Path>) -> Vec<char> {
+    match path.and_then(parse_for_path) {
+        Some(profile) => profile.info().wording.identifier_extra_chars.to_vec(),
+        None => PROFILES
+            .iter()
+            .flat_map(|profile| ParseProfile::info(*profile).wording.identifier_extra_chars)
+            .copied()
+            .collect(),
+    }
+}
+
 pub fn smell_wording(language: Language) -> &'static SmellWording {
     profile(language).info().wording
 }

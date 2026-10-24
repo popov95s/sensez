@@ -17,6 +17,7 @@ use std::path::{Path, PathBuf};
 #[derive(Clone, Debug, Default)]
 pub struct ChangedLines {
     files: HashMap<PathBuf, Vec<(usize, usize)>>,
+    removed_names: std::collections::HashSet<String>,
     resolved: std::cell::RefCell<rustc_hash::FxHashMap<PathBuf, PathBuf>>,
 }
 
@@ -25,10 +26,18 @@ impl ChangedLines {
     /// paths to absolute paths so they can be matched against finding paths.
     pub fn from_unified(text: &str, base: &Path) -> Self {
         let mut changed = ChangedLines::default();
-        for (rel, ranges) in parse::parse_unified(text) {
-            let path = base.join(rel);
-            for (lo, hi) in ranges {
-                changed.add(&path, lo, hi);
+        for file in parse::parse_unified(text) {
+            let identifier_chars = crate::profiles::registry::identifier_extra_chars_for_path(
+                file.path.as_deref().map(Path::new),
+            );
+            if let Some(rel) = file.path {
+                let path = base.join(rel);
+                for (lo, hi) in file.ranges {
+                    changed.add(&path, lo, hi);
+                }
+            }
+            for line in &file.removed {
+                changed.add_removed_text(line, &identifier_chars);
             }
         }
         changed
@@ -55,6 +64,21 @@ impl ChangedLines {
         self.add(file, 1, usize::MAX);
     }
 
+    /// Record the identifiers of text the change removed, split with the language's `identifier_chars`.
+    pub fn add_removed_text(&mut self, text: &str, identifier_chars: &[char]) {
+        self.removed_names.extend(
+            text.split(|ch: char| !crate::profiles::typevocab::is_ident_char(ch, identifier_chars))
+                .filter(|word| !word.is_empty())
+                .map(str::to_string),
+        );
+    }
+
+    /// True if removed text mentioned `symbol` (its last `.` or `::` segment).
+    pub fn removed_mentions(&self, symbol: &str) -> bool {
+        let name = symbol.rsplit(['.', ':']).next().unwrap_or(symbol);
+        self.removed_names.contains(name)
+    }
+
     /// True if `[lo, hi]` overlaps any changed range in `file`.
     pub fn touches(&self, file: &Path, lo: usize, hi: usize) -> bool {
         self.files
@@ -68,7 +92,7 @@ impl ChangedLines {
     }
 
     pub fn is_empty(&self) -> bool {
-        self.files.is_empty()
+        self.files.is_empty() && self.removed_names.is_empty()
     }
 
     #[cfg(test)]

@@ -88,6 +88,11 @@ fn resolve(root: &Path, raw: &str) -> PathBuf {
 
 /// Scope an edit to where its replacement sits now, or to the whole file when that is ambiguous.
 fn record_edit(file: &Path, edit: &Map<String, Value>, changed: &mut ChangedLines) {
+    if let Some(removed) = edit.get("old_string").and_then(Value::as_str) {
+        let identifier_chars =
+            crate::profiles::registry::identifier_extra_chars_for_path(Some(file));
+        changed.add_removed_text(removed, &identifier_chars);
+    }
     let replacement = edit
         .get("new_string")
         .and_then(Value::as_str)
