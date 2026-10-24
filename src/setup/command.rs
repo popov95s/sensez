@@ -4,7 +4,16 @@ use super::agents::McpLaunchDir;
 use super::scope::InstallScope;
 use std::path::{Path, PathBuf};
 
-const PROJECT_SHIM: &str = "node_modules/.bin/sensez";
+pub(super) const PROJECT_SHIM: &str = if cfg!(windows) {
+    "node_modules/.bin/sensez.cmd"
+} else {
+    "node_modules/.bin/sensez"
+};
+const PATH_NAMES: &[&str] = if cfg!(windows) {
+    &["sensez.exe", "sensez.cmd"]
+} else {
+    &["sensez"]
+};
 const NPM_WRAPPER: &str = "sensez/bin/sensez.js";
 
 /// How an MCP config launches sensez.
@@ -57,7 +66,18 @@ fn uses_project_shim(
 
 /// Whether running `on_path` ends up executing `exe`, directly or via the npm wrapper.
 pub(super) fn launches(on_path: &Path, exe: &Path) -> bool {
-    same_file(on_path, exe) || is_npm_wrapper_for(on_path, exe)
+    same_file(on_path, exe) || is_npm_wrapper_for(on_path, exe) || is_npm_cmd_shim_for(on_path, exe)
+}
+
+/// npm on Windows puts `sensez.cmd` next to the `node_modules` holding the wrapper.
+fn is_npm_cmd_shim_for(on_path: &Path, exe: &Path) -> bool {
+    on_path
+        .extension()
+        .is_some_and(|ext| ext.eq_ignore_ascii_case("cmd"))
+        && is_npm_wrapper_for(
+            &on_path.with_file_name("node_modules").join(NPM_WRAPPER),
+            exe,
+        )
 }
 
 fn is_npm_wrapper_for(on_path: &Path, exe: &Path) -> bool {
@@ -67,9 +87,8 @@ fn is_npm_wrapper_for(on_path: &Path, exe: &Path) -> bool {
 }
 
 fn sensez_on_path() -> Option<PathBuf> {
-    let name = format!("sensez{}", std::env::consts::EXE_SUFFIX);
     std::env::split_paths(&std::env::var_os("PATH")?)
-        .map(|dir| dir.join(&name))
+        .flat_map(|dir| PATH_NAMES.iter().map(move |name| dir.join(name)))
         .find(|candidate| candidate.is_file())
 }
 
