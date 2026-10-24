@@ -78,6 +78,18 @@ fn invalid_globs_fail_loudly() {
     );
 }
 
+#[test]
+fn invalid_boundary_glob_is_a_config_error() {
+    let tmp = write_config("[[boundaries.forbidden]]\nfrom = \"core.[x\"\nto = \"web\"\n");
+
+    let err = Config::load(tmp.path()).unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("invalid glob in boundaries.forbidden"),
+        "{err:#}"
+    );
+}
+
 /// `[tool.sensez]` in pyproject.toml configures sensez when sensez.toml is absent;
 /// sensez.toml wins when both exist.
 #[test]
