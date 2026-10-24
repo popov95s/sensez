@@ -46,7 +46,8 @@ fn scan() -> Value {
                         uncommitted changes touch — analysis still covers the \
                         whole repo, so diff results are focused but never \
                         wrong. Pass diff=false for an explicit full-repository \
-                        audit. The returned JSON is compact: meta.totals \
+                        audit, and outside a git repository, where the diff \
+                        default returns an error. The returned JSON is compact: meta.totals \
                         counts each pillar before `limit`, and meta.truncated \
                         says whether `limit` cut anything.",
         "inputSchema": {

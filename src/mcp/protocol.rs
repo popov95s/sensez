@@ -62,7 +62,7 @@ fn handle_tool_call(params: Option<&Value>) -> ToolResult {
     let name = request
         .get("name")
         .and_then(Value::as_str)
-        .unwrap_or_default();
+        .ok_or_else(|| (handlers::INVALID_PARAMS, "missing 'name'".to_string()))?;
     let args = request
         .get("arguments")
         .cloned()
@@ -87,6 +87,13 @@ mod tests {
             "params": {"protocolVersion": "2099-01-01"}});
         let resp = handle_message(&req).unwrap();
         assert_eq!(resp["result"]["protocolVersion"], "2025-06-18");
+    }
+
+    #[test]
+    fn tool_call_without_a_name_says_so() {
+        let req = json!({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {}});
+        let resp = handle_message(&req).unwrap();
+        assert_eq!(resp["error"]["message"], "missing 'name'");
     }
 
     #[test]

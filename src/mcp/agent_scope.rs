@@ -2,6 +2,7 @@
 //!
 //! This runs inside the existing Stop gate call. It never exposes
 //! a tracking tool to the model and does not require a second MCP round trip.
+//! Edits made by subagents live in their own transcripts and are not seen here.
 
 use crate::diff::ChangedLines;
 use anyhow::{Context, Result};
