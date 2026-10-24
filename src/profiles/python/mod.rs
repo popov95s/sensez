@@ -29,8 +29,8 @@ mod units;
 mod wording;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -80,16 +80,8 @@ impl ModuleProfile for PythonProfile {
         resolve::containing_package(module_name, is_index)
     }
 
-    fn resolve_target(
-        &self,
-        import: &ImportContext,
-        importer_package: &str,
-        importer_file: &Path,
-        _root: &Path,
-        _resolution_cache: &mut crate::profiles::ResolutionCache,
-    ) -> String {
-        script_imports::sibling_module(&import.target_module, importer_package, importer_file)
-            .unwrap_or_else(|| resolve::resolve_target(import, importer_package))
+    fn import_resolver(&self) -> Box<dyn ImportResolver> {
+        Box::new(PythonProfile)
     }
 
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String> {
@@ -100,6 +92,19 @@ impl ModuleProfile for PythonProfile {
     fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         // `__init__` ↔ submodule mutual imports are real load-time hazards.
         false
+    }
+}
+
+impl ImportResolver for PythonProfile {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        importer_package: &str,
+        importer_file: &Path,
+        _root: &Path,
+    ) -> String {
+        script_imports::sibling_module(&import.target_module, importer_package, importer_file)
+            .unwrap_or_else(|| resolve::resolve_target(import, importer_package))
     }
 }
 

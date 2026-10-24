@@ -6,11 +6,11 @@
 
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageProfile, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use globset::GlobSet;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::sync::OnceLock;
 
@@ -71,6 +71,15 @@ fn profile(language: Language) -> &'static dyn LanguageProfile {
 
 pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {
     profile(language) as &dyn ModuleProfile
+}
+
+/// Fresh import resolver state for every compiled-in language, for one graph build.
+pub fn import_resolvers() -> BTreeMap<Language, Box<dyn ImportResolver>> {
+    PROFILES
+        .iter()
+        .map(|p| ParseProfile::info(*p).language)
+        .map(|language| (language, module_profile(language).import_resolver()))
+        .collect()
 }
 
 pub fn dead_code_profile(language: Language) -> &'static dyn DeadCodeProfile {

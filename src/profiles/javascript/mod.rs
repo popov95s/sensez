@@ -46,8 +46,8 @@ mod fused_collector_tests;
 mod tests;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -97,16 +97,8 @@ impl ModuleProfile for JsProfile {
         resolve::containing_package(module_name, is_index)
     }
 
-    fn resolve_target(
-        &self,
-        import: &ImportContext,
-        _importer_package: &str,
-        file: &Path,
-        root: &Path,
-        _resolution_cache: &mut crate::profiles::ResolutionCache,
-    ) -> String {
-        // `./foo` resolves against the importing file's directory on disk.
-        resolve::resolve_target(import, file, root)
+    fn import_resolver(&self) -> Box<dyn ImportResolver> {
+        Box::new(JsProfile)
     }
 
     fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {
@@ -116,6 +108,19 @@ impl ModuleProfile for JsProfile {
 
     fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         false
+    }
+}
+
+impl ImportResolver for JsProfile {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        _importer_package: &str,
+        file: &Path,
+        root: &Path,
+    ) -> String {
+        // `./foo` resolves against the importing file's directory on disk.
+        resolve::resolve_target(import, file, root)
     }
 }
 

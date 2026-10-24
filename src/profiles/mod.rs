@@ -42,25 +42,6 @@ pub mod rust;
 #[cfg(feature = "lang-typescript")]
 pub mod typescript;
 
-/// Per-graph-build state used by language-specific import resolvers.
-///
-/// Keeping this state in the graph-build lifetime avoids stale configuration
-/// in long-lived MCP processes while allowing profiles to cache immutable
-/// resolver inputs for every import under the same module root.
-#[cfg(feature = "lang-typescript")]
-pub(crate) use typescript::ResolutionCache;
-
-#[cfg(not(feature = "lang-typescript"))]
-#[derive(Default)]
-pub(crate) struct ResolutionCache;
-
-#[cfg(not(feature = "lang-typescript"))]
-impl ResolutionCache {
-    pub(crate) fn alias_path(&mut self, _root: &Path, _specifier: &str) -> Option<PathBuf> {
-        None
-    }
-}
-
 use crate::spine::ir::{
     ClassProperty, ClassUnit, ImportContext, ImportPhase, Language, MutatorFamily, PerfLine, Walked,
 };
@@ -190,23 +171,8 @@ pub trait ModuleProfile: Send + Sync {
     fn is_package_index(&self, file: &Path) -> bool;
     /// The containing package of `module_name` (`a.b.c` -> `a.b`; index files stay one level deeper).
     fn containing_package(&self, module_name: &str, is_index: bool) -> String;
-    fn resolve_target(
-        &self,
-        import: &ImportContext,
-        importer_package: &str,
-        importer_file: &Path,
-        root: &Path,
-        resolution_cache: &mut ResolutionCache,
-    ) -> String;
-    /// Phase of the graph edge built from `import`.
-    fn edge_phase(
-        &self,
-        import: &ImportContext,
-        _importer_file: &Path,
-        _resolution_cache: &mut ResolutionCache,
-    ) -> ImportPhase {
-        import.phase
-    }
+    /// Fresh resolver state for one graph build.
+    fn import_resolver(&self) -> Box<dyn ImportResolver>;
     /// Give a colliding module identity a profile-specific, workspace-relative
     /// name. Profiles that have no alternate namespace retain `base`.
     fn disambiguated_module_name(&self, file: &Path, workspace_root: &Path, base: &str) -> String {
@@ -216,6 +182,25 @@ pub trait ModuleProfile: Send + Sync {
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String>;
     fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         false
+    }
+}
+
+/// Import resolution owned by one language; lives for one graph build so cached inputs never go stale.
+pub trait ImportResolver {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        importer_package: &str,
+        importer_file: &Path,
+        root: &Path,
+    ) -> String;
+    /// Phase of the graph edge built from `import`.
+    fn edge_phase(&mut self, import: &ImportContext, _importer_file: &Path) -> ImportPhase {
+        import.phase
+    }
+    /// Filesystem path an aliased import specifier maps to, for modules under `root`.
+    fn alias_path(&mut self, _root: &Path, _specifier: &str) -> Option<PathBuf> {
+        None
     }
 }
 

@@ -1,7 +1,7 @@
 //! Assemble a [`CodebaseGraph`] from parsed files.
 
 use super::identity;
-use crate::profiles::{registry, ResolutionCache};
+use crate::profiles::registry;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::{ImportContext, Language};
 use crate::spine::parser::ParsedFile;
@@ -16,7 +16,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     let identities = identity::for_files(files, configured_roots);
     let mut module_of: Vec<Option<String>> = Vec::with_capacity(files.len());
     let mut by_scope: HashMap<(Language, PathBuf), HashMap<String, String>> = HashMap::new();
-    let mut resolution_cache = ResolutionCache::default();
+    let mut resolvers = registry::import_resolvers();
 
     // Pass 1: create a node per file. Re-exports are NOT folded into declared
     // symbols — a re-exported name is kept alive in its defining module by the
@@ -58,21 +58,18 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         let scoped_names = by_scope
             .get(&(file.language, identities[i].root.clone()))
             .unwrap_or(&empty_scope);
+        let resolver = resolvers
+            .get_mut(&file.language)
+            .expect("every parsed language has a compiled-in profile");
         for import in &file.walked.symbols.imports {
-            let import = match profile.edge_phase(import, &file.path, &mut resolution_cache) {
+            let import = match resolver.edge_phase(import, &file.path) {
                 phase if phase == import.phase => Cow::Borrowed(import),
                 phase => Cow::Owned(ImportContext {
                     phase,
                     ..import.clone()
                 }),
             };
-            let resolved = profile.resolve_target(
-                &import,
-                &pkg,
-                &file.path,
-                &identities[i].root,
-                &mut resolution_cache,
-            );
+            let resolved = resolver.resolve_target(&import, &pkg, &file.path, &identities[i].root);
             // Zero-allocation probe: borrow the canonical name when the
             // logical module exists, else fall back to the raw resolution.
             let target: &str = scoped_names
