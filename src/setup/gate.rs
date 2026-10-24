@@ -58,7 +58,8 @@ fn gate_hook() -> Value {
     let input = json!({
         "path": "${cwd}",
         "session_id": "${session_id}",
-        "transcript_path": "${transcript_path}"
+        "transcript_path": "${transcript_path}",
+        "stop_hook_active": "${stop_hook_active}"
     });
     json!({"hooks": [{
         "type": "mcp_tool", "server": "sensez", "tool": "noze_gate", "input": input,

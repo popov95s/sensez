@@ -9,7 +9,7 @@ use serde_json::{Map, Value};
 use std::path::{Path, PathBuf};
 
 pub(super) fn id(session_id: Option<&str>) -> Option<String> {
-    useful(session_id).map(|id| format!("session:{id}"))
+    session_id.map(|id| format!("session:{id}"))
 }
 
 pub(super) fn changes(root: &Path, transcript: &Path) -> Result<ChangedLines> {
@@ -21,10 +21,6 @@ pub(super) fn changes(root: &Path, transcript: &Path) -> Result<ChangedLines> {
         collect(root, &value, &mut changed);
     }
     Ok(changed)
-}
-
-fn useful(value: Option<&str>) -> Option<&str> {
-    value.filter(|value| !value.is_empty() && !value.starts_with("${"))
 }
 
 fn collect(root: &Path, value: &Value, changed: &mut ChangedLines) {

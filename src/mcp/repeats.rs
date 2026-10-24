@@ -1,21 +1,22 @@
 use crate::report::{
     AnalysisReport, BoundaryViolation, CloneClass, CycleFinding, DeadCodeFinding, SmellFinding,
 };
-use std::collections::{HashMap, HashSet};
-use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock};
-
-type RepoKey = (PathBuf, String, Option<String>);
+use serde::{Deserialize, Serialize};
+use std::collections::{BTreeMap, BTreeSet};
+use std::path::Path;
 
 pub(super) const DEFER_EXPIRY_SECS: u64 = 3 * 86_400;
 
-#[derive(Default)]
-struct RepeatState {
-    counts: HashMap<String, usize>,
-    deferred: HashMap<String, Deferred>,
-    expired_once: HashSet<String>,
+/// Repeat counts and auto-deferrals for one branch of one gate scope.
+#[derive(Default, Serialize, Deserialize)]
+#[serde(default)]
+pub(super) struct RepeatState {
+    counts: BTreeMap<String, usize>,
+    deferred: BTreeMap<String, Deferred>,
+    expired_once: BTreeSet<String>,
 }
 
+#[derive(Serialize, Deserialize)]
 struct Deferred {
     expires_at: Option<u64>,
 }
@@ -24,36 +25,13 @@ pub(super) struct RepeatOutcome {
     pub deferred: usize,
 }
 
-fn states() -> &'static Mutex<HashMap<RepoKey, RepeatState>> {
-    static STATES: OnceLock<Mutex<HashMap<RepoKey, RepeatState>>> = OnceLock::new();
-    STATES.get_or_init(|| Mutex::new(HashMap::new()))
-}
-
+/// Drop findings reported at least `limit` times on the same lines.
 pub(super) fn suppress_repeated(
-    root: &Path,
-    scope: Option<&str>,
-    report: &mut AnalysisReport,
-    limit: usize,
-) -> RepeatOutcome {
-    suppress_repeated_at(root, scope, report, limit, now_secs())
-}
-
-pub(super) fn suppress_repeated_at(
-    root: &Path,
-    scope: Option<&str>,
+    state: &mut RepeatState,
     report: &mut AnalysisReport,
     limit: usize,
     now: u64,
 ) -> RepeatOutcome {
-    let branch = crate::diff::git::current_branch(root).unwrap_or_else(|| "unbranched".into());
-    let repo = (canon(root), branch, scope.map(str::to_string));
-    let active = active_keys(report);
-    let mut states = states().lock().unwrap_or_else(|e| e.into_inner());
-    let state = states.entry(repo).or_default();
-    state.counts.retain(|key, _| active.contains(key));
-    state.deferred.retain(|key, _| active.contains(key));
-    state.expired_once.retain(|key| active.contains(key));
-
     let mut deferred = 0;
     retain_allowed(
         &mut report.cycles,
@@ -97,18 +75,6 @@ pub(super) fn suppress_repeated_at(
     );
     report.meta.glossary = crate::noze::glossary::for_report(report);
     RepeatOutcome { deferred }
-}
-
-fn active_keys(report: &AnalysisReport) -> HashSet<String> {
-    report
-        .cycles
-        .iter()
-        .map(cycle_key)
-        .chain(report.dead_code.iter().map(dead_code_key))
-        .chain(report.boundaries.iter().map(boundary_key))
-        .chain(report.duplication.iter().map(clone_key))
-        .chain(report.smells.iter().map(smell_key))
-        .collect()
 }
 
 fn retain_allowed<T>(
@@ -221,15 +187,4 @@ fn smell_key(finding: &SmellFinding) -> String {
 
 fn path(path: &Path) -> String {
     path.to_string_lossy().into_owned()
-}
-
-fn canon(path: &Path) -> PathBuf {
-    std::fs::canonicalize(path).unwrap_or_else(|_| path.to_path_buf())
-}
-
-fn now_secs() -> u64 {
-    std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|d| d.as_secs())
-        .unwrap_or(0)
 }

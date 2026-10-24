@@ -3,7 +3,7 @@
 
 mod aging;
 mod events;
-mod file_lock;
+pub(crate) mod file_lock;
 mod fingerprint;
 mod flush;
 mod gate_memory;
@@ -23,7 +23,7 @@ mod usage;
 
 pub use events::Origin;
 pub use flush::flush;
-pub use gate_memory::retain_unseen_gate_findings;
+pub use gate_memory::{finding_identities, retain_unseen_gate_findings};
 pub use ranking::{rank_by_precision, regressions};
 #[cfg(feature = "eyez")]
 pub use recording::record_search;

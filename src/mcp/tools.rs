@@ -143,17 +143,23 @@ fn gate() -> Value {
         "name": "noze_gate",
         "description": "End-of-turn quality gate (intended for a Claude Code \
                         Stop hook, not for direct calls): diff-scoped scan of \
-                        uncommitted changes; returns hook-decision JSON that \
-                        blocks at most twice per turn-chain. Findings reported \
-                        more than [gate].repeat_limit times on the same source \
-                        lines are auto-deferred for the current coding loop; \
-                        the first auto-defer expires after three days, while a \
-                        second auto-defer for the same lines stays deferred.",
+                        uncommitted changes; returns hook-decision JSON. It \
+                        allows whenever stop_hook_active is true, so it blocks \
+                        at most once per stop chain, and it blocks a finding \
+                        only once per session unless the finding is fixed and \
+                        then reintroduced (reported as a regression). Findings \
+                        reintroduced more than [gate].repeat_limit times on the \
+                        same source lines are auto-deferred; the first \
+                        auto-defer expires after three days, a second one stays. \
+                        Gate state lives in .sensez/gate/ and expires after \
+                        seven idle days.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Repository root"},
-                "stop_hook_active": {"type": ["boolean", "string"], "description": "Ignored; accepted so older hooks still validate"}
+                "session_id": {"type": "string", "description": "Claude Code session id; scopes the gate's memory"},
+                "transcript_path": {"type": "string", "description": "Claude Code transcript; scopes the scan to this session's edits"},
+                "stop_hook_active": {"type": ["boolean", "string"], "description": "true when this Stop follows a gate block; the gate then allows"}
             },
             "required": ["path"]
         }
