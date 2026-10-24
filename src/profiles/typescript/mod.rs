@@ -167,6 +167,10 @@ macro_rules! impl_ts_traits {
                 roots::module_name(file, workspace_root)
             }
 
+            fn workspace_root(&self, common: &Path) -> Option<PathBuf> {
+                roots::workspace_root(common)
+            }
+
             fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {
                 None
             }

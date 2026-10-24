@@ -179,6 +179,10 @@ pub trait ModuleProfile: Send + Sync {
         let _ = (file, workspace_root);
         base.to_string()
     }
+    /// Workspace above `common` whose layout disambiguates colliding module names.
+    fn workspace_root(&self, _common: &Path) -> Option<PathBuf> {
+        None
+    }
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String>;
     fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         false

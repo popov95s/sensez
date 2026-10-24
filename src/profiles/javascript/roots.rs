@@ -24,6 +24,14 @@ pub fn root_for(file: &Path) -> PathBuf {
     pathroot::root_for(file, &MARKERS, &BOUNDARIES)
 }
 
+/// Nearest directory at or above `start` holding a `package.json`.
+pub fn workspace_root(start: &Path) -> Option<PathBuf> {
+    start
+        .ancestors()
+        .find(|directory| directory.join("package.json").is_file())
+        .map(Path::to_path_buf)
+}
+
 /// Root-relative path key: drop the extension and collapse a trailing `index`.
 /// `root/src/api/index.ts` → `src/api`; `root/src/util.ts` → `src/util`.
 pub fn module_name(file: &Path, root: &Path) -> String {
