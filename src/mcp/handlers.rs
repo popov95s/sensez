@@ -222,3 +222,6 @@ fn usage_report(args: &Value) -> ToolResult {
 #[cfg(test)]
 #[path = "handlers_tests.rs"]
 mod tests;
+#[cfg(test)]
+#[path = "handlers_triage_tests.rs"]
+mod triage_tests;
