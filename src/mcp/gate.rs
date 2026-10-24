@@ -19,13 +19,14 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     let gate_config = crate::config::model::Config::load(root)
         .map(|config| config.gate)
         .unwrap_or_default();
-    let (mut report, snapshot, elapsed) = match super::scan::diff_changed(root, None, 0, changed) {
-        Ok(result) => result,
-        Err(err) => {
-            eprintln!("[sensez gate] failed to scan, allowing: {err:#}");
-            return Ok(allow());
-        }
-    };
+    let (mut report, snapshot, elapsed) =
+        match super::scan::run(root, None, 0, super::scan::Scope::Changed(changed)) {
+            Ok(result) => result,
+            Err(err) => {
+                eprintln!("[sensez gate] failed to scan, allowing: {err:#}");
+                return Ok(allow());
+            }
+        };
     crate::brainz::record_scan(root, &snapshot, elapsed, None, crate::brainz::Origin::Gate);
 
     // The auto-defer UX is gate-specific; it sees the post-processed

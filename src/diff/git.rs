@@ -1,7 +1,6 @@
-//! The only subprocess use in sensez: obtain a working-tree diff from `git`.
+//! Obtain working-tree diffs and changed paths from `git`.
 //!
-//! Isolated here so the rest of the tool stays subprocess-free. Diffs against
-//! the `HEAD` commit (so staged *and* unstaged edits are seen) and treats
+//! Diffs against the `HEAD` commit (so staged *and* unstaged edits are seen) and treats
 //! untracked source files as fully added (a freshly-written file emits no diff
 //! hunks but is exactly the common edit-loop case).
 

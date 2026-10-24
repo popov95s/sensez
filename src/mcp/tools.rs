@@ -108,7 +108,7 @@ fn search_docs() -> Value {
             "properties": {
                 "path": {"type": "string", "description": "Project root to index/search"},
                 "query": {"type": "string", "description": "Natural-language intent query"},
-                "top_k": {"type": "integer", "minimum": 1, "default": 10, "description": "Number of results (default 10)"}
+                "top_k": {"type": "integer", "minimum": 1, "default": crate::eyez::DEFAULT_TOP_K.get(), "description": format!("Number of results (default {})", crate::eyez::DEFAULT_TOP_K)}
             },
             "required": ["path", "query"]
         }

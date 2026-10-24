@@ -59,7 +59,7 @@ fn initialize_result(requested: Option<&Value>) -> Value {
 }
 
 fn handle_tool_call(params: Option<&Value>) -> ToolResult {
-    let request = params.ok_or((-32602, "missing params".to_string()))?;
+    let request = params.ok_or_else(|| (handlers::INVALID_PARAMS, "missing params".to_string()))?;
     let name = request
         .get("name")
         .and_then(Value::as_str)
