@@ -24,6 +24,7 @@
       "smells/nested_loop": 26,
       "smells/nested_ternary": 8,
       "smells/shotgun_surgery_hazard": 3,
+      "smells/swallowed_error_sentinel": 1,
       "smells/unnecessary_nested_if": 13
     },
     "resolved_by_detector": {},

@@ -624,7 +624,7 @@
       "cycles": 2,
       "dead_code": 5,
       "duplication": 20,
-      "smells": 162
+      "smells": 163
     },
     "truncated": false
   },
@@ -2239,6 +2239,16 @@
       "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "swallowed_error_sentinel",
+      "line": 380,
+      "message": "catch at line 380 returns `false` and drops the error, so callers get a plausible value instead of a failure; rethrow it or return a typed failure (`{ ok: false, error }`) the caller must handle",
+      "metric": 1,
+      "symbol": "cached callback",
+      "threshold": 0
     },
     {
       "action": "warning",
