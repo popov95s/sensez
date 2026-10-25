@@ -28,7 +28,7 @@ pub(crate) fn run(args: ReflexezArgs) -> Result<ExitCode> {
         crate::cli::output::print_line(&serde_json::to_string_pretty(&plan)?)?;
         return Ok(ExitCode::SUCCESS);
     }
-    crate::cli::output::print_line(&render::terminal(&plan, &root))?;
+    crate::cli::output::print_line(&render::terminal(&plan))?;
     if args.plan {
         return Ok(ExitCode::SUCCESS);
     }

@@ -1,8 +1,9 @@
 use super::model::{ImpactPlan, RunMode};
 use std::fmt::Write;
-use std::path::Path;
 
-pub fn terminal(plan: &ImpactPlan, root: &Path) -> String {
+/// Plan summary with paths relative to the repository root.
+pub fn terminal(plan: &ImpactPlan) -> String {
+    let root = plan.repository.as_path();
     let mut out = String::new();
     let mode = if plan.full_suite {
         "full safety fallback"
