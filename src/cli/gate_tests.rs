@@ -49,6 +49,29 @@ fn run_scan_warns_about_invalid_config_and_uses_defaults() {
 }
 
 #[test]
+fn gated_run_with_config_issues_says_so() {
+    let report = AnalysisReport {
+        meta: ReportMeta {
+            issues: vec![crate::report::ScanIssue {
+                stage: crate::report::ScanStage::Config,
+                file: None,
+                message: "sensez.toml:2:1: unknown key".to_string(),
+            }],
+            ..ReportMeta::default()
+        },
+        ..AnalysisReport::default()
+    };
+    let gated = spec::ScanOptions {
+        fail_on: Some(FailOnNewLevel::Advisory),
+        ..scan_options()
+    };
+
+    assert_eq!(gate_config_note(&report, &scan_options()), None);
+    let note = gate_config_note(&report, &gated).unwrap();
+    assert!(note.contains("1 configuration issue(s)"), "{note}");
+}
+
+#[test]
 fn skipped_analyzer_fails_only_gated_runs() {
     let report = AnalysisReport {
         meta: ReportMeta {
