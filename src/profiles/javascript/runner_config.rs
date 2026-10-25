@@ -2,6 +2,7 @@
 
 mod calls;
 mod defaults;
+pub mod detect;
 mod evaluate;
 mod extglob;
 pub mod jest;

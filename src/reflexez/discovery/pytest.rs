@@ -1,140 +1,154 @@
-use anyhow::{Context, Result};
+//! Pytest collection rules from the nearest `pytest.ini`, `pyproject.toml`, `tox.ini` or `setup.cfg`.
+
+use globset::{Glob, GlobSet, GlobSetBuilder};
+use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 
-/// Whether pytest's default `python_files` patterns (`test_*.py`, `*_test.py`) collect `path`.
-pub fn is_test_file(path: &Path) -> bool {
-    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
-        return false;
-    };
-    path.extension().is_some_and(|ext| ext == "py")
-        && (name.starts_with("test_") || name.ends_with("_test.py"))
+const DEFAULT_PYTHON_FILES: [&str; 2] = ["test_*.py", "*_test.py"];
+
+/// One pytest rootdir: where it runs, which directories and file names it collects.
+pub struct PytestConfig {
+    pub dir: PathBuf,
+    testpaths: Vec<PathBuf>,
+    python_files: GlobSet,
 }
 
-pub fn test_roots(root: &Path) -> Result<Vec<PathBuf>> {
-    let configured = pyproject_roots(root)?.or_else(|| ini_roots(root));
-    Ok(configured
-        .unwrap_or_default()
-        .into_iter()
-        .map(|path| root.join(path))
-        .collect())
-}
-
-pub fn is_collected(file: &Path, roots: &[PathBuf]) -> bool {
-    roots.is_empty() || roots.iter().any(|root| file.starts_with(root))
-}
-
-fn pyproject_roots(root: &Path) -> Result<Option<Vec<String>>> {
-    let path = root.join("pyproject.toml");
-    if !path.is_file() {
-        return Ok(None);
+impl PytestConfig {
+    fn new(dir: &Path, testpaths: Vec<String>, python_files: Option<Vec<String>>) -> Self {
+        let patterns =
+            python_files.unwrap_or_else(|| DEFAULT_PYTHON_FILES.map(str::to_string).to_vec());
+        let mut builder = GlobSetBuilder::new();
+        for glob in patterns
+            .iter()
+            .filter_map(|pattern| Glob::new(pattern).ok())
+        {
+            builder.add(glob);
+        }
+        Self {
+            dir: dir.to_path_buf(),
+            testpaths: testpaths.iter().map(|path| dir.join(path)).collect(),
+            python_files: builder.build().unwrap_or_else(|_| GlobSet::empty()),
+        }
     }
-    let source = std::fs::read_to_string(&path)
-        .with_context(|| format!("reading pytest configuration at {}", path.display()))?;
-    let value: toml::Value = toml::from_str(&source)
-        .with_context(|| format!("parsing pytest configuration at {}", path.display()))?;
-    let Some(testpaths) = value
-        .get("tool")
-        .and_then(|value| value.get("pytest"))
-        .and_then(|value| value.get("ini_options"))
-        .and_then(|value| value.get("testpaths"))
-    else {
-        return Ok(None);
-    };
-    Ok(value_roots(testpaths))
+
+    /// Whether pytest run from this rootdir collects `path`.
+    pub fn collects(&self, path: &Path) -> bool {
+        let named = path.extension().is_some_and(|ext| ext == "py")
+            && path
+                .file_name()
+                .is_some_and(|name| self.python_files.is_match(name));
+        named
+            && (self.testpaths.is_empty()
+                || self.testpaths.iter().any(|root| path.starts_with(root)))
+    }
 }
 
-fn value_roots(value: &toml::Value) -> Option<Vec<String>> {
-    if let Some(path) = value.as_str() {
-        return Some(split_paths(path));
+/// Nearest pytest configuration for each directory under one repository.
+pub struct PytestConfigs {
+    repository: PathBuf,
+    default: PytestConfig,
+    by_dir: HashMap<PathBuf, Option<PytestConfig>>,
+}
+
+impl PytestConfigs {
+    pub fn new(repository: &Path) -> Self {
+        Self {
+            repository: repository.to_path_buf(),
+            default: PytestConfig::new(repository, Vec::new(), None),
+            by_dir: HashMap::new(),
+        }
     }
-    value.as_array().map(|paths| {
-        paths
+
+    /// Configuration pytest applies to `file`; the defaults at the repository root without one.
+    pub fn for_file(&mut self, file: &Path) -> &PytestConfig {
+        let mut dir = file.parent();
+        while let Some(current) = dir.filter(|current| current.starts_with(&self.repository)) {
+            let found = self
+                .by_dir
+                .entry(current.to_path_buf())
+                .or_insert_with(|| read_config(current))
+                .is_some();
+            if found {
+                return self.by_dir[current].as_ref().unwrap_or(&self.default);
+            }
+            dir = current.parent();
+        }
+        &self.default
+    }
+}
+
+fn read_config(dir: &Path) -> Option<PytestConfig> {
+    if let Some(values) = ini_section(&dir.join("pytest.ini"), "[pytest]") {
+        return Some(from_ini(dir, &values));
+    }
+    if let Some(config) = pyproject_config(dir) {
+        return Some(config);
+    }
+    ini_section(&dir.join("tox.ini"), "[pytest]")
+        .or_else(|| ini_section(&dir.join("setup.cfg"), "[tool:pytest]"))
+        .map(|values| from_ini(dir, &values))
+}
+
+fn pyproject_config(dir: &Path) -> Option<PytestConfig> {
+    let source = std::fs::read_to_string(dir.join("pyproject.toml")).ok()?;
+    let value: toml::Value = toml::from_str(&source).ok()?;
+    let options = value.get("tool")?.get("pytest")?.get("ini_options")?;
+    let list = |key: &str| options.get(key).map(toml_strings);
+    Some(PytestConfig::new(
+        dir,
+        list("testpaths").unwrap_or_default(),
+        list("python_files"),
+    ))
+}
+
+fn toml_strings(value: &toml::Value) -> Vec<String> {
+    match value {
+        toml::Value::String(text) => split_words(text),
+        toml::Value::Array(items) => items
             .iter()
             .filter_map(toml::Value::as_str)
             .map(str::to_string)
-            .collect()
-    })
+            .collect(),
+        _ => Vec::new(),
+    }
 }
 
-fn ini_roots(root: &Path) -> Option<Vec<String>> {
-    parse_ini(&root.join("pytest.ini"), "[pytest]")
-        .or_else(|| parse_ini(&root.join("setup.cfg"), "[tool:pytest]"))
-        .or_else(|| parse_ini(&root.join("tox.ini"), "[pytest]"))
+fn from_ini(dir: &Path, values: &HashMap<String, Vec<String>>) -> PytestConfig {
+    PytestConfig::new(
+        dir,
+        values.get("testpaths").cloned().unwrap_or_default(),
+        values.get("python_files").cloned(),
+    )
 }
 
-fn parse_ini(path: &Path, expected_section: &str) -> Option<Vec<String>> {
+/// Keys of `section` with their whitespace-separated values, continuation lines included.
+fn ini_section(path: &Path, section: &str) -> Option<HashMap<String, Vec<String>>> {
     let source = std::fs::read_to_string(path).ok()?;
-    let lines: Vec<_> = source.lines().collect();
-    let start = lines
-        .iter()
-        .position(|line| line.trim() == expected_section)?;
-    let section: Vec<_> = lines[start + 1..]
-        .iter()
-        .take_while(|line| !line.trim().starts_with('['))
-        .copied()
-        .collect();
-    let assignment = section
-        .iter()
-        .position(|line| line.trim().starts_with("testpaths"))?;
-    let inline = section[assignment]
-        .split_once('=')
-        .map_or("", |(_, value)| value);
-    let values: Vec<_> = std::iter::once(inline)
-        .chain(
-            section[assignment + 1..]
-                .iter()
-                .take_while(|line| line.starts_with(char::is_whitespace))
-                .copied(),
-        )
-        .flat_map(split_paths)
-        .collect();
-    (!values.is_empty()).then_some(values)
+    let mut lines = source.lines().skip_while(|line| line.trim() != section);
+    lines.next()?;
+    let mut values: HashMap<String, Vec<String>> = HashMap::new();
+    let mut current: Option<String> = None;
+    for line in lines.take_while(|line| !line.trim().starts_with('[')) {
+        if line.starts_with(char::is_whitespace) {
+            if let Some(key) = &current {
+                values
+                    .entry(key.clone())
+                    .or_default()
+                    .extend(split_words(line));
+            }
+        } else if let Some((key, value)) = line.split_once('=') {
+            let key = key.trim().to_string();
+            values.insert(key.clone(), split_words(value));
+            current = Some(key);
+        }
+    }
+    Some(values)
 }
 
-fn split_paths(value: &str) -> Vec<String> {
+fn split_words(value: &str) -> Vec<String> {
     value.split_whitespace().map(str::to_string).collect()
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn reads_pyproject_testpaths() {
-        let root = tempfile::tempdir().unwrap();
-        std::fs::write(
-            root.path().join("pyproject.toml"),
-            "[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n",
-        )
-        .unwrap();
-
-        let roots = test_roots(root.path()).unwrap();
-
-        assert_eq!(roots, vec![root.path().join("tests")]);
-        assert!(is_collected(&root.path().join("tests/test_one.py"), &roots));
-        assert!(!is_collected(
-            &root.path().join("examples/test_one.py"),
-            &roots
-        ));
-    }
-
-    #[test]
-    fn reads_multiline_ini_testpaths() {
-        let root = tempfile::tempdir().unwrap();
-        std::fs::write(
-            root.path().join("pytest.ini"),
-            "[pytest]\ntestpaths =\n    tests\n    integration\n",
-        )
-        .unwrap();
-
-        assert_eq!(test_roots(root.path()).unwrap().len(), 2);
-    }
-
-    #[test]
-    fn default_python_files_patterns_mark_test_files() {
-        assert!(is_test_file(Path::new("tests/test_api.py")));
-        assert!(is_test_file(Path::new("pkg/api_test.py")));
-        assert!(!is_test_file(Path::new("tests/conftest.py")));
-        assert!(!is_test_file(Path::new("web/test_api.ts")));
-    }
-}
+#[path = "pytest_tests.rs"]
+mod tests;

@@ -44,6 +44,8 @@ mod tests_config;
 #[cfg(test)]
 mod tests_declaration;
 #[cfg(test)]
+mod tests_discovery;
+#[cfg(test)]
 mod tests_graph;
 #[cfg(test)]
 mod tests_settings;
