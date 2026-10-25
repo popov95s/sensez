@@ -170,9 +170,9 @@ impl FunctionFacts {
                 if let Some(constructor) = returned_constructor(node, src) {
                     self.unit.returned_constructors.insert(constructor);
                 }
-                if let Some(name) = returned_name(node, src) {
-                    self.unit.returned_names.insert(name);
-                }
+                self.unit
+                    .returned_names
+                    .extend(super::returned_names::returned_names(node, src));
             }
             "number" => {
                 self.unit
@@ -297,11 +297,6 @@ fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
         .child_by_field_name("property")
         .and_then(|method| method.utf8_text(src).ok())
         .map(str::to_string)
-}
-
-fn returned_name(node: Node<'_>, src: &[u8]) -> Option<String> {
-    let value = node.named_child(0).filter(|v| v.kind() == "identifier")?;
-    value.utf8_text(src).ok().map(str::to_string)
 }
 
 fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {

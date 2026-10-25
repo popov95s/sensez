@@ -210,19 +210,35 @@ fn visit<'tree>(
     }
 }
 
+/// `function f() {}`, or `const f = () => {}` outside a component or hook.
+fn is_named_local_function(node: Node, kind: &str, parent: &str) -> bool {
+    match kind {
+        "function_declaration" | "generator_function_declaration" => true,
+        "arrow_function" | "function_expression" => {
+            node.parent()
+                .is_some_and(|binding| binding.kind() == "variable_declarator")
+                && !is_component_or_hook(parent)
+        }
+        _ => false,
+    }
+}
+
+/// `SaveButton` or `useSave`.
+fn is_component_or_hook(name: &str) -> bool {
+    let hook = name
+        .strip_prefix("use")
+        .is_some_and(|rest| rest.starts_with(|c: char| c.is_ascii_uppercase()));
+    hook || name.starts_with(|c: char| c.is_ascii_uppercase())
+}
+
 // Kept out of `visit` so the large collector never sits in each recursive frame.
 #[inline(never)]
 fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut VisitCtx<'_, 'tree>) {
     let lineage = Lineage::new(&ctx.path, node);
     let is_method = ctx.scope.last().is_some_and(|s| s.is_class);
     let mut collector = units::FunctionFacts::start(lineage, src, is_method);
-    let enclosed_by_fn = ctx.scope.last().is_some_and(|s| !s.is_class);
-    if enclosed_by_fn
-        && matches!(
-            kind,
-            "function_declaration" | "generator_function_declaration"
-        )
-    {
+    let parent = ctx.scope.last().filter(|s| !s.is_class);
+    if parent.is_some_and(|parent| is_named_local_function(node, kind, &parent.name)) {
         collector.unit.is_nested = true;
         collector.unit.parent = ctx.scope.last().map(|s| s.name.clone()).unwrap_or_default();
         collector.unit.parent_is_test_callback = ctx

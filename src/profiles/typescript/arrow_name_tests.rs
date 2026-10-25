@@ -10,7 +10,7 @@ use crate::spine::parser::parse_source;
 fn nested_function_in_arrow_names_parent_binding() {
     let body = "  let x = 0;\n".repeat(17);
     let src = format!(
-        "const useThing = () => {{\n  function inner() {{\n{body}  }}\n  return inner;\n}};\n"
+        "const useThing = () => {{\n  function inner() {{\n{body}  }}\n  return inner();\n}};\n"
     );
     let finding = findings_for(src.as_bytes(), &Smells::default())
         .into_iter()

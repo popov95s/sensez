@@ -30,6 +30,7 @@ pub(crate) mod obsession;
 mod params;
 pub(crate) mod performance;
 pub(crate) mod resolve;
+mod returned_names;
 pub(crate) mod risk_facts;
 pub(crate) mod roots;
 pub(crate) mod runner_config;
