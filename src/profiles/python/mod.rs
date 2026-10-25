@@ -7,6 +7,7 @@ mod conditionals;
 mod control_shapes;
 mod deadcode;
 mod echo_facts;
+mod fallback_sink;
 mod generated;
 mod imports;
 mod lexeme;

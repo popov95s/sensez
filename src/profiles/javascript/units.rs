@@ -5,6 +5,7 @@
 //! receiver so the language-neutral detectors work unchanged.
 
 use super::chains::CHAIN;
+use super::compared_defaults::compared_defaults;
 use super::member_visibility::{callback_position, function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
@@ -75,6 +76,7 @@ impl FunctionFacts {
             },
             homogeneous_tuple_return: classunit::is_homogeneous_primitive_tuple(&tuple_return),
             magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
+            string_fallbacks: compared_defaults(func, src),
             ..Default::default()
         };
         if !is_method && func.kind() == "function_declaration" {

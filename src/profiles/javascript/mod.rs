@@ -5,6 +5,7 @@ mod chains;
 pub(crate) mod classunit;
 mod comment_runs;
 pub(crate) mod comment_syntax;
+mod compared_defaults;
 pub(crate) mod conditionals;
 pub(crate) mod const_eval;
 mod control_shapes;

@@ -333,7 +333,7 @@ impl Acc<'_> {
         walk::record_string_fallback(
             self.unit,
             arg.utf8_text(src).ok().map(unquote),
-            FallbackSink::Unclassified,
+            FallbackSink::Unclassified.into(),
             arg.start_position().row + 1,
         );
     }

@@ -2,9 +2,10 @@
 //! single body walk in [`super::units`] (no second traversal). Collects raw
 //! structure only — thresholds and severity live in `noze::smells`.
 
+use super::fallback_sink::fallback_sink;
 use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
 use crate::profiles::walk::{self, MutationTarget};
-use crate::spine::ir::{FallbackSink, FunctionUnit, LiteralMembership, SchemaCall};
+use crate::spine::ir::{FunctionUnit, LiteralMembership, SchemaCall};
 use tree_sitter::Node;
 
 const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
@@ -48,6 +49,7 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
             }
         }
         "call" => {
+            record_get_default(unit, node, src);
             record_schema_call(unit, node, src);
             record_mutating_call(unit, node, src);
         }
@@ -118,9 +120,39 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     walk::record_string_fallback(
         unit,
         string_literal_text(right, src),
-        FallbackSink::Unclassified,
+        fallback_sink(node, src),
         right.start_position().row + 1,
     );
+}
+
+/// `d.get("k", "")` / `getattr(o, "k", "")` — the string default stands in for a missing value.
+fn record_get_default(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let (Some(function), Some(arguments)) = (
+        node.child_by_field_name("function"),
+        node.child_by_field_name("arguments"),
+    ) else {
+        return;
+    };
+    let default_index = match function.kind() {
+        "attribute" if attribute_name(function, src) == Some("get") => 1,
+        "identifier" if function.utf8_text(src).ok() == Some("getattr") => 2,
+        _ => return,
+    };
+    let Some(default) = arguments.named_child(default_index) else {
+        return;
+    };
+    walk::record_string_fallback(
+        unit,
+        string_literal_text(default, src),
+        fallback_sink(node, src),
+        default.start_position().row + 1,
+    );
+}
+
+fn attribute_name<'a>(attribute: Node, src: &'a [u8]) -> Option<&'a str> {
+    attribute
+        .child_by_field_name("attribute")
+        .and_then(|name| name.utf8_text(src).ok())
 }
 
 /// `value if value else "?"` or `"?" if value is None else value` — Python leaves
@@ -139,7 +171,7 @@ fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) 
     walk::record_string_fallback(
         unit,
         string_literal_text(fallback, src),
-        FallbackSink::Unclassified,
+        fallback_sink(node, src),
         fallback.start_position().row + 1,
     );
 }

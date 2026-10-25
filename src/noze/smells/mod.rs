@@ -294,6 +294,8 @@ mod line_anchor_tests;
 #[cfg(test)]
 mod loop_frame_tests;
 #[cfg(test)]
+mod magic_string_sink_tests;
+#[cfg(test)]
 mod magic_string_tests;
 #[cfg(test)]
 mod message_chain_tests;

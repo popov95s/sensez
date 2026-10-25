@@ -43,7 +43,7 @@ pub const MAGIC_STRING_DEFAULT_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "Medium",
         value: "medium",
-        description: "Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.",
+        description: "Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations, including coercions such as `Number(..)` and lookups such as `map.get(..)`.",
     },
     StrictnessLevelDoc {
         title: "High",

@@ -9,7 +9,7 @@ use crate::profiles::comments;
 use crate::profiles::lexeme::BoundNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 use crate::spine::ir::{
-    bump, record_attr, CommentSpan, FallbackSink, FunctionUnit, StringFallback, SymbolKind, Walked,
+    bump, record_attr, CommentSpan, FallbackSite, FunctionUnit, StringFallback, SymbolKind, Walked,
 };
 use std::collections::HashSet;
 use tree_sitter::Node;
@@ -250,14 +250,15 @@ pub(crate) fn record_str_key_line(unit: &mut FunctionUnit, recv: &str, line: usi
 pub(crate) fn record_string_fallback(
     unit: &mut FunctionUnit,
     literal: Option<String>,
-    sink: FallbackSink,
+    site: FallbackSite,
     line: usize,
 ) {
     if let Some(literal) = literal {
         unit.string_fallbacks.push(StringFallback {
             line,
             literal,
-            sink,
+            sink: site.sink,
+            target: site.target,
         });
     }
 }
