@@ -1,57 +1,16 @@
-use super::diagnostics::{from_report, retain_visible};
-use super::health::HealthSummary;
 use super::protocol::{
-    capabilities, health as send_health, log, publish, status as send_status, RESCAN,
+    capabilities, health as send_health, info, log, publish, status as send_status, RESCAN,
 };
+use super::scan::{self, ScanResult};
 use super::schedule::{mark_dirty, take_pending, Workspace};
-use super::settings::{AnalysisScope, Settings};
-use super::workspace::{notification_path, roots as workspace_roots};
+use super::settings::Settings;
+use super::workspace::{affects_scan, changed_paths, notification_path, roots as workspace_roots};
 use anyhow::{Context, Result};
 use crossbeam_channel::{unbounded, Sender};
 use lsp_server::{Connection, Message, Request, Response};
 use serde_json::Value;
 use std::collections::{BTreeMap, BTreeSet};
-use std::path::PathBuf;
-use std::sync::atomic::{AtomicUsize, Ordering};
-use std::sync::{Mutex, OnceLock};
-use std::thread;
-
-static IN_FLIGHT: AtomicUsize = AtomicUsize::new(0);
-static SCAN_THREADS: OnceLock<Mutex<Vec<thread::JoinHandle<()>>>> = OnceLock::new();
-
-fn spawn_tracked(build: impl FnOnce() + Send + 'static) {
-    // Fetch-add before spawn keeps the count conservative (never undercounts
-    // while a queued thread has not started yet).
-    IN_FLIGHT.fetch_add(1, Ordering::AcqRel);
-    let handle = thread::spawn(move || {
-        build();
-        IN_FLIGHT.fetch_sub(1, Ordering::AcqRel);
-    });
-    SCAN_THREADS
-        .get_or_init(|| Mutex::new(Vec::new()))
-        .lock()
-        .unwrap_or_else(|poisoned| poisoned.into_inner())
-        .push(handle);
-}
-
-fn join_scan_threads() {
-    if let Some(handles) = SCAN_THREADS.get() {
-        let mut guards = handles
-            .lock()
-            .unwrap_or_else(|poisoned| poisoned.into_inner());
-        for handle in guards.drain(..) {
-            let _ = handle.join();
-        }
-    }
-}
-
-struct ScanResult {
-    root: PathBuf,
-    generation: u64,
-    diagnostics: BTreeMap<String, Vec<super::diagnostics::Diagnostic>>,
-    health: Option<HealthSummary>,
-    error: Option<String>,
-}
+use std::path::{Path, PathBuf};
 
 pub fn serve() -> Result<()> {
     let (connection, io_threads) = Connection::stdio();
@@ -67,7 +26,7 @@ pub fn serve() -> Result<()> {
     // In-flight scans only write metrics/publish through the (now-closed)
     // sender; joining them keeps shutdown deterministic and lets bounded
     // flushes finish.
-    join_scan_threads();
+    scan::join_all();
     io_threads.join().context("joining LSP I/O threads")?;
     result
 }
@@ -119,11 +78,19 @@ fn handle_message(
                 *settings = Settings::from_lsp(&notification.params);
                 rescan_all(workspaces, *settings, &connection.sender, completed)?;
             } else if notification.method == "textDocument/didSave" {
-                if let Some(root) = root_for_notification(&notification.params, workspaces) {
-                    queue(workspaces, root, *settings, &connection.sender, completed)?;
-                } else {
-                    rescan_all(workspaces, *settings, &connection.sender, completed)?;
-                }
+                let saved: Vec<_> = notification_path(&notification.params)
+                    .into_iter()
+                    .collect();
+                rescan_affected(&saved, workspaces, *settings, &connection.sender, completed)?;
+            } else if notification.method == "workspace/didChangeWatchedFiles" {
+                let changed = changed_paths(&notification.params);
+                rescan_affected(
+                    &changed,
+                    workspaces,
+                    *settings,
+                    &connection.sender,
+                    completed,
+                )?;
             }
             Ok(false)
         }
@@ -131,11 +98,26 @@ fn handle_message(
     }
 }
 
-fn root_for_notification(
-    params: &Value,
-    workspaces: &BTreeMap<PathBuf, Workspace>,
-) -> Option<PathBuf> {
-    let path = notification_path(params)?;
+/// Rescan each workspace holding a changed file that can alter its scan.
+fn rescan_affected(
+    paths: &[PathBuf],
+    workspaces: &mut BTreeMap<PathBuf, Workspace>,
+    settings: Settings,
+    sender: &Sender<Message>,
+    completed: &Sender<ScanResult>,
+) -> Result<()> {
+    let roots: BTreeSet<_> = paths
+        .iter()
+        .filter(|path| affects_scan(path))
+        .filter_map(|path| root_for_path(path, workspaces))
+        .collect();
+    for root in roots {
+        queue(workspaces, root, settings, sender, completed)?;
+    }
+    Ok(())
+}
+
+fn root_for_path(path: &Path, workspaces: &BTreeMap<PathBuf, Workspace>) -> Option<PathBuf> {
     workspaces
         .keys()
         .filter(|root| path.starts_with(root))
@@ -181,11 +163,11 @@ fn queue(
     sender: &Sender<Message>,
     completed: &Sender<ScanResult>,
 ) -> Result<()> {
-    let Some(generation) = mark_dirty(workspaces, &root, IN_FLIGHT.load(Ordering::Acquire)) else {
+    let Some(generation) = mark_dirty(workspaces, &root) else {
         return Ok(());
     };
     send_status(sender, &root, "scanning")?;
-    spawn_scan(root, generation, settings, completed.clone());
+    scan::spawn(root, generation, settings, completed.clone());
     Ok(())
 }
 
@@ -202,71 +184,15 @@ fn rescan_all(
     Ok(())
 }
 
-fn spawn_scan(root: PathBuf, generation: u64, settings: Settings, completed: Sender<ScanResult>) {
-    spawn_tracked(move || {
-        let result = match crate::analyze_path_in_service(&root, None) {
-            Ok((mut report, module_files)) => {
-                let mut health = settings.health_enabled.then(|| {
-                    HealthSummary::from_report(root.display().to_string(), "workspace", &report)
-                });
-                if settings.scope == AnalysisScope::Changed {
-                    match crate::diff::git::changed_vs_head(&root) {
-                        Ok(changed) => crate::diff::apply(&mut report, &changed, &module_files),
-                        Err(error) => {
-                            return send_scan_error(root, generation, health, error, completed)
-                        }
-                    }
-                }
-                if let Some(health) = health.as_mut() {
-                    health.set_current_changes(&report);
-                }
-                retain_visible(&mut report, settings);
-                ScanResult {
-                    root,
-                    generation,
-                    diagnostics: from_report(&report),
-                    health,
-                    error: None,
-                }
-            }
-            Err(error) => ScanResult {
-                health: None,
-                root,
-                generation,
-                diagnostics: BTreeMap::new(),
-                error: Some(format!("{error:#}")),
-            },
-        };
-        let _ = completed.send(result);
-    });
-}
-
-fn send_scan_error(
-    root: PathBuf,
-    generation: u64,
-    health: Option<HealthSummary>,
-    error: anyhow::Error,
-    completed: Sender<ScanResult>,
-) {
-    let _ = completed.send(ScanResult {
-        root,
-        generation,
-        diagnostics: BTreeMap::new(),
-        health,
-        error: Some(format!("{error:#}")),
-    });
-}
-
 fn launch_pending(
     settings: Settings,
     sender: &Sender<Message>,
     workspaces: &mut BTreeMap<PathBuf, Workspace>,
     completed: &Sender<ScanResult>,
 ) -> Result<()> {
-    while let Some((path, generation)) = take_pending(workspaces, IN_FLIGHT.load(Ordering::Acquire))
-    {
+    while let Some((path, generation)) = take_pending(workspaces) {
         send_status(sender, &path, "scanning")?;
-        spawn_scan(path, generation, settings, completed.clone());
+        scan::spawn(path, generation, settings, completed.clone());
     }
     Ok(())
 }
@@ -282,6 +208,9 @@ fn apply_result(
     workspace.running = false;
     if result.generation != workspace.generation {
         return Ok(());
+    }
+    if let Some(notice) = result.notice {
+        info(sender, notice)?;
     }
     if let Some(error) = result.error {
         if let Some(health) = result.health {
