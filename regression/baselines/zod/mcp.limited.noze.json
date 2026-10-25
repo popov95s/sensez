@@ -719,7 +719,7 @@
       "cycles": 2,
       "dead_code": 5,
       "duplication": 27,
-      "smells": 558
+      "smells": 573
     },
     "truncated": true
   },
@@ -875,12 +875,12 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "loose_typing",
-      "line": 2495,
-      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
-      "metric": 3,
-      "symbol": "mergeValues",
-      "threshold": 0
+      "kind": "heavy_nested_function",
+      "line": 218,
+      "message": "nested function inside `core.$constructor(\"$ZodType\") callback` spans 43 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `core.$constructor(\"$ZodType\") callback`), so extract it to module/class level",
+      "metric": 43,
+      "symbol": "runChecks",
+      "threshold": 15
     },
     {
       "action": "warning",
@@ -890,7 +890,7 @@
       "lines": [
         4470
       ],
-      "message": "attribute chain depth 5 (threshold 4) at L4470 \u2014 Law of Demeter",
+      "message": "attribute chain depth 5 (threshold 4) at L4470 \u2014 Law of Demeter; if `inst` is plain data or config, add it to `ignore_roots`",
       "metric": 5,
       "symbol": "parse",
       "threshold": 4
