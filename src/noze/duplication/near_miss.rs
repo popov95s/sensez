@@ -1,4 +1,4 @@
-//! Opt-in consistent-rename (near-miss Type-2) detection.
+//! Consistent-rename (near-miss Type-2) detection: on for long functions, `near_miss` extends it to all.
 //!
 //! The default suffix-array matcher is strict: it keeps every name/type/literal
 //! verbatim, so renaming an API breaks a clone. This pass relaxes that *only*
@@ -7,6 +7,7 @@
 //! ordinal) while keeping operators and control-flow structure verbatim. Two
 //! functions share a key iff a consistent rename maps one onto the other.
 
+use crate::config::model::Duplication;
 use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence};
 use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::ParsedFile;
@@ -20,6 +21,14 @@ struct Member {
     raw: Vec<u64>,
     occ: CloneOccurrence,
     token_len: usize,
+}
+
+/// Shortest function the rename pass compares: twice the threshold unless `near_miss` asks for every size.
+pub fn min_tokens(config: &Duplication) -> usize {
+    match config.near_miss {
+        true => config.threshold,
+        false => config.threshold * 2,
+    }
 }
 
 /// Detect consistent-rename clone classes across `files` (function granularity).

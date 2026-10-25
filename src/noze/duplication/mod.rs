@@ -165,24 +165,19 @@ fn detect_partition(
         });
     }
 
-    // Opt-in: consistent-rename near-miss clones (function granularity). Routed
-    // through the same dedup so a near-miss already covered as an exact clone
-    // doesn't double-report.
-    if config.near_miss {
-        for class in near_miss::detect(kept, config.threshold) {
-            let near_miss_occurrences = suppress_overlaps(class.occurrences);
-            if near_miss_occurrences.len() < 2 {
-                continue;
-            }
-            if !seen.insert(dedup_key(&near_miss_occurrences, class.token_length)) {
-                continue;
-            }
-            out.push(CloneClass {
-                action: ActionLevel::Advisory,
-                occurrences: near_miss_occurrences,
-                ..class
-            });
+    for class in near_miss::detect(kept, near_miss::min_tokens(config)) {
+        let near_miss_occurrences = suppress_overlaps(class.occurrences);
+        if near_miss_occurrences.len() < 2 {
+            continue;
         }
+        if !seen.insert(dedup_key(&near_miss_occurrences, class.token_length)) {
+            continue;
+        }
+        out.push(CloneClass {
+            action: ActionLevel::Advisory,
+            occurrences: near_miss_occurrences,
+            ..class
+        });
     }
 
     #[cfg(feature = "eyez")]

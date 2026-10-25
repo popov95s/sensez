@@ -1,5 +1,7 @@
 use super::detect;
+use crate::config::model::Duplication;
 use crate::noze::duplication::test_support::write_files;
+use crate::report::CloneDetector;
 
 fn renamed_pairs() -> Vec<(String, String)> {
     ["+", "-", "*", "/", "%"]
@@ -60,4 +62,36 @@ fn local_renamed_away_from_a_shared_property_name_still_pairs() {
     let refs: Vec<_> = files.iter().collect();
 
     assert_eq!(detect(&refs, 10).len(), 1);
+}
+
+fn ledger(func: &str, rows: &str, amount: &str, flag: &str) -> String {
+    format!(
+        "export function {func}(book) {{\n  let open = 0;\n  let closed = 0;\n  for (const row of book.{rows}) {{\n    const value = row.{amount} * row.rate;\n    if (row.{flag}) {{\n      closed += value;\n    }} else {{\n      open += value;\n    }}\n    if (value > book.limit) {{\n      book.alerts.push({{ id: row.id, value }});\n    }}\n  }}\n  const ratio = closed / Math.max(open + closed, 1);\n  const label = ratio > 0.5 ? book.labels.high : book.labels.low;\n  book.audit.record(book.id, {{ open, closed, label }});\n  if (book.alerts.length > book.maxAlerts) {{\n    book.audit.flag(book.id, book.alerts.length);\n  }}\n  if (ratio < book.floor) {{\n    throw new Error(`book ${{book.id}} is under its floor`);\n  }}\n  return {{ open, closed, ratio, alerts: book.alerts.length }};\n}}\n"
+    )
+}
+
+#[test]
+fn long_member_renamed_copy_is_reported_at_defaults() {
+    let tmp = tempfile::tempdir().unwrap();
+    let files = write_files(
+        tmp.path(),
+        &[
+            ("a.ts", &ledger("ledgerTotals", "rows", "amount", "settled")),
+            ("b.ts", &ledger("journalTotals", "lines", "sum", "booked")),
+        ],
+    );
+    let config = Duplication {
+        exclude: vec![],
+        ..Default::default()
+    };
+
+    let clones = crate::noze::duplication::detect(&files, &config);
+
+    assert!(
+        clones.iter().any(|c| c.detector == CloneDetector::NearMiss
+            || c.absorbed
+                .iter()
+                .any(|a| a.detector == CloneDetector::NearMiss)),
+        "{clones:?}"
+    );
 }
