@@ -18,6 +18,7 @@ pub(crate) mod grammar;
 pub(crate) mod imports;
 mod iteration;
 pub(crate) mod lexeme;
+mod local_functions;
 pub(crate) mod loops;
 mod magic_numbers;
 pub(crate) mod manifest;
