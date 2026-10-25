@@ -4661,6 +4661,91 @@ action = "warning"
 
 ## Other
 
+### Dependency Reimplementation (`dependency_reimplementation`)
+
+**What it is**
+
+A small helper re-writes a utility that a declared dependency or the standard library already provides — call the provider instead of keeping a private copy.
+
+**Why it's bad**
+
+Each private copy of a stock utility is one more thing to test and maintain, and copies drift: one swaps the bounds, another drops the last chunk.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def chunks(items, size):
+        return [items[start : start + size] for start in range(0, len(items), size)]
+
+
+    print(chunks(["a", "b", "c"], 2))
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Call the standard-library or declared-package function the message names. List in-house utility packages in `providers` so their functions count too.
+
+    ```python
+    from itertools import batched
+
+    print(list(batched(["a", "b", "c"], 2)))
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    // package.json lists es-toolkit
+    function unique<T>(items: T[]): T[] {
+      return Array.from(new Set(items));
+    }
+
+    console.log(unique(["a", "a", "b"]));
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Import the function the message names from the package `package.json` already lists. List in-house utility packages in `providers` so they count too.
+
+    ```ts
+    import { uniq } from "es-toolkit";
+
+    console.log(uniq(["a", "a", "b"]));
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.dependency_reimplementation]
+enabled = true
+action = "warning"
+providers = [] # in-house packages whose same-named functions count as providers
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ### Redundant Wrapper Chain (`redundant_wrapper_chain`)
 
 **What it is**

@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 40] = {
+pub const ALL_SMELLS: [SmellKind; 41] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -68,7 +68,7 @@ pub const ALL_SMELLS: [SmellKind; 40] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 40] = {
+pub const SMELLS: [SmellDoc; 41] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },

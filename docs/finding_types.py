@@ -22,6 +22,7 @@ class SmellTerm(StrEnum):
     DATA_CLUMP = "data_clump"
     DEEP_NESTING = "deep_nesting"
     DEFENSIVE_FALLBACK = "defensive_fallback"
+    DEPENDENCY_REIMPLEMENTATION = "dependency_reimplementation"
     DIVERGENT_ABSTRACTION = "divergent_abstraction"
     DIVERGENT_CHANGE = "divergent_change"
     FEATURE_ENVY = "feature_envy"
