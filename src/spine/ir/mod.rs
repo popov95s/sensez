@@ -10,6 +10,7 @@ mod lang;
 mod loop_frame;
 mod magic_number;
 mod performance;
+mod sentinel_handler;
 pub mod tokens;
 mod units;
 
@@ -21,6 +22,7 @@ pub use lang::Language;
 pub use loop_frame::{LoopBound, LoopFrame, LoopKind};
 pub use magic_number::{MagicContext, MagicNumber};
 pub use performance::{CallFact, IterationPass, PerfLine, PerformanceFacts};
+pub use sentinel_handler::{GuardedBody, HandlerComment, HandlerEnd, SentinelHandler};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
 pub use units::{

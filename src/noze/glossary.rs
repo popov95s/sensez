@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 38] = {
+pub const ALL_SMELLS: [SmellKind; 39] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -58,6 +58,7 @@ pub const ALL_SMELLS: [SmellKind; 38] = {
         ShotgunSurgeryHazard,
         SplitVariable,
         SortInLoop,
+        SwallowedErrorSentinel,
         TooManyReturns,
         TuplePacking,
         UnnecessaryNestedIf,
@@ -65,7 +66,7 @@ pub const ALL_SMELLS: [SmellKind; 38] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 38] = {
+pub const SMELLS: [SmellDoc; 39] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -102,6 +103,7 @@ pub const SMELLS: [SmellDoc; 38] = {
         SmellDoc { kind: ShotgunSurgeryHazard, title: "Shotgun Surgery Hazard", explanation: "A symbol so widely depended-on that one change ripples across many modules — a blast-radius hotspot." },
         SmellDoc { kind: SplitVariable, title: "Split Variable", explanation: "One local is reassigned to mean different things at different points — use distinct, single-purpose bindings." },
         SmellDoc { kind: SortInLoop, title: "Sort In Loop", explanation: "A collection is sorted inside a loop — hoist sorting or maintain ordered data to avoid repeated O(n log n) work." },
+        SmellDoc { kind: SwallowedErrorSentinel, title: "Swallowed Error Sentinel", explanation: "An error handler drops the error and returns a placeholder (`null`, `[]`, `false`) or only logs — callers get a plausible value instead of a failure; rethrow or return a typed failure." },
         SmellDoc { kind: TooManyReturns, title: "Too Many Returns", explanation: "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much." },
         SmellDoc { kind: TuplePacking, title: "Tuple Packing", explanation: "Data passed as positional tuples whose fields aren't named — use a named structure so meaning is explicit." },
         SmellDoc { kind: UnnecessaryNestedIf, title: "Unnecessary Nested If", explanation: "An `if` whose only body is another `if`, with no else path — combine the conditions with `and`/`&&` to flatten the control flow." },

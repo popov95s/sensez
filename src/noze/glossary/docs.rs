@@ -617,6 +617,22 @@ FindingDocs {
         ],
     },
     FindingDocs {
+        kind: SwallowedErrorSentinel,
+        why_bad: "A handler that turns any failure into `null`, an empty list or a log line hands callers a plausible value; the broken contract surfaces far from its cause, or never.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock {
+                language: "python",
+                body: "Catch the specific exception you can handle, re-raise the rest with `raise ... from error`, or return a typed failure the caller must check.",
+            },
+            LanguageBlock {
+                language: "typescript",
+                body: "Rethrow, or return a typed failure (`{ ok: false, error }` or a `Result`) so the caller must handle it; keep a `tryX(): T | null` helper only where missing is the documented contract.",
+            },
+        ],
+    },
+    FindingDocs {
         kind: TooManyReturns,
         why_bad: "Many exit points make the function harder to follow and test.",
         external_lints: &[ExternalLint {

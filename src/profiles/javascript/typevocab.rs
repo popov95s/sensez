@@ -173,6 +173,11 @@ pub(crate) fn is_void(annotation: &str) -> bool {
     matches!(resolved.trim(), "void" | "undefined")
 }
 
+/// `T | null`, `T | undefined`, also inside `Promise<...>`.
+pub(crate) fn admits_missing(annotation: &str) -> bool {
+    has_token(annotation, "null") || has_token(annotation, "undefined")
+}
+
 /// Union members other than `undefined` / `null`.
 fn non_nullish(annotation: &str) -> Vec<&str> {
     split_top_level(annotation, '|')

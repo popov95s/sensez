@@ -20,6 +20,7 @@ mod performance;
 mod review_risks;
 mod size;
 mod structural;
+mod swallowed_error;
 mod typing;
 mod union_find;
 
@@ -263,5 +264,7 @@ mod nested_if_tests;
 mod nested_ternary_tests;
 #[cfg(test)]
 mod performance_tests;
+#[cfg(test)]
+mod swallowed_error_tests;
 #[cfg(test)]
 mod tests;

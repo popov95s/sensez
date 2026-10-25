@@ -206,6 +206,10 @@ impl TypeVocabularyProfile for PythonProfile {
         typevocab::is_literal_union(annotation)
     }
 
+    fn admits_missing(&self, annotation: &str) -> bool {
+        typevocab::admits_missing(annotation)
+    }
+
     fn is_mutable_collection(&self, annotation: &str, family: MutatorFamily) -> bool {
         typevocab::is_mutable_collection(annotation, family)
     }

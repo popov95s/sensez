@@ -119,7 +119,7 @@ impl FunctionFacts {
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
-        super::risk_facts::scan(&mut self.unit, &mut self.guards, lineage, src);
+        super::risk_facts::scan(&mut self.unit, &mut self.guards, lineage, src, frame);
 
         let kind = node.kind();
         if is_nesting(kind) && !is_else_if(lineage) {
