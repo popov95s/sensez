@@ -60,6 +60,7 @@ class SmellTerm(StrEnum):
     STUB_SHIPPED = "stub_shipped"
     TOO_MANY_RETURNS = "too_many_returns"
     TUPLE_PACKING = "tuple_packing"
+    TYPE_ESCAPE_CAST = "type_escape_cast"
     UNNECESSARY_NESTED_IF = "unnecessary_nested_if"
     WEAK_TEST_ORACLE = "weak_test_oracle"
 

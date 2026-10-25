@@ -3349,7 +3349,7 @@ min_keys = 4 # string keys on one object before implicit-schema risk
 
 **What it is**
 
-A public signature leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract.
+A public signature leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract. Casts inside a body belong to `type_escape_cast`.
 
 **Why it's bad**
 
@@ -3489,7 +3489,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3523,7 +3523,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3559,7 +3559,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3626,6 +3626,235 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 </tbody>
 </table>
 </details>
+
+### Type Escape Cast (`type_escape_cast`)
+
+**What it is**
+
+A function body silences the type checker (`as any`, `as unknown as T`, a bare `@ts-ignore` or `# type: ignore`, `cast(Any, …)`) instead of giving the value a type — the types and the code disagree and nobody looked. Body casts belong to this rule; signatures belong to `loose_typing`.
+
+**Why it's bad**
+
+A cast or suppression in a body turns a type error into a runtime surprise: the checker complained, the code was silenced, and no reviewer saw why.
+
+**Example**
+
+=== "Python"
+
+    === "Low"
+
+        Flags casts to the escape type (`as any`, `cast(Any, …)`) and bare `@ts-ignore`.
+
+        **Problem**
+
+        ```python
+        from typing import Any, cast
+
+
+        def order_total(raw: object) -> int:
+            payload = cast(Any, raw)
+            return sum(item["amount"] for item in payload["items"])
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Give the value a real type (a dataclass, TypedDict or validated model) or narrow it with `isinstance`. A `# type: ignore` that must stay names its error code, as in `# type: ignore[attr-defined]`. Casts in a `TypeGuard` function on its own subject are not reported. Signatures belong to `loose_typing`; this rule owns casts inside bodies.
+
+        ```python
+        def order_total(raw: object) -> int:
+            payload = Order.model_validate(raw)
+            return sum(item.amount for item in payload.items)
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags `as unknown as T`, bare `@ts-expect-error`, and `# type: ignore` without an error code.
+
+        **Problem**
+
+        ```python
+        def shipping_label(order: Order) -> str:
+            return f"{order.parcel.carrier} {order.parcel.tracking_code}"  # type: ignore
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Give the value a real type (a dataclass, TypedDict or validated model) or narrow it with `isinstance`. A `# type: ignore` that must stay names its error code, as in `# type: ignore[attr-defined]`. Casts in a `TypeGuard` function on its own subject are not reported. Signatures belong to `loose_typing`; this rule owns casts inside bodies.
+
+        ```python
+        def order_total(raw: object) -> int:
+            payload = Order.model_validate(raw)
+            return sum(item.amount for item in payload.items)
+        ```
+
+        </details>
+
+    === "High"
+
+        Also flags non-null assertions on call results (`find()!`).
+
+        **Problem**
+
+        ```python
+        def primary_email(user: User) -> str:
+            return user.primary_email.address  # type: ignore
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Give the value a real type (a dataclass, TypedDict or validated model) or narrow it with `isinstance`. A `# type: ignore` that must stay names its error code, as in `# type: ignore[attr-defined]`. Casts in a `TypeGuard` function on its own subject are not reported. Signatures belong to `loose_typing`; this rule owns casts inside bodies.
+
+        ```python
+        def order_total(raw: object) -> int:
+            payload = Order.model_validate(raw)
+            return sum(item.amount for item in payload.items)
+        ```
+
+        </details>
+
+=== "JS / TS"
+
+    === "Low"
+
+        Flags casts to the escape type (`as any`, `cast(Any, …)`) and bare `@ts-ignore`.
+
+        **Problem**
+
+        ```ts
+        export async function orderTotal(res: Response): Promise<number> {
+          const payload = (await res.json()) as any;
+          return payload.items.reduce((sum: number, item: { amount: number }) => sum + item.amount, 0);
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Parse the value with a schema or narrow it with a type guard instead of `as any` or `as unknown as T`. A suppression that must stay is `@ts-expect-error` with a reason after it. `as const` and `satisfies` are never reported, nor are casts of the guarded subject inside a type-predicate function, casts with a rationale comment on their line or the line above, and (at `high`) non-null calls already checked by an enclosing condition, a `has` test or a `length` loop. The `type_escape_strictness` knob (`strictness` under `[smells.rules.type_escape_cast]`) adds non-null assertions on call results at `high`. Signatures belong to `loose_typing`; this rule owns casts inside bodies.
+
+        ```ts
+        export async function orderTotal(res: Response): Promise<number> {
+          const payload = OrderSchema.parse(await res.json());
+          return payload.items.reduce((sum, item) => sum + item.amount, 0);
+        }
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags `as unknown as T`, bare `@ts-expect-error`, and `# type: ignore` without an error code.
+
+        **Problem**
+
+        ```ts
+        export function shippingLabel(order: Order): string {
+          const parcel = order as unknown as Parcel;
+          return `${parcel.carrier} ${parcel.trackingCode}`;
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Parse the value with a schema or narrow it with a type guard instead of `as any` or `as unknown as T`. A suppression that must stay is `@ts-expect-error` with a reason after it. `as const` and `satisfies` are never reported, nor are casts of the guarded subject inside a type-predicate function, casts with a rationale comment on their line or the line above, and (at `high`) non-null calls already checked by an enclosing condition, a `has` test or a `length` loop. The `type_escape_strictness` knob (`strictness` under `[smells.rules.type_escape_cast]`) adds non-null assertions on call results at `high`. Signatures belong to `loose_typing`; this rule owns casts inside bodies.
+
+        ```ts
+        export async function orderTotal(res: Response): Promise<number> {
+          const payload = OrderSchema.parse(await res.json());
+          return payload.items.reduce((sum, item) => sum + item.amount, 0);
+        }
+        ```
+
+        </details>
+
+    === "High"
+
+        Also flags non-null assertions on call results (`find()!`).
+
+        **Problem**
+
+        ```ts
+        export function primaryEmail(user: User): string {
+          return user.emails.find((email) => email.primary)!.address;
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Parse the value with a schema or narrow it with a type guard instead of `as any` or `as unknown as T`. A suppression that must stay is `@ts-expect-error` with a reason after it. `as const` and `satisfies` are never reported, nor are casts of the guarded subject inside a type-predicate function, casts with a rationale comment on their line or the line above, and (at `high`) non-null calls already checked by an enclosing condition, a `has` test or a `length` loop. The `type_escape_strictness` knob (`strictness` under `[smells.rules.type_escape_cast]`) adds non-null assertions on call results at `high`. Signatures belong to `loose_typing`; this rule owns casts inside bodies.
+
+        ```ts
+        export async function orderTotal(res: Response): Promise<number> {
+          const payload = OrderSchema.parse(await res.json());
+          return payload.items.reduce((sum, item) => sum + item.amount, 0);
+        }
+        ```
+
+        </details>
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+=== "Low"
+
+    ```toml
+    [smells.<lang>.rules.type_escape_cast]
+    enabled = true
+    action = "warning"
+    strictness = "low"
+    ```
+
+    Flags casts to the escape type (`as any`, `cast(Any, …)`) and bare `@ts-ignore`.
+
+=== "Medium"
+
+    ```toml
+    [smells.<lang>.rules.type_escape_cast]
+    enabled = true
+    action = "warning"
+    strictness = "medium"
+    ```
+
+    Also flags `as unknown as T`, bare `@ts-expect-error`, and `# type: ignore` without an error code.
+
+=== "High"
+
+    ```toml
+    [smells.<lang>.rules.type_escape_cast]
+    enabled = true
+    action = "warning"
+    strictness = "high"
+    ```
+
+    Also flags non-null assertions on call results (`find()!`).
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
+**External linter coverage**
+
+- ESLint: `@typescript-eslint/no-explicit-any`
+- ESLint: `@typescript-eslint/ban-ts-comment`
+- Ruff: `PGH003`
 
 ### Tuple Packing (`tuple_packing`)
 

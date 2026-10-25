@@ -59,6 +59,7 @@ GROUPS: tuple[FindingGroup, ...] = (
         (
             SmellTerm.IMPLICIT_SCHEMA,
             SmellTerm.LOOSE_TYPING,
+            SmellTerm.TYPE_ESCAPE_CAST,
             SmellTerm.TUPLE_PACKING,
             SmellTerm.DEFENSIVE_FALLBACK,
             SmellTerm.SWALLOWED_ERROR_SENTINEL,
