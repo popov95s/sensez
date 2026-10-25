@@ -9,6 +9,7 @@
 //! groups ([`clones`]), optionally gap-stitched ([`gapped`]); occurrences are
 //! mapped back to file/line ranges, de-overlapped, de-duped, and ranked.
 
+mod advice;
 mod class_shapes;
 mod clones;
 mod consolidate;
@@ -185,7 +186,11 @@ fn detect_partition(
     #[cfg(not(feature = "eyez"))]
     let issues = Vec::new();
 
-    (consolidate::consolidate(out), issues)
+    let described = consolidate::consolidate(out)
+        .into_iter()
+        .map(advice::describe)
+        .collect();
+    (described, issues)
 }
 
 /// Opt-in comment-backed semantic clones; an unusable embedder is a scan issue.

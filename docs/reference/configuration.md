@@ -228,7 +228,9 @@ never pair two functions on their own.
 
 When several detectors report the same code, the widest group is kept, its
 line ranges grow to cover the others, and the folded groups are listed under
-`absorbed` in JSON output. Each group's source is in `detector`.
+`absorbed` in JSON output. Each group's source is in `detector`. The `hint`
+says the token count (a range when a folded group is wider), the number of
+copies, what to do, and how many overlapping groups were folded in.
 
 ## Cycles
 

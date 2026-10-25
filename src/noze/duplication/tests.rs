@@ -134,7 +134,10 @@ fn near_miss_consistent_rename() {
         touches(&clones, "u.py") && touches(&clones, "o.py"),
         "near-miss must pair the two functions, got {clones:?}"
     );
-    assert_eq!(clones[0].hint.as_deref(), Some("consistent-rename clone"));
+    assert!(clones[0]
+        .hint
+        .as_deref()
+        .is_some_and(|hint| hint.starts_with("consistent-rename clone:")));
 }
 
 #[test]
