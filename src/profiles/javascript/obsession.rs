@@ -61,7 +61,10 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         }
         "unary_expression" => record_delete(unit, node, src),
         "call_expression" => record_call(unit, node, src),
-        "binary_expression" => record_binary_fallback(unit, node, src),
+        "binary_expression" => {
+            record_binary_fallback(unit, node, src);
+            membership::record_or_chain(unit, node, src);
+        }
         "ternary_expression" => record_ternary_fallback(unit, node, src),
         "variable_declarator" => record_destructured_keys(unit, node, src),
         _ => {}

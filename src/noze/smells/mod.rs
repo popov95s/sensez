@@ -296,6 +296,8 @@ mod discipline_tests;
 #[cfg(test)]
 mod line_anchor_tests;
 #[cfg(test)]
+mod literal_membership_tests;
+#[cfg(test)]
 mod loop_frame_tests;
 #[cfg(test)]
 mod loose_typing_tests;

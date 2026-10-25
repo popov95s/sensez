@@ -3,9 +3,10 @@
 //! structure only — thresholds and severity live in `noze::smells`.
 
 use super::fallback_sink::fallback_sink;
+use super::membership;
 use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
 use crate::profiles::walk::{self, MutationTarget};
-use crate::spine::ir::{FunctionUnit, LiteralMembership, SchemaCall};
+use crate::spine::ir::{FunctionUnit, SchemaCall};
 use tree_sitter::Node;
 
 const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
@@ -64,8 +65,12 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         }
         "comparison_operator" => unit
             .literal_memberships
-            .extend(literal_membership(node, src)),
-        "boolean_operator" => record_boolean_fallback(unit, node, src),
+            .extend(membership::literal_membership(node, src)),
+        "boolean_operator" => {
+            record_boolean_fallback(unit, node, src);
+            unit.literal_memberships
+                .extend(membership::or_chain(node, src));
+        }
         "conditional_expression" => record_conditional_fallback(unit, node, src),
         _ => {}
     }
@@ -307,38 +312,4 @@ fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
         }
         _ => None,
     }
-}
-
-/// `x in ["a", "b"]` — an `in`/`not in` test against a literal collection
-/// whose elements are all strings.
-fn literal_membership(node: Node, src: &[u8]) -> Option<LiteralMembership> {
-    let has_in = node
-        .children(&mut node.walk())
-        .any(|c| matches!(c.kind(), "in" | "not in"));
-    if !has_in {
-        return None;
-    }
-    let rhs = node.named_child(node.named_child_count().saturating_sub(1))?;
-    if !matches!(rhs.kind(), "list" | "tuple" | "set") || rhs.named_child_count() == 0 {
-        return None;
-    }
-    let mut cursor = rhs.walk();
-    let elements: Vec<Node> = rhs.named_children(&mut cursor).collect();
-    if !elements.iter().all(|e| e.kind() == "string") {
-        return None;
-    }
-    let operand = node
-        .named_child(0)
-        .filter(|lhs| matches!(lhs.kind(), "identifier" | "attribute"))
-        .and_then(|lhs| lhs.utf8_text(src).ok())
-        .map(str::to_string);
-    Some(LiteralMembership {
-        line: node.start_position().row + 1,
-        operand,
-        literals: elements
-            .iter()
-            .filter_map(|e| e.utf8_text(src).ok())
-            .map(|t| t.trim_matches(['"', '\'']).to_string())
-            .collect(),
-    })
 }

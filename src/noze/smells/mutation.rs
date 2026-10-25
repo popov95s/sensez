@@ -5,7 +5,7 @@
 //! - `implicit_schema`: one receiver subscripted with many distinct string keys.
 //! - `literal_membership`: branching on `x in ["a", "b"]` string lists.
 
-use super::external_vocab::is_external_vocabulary;
+use super::external_vocab::{is_external_vocabulary, is_markup_operand};
 use super::lines::{hit_lines, line_list};
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
@@ -48,9 +48,7 @@ fn literal_membership(
     let hits: Vec<&LiteralMembership> = m
         .literal_memberships
         .iter()
-        .filter(|test| {
-            !(cfg.literal_membership_skip_external_vocab && is_external_vocabulary(&test.literals))
-        })
+        .filter(|test| !(cfg.literal_membership_skip_external_vocab && is_external(ctx, test)))
         .filter(|test| {
             test.operand
                 .as_deref()
@@ -77,6 +75,14 @@ fn literal_membership(
         0,
     );
     out.push(SmellFinding { lines, ..finding });
+}
+
+fn is_external(ctx: &SmellContext<'_>, test: &LiteralMembership) -> bool {
+    is_external_vocabulary(&test.literals)
+        || test
+            .operand
+            .as_deref()
+            .is_some_and(|operand| is_markup_operand(operand, ctx.wording.markup_names))
 }
 
 /// The operand is already annotated with a closed literal type (inline or a same-file alias).

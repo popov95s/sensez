@@ -14,6 +14,7 @@ mod lexeme;
 mod loops;
 mod magic_numbers;
 mod manifest;
+mod membership;
 mod mock_targets;
 mod nested;
 mod nesting;
