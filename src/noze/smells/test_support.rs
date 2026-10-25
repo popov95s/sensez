@@ -23,3 +23,23 @@ pub(super) fn local_of(name: &str, body: &str, cfg: &Smells, kind: SmellKind) ->
         .filter(|finding| finding.kind == kind)
         .collect()
 }
+
+/// Every file of a throwaway project and the import graph between them.
+pub(super) fn project(
+    files: &[(&str, &str)],
+) -> (Vec<ParsedFile>, crate::spine::graph::CodebaseGraph) {
+    let tmp = tempfile::tempdir().unwrap();
+    let parsed: Vec<ParsedFile> = files
+        .iter()
+        .enumerate()
+        .map(|(index, (name, body))| {
+            parse_file(
+                &crate::test_support::write(tmp.path(), name, body),
+                index as u32,
+            )
+            .unwrap()
+        })
+        .collect();
+    let graph = crate::spine::graph::build(&parsed, &[tmp.path().to_path_buf()]);
+    (parsed, graph)
+}

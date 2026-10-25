@@ -18,6 +18,7 @@ mod magic_string;
 mod mutation;
 mod performance;
 mod review_risks;
+mod sibling_helpers;
 mod size;
 mod structural;
 mod swallowed_error;
@@ -38,6 +39,8 @@ mod graph_tests;
 mod review_risks_tests;
 #[cfg(test)]
 mod schema_tests;
+#[cfg(test)]
+mod sibling_helpers_tests;
 #[cfg(test)]
 mod structural_tests;
 #[cfg(test)]
@@ -125,6 +128,7 @@ pub fn detect(
     );
 
     let mut cross_file = clumps::detect(&kept, cfg);
+    cross_file.extend(sibling_helpers::detect(&kept, graph, cfg));
     cross_file.extend(graphy::detect(graph, files, cfg, &|node: &ModuleNode| {
         node.source_index
             .and_then(|index| files.get(index))

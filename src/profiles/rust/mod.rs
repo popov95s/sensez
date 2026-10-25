@@ -35,6 +35,7 @@ use crate::profiles::{
     DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
     PerformanceProfile, TypeVocabularyProfile,
 };
+use crate::report::SmellKind;
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -48,6 +49,8 @@ static RUST_INFO: LanguageInfo = LanguageInfo {
     test_support: &[],
     migration_layouts: &[],
     test_runners: &[],
+    // The same-name gate cannot tell a copied helper from sibling modules' parallel free functions.
+    default_off_smells: &[SmellKind::SiblingHelperRedefinition],
     wording: &wording::WORDING,
 };
 impl ParseProfile for RustProfile {

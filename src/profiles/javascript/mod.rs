@@ -63,6 +63,7 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     test_support: test_support::TEST_SUPPORT,
     migration_layouts: &[],
     test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
+    default_off_smells: &[],
     wording: &wording::WORDING,
 };
 impl ParseProfile for JsProfile {

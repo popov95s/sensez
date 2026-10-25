@@ -12,4 +12,5 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     sentinel_words: wording::SENTINEL_WORDS,
     handler_clause: "error arm",
     swallowed_error_advice: "propagate it with `?` or return the `Err` to the caller",
+    framework_names: &["main"],
 };
