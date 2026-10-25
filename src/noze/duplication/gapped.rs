@@ -31,12 +31,15 @@ const MIN_DENSITY: f64 = 0.6;
 /// Shortest fragment worth stitching; stops tiny idioms from chaining.
 const MIN_SEED: usize = 12;
 
+/// Fragments as short as a third of the threshold seed stitching; the stitched total still needs the threshold.
+const SEED_DIVISOR: usize = 3;
+
 /// Extraction length and nesting: stitching needs sub-threshold fragments.
 pub fn seed(threshold: usize, max_gap: usize) -> (usize, Nesting) {
     match max_gap {
         0 => (threshold, Nesting::Outermost),
         _ => (
-            (threshold / 2).max(MIN_SEED).min(threshold),
+            (threshold / SEED_DIVISOR).max(MIN_SEED).min(threshold),
             Nesting::Seeded {
                 report_len: threshold,
             },

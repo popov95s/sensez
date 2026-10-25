@@ -13,6 +13,8 @@ mod class_shapes;
 mod clones;
 mod consolidate;
 mod flatten;
+#[cfg(test)]
+mod gap_tests;
 mod gapped;
 mod lexeme_similarity;
 mod near_miss;
