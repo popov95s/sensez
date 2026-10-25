@@ -2,19 +2,17 @@
 //!
 //! - `mutated_parameter`: caller-visible mutation of an input parameter.
 //! - `reassigned_parameter` (opt-in): rebinding a parameter name.
-//! - `implicit_schema`: one receiver subscripted with many distinct string keys.
 //! - `literal_membership`: branching on `x in ["a", "b"]` string lists.
 
 use super::external_vocab::{is_external_vocabulary, is_markup_operand};
+use super::implicit_schema;
 use super::lines::{hit_lines, line_list};
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
-use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{
     CallbackPosition, FunctionUnit, LiteralMembership, MutatorFamily, Visibility,
 };
-use std::collections::{HashMap, HashSet};
 
 pub fn detect(
     ctx: &SmellContext<'_>,
@@ -22,7 +20,7 @@ pub fn detect(
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
-    let schemas = propagated_schemas(metrics);
+    let schemas = implicit_schema::propagated_schemas(metrics);
     for (index, m) in metrics.iter().enumerate() {
         if cfg.is_enabled(SmellKind::MutatedParameter) {
             mutated_params(ctx, m, cfg, out);
@@ -31,7 +29,7 @@ pub fn detect(
             reassigned_params(ctx, m, out);
         }
         if cfg.implicit_schema_min_keys > 0 {
-            implicit_schema(ctx, m, &schemas[index], cfg, out);
+            implicit_schema::detect(ctx, m, &schemas[index], cfg, out);
         }
         if cfg.is_enabled(SmellKind::LiteralMembership) {
             literal_membership(ctx, m, cfg, out);
@@ -225,99 +223,4 @@ fn reassigned_params(ctx: &SmellContext<'_>, m: &FunctionUnit, out: &mut Vec<Sme
         rebound.len() as u32,
         0,
     ));
-}
-
-/// A receiver subscripted with ≥ N distinct string-literal keys — an implicit
-/// schema that wants a dataclass. Receivers annotated as a non-dict type
-/// (DataFrame, ndarray, ...) are skipped; dict-annotated or unknown both flag.
-fn implicit_schema(
-    ctx: &SmellContext<'_>,
-    m: &FunctionUnit,
-    schemas: &HashMap<String, HashSet<String>>,
-    cfg: &Smells,
-    out: &mut Vec<SmellFinding>,
-) {
-    for (recv, keys) in schemas {
-        if keys.len() < cfg.implicit_schema_min_keys
-            || m.dynamic_key_receivers.contains(recv)
-            || keys.iter().all(|key| key.starts_with('-'))
-        {
-            continue;
-        }
-        let annotated = ctx
-            .type_hints
-            .param_type(m, recv)
-            .or_else(|| ctx.type_hints.var_types.get(recv));
-        if annotated.is_some_and(|ty| {
-            !ctx.type_vocabulary.is_dictish(ty) || ctx.type_vocabulary.is_open_map(ty)
-        }) {
-            continue;
-        }
-        if m.validated_names.contains(recv) || is_validated_boundary(ctx, m) {
-            continue;
-        }
-        out.push(make(
-            SmellKind::ImplicitSchema,
-            format!(
-                "`{recv}` accessed via {} distinct string keys — implicit schema; consider {}",
-                keys.len(),
-                ctx.wording.structure
-            ),
-            ctx.path,
-            m.str_key_lines.get(recv).copied().unwrap_or(m.start_line),
-            &m.name,
-            Severity::Info,
-            keys.len() as u32,
-            cfg.implicit_schema_min_keys as u32,
-        ));
-    }
-}
-
-fn propagated_schemas(metrics: &[FunctionUnit]) -> Vec<HashMap<String, HashSet<String>>> {
-    let by_name: HashMap<&str, usize> = metrics
-        .iter()
-        .enumerate()
-        .map(|(index, metric)| (metric.name.as_str(), index))
-        .collect();
-    let mut schemas: Vec<_> = metrics
-        .iter()
-        .map(|metric| metric.str_keys.clone())
-        .collect();
-    for _ in 0..metrics.len().min(4) {
-        let snapshot = schemas.clone();
-        for (caller_index, caller) in metrics.iter().enumerate() {
-            for call in &caller.schema_calls {
-                let Some(&callee_index) = by_name.get(call.target.as_str()) else {
-                    continue;
-                };
-                for (position, argument) in call.arguments.iter().enumerate() {
-                    if !caller.param_names.contains(argument) {
-                        continue;
-                    }
-                    let Some(parameter) = metrics[callee_index].param_names.get(position) else {
-                        continue;
-                    };
-                    let Some(keys) = snapshot[callee_index].get(parameter) else {
-                        continue;
-                    };
-                    schemas[caller_index]
-                        .entry(argument.clone())
-                        .or_default()
-                        .extend(keys.iter().cloned());
-                }
-            }
-        }
-    }
-    schemas
-}
-
-fn is_validated_boundary(ctx: &SmellContext<'_>, metric: &FunctionUnit) -> bool {
-    ctx.type_hints
-        .return_type(metric)
-        .is_some_and(|return_type| {
-            ctx.type_vocabulary.has_domain_model(return_type)
-                && metric
-                    .returned_constructors
-                    .contains(base_type(return_type))
-        })
 }

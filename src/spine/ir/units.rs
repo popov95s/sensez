@@ -148,6 +148,8 @@ pub struct FunctionUnit {
     pub own_method_calls: HashSet<String>,
     /// Receiver identifier → distinct string-literal subscript keys (`cfg["host"]`).
     pub str_keys: HashMap<String, HashSet<String>>,
+    /// Receiver identifier → keys destructured from it (`const { a, b } = recv`).
+    pub destructured_keys: HashMap<String, HashSet<String>>,
     /// Receiver identifier → line of its first string-literal subscript.
     pub str_key_lines: HashMap<String, usize>,
     /// Direct helper calls with identifier arguments.

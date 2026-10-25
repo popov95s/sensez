@@ -155,7 +155,7 @@ fn record_destructured_keys(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
             _ => None,
         };
         if let Some(key) = key.and_then(|key| key.utf8_text(src).ok()) {
-            record_attr(&mut unit.str_keys, recv, key);
+            record_attr(&mut unit.destructured_keys, recv, key);
             walk::record_str_key_line(unit, recv, node.start_position().row + 1);
         }
     }

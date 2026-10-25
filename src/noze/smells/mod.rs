@@ -14,6 +14,7 @@ mod exclusive_paths;
 mod external_vocab;
 mod fixture_echo;
 mod graphy;
+mod implicit_schema;
 mod inherit;
 mod lines;
 mod loose_fields;

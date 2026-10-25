@@ -115,3 +115,9 @@ fn python_get_keys_count_toward_an_implicit_schema() {
     let source = "def to_user(payload):\n    email = payload.get(\"email\")\n    plan = payload.get(\"plan\")\n    active = payload.get(\"active\")\n    seats = payload.get(\"seats\", 1)\n    return User(email, plan, active, seats)\n";
     assert_eq!(schema_in("u.py", source).len(), 1);
 }
+
+#[test]
+fn destructuring_a_typed_or_inferred_value_is_not_an_implicit_schema() {
+    let source = "export function run(args: { ctx: C; id: string; org: string; at: number }) {\n  const { ctx, id, org, at } = args;\n  const row = load(id);\n  const { a, b, c, d } = row;\n  return [ctx, org, at, a, b, c, d];\n}\n";
+    assert!(schema_in("r.ts", source).is_empty());
+}
