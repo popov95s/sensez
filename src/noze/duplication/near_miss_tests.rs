@@ -41,3 +41,23 @@ fn equal_weight_classes_come_out_in_the_same_order_every_run() {
     assert_eq!(first.len(), 5, "{first:?}");
     assert_eq!(first, order());
 }
+
+#[test]
+fn local_renamed_away_from_a_shared_property_name_still_pairs() {
+    let tmp = tempfile::tempdir().unwrap();
+    let body = |func: &str, owner: &str, local: &str| {
+        format!(
+            "export function {func}(shipment) {{\n  const {local} = shipment.{owner}?.zone ?? \"EU\";\n  if ({local} !== \"EU\") {{\n    shipment.fee = 0;\n  }}\n  return {{ fee: shipment.fee, {local} }};\n}}\n"
+        )
+    };
+    let files = write_files(
+        tmp.path(),
+        &[
+            ("a.ts", &body("feeFor", "address", "zone")),
+            ("b.ts", &body("chargeFor", "target", "region")),
+        ],
+    );
+    let refs: Vec<_> = files.iter().collect();
+
+    assert_eq!(detect(&refs, 10).len(), 1);
+}

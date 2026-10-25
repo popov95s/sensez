@@ -1,7 +1,7 @@
 //! JS/TS identifier rule for duplication lexemes (core in [`crate::profiles::lexeme`]).
 //!
 //! Member/property names are API surface — kept verbatim. Only function-bound
-//! locals collapse.
+//! locals collapse. Shorthand keys get their own code space, apart from member names.
 
 use crate::profiles::lexeme as shared;
 use crate::profiles::lexeme::BoundNames;
@@ -17,8 +17,11 @@ pub fn code(
     fn_bounds: &[BoundNames],
     is_member_property: bool,
 ) -> u64 {
-    // property_identifier / shorthand property keys are API surface — always kept.
-    shared::code_with_api_surface(node, tok, src, fn_bounds, |node| {
+    let code = shared::code_with_api_surface(node, tok, src, fn_bounds, |node| {
         node.kind() != "identifier" || is_member_property
-    })
+    });
+    match node.kind() {
+        "shorthand_property_identifier" => shared::shorthand_position(code),
+        _ => code,
+    }
 }
