@@ -27,6 +27,7 @@ mod stub_body;
 mod symbols;
 mod tokens;
 mod traversal;
+mod type_escapes;
 mod typehints;
 pub(crate) mod typevocab;
 mod units;
