@@ -164,8 +164,8 @@ Duplication and smells skip, on top of `exclude`:
   `tests/`, `test/` and pytest file names. The Python profile also counts
   `examples/` and `docs_src/`, and the Rust profile `benches/`, so those are
   skipped too. Set `include_tests = true` under
-  `[duplication]` or `[smells]` to analyse them. `weak_test_oracle` always
-  inspects test files.
+  `[duplication]` or `[smells]` to analyse them. `weak_test_oracle` and
+  `fixture_echo_assertion` always inspect test files.
 - **Generated files** (JS/TS): paths under `_generated/` or `__generated__/`,
   `*.gen.*` and `*.generated.*`, or a first-1 KB header containing
   `@generated`, `do not edit`, `auto-generated`, `automatically generated` or
