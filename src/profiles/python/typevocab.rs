@@ -55,8 +55,8 @@ pub(crate) fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
     if annotation.contains("Literal") || has_domain_type(annotation, &TYPING_NAMES) {
         return None;
     }
-    if is_schema_erasing(annotation) {
-        return Some(LooseTypeKind::SchemaErasing);
+    if let Some(kind) = mapping_kind(annotation) {
+        return Some(kind);
     }
     let primitive_collection = annotation
         .split('|')
@@ -162,10 +162,20 @@ fn inner(annotation: &str) -> &str {
         .unwrap_or("")
 }
 
-fn is_schema_erasing(annotation: &str) -> bool {
+/// Bare or `object`-valued mappings erase the schema; typed values are primitive collections.
+fn mapping_kind(annotation: &str) -> Option<LooseTypeKind> {
     let base = base_type(annotation);
-    matches!(base, "dict" | "Dict" | "Mapping" | "MutableMapping")
-        || base == "Optional" && is_schema_erasing(inner(annotation))
+    if base == "Optional" {
+        return mapping_kind(inner(annotation));
+    }
+    if !matches!(base, "dict" | "Dict" | "Mapping" | "MutableMapping") {
+        return None;
+    }
+    let value = split_top_level(inner(annotation), ',').get(1).copied();
+    match value {
+        None | Some("object") => Some(LooseTypeKind::SchemaErasing),
+        Some(_) => Some(LooseTypeKind::PrimitiveCollection),
+    }
 }
 
 #[cfg(test)]

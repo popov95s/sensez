@@ -67,11 +67,7 @@ pub fn base_classes(node: Node, src: &[u8]) -> Vec<String> {
 }
 
 fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
-    let mut cursor = node.walk();
-    let found = node
-        .children(&mut cursor)
-        .find(|c| c.kind() == "identifier");
-    found
+    super::typehints::param_identifier(node)
         .and_then(|c| c.utf8_text(src).ok())
         .map(str::to_string)
 }

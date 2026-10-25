@@ -20,17 +20,17 @@ pub const LOOSE_TYPING_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "Low",
         value: "low",
-        description: "Flags only direct escape hatches.",
+        description: "Flags only direct escape hatches (`any`, `Any`, `as any` casts).",
     },
     StrictnessLevelDoc {
         title: "Medium",
         value: "medium",
-        description: "Flags escape hatches plus schema-erasing maps and records.",
+        description: "Flags escape hatches plus schema-erasing maps and records: bare `dict`, `dict[str, object]`, `Record<string, unknown>`.",
     },
     StrictnessLevelDoc {
         title: "High",
         value: "high",
-        description: "Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.",
+        description: "Flags everything in medium, primitive-only collections and typed-value maps (`dict[str, int]`), bare `unknown` params and returns, and shallow aliases.",
     },
 ];
 

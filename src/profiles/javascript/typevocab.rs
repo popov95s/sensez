@@ -50,16 +50,17 @@ pub(crate) fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
     if has_token(annotation, "any") {
         return Some(LooseTypeKind::EscapeHatch);
     }
-    if matches!(
-        non_nullish(annotation).as_slice(),
-        ["unknown" | "unknown[]"]
-    ) {
+    if returns_unknown(annotation) {
+        return None;
+    }
+    let core = core_type(annotation);
+    if matches!(core, "unknown" | "unknown[]") {
         return Some(LooseTypeKind::SafeTop);
     }
     if has_domain_type(annotation, &BUILTINS) {
         return None;
     }
-    if let Some(value) = map_value_type(annotation) {
+    if let Some(value) = map_value_type(core) {
         return Some(map_kind(value));
     }
     if idents(annotation).any(|t| SCHEMA_ERASING.contains(&t)) {
@@ -176,6 +177,27 @@ pub(crate) fn is_void(annotation: &str) -> bool {
 /// `T | null`, `T | undefined`, also inside `Promise<...>`.
 pub(crate) fn admits_missing(annotation: &str) -> bool {
     has_token(annotation, "null") || has_token(annotation, "undefined")
+}
+
+/// `T` from `T | undefined`, `T | null` and `Promise<T>`.
+fn core_type(annotation: &str) -> &str {
+    let single = match non_nullish(annotation).as_slice() {
+        [only] => *only,
+        _ => return annotation.trim(),
+    };
+    single
+        .strip_prefix("Promise<")
+        .and_then(|rest| rest.strip_suffix('>'))
+        .map_or(single, core_type)
+}
+
+/// `() => unknown` / `(x: X) => Promise<unknown>`: a callback whose result is ignored.
+fn returns_unknown(annotation: &str) -> bool {
+    let text = annotation.trim();
+    text.starts_with('(')
+        && text
+            .rsplit_once("=>")
+            .is_some_and(|(_, result)| core_type(result) == "unknown")
 }
 
 /// Union members other than `undefined` / `null`.

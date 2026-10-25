@@ -10,6 +10,9 @@ use crate::profiles::walk;
 use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
 use tree_sitter::Node;
 
+/// Name `params::param_names` gives a destructured parameter.
+const DESTRUCTURED: &str = "{}";
+
 /// Record a function/method's return + parameter type annotations.
 pub fn record_function(lineage: Lineage, src: &[u8], hints: &mut TypeHints) {
     let node = lineage.node();
@@ -40,8 +43,11 @@ pub fn record_function(lineage: Lineage, src: &[u8], hints: &mut TypeHints) {
             }
             let pname = p
                 .child_by_field_name("pattern")
-                .filter(|n| n.kind() == "identifier")
-                .and_then(|n| n.utf8_text(src).ok());
+                .and_then(|n| match n.kind() {
+                    "identifier" => n.utf8_text(src).ok(),
+                    "object_pattern" | "array_pattern" => Some(DESTRUCTURED),
+                    _ => None,
+                });
             let param_any_allowed = any_allowed || follows_any_directive(before, src);
             let ptype = type_text(p.child_by_field_name("type"), src)
                 .filter(|ty| !(param_any_allowed && has_token(ty, "any")));

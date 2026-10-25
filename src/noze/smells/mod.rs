@@ -16,6 +16,7 @@ mod fixture_echo;
 mod graphy;
 mod inherit;
 mod lines;
+mod loose_fields;
 mod magic_string;
 mod mock_modules;
 mod mocked_subject;
@@ -205,6 +206,9 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
         cfg,
         &mut out,
     );
+    if cfg.is_enabled(SmellKind::LooseTyping) {
+        loose_fields::detect(&ctx, classes, cfg, &mut out);
+    }
     mutation::detect(&ctx, metrics, cfg, &mut out);
     fixture_echo::detect(&ctx, metrics, cfg, &mut out);
     name_promise::detect(&ctx, metrics, cfg, &mut out);
@@ -293,6 +297,8 @@ mod discipline_tests;
 mod line_anchor_tests;
 #[cfg(test)]
 mod loop_frame_tests;
+#[cfg(test)]
+mod loose_typing_tests;
 #[cfg(test)]
 mod magic_string_sink_tests;
 #[cfg(test)]
