@@ -5041,6 +5041,91 @@ max_depth = 0 # allowed depth before flagging
 </table>
 </details>
 
+### Shipped Stub (`stub_shipped`)
+
+**What it is**
+
+A production function whose whole body is a placeholder (`pass`, `raise NotImplementedError`, a "not implemented" throw) — it fails the first caller who reaches it.
+
+**Why it's bad**
+
+Scaffolding written for later ships as a function that only fails, and the first user on that path hits the error at runtime. Unreferenced stubs are also reported as dead code. Keep deliberate scaffolding folders out with `[smells] exclude`.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def export_ledger(org_id: str) -> bytes:
+        raise NotImplementedError
+
+
+    report = export_ledger("acme")
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Implement the function, delete it with its callers, or declare it with `@abstractmethod` on an `ABC`/`Protocol`.
+
+    ```python
+    def export_ledger(org_id: str) -> bytes:
+        return f"ledger,{org_id}\n".encode()
+
+
+    report = export_ledger("acme")
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    export async function exportLedger(orgId: string): Promise<Blob> {
+      // TODO: implement CSV export
+      throw new Error("not implemented");
+    }
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Implement the function, delete it with its callers, or declare it `abstract` or as an interface member. Tune the thrown messages with `markers`.
+
+    ```ts
+    export async function exportLedger(orgId: string): Promise<Blob> {
+      return new Blob([`ledger,${orgId}\n`], { type: "text/csv" });
+    }
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.stub_shipped]
+enabled = true
+action = "warning"
+markers = ["not implemented" # thrown-error messages that mark a stub, matched as whole words
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ### Weak Test Oracle (`weak_test_oracle`)
 
 **What it is**
