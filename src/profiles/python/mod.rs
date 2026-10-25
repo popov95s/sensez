@@ -18,6 +18,7 @@ mod nested;
 mod nesting;
 mod obsession;
 mod performance;
+pub(crate) mod pytest_config;
 mod resolve;
 mod risk_facts;
 mod roots;
@@ -53,6 +54,9 @@ static PYTHON_INFO: LanguageInfo = LanguageInfo {
     migration_layouts: &["**/alembic/**/*.py", "**/versions/**/*.py"],
     test_runners: &[RunnerKind::Pytest],
     default_off_smells: &[],
+    #[cfg(feature = "lsp")]
+    project_files: &["pyproject.toml"],
+    import_words: &["import"],
     wording: &wording::WORDING,
 };
 impl ParseProfile for PythonProfile {

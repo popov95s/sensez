@@ -81,6 +81,10 @@ pub struct LanguageInfo {
     pub test_runners: &'static [runner_config::RunnerKind],
     /// Smells this language switches off by default, before any `sensez.toml` overlay.
     pub default_off_smells: &'static [crate::report::SmellKind],
+    /// File-name globs of project and compiler config files whose edits change findings.
+    #[cfg(feature = "lsp")]
+    pub project_files: &'static [&'static str],
+    pub import_words: &'static [&'static str],
     pub wording: &'static wording::SmellWording,
 }
 

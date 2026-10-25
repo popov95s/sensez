@@ -182,7 +182,11 @@ fn node_projects(
             Err(reason) => {
                 warnings.push(ConfigWarning {
                     file: manifest.clone(),
-                    key: "package.json".into(),
+                    key: manifest
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned(),
                     reason,
                     fallback: "no Node runner for this directory".into(),
                 });

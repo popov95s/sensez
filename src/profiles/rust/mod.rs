@@ -51,6 +51,9 @@ static RUST_INFO: LanguageInfo = LanguageInfo {
     test_runners: &[],
     // The same-name gate cannot tell a copied helper from sibling modules' parallel free functions.
     default_off_smells: &[SmellKind::SiblingHelperRedefinition],
+    #[cfg(feature = "lsp")]
+    project_files: &["Cargo.toml"],
+    import_words: &["use", "mod"],
     wording: &wording::WORDING,
 };
 impl ParseProfile for RustProfile {

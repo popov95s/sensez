@@ -77,6 +77,9 @@ static TS_INFO: LanguageInfo = LanguageInfo {
     migration_layouts: &[],
     test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     default_off_smells: &[],
+    #[cfg(feature = "lsp")]
+    project_files: &["package.json", "tsconfig*.json"],
+    import_words: &["import", "require", "from"],
     wording: &wording::WORDING,
 };
 
@@ -87,6 +90,9 @@ static TSX_INFO: LanguageInfo = LanguageInfo {
     migration_layouts: &[],
     test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     default_off_smells: &[],
+    #[cfg(feature = "lsp")]
+    project_files: &["package.json", "tsconfig*.json"],
+    import_words: &["import", "require", "from"],
     wording: &wording::WORDING,
 };
 /// The TypeScript language profile (zero-sized).

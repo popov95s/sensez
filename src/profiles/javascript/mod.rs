@@ -71,6 +71,9 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     migration_layouts: &[],
     test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     default_off_smells: &[],
+    #[cfg(feature = "lsp")]
+    project_files: &["package.json"],
+    import_words: &["import", "require", "from"],
     wording: &wording::WORDING,
 };
 impl ParseProfile for JsProfile {

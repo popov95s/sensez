@@ -62,8 +62,13 @@ fn might_contain_dynamic_import(source: &[u8]) -> bool {
 
 /// Whether the file at `path` may import anything; unreadable files may.
 pub fn may_import(path: &Path) -> bool {
+    let import_words = crate::profiles::registry::parse_for_path(path)
+        .map_or(&[][..], |profile| profile.info().import_words);
     std::fs::read(path).map_or(true, |source| {
-        might_contain_dynamic_import(&source) || contains(&source, b"from")
+        might_contain_dynamic_import(&source)
+            || import_words
+                .iter()
+                .any(|word| contains(&source, word.as_bytes()))
     })
 }
 

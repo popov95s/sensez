@@ -44,16 +44,9 @@ pub fn changed_paths(params: &Value) -> Vec<PathBuf> {
 
 /// Whether a change to `path` can alter findings: a parsed source or a config file.
 pub fn affects_scan(path: &Path) -> bool {
-    let name = path
-        .file_name()
-        .and_then(|name| name.to_str())
-        .unwrap_or_default();
     crate::profiles::registry::parse_for_path(path).is_some()
-        || matches!(
-            name,
-            "sensez.toml" | "pyproject.toml" | "package.json" | "Cargo.toml"
-        )
-        || (name.starts_with("tsconfig") && name.ends_with(".json"))
+        || path.ends_with("sensez.toml")
+        || crate::profiles::registry::is_project_file(path)
 }
 
 fn uri_path(uri: &str) -> Option<PathBuf> {
