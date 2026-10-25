@@ -25,6 +25,7 @@
       "smells/n_plus_one_call": 1,
       "smells/nested_loop": 6,
       "smells/shotgun_surgery_hazard": 1,
+      "smells/sibling_helper_redefinition": 2,
       "smells/tuple_packing": 3
     },
     "resolved_by_detector": {},
