@@ -123,63 +123,7 @@
       "detector": {
         "kind": "structural"
       },
-      "occurrences": [
-        {
-          "end_row": 24,
-          "file": "<flask>/src/flask/sansio/blueprints.py",
-          "start_row": 18
-        },
-        {
-          "end_row": 34,
-          "file": "<flask>/src/flask/sansio/scaffold.py",
-          "start_row": 28
-        }
-      ],
-      "token_length": 47
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 30,
-          "file": "<flask>/src/flask/blueprints.py",
-          "start_row": 19
-        },
-        {
-          "end_row": 185,
-          "file": "<flask>/src/flask/sansio/blueprints.py",
-          "start_row": 174
-        }
-      ],
-      "token_length": 57
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 321,
-          "file": "<flask>/src/flask/app.py",
-          "start_row": 310
-        },
-        {
-          "end_row": 290,
-          "file": "<flask>/src/flask/sansio/app.py",
-          "start_row": 279
-        }
-      ],
-      "token_length": 52
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
+      "hint": "structural clone: 101 tokens, 2 copies \u2014 extract a shared helper",
       "occurrences": [
         {
           "end_row": 445,
@@ -199,6 +143,67 @@
       "detector": {
         "kind": "structural"
       },
+      "hint": "structural clone: 47 tokens, 2 copies \u2014 extract a shared helper",
+      "occurrences": [
+        {
+          "end_row": 24,
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "start_row": 18
+        },
+        {
+          "end_row": 34,
+          "file": "<flask>/src/flask/sansio/scaffold.py",
+          "start_row": 28
+        }
+      ],
+      "token_length": 47
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "hint": "structural clone: 52 tokens, 2 copies \u2014 extract a shared helper",
+      "occurrences": [
+        {
+          "end_row": 321,
+          "file": "<flask>/src/flask/app.py",
+          "start_row": 310
+        },
+        {
+          "end_row": 290,
+          "file": "<flask>/src/flask/sansio/app.py",
+          "start_row": 279
+        }
+      ],
+      "token_length": 52
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "hint": "structural clone: 57 tokens, 2 copies \u2014 extract a shared helper",
+      "occurrences": [
+        {
+          "end_row": 30,
+          "file": "<flask>/src/flask/blueprints.py",
+          "start_row": 19
+        },
+        {
+          "end_row": 185,
+          "file": "<flask>/src/flask/sansio/blueprints.py",
+          "start_row": 174
+        }
+      ],
+      "token_length": 57
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "hint": "structural clone: 76 tokens, 2 copies \u2014 extract a shared helper",
       "occurrences": [
         {
           "end_row": 77,
