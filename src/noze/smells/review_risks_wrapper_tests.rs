@@ -1,4 +1,5 @@
 use super::*;
+use crate::noze::smells::test_support as fixture;
 
 #[test]
 fn unchanged_local_wrapper_chain_is_reported() {
@@ -10,10 +11,7 @@ fn unchanged_local_wrapper_chain_is_reported() {
         ("py", "def outer(value):\n    return middle(value)\ndef middle(value):\n    return actual(value)\ndef actual(value):\n    return value * 2\n"),
         ("js", "function outer(value) { return middle(value); }\nfunction middle(value) { return actual(value); }\nfunction actual(value) { return value * 2; }\n"),
     ] {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join(format!("sample.{ext}"));
-        fs::write(&path, source).unwrap();
-        let file = parse_file(&path, 0).unwrap();
+        let file = fixture::parsed(&format!("sample.{ext}"), source);
         let findings = detect_local(&file, &config);
         assert_eq!(findings.iter().filter(|f| f.kind == SmellKind::RedundantWrapperChain).count(), 1, "{ext}");
     }

@@ -13,7 +13,7 @@ pub fn detect(
 ) {
     for m in metrics {
         let cyclomatic = m.branch_count + 1;
-        if cfg.cyclomatic_complexity && cyclomatic > cfg.max_cyclomatic {
+        if cfg.is_enabled(SmellKind::HighComplexity) && cyclomatic > cfg.max_cyclomatic {
             let sev = if cyclomatic > cfg.max_cyclomatic * 2 {
                 Severity::Critical
             } else {

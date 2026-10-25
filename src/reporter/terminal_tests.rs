@@ -152,9 +152,9 @@ fn filtered_pillar_is_not_rendered_as_zero() {
 
     let text = render(&report, false);
 
-    assert!(!text.contains("Circular imports"));
-    assert!(!text.contains("Boundary violations"));
-    assert!(text.contains("Dead code candidates"));
+    assert!(!text.contains("Circular imports"), "{text}");
+    assert!(!text.contains("Boundary violations"), "{text}");
+    assert!(text.contains("Dead code candidates"), "{text}");
 }
 
 #[test]
@@ -173,8 +173,14 @@ fn each_pillar_names_the_files_it_skipped() {
 
     let text = render(&report, false);
 
-    assert!(text.contains(
-        "skipped 2 test, 0 generated and 0 excluded file(s) (smells.include_tests / exclude)"
-    ));
-    assert!(text.contains("skipped 0 test, 1 generated and 0 excluded file(s) (duplication."));
+    assert!(
+        text.contains(
+            "skipped 2 test, 0 generated and 0 excluded file(s) (smells.include_tests / exclude)"
+        ),
+        "{text}"
+    );
+    assert!(
+        text.contains("skipped 0 test, 1 generated and 0 excluded file(s) (duplication."),
+        "{text}"
+    );
 }

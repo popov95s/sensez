@@ -10,10 +10,12 @@ use crate::spine::ir::{
 };
 use tree_sitter::Node;
 
+use super::calls::{call_fact, method_call};
+use super::chains::CHAIN;
+use super::nesting::{cognitive_weight, is_branch, is_loop, is_nesting};
 use super::params::param_names;
 use super::unit_helpers::{
-    call_fact, cognitive_weight, is_branch, is_loop, is_nesting, is_string, method_call,
-    pattern_name, target_root, tuple_type_arity, type_text, unquote, CHAIN,
+    is_string, pattern_name, target_root, tuple_type_arity, type_text, unquote,
 };
 
 const ITER_METHODS: &[&str] = &["fold", "any", "all", "count", "sum", "position"];
@@ -77,7 +79,7 @@ impl Acc<'_> {
         }
         let loop_frame = is_loop(kind).then(|| {
             let opened = super::loops::loop_frame(node, src, frame);
-            let line = walk::perf_line(node, src, &["value", "condition"]);
+            let line = super::performance::loop_line(node, src);
             self.unit.performance.open_loop(line, opened)
         });
         self.scan(node, src, frame);

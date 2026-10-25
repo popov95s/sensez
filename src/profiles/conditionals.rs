@@ -36,7 +36,9 @@ pub(crate) struct TernaryShape<'a> {
 
 /// Chain position of `node` through transparent parents, else a lexical-only record.
 pub(crate) fn ternary_nesting(node: Node<'_>, shape: &TernaryShape<'_>) -> Option<NestedTernary> {
-    let (mut depth, mut root, mut current) = (0, node, node);
+    let mut depth = 0;
+    let mut root = node;
+    let mut current = node;
     while let Some(parent) = current.parent() {
         if parent.kind() == shape.conditional_kind {
             depth += 1;

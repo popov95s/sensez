@@ -1,5 +1,6 @@
 //! Parallel scheduling for independent analyzer pillars.
 
+use super::source_scope::SourceScope;
 use super::{cycles, dead_code, duplication, smells};
 use crate::bonez::{self, BoundaryAudit};
 use crate::config::model::Config;
@@ -34,10 +35,11 @@ pub(super) fn detect(
     graph: &CodebaseGraph,
     config: &Config,
     root: Option<&Path>,
+    smells_scope: &SourceScope,
 ) -> AnalyzerFindings {
     let (graph_findings, source_findings) = rayon::join(
         || detect_graph_findings(files, graph, config),
-        || detect_source_findings(files, graph, config, root),
+        || detect_source_findings(files, graph, config, root, smells_scope),
     );
     AnalyzerFindings {
         cycles: graph_findings.cycles,
@@ -75,10 +77,11 @@ fn detect_source_findings(
     graph: &CodebaseGraph,
     config: &Config,
     root: Option<&Path>,
+    smells_scope: &SourceScope,
 ) -> SourceFindings {
     let ((duplication, issues), smells) = rayon::join(
         || duplication::detect_with_root(files, &config.duplication, root),
-        || smells::detect(files, graph, &config.smells),
+        || smells::detect(files, graph, &config.smells, smells_scope),
     );
     SourceFindings {
         duplication,

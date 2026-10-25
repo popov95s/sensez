@@ -1,16 +1,12 @@
 //! Aggregated smells anchor at the first offending line and list every hit.
 
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn local(ext: &str, body: &str, cfg: &Smells) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("anchor.{ext}"));
-    fs::write(&path, body).unwrap();
-    detect_local(&parse_file(&path, 0).unwrap(), cfg)
+    detect_local(&fixture::parsed(&format!("anchor.{ext}"), body), cfg)
 }
 
 fn only(findings: &[SmellFinding], kind: SmellKind) -> SmellFinding {

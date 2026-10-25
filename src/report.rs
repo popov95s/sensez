@@ -32,8 +32,8 @@ pub struct CycleEdge {
     pub line: usize,
 }
 
-/// How likely a dead-code candidate is a true positive.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// How likely a dead-code candidate is a true positive, most likely first.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Confidence {
     /// Reached from a root, and no importer asks for this symbol.
     High,
@@ -131,8 +131,8 @@ pub struct AbsorbedClone {
     pub copies: usize,
 }
 
-/// How serious a smell finding is (drives ordering and rendering).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// How serious a smell finding is (drives ordering and rendering), most serious first.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Severity {
     Critical,
     #[default]

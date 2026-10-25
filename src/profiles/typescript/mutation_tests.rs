@@ -2,15 +2,11 @@
 
 use crate::config::smells::Smells;
 use crate::noze::smells::detect_local;
+use crate::noze::smells::test_support as fixture;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn findings(ext: &str, body: &str, cfg: &Smells, kind: SmellKind) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("m.{ext}"));
-    fs::write(&path, body).unwrap();
-    detect_local(&parse_file(&path, 0).unwrap(), cfg)
+    detect_local(&fixture::parsed(&format!("m.{ext}"), body), cfg)
         .into_iter()
         .filter(|f| f.kind == kind)
         .collect()
@@ -40,7 +36,8 @@ export function sortGroups() {
 export function logIt(event: Logger) { event.set(\"k\", 1); }
 export async function teardown(sandbox: Client) { await sandbox.delete(); }
 ";
-    assert!(mutated(body).is_empty(), "{:?}", mutated(body));
+    let found = mutated(body);
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]

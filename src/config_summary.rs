@@ -1,7 +1,7 @@
 //! Aggregated scan summary for configuration tuning surfaces.
 
 use crate::config::Config;
-use crate::report::{AnalysisReport, SkipCounts, SmellKind};
+use crate::report::{AnalysisReport, Pillar, SkipCounts, SmellKind};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -26,7 +26,8 @@ struct Scope {
 struct PillarScope {
     exclude_effective: Vec<String>,
     include_tests: bool,
-    include_generated: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    include_generated: Option<bool>,
     skipped: SkipCounts,
 }
 
@@ -94,30 +95,32 @@ fn scope(report: &AnalysisReport, config: &Config) -> Scope {
         duplication: PillarScope {
             exclude_effective: config.duplication.exclude.clone(),
             include_tests: config.duplication.include_tests,
-            include_generated: config.duplication.include_generated,
+            include_generated: Some(config.duplication.include_generated),
             skipped: report.meta.duplication_skipped,
         },
         smells: PillarScope {
             exclude_effective: config.smells.exclude.clone(),
             include_tests: config.smells.include_tests,
-            include_generated: false,
+            include_generated: None,
             skipped: report.meta.smells_skipped,
         },
     }
 }
 
 fn add_cycles(root: &Path, report: &AnalysisReport, by_rule: &mut BTreeMap<String, RuleSummary>) {
-    let rule = by_rule
-        .entry("cycles".into())
-        .or_insert_with(|| RuleSummary::new("cycles", Value::Null, "action.cycles"));
-    for cycle in &report.cycles {
-        let sample = cycle
+    let samples = report.cycles.iter().map(|cycle| {
+        cycle
             .edges
             .first()
-            .map(|edge| sample_path(root, &edge.file));
-        rule.add(sample);
-    }
-    remove_empty("cycles", by_rule);
+            .map(|edge| sample_path(root, &edge.file))
+    });
+    add_pillar(
+        by_rule,
+        Pillar::Cycles,
+        Value::Null,
+        "action.cycles",
+        samples,
+    );
 }
 
 fn add_dead_code(
@@ -132,13 +135,11 @@ fn add_dead_code(
         "unused_properties": config.dead_code.unused_properties,
         "unused_variables": config.dead_code.unused_variables
     });
-    let rule = by_rule
-        .entry("dead_code".into())
-        .or_insert_with(|| RuleSummary::new("dead_code", threshold, "dead_code"));
-    for finding in &report.dead_code {
-        rule.add(sample_path(root, &finding.file));
-    }
-    remove_empty("dead_code", by_rule);
+    let samples = report
+        .dead_code
+        .iter()
+        .map(|finding| Some(sample_path(root, &finding.file)));
+    add_pillar(by_rule, Pillar::DeadCode, threshold, "dead_code", samples);
 }
 
 fn add_boundaries(
@@ -162,21 +163,40 @@ fn add_duplication(
     config: &Config,
     by_rule: &mut BTreeMap<String, RuleSummary>,
 ) {
-    let rule = by_rule.entry("duplication".into()).or_insert_with(|| {
-        RuleSummary::new(
-            "duplication",
-            json!(config.duplication.threshold),
-            "duplication.threshold",
-        )
-    });
-    for clone in &report.duplication {
-        let sample = clone
+    let samples = report.duplication.iter().map(|clone| {
+        clone
             .occurrences
             .first()
-            .map(|occurrence| sample_path(root, &occurrence.file));
+            .map(|occurrence| sample_path(root, &occurrence.file))
+    });
+    let threshold = json!(config.duplication.threshold);
+    add_pillar(
+        by_rule,
+        Pillar::Duplication,
+        threshold,
+        "duplication.threshold",
+        samples,
+    );
+}
+
+/// One rule per pillar, counted from its findings' sample paths; left out when nothing was found.
+fn add_pillar(
+    by_rule: &mut BTreeMap<String, RuleSummary>,
+    pillar: Pillar,
+    threshold: Value,
+    config_path: &str,
+    samples: impl Iterator<Item = Option<String>>,
+) {
+    let id = pillar.as_str();
+    let rule = by_rule
+        .entry(id.into())
+        .or_insert_with(|| RuleSummary::new(id, threshold, config_path));
+    for sample in samples {
         rule.add(sample);
     }
-    remove_empty("duplication", by_rule);
+    if rule.count == 0 {
+        by_rule.remove(id);
+    }
 }
 
 fn add_smells(root: &Path, report: &AnalysisReport, by_rule: &mut BTreeMap<String, RuleSummary>) {
@@ -231,12 +251,6 @@ fn relative_path(root: &Path, file: &Path) -> PathBuf {
     file.strip_prefix(root)
         .map(Path::to_path_buf)
         .unwrap_or_else(|_| file.to_path_buf())
-}
-
-fn remove_empty(rule_id: &str, rules: &mut BTreeMap<String, RuleSummary>) {
-    if rules.get(rule_id).is_some_and(|rule| rule.count == 0) {
-        rules.remove(rule_id);
-    }
 }
 
 #[cfg(test)]

@@ -1,6 +1,8 @@
 //! Rust performance-smell profile policy.
 
+use crate::profiles::walk;
 use crate::spine::ir::PerfLine;
+use tree_sitter::Node;
 
 const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "execute", "fetch", "find", "load", "query", "read", "request", "save", "send",
@@ -45,6 +47,10 @@ pub(crate) fn is_mutating_call(method: &str) -> bool {
 
 pub(crate) fn receiver_root(receiver: &str) -> &str {
     receiver.split('.').next().unwrap_or(receiver)
+}
+
+pub(super) fn loop_line(node: Node, src: &[u8]) -> PerfLine {
+    walk::perf_line(node, src, &["value", "condition"])
 }
 
 pub(crate) fn is_bounded_loop(subject: &str) -> bool {

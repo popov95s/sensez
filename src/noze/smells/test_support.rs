@@ -6,7 +6,7 @@ use crate::report::{SmellFinding, SmellKind};
 use crate::spine::parser::{parse_file, ParsedFile};
 
 /// `body` parsed as a file called `name` in a throwaway directory.
-pub(super) fn parsed(name: &str, body: &str) -> ParsedFile {
+pub(crate) fn parsed(name: &str, body: &str) -> ParsedFile {
     let tmp = tempfile::tempdir().unwrap();
     parse_file(&crate::test_support::write(tmp.path(), name, body), 0).unwrap()
 }

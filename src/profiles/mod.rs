@@ -24,6 +24,8 @@ pub(crate) mod node_query;
 pub(crate) mod pathroot;
 pub mod registry;
 pub(crate) mod runner_config;
+#[cfg(test)]
+pub(crate) mod test_fixtures;
 pub(crate) mod test_oracle;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod try_handling;

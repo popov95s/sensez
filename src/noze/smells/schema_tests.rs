@@ -1,14 +1,10 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn local(source: &str) -> Vec<SmellFinding> {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("sample.py");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("sample.py", source);
     detect_local(&file, &Smells::default())
 }
 
@@ -61,10 +57,7 @@ def parse_user(payload: dict[str, object]) -> User:
 }
 
 fn local_ts(source: &str) -> Vec<SmellFinding> {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("sample.ts");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("sample.ts", source);
     detect_local(&file, &Smells::default())
 }
 

@@ -3,12 +3,15 @@
 //! already owns private ones), and Rust-native unit extraction for smells that
 //! complement Clippy instead of re-reporting its local style lints.
 
+mod calls;
+mod chains;
 pub(crate) mod comment_syntax;
 mod control_shapes;
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
 mod loops;
+mod nesting;
 mod params;
 pub(crate) mod performance;
 pub(crate) mod resolve;

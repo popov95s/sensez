@@ -1,4 +1,4 @@
-use super::dead_code_tests::{reported, scan};
+use super::dead_code_tests::{kept_confidence, scan};
 use crate::config::model::Config;
 use crate::report::{Confidence, DeadCodeFinding};
 use crate::spine::parser::SymbolKind;
@@ -18,9 +18,8 @@ fn kind_of(findings: &[DeadCodeFinding], symbol: &str) -> Vec<SymbolKind> {
         .collect()
 }
 
-#[test]
-fn playwright_helpers_count_spec_importers() {
-    let findings = scan(
+fn playwright_findings() -> Vec<DeadCodeFinding> {
+    scan(
         &[
             (
                 "e2e/utils/helpers.ts",
@@ -45,17 +44,42 @@ fn playwright_helpers_count_spec_importers() {
             ("src/app.ts", "import { appUsed } from \"./api\";\nappUsed();\n"),
         ],
         &Config::default().dead_code,
-    );
+    )
+}
 
-    assert_eq!(reported(&findings, "signInAs"), None);
-    assert_eq!(reported(&findings, "openDrawer"), None);
-    assert_eq!(reported(&findings, "neverUsed"), Some(Confidence::High));
+#[test]
+fn spec_importers_keep_playwright_helpers_live() {
+    let findings = playwright_findings();
+    assert_eq!(kept_confidence(&findings, "signInAs"), None);
+    assert_eq!(kept_confidence(&findings, "openDrawer"), None);
+}
+
+#[test]
+fn unused_playwright_helpers_are_high_confidence() {
+    let findings = playwright_findings();
     assert_eq!(
-        reported(&findings, "reallyDeadInSpecOnlyFile"),
+        kept_confidence(&findings, "neverUsed"),
         Some(Confidence::High)
     );
-    assert_eq!(reported(&findings, "unloadedFixture"), None);
-    assert_eq!(reported(&findings, "specOnly"), Some(Confidence::Medium));
+    assert_eq!(
+        kept_confidence(&findings, "reallyDeadInSpecOnlyFile"),
+        Some(Confidence::High)
+    );
+}
+
+#[test]
+fn playwright_fixture_files_are_not_reported() {
+    let findings = playwright_findings();
+    assert_eq!(kept_confidence(&findings, "unloadedFixture"), None);
+}
+
+#[test]
+fn source_used_only_by_specs_is_test_only() {
+    let findings = playwright_findings();
+    assert_eq!(
+        kept_confidence(&findings, "specOnly"),
+        Some(Confidence::Medium)
+    );
     assert_eq!(reason(&findings, "specOnly"), Some("test_only"));
 }
 
@@ -84,13 +108,22 @@ fn test_only_usage_is_its_own_reason() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "addUsed"), None);
-    assert_eq!(reported(&findings, "onlyTested"), Some(Confidence::Medium));
+    assert_eq!(kept_confidence(&findings, "addUsed"), None);
+    assert_eq!(
+        kept_confidence(&findings, "onlyTested"),
+        Some(Confidence::Medium)
+    );
     assert_eq!(reason(&findings, "onlyTested"), Some("test_only"));
-    assert_eq!(reported(&findings, "zeroRefs"), Some(Confidence::High));
+    assert_eq!(
+        kept_confidence(&findings, "zeroRefs"),
+        Some(Confidence::High)
+    );
     assert_eq!(reason(&findings, "zeroRefs"), Some(""));
     assert_eq!(reason(&findings, "helperA"), Some("test_only"));
-    assert_eq!(reported(&findings, "helperDead"), Some(Confidence::High));
+    assert_eq!(
+        kept_confidence(&findings, "helperDead"),
+        Some(Confidence::High)
+    );
 }
 
 #[test]
@@ -106,16 +139,19 @@ fn unreachable_modules_report_until_declared_entry_points() {
     let mut config = Config::default().dead_code;
     let findings = scan(&sources, &config);
 
-    assert_eq!(reported(&findings, "soloDead"), Some(Confidence::Medium));
+    assert_eq!(
+        kept_confidence(&findings, "soloDead"),
+        Some(Confidence::Medium)
+    );
     assert_eq!(reason(&findings, "soloDead"), Some("unreachable_module"));
-    assert_eq!(reported(&findings, "run"), None);
+    assert_eq!(kept_confidence(&findings, "run"), None);
 
     config.entry_points = vec!["**/tools/**".to_string()];
-    assert_eq!(reported(&scan(&sources, &config), "soloDead"), None);
+    assert_eq!(kept_confidence(&scan(&sources, &config), "soloDead"), None);
 
     config.entry_points.clear();
     config.orphan_modules = false;
-    assert_eq!(reported(&scan(&sources, &config), "soloDead"), None);
+    assert_eq!(kept_confidence(&scan(&sources, &config), "soloDead"), None);
 }
 
 #[test]
@@ -147,8 +183,8 @@ fn entry_point_imports_count_as_usage() {
     config.entry_points = vec!["**/scripts/**".to_string()];
     let findings = scan(&sources, &config);
 
-    assert_eq!(reported(&findings, "seedRows"), None);
-    assert_eq!(reported(&findings, "dbDead"), Some(Confidence::High));
+    assert_eq!(kept_confidence(&findings, "seedRows"), None);
+    assert_eq!(kept_confidence(&findings, "dbDead"), Some(Confidence::High));
 }
 
 #[test]
@@ -201,8 +237,8 @@ fn reexport_chains_and_stars_forward_to_a_fixed_point() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "viaChain"), None);
-    assert_eq!(reported(&findings, "viaStar"), None);
+    assert_eq!(kept_confidence(&findings, "viaChain"), None);
+    assert_eq!(kept_confidence(&findings, "viaStar"), None);
     assert_eq!(
         kind_of(&findings, "chainDead"),
         vec![
@@ -213,9 +249,8 @@ fn reexport_chains_and_stars_forward_to_a_fixed_point() {
     );
 }
 
-#[test]
-fn hidden_use_evidence_lowers_confidence() {
-    let findings = scan(
+fn hidden_use_findings() -> Vec<DeadCodeFinding> {
+    scan(
         &[
             (
                 "src/widget.tsx",
@@ -239,15 +274,38 @@ fn hidden_use_evidence_lowers_confidence() {
             ),
         ],
         &Config::default().dead_code,
-    );
+    )
+}
 
-    assert_eq!(reported(&findings, "Widget"), Some(Confidence::Medium));
-    assert_eq!(reported(&findings, "zeroRefs"), Some(Confidence::High));
-    assert_eq!(reported(&findings, "Panel"), None);
-    assert_eq!(reported(&findings, "panelExtra"), Some(Confidence::Medium));
-    assert_eq!(reported(&findings, "Reporter"), None);
+#[test]
+fn default_export_is_medium_confidence() {
+    let findings = hidden_use_findings();
     assert_eq!(
-        reported(&findings, "reporterExtra"),
+        kept_confidence(&findings, "Widget"),
+        Some(Confidence::Medium)
+    );
+    assert_eq!(
+        kept_confidence(&findings, "zeroRefs"),
+        Some(Confidence::High)
+    );
+}
+
+#[test]
+fn lazy_import_keeps_default_live_and_lowers_the_rest() {
+    let findings = hidden_use_findings();
+    assert_eq!(kept_confidence(&findings, "Panel"), None);
+    assert_eq!(
+        kept_confidence(&findings, "panelExtra"),
+        Some(Confidence::Medium)
+    );
+}
+
+#[test]
+fn config_importer_keeps_default_live_and_lowers_the_rest() {
+    let findings = hidden_use_findings();
+    assert_eq!(kept_confidence(&findings, "Reporter"), None);
+    assert_eq!(
+        kept_confidence(&findings, "reporterExtra"),
         Some(Confidence::Medium)
     );
 }

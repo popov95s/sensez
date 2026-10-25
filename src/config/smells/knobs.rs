@@ -77,6 +77,8 @@ pub struct Smells {
     pub n_plus_one_callees: Vec<String>,
     pub n_plus_one_max_constant_bound: usize,
     pub n_plus_one_await_in_loop: bool,
+    #[serde(skip)]
+    pub compiled: super::compiled::Compiled,
 }
 
 impl Default for Smells {
@@ -149,6 +151,7 @@ impl Default for Smells {
             n_plus_one_callees: Vec::new(),
             n_plus_one_max_constant_bound: 10,
             n_plus_one_await_in_loop: false,
+            compiled: Default::default(),
         }
     }
 }

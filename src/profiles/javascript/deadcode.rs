@@ -2,8 +2,8 @@
 //! naming conventions don't apply; exported initializer callees stand in for
 //! registration decorators.
 
-use super::symbols;
 use crate::globs::matches_any;
+use crate::profiles::walk;
 use crate::profiles::{DeadCodeDefaults, DecoratorClass, ExternalBases};
 use std::collections::HashSet;
 
@@ -102,7 +102,7 @@ pub fn classify(paths: Option<&Vec<String>>, user: &HashSet<String>) -> Decorato
     let registered = paths.is_some_and(|paths| {
         paths
             .iter()
-            .any(|path| matches_any(user, symbols::last_segment(path)))
+            .any(|path| matches_any(user, walk::last_segment(path)))
     });
     if registered {
         DecoratorClass::Registration

@@ -28,11 +28,11 @@ pub(crate) fn identifiers(node: Node, src: &[u8], kinds: &[&str]) -> Vec<String>
             .unwrap_or_default();
     }
     let mut cursor = node.walk();
-    let children: Vec<Node> = node.named_children(&mut cursor).collect();
-    children
-        .into_iter()
+    let found = node
+        .named_children(&mut cursor)
         .flat_map(|child| identifiers(child, src, kinds))
-        .collect()
+        .collect();
+    found
 }
 
 /// `identifier` texts under `node`'s `field` child.
@@ -75,12 +75,15 @@ pub(crate) fn is_field_child(parent: Node, child: Node, fields: &[&str]) -> bool
     })
 }
 
+/// Longest loop subject text kept for display.
+const MAX_SUBJECT_BYTES: usize = 120;
+
 pub(crate) fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<String> {
     subject_fields
         .iter()
         .find_map(|field| node.child_by_field_name(field))
         .and_then(|n| node_text(n, src))
-        .filter(|text| text.len() <= 120)
+        .filter(|text| text.len() <= MAX_SUBJECT_BYTES)
         .map(str::to_string)
 }
 

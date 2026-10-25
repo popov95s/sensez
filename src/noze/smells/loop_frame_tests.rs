@@ -1,8 +1,7 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn enabled() -> Smells {
     let mut cfg = Smells::default();
@@ -19,10 +18,7 @@ fn with_callees() -> Smells {
 }
 
 fn run(ext: &str, body: &str, cfg: &Smells) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("sample.{ext}"));
-    fs::write(&path, body).unwrap();
-    detect_local(&parse_file(&path, 0).unwrap(), cfg)
+    detect_local(&fixture::parsed(&format!("sample.{ext}"), body), cfg)
 }
 
 fn fires(ext: &str, body: &str, cfg: &Smells, kind: SmellKind) -> bool {
@@ -56,10 +52,18 @@ fn nested_loop_skips_walking_nested_data() {
     ] {
         assert!(!fires("ts", src, &enabled(), SmellKind::NestedLoop), "{src}");
     }
+}
+
+#[test]
+fn python_nested_loop_skips_walking_nested_data() {
     let py = "def walk(orders):\n    for o in orders:\n        for line in o.lines:\n            print(line)\n";
-    assert!(!fires("py", py, &enabled(), SmellKind::NestedLoop));
+    assert!(!fires("py", py, &enabled(), SmellKind::NestedLoop), "{py}");
+}
+
+#[test]
+fn rust_nested_loop_skips_walking_nested_data() {
     let rs = "fn walk(orders: &[Order]) {\n    for o in orders {\n        for line in &o.lines {\n            use_line(line);\n        }\n    }\n}\n";
-    assert!(!fires("rs", rs, &enabled(), SmellKind::NestedLoop));
+    assert!(!fires("rs", rs, &enabled(), SmellKind::NestedLoop), "{rs}");
 }
 
 #[test]

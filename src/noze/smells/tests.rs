@@ -1,14 +1,10 @@
+use super::test_support as fixture;
 use super::*;
 use crate::config::smells::Smells;
-use crate::spine::parser::parse_file;
-use std::fs;
 
 /// Write `body` to a temp `.py` file and parse it.
 fn parsed(name: &str, body: &str) -> crate::spine::parser::ParsedFile {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("{name}.py"));
-    fs::write(&path, body).unwrap();
-    parse_file(&path, 0).unwrap()
+    fixture::parsed(&format!("{name}.py"), body)
 }
 
 fn local(name: &str, body: &str, cfg: &Smells) -> Vec<SmellFinding> {

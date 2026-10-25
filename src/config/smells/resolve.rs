@@ -1,7 +1,8 @@
 use super::defaults;
 use super::knobs::Smells;
 use super::raw::{split_rules, RuleRaw, SmellsRaw};
-use super::rules::{apply_rules, set_rule_enabled};
+use super::rules::apply_rules;
+use super::toggles::toggle_key;
 use crate::report::SmellKind;
 use crate::spine::ir::Language;
 use std::collections::BTreeMap;
@@ -85,7 +86,7 @@ fn resolve(
         .map_err(|err| format!("invalid [smells.{}]: {err}", language_label(lang)))?;
     for (key, kind) in FLAT_THRESHOLDS {
         if flat_threshold_enables(key, kind, base, over) {
-            set_rule_enabled(&mut smells, kind, true);
+            smells.set_enabled(kind, true);
         }
     }
     apply_rules(&mut smells, base_rules)?;
@@ -113,19 +114,6 @@ fn sets_toggle(table: &toml::Table, kind: SmellKind) -> bool {
         .and_then(toml::Value::as_array)
         .is_some_and(|kinds| kinds.iter().any(|k| k.as_str() == Some(kind.as_str())));
     listed_disabled || toggle_key(kind).is_some_and(|toggle| table.contains_key(toggle))
-}
-
-fn toggle_key(kind: SmellKind) -> Option<&'static str> {
-    match kind {
-        SmellKind::HighComplexity => Some("cyclomatic_complexity"),
-        SmellKind::LongFunction => Some("long_function"),
-        SmellKind::LargeClass => Some("large_class"),
-        SmellKind::LongParameterList => Some("long_parameter_list"),
-        SmellKind::TooManyReturns => Some("too_many_returns"),
-        SmellKind::TuplePacking => Some("tuple_packing"),
-        SmellKind::NarratingCode => Some("narrating_code"),
-        _ => None,
-    }
 }
 
 fn language_label(lang: Language) -> &'static str {

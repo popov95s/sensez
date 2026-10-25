@@ -9,7 +9,7 @@ pub mod smells;
 mod source_scope;
 
 use crate::report::{
-    ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, Severity, SmellFinding,
+    ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, SmellFinding,
 };
 
 use crate::config::model::{ActionPolicy, Config};
@@ -34,6 +34,7 @@ pub fn run_with_root(
     config: &Config,
     root: Option<&Path>,
 ) -> AnalysisReport {
+    let smells_scope = SourceScope::for_smells(&config.smells);
     let parallel::AnalyzerFindings {
         mut cycles,
         mut dead_code,
@@ -41,20 +42,20 @@ pub fn run_with_root(
         mut duplication,
         mut smells,
         issues,
-    } = parallel::detect(files, graph, config, root);
+    } = parallel::detect(files, graph, config, root, &smells_scope);
 
     for cycle in &mut cycles {
         if cycle.action != ActionLevel::Info {
             cycle.action = config.action.cycles;
         }
     }
-    cycles.sort_by_key(|c| (action_rank(c.action), std::cmp::Reverse(c.modules.len())));
+    cycles.sort_by_key(|c| (c.action, std::cmp::Reverse(c.modules.len())));
 
     dead_code.retain(|finding| finding.confidence != Confidence::Low);
     for finding in &mut dead_code {
         finding.action = config.action.dead_code;
     }
-    dead_code.sort_by_key(|f| confidence_rank(f.confidence));
+    dead_code.sort_by_key(|f| f.confidence);
 
     for violation in &mut boundary_audit.violations {
         violation.action = config.action.boundaries;
@@ -67,9 +68,9 @@ pub fn run_with_root(
 
     apply_smell_actions(&mut smells, &config.action);
     smells.sort_by(|a, b| {
-        action_rank(a.action)
-            .cmp(&action_rank(b.action))
-            .then(severity_rank(a.severity).cmp(&severity_rank(b.severity)))
+        a.action
+            .cmp(&b.action)
+            .then(a.severity.cmp(&b.severity))
             .then(b.metric.cmp(&a.metric))
     });
 
@@ -85,7 +86,7 @@ pub fn run_with_root(
             source_lines: files.iter().map(|f| f.lines as usize).sum(),
             duplication_skipped: SourceScope::for_duplication(&config.duplication)
                 .skip_counts(files),
-            smells_skipped: SourceScope::for_smells(&config.smells).skip_counts(files),
+            smells_skipped: smells_scope.skip_counts(files),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues,
             ..ReportMeta::default()
@@ -121,31 +122,6 @@ pub fn limit(report: &mut AnalysisReport, max: usize) {
     report.duplication.truncate(max);
     report.smells.truncate(max);
     report.meta.glossary = crate::noze::glossary::for_report(report);
-}
-
-fn severity_rank(s: Severity) -> u8 {
-    match s {
-        Severity::Critical => 0,
-        Severity::Warning => 1,
-        Severity::Info => 2,
-    }
-}
-
-pub(super) fn action_rank(level: ActionLevel) -> u8 {
-    match level {
-        ActionLevel::MustFix => 0,
-        ActionLevel::Warning => 1,
-        ActionLevel::Advisory => 2,
-        ActionLevel::Info => 3,
-    }
-}
-
-fn confidence_rank(c: Confidence) -> u8 {
-    match c {
-        Confidence::High => 0,
-        Confidence::Medium => 1,
-        Confidence::Low => 2,
-    }
 }
 
 fn edge_stats(graph: &CodebaseGraph) -> (usize, usize) {

@@ -137,7 +137,12 @@ fn analyze_with_config(
             .count()
     );
     report.meta.issues.extend(parsed.issues);
-    report.meta.files_skipped = report.meta.issues.len();
+    report.meta.files_skipped = report
+        .meta
+        .issues
+        .iter()
+        .filter(|issue| issue.file.is_some())
+        .count();
     timer.lap("analyze");
 
     let mut module_files: HashMap<String, PathBuf> = HashMap::new();

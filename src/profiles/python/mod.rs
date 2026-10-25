@@ -12,6 +12,7 @@ mod lexeme;
 mod loops;
 mod magic_numbers;
 mod nested;
+mod nesting;
 mod obsession;
 mod performance;
 mod resolve;

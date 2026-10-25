@@ -295,6 +295,6 @@ fn decorated_handlers_live_unimported_module_is_medium() {
         .iter()
         .find(|f| f.symbol == "plain")
         .expect("plain is unused");
-    assert_eq!(plain.confidence, Confidence::Medium);
-    assert_eq!(plain.reason, "unreachable_module");
+    assert_eq!(plain.confidence, Confidence::Medium, "{plain:?}");
+    assert_eq!(plain.reason, "unreachable_module", "{plain:?}");
 }

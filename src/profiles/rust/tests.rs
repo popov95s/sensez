@@ -2,16 +2,10 @@
 //! resolution, cycles, duplication, dead-code crediting).
 
 use super::RustProfile;
+use crate::profiles::test_fixtures::tokens;
 use crate::spine::parser::{parse_file, parse_source, StructuralToken};
 use std::fs;
 use std::path::Path;
-
-fn tokens(src: &[u8]) -> Vec<StructuralToken> {
-    parse_source(src, 0, "m", &RustProfile)
-        .unwrap()
-        .syntax
-        .tokens
-}
 
 /// Two functions with the same control-flow shape but different local names
 /// produce identical structural-token vectors (rename invariance).
@@ -19,8 +13,12 @@ fn tokens(src: &[u8]) -> Vec<StructuralToken> {
 fn rename_invariance_yields_identical_tokens() {
     let a = b"fn compute(items: &[i64]) -> i64 {\n    let mut total = 0;\n    for item in items {\n        if *item > 10 { total += item; }\n    }\n    total\n}\n";
     let b = b"fn process(values: &[i64]) -> i64 {\n    let mut acc = 0;\n    for value in values {\n        if *value > 10 { acc += value; }\n    }\n    acc\n}\n";
-    let ta = tokens(a);
-    assert_eq!(ta, tokens(b), "renamed-but-identical fns must match");
+    let ta = tokens(a, &RustProfile);
+    assert_eq!(
+        ta,
+        tokens(b, &RustProfile),
+        "renamed-but-identical fns must match"
+    );
     assert!(ta.contains(&StructuralToken::FunctionDef));
     assert!(ta.contains(&StructuralToken::ForStatement));
     assert!(ta.contains(&StructuralToken::IfStatement));

@@ -113,7 +113,7 @@ pub fn detect_with_root(
     // Rank by impact: long clones with many occurrences first.
     out.sort_by_key(|c| {
         (
-            super::action_rank(c.action),
+            c.action,
             std::cmp::Reverse(c.token_length * c.occurrences.len()),
         )
     });

@@ -9,6 +9,7 @@
 //! the main visit already reaches exactly these nodes in the same pre-order, so
 //! the collected hints are identical, one traversal cheaper.
 
+use crate::profiles::walk;
 use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
 use tree_sitter::Node;
 
@@ -109,7 +110,7 @@ pub(super) fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<Strin
     let call = right.filter(|r| r.kind() == "call")?;
     let func = call.child_by_field_name("function")?;
     let text = func.utf8_text(src).ok()?;
-    let last = text.rsplit('.').next().unwrap_or(text);
+    let last = walk::last_segment(text);
     match last.chars().next() {
         Some(c) if c.is_uppercase() => Some(last.to_string()),
         _ => None,
