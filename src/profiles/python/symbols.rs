@@ -1,5 +1,6 @@
 //! Top-level declaration extraction (function/class/assignment names, `__all__`).
 
+use crate::spine::ir::Visibility;
 use tree_sitter::Node;
 
 /// Name of a `function_definition` / `class_definition`.
@@ -131,4 +132,13 @@ pub fn string_value(node: Node, src: &[u8]) -> Option<String> {
         .and_then(|c| c.utf8_text(src).ok())
         .map(str::to_string);
     value.or_else(|| (node.kind() == "string").then(String::new))
+}
+
+/// `_helper` is module-private; dunder and plain names are public.
+pub fn visibility(name: &str) -> Visibility {
+    if name.starts_with('_') && !name.starts_with("__") {
+        Visibility::Private
+    } else {
+        Visibility::Exported
+    }
 }

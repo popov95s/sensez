@@ -39,3 +39,20 @@ fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
         _ => None,
     }
 }
+
+/// Names bound inside destructured parameters: `items` in `({ items }) => …`.
+pub(super) fn destructured_params(func: Node, src: &[u8]) -> Vec<String> {
+    let Some(params) = func.child_by_field_name("parameters") else {
+        return Vec::new();
+    };
+    let mut cursor = params.walk();
+    let patterns: Vec<Node> = params
+        .named_children(&mut cursor)
+        .filter_map(|p| p.child_by_field_name("pattern").or(Some(p)))
+        .filter(|p| matches!(p.kind(), "object_pattern" | "array_pattern"))
+        .collect();
+    patterns
+        .into_iter()
+        .flat_map(|pattern| super::loops::names(Some(pattern), src))
+        .collect()
+}

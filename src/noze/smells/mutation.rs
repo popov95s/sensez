@@ -11,7 +11,9 @@ use super::{make, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::ir::{CallbackPosition, FunctionUnit, LiteralMembership, Visibility};
+use crate::spine::ir::{
+    CallbackPosition, FunctionUnit, LiteralMembership, MutatorFamily, Visibility,
+};
 use std::collections::{HashMap, HashSet};
 
 pub fn detect(
@@ -112,6 +114,7 @@ fn mutated_params(
     let mutated: Vec<&str> = m
         .param_names
         .iter()
+        .chain(&m.destructured_params)
         .filter(|p| !matches!(p.as_str(), "self" | "cls"))
         .filter(|p| {
             m.mutated_names.contains(*p)
@@ -120,23 +123,30 @@ fn mutated_params(
         })
         .map(String::as_str)
         .collect();
-    if mutated.is_empty() {
+    if mutated.is_empty() || is_private_collector(ctx, m, &mutated) {
         return;
     }
-    let (severity, advice) = mutation_advice(ctx, m, &mutated);
-    out.push(make(
+    let (severity, advice) = mutation_advice(m, &mutated);
+    let lines = hit_lines(
+        m.mutation_lines
+            .iter()
+            .filter(|(name, _)| mutated.contains(&name.as_str()))
+            .map(|(_, line)| *line),
+    );
+    let finding = make(
         SmellKind::MutatedParameter,
         format!(
             "mutates input parameter(s) [{}] — {advice}",
             mutated.join(", ")
         ),
         ctx.path,
-        m.start_line,
+        lines.first().copied().unwrap_or(m.start_line),
         &m.name,
         severity,
         mutated.len() as u32,
         0,
-    ));
+    );
+    out.push(SmellFinding { lines, ..finding });
 }
 
 /// A mutating method call counts only when the param's declared type (if any)
@@ -149,17 +159,21 @@ fn is_method_mutated(ctx: &SmellContext<'_>, m: &FunctionUnit, param: &str) -> b
     })
 }
 
-fn mutation_advice(
-    ctx: &SmellContext<'_>,
-    m: &FunctionUnit,
-    mutated: &[&str],
-) -> (Severity, &'static str) {
+fn mutation_advice(m: &FunctionUnit, mutated: &[&str]) -> (Severity, &'static str) {
     if mutated.iter().any(|p| m.returned_names.contains(*p)) {
         return (
             Severity::Warning,
             "mutates and returns its input; callers can't tell whether it copies",
         );
     }
+    (
+        Severity::Warning,
+        "caller-visible side effect; return a new value instead",
+    )
+}
+
+/// A private void helper filling its last parameter, or parameters typed as collections.
+fn is_private_collector(ctx: &SmellContext<'_>, m: &FunctionUnit, mutated: &[&str]) -> bool {
     let returns_nothing = ctx
         .type_hints
         .return_type(m)
@@ -168,16 +182,19 @@ fn mutation_advice(
         .param_names
         .last()
         .is_some_and(|last| mutated == [last.as_str()]);
-    if m.visibility == Visibility::Private && returns_nothing && only_last {
-        return (
-            Severity::Info,
-            "output parameter — acceptable in private collectors",
-        );
-    }
-    (
-        Severity::Warning,
-        "caller-visible side effect; return a new value instead",
-    )
+    let typed_collections = mutated.iter().all(|p| is_typed_collection(ctx, m, p));
+    m.visibility == Visibility::Private
+        && returns_nothing
+        && !mutated.iter().any(|p| m.returned_names.contains(*p))
+        && (only_last || typed_collections)
+}
+
+fn is_typed_collection(ctx: &SmellContext<'_>, m: &FunctionUnit, param: &str) -> bool {
+    let vocab = ctx.type_vocabulary;
+    ctx.type_hints.param_type(m, param).is_some_and(|ty| {
+        vocab.is_mutable_collection(ty, MutatorFamily::Array)
+            || vocab.is_mutable_collection(ty, MutatorFamily::Collection)
+    })
 }
 
 /// Parameters rebound with plain assignment (opt-in: `x = x or []` is idiomatic).

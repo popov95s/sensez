@@ -10,9 +10,17 @@ pub(super) fn method_visibility(func: Node, src: &[u8]) -> Visibility {
 
 pub(super) fn function_visibility(func: Lineage) -> Visibility {
     private_when(
-        func.parent(func.node())
+        func.parent(declaration(func))
             .is_none_or(|p| p.kind() != "export_statement"),
     )
+}
+
+/// The statement declaring `func`: itself, or the `const` binding an arrow or function expression.
+fn declaration<'tree>(func: Lineage<'_, 'tree>) -> Node<'tree> {
+    func.parent(func.node())
+        .filter(|parent| parent.kind() == "variable_declarator")
+        .and_then(|declarator| func.parent(declarator))
+        .unwrap_or(func.node())
 }
 
 fn private_when(private: bool) -> Visibility {

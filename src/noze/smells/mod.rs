@@ -306,6 +306,8 @@ mod magic_string_tests;
 #[cfg(test)]
 mod message_chain_tests;
 #[cfg(test)]
+mod mutated_parameter_tests;
+#[cfg(test)]
 mod name_promise_tests;
 #[cfg(test)]
 mod nested_if_tests;

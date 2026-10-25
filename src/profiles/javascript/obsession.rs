@@ -170,17 +170,22 @@ fn record_delete(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     if !is_delete {
         return;
     }
-    if let Some(arg) = node
+    let target = node
         .child_by_field_name("argument")
-        .filter(|a| matches!(a.kind(), "subscript_expression" | "member_expression"))
-    {
-        record_root(unit, arg, src);
+        .and_then(|arg| match arg.kind() {
+            "subscript_expression" => Some(arg),
+            "member_expression" => arg.child_by_field_name("object"),
+            _ => None,
+        });
+    if let Some(target) = target {
+        record_root(unit, target, src);
     }
 }
 
 /// `x.push(...)` (mutating call) and `["a","b"].includes(y)` (literal membership).
 fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     record_schema_call(unit, node, src);
+    record_object_assign(unit, node, src);
     let Some(func) = node
         .child_by_field_name("function")
         .filter(|f| f.kind() == "member_expression")
@@ -206,17 +211,34 @@ fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     }
 }
 
+/// `Object.assign(target, …)` mutates `target`.
+fn record_object_assign(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let is_assign = node
+        .child_by_field_name("function")
+        .and_then(|function| function.utf8_text(src).ok())
+        == Some("Object.assign");
+    let target = node
+        .child_by_field_name("arguments")
+        .and_then(|args| args.named_child(0));
+    if let Some(target) = target.filter(|_| is_assign) {
+        record_root(unit, target, src);
+    }
+}
+
 fn record_method_mutation(
     unit: &mut FunctionUnit,
     object: Node,
     src: &[u8],
     family: MutatorFamily,
 ) {
+    let line = object.start_position().row + 1;
     match target_root(object, src) {
         Some(MutationTarget::ViaAttribute(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.attr_mutated_names.insert(root);
         }
         Some(MutationTarget::Direct(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.method_mutations.insert((root, family));
         }
         None => {}

@@ -66,6 +66,7 @@ impl FunctionFacts {
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
             param_names: param_names(func, src),
+            destructured_params: super::params::destructured_params(func, src),
             is_method,
             max_tuple_return: classunit::tuple_return_arity(&tuple_return),
             callback_position: callback_position(lineage),

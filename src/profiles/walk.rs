@@ -230,11 +230,14 @@ pub(crate) fn record_mutation_root(
     src: &[u8],
     target_root: TargetRootFn,
 ) {
+    let line = node.start_position().row + 1;
     match target_root(node, src) {
         Some(MutationTarget::ViaAttribute(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.attr_mutated_names.insert(root);
         }
         Some(MutationTarget::Direct(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.mutated_names.insert(root);
         }
         None => {}
