@@ -80,24 +80,22 @@ fn files_without_findings_any_more_get_their_diagnostics_cleared() {
 fn saving_a_non_source_file_does_not_rescan() {
     let (sender, _receiver) = unbounded();
     let (completed, _results) = unbounded();
-    let mut workspaces = BTreeMap::new();
-    mark_dirty(&mut workspaces, Path::new(ROOT));
-    workspaces.get_mut(Path::new(ROOT)).unwrap().running = false;
+    let mut scans = Scans {
+        workspaces: BTreeMap::new(),
+        settings: Settings::default(),
+        sender,
+        completed,
+    };
+    mark_dirty(&mut scans.workspaces, Path::new(ROOT));
+    scans.workspaces.get_mut(Path::new(ROOT)).unwrap().running = false;
 
     let saved = [
         PathBuf::from("/work/a/README.md"),
         PathBuf::from("/work/a/yarn.lock"),
     ];
-    rescan_affected(
-        &saved,
-        &mut workspaces,
-        Settings::default(),
-        &sender,
-        &completed,
-    )
-    .unwrap();
+    scans.rescan_affected(&saved).unwrap();
 
-    assert_eq!(workspaces[Path::new(ROOT)].generation, 1);
+    assert_eq!(scans.workspaces[Path::new(ROOT)].generation, 1);
 }
 
 #[test]

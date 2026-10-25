@@ -31,66 +31,106 @@ pub fn serve() -> Result<()> {
     result
 }
 
-fn run(connection: Connection, roots: Vec<PathBuf>, mut settings: Settings) -> Result<()> {
-    let (completed_tx, completed_rx) = unbounded();
-    let mut workspaces = BTreeMap::new();
+fn run(connection: Connection, roots: Vec<PathBuf>, settings: Settings) -> Result<()> {
+    let (completed, completed_rx) = unbounded();
+    let mut scans = Scans {
+        workspaces: BTreeMap::new(),
+        settings,
+        sender: connection.sender.clone(),
+        completed,
+    };
     for root in roots {
-        queue(
-            &mut workspaces,
-            root,
-            settings,
-            &connection.sender,
-            &completed_tx,
-        )?;
+        scans.queue(root)?;
     }
-    launch_pending(settings, &connection.sender, &mut workspaces, &completed_tx)?;
+    scans.launch_pending()?;
     loop {
         crossbeam_channel::select! {
             recv(connection.receiver) -> message => match message {
-                Ok(message) => if handle_message(message, &connection, &mut settings, &mut workspaces, &completed_tx)? { break; },
+                Ok(message) => if handle_message(message, &connection, &mut scans)? { break; },
                 Err(_) => break,
             },
             recv(completed_rx) -> result => if let Ok(result) = result {
-                apply_result(result, &connection.sender, &mut workspaces)?;
-                launch_pending(settings, &connection.sender, &mut workspaces, &completed_tx)?;
+                apply_result(result, &scans.sender, &mut scans.workspaces)?;
+                scans.launch_pending()?;
             },
         }
     }
     Ok(())
 }
 
-fn handle_message(
-    message: Message,
-    connection: &Connection,
-    settings: &mut Settings,
-    workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    completed: &Sender<ScanResult>,
-) -> Result<bool> {
-    match message {
-        Message::Request(request) => {
-            handle_request(request, connection, *settings, workspaces, completed)
+/// Workspace scan state the main loop schedules from.
+struct Scans {
+    workspaces: BTreeMap<PathBuf, Workspace>,
+    settings: Settings,
+    sender: Sender<Message>,
+    completed: Sender<ScanResult>,
+}
+
+impl Scans {
+    fn queue(&mut self, root: PathBuf) -> Result<()> {
+        let Some(generation) = mark_dirty(&mut self.workspaces, &root) else {
+            return Ok(());
+        };
+        send_status(&self.sender, &root, "scanning")?;
+        scan::spawn(root, generation, self.settings, self.completed.clone());
+        Ok(())
+    }
+
+    fn rescan_all(&mut self) -> Result<()> {
+        let roots: Vec<_> = self.workspaces.keys().cloned().collect();
+        for root in roots {
+            self.queue(root)?;
         }
+        Ok(())
+    }
+
+    /// Rescan each workspace holding a changed file that can alter its scan.
+    fn rescan_affected(&mut self, paths: &[PathBuf]) -> Result<()> {
+        let roots: BTreeSet<_> = paths
+            .iter()
+            .filter(|path| affects_scan(path))
+            .filter_map(|path| self.root_for_path(path))
+            .collect();
+        for root in roots {
+            self.queue(root)?;
+        }
+        Ok(())
+    }
+
+    fn root_for_path(&self, path: &Path) -> Option<PathBuf> {
+        self.workspaces
+            .keys()
+            .filter(|root| path.starts_with(root))
+            .max_by_key(|root| root.components().count())
+            .cloned()
+    }
+
+    fn launch_pending(&mut self) -> Result<()> {
+        while let Some((path, generation)) = take_pending(&mut self.workspaces) {
+            send_status(&self.sender, &path, "scanning")?;
+            scan::spawn(path, generation, self.settings, self.completed.clone());
+        }
+        Ok(())
+    }
+}
+
+fn handle_message(message: Message, connection: &Connection, scans: &mut Scans) -> Result<bool> {
+    match message {
+        Message::Request(request) => handle_request(request, connection, scans),
         Message::Notification(notification) => {
             if notification.method == "exit" {
                 return Ok(true);
             }
             if notification.method == "workspace/didChangeConfiguration" {
-                *settings = Settings::from_lsp(&notification.params);
-                rescan_all(workspaces, *settings, &connection.sender, completed)?;
+                scans.settings = Settings::from_lsp(&notification.params);
+                scans.rescan_all()?;
             } else if notification.method == "textDocument/didSave" {
                 let saved: Vec<_> = notification_path(&notification.params)
                     .into_iter()
                     .collect();
-                rescan_affected(&saved, workspaces, *settings, &connection.sender, completed)?;
+                scans.rescan_affected(&saved)?;
             } else if notification.method == "workspace/didChangeWatchedFiles" {
-                let changed = changed_paths(&notification.params);
-                rescan_affected(
-                    &changed,
-                    workspaces,
-                    *settings,
-                    &connection.sender,
-                    completed,
-                )?;
+                scans.rescan_affected(&changed_paths(&notification.params))?;
             }
             Ok(false)
         }
@@ -98,47 +138,14 @@ fn handle_message(
     }
 }
 
-/// Rescan each workspace holding a changed file that can alter its scan.
-fn rescan_affected(
-    paths: &[PathBuf],
-    workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    settings: Settings,
-    sender: &Sender<Message>,
-    completed: &Sender<ScanResult>,
-) -> Result<()> {
-    let roots: BTreeSet<_> = paths
-        .iter()
-        .filter(|path| affects_scan(path))
-        .filter_map(|path| root_for_path(path, workspaces))
-        .collect();
-    for root in roots {
-        queue(workspaces, root, settings, sender, completed)?;
-    }
-    Ok(())
-}
-
-fn root_for_path(path: &Path, workspaces: &BTreeMap<PathBuf, Workspace>) -> Option<PathBuf> {
-    workspaces
-        .keys()
-        .filter(|root| path.starts_with(root))
-        .max_by_key(|root| root.components().count())
-        .cloned()
-}
-
-fn handle_request(
-    request: Request,
-    connection: &Connection,
-    settings: Settings,
-    workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    completed: &Sender<ScanResult>,
-) -> Result<bool> {
+fn handle_request(request: Request, connection: &Connection, scans: &mut Scans) -> Result<bool> {
     if connection.handle_shutdown(&request)? {
         return Ok(true);
     }
     if request.method == "workspace/executeCommand"
         && request.params.get("command").and_then(Value::as_str) == Some(RESCAN)
     {
-        rescan_all(workspaces, settings, &connection.sender, completed)?;
+        scans.rescan_all()?;
         connection
             .sender
             .send(Message::Response(Response::new_ok(request.id, Value::Null)))
@@ -154,47 +161,6 @@ fn handle_request(
             .context("responding to unsupported request")?;
     }
     Ok(false)
-}
-
-fn queue(
-    workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    root: PathBuf,
-    settings: Settings,
-    sender: &Sender<Message>,
-    completed: &Sender<ScanResult>,
-) -> Result<()> {
-    let Some(generation) = mark_dirty(workspaces, &root) else {
-        return Ok(());
-    };
-    send_status(sender, &root, "scanning")?;
-    scan::spawn(root, generation, settings, completed.clone());
-    Ok(())
-}
-
-fn rescan_all(
-    workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    settings: Settings,
-    sender: &Sender<Message>,
-    completed: &Sender<ScanResult>,
-) -> Result<()> {
-    let roots: Vec<_> = workspaces.keys().cloned().collect();
-    for root in roots {
-        queue(workspaces, root, settings, sender, completed)?;
-    }
-    Ok(())
-}
-
-fn launch_pending(
-    settings: Settings,
-    sender: &Sender<Message>,
-    workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    completed: &Sender<ScanResult>,
-) -> Result<()> {
-    while let Some((path, generation)) = take_pending(workspaces) {
-        send_status(sender, &path, "scanning")?;
-        scan::spawn(path, generation, settings, completed.clone());
-    }
-    Ok(())
 }
 
 fn apply_result(
