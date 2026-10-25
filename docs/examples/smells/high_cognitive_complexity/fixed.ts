@@ -22,7 +22,7 @@ function canScore(order: Order): boolean {
   if (order.customer.suspended) {
     return false;
   }
-  return true;
+  return order.customer.verified;
 }
 
 function scoreTotal(total: number): number {

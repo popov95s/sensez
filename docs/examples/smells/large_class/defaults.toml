@@ -1,0 +1,3 @@
+# The example stays short; at defaults a class needs more than 20 methods.
+[smells]
+max_class_methods = 3

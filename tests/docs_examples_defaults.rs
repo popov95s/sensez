@@ -6,17 +6,12 @@ const SMELL_EXAMPLES: &str = "docs/examples/smells";
 
 /// Kinds whose examples only fire under the tuned thresholds in `docs/examples/sensez.toml`.
 const NEEDS_DOCS_THRESHOLDS: &[&str] = &[
-    "data_clump",
-    "deep_nesting",
     "god_module",
     "heavy_nested_function",
-    "high_cognitive_complexity",
     "high_complexity",
-    "implicit_schema",
     "large_class",
     "long_function",
     "long_parameter_list",
-    "message_chain",
 ];
 const SUFFIXES: [&str; 2] = ["py", "ts"];
 

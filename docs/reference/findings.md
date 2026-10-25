@@ -630,7 +630,9 @@ The control flow becomes hard to scan and easy to misread in review.
         if order.is_paid:
             if not order.is_flagged:
                 if order.customer.is_active:
-                    return order.total < order.customer.limit
+                    if order.customer.is_verified:
+                        if order.total < order.customer.limit:
+                            return True
         return False
     ```
 
@@ -641,11 +643,11 @@ The control flow becomes hard to scan and easy to misread in review.
 
     ```python
     def approve(order: Order) -> bool:
-        if not order.is_paid:
-            return False
-        if order.is_flagged:
+        if not order.is_paid or order.is_flagged:
             return False
         if not order.customer.is_active:
+            return False
+        if not order.customer.is_verified:
             return False
         return order.total < order.customer.limit
     ```
@@ -660,7 +662,11 @@ The control flow becomes hard to scan and easy to misread in review.
       if (order.isPaid) {
         if (!order.isFlagged) {
           if (order.customer.isActive) {
-            return order.total < order.customer.limit;
+            if (order.customer.isVerified) {
+              if (order.total < order.customer.limit) {
+                return true;
+              }
+            }
           }
         }
       }
@@ -675,13 +681,13 @@ The control flow becomes hard to scan and easy to misread in review.
 
     ```ts
     function approve(order: Order): boolean {
-      if (!order.isPaid) {
-        return false;
-      }
-      if (order.isFlagged) {
+      if (!order.isPaid || order.isFlagged) {
         return false;
       }
       if (!order.customer.isActive) {
+        return false;
+      }
+      if (!order.customer.isVerified) {
         return false;
       }
       return order.total < order.customer.limit;
@@ -740,12 +746,13 @@ The reader has to simulate too many branches and nesting levels at once.
         if order.paid:
             if order.customer.active:
                 if not order.customer.suspended:
-                    if order.total >= 500:
-                        total += 25
-                    elif order.total >= 100:
-                        total += 10
-                    else:
-                        total += 1
+                    if order.customer.verified:
+                        if order.total >= 500:
+                            total += 25
+                        elif order.total >= 100:
+                            total += 10
+                        else:
+                            total += 1
         return total
     ```
 
@@ -776,7 +783,7 @@ The reader has to simulate too many branches and nesting levels at once.
             return False
         if order.customer.suspended:
             return False
-        return True
+        return order.customer.verified
 
 
     def score_total(total: int) -> int:
@@ -798,12 +805,14 @@ The reader has to simulate too many branches and nesting levels at once.
       if (order.paid) {
         if (order.customer.active) {
           if (!order.customer.suspended) {
-            if (order.total >= 500) {
-              total += 25;
-            } else if (order.total >= 100) {
-              total += 10;
-            } else {
-              total += 1;
+            if (order.customer.verified) {
+              if (order.total >= 500) {
+                total += 25;
+              } else if (order.total >= 100) {
+                total += 10;
+              } else {
+                total += 1;
+              }
             }
           }
         }
@@ -842,7 +851,7 @@ The reader has to simulate too many branches and nesting levels at once.
       if (order.customer.suspended) {
         return false;
       }
-      return true;
+      return order.customer.verified;
     }
 
     function scoreTotal(total: number): number {
@@ -1538,6 +1547,20 @@ A single module becomes a hot spot with too many reasons to change.
 
 **Example**
 
+The example is kept short, so it fires with these settings:
+
+```toml
+# The example stays small; at defaults a god module needs a fan of 25, 150 lines
+# and 12 functions or classes, and with four callers shotgun_surgery_hazard wins.
+[smells]
+god_module_fan = 4
+god_module_min_fan_in = 4
+god_module_min_fan_out = 4
+god_module_min_lines = 0
+god_module_min_units = 0
+shotgun_blast_threshold = 5
+```
+
 === "Python"
 
     **Problem**
@@ -1655,6 +1678,14 @@ Nested helpers hide important behavior and make tests awkward.
 
 **Example**
 
+The example is kept short, so it fires with these settings:
+
+```toml
+# The example stays short; at defaults the nested function needs more than 15 lines.
+[smells]
+max_nested_function_lines = 4
+```
+
 === "Python"
 
     **Problem**
@@ -1764,6 +1795,14 @@ A class with too many methods/responsibilities — split it into focused classes
 The class stops having a clear job and becomes a grab bag.
 
 **Example**
+
+The example is kept short, so it fires with these settings:
+
+```toml
+# The example stays short; at defaults a class needs more than 20 methods.
+[smells]
+max_class_methods = 3
+```
 
 === "Python"
 
@@ -2278,12 +2317,16 @@ The same bundle has to be kept in sync everywhere it travels.
     **Problem**
 
     ```python
-    def format_label(street: str, city: str, zip_code: str) -> str:
-        return f"{street}, {city} {zip_code}"
+    def format_label(street: str, city: str, zip_code: str, country: str) -> str:
+        return f"{street}, {city} {zip_code}, {country}"
 
 
-    def shipping_zone(street: str, city: str, zip_code: str) -> str:
-        return zones.lookup(street, city, zip_code)
+    def shipping_zone(street: str, city: str, zip_code: str, country: str) -> str:
+        return zones.lookup(street, city, zip_code, country)
+
+
+    def is_deliverable(street: str, city: str, zip_code: str, country: str) -> bool:
+        return carriers.covers(street, city, zip_code, country)
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -2300,14 +2343,19 @@ The same bundle has to be kept in sync everywhere it travels.
         street: str
         city: str
         zip_code: str
+        country: str
 
 
     def format_label(address: Address) -> str:
-        return f"{address.street}, {address.city} {address.zip_code}"
+        return f"{address.street}, {address.city} {address.zip_code}, {address.country}"
 
 
     def shipping_zone(address: Address) -> str:
-        return zones.lookup(address.street, address.city, address.zip_code)
+        return zones.lookup(address)
+
+
+    def is_deliverable(address: Address) -> bool:
+        return carriers.covers(address)
     ```
     </details>
 
@@ -2316,12 +2364,16 @@ The same bundle has to be kept in sync everywhere it travels.
     **Problem**
 
     ```ts
-    function formatLabel(street: string, city: string, zipCode: string): string {
-      return `${street}, ${city} ${zipCode}`;
+    function formatLabel(street: string, city: string, zipCode: string, country: string): string {
+      return `${street}, ${city} ${zipCode}, ${country}`;
     }
 
-    function shippingZone(street: string, city: string, zipCode: string): string {
-      return zones.lookup(street, city, zipCode);
+    function shippingZone(street: string, city: string, zipCode: string, country: string): string {
+      return zones.lookup(street, city, zipCode, country);
+    }
+
+    function isDeliverable(street: string, city: string, zipCode: string, country: string): boolean {
+      return carriers.covers(street, city, zipCode, country);
     }
     ```
 
@@ -2335,14 +2387,19 @@ The same bundle has to be kept in sync everywhere it travels.
       street: string;
       city: string;
       zipCode: string;
+      country: string;
     }
 
     function formatLabel(address: Address): string {
-      return `${address.street}, ${address.city} ${address.zipCode}`;
+      return `${address.street}, ${address.city} ${address.zipCode}, ${address.country}`;
     }
 
     function shippingZone(address: Address): string {
-      return zones.lookup(address.street, address.city, address.zipCode);
+      return zones.lookup(address);
+    }
+
+    function isDeliverable(address: Address): boolean {
+      return carriers.covers(address);
     }
     ```
     </details>
@@ -2862,8 +2919,8 @@ Deep property walking couples the caller to the whole object graph.
     **Problem**
 
     ```python
-    def city(order: Order) -> str:
-        return order.customer.address.city.name
+    def country(order: Order) -> str:
+        return order.customer.address.city.country.name
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -2873,22 +2930,27 @@ Deep property walking couples the caller to the whole object graph.
 
     ```python
     class Order:
-        def shipping_city(self) -> str:
-            return self.customer.shipping_city()
+        def shipping_country(self) -> str:
+            return self.customer.shipping_country()
 
 
     class Customer:
-        def shipping_city(self) -> str:
-            return self.address.city_name()
+        def shipping_country(self) -> str:
+            return self.address.country_name()
 
 
     class Address:
-        def city_name(self) -> str:
-            return self.city.name
+        def country_name(self) -> str:
+            return self.city.country_name()
 
 
-    def city(order: Order) -> str:
-        return order.shipping_city()
+    class City:
+        def country_name(self) -> str:
+            return self.country.name
+
+
+    def country(order: Order) -> str:
+        return order.shipping_country()
     ```
     </details>
 
@@ -2897,8 +2959,8 @@ Deep property walking couples the caller to the whole object graph.
     **Problem**
 
     ```ts
-    function city(order: Order): string {
-      return order.customer.address.city.name;
+    function country(order: Order): string {
+      return order.customer.address.city.country.name;
     }
     ```
 
@@ -2909,25 +2971,31 @@ Deep property walking couples the caller to the whole object graph.
 
     ```ts
     class Order {
-      shippingCity(): string {
-        return this.customer.shippingCity();
+      shippingCountry(): string {
+        return this.customer.shippingCountry();
       }
     }
 
     class Customer {
-      shippingCity(): string {
-        return this.address.cityName();
+      shippingCountry(): string {
+        return this.address.countryName();
       }
     }
 
     class Address {
-      cityName(): string {
-        return this.city.name;
+      countryName(): string {
+        return this.city.countryName();
       }
     }
 
-    function city(order: Order): string {
-      return order.shippingCity();
+    class City {
+      countryName(): string {
+        return this.country.name;
+      }
+    }
+
+    function country(order: Order): string {
+      return order.shippingCountry();
     }
     ```
     </details>
@@ -3266,7 +3334,8 @@ Stringly typed payloads drift silently when the shape changes.
         email = payload["email"]
         plan = payload["plan"]
         active = payload["active"]
-        return users.create(email, plan, active)
+        seats = payload["seats"]
+        return users.create(email, plan, active, seats)
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -3283,10 +3352,11 @@ Stringly typed payloads drift silently when the shape changes.
         email: str
         plan: str
         active: bool
+        seats: int
 
 
     def create_user(payload: UserPayload) -> User:
-        return users.create(payload.email, payload.plan, payload.active)
+        return users.create(payload)
     ```
     </details>
 
@@ -3299,7 +3369,8 @@ Stringly typed payloads drift silently when the shape changes.
       const email = payload["email"];
       const plan = payload["plan"];
       const active = payload["active"];
-      return users.create(email, plan, active);
+      const seats = payload["seats"];
+      return users.create(email, plan, active, seats);
     }
     ```
 
@@ -3313,10 +3384,11 @@ Stringly typed payloads drift silently when the shape changes.
       email: string;
       plan: string;
       active: boolean;
+      seats: number;
     }
 
     function createUser(payload: UserPayload): User {
-      return users.create(payload.email, payload.plan, payload.active);
+      return users.create(payload);
     }
     ```
     </details>

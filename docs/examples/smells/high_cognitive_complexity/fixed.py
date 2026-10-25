@@ -19,7 +19,7 @@ def can_score(order: Order) -> bool:
         return False
     if order.customer.suspended:
         return False
-    return True
+    return order.customer.verified
 
 
 def score_total(total: int) -> int:

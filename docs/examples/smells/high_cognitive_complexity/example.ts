@@ -3,12 +3,14 @@ function score(order: Order): number {
   if (order.paid) {
     if (order.customer.active) {
       if (!order.customer.suspended) {
-        if (order.total >= 500) {
-          total += 25;
-        } else if (order.total >= 100) {
-          total += 10;
-        } else {
-          total += 1;
+        if (order.customer.verified) {
+          if (order.total >= 500) {
+            total += 25;
+          } else if (order.total >= 100) {
+            total += 10;
+          } else {
+            total += 1;
+          }
         }
       }
     }

@@ -9,6 +9,8 @@
 # temporary scan root alongside this file, runs `sensez noze`, and asserts:
 #   - `example.{py,ts}` triggers the named finding (collateral findings allowed).
 #   - `fixed.{py,ts}` triggers no finding from any pillar.
+#   - a default-on smell also fires on `example.{py,ts}` with no config, plus
+#     the folder's `defaults.toml` when the example stays below the defaults.
 #
 # `<kind>` is either a smell kind snake_case name (`boolean_blindness`, ...) or
 # one of the pillar keys (`cycles`, `dead_code`, `boundaries`, `duplication`).

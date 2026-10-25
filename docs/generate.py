@@ -251,6 +251,16 @@ def render_example_and_fix_tabs(doc: RichDocs) -> str:
     return rendered
 
 
+def render_defaults_note(smell_term: SmellTerm) -> str:
+    note = EXAMPLES_ROOT / str(smell_term) / "defaults.toml"
+    if not note.exists():
+        return ""
+    return (
+        "The example is kept short, so it fires with these settings:\n\n"
+        f"```toml\n{note.read_text().rstrip()}\n```\n\n"
+    )
+
+
 def render_optional_lints(lints: list[tuple[str, str]]) -> str:
     if not lints:
         return ""
@@ -289,6 +299,7 @@ def render_findings() -> str:
                     "**Why it's bad**\n\n",
                     f"{doc.why_bad}\n\n",
                     "**Example**\n\n",
+                    render_defaults_note(smell.term),
                     examples,
                     "\n",
                     render_tuning(smell.term, knobs.get(smell.term, [])),
