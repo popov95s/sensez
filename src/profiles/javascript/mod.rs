@@ -15,6 +15,7 @@ pub(crate) mod fallback_sink;
 pub(crate) mod generated;
 pub(crate) mod grammar;
 pub(crate) mod imports;
+mod iteration;
 pub(crate) mod lexeme;
 pub(crate) mod loops;
 mod magic_numbers;

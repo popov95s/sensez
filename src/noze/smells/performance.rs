@@ -213,13 +213,19 @@ fn repeated_iterations<'a>(
     by_base
         .into_iter()
         .filter(|((base, _), calls)| {
-            calls
-                .iter()
-                .any(|call| call.pass != IterationPass::Projection)
-                && has_fusable_pair(m, profile, base, calls)
+            worth_fusing(calls) && has_fusable_pair(m, profile, base, calls)
         })
         .map(|(_, calls)| calls)
         .collect()
+}
+
+/// Three real passes, two loops, or two passes where one aggregates; projections do not count.
+fn worth_fusing(calls: &[&CallFact]) -> bool {
+    let count = |pass: IterationPass| calls.iter().filter(|call| call.pass == pass).count();
+    let passes = calls.len() - count(IterationPass::Projection);
+    passes >= 3
+        || count(IterationPass::Loop) >= 2
+        || (passes >= 2 && count(IterationPass::Aggregate) >= 1)
 }
 
 fn has_fusable_pair(

@@ -1,19 +1,11 @@
 //! JS/TS AST facts for performance-oriented smells.
 
+use super::iteration::{iteration_call, loop_pass};
 use crate::profiles::lineage::Lineage;
 use crate::profiles::walk;
-use crate::spine::ir::{CallFact, IterationPass, PerfLine, PerformanceFacts};
+use crate::spine::ir::{CallFact, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
 
-const FULL_PASS_METHODS: &[&str] = &[
-    "filter",
-    "map",
-    "reduce",
-    "reduceRight",
-    "forEach",
-    "flatMap",
-];
-const ASSERTION_CALLEES: &[&str] = &["expect", "assert"];
 const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "all", "execute", "fetch", "fetchOne", "find", "findOne", "load", "query", "request", "save",
 ];
@@ -63,6 +55,9 @@ pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: O
         }
         _ => {}
     }
+    if let Some(pass) = loop_pass(node, src) {
+        facts.iteration_calls.push(pass);
+    }
     if kind != "call_expression" {
         return;
     }
@@ -70,7 +65,7 @@ pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: O
         return;
     };
     facts.calls.push(call.clone());
-    if let Some(iteration) = iteration_call(lineage, src, &call) {
+    if let Some(iteration) = iteration_call(node, src, &call) {
         facts.iteration_calls.push(iteration);
     }
     if frame.is_none() {
@@ -123,89 +118,6 @@ fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     Some(call)
 }
 
-fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> Option<CallFact> {
-    let node = lineage.node();
-    if !call.member {
-        return None;
-    }
-    let pass = match call.method.as_str() {
-        "map" if is_trivial_projection(node, src) => IterationPass::Projection,
-        method if FULL_PASS_METHODS.contains(&method) => IterationPass::Full,
-        _ => return None,
-    };
-    Some(CallFact {
-        pass,
-        in_assertion: in_assertion(lineage, src),
-        arg_idents: node
-            .child_by_field_name("arguments")
-            .map(|args| super::loops::names(Some(args), src))
-            .unwrap_or_default(),
-        ..call.clone()
-    })
-}
-
-/// `xs.map(x => x.field)`.
-fn is_trivial_projection(call: Node, src: &[u8]) -> bool {
-    let Some(arrow) = call
-        .child_by_field_name("arguments")
-        .filter(|args| args.named_child_count() == 1)
-        .and_then(|args| args.named_child(0))
-        .filter(|arg| arg.kind() == "arrow_function")
-    else {
-        return false;
-    };
-    let param = arrow
-        .child_by_field_name("parameter")
-        .or_else(|| sole_parameter(arrow))
-        .and_then(|p| walk::node_text(p, src));
-    let object = arrow
-        .child_by_field_name("body")
-        .filter(|body| body.kind() == "member_expression")
-        .and_then(|body| body.child_by_field_name("object"))
-        .and_then(|object| walk::node_text(object, src));
-    param.is_some() && param == object
-}
-
-/// `p` in `(p) => …`.
-fn sole_parameter(arrow: Node) -> Option<Node> {
-    arrow
-        .child_by_field_name("parameters")
-        .filter(|params| params.named_child_count() == 1)
-        .and_then(|params| params.named_child(0))
-        .map(|param| param.child_by_field_name("pattern").unwrap_or(param))
-}
-
-fn in_assertion(lineage: Lineage, src: &[u8]) -> bool {
-    let mut current = lineage.node();
-    while let Some(parent) = lineage.parent(current) {
-        if super::units::is_function(parent.kind()) {
-            return false;
-        }
-        if parent.kind() == "call_expression" && is_assertion_call(parent, src) {
-            return true;
-        }
-        current = parent;
-    }
-    false
-}
-
-/// `expect(..)`, `expect(..).toBe(..)`, `assert(..)`, `assert.equal(..)`.
-fn is_assertion_call(call: Node, src: &[u8]) -> bool {
-    let mut callee = call.child_by_field_name("function");
-    while let Some(node) = callee {
-        callee = match node.kind() {
-            "member_expression" => node.child_by_field_name("object"),
-            "call_expression" => node.child_by_field_name("function"),
-            "identifier" => {
-                return walk::node_text(node, src)
-                    .is_some_and(|name| ASSERTION_CALLEES.contains(&name))
-            }
-            _ => None,
-        };
-    }
-    false
-}
-
 /// Names a loop body declares, and which of them hold call results.
 fn record_loop_declaration(
     facts: &mut PerformanceFacts,
@@ -223,7 +135,7 @@ fn record_loop_declaration(
     }
 }
 
-fn stable_receiver(node: &Node<'_>) -> bool {
+pub(super) fn stable_receiver(node: &Node<'_>) -> bool {
     matches!(node.kind(), "identifier" | "this")
         || (node.kind() == "member_expression"
             && node
@@ -231,7 +143,7 @@ fn stable_receiver(node: &Node<'_>) -> bool {
                 .is_some_and(|base| stable_receiver(&base)))
 }
 
-fn control_region(lineage: Lineage) -> usize {
+pub(super) fn control_region(lineage: Lineage) -> usize {
     let mut current = lineage.node();
     while let Some(parent) = lineage.parent(current) {
         if matches!(

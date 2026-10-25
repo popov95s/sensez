@@ -306,6 +306,8 @@ mod nested_ternary_tests;
 #[cfg(test)]
 mod performance_tests;
 #[cfg(test)]
+mod repeated_iteration_tests;
+#[cfg(test)]
 mod swallowed_error_tests;
 #[cfg(test)]
 mod tests;

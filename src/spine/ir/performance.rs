@@ -53,6 +53,10 @@ pub enum IterationPass {
     Full,
     /// `map(x => x.field)`.
     Projection,
+    /// Folds the collection into one value: `reduce`, `sum`, `filter(..).length`.
+    Aggregate,
+    /// A `for … of` loop over the collection.
+    Loop,
 }
 
 impl CallFact {
