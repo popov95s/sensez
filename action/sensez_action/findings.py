@@ -55,7 +55,7 @@ def flatten_duplication(
         action = str(clone_class.get("action") or "advisory")
         for occurrence in occurrences:
             occurrence = cast(Occurrence, occurrence)
-            path = _relative_path(occurrence.get("file", ""), workspace)
+            path = _relative_path(occurrence.get("file"), workspace)
             start = int(occurrence.get("start_row") or 1)
             end = int(occurrence.get("end_row") or start)
             if changed is not None and not _touches_changed(path, start, end, changed):
@@ -81,8 +81,8 @@ def should_fail(report: DuplicationReport, fail_on_new: FailureLevel) -> bool:
     return False
 
 
-def _relative_path(value: str, workspace: Path) -> str:
-    path = Path(value)
+def _relative_path(value: Optional[str], workspace: Path) -> str:
+    path = Path(value) if value is not None else Path()
     if path.is_absolute():
         try:
             return path.relative_to(workspace).as_posix()
@@ -92,7 +92,7 @@ def _relative_path(value: str, workspace: Path) -> str:
 
 
 def _peer_text(occurrence: Occurrence, workspace: Path) -> str:
-    path = _relative_path(occurrence.get("file", ""), workspace)
+    path = _relative_path(occurrence.get("file"), workspace)
     start = int(occurrence.get("start_row") or 1)
     end = int(occurrence.get("end_row") or start)
     return f"{path}:{start}-{end}"

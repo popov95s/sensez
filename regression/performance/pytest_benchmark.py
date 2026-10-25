@@ -24,9 +24,9 @@ class ReflexezPlan:
 class BenchmarkReport:
     schema: int
     target: dict[str, str]
-    protocol: dict[str, object]
+    protocol: dict[str, str | int | bool]
     scope: dict[str, int]
-    testmon_baseline: dict[str, object]
+    testmon_baseline: dict[str, str | int | float | None]
     measurements: list[dict[str, object]]
     comparisons: dict[str, dict[str, float]]
 
