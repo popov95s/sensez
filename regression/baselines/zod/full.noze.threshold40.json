@@ -837,8 +837,8 @@
       "tests": 171
     },
     "duplication_total": 31,
-    "external_edges": 462,
-    "internal_edges": 521,
+    "external_edges": 458,
+    "internal_edges": 525,
     "mode": "full",
     "smell_totals": {
       "data_clump": 3,

@@ -2,8 +2,8 @@
   "meta": {
     "mode": "full",
     "boundaries_configured": false,
-    "internal_edges": 524,
-    "external_edges": 462,
+    "internal_edges": 528,
+    "external_edges": 458,
     "analyzed_files": 374,
     "source_lines": 72143,
     "cycles_total": 3,
