@@ -184,8 +184,15 @@ fn parse_loaded_source(
         profile.info().language,
         source.content_hash,
     );
+    let is_generated = profile.is_generated(path, src);
     let walked = parse_source_with_parser(src, file_id, &module_name, profile, parser)
-        .with_context(|| format!("parsing {}", path.display()))?;
+        .with_context(|| {
+            if is_generated {
+                format!("generated file skipped: {}", path.display())
+            } else {
+                format!("parsing {}", path.display())
+            }
+        })?;
     let lines = if src.is_empty() {
         0
     } else {
@@ -197,7 +204,7 @@ fn parse_loaded_source(
         lines,
         fingerprint,
         walked: Arc::new(walked),
-        is_generated: profile.is_generated(path, src),
+        is_generated,
     })
 }
 

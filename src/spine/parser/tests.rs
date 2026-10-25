@@ -40,3 +40,15 @@ fn loaded_sources_parse_without_rereading_the_filesystem() {
     assert_eq!(parsed.files.len(), 1);
     assert_eq!(parsed.files[0].path, path);
 }
+
+#[test]
+fn too_deep_generated_file_says_it_was_a_generated_file() {
+    let root = tempfile::tempdir().unwrap();
+    let dir = root.path().join("_generated");
+    std::fs::create_dir(&dir).unwrap();
+    let path = dir.join("model.d.ts");
+    let src = format!("type T = {}1{};\n", "(".repeat(600), ")".repeat(600));
+    std::fs::write(&path, src).unwrap();
+    let error = format!("{:#}", parse_file(&path, 0).unwrap_err());
+    assert!(error.contains("generated file skipped"), "{error}");
+}
