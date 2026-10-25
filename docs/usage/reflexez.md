@@ -57,11 +57,12 @@ a `test` key, or `jest.config.*` at the root selects the runner. A
 `package.json` that is not valid JSON is skipped with a config warning, and a
 runner project with no discovered tests is not run.
 
-pytest tests follow the nearest `pytest.ini`, `pyproject.toml` with
-`[tool.pytest.ini_options]`, `tox.ini` or `setup.cfg` above each file: its
-`testpaths` and `python_files` decide what is collected, and its directory is
-where pytest runs. Without one, the default `test_*.py` / `*_test.py` patterns
-apply from the repository root. Force a runner only when auto-detection is
+pytest tests follow the repository's `pytest.ini`, `pyproject.toml` with
+`[tool.pytest.ini_options]`, `tox.ini` or `setup.cfg`: its `testpaths` and
+`python_files` decide what is collected. When the repository root has none, the
+nearest such file above each test applies instead and pytest runs from its
+directory (for example `backend/pyproject.toml`). Without any, the default
+`test_*.py` / `*_test.py` patterns apply from the repository root. Force a runner only when auto-detection is
 ambiguous:
 
 ```bash
