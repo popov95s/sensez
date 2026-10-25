@@ -45,6 +45,7 @@ mod fused_collector_tests;
 #[cfg(test)]
 mod tests;
 
+use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
     DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
     PerformanceProfile, TypeVocabularyProfile,
@@ -61,6 +62,7 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     extensions: &["js", "jsx", "mjs", "cjs"],
     test_support: test_support::TEST_SUPPORT,
     migration_layouts: &[],
+    test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     wording: &wording::WORDING,
 };
 impl ParseProfile for JsProfile {

@@ -28,6 +28,7 @@ pub(crate) mod typevocab;
 mod units;
 mod wording;
 
+use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
     DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
     PerformanceProfile, TypeVocabularyProfile,
@@ -44,6 +45,7 @@ static PYTHON_INFO: LanguageInfo = LanguageInfo {
     extensions: &["py", "pyi"],
     test_support: &[],
     migration_layouts: &["**/alembic/**/*.py", "**/versions/**/*.py"],
+    test_runners: &[RunnerKind::Pytest],
     wording: &wording::WORDING,
 };
 impl ParseProfile for PythonProfile {

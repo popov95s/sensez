@@ -8,6 +8,7 @@ use crate::profiles::javascript::{
     deadcode, declaration, generated, manifest, performance, resolve, roots, test_support,
     traversal, typevocab, wording,
 };
+use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
     DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
     PerformanceProfile, TypeVocabularyProfile,
@@ -69,6 +70,7 @@ static TS_INFO: LanguageInfo = LanguageInfo {
     extensions: &["ts", "mts", "cts"],
     test_support: test_support::TEST_SUPPORT,
     migration_layouts: &[],
+    test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     wording: &wording::WORDING,
 };
 
@@ -77,6 +79,7 @@ static TSX_INFO: LanguageInfo = LanguageInfo {
     extensions: &["tsx"],
     test_support: test_support::TEST_SUPPORT,
     migration_layouts: &[],
+    test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     wording: &wording::WORDING,
 };
 /// The TypeScript language profile (zero-sized).

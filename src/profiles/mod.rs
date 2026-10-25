@@ -69,6 +69,8 @@ pub struct LanguageInfo {
     pub test_support: &'static [&'static str],
     /// Generated, often cyclic migration scripts: skipped by duplication, smells and cycles.
     pub migration_layouts: &'static [&'static str],
+    /// Test runners that collect this language's tests; empty when reflexez cannot select them.
+    pub test_runners: &'static [runner_config::RunnerKind],
     pub wording: &'static wording::SmellWording,
 }
 

@@ -103,16 +103,12 @@ pub(super) fn global_trigger(path: &Path) -> Option<&'static str> {
     None
 }
 
-/// Language of a source file whose tests reflexez can select (it has no Rust runner).
+/// Language of a source file whose tests reflexez can select: its profile names a test runner.
 pub(super) fn source_language(path: &Path) -> Option<Language> {
     registry::parse_for_path(path)
-        .map(|profile| profile.info().language)
-        .filter(|language| {
-            matches!(
-                language,
-                Language::Python | Language::JavaScript | Language::TypeScript
-            )
-        })
+        .map(|profile| profile.info())
+        .filter(|info| !info.test_runners.is_empty())
+        .map(|info| info.language)
 }
 
 pub(super) fn is_source(path: &Path) -> bool {
