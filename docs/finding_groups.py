@@ -60,6 +60,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.LOOSE_TYPING,
             SmellTerm.TUPLE_PACKING,
             SmellTerm.DEFENSIVE_FALLBACK,
+            SmellTerm.SWALLOWED_ERROR_SENTINEL,
         ),
     ),
     (

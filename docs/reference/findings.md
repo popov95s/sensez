@@ -3728,6 +3728,191 @@ action = "warning"
 </table>
 </details>
 
+### Swallowed Error Sentinel (`swallowed_error_sentinel`)
+
+**What it is**
+
+An error handler drops the error and returns a placeholder (`null`, `[]`, `false`) or only logs — callers get a plausible value instead of a failure; rethrow or return a typed failure.
+
+**Why it's bad**
+
+A handler that turns any failure into `null`, an empty list or a log line hands callers a plausible value; the broken contract surfaces far from its cause, or never.
+
+**Example**
+
+=== "Python"
+
+    === "Low"
+
+        Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.
+
+        **Problem**
+
+        ```python
+        def load_profile(profile_id):
+            try:
+                return client.profiles.get(profile_id)
+            except Exception as error:
+                log.warning("profile load failed: %s", error)
+                return None
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Catch the specific exception you can handle, re-raise the rest with `raise ... from error`, or return a typed failure the caller must check.
+
+        ```python
+        def load_profile(profile_id):
+            try:
+                return client.profiles.get(profile_id)
+            except ClientError as error:
+                raise ProfileUnavailable(profile_id) from error
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags empty-value returns around a single JSON parse.
+
+        **Problem**
+
+        ```python
+        import json
+
+
+        def read_settings(text):
+            try:
+                return json.loads(text)
+            except Exception:
+                return None
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Catch the specific exception you can handle, re-raise the rest with `raise ... from error`, or return a typed failure the caller must check.
+
+        ```python
+        def load_profile(profile_id):
+            try:
+                return client.profiles.get(profile_id)
+            except ClientError as error:
+                raise ProfileUnavailable(profile_id) from error
+        ```
+
+        </details>
+
+=== "JS / TS"
+
+    === "Low"
+
+        Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.
+
+        **Problem**
+
+        ```ts
+        async function loadProfile(id: string): Promise<Profile | null> {
+          try {
+            return await client.profiles.get(id);
+          } catch (error) {
+            console.warn("profile load failed", error);
+            return null;
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rethrow, or return a typed failure (`{ ok: false, error }` or a `Result`) so the caller must handle it; keep a `tryX(): T | null` helper only where missing is the documented contract.
+
+        ```ts
+        async function loadProfile(id: string): Promise<Result<Profile, LoadError>> {
+          try {
+            return ok(await client.profiles.get(id));
+          } catch (error) {
+            return err(toLoadError(error));
+          }
+        }
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags empty-value returns around a single JSON parse.
+
+        **Problem**
+
+        ```ts
+        function readSettings(text: string) {
+          try {
+            return JSON.parse(text);
+          } catch {
+            return undefined;
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rethrow, or return a typed failure (`{ ok: false, error }` or a `Result`) so the caller must handle it; keep a `tryX(): T | null` helper only where missing is the documented contract.
+
+        ```ts
+        async function loadProfile(id: string): Promise<Result<Profile, LoadError>> {
+          try {
+            return ok(await client.profiles.get(id));
+          } catch (error) {
+            return err(toLoadError(error));
+          }
+        }
+        ```
+
+        </details>
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+=== "Low"
+
+    ```toml
+    [smells.<lang>.rules.swallowed_error_sentinel]
+    enabled = true
+    action = "warning"
+    strictness = "low"
+    ```
+
+    Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.
+
+=== "Medium"
+
+    ```toml
+    [smells.<lang>.rules.swallowed_error_sentinel]
+    enabled = true
+    action = "warning"
+    strictness = "medium"
+    ```
+
+    Also flags empty-value returns around a single JSON parse.
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ## Mutation and State
 
 ### Mutated Parameter (`mutated_parameter`)
