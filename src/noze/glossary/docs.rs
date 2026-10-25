@@ -756,6 +756,13 @@ FindingDocs {
         references: &[],
         fixes: &[LanguageBlock { language: "python", body: "Assert an observable result or expected exception." }, LanguageBlock { language: "typescript", body: "Assert the result, state, or expected rejection with a matcher." }],
     },
+    FindingDocs {
+        kind: MockedSubject,
+        why_bad: "A test that replaces the module it claims to test checks the double's canned answer; it stays green when the real code breaks.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Patch the collaborators the subject calls, or patch with `wraps=` to keep the real function." }, LanguageBlock { language: "typescript", body: "Mock the collaborators the subject imports, or keep the real module with `importActual` / `importOriginal`." }],
+    },
 ];
 
 pub fn all() -> impl Iterator<Item = &'static FindingDocs> {

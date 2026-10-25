@@ -16,6 +16,8 @@ mod graphy;
 mod inherit;
 mod lines;
 mod magic_string;
+mod mock_modules;
+mod mocked_subject;
 mod mutation;
 mod performance;
 mod review_risks;
@@ -38,6 +40,8 @@ mod dependency_reimplementation_tests;
 mod god_module_tests;
 #[cfg(test)]
 mod graph_tests;
+#[cfg(test)]
+mod mocked_subject_tests;
 #[cfg(test)]
 mod review_risks_tests;
 #[cfg(test)]
@@ -127,7 +131,7 @@ pub fn detect(
         files
             .par_iter()
             .filter(|file| !scope.includes(file) && !explicit.is_match(&file.path))
-            .flat_map(|file| test_oracles(file, cfg.for_language(file.language))),
+            .flat_map(|file| test_rules(file, cfg.for_language(file.language))),
     );
 
     let mut cross_file = clumps::detect(&kept, cfg);
@@ -143,14 +147,18 @@ pub fn detect(
     out
 }
 
-/// The opt-in test rule on a file the ordinary smell scope skips.
-fn test_oracles(file: &ParsedFile, settings: &Smells) -> Vec<SmellFinding> {
-    if !settings.is_enabled(SmellKind::WeakTestOracle) {
-        return Vec::new();
-    }
+/// The test-source rules on a file the ordinary smell scope skips.
+fn test_rules(file: &ParsedFile, settings: &Smells) -> Vec<SmellFinding> {
     let ctx = SmellContext::from_file(file);
-    let mut findings =
-        review_risks::detect_test_oracles(&ctx, &file.walked.units.functions, settings);
+    let mut findings = mocked_subject::detect(file, &ctx, settings);
+    if settings.is_enabled(SmellKind::WeakTestOracle) {
+        findings.extend(review_risks::detect_test_oracles(
+            &ctx,
+            &file.walked.units.functions,
+            settings,
+        ));
+    }
+    findings.retain(|finding| settings.is_enabled(finding.kind));
     apply_actions(&mut findings, settings);
     fill_spans(file, &mut findings);
     findings
@@ -179,6 +187,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     typing::detect(&ctx, metrics, cfg, &mut out);
     mutation::detect(&ctx, metrics, cfg, &mut out);
     out.extend(performance::detect(&ctx, metrics, cfg));
+    out.extend(mocked_subject::detect(file, &ctx, cfg));
     out.retain(|f| cfg.is_enabled(f.kind));
     apply_actions(&mut out, cfg);
     fill_spans(file, &mut out);

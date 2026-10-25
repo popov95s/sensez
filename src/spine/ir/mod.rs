@@ -9,6 +9,7 @@ mod import_context;
 mod lang;
 mod loop_frame;
 mod magic_number;
+mod mock_target;
 mod performance;
 mod sentinel_handler;
 pub mod tokens;
@@ -22,6 +23,7 @@ pub use import_context::{ImportContext, ImportPhase};
 pub use lang::Language;
 pub use loop_frame::{LoopBound, LoopFrame, LoopKind};
 pub use magic_number::{MagicContext, MagicNumber};
+pub use mock_target::{MockFidelity, MockHost, MockScope, MockTarget};
 pub use performance::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 pub use sentinel_handler::{GuardedBody, HandlerComment, HandlerEnd, SentinelHandler};
 pub use tokens::{StructuralToken, TokenSpan};
@@ -111,6 +113,8 @@ pub struct UnitFacts {
     pub classes: Vec<ClassUnit>,
     pub type_hints: TypeHints,
     pub comment_spans: Vec<CommentSpan>,
+    /// Test doubles installed by module-mocking and patching calls.
+    pub mock_targets: Vec<MockTarget>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

@@ -135,7 +135,7 @@ def ranked_tuning_tabs(rule: StrictnessRule) -> list[TuningTab]:
 
 
 def read_ranked_example(smell_term: SmellTerm, level: str, ext: str) -> str:
-    return (EXAMPLES / smell_term / level / f"example.{ext}").read_text().rstrip()
+    return next((EXAMPLES / smell_term / level).glob(f"*example*.{ext}")).read_text().rstrip()
 
 
 def render_tabbed_tuning(smell_term: SmellTerm, tabs: list[TuningTab]) -> str:
@@ -191,7 +191,7 @@ def render_example_tab(fence: str, tab: ExampleTab) -> list[str]:
 
 
 def read_fixed_example(smell_term: SmellTerm, ext: str) -> str:
-    return (EXAMPLES / smell_term / f"fixed.{ext}").read_text().rstrip()
+    return next((EXAMPLES / smell_term).glob(f"fixed*.{ext}")).read_text().rstrip()
 
 
 def language_key(ext: str) -> str:

@@ -13,4 +13,7 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     handler_clause: "error arm",
     swallowed_error_advice: "propagate it with `?` or return the `Err` to the caller",
     framework_names: &["main"],
+    double_api_prefixes: &[],
+    test_file_prefix: "",
+    test_file_suffix: "",
 };

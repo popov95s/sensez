@@ -12,6 +12,7 @@ mod lexeme;
 mod loops;
 mod magic_numbers;
 mod manifest;
+mod mock_targets;
 mod nested;
 mod nesting;
 mod obsession;

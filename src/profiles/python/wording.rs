@@ -14,4 +14,7 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     swallowed_error_advice:
         "re-raise it (`raise ... from error`) or return a typed failure the caller must handle",
     framework_names: &["main", "handler", "setup"],
+    double_api_prefixes: &["mock", "assert_"],
+    test_file_prefix: "test_",
+    test_file_suffix: "_test",
 };
