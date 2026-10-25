@@ -240,6 +240,7 @@
       "magic_string_default": 3,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
+      "name_promise_mismatch": 1,
       "nested_loop": 6,
       "shotgun_surgery_hazard": 1,
       "sibling_helper_redefinition": 2,
@@ -251,7 +252,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 147,
+    "smells_total": 148,
     "source_lines": 18315
   },
   "smells": [
@@ -384,6 +385,20 @@
       "message": "1 membership test(s) against literal string lists at L48 \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
       "symbol": "get_load_dotenv",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "name_promise_mismatch",
+      "line": 360,
+      "lines": [
+        393,
+        394
+      ],
+      "message": "`get_flashed_messages` writes: `session.pop` at L393, `app_ctx._flashes` at L394 \u2014 rename it to say so or move the write to the caller",
+      "metric": 2,
+      "symbol": "get_flashed_messages",
       "threshold": 0
     },
     {

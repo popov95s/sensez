@@ -203,7 +203,7 @@
       "cycles": 2,
       "dead_code": 6,
       "duplication": 4,
-      "smells": 147
+      "smells": 148
     },
     "truncated": false
   },
@@ -337,6 +337,20 @@
       "message": "1 membership test(s) against literal string lists at L48 \u2014 stringly-typed categories; consider an Enum",
       "metric": 1,
       "symbol": "get_load_dotenv",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "name_promise_mismatch",
+      "line": 360,
+      "lines": [
+        393,
+        394
+      ],
+      "message": "`get_flashed_messages` writes: `session.pop` at L393, `app_ctx._flashes` at L394 \u2014 rename it to say so or move the write to the caller",
+      "metric": 2,
+      "symbol": "get_flashed_messages",
       "threshold": 0
     },
     {

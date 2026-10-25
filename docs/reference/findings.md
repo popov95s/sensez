@@ -4543,7 +4543,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     action = "warning"
     strictness = "low"
     read_prefixes = ["get", "is", "has", "find", "list", "validate", "check"] # name prefixes that promise a read
-    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "push", "splice", "save", "commit", "post", "put"] # method names that count as writes on outside receivers
+    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "save", "commit", "post", "put"] # method names that count as writes on outside receivers (each language adds its own mutators)
     ```
 
     Flags only database, network and scheduling writes.
@@ -4556,7 +4556,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     action = "warning"
     strictness = "medium"
     read_prefixes = ["get", "is", "has", "find", "list", "validate", "check"] # name prefixes that promise a read
-    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "push", "splice", "save", "commit", "post", "put"] # method names that count as writes on outside receivers
+    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "save", "commit", "post", "put"] # method names that count as writes on outside receivers (each language adds its own mutators)
     ```
 
     Also flags mutating calls and assignments on parameters, own members and module-level names; skips caches and lazy initialisation.
@@ -4569,7 +4569,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     action = "warning"
     strictness = "high"
     read_prefixes = ["get", "is", "has", "find", "list", "validate", "check"] # name prefixes that promise a read
-    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "push", "splice", "save", "commit", "post", "put"] # method names that count as writes on outside receivers
+    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "save", "commit", "post", "put"] # method names that count as writes on outside receivers (each language adds its own mutators)
     ```
 
     Also flags cache fills and lazy initialisation, and treats `load` and `fetch` names as reads.
