@@ -4,7 +4,7 @@ from ..branch_metrics.assertions import assert_exact_transition_count
 from ..branch_metrics.stability import (
     reported_stable_across_branch_switches,
 )
-from ..harness.artifacts import dump_metrics_schema, dump_normalized
+from ..harness.artifacts import dump_metrics_schema, dump_run_artifact
 from ..harness.assertions import (
     assert_brainz_totals_reported,
     assert_finding_reintroduced,
@@ -35,7 +35,7 @@ def _verify_protocol(client: McpClient, context: RegressionRun, repo: Path) -> N
     initialized = client.request("initialize")["result"]
     assert initialized["serverInfo"]["name"] == "sensez"
     tools = client.request("tools/list")["result"]
-    _dump(context, repo, "mcp.tools.json", tools)
+    dump_run_artifact(context, repo, "mcp.tools.json", tools)
 
 
 def _record_full_and_limited_scans(
@@ -47,7 +47,7 @@ def _record_full_and_limited_scans(
             {"path": str(repo), "diff": False},
         )
     )
-    _dump(context, repo, "mcp.full.noze.json", full)
+    dump_run_artifact(context, repo, "mcp.full.noze.json", full)
     limited = text_json(
         client.call_tool(
             "noze_sniff",
@@ -59,9 +59,9 @@ def _record_full_and_limited_scans(
             },
         )
     )
-    _dump(context, repo, "mcp.limited.noze.json", limited)
+    dump_run_artifact(context, repo, "mcp.limited.noze.json", limited)
     report = _brainz_report(client, repo)
-    _dump(context, repo, "brainz.after-full.json", report)
+    dump_run_artifact(context, repo, "brainz.after-full.json", report)
     assert_brainz_totals_reported(report, context.target["name"])
 
 
@@ -71,14 +71,14 @@ def _exercise_gate_lifecycle(
     fixture = context.fixture
     apply_fixture(repo, fixture, fixture["text"])
     diff = text_json(client.call_tool("noze_sniff", {"path": str(repo), "diff": True}))
-    _dump(context, repo, "diff.noze.json", diff)
+    dump_run_artifact(context, repo, "diff.noze.json", diff)
 
     blocked = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
-    _dump(context, repo, "gate.block.json", blocked)
+    dump_run_artifact(context, repo, "gate.block.json", blocked)
     assert_gate_blocks(blocked, context.target["name"])
 
     same = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
-    _dump(context, repo, "gate.allow-same-content.json", same)
+    dump_run_artifact(context, repo, "gate.allow-same-content.json", same)
     assert_gate_allows(same, "signature dedup")
 
     active = text_json(
@@ -87,7 +87,7 @@ def _exercise_gate_lifecycle(
             {"path": str(repo), "stop_hook_active": True},
         )
     )
-    _dump(context, repo, "gate.allow.json", active)
+    dump_run_artifact(context, repo, "gate.allow.json", active)
     assert_gate_allows(active, "stop_hook_active")
 
     _exercise_fix_and_reintroduction(client, context, repo, fixture)
@@ -95,7 +95,7 @@ def _exercise_gate_lifecycle(
         _triage(client, repo, fixture)
 
     deferred = text_json(client.call_tool("noze_gate", {"path": str(repo)}))
-    _dump(context, repo, "gate.defer.json", deferred)
+    dump_run_artifact(context, repo, "gate.defer.json", deferred)
     assert_gate_allows(deferred, "auto-deferred past repeat_limit")
 
 
@@ -108,7 +108,7 @@ def _exercise_fix_and_reintroduction(
     apply_fixture(repo, fixture, fixture["fix_text"])
     client.call_tool("noze_sniff", {"path": str(repo), "limit": 20})
     fixed = _brainz_report(client, repo)
-    _dump(context, repo, "brainz.after-gate-fix.json", fixed)
+    dump_run_artifact(context, repo, "brainz.after-gate-fix.json", fixed)
     assert_finding_resolved(
         fixed,
         fixture["detector"],
@@ -125,7 +125,7 @@ def _exercise_fix_and_reintroduction(
     apply_fixture(repo, fixture, fixture["text"])
     client.call_tool("noze_sniff", {"path": str(repo), "limit": 20})
     reintroduced = _brainz_report(client, repo)
-    _dump(context, repo, "brainz.after-reintro.json", reintroduced)
+    dump_run_artifact(context, repo, "brainz.after-reintro.json", reintroduced)
     assert_finding_reintroduced(
         reintroduced,
         fixture["detector"],
@@ -149,7 +149,7 @@ def _record_metrics_outputs(
         repo,
         context.target["name"],
     )
-    _dump(context, repo, "brainz.after-branch-switch.json", report)
+    dump_run_artifact(context, repo, "brainz.after-branch-switch.json", report)
 
 
 def _brainz_report(client: McpClient, repo: Path) -> object:
@@ -166,18 +166,4 @@ def _triage(client: McpClient, repo: Path, fixture: DeadCodeFixture) -> None:
             "verdict": "debt",
             "note": "regression fixture",
         },
-    )
-
-
-def _dump(
-    context: RegressionRun,
-    repo: Path,
-    artifact: str,
-    value: object,
-) -> None:
-    dump_normalized(
-        context.out / artifact,
-        value,
-        repo,
-        context.target,
     )

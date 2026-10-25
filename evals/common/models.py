@@ -19,7 +19,7 @@ class JsonFields:
         return None
 
     def integer(self, key: str, default: int = 0) -> int:
-        return _integer(self.get(key), default)
+        return int_or_default(self.get(key), default)
 
     def number(self, key: str, default: float = 0.0) -> float:
         value = self.get(key)
@@ -33,7 +33,7 @@ def _mapping(value: object) -> JsonFields:
     return JsonFields(value)
 
 
-def _integer(value: object, default: int = 0) -> int:
+def int_or_default(value: object, default: int = 0) -> int:
     return value if isinstance(value, int) else default
 
 
@@ -49,7 +49,7 @@ class Occurrence:
     @classmethod
     def parse(cls, value: object) -> Occurrence:
         data = _mapping(value)
-        return cls(_text(data.get("file")), _integer(data.get("start_row")))
+        return cls(_text(data.get("file")), int_or_default(data.get("start_row")))
 
 
 @dataclass(frozen=True)
@@ -68,9 +68,9 @@ class Finding:
         return cls(
             reason=_text(data.get("reason")),
             hint=_text(data.get("hint")),
-            token_length=_integer(data.get("token_length")),
+            token_length=int_or_default(data.get("token_length")),
             kind=_text(data.get("kind")),
-            metric=_integer(data.get("metric")),
+            metric=int_or_default(data.get("metric")),
             occurrences=tuple(Occurrence.parse(item) for item in occurrences)
             if isinstance(occurrences, list)
             else (),

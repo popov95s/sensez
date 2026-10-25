@@ -6,7 +6,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Iterator
 
-from ..harness.artifacts import dump_normalized
+from ..harness.artifacts import dump_run_artifact
 from ..harness.assertions import (
     FixtureIdentity,
     assert_gate_allows,
@@ -71,7 +71,7 @@ def run_gate_reblock_scenario(context: RegressionRun) -> None:
                 {"path": str(session.repo)},
             )
         )
-        _dump(context, session.repo, "gate.block-new-only.json", response)
+        dump_run_artifact(context, session.repo, "gate.block-new-only.json", response)
         assert_gate_blocks(response, session.target_name)
         assert_gate_mentions_new_only(
             response,
@@ -89,7 +89,7 @@ def run_gate_detached_scenario(context: RegressionRun) -> None:
 
         run(["git", "checkout", "--detach"], session.repo)
         detached = _gate(session.client, session.repo)
-        _dump(context, session.repo, "gate.allow-detached.json", detached)
+        dump_run_artifact(context, session.repo, "gate.allow-detached.json", detached)
         assert_gate_allows(detached, "detached HEAD")
 
         run(
@@ -136,13 +136,13 @@ def run_shared_worktree_gate_scenario(context: RegressionRun) -> None:
         )
         _assert_isolated(first, first_fixture, second_fixture)
         _assert_isolated(second, second_fixture, first_fixture)
-        _dump(
+        dump_run_artifact(
             context,
             repo,
             "gate.shared-worktree.session-a.json",
             first,
         )
-        _dump(
+        dump_run_artifact(
             context,
             repo,
             "gate.shared-worktree.session-b.json",
@@ -155,7 +155,7 @@ def run_shared_worktree_gate_scenario(context: RegressionRun) -> None:
             first_transcript,
         )
         assert_gate_allows(repeated, "same transcript-scoped finding")
-        _dump(
+        dump_run_artifact(
             context,
             repo,
             "gate.shared-worktree.session-a-repeat.json",
@@ -215,18 +215,4 @@ def _assert_isolated(
         response,
         FixtureIdentity(owned["path"], owned["symbol"]),
         FixtureIdentity(other["path"], other["symbol"]),
-    )
-
-
-def _dump(
-    context: RegressionRun,
-    repo: Path,
-    artifact: str,
-    value: object,
-) -> None:
-    dump_normalized(
-        context.out / artifact,
-        value,
-        repo,
-        context.target,
     )

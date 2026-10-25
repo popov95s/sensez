@@ -15,13 +15,10 @@ from models import (
     JsonFields,
     PILLARS,
     ScanPayload,
+    int_or_default,
 )
 
 MISSING_TEXT = ""
-
-
-def _integer(value: object, default: int = 0) -> int:
-    return value if isinstance(value, int) else default
 
 
 def _text(value: object) -> str:
@@ -38,9 +35,9 @@ class AgentUsage:
     def parse(cls, value: object) -> AgentUsage:
         data = JsonFields(value)
         return cls(
-            _integer(data.get("input_tokens")),
-            _integer(data.get("output_tokens")),
-            _integer(data.get("reasoning_output_tokens")),
+            int_or_default(data.get("input_tokens")),
+            int_or_default(data.get("output_tokens")),
+            int_or_default(data.get("reasoning_output_tokens")),
         )
 
 
@@ -63,15 +60,15 @@ class ReportRun:
         payload = ScanPayload.parse(diff.get("json"))
         counts = JsonFields(metrics.get("sensez_diff"))
         finding_counts = FindingCounts(
-            *(_integer(counts.get(pillar)) for pillar in PILLARS)
+            *(int_or_default(counts.get(pillar)) for pillar in PILLARS)
         )
         return cls(
             variant=_text(metrics.get("variant")),
             agent_stdout=_text(agent.get("stdout")),
-            quality_regression_score=_integer(
+            quality_regression_score=int_or_default(
                 metrics.get("quality_regression_score")
             ),
-            diff_total=_integer(counts.get("total"), finding_counts.total),
+            diff_total=int_or_default(counts.get("total"), finding_counts.total),
             sensez_diff=finding_counts,
             smells=payload.smells,
         )
