@@ -30,13 +30,11 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         crate::config::model::Config::load_for_scan(&scope.repository);
     let graph = crate::spine::graph::build(&parsed.files, &config.roots);
     let mut fallback = scope.fallback_reasons;
-    let hides_tests = |issue: &ScanIssue| {
-        issue
-            .file
-            .as_deref()
-            .is_none_or(|file| !crate::profiles::registry::is_declaration_only(file))
-    };
-    if parsed.issues.iter().any(hides_tests) {
+    if parsed
+        .issues
+        .iter()
+        .any(|issue| hides_tests(issue, &scope.files))
+    {
         fallback.push("incomplete parsing could hide an affected test".into());
     }
     if args.full {
@@ -124,6 +122,14 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         opaque_import_files,
         unmapped_changes: reached.unmapped,
         selection_ms: started.elapsed().as_millis(),
+    })
+}
+
+/// A parse issue hides tests unless its file is a declaration, or imports nothing and did not change.
+fn hides_tests(issue: &ScanIssue, changed: &[PathBuf]) -> bool {
+    issue.file.as_deref().is_none_or(|file| {
+        !crate::profiles::registry::is_declaration_only(file)
+            && (changed.iter().any(|path| path == file) || dynamic::may_import(file))
     })
 }
 

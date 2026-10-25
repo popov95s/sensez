@@ -60,6 +60,13 @@ fn might_contain_dynamic_import(source: &[u8]) -> bool {
         || contains(source, b"import.meta.glob")
 }
 
+/// Whether the file at `path` may import anything; unreadable files may.
+pub fn may_import(path: &Path) -> bool {
+    std::fs::read(path).map_or(true, |source| {
+        might_contain_dynamic_import(&source) || contains(&source, b"from")
+    })
+}
+
 fn contains(source: &[u8], needle: &[u8]) -> bool {
     source.windows(needle.len()).any(|window| window == needle)
 }
