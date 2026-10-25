@@ -38,6 +38,8 @@ pub(crate) fn run(args: ReflexezArgs) -> Result<ExitCode> {
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
+mod tests_changes;
+#[cfg(test)]
 mod tests_config;
 #[cfg(test)]
 mod tests_declaration;
