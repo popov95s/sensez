@@ -2,7 +2,7 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
-use super::{MagicNumber, PerformanceFacts, SentinelHandler, StringFallback};
+use super::{EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StringFallback};
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
@@ -24,6 +24,11 @@ pub struct ReviewRiskFacts {
     pub sentinel_handlers: Vec<SentinelHandler>,
     /// The body only defers its work to later.
     pub stub: Option<StubBody>,
+    pub echo_assertions: Vec<EchoAssertion>,
+    /// Receivers of argument-free was-called checks (`expect(fn).toHaveBeenCalled()`).
+    pub mock_call_checks: Vec<String>,
+    /// Mocks whose return value this unit programs (`fn.mockReturnValue(x)`).
+    pub programmed_mocks: Vec<String>,
 }
 
 /// The shape of a function body that is only a placeholder.
