@@ -43,9 +43,10 @@ impl PytestConfig {
     }
 }
 
-/// Nearest pytest configuration for each directory under one repository.
+/// Pytest configuration per directory: the repository's own, else the nearest nested one.
 pub struct PytestConfigs {
     repository: PathBuf,
+    root: Option<PytestConfig>,
     default: PytestConfig,
     by_dir: HashMap<PathBuf, Option<PytestConfig>>,
 }
@@ -54,13 +55,17 @@ impl PytestConfigs {
     pub fn new(repository: &Path) -> Self {
         Self {
             repository: repository.to_path_buf(),
+            root: read_config(repository),
             default: PytestConfig::new(repository, Vec::new(), None),
             by_dir: HashMap::new(),
         }
     }
 
-    /// Configuration pytest applies to `file`; the defaults at the repository root without one.
+    /// Configuration pytest applies to `file`; a repository-root config governs every file.
     pub fn for_file(&mut self, file: &Path) -> &PytestConfig {
+        if let Some(root) = &self.root {
+            return root;
+        }
         let mut dir = file.parent();
         while let Some(current) = dir.filter(|current| current.starts_with(&self.repository)) {
             let found = self

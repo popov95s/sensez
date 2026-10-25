@@ -78,3 +78,25 @@ fn pyproject_without_pytest_section_is_not_a_rootdir() {
 
     assert_eq!(config.dir, root.path());
 }
+
+#[test]
+fn root_config_governs_nested_projects() {
+    let root = tempfile::tempdir().unwrap();
+    write(
+        root.path(),
+        "pyproject.toml",
+        "[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n",
+    );
+    write(
+        root.path(),
+        "examples/demo/pyproject.toml",
+        "[tool.pytest.ini_options]\ntestpaths = [\"tests\"]\n",
+    );
+    let mut configs = PytestConfigs::new(root.path());
+    let example = root.path().join("examples/demo/tests/test_demo.py");
+
+    let config = configs.for_file(&example);
+
+    assert_eq!(config.dir, root.path());
+    assert!(!config.collects(&example));
+}
