@@ -51,6 +51,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.MESSAGE_CHAIN,
             SmellTerm.REFUSED_BEQUEST,
             SmellTerm.SHOTGUN_SURGERY_HAZARD,
+            SmellTerm.SIBLING_HELPER_REDEFINITION,
         ),
     ),
     (

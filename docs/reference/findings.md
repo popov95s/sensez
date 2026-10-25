@@ -3157,6 +3157,92 @@ min_blast = 4 # dependent modules before shotgun-surgery risk
 </table>
 </details>
 
+### Sibling Helper Redefinition (`sibling_helper_redefinition`)
+
+**What it is**
+
+The same small helper — same name, same parameter count, near-identical body — is written again in another module instead of imported.
+
+**Why it's bad**
+
+A fix lands in one copy and the others drift; a reviewer reading one file cannot know the helper already exists.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def message_of(error):
+        return str(error.args[0]) if error.args else repr(error)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Keep one definition in a shared module and import it where the copies were.
+
+    ```python
+    import logging
+
+    from example import message_of
+
+
+    def log_failure(failure):
+        logging.error(message_of(failure))
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    export function messageOf(error: unknown): string {
+      return error instanceof Error ? error.message : String(error);
+    }
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Export one definition from a shared module and import it where the copies were.
+
+    ```ts
+    import { messageOf } from "./example";
+
+    export function logFailure(failure: unknown): void {
+      console.error(messageOf(failure));
+    }
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.sibling_helper_redefinition]
+enabled = true
+action = "warning"
+min_similarity = 80 # percent of matching body lexemes required between copies
+min_lexemes = 8 # lexeme codes a helper body needs before it is compared
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ## Type and Data Modeling
 
 ### Implicit Schema (`implicit_schema`)
