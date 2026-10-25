@@ -43,6 +43,7 @@ class SmellTerm(StrEnum):
     MESSAGE_CHAIN = "message_chain"
     MOCKED_SUBJECT = "mocked_subject"
     MUTATED_PARAMETER = "mutated_parameter"
+    NAME_PROMISE_MISMATCH = "name_promise_mismatch"
     NARRATING_CODE = "narrating_code"
     N_PLUS_ONE_CALL = "n_plus_one_call"
     NESTED_LOOP = "nested_loop"

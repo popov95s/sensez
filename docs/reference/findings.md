@@ -4316,6 +4316,277 @@ include_attributes = false # also flag mutation of fields on parameters
 
 - ESLint: `no-param-reassign`
 
+### Name Promise Mismatch (`name_promise_mismatch`)
+
+**What it is**
+
+A function named like a read (`get`, `is`, `find`, `validate`, ...) also writes state — rename it to say so or move the write to the caller.
+
+**Why it's bad**
+
+Callers trust a read-named function to be safe to call twice, cache, or skip; a hidden write breaks all three.
+
+**Example**
+
+=== "Python"
+
+    === "Low"
+
+        Flags only database, network and scheduling writes.
+
+        **Problem**
+
+        ```python
+        def get_invoice(db: Database, invoice_id: str) -> Invoice | None:
+            invoice = db.invoices.find(invoice_id)
+            if invoice is None:
+                db.invoices.insert({"id": invoice_id, "status": "draft"})
+            return invoice
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rename it to name the write (`get_or_create_invoice`), or return the data and let the caller write.
+
+        ```python
+        def get_or_create_invoice(db: Database, invoice_id: str) -> Invoice:
+            invoice = db.invoices.find(invoice_id)
+            if invoice is not None:
+                return invoice
+            return db.invoices.insert({"id": invoice_id, "status": "draft"})
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags mutating calls and assignments on parameters, own members and module-level names; skips caches and lazy initialisation.
+
+        **Problem**
+
+        ```python
+        class TaskQueue:
+            def __init__(self) -> None:
+                self.tasks: list[Task] = []
+
+            def get_next_task(self) -> Task | None:
+                next_task = self.tasks[0] if self.tasks else None
+                self.tasks.remove(next_task)
+                return next_task
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rename it to name the write (`get_or_create_invoice`), or return the data and let the caller write.
+
+        ```python
+        def get_or_create_invoice(db: Database, invoice_id: str) -> Invoice:
+            invoice = db.invoices.find(invoice_id)
+            if invoice is not None:
+                return invoice
+            return db.invoices.insert({"id": invoice_id, "status": "draft"})
+        ```
+
+        </details>
+
+    === "High"
+
+        Also flags cache fills and lazy initialisation, and treats `load` and `fetch` names as reads.
+
+        **Problem**
+
+        ```python
+        class RateTable:
+            def __init__(self) -> None:
+                self.source: RateSource | None = None
+
+            def get_source(self) -> RateSource:
+                if self.source is None:
+                    self.source = RateSource()
+                return self.source
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rename it to name the write (`get_or_create_invoice`), or return the data and let the caller write.
+
+        ```python
+        def get_or_create_invoice(db: Database, invoice_id: str) -> Invoice:
+            invoice = db.invoices.find(invoice_id)
+            if invoice is not None:
+                return invoice
+            return db.invoices.insert({"id": invoice_id, "status": "draft"})
+        ```
+
+        </details>
+
+=== "JS / TS"
+
+    === "Low"
+
+        Flags only database, network and scheduling writes.
+
+        **Problem**
+
+        ```ts
+        export async function getInvoice(db: Database, invoiceId: string): Promise<Invoice | null> {
+          const invoice = await db.invoices.find(invoiceId);
+          if (!invoice) {
+            await db.invoices.insert({ id: invoiceId, status: "draft" });
+          }
+          return invoice;
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rename it to name the write (`getOrCreateInvoice`), or return the data and let the caller write.
+
+        ```ts
+        export async function getOrCreateInvoice(db: Database, invoiceId: string): Promise<Invoice> {
+          const invoice = await db.invoices.find(invoiceId);
+          if (invoice) {
+            return invoice;
+          }
+          return db.invoices.insert({ id: invoiceId, status: "draft" });
+        }
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags mutating calls and assignments on parameters, own members and module-level names; skips caches and lazy initialisation.
+
+        **Problem**
+
+        ```ts
+        export class TaskQueue {
+          private tasks: Task[] = [];
+
+          getNextTask(): Task | undefined {
+            const next = this.tasks[0];
+            this.tasks.splice(0, 1);
+            return next;
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rename it to name the write (`getOrCreateInvoice`), or return the data and let the caller write.
+
+        ```ts
+        export async function getOrCreateInvoice(db: Database, invoiceId: string): Promise<Invoice> {
+          const invoice = await db.invoices.find(invoiceId);
+          if (invoice) {
+            return invoice;
+          }
+          return db.invoices.insert({ id: invoiceId, status: "draft" });
+        }
+        ```
+
+        </details>
+
+    === "High"
+
+        Also flags cache fills and lazy initialisation, and treats `load` and `fetch` names as reads.
+
+        **Problem**
+
+        ```ts
+        const rates = new Map<string, number>();
+
+        export function getRate(currency: string): number {
+          const known = rates.get(currency);
+          if (known !== undefined) {
+            return known;
+          }
+          const rate = currency.length / 10;
+          rates.set(currency, rate);
+          return rate;
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rename it to name the write (`getOrCreateInvoice`), or return the data and let the caller write.
+
+        ```ts
+        export async function getOrCreateInvoice(db: Database, invoiceId: string): Promise<Invoice> {
+          const invoice = await db.invoices.find(invoiceId);
+          if (invoice) {
+            return invoice;
+          }
+          return db.invoices.insert({ id: invoiceId, status: "draft" });
+        }
+        ```
+
+        </details>
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+=== "Low"
+
+    ```toml
+    [smells.<lang>.rules.name_promise_mismatch]
+    enabled = true
+    action = "warning"
+    strictness = "low"
+    read_prefixes = ["get", "is", "has", "find", "list", "validate", "check"] # name prefixes that promise a read
+    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "push", "splice", "save", "commit", "post", "put"] # method names that count as writes on outside receivers
+    ```
+
+    Flags only database, network and scheduling writes.
+
+=== "Medium"
+
+    ```toml
+    [smells.<lang>.rules.name_promise_mismatch]
+    enabled = true
+    action = "warning"
+    strictness = "medium"
+    read_prefixes = ["get", "is", "has", "find", "list", "validate", "check"] # name prefixes that promise a read
+    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "push", "splice", "save", "commit", "post", "put"] # method names that count as writes on outside receivers
+    ```
+
+    Also flags mutating calls and assignments on parameters, own members and module-level names; skips caches and lazy initialisation.
+
+=== "High"
+
+    ```toml
+    [smells.<lang>.rules.name_promise_mismatch]
+    enabled = true
+    action = "warning"
+    strictness = "high"
+    read_prefixes = ["get", "is", "has", "find", "list", "validate", "check"] # name prefixes that promise a read
+    write_methods = ["insert", "patch", "upsert", "delete", "update", "set", "push", "splice", "save", "commit", "post", "put"] # method names that count as writes on outside receivers
+    ```
+
+    Also flags cache fills and lazy initialisation, and treats `load` and `fetch` names as reads.
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ### Reassigned Parameter (`reassigned_parameter`)
 
 **What it is**

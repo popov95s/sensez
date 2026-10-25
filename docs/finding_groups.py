@@ -69,6 +69,7 @@ GROUPS: tuple[FindingGroup, ...] = (
         FindingGroupTitle.MUTATION,
         (
             SmellTerm.MUTATED_PARAMETER,
+            SmellTerm.NAME_PROMISE_MISMATCH,
             SmellTerm.REASSIGNED_PARAMETER,
             SmellTerm.SPLIT_VARIABLE,
         ),
