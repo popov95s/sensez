@@ -16,7 +16,8 @@ plugin, fixture, or runner command needs replacing.
 sensez reflexez .
 ```
 
-By default the change scope includes staged, unstaged, and untracked files. For
+By default the change scope includes staged, unstaged, and untracked files; in
+a repository without commits every file counts as changed. For
 a branch or CI job, select an explicit base:
 
 ```bash
@@ -35,7 +36,10 @@ sensez reflexez . --plan --json
 
 Every selected file includes a reason (`changed_test`, `direct_dependency`,
 `transitive_dependency`, `dynamic_import`, `full_requested`, `safety_fallback`)
-and a dependency distance. The JSON plan also lists:
+and a dependency distance: the number of import hops from a changed file. A
+`dynamic_import` selection reached through a file whose computed import could
+not be resolved counts that file as one hop, since the import may load any
+module. The JSON plan also lists:
 
 - `config_warnings`: runner-config keys that could not be read statically, with
   the file, key, reason, and the fallback used for that key;
@@ -45,9 +49,20 @@ and a dependency distance. The JSON plan also lists:
 
 ## Runner integration
 
-Reflexez detects local Vitest and Jest installations from `package.json` and
-detects pytest tests by its standard file conventions. Force a runner only when
-auto-detection is ambiguous:
+Reflexez detects Vitest and Jest from each `package.json`: a script that runs
+`vitest` or `jest` selects that runner (both, when scripts run both); otherwise
+a `vitest` or `jest` dependency does, Vitest first. Without either in any
+`package.json`, a `vitest.config.*`, `vitest.workspace.*`, `vite.config.*` with
+a `test` key, or `jest.config.*` at the root selects the runner. A
+`package.json` that is not valid JSON is skipped with a config warning, and a
+runner project with no discovered tests is not run.
+
+pytest tests follow the nearest `pytest.ini`, `pyproject.toml` with
+`[tool.pytest.ini_options]`, `tox.ini` or `setup.cfg` above each file: its
+`testpaths` and `python_files` decide what is collected, and its directory is
+where pytest runs. Without one, the default `test_*.py` / `*_test.py` patterns
+apply from the repository root. Force a runner only when auto-detection is
+ambiguous:
 
 ```bash
 sensez reflexez . --runner pytest
@@ -99,6 +114,9 @@ Use explicit paths in editor and staged-file integrations:
 sensez reflexez . --changed-file src/service.ts
 ```
 
+A relative `--changed-file` is resolved against the current directory, or
+against the repository root when no such file exists there (a deleted file).
+
 ## Safety model
 
 Reflexez runs the full suite when a narrow plan cannot be proven safe. Current
@@ -112,7 +130,11 @@ global triggers include:
 - the configured `setupFiles`, `setupFilesAfterEnv`, and `globalSetup` modules,
   or anything they import;
 - TypeScript module-resolution configuration;
-- deleted source files or incomplete parsing.
+- deleted or renamed source files (a rename counts as a deletion of the old
+  path, including case-only renames); deleting other files, such as a README,
+  does not trigger it;
+- incomplete parsing of a file that may import something (a file whose text
+  has no `import`, `require` or `from` only triggers it when it changed).
 
 Literal `import()`, CommonJS `require()`, `importlib.import_module()`, and
 `__import__()` targets use the normal import graph. Reflexez additionally resolves
