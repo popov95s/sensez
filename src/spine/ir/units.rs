@@ -22,6 +22,21 @@ pub struct ReviewRiskFacts {
     pub is_test_case: bool,
     /// Handlers that swallow the error and return a placeholder or only log.
     pub sentinel_handlers: Vec<SentinelHandler>,
+    /// The body only defers its work to later.
+    pub stub: Option<StubBody>,
+}
+
+/// The shape of a function body that is only a placeholder.
+#[derive(Debug, Clone, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum StubBody {
+    /// `pass` or `...`.
+    Placeholder,
+    /// Raises the language's not-implemented error.
+    NotImplemented,
+    /// Throws an error with this message.
+    Throws(String),
+    /// Empty, or returns nothing, under a `TODO`/`FIXME` comment.
+    TodoEmpty,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

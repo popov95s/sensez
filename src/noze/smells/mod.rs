@@ -24,6 +24,7 @@ mod review_risks;
 mod sibling_helpers;
 mod size;
 mod structural;
+mod stub_shipped;
 mod swallowed_error;
 mod typing;
 mod union_find;
@@ -50,6 +51,8 @@ mod schema_tests;
 mod sibling_helpers_tests;
 #[cfg(test)]
 mod structural_tests;
+#[cfg(test)]
+mod stub_shipped_tests;
 #[cfg(test)]
 mod test_oracle_tests;
 #[cfg(test)]
@@ -184,6 +187,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     review_risks::detect(&ctx, metrics, classes, cfg, &mut out);
     coupling::detect(&ctx, metrics, &usage, &locals, cfg, &mut out);
     inherit::detect(&ctx, classes, cfg, &mut out);
+    stub_shipped::detect(&ctx, metrics, &cfg.stub_markers, &mut out);
     typing::detect(&ctx, metrics, cfg, &mut out);
     mutation::detect(&ctx, metrics, cfg, &mut out);
     out.extend(performance::detect(&ctx, metrics, cfg));

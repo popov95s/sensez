@@ -81,6 +81,7 @@ impl FunctionFacts {
                 super::risk_facts::forward_target(func, src, &unit.param_names);
         }
         unit.review_risks.is_test_case = super::risk_facts::is_test_callback(lineage, src);
+        unit.review_risks.stub = super::stub_body::stub_body(func, src);
         unit.is_constructor = is_method && unit.name == "constructor";
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);

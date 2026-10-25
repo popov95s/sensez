@@ -22,6 +22,7 @@ mod risk_facts;
 mod roots;
 mod scope;
 mod script_imports;
+mod stub_body;
 mod symbols;
 mod tokens;
 mod traversal;
@@ -67,6 +68,10 @@ impl ParseProfile for PythonProfile {
 
     fn is_generated_or_data_source(&self, path: &Path) -> bool {
         generated::is_generated_or_data_source(path)
+    }
+
+    fn is_declaration_only(&self, path: &Path) -> bool {
+        path.extension().is_some_and(|ext| ext == "pyi")
     }
 }
 

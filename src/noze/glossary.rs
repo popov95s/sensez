@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 42] = {
+pub const ALL_SMELLS: [SmellKind; 43] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -60,6 +60,7 @@ pub const ALL_SMELLS: [SmellKind; 42] = {
         ShotgunSurgeryHazard,
         SiblingHelperRedefinition,
         SplitVariable,
+        StubShipped,
         SortInLoop,
         SwallowedErrorSentinel,
         TooManyReturns,
@@ -69,7 +70,7 @@ pub const ALL_SMELLS: [SmellKind; 42] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 42] = {
+pub const SMELLS: [SmellDoc; 43] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -108,6 +109,7 @@ pub const SMELLS: [SmellDoc; 42] = {
         SmellDoc { kind: SiblingHelperRedefinition, title: "Sibling Helper Redefinition", explanation: "The same small helper — same name, same parameter count, near-identical body — is written again in another module instead of imported." },
         SmellDoc { kind: ShotgunSurgeryHazard, title: "Shotgun Surgery Hazard", explanation: "A symbol so widely depended-on that one change ripples across many modules — a blast-radius hotspot." },
         SmellDoc { kind: SplitVariable, title: "Split Variable", explanation: "One local is reassigned to mean different things at different points — use distinct, single-purpose bindings." },
+        SmellDoc { kind: StubShipped, title: "Shipped Stub", explanation: "A production function whose whole body is a placeholder (`pass`, `raise NotImplementedError`, a \"not implemented\" throw) — it fails the first caller who reaches it." },
         SmellDoc { kind: SortInLoop, title: "Sort In Loop", explanation: "A collection is sorted inside a loop — hoist sorting or maintain ordered data to avoid repeated O(n log n) work." },
         SmellDoc { kind: SwallowedErrorSentinel, title: "Swallowed Error Sentinel", explanation: "An error handler drops the error and returns a placeholder (`null`, `[]`, `false`) or only logs — callers get a plausible value instead of a failure; rethrow or return a typed failure." },
         SmellDoc { kind: TooManyReturns, title: "Too Many Returns", explanation: "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much." },

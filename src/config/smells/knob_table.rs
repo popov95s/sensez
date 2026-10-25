@@ -228,6 +228,7 @@ pub(super) const RULE_KNOBS: &[(SmellKind, &str, Knob)] = &[
         "providers",
         Strings(|s| &mut s.dependency_reimplementation_providers),
     ),
+    (K::StubShipped, "markers", Strings(|s| &mut s.stub_markers)),
 ];
 
 /// Typed knob names a rule accepts, in declaration order.
