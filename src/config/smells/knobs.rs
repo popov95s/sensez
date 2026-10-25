@@ -80,6 +80,7 @@ pub struct Smells {
     pub n_plus_one_callees: Vec<String>,
     pub n_plus_one_max_constant_bound: usize,
     pub n_plus_one_await_in_loop: bool,
+    pub dependency_reimplementation_providers: Vec<String>,
     #[serde(skip)]
     pub compiled: super::compiled::Compiled,
 }
@@ -155,6 +156,7 @@ impl Default for Smells {
             nested_function_skip_capturing: false,
             assertion_functions: ["expect*", "assert*", "verify*"].map(String::from).to_vec(),
             n_plus_one_callees: Vec::new(),
+            dependency_reimplementation_providers: Vec::new(),
             n_plus_one_max_constant_bound: 10,
             n_plus_one_await_in_loop: false,
             compiled: Default::default(),

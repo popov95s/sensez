@@ -713,6 +713,16 @@ FindingDocs {
         ],
     },
     FindingDocs {
+        kind: DependencyReimplementation,
+        why_bad: "Each private copy of a stock utility is one more thing to test and maintain, and copies drift: one swaps the bounds, another drops the last chunk.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock { language: "python", body: "Call the standard-library or declared-package function the message names. List in-house utility packages in `providers` so their functions count too." },
+            LanguageBlock { language: "typescript", body: "Import the function the message names from the package `package.json` already lists. List in-house utility packages in `providers` so they count too." },
+        ],
+    },
+    FindingDocs {
         kind: DivergentAbstraction,
         why_bad: "A forced common type couples two implementations whose real responsibilities no longer match.",
         external_lints: &[],

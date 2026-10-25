@@ -223,6 +223,11 @@ pub(super) const RULE_KNOBS: &[(SmellKind, &str, Knob)] = &[
         "await_in_loop",
         Bool(|s| &mut s.n_plus_one_await_in_loop),
     ),
+    (
+        K::DependencyReimplementation,
+        "providers",
+        Strings(|s| &mut s.dependency_reimplementation_providers),
+    ),
 ];
 
 /// Typed knob names a rule accepts, in declaration order.

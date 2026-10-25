@@ -6,8 +6,8 @@
 
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
-    DeadCodeProfile, ImportResolver, Language, LanguageProfile, ModuleProfile, ParseProfile,
-    PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, DependencyProfile, ImportResolver, Language, LanguageProfile, ModuleProfile,
+    ParseProfile, PerformanceProfile, TypeVocabularyProfile,
 };
 use globset::GlobSet;
 use std::collections::{BTreeMap, HashMap};
@@ -84,6 +84,10 @@ pub fn import_resolvers() -> BTreeMap<Language, Box<dyn ImportResolver>> {
 
 pub fn dead_code_profile(language: Language) -> &'static dyn DeadCodeProfile {
     profile(language) as &dyn DeadCodeProfile
+}
+
+pub fn dependency_profile(language: Language) -> &'static dyn DependencyProfile {
+    profile(language) as &dyn DependencyProfile
 }
 
 pub fn performance_profile(language: Language) -> &'static dyn PerformanceProfile {

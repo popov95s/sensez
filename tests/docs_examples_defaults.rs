@@ -20,6 +20,14 @@ const NEEDS_DOCS_THRESHOLDS: &[&str] = &[
 ];
 const SUFFIXES: [&str; 2] = ["py", "ts"];
 
+/// Manifests staged beside a language's examples, read by dependency-aware smells.
+fn manifests(suffix: &str) -> &'static [&'static str] {
+    match suffix {
+        "py" => &["pyproject.toml"],
+        _ => &["package.json"],
+    }
+}
+
 fn stage(folder: &Path, suffix: &str, root: &Path) {
     let box_dir = root.join(folder.file_name().unwrap());
     for path in files(folder) {
@@ -30,7 +38,9 @@ fn stage(folder: &Path, suffix: &str, root: &Path) {
             .unwrap()
             .as_os_str()
             .to_string_lossy();
-        if path.extension().is_none_or(|ext| ext != suffix) || first.starts_with("fixed") {
+        let is_manifest = manifests(suffix).contains(&first.as_ref());
+        let is_source = path.extension().is_some_and(|ext| ext == suffix);
+        if !(is_source || is_manifest) || first.starts_with("fixed") {
             continue;
         }
         let target = box_dir.join(rel);

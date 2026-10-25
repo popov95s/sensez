@@ -4,14 +4,15 @@
 //! share node-kind names; TS-only kinds like `interface_declaration` simply map
 //! to no structural token). TS decorators are a deferred enhancement.
 
+use crate::profiles::dependencies::{DeclaredPackages, KnownUtility};
 use crate::profiles::javascript::{
     deadcode, declaration, generated, manifest, performance, resolve, roots, test_support,
-    traversal, typevocab, wording,
+    traversal, typevocab, utilities, wording,
 };
 use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
-    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
-    PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, DependencyProfile, ImportResolver, Language, LanguageInfo, ModuleProfile,
+    ParseProfile, PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -210,6 +211,16 @@ macro_rules! impl_ts_traits {
 
             fn manifest_entry_files(&self, files: &[&Path]) -> Vec<PathBuf> {
                 manifest::entry_files(files)
+            }
+        }
+
+        impl DependencyProfile for $name {
+            fn known_utilities(&self) -> &'static [KnownUtility] {
+                utilities::UTILITIES
+            }
+
+            fn declared_packages(&self, dir: &Path) -> DeclaredPackages {
+                manifest::declared_packages(dir)
             }
         }
 

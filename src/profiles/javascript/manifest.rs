@@ -1,12 +1,20 @@
-//! `package.json` entry targets (`main`, `module`, `bin`, `exports`) as dead-code roots.
+//! `package.json` reading: entry targets as dead-code roots, dependencies for utility lookups.
 
 use super::roots;
+use crate::profiles::dependencies::{manifest_dirs, DeclaredPackages, DependencyScope};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 
 const ENTRY_FIELDS: [&str; 4] = ["main", "module", "bin", "exports"];
 const BUILD_DIRS: [&str; 4] = ["dist", "lib", "build", "out"];
+const MANIFEST: &str = "package.json";
+const DEPENDENCY_SECTIONS: [(&str, DependencyScope); 4] = [
+    ("dependencies", DependencyScope::Production),
+    ("peerDependencies", DependencyScope::Production),
+    ("optionalDependencies", DependencyScope::Production),
+    ("devDependencies", DependencyScope::Development),
+];
 
 /// Files named by their package's manifest, directly or through a `src/` twin of a build path.
 pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
@@ -25,11 +33,30 @@ pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
     entries
 }
 
+/// Packages every `package.json` from `dir` up to the repository root declares.
+pub fn declared_packages(dir: &Path) -> DeclaredPackages {
+    let mut declared = DeclaredPackages::default();
+    for manifest in manifest_dirs(dir)
+        .iter()
+        .filter_map(|dir| read_manifest(dir))
+    {
+        for (section, scope) in DEPENDENCY_SECTIONS {
+            let packages = manifest.get(section).and_then(Value::as_object);
+            for package in packages.into_iter().flat_map(|packages| packages.keys()) {
+                declared.declare(scope, package.clone(), MANIFEST);
+            }
+        }
+    }
+    declared
+}
+
+fn read_manifest(dir: &Path) -> Option<Value> {
+    let text = std::fs::read_to_string(dir.join(MANIFEST)).ok()?;
+    serde_json::from_str(&text).ok()
+}
+
 fn manifest_keys(root: &Path) -> HashSet<String> {
-    let Some(manifest) = std::fs::read_to_string(root.join("package.json"))
-        .ok()
-        .and_then(|text| serde_json::from_str::<Value>(&text).ok())
-    else {
+    let Some(manifest) = read_manifest(root) else {
         return HashSet::new();
     };
     let mut targets = Vec::new();
@@ -98,5 +125,27 @@ mod tests {
         let entries = entry_files(&files);
 
         assert_eq!(entries, paths[..3].to_vec());
+    }
+
+    #[test]
+    fn dev_only_packages_are_declared_for_development() {
+        let tmp = tempfile::tempdir().unwrap();
+        fs::write(
+            tmp.path().join(MANIFEST),
+            r#"{"dependencies": {"es-toolkit": "1"}, "devDependencies": {"remeda": "2"}}"#,
+        )
+        .unwrap();
+
+        let declared = declared_packages(tmp.path());
+
+        assert!(declared
+            .origin("es-toolkit", DependencyScope::Production)
+            .is_some());
+        assert!(declared
+            .origin("remeda", DependencyScope::Production)
+            .is_none());
+        assert!(declared
+            .origin("remeda", DependencyScope::Development)
+            .is_some());
     }
 }

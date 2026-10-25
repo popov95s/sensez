@@ -9,6 +9,7 @@ mod clumps;
 mod cohesion;
 mod complexity;
 mod coupling;
+mod dependency_reimplementation;
 mod exclusive_paths;
 mod external_vocab;
 mod graphy;
@@ -31,6 +32,8 @@ mod cohesion_tests;
 mod coupling_tests;
 #[cfg(test)]
 mod defensive_code_tests;
+#[cfg(test)]
+mod dependency_reimplementation_tests;
 #[cfg(test)]
 mod god_module_tests;
 #[cfg(test)]
@@ -129,6 +132,7 @@ pub fn detect(
 
     let mut cross_file = clumps::detect(&kept, cfg);
     cross_file.extend(sibling_helpers::detect(&kept, graph, cfg));
+    cross_file.extend(dependency_reimplementation::detect(&kept, cfg));
     cross_file.extend(graphy::detect(graph, files, cfg, &|node: &ModuleNode| {
         node.source_index
             .and_then(|index| files.get(index))
