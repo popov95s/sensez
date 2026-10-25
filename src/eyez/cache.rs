@@ -89,8 +89,9 @@ pub(crate) fn remove_file(root: &Path, rel: &str) -> Result<()> {
 }
 
 impl SystemCache {
-    /// Diff `docs` against the cache by content key and embed only the misses.
-    pub fn refresh(&mut self, docs: &[Doc], embedder: &Embedder) -> Result<()> {
+    /// Diff `docs` under `root` against the cache by content key and embed only the misses.
+    pub fn refresh(&mut self, docs: &[Doc], root: &Path, embedder: &Embedder) -> Result<()> {
+        let key = |doc: &Doc| key(doc, root);
         if self.model_id != embedder.model_id() {
             self.docs.clear();
             self.vectors.clear();
@@ -167,16 +168,18 @@ pub(super) fn write_atomic(path: &Path, bytes: &[u8]) -> Result<()> {
     std::fs::rename(&tmp, path).with_context(|| format!("replacing {}", path.display()))
 }
 
-/// Content+identity key: changes whenever the file, symbol path, kind, or text
-/// changes. Including the file keeps identical docs in different files as
-/// distinct results (and only re-embeds a doc whose *text* actually changed —
-/// the line moving within a file does not change the key).
-pub fn key(d: &Doc) -> u64 {
-    fingerprint(d).hash
+/// Content+identity key from the root-relative file, symbol path, kind and text.
+pub fn key(d: &Doc, root: &Path) -> u64 {
+    fingerprint(d, root).hash
 }
 
-pub fn fingerprint(d: &Doc) -> DocFingerprint {
-    let file = d.file.to_string_lossy().into_owned();
+pub fn fingerprint(d: &Doc, root: &Path) -> DocFingerprint {
+    let file = d
+        .file
+        .strip_prefix(root)
+        .unwrap_or(&d.file)
+        .to_string_lossy()
+        .into_owned();
     let class = match d.kind {
         DocKind::Comment => Class::Comment,
         DocKind::Docstring => Class::Docstring,
@@ -232,9 +235,31 @@ mod tests {
         let same = doc("m::f", "Add one.");
         let edited = doc("m::f", "Add two.");
         let moved = doc("m::g", "Add one.");
-        assert_eq!(key(&a), key(&same));
-        assert_ne!(key(&a), key(&edited), "text edit must change the key");
-        assert_ne!(key(&a), key(&moved), "symbol move must change the key");
+        let root = Path::new("");
+        assert_eq!(key(&a, root), key(&same, root));
+        assert_ne!(
+            key(&a, root),
+            key(&edited, root),
+            "text edit must change the key"
+        );
+        assert_ne!(
+            key(&a, root),
+            key(&moved, root),
+            "symbol move must change the key"
+        );
+    }
+
+    #[test]
+    fn key_ignores_how_the_root_is_spelled() {
+        let mut relative = doc("m::f", "Add one.");
+        relative.file = "./src/m.py".into();
+        let mut absolute = doc("m::f", "Add one.");
+        absolute.file = "/work/repo/src/m.py".into();
+
+        assert_eq!(
+            key(&relative, Path::new(".")),
+            key(&absolute, Path::new("/work/repo"))
+        );
     }
 
     #[test]

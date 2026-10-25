@@ -66,7 +66,7 @@ impl Index {
         let embedder = embed::Embedder::load().context("loading embedding model")?;
         let mut cache = cache::load(root);
         let docs = extract::collect(root).context("collecting project docs")?;
-        cache.refresh(&docs, &embedder)?;
+        cache.refresh(&docs, root, &embedder)?;
         cache.persist(root)?;
         Ok(Index { embedder, cache })
     }
