@@ -89,3 +89,29 @@ fn loose_or_unannotated_string_keyed_receivers_stay_implicit_schemas() {
         );
     }
 }
+
+fn schema_in(name: &str, source: &str) -> Vec<SmellFinding> {
+    let file = fixture::parsed(name, source);
+    detect_local(&file, &Smells::default())
+        .into_iter()
+        .filter(|finding| finding.kind == SmellKind::ImplicitSchema)
+        .collect()
+}
+
+#[test]
+fn cli_flag_bags_are_not_implicit_schemas() {
+    let source = "export function opts(argv) {\n  const args = parse(argv);\n  return [args[\"--from\"], args[\"--to\"], args[\"--org\"], args[\"--out\"], args[\"--dry-run\"]];\n}\n";
+    assert!(schema_in("cli.mjs", source).is_empty());
+}
+
+#[test]
+fn destructured_keys_count_toward_an_implicit_schema() {
+    let source = "export function toUser(payload: Record<string, unknown>) {\n  const { email, plan, active, seats } = payload;\n  return { email, plan, active, seats };\n}\n";
+    assert_eq!(schema_in("u.ts", source).len(), 1);
+}
+
+#[test]
+fn python_get_keys_count_toward_an_implicit_schema() {
+    let source = "def to_user(payload):\n    email = payload.get(\"email\")\n    plan = payload.get(\"plan\")\n    active = payload.get(\"active\")\n    seats = payload.get(\"seats\", 1)\n    return User(email, plan, active, seats)\n";
+    assert_eq!(schema_in("u.py", source).len(), 1);
+}

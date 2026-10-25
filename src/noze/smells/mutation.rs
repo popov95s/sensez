@@ -232,7 +232,10 @@ fn implicit_schema(
     out: &mut Vec<SmellFinding>,
 ) {
     for (recv, keys) in schemas {
-        if keys.len() < cfg.implicit_schema_min_keys || m.dynamic_key_receivers.contains(recv) {
+        if keys.len() < cfg.implicit_schema_min_keys
+            || m.dynamic_key_receivers.contains(recv)
+            || keys.iter().all(|key| key.starts_with('-'))
+        {
             continue;
         }
         let annotated = ctx

@@ -49,6 +49,7 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
             }
         }
         "call" => {
+            record_get_key(unit, node, src);
             record_get_default(unit, node, src);
             record_schema_call(unit, node, src);
             record_mutating_call(unit, node, src);
@@ -123,6 +124,32 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         fallback_sink(node, src),
         right.start_position().row + 1,
     );
+}
+
+/// `recv.get("key")` — the key counts toward `recv`'s implicit schema.
+fn record_get_key(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let Some(function) = node
+        .child_by_field_name("function")
+        .filter(|function| attribute_name(*function, src) == Some("get"))
+    else {
+        return;
+    };
+    let recv = function
+        .child_by_field_name("object")
+        .filter(|object| object.kind() == "identifier")
+        .and_then(|object| object.utf8_text(src).ok());
+    let key = node
+        .child_by_field_name("arguments")
+        .and_then(|args| args.named_child(0))
+        .filter(|key| key.kind() == "string")
+        .and_then(|key| string_literal_text(key, src));
+    if let (Some(recv), Some(key)) = (recv, key) {
+        unit.str_keys
+            .entry(recv.to_string())
+            .or_default()
+            .insert(key);
+        walk::record_str_key_line(unit, recv, node.start_position().row + 1);
+    }
 }
 
 /// `d.get("k", "")` / `getattr(o, "k", "")` — the string default stands in for a missing value.

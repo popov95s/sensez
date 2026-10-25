@@ -63,6 +63,7 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         "call_expression" => record_call(unit, node, src),
         "binary_expression" => record_binary_fallback(unit, node, src),
         "ternary_expression" => record_ternary_fallback(unit, node, src),
+        "variable_declarator" => record_destructured_keys(unit, node, src),
         _ => {}
     }
 }
@@ -129,6 +130,32 @@ fn template_string_body(text: &str) -> Option<String> {
         return None;
     }
     Some(text.strip_prefix('`')?.strip_suffix('`')?.to_string())
+}
+
+/// `const { a, b: c, d = 1 } = recv` — each key read off `recv`.
+fn record_destructured_keys(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let (Some(pattern), Some(recv)) = (
+        node.child_by_field_name("name")
+            .filter(|name| name.kind() == "object_pattern"),
+        node.child_by_field_name("value")
+            .filter(|value| value.kind() == "identifier")
+            .and_then(|value| value.utf8_text(src).ok()),
+    ) else {
+        return;
+    };
+    let mut cursor = pattern.walk();
+    for property in pattern.named_children(&mut cursor) {
+        let key = match property.kind() {
+            "shorthand_property_identifier_pattern" => Some(property),
+            "pair_pattern" => property.child_by_field_name("key"),
+            "object_assignment_pattern" => property.child_by_field_name("left"),
+            _ => None,
+        };
+        if let Some(key) = key.and_then(|key| key.utf8_text(src).ok()) {
+            record_attr(&mut unit.str_keys, recv, key);
+            walk::record_str_key_line(unit, recv, node.start_position().row + 1);
+        }
+    }
 }
 
 /// `recv["key"]` — record the distinct string-literal key per receiver.
