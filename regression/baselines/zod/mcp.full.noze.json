@@ -624,7 +624,7 @@
       "cycles": 2,
       "dead_code": 5,
       "duplication": 20,
-      "smells": 264
+      "smells": 558
     },
     "truncated": false
   },
@@ -641,6 +641,86 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/bench/benchUtil.ts",
+      "kind": "type_escape_cast",
+      "line": 8,
+      "lines": [
+        8,
+        9
+      ],
+      "message": "2 type escapes in 7 lines: `as any` at L8, L9 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "makeSchema",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "type_escape_cast",
+      "line": 221,
+      "lines": [
+        221
+      ],
+      "message": "1 type escape in 5 lines: `as any` at L221 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "mitata.group callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "type_escape_cast",
+      "line": 43,
+      "lines": [
+        43,
+        51
+      ],
+      "message": "2 type escapes in 28 lines: `as any` at L43, L51 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "benchWithData",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/metabench.ts",
+      "kind": "type_escape_cast",
+      "line": 85,
+      "lines": [
+        85
+      ],
+      "message": "1 type escape in 64 lines: `as any` at L85 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "run",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/property-access.ts",
+      "kind": "type_escape_cast",
+      "line": 23,
+      "lines": [
+        23
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L23 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "get",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/property-access.ts",
+      "kind": "type_escape_cast",
+      "line": 26,
+      "lines": [
+        26
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L26 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "set",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "narrating_code",
       "line": 330,
@@ -648,6 +728,162 @@
       "metric": 71,
       "symbol": "generateFields",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "type_escape_cast",
+      "line": 209,
+      "lines": [
+        209
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L209 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "constructor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "type_escape_cast",
+      "line": 223,
+      "lines": [
+        223
+      ],
+      "message": "1 type escape in 48 lines: `as any` at L223 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "format",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "type_escape_cast",
+      "line": 233,
+      "lines": [
+        233
+      ],
+      "message": "1 type escape in 37 lines: `as any` at L233 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "processError",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
+      "kind": "type_escape_cast",
+      "line": 298,
+      "lines": [
+        298
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L298 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/discriminatedUnion.ts",
+      "kind": "type_escape_cast",
+      "line": 54,
+      "lines": [
+        54
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L54 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/discriminatedUnion.ts",
+      "kind": "type_escape_cast",
+      "line": 75,
+      "lines": [
+        75
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L75 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/object.ts",
+      "kind": "type_escape_cast",
+      "line": 32,
+      "lines": [
+        32
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L32 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/object.ts",
+      "kind": "type_escape_cast",
+      "line": 48,
+      "lines": [
+        48
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L48 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/object.ts",
+      "kind": "type_escape_cast",
+      "line": 64,
+      "lines": [
+        64
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L64 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/realworld.ts",
+      "kind": "type_escape_cast",
+      "line": 58,
+      "lines": [
+        58
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L58 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/union.ts",
+      "kind": "type_escape_cast",
+      "line": 54,
+      "lines": [
+        54
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L54 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/benchmarks/union.ts",
+      "kind": "type_escape_cast",
+      "line": 75,
+      "lines": [
+        75
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L75 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "on(\"cycle\") callback",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -668,6 +904,703 @@
       "metric": 26,
       "symbol": "handleResults",
       "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 101,
+      "lines": [
+        101,
+        103,
+        104
+      ],
+      "message": "4 type escapes in 6 lines: `as any` at L101, L103, L104 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 4,
+      "symbol": "error",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2322,
+      "lines": [
+        2322
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2322 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "min",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2329,
+      "lines": [
+        2329
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2329 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "max",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2336,
+      "lines": [
+        2336
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2336 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "length",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2343,
+      "lines": [
+        2343
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L2343 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nonempty",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2432,
+      "lines": [
+        2432
+      ],
+      "message": "1 type escape in 27 lines: `as any` at L2432 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "deepPartialify",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 251,
+      "lines": [
+        251,
+        260,
+        272,
+        274
+      ],
+      "message": "4 type escapes in 44 lines: `as any` at L251, L260, L272 (+1 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 4,
+      "symbol": "\"~validate\"",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2566,
+      "lines": [
+        2566
+      ],
+      "message": "1 type escape in 100 lines: `as any` at L2566 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2576,
+      "lines": [
+        2576
+      ],
+      "message": "1 type escape in 21 lines: `as any` at L2576 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "strict",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2597,
+      "lines": [
+        2597
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2597 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "strip",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2604,
+      "lines": [
+        2604
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2604 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "passthrough",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2636,
+      "lines": [
+        2636
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L2636 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "extend",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2690,
+      "lines": [
+        2690
+      ],
+      "message": "1 type escape in 14 lines: `as any` at L2690 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "merge",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2741,
+      "lines": [
+        2741
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2741 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "setKey",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2766,
+      "lines": [
+        2766
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2766 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "catchall",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2783,
+      "lines": [
+        2783
+      ],
+      "message": "1 type escape in 16 lines: `as any` at L2783 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "pick",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2800,
+      "lines": [
+        2800
+      ],
+      "message": "1 type escape in 16 lines: `as any` at L2800 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "omit",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2836,
+      "lines": [
+        2836
+      ],
+      "message": "1 type escape in 18 lines: `as any` at L2836 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "partial",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2870,
+      "lines": [
+        2870
+      ],
+      "message": "1 type escape in 23 lines: `as any` at L2870 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "required",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2877,
+      "lines": [
+        2877
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L2877 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "keyof",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2890,
+      "lines": [
+        2890
+      ],
+      "message": "1 type escape in 18 lines: `as any` at L2890 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2903,
+      "lines": [
+        2903
+      ],
+      "message": "1 type escape in 12 lines: `as any` at L2903 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "strictCreate",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 2916,
+      "lines": [
+        2916
+      ],
+      "message": "1 type escape in 12 lines: `as any` at L2916 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "lazycreate",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3148,
+      "lines": [
+        3148,
+        3154
+      ],
+      "message": "2 type escapes in 41 lines: `as any` at L3148, L3154 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3438,
+      "lines": [
+        3438
+      ],
+      "message": "1 type escape in 5 lines: `as any` at L3438 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "map callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3545,
+      "lines": [
+        3545
+      ],
+      "message": "1 type escape in 34 lines: `as any` at L3545 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3756,
+      "lines": [
+        3756
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L3756 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "min",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3763,
+      "lines": [
+        3763
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L3763 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "max",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3770,
+      "lines": [
+        3770
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L3770 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "size",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3774,
+      "lines": [
+        3774
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L3774 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nonempty",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3875,
+      "lines": [
+        3875,
+        3876
+      ],
+      "message": "2 type escapes in 15 lines: `as any` at L3875; `as unknown as` at L3876 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "OK callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3889,
+      "lines": [
+        3889
+      ],
+      "message": "1 type escape in 81 lines: `as any` at L3889 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3917,
+      "lines": [
+        3917
+      ],
+      "message": "1 type escape in 8 lines: `as any` at L3917 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "args",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3934,
+      "lines": [
+        3934
+      ],
+      "message": "1 type escape in 8 lines: `as any` at L3934 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "implement",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3939,
+      "lines": [
+        3939
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L3939 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "strictImplement",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 3953,
+      "lines": [
+        3953,
+        3954
+      ],
+      "message": "2 type escapes in 8 lines: `as any` at L3953, L3954 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4144,
+      "lines": [
+        4144
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L4144 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "extract",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4154,
+      "lines": [
+        4154
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L4154 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "exclude",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4318,
+      "lines": [
+        4318
+      ],
+      "message": "1 type escape in 5 lines: `as unknown as` at L4318 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "sourceType",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 445,
+      "lines": [
+        445
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L445 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "optional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 448,
+      "lines": [
+        448
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L448 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nullable",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4503,
+      "lines": [
+        4503
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L4503 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4543,
+      "lines": [
+        4543
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L4543 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4592,
+      "lines": [
+        4592
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L4592 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4595,
+      "lines": [
+        4595
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L4595 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 461,
+      "lines": [
+        461
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L461 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "or",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 471,
+      "lines": [
+        471
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L471 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "transform",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 484,
+      "lines": [
+        484
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L484 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "default",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 4889,
+      "lines": [
+        4889
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L4889 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "create",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 506,
+      "lines": [
+        506
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L506 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "catch",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 515,
+      "lines": [
+        515
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L515 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "describe",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 708,
+      "lines": [
+        708
+      ],
+      "message": "1 type escape in 21 lines: `@ts-ignore` at L708 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "isValidJWT",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "type_escape_cast",
+      "line": 879,
+      "lines": [
+        879
+      ],
+      "message": "1 type escape in 309 lines: `@ts-ignore` at L879 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_parse",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -863,6 +1796,19 @@
       "metric": 4,
       "symbol": "string",
       "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "type_escape_cast",
+      "line": 6,
+      "lines": [
+        6
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L6 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "string",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -1726,6 +2672,798 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1002,
+      "lines": [
+        1002
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L1002 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "stringFormat",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1006,
+      "lines": [
+        1006
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L1006 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "hostname",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1010,
+      "lines": [
+        1010
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L1010 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "hex",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1023,
+      "lines": [
+        1023
+      ],
+      "message": "1 type escape in 12 lines: `as any` at L1023 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "hash",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1419,
+      "lines": [
+        1419
+      ],
+      "message": "2 type escapes in 3 lines: `as any` at L1419 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "array",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1425,
+      "lines": [
+        1425
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L1425 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "keyof",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1534,
+      "lines": [
+        1534
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L1534 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "catchall",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1581,
+      "lines": [
+        1581
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1581 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "object",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1590,
+      "lines": [
+        1590
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1590 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "strictObject",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1604,
+      "lines": [
+        1604
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1604 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "looseObject",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1630,
+      "lines": [
+        1630,
+        1632
+      ],
+      "message": "2 type escapes in 10 lines: `as any` at L1630, L1632 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "union",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1658,
+      "lines": [
+        1658,
+        1660
+      ],
+      "message": "2 type escapes in 11 lines: `as any` at L1658, L1660 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "xor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1693,
+      "lines": [
+        1693
+      ],
+      "message": "1 type escape in 16 lines: `as any` at L1693 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "discriminatedUnion",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1720,
+      "lines": [
+        1720,
+        1722,
+        1723
+      ],
+      "message": "3 type escapes in 10 lines: `as any` at L1720, L1722, L1723 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "intersection",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1741,
+      "lines": [
+        1741,
+        1743
+      ],
+      "message": "2 type escapes in 5 lines: `as any` at L1741, L1743 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "rest",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1767,
+      "lines": [
+        1767
+      ],
+      "message": "1 type escape in 15 lines: `as any` at L1767 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "tuple",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1799,
+      "lines": [
+        1799,
+        1801,
+        1802,
+        1806,
+        1809
+      ],
+      "message": "5 type escapes in 21 lines: `as any` at L1799, L1801, L1802 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "record",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1821,
+      "lines": [
+        1821,
+        1824
+      ],
+      "message": "2 type escapes in 14 lines: `as any` at L1821, L1824 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "partialRecord",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1834,
+      "lines": [
+        1834,
+        1837
+      ],
+      "message": "2 type escapes in 13 lines: `as any` at L1834, L1837 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "looseRecord",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1872,
+      "lines": [
+        1872,
+        1874,
+        1875
+      ],
+      "message": "3 type escapes in 12 lines: `as any` at L1872, L1874, L1875 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "map",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1905,
+      "lines": [
+        1905,
+        1907
+      ],
+      "message": "2 type escapes in 10 lines: `as any` at L1905, L1907 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "set",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1948,
+      "lines": [
+        1948
+      ],
+      "message": "1 type escape in 14 lines: `as any` at L1948 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "extract",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1963,
+      "lines": [
+        1963
+      ],
+      "message": "1 type escape in 14 lines: `as any` at L1963 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "exclude",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1980,
+      "lines": [
+        1980
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1980 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_enum",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2061,
+      "lines": [
+        2061
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L2061 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "file",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2116,
+      "lines": [
+        2116,
+        2118
+      ],
+      "message": "2 type escapes in 8 lines: `as any` at L2116, L2118 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "transform",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2141,
+      "lines": [
+        2141,
+        2143
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2141, L2143 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "optional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2166,
+      "lines": [
+        2166,
+        2168
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2166, L2168 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "exactOptional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2191,
+      "lines": [
+        2191,
+        2193
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2191, L2193 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "nullable",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2224,
+      "lines": [
+        2224,
+        2226
+      ],
+      "message": "2 type escapes in 12 lines: `as any` at L2224, L2226 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_default",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2254,
+      "lines": [
+        2254,
+        2256
+      ],
+      "message": "2 type escapes in 12 lines: `as any` at L2254, L2256 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "prefault",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2285,
+      "lines": [
+        2285,
+        2287
+      ],
+      "message": "2 type escapes in 10 lines: `as any` at L2285, L2287 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "nonoptional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2308,
+      "lines": [
+        2308,
+        2310
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2308, L2310 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "success",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2336,
+      "lines": [
+        2336,
+        2338
+      ],
+      "message": "2 type escapes in 12 lines: `as any` at L2336, L2338 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_catch",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2384,
+      "lines": [
+        2384,
+        2385
+      ],
+      "message": "2 type escapes in 8 lines: `as unknown as` at L2384, L2385 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "pipe",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2411,
+      "lines": [
+        2411,
+        2413,
+        2414,
+        2415,
+        2416
+      ],
+      "message": "5 type escapes in 16 lines: `as any` at L2411, L2413, L2414 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "codec",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2422,
+      "lines": [
+        2422,
+        2424,
+        2425,
+        2426,
+        2427
+      ],
+      "message": "5 type escapes in 10 lines: `as any` at L2422, L2424, L2425 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "invertCodec",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2466,
+      "lines": [
+        2466,
+        2468
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2466, L2468 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "readonly",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2491,
+      "lines": [
+        2491
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L2491 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "templateLiteral",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2514,
+      "lines": [
+        2514,
+        2516
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2514, L2516 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "lazy",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2536,
+      "lines": [
+        2536,
+        2538
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L2536, L2538 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "promise",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2602,
+      "lines": [
+        2602
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L2602 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_function",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2636,
+      "lines": [
+        2636
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L2636 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "custom",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2672,
+      "lines": [
+        2672,
+        2687
+      ],
+      "message": "2 type escapes in 26 lines: `as any` at L2672, L2687 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_instanceof",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2695,
+      "lines": [
+        2695
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L2695 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "stringbool",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2732,
+      "lines": [
+        2732,
+        2734,
+        2735
+      ],
+      "message": "4 type escapes in 10 lines: `as any` at L2732, L2734, L2735 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 4,
+      "symbol": "preprocess",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 408,
+      "lines": [
+        408
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L408 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "regex",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 411,
+      "lines": [
+        411
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L411 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "includes",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 414,
+      "lines": [
+        414
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L414 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "startsWith",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 417,
+      "lines": [
+        417
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L417 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "endsWith",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 420,
+      "lines": [
+        420
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L420 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "min",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 423,
+      "lines": [
+        423
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L423 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "max",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 426,
+      "lines": [
+        426
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L426 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "length",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 429,
+      "lines": [
+        429
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L429 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nonempty",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 561,
+      "lines": [
+        561
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L561 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "datetime",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 562,
+      "lines": [
+        562
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L562 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "date",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 563,
+      "lines": [
+        563
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L563 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "time",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 564,
+      "lines": [
+        564
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L564 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "duration",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "narrating_code",
       "line": 1357,
@@ -1733,6 +3471,483 @@
       "metric": 123,
       "symbol": "_enum",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1167,
+      "lines": [
+        1167
+      ],
+      "message": "1 type escape in 14 lines: `as any` at L1167 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_array",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1187,
+      "lines": [
+        1187
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1187 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_union",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1201,
+      "lines": [
+        1201
+      ],
+      "message": "1 type escape in 12 lines: `as any` at L1201 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_xor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1230,
+      "lines": [
+        1230
+      ],
+      "message": "1 type escape in 16 lines: `as any` at L1230 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_discriminatedUnion",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1246,
+      "lines": [
+        1246
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1246 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_intersection",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1300,
+      "lines": [
+        1300
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L1300 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_record",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1317,
+      "lines": [
+        1317
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L1317 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_map",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1333,
+      "lines": [
+        1333
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1333 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_set",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1369,
+      "lines": [
+        1369
+      ],
+      "message": "1 type escape in 20 lines: `as any` at L1369 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_enum",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1389,
+      "lines": [
+        1389
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1389 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_nativeEnum",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1434,
+      "lines": [
+        1434,
+        1436
+      ],
+      "message": "2 type escapes in 9 lines: `as any` at L1434, L1436 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_transform",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1447,
+      "lines": [
+        1447
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1447 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_optional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1460,
+      "lines": [
+        1460
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1460 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_nullable",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1474,
+      "lines": [
+        1474
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L1474 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_default",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1491,
+      "lines": [
+        1491
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1491 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_nonoptional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1505,
+      "lines": [
+        1505
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1505 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_success",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1519,
+      "lines": [
+        1519,
+        1522
+      ],
+      "message": "2 type escapes in 11 lines: `as any` at L1519, L1522 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_catch",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1537,
+      "lines": [
+        1537
+      ],
+      "message": "1 type escape in 14 lines: `as any` at L1537 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_pipe",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1551,
+      "lines": [
+        1551
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1551 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_readonly",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1565,
+      "lines": [
+        1565
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L1565 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_templateLiteral",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1579,
+      "lines": [
+        1579
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1579 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_lazy",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1592,
+      "lines": [
+        1592
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1592 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_promise",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1611,
+      "lines": [
+        1611,
+        1615
+      ],
+      "message": "2 type escapes in 16 lines: `as any` at L1611, L1615 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_custom",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1628,
+      "lines": [
+        1628,
+        1632
+      ],
+      "message": "2 type escapes in 14 lines: `as any` at L1628, L1632 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_refine",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1765,
+      "lines": [
+        1765,
+        1767,
+        1768,
+        1769,
+        1788
+      ],
+      "message": "5 type escapes in 62 lines: `as any` at L1765, L1767, L1768 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "_stringbool",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1822,
+      "lines": [
+        1822
+      ],
+      "message": "1 type escape in 22 lines: `as any` at L1822 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_stringFormat",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 1116,
+      "lines": [
+        1116
+      ],
+      "message": "1 type escape in 16 lines: `as any` at L1116 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 35,
+      "lines": [
+        35
+      ],
+      "message": "1 type escape in 5 lines: `as any` at L35 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "core.$constructor(\"$ZodCheck\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 360,
+      "lines": [
+        360
+      ],
+      "message": "1 type escape in 89 lines: `as any` at L360 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 416,
+      "lines": [
+        416,
+        424
+      ],
+      "message": "2 type escapes in 27 lines: `as any` at L416, L424 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 462,
+      "lines": [
+        462
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L462 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 512,
+      "lines": [
+        512
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L512 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 562,
+      "lines": [
+        562
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L562 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 616,
+      "lines": [
+        616
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L616 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 667,
+      "lines": [
+        667
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L667 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/checks.ts",
+      "kind": "type_escape_cast",
+      "line": 719,
+      "lines": [
+        719
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L719 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -1753,6 +3968,110 @@
       "metric": 30,
       "symbol": "init",
       "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/core.ts",
+      "kind": "type_escape_cast",
+      "line": 48,
+      "lines": [
+        48
+      ],
+      "message": "1 type escape in 30 lines: `as any` at L48 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "init",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/core.ts",
+      "kind": "type_escape_cast",
+      "line": 76,
+      "lines": [
+        76
+      ],
+      "message": "1 type escape in 61 lines: `as any` at L76 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "$constructor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
+      "kind": "type_escape_cast",
+      "line": 42,
+      "lines": [
+        42
+      ],
+      "message": "1 type escape in 8 lines: `as any` at L42 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "compile",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "type_escape_cast",
+      "line": 294,
+      "lines": [
+        294
+      ],
+      "message": "1 type escape in 38 lines: `as any` at L294 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "formatError",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "type_escape_cast",
+      "line": 306,
+      "lines": [
+        306
+      ],
+      "message": "1 type escape in 33 lines: `as any` at L306 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "processError",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
+      "kind": "type_escape_cast",
+      "line": 348,
+      "lines": [
+        348
+      ],
+      "message": "1 type escape in 46 lines: `as any` at L348 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "treeifyError",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
+      "kind": "type_escape_cast",
+      "line": 123,
+      "lines": [
+        123
+      ],
+      "message": "1 type escape in 15 lines: `as any` at L123 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "emit",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
+      "kind": "type_escape_cast",
+      "line": 94,
+      "lines": [
+        94
+      ],
+      "message": "1 type escape in 15 lines: `as any` at L94 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "constructor",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -1786,6 +4105,552 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 187,
+      "lines": [
+        187
+      ],
+      "message": "1 type escape in 38 lines: `as any` at L187 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "literalProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 284,
+      "lines": [
+        284
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L284 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "arrayProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 298,
+      "lines": [
+        298,
+        329
+      ],
+      "message": "2 type escapes in 45 lines: `as any` at L298, L329 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "objectProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 342,
+      "lines": [
+        342
+      ],
+      "message": "1 type escape in 5 lines: `as any` at L342 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "def.options.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 356,
+      "lines": [
+        356,
+        360
+      ],
+      "message": "2 type escapes in 18 lines: `as any` at L356, L360 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "intersectionProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 383,
+      "lines": [
+        383
+      ],
+      "message": "1 type escape in 5 lines: `as any` at L383 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "def.items.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 389,
+      "lines": [
+        389
+      ],
+      "message": "1 type escape in 54 lines: `as any` at L389 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "tupleProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 442,
+      "lines": [
+        442,
+        453,
+        458
+      ],
+      "message": "3 type escapes in 48 lines: `as any` at L442, L453, L458 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "recordProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 479,
+      "lines": [
+        479
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L479 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nullableProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 491,
+      "lines": [
+        491
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L491 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nonoptionalProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 498,
+      "lines": [
+        498
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L498 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "defaultProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 506,
+      "lines": [
+        506
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L506 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "prefaultProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 514,
+      "lines": [
+        514,
+        519
+      ],
+      "message": "2 type escapes in 16 lines: `as any` at L514, L519 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "catchProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 533,
+      "lines": [
+        533
+      ],
+      "message": "1 type escape in 8 lines: `as any` at L533 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "pipeProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 540,
+      "lines": [
+        540
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L540 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "readonlyProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 548,
+      "lines": [
+        548
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L548 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "promiseProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 555,
+      "lines": [
+        555
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L555 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "optionalProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 562,
+      "lines": [
+        562
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L562 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "lazyProcessor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 634,
+      "lines": [
+        634,
+        650,
+        651,
+        666,
+        667,
+        668
+      ],
+      "message": "6 type escapes in 49 lines: `as any` at L634, L650, L651 (+3 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 6,
+      "symbol": "toJSONSchema",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+      "kind": "type_escape_cast",
+      "line": 105,
+      "lines": [
+        105
+      ],
+      "message": "2 type escapes in 4 lines: `as any` at L105 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+      "kind": "type_escape_cast",
+      "line": 130,
+      "lines": [
+        130
+      ],
+      "message": "2 type escapes in 4 lines: `as any` at L130 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+      "kind": "type_escape_cast",
+      "line": 155,
+      "lines": [
+        155
+      ],
+      "message": "2 type escapes in 4 lines: `as any` at L155 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+      "kind": "type_escape_cast",
+      "line": 180,
+      "lines": [
+        180
+      ],
+      "message": "2 type escapes in 4 lines: `as any` at L180 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+      "kind": "type_escape_cast",
+      "line": 71,
+      "lines": [
+        71
+      ],
+      "message": "1 type escape in 14 lines: `as any` at L71 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/parse.ts",
+      "kind": "type_escape_cast",
+      "line": 91,
+      "lines": [
+        91
+      ],
+      "message": "1 type escape in 12 lines: `as any` at L91 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/registries.ts",
+      "kind": "type_escape_cast",
+      "line": 42,
+      "lines": [
+        42
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L42 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "add",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/registries.ts",
+      "kind": "type_escape_cast",
+      "line": 71,
+      "lines": [
+        71
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L71 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "get",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1015,
+      "lines": [
+        1015
+      ],
+      "message": "1 type escape in 16 lines: `@ts-ignore` at L1015 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "isValidJWT",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1781,
+      "lines": [
+        1781,
+        1784
+      ],
+      "message": "2 type escapes in 37 lines: `as any` at L1781, L1784 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "handlePropertyResult",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 191,
+      "lines": [
+        191,
+        201
+      ],
+      "message": "2 type escapes in 131 lines: `as any` at L191, L201 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "core.$constructor(\"$ZodType\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 235,
+      "lines": [
+        235
+      ],
+      "message": "2 type escapes in 43 lines: `as any` at L235 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "runChecks",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2414,
+      "lines": [
+        2414,
+        2416
+      ],
+      "message": "2 type escapes in 40 lines: `as any` at L2414, L2416 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 3388,
+      "lines": [
+        3388
+      ],
+      "message": "1 type escape in 13 lines: `@ts-ignore` at L3388 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "parse",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 4298,
+      "lines": [
+        4298
+      ],
+      "message": "1 type escape in 54 lines: `as any` at L4298 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "core.$constructor(\"$ZodTemplateLiteral\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 4440,
+      "lines": [
+        4440
+      ],
+      "message": "1 type escape in 8 lines: `as any` at L4440 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 4448,
+      "lines": [
+        4448
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L4448 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "implementAsync",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 4638,
+      "lines": [
+        4638
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L4638 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 503,
+      "lines": [
+        503
+      ],
+      "message": "1 type escape in 74 lines: `@ts-ignore` at L503 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 811,
+      "lines": [
+        811
+      ],
+      "message": "1 type escape in 15 lines: `@ts-ignore` at L811 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 897,
+      "lines": [
+        897
+      ],
+      "message": "1 type escape in 21 lines: `@ts-ignore` at L897 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 919,
+      "lines": [
+        919
+      ],
+      "message": "1 type escape in 13 lines: `@ts-ignore` at L919 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "isValidBase64",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "unnecessary_nested_if",
       "line": 489,
@@ -1795,6 +4660,32 @@
       "message": "1 nested if(s) at L489 can be combined with a boolean AND",
       "metric": 1,
       "symbol": "check",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "type_escape_cast",
+      "line": 129,
+      "lines": [
+        129
+      ],
+      "message": "1 type escape in 20 lines: `as any` at L129 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "initializeContext",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "type_escape_cast",
+      "line": 168,
+      "lines": [
+        168
+      ],
+      "message": "1 type escape in 77 lines: `as any` at L168 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "process",
       "threshold": 0
     },
     {
@@ -1818,6 +4709,230 @@
       "message": "params [obj: object] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "objectClone",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 323,
+      "lines": [
+        323
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L323 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "keys.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 371,
+      "lines": [
+        371
+      ],
+      "message": "1 type escape in 20 lines: `@ts-ignore` at L371 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "cached callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 468,
+      "lines": [
+        468
+      ],
+      "message": "1 type escape in 54 lines: `@ts-ignore` at L468 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "getParsedType",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 496,
+      "lines": [
+        496
+      ],
+      "message": "1 type escape in 5 lines: `as any` at L496 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "clone",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 520,
+      "lines": [
+        520,
+        521,
+        527
+      ],
+      "message": "3 type escapes in 13 lines: `as any` at L520, L521, L527 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "normalizeParams",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 627,
+      "lines": [
+        627
+      ],
+      "message": "1 type escape in 28 lines: `as any` at L627 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "pick",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 646,
+      "lines": [
+        646
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L646 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "shape",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 684,
+      "lines": [
+        684
+      ],
+      "message": "1 type escape in 27 lines: `as any` at L684 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "extend",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 698,
+      "lines": [
+        698
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L698 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "safeExtend",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 717,
+      "lines": [
+        717
+      ],
+      "message": "1 type escape in 18 lines: `as any` at L717 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "merge",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 742,
+      "lines": [
+        742
+      ],
+      "message": "1 type escape in 33 lines: `as any` at L742 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "shape",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 769,
+      "lines": [
+        769
+      ],
+      "message": "1 type escape in 51 lines: `as any` at L769 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "partial",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 787,
+      "lines": [
+        787
+      ],
+      "message": "1 type escape in 29 lines: `as any` at L787 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "shape",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 809,
+      "lines": [
+        809
+      ],
+      "message": "1 type escape in 39 lines: `as any` at L809 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "required",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 839,
+      "lines": [
+        839,
+        840
+      ],
+      "message": "2 type escapes in 5 lines: `as any` at L839, L840 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "issues.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 862,
+      "lines": [
+        862
+      ],
+      "message": "1 type escape in 21 lines: `as any` at L862 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "finalizeIssue",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "type_escape_cast",
+      "line": 874,
+      "lines": [
+        874
+      ],
+      "message": "1 type escape in 7 lines: `@ts-ignore` at L874 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "getSizableOrigin",
       "threshold": 0
     },
     {
@@ -1849,6 +4964,821 @@
       "metric": 17,
       "symbol": "getSizing",
       "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1016,
+      "lines": [
+        1016
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1016 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "catchall",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1037,
+      "lines": [
+        1037,
+        1039
+      ],
+      "message": "2 type escapes in 10 lines: `as any` at L1037, L1039 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "union",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 105,
+      "lines": [
+        105
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L105 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "string",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1061,
+      "lines": [
+        1061,
+        1063
+      ],
+      "message": "2 type escapes in 11 lines: `as any` at L1061, L1063 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "xor",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1116,
+      "lines": [
+        1116,
+        1118,
+        1119
+      ],
+      "message": "3 type escapes in 7 lines: `as any` at L1116, L1118, L1119 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "intersection",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1159,
+      "lines": [
+        1159
+      ],
+      "message": "1 type escape in 15 lines: `as any` at L1159 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "tuple",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1188,
+      "lines": [
+        1188,
+        1190,
+        1191,
+        1195,
+        1198
+      ],
+      "message": "5 type escapes in 21 lines: `as any` at L1188, L1190, L1191 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "record",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1210,
+      "lines": [
+        1210,
+        1213
+      ],
+      "message": "2 type escapes in 14 lines: `as any` at L1210, L1213 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "partialRecord",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1223,
+      "lines": [
+        1223,
+        1226
+      ],
+      "message": "2 type escapes in 13 lines: `as any` at L1223, L1226 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "looseRecord",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1248,
+      "lines": [
+        1248,
+        1250,
+        1251
+      ],
+      "message": "3 type escapes in 12 lines: `as any` at L1248, L1250, L1251 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "map",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1267,
+      "lines": [
+        1267,
+        1269
+      ],
+      "message": "2 type escapes in 7 lines: `as any` at L1267, L1269 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "set",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1298,
+      "lines": [
+        1298
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1298 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_enum",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1315,
+      "lines": [
+        1315
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L1315 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nativeEnum",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1366,
+      "lines": [
+        1366
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L1366 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "file",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1385,
+      "lines": [
+        1385,
+        1387
+      ],
+      "message": "2 type escapes in 8 lines: `as any` at L1385, L1387 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "transform",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1407,
+      "lines": [
+        1407,
+        1409
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1407, L1409 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "optional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1429,
+      "lines": [
+        1429,
+        1431
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1429, L1431 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "exactOptional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1450,
+      "lines": [
+        1450,
+        1452
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1450, L1452 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "nullable",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1479,
+      "lines": [
+        1479,
+        1481
+      ],
+      "message": "2 type escapes in 12 lines: `as any` at L1479, L1481 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_default",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1505,
+      "lines": [
+        1505,
+        1507
+      ],
+      "message": "2 type escapes in 12 lines: `as any` at L1505, L1507 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "prefault",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1532,
+      "lines": [
+        1532,
+        1534
+      ],
+      "message": "2 type escapes in 10 lines: `as any` at L1532, L1534 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "nonoptional",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1553,
+      "lines": [
+        1553,
+        1555
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1553, L1555 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "success",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1576,
+      "lines": [
+        1576,
+        1578
+      ],
+      "message": "2 type escapes in 12 lines: `as any` at L1576, L1578 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_catch",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1597,
+      "lines": [
+        1597
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L1597 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "nan",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1618,
+      "lines": [
+        1618,
+        1620,
+        1621
+      ],
+      "message": "3 type escapes in 10 lines: `as any` at L1618, L1620, L1621 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "pipe",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1649,
+      "lines": [
+        1649,
+        1651,
+        1652,
+        1653,
+        1654
+      ],
+      "message": "5 type escapes in 16 lines: `as any` at L1649, L1651, L1652 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "codec",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1661,
+      "lines": [
+        1661,
+        1663,
+        1664,
+        1665,
+        1666
+      ],
+      "message": "5 type escapes in 10 lines: `as any` at L1661, L1663, L1664 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "invertCodec",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1685,
+      "lines": [
+        1685,
+        1687
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1685, L1687 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "readonly",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1709,
+      "lines": [
+        1709
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L1709 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "templateLiteral",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1733,
+      "lines": [
+        1733,
+        1735
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1733, L1735 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "_lazy",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1754,
+      "lines": [
+        1754,
+        1756
+      ],
+      "message": "2 type escapes in 6 lines: `as any` at L1754, L1756 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 2,
+      "symbol": "promise",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1791,
+      "lines": [
+        1791
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L1791 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "custom",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1839,
+      "lines": [
+        1839
+      ],
+      "message": "1 type escape in 20 lines: `as any` at L1839 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_instanceof",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1846,
+      "lines": [
+        1846
+      ],
+      "message": "1 type escape in 9 lines: `as any` at L1846 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "stringbool",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1942,
+      "lines": [
+        1942
+      ],
+      "message": "1 type escape in 10 lines: `as any` at L1942 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_function",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 511,
+      "lines": [
+        511
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L511 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "stringFormat",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 516,
+      "lines": [
+        516
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L516 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "hostname",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 521,
+      "lines": [
+        521
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L521 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "hex",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 536,
+      "lines": [
+        536
+      ],
+      "message": "1 type escape in 13 lines: `as any` at L536 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "hash",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 558,
+      "lines": [
+        558
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L558 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "number",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 620,
+      "lines": [
+        620
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L620 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "boolean",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 637,
+      "lines": [
+        637
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L637 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "bigint",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 682,
+      "lines": [
+        682
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L682 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "symbol",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 699,
+      "lines": [
+        699
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L699 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_undefined",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 717,
+      "lines": [
+        717
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L717 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_null",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 732,
+      "lines": [
+        732
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L732 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "any",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 749,
+      "lines": [
+        749
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L749 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "unknown",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 76,
+      "lines": [
+        76
+      ],
+      "message": "1 type escape in 1 lines: `as any` at L76 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "brand",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 766,
+      "lines": [
+        766
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L766 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "never",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 77,
+      "lines": [
+        77
+      ],
+      "message": "1 type escape in 38 lines: `as any` at L77 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "core.$constructor(\"ZodMiniType\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 783,
+      "lines": [
+        783
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L783 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "_void",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 802,
+      "lines": [
+        802
+      ],
+      "message": "1 type escape in 3 lines: `as any` at L802 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "date",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 822,
+      "lines": [
+        822
+      ],
+      "message": "1 type escape in 7 lines: `as any` at L822 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "array",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 833,
+      "lines": [
+        833
+      ],
+      "message": "1 type escape in 4 lines: `as any` at L833 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "keyof",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 863,
+      "lines": [
+        863
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L863 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "object",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 872,
+      "lines": [
+        872
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L872 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "strictObject",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 886,
+      "lines": [
+        886
+      ],
+      "message": "1 type escape in 11 lines: `as any` at L886 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "looseObject",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 918,
+      "lines": [
+        918
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L918 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "safeExtend",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 936,
+      "lines": [
+        936
+      ],
+      "message": "1 type escape in 6 lines: `as any` at L936 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "pick",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/scripts/fail-on-console.ts",
+      "kind": "type_escape_cast",
+      "line": 13,
+      "lines": [
+        13
+      ],
+      "message": "1 type escape in 6 lines: `@ts-ignore` at L13 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "beforeAll callback",
+      "threshold": 0
     },
     {
       "action": "warning",

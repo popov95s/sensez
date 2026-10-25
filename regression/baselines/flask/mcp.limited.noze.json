@@ -203,7 +203,7 @@
       "cycles": 2,
       "dead_code": 6,
       "duplication": 4,
-      "smells": 140
+      "smells": 147
     },
     "truncated": true
   },

@@ -214,14 +214,15 @@
       "nested_loop": 6,
       "shotgun_surgery_hazard": 1,
       "sibling_helper_redefinition": 2,
-      "tuple_packing": 3
+      "tuple_packing": 3,
+      "type_escape_cast": 7
     },
     "smells_skipped": {
       "config_exclude": 0,
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 140,
+    "smells_total": 147,
     "source_lines": 18315
   },
   "smells": [
@@ -247,6 +248,32 @@
       "metric": 2,
       "symbol": "_make_timedelta",
       "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "type_escape_cast",
+      "line": 362,
+      "lines": [
+        362
+      ],
+      "message": "1 type escape in 54 lines: `# type: ignore` at L362 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "type_escape_cast",
+      "line": 809,
+      "lines": [
+        809
+      ],
+      "message": "1 type escape in 57 lines: `# type: ignore` at L809 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 1,
+      "symbol": "test_client",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -333,6 +360,21 @@
       "metric": 3,
       "symbol": "_get_source_fast",
       "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "type_escape_cast",
+      "line": 129,
+      "lines": [
+        129,
+        133,
+        134
+      ],
+      "message": "3 type escapes in 50 lines: `# type: ignore` at L129, L133, L134 \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 3,
+      "symbol": "as_view",
+      "threshold": 0
     },
     {
       "action": "warning",
