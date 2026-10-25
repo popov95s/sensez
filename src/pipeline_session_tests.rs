@@ -172,3 +172,17 @@ fn unreadable_source_reports_why_the_analysis_cache_was_skipped() {
             && issue.message.starts_with("analysis cache skipped")
     }));
 }
+
+#[test]
+fn config_warning_keeps_the_parse_cache() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(dir.join("sensez.toml"), "[duplication]\ntreshold = 8\n").unwrap();
+    fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
+    let session = AnalysisSession::default();
+
+    let report = analyze_path_in_session(&session, dir, None).unwrap().0;
+
+    assert!(!report.meta.issues.is_empty());
+    assert!(session.has_workspace(dir));
+}

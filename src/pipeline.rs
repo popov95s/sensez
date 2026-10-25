@@ -94,7 +94,7 @@ fn analyze_keeping_config(
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
     let mut cache_issues = Vec::new();
-    let project = if session.is_some() && config_issues.is_empty() && discovery.issues.is_empty() {
+    let project = if session.is_some() {
         match crate::spine::cache::load_project(&discovery.files) {
             Ok(project) => Some(project),
             Err(err) => {
