@@ -180,10 +180,15 @@ impl StructuralDetector<'_, '_> {
         let Some(&first) = lines.first() else {
             return;
         };
+        let data_hint = hits
+            .iter()
+            .find_map(|hit| hit.root.as_deref())
+            .map(|root| format!("; if `{root}` is plain data or config, add it to `ignore_roots`"))
+            .unwrap_or_default();
         let finding = make(
             SmellKind::MessageChain,
             format!(
-                "attribute chain depth {depth} (threshold {}) at {} — Law of Demeter",
+                "attribute chain depth {depth} (threshold {}) at {} — Law of Demeter{data_hint}",
                 self.cfg.max_chain_depth,
                 line_list(&lines)
             ),
