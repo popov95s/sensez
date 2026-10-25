@@ -34,6 +34,12 @@ const TERNARY_SHAPE: TernaryShape<'static> = TernaryShape {
         "generator_function_declaration",
         "method_definition",
     ],
+    boundary_kinds: &[
+        "jsx_element",
+        "jsx_self_closing_element",
+        "jsx_opening_element",
+        "object",
+    ],
 };
 
 pub(crate) fn nested_ternary(node: Node<'_>) -> Option<NestedTernary> {

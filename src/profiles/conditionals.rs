@@ -32,6 +32,8 @@ pub(crate) struct TernaryShape<'a> {
     pub(crate) conditional_kind: &'a str,
     pub(crate) transparent_kinds: &'a [&'a str],
     pub(crate) function_kinds: &'a [&'a str],
+    /// Markup or literal nodes that end the lexical nesting walk: JSX elements, object literals.
+    pub(crate) boundary_kinds: &'a [&'a str],
 }
 
 /// Chain position of `node` through transparent parents, else a lexical-only record.
@@ -48,8 +50,7 @@ pub(crate) fn ternary_nesting(node: Node<'_>, shape: &TernaryShape<'_>) -> Optio
         }
         current = parent;
     }
-    let nested =
-        depth > 0 || is_nested_conditional(node, shape.conditional_kind, shape.function_kinds);
+    let nested = depth > 0 || is_nested_conditional(node, shape);
     nested.then(|| NestedTernary {
         line: node.start_position().row + 1,
         root_line: root.start_position().row + 1,
@@ -57,13 +58,15 @@ pub(crate) fn ternary_nesting(node: Node<'_>, shape: &TernaryShape<'_>) -> Optio
     })
 }
 
-fn is_nested_conditional(node: Node<'_>, conditional_kind: &str, function_kinds: &[&str]) -> bool {
+fn is_nested_conditional(node: Node<'_>, shape: &TernaryShape<'_>) -> bool {
     let mut parent = node.parent();
     while let Some(current) = parent {
-        if current.kind() == conditional_kind {
+        if current.kind() == shape.conditional_kind {
             return true;
         }
-        if function_kinds.contains(&current.kind()) {
+        if shape.function_kinds.contains(&current.kind())
+            || shape.boundary_kinds.contains(&current.kind())
+        {
             return false;
         }
         parent = current.parent();

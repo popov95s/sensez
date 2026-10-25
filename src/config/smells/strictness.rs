@@ -61,7 +61,7 @@ pub const NESTED_TERNARY_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "High",
         value: "high",
-        description: "Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.",
+        description: "Also flags conditionals nested inside a call argument or template of another; JSX elements and object literals end the nesting.",
     },
 ];
 
