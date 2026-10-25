@@ -54,6 +54,21 @@ pub fn key_from_parts(mut parts: Vec<String>) -> String {
     parts.join("/")
 }
 
+/// Extension-less, `index`-collapsed path naming the module at `path`.
+pub fn path_key(path: &Path) -> PathBuf {
+    let mut key = normalize(path);
+    if key
+        .extension()
+        .is_some_and(|ext| EXTENSIONS.iter().any(|known| ext == *known))
+    {
+        key.set_extension("");
+    }
+    if key.file_name().is_some_and(|name| name == "index") {
+        key.pop();
+    }
+    key
+}
+
 /// Normalize a path's `.`/`..` components without touching the filesystem.
 pub fn normalize(path: &Path) -> PathBuf {
     let mut out: Vec<Component> = Vec::new();
@@ -89,6 +104,18 @@ mod tests {
             "src/api"
         );
         assert_eq!(module_name(Path::new("/proj/main.jsx"), root), "main");
+    }
+
+    #[test]
+    fn path_key_strips_ext_and_index() {
+        assert_eq!(
+            path_key(Path::new("/proj/src/../lib/index.ts")),
+            PathBuf::from("/proj/lib")
+        );
+        assert_eq!(
+            path_key(Path::new("./src/util.test.ts")),
+            PathBuf::from("src/util.test")
+        );
     }
 
     #[test]

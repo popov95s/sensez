@@ -1,5 +1,4 @@
 use super::dynamic::DynamicFacts;
-use super::module_root::module_root;
 use crate::profiles::registry;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::ImportPhase;
@@ -20,7 +19,6 @@ pub(super) fn reverse_edges(
     dynamic: &DynamicFacts,
     nodes: &HashMap<PathBuf, NodeIndex>,
     root: &Path,
-    configured_roots: &[PathBuf],
 ) -> HashMap<NodeIndex, Vec<(NodeIndex, bool)>> {
     let computed: HashSet<(&PathBuf, usize)> = dynamic
         .by_file
@@ -46,15 +44,10 @@ pub(super) fn reverse_edges(
         let Some(&importer) = nodes.get(importer_path) else {
             continue;
         };
-        let alias_root = module_root(
-            importer_path,
-            graph.graph[importer].language,
-            configured_roots,
-        );
         let mut resolve_alias = |specifier: &str| {
             resolvers
                 .values_mut()
-                .find_map(|resolver| resolver.alias_path(&alias_root, specifier))
+                .find_map(|resolver| resolver.alias_path(importer_path, specifier))
         };
         for patterns in &facts.patterns {
             let targets = super::patterns::matching_nodes(

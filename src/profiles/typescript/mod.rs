@@ -18,6 +18,7 @@ use crate::spine::ir::{MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+mod compiler_options;
 #[cfg(test)]
 #[path = "dead_code_reach_tests.rs"]
 mod dead_code_reach_tests;
@@ -28,6 +29,9 @@ mod dead_code_tests;
 #[path = "duplication_tests.rs"]
 mod duplication_tests;
 mod edge_phase;
+#[cfg(test)]
+#[path = "graph_target_tests.rs"]
+mod graph_target_tests;
 mod paths;
 #[cfg(test)]
 #[path = "paths_tests.rs"]
@@ -177,6 +181,10 @@ macro_rules! impl_ts_traits {
 
             fn workspace_root(&self, common: &Path) -> Option<PathBuf> {
                 roots::workspace_root(common)
+            }
+
+            fn path_key(&self, file: &Path) -> Option<PathBuf> {
+                Some(roots::path_key(file))
             }
 
             fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {

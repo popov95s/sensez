@@ -59,7 +59,6 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
             &dynamic,
             &nodes_by_path,
             &scope.repository,
-            &config.roots,
         ),
         assets: &asset_nodes(&graph, &config.roots),
         opaque_files: &opaque_import_files,
