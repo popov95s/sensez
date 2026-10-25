@@ -2,12 +2,19 @@
 
 use super::graphy;
 use crate::config::smells::Smells;
-use crate::report::SmellKind;
+use crate::report::{SmellFinding, SmellKind};
 use crate::spine::parser::parse_file;
 use std::fs;
 
 /// God-module file names for a flat TS project given as `(name, body)` pairs.
 fn god_modules(files: &[(String, String)], cfg: Smells) -> Vec<String> {
+    god_module_findings(files, cfg)
+        .into_iter()
+        .map(|f| f.symbol)
+        .collect()
+}
+
+fn god_module_findings(files: &[(String, String)], cfg: Smells) -> Vec<SmellFinding> {
     let tmp = tempfile::tempdir().unwrap();
     let parsed: Vec<_> = files
         .iter()
@@ -22,7 +29,6 @@ fn god_modules(files: &[(String, String)], cfg: Smells) -> Vec<String> {
     graphy::detect(&graph, &parsed, &cfg.into(), &|_| true)
         .into_iter()
         .filter(|f| f.kind == SmellKind::GodModule)
-        .map(|f| f.symbol)
         .collect()
 }
 
@@ -82,6 +88,7 @@ fn thin_page_composing_many_siblings_is_not_a_god_module() {
 
     let no_size_gate = Smells {
         god_module_min_lines: 0,
+        god_module_min_units: 0,
         ..no_shotgun()
     };
     assert_eq!(god_modules(&files, no_size_gate), vec!["Page".to_string()]);
@@ -101,9 +108,51 @@ fn hub() -> Vec<(String, String)> {
     for i in 0..400 {
         service.push_str(&format!("export const v{i} = {i};\n"));
     }
-    service.push_str("export const x = d0;\n");
+    service.push_str("export const x = d0;\nexport function total() {\n  return x;\n}\n");
     files.push(file("service", service));
     files
+}
+
+/// A 400-line module of imported tables composed into one object, with no functions.
+fn aggregator() -> Vec<(String, String)> {
+    let mut schema = String::new();
+    let mut files = Vec::new();
+    for i in 0..12 {
+        schema.push_str(&format!("import {{ t{i} }} from \"./table{i}\";\n"));
+        files.push(file(
+            &format!("table{i}"),
+            format!("export const t{i} = {i};\n"),
+        ));
+    }
+    schema.push_str("export const x = {\n");
+    for i in 0..400 {
+        schema.push_str(&format!("  k{i}: t{},\n", i % 12));
+    }
+    schema.push_str("};\n");
+    files.push(file("schema", schema));
+    files
+}
+
+#[test]
+fn composition_root_without_functions_is_not_a_god_module() {
+    let mut files = aggregator();
+    files.extend(importers("caller", 15, "schema"));
+    assert!(god_modules(&files, no_shotgun()).is_empty());
+}
+
+#[test]
+fn god_module_finding_is_anchored_with_advice() {
+    let mut files = hub();
+    files.extend(importers("caller", 15, "service"));
+    let finding = god_module_findings(&files, no_shotgun())
+        .pop()
+        .expect("hub is a god module");
+    assert_eq!(finding.line, 1);
+    assert!(
+        finding.message.contains("split it by responsibility"),
+        "{}",
+        finding.message
+    );
 }
 
 #[test]

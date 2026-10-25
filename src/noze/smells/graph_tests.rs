@@ -73,6 +73,7 @@ fn god_module_is_a_hub_not_an_entrypoint() {
         god_module_min_fan_in: 4,
         god_module_min_fan_out: 4,
         god_module_min_lines: 0,
+        god_module_min_units: 0,
         shotgun_blast_threshold: 100,
         ..Smells::default()
     };
