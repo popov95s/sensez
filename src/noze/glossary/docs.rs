@@ -447,6 +447,22 @@ FindingDocs {
             ],
         },
         FindingDocs {
+            kind: NamePromiseMismatch,
+            why_bad: "Callers trust a read-named function to be safe to call twice, cache, or skip; a hidden write breaks all three.",
+            external_lints: &[],
+            references: &[],
+            fixes: &[
+                LanguageBlock {
+                    language: "python",
+                    body: "Rename it to name the write (`get_or_create_invoice`), or return the data and let the caller write.",
+                },
+                LanguageBlock {
+                    language: "typescript",
+                    body: "Rename it to name the write (`getOrCreateInvoice`), or return the data and let the caller write.",
+                },
+            ],
+        },
+        FindingDocs {
             kind: NarratingCode,
             why_bad: "The prose becomes a second implementation that readers must keep in sync with the code.",
             external_lints: &[],

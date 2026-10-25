@@ -224,6 +224,16 @@ pub(super) const RULE_KNOBS: &[(SmellKind, &str, Knob)] = &[
         Integer(|s| &mut s.n_plus_one_max_constant_bound),
     ),
     (
+        K::NamePromiseMismatch,
+        "read_prefixes",
+        Strings(|s| &mut s.name_promise_read_prefixes),
+    ),
+    (
+        K::NamePromiseMismatch,
+        "write_methods",
+        Strings(|s| &mut s.name_promise_write_methods),
+    ),
+    (
         K::NPlusOneCall,
         "await_in_loop",
         Bool(|s| &mut s.n_plus_one_await_in_loop),

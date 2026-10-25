@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 45] = {
+pub const ALL_SMELLS: [SmellKind; 46] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -49,6 +49,7 @@ pub const ALL_SMELLS: [SmellKind; 45] = {
         MessageChain,
         MockedSubject,
         MutatedParameter,
+        NamePromiseMismatch,
         NarratingCode,
         NestedLoop,
         NestedTernary,
@@ -72,7 +73,7 @@ pub const ALL_SMELLS: [SmellKind; 45] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 45] = {
+pub const SMELLS: [SmellDoc; 46] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -100,6 +101,7 @@ pub const SMELLS: [SmellDoc; 45] = {
         SmellDoc { kind: MessageChain, title: "Message Chain", explanation: "A long `a.b.c.d` access chain couples the caller to a deep object graph (Law of Demeter) — ask the immediate collaborator instead." },
         SmellDoc { kind: MockedSubject, title: "Mocked Subject", explanation: "A test file mocks the module its subject under test is imported from, so the test exercises the double instead of the code — mock collaborators, keep the subject real." },
         SmellDoc { kind: MutatedParameter, title: "Mutated Parameter", explanation: "The function mutates a caller's argument in place — a hidden side effect; return a new value instead." },
+        SmellDoc { kind: NamePromiseMismatch, title: "Name Promise Mismatch", explanation: "A function named like a read (`get`, `is`, `find`, `validate`, ...) also writes state — rename it to say so or move the write to the caller." },
         SmellDoc { kind: NarratingCode, title: "Narrating Code", explanation: "A function is packed with step-by-step narration or commented-out code — prefer clearer names or extracted helpers, delete dead code, and keep comments for why." },
         SmellDoc { kind: NestedLoop, title: "Nested Loop", explanation: "A loop is nested directly or through a helper called inside a loop — work grows multiplicatively; combine passes or pre-index the data." },
         SmellDoc { kind: NestedTernary, title: "Nested Ternary", explanation: "A conditional expression is a branch or condition of another conditional expression, forcing readers to match several branches mentally — extract the result into a named function or flatten it into if statements with early returns." },

@@ -20,6 +20,8 @@ mod magic_string;
 mod mock_modules;
 mod mocked_subject;
 mod mutation;
+mod name_promise;
+mod name_promise_writes;
 mod performance;
 mod review_risks;
 mod sibling_helpers;
@@ -205,6 +207,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     );
     mutation::detect(&ctx, metrics, cfg, &mut out);
     fixture_echo::detect(&ctx, metrics, cfg, &mut out);
+    name_promise::detect(&ctx, metrics, cfg, &mut out);
     out.extend(performance::detect(&ctx, metrics, cfg));
     out.extend(mocked_subject::detect(file, &ctx, cfg));
     out.retain(|f| cfg.is_enabled(f.kind));
@@ -294,6 +297,8 @@ mod loop_frame_tests;
 mod magic_string_tests;
 #[cfg(test)]
 mod message_chain_tests;
+#[cfg(test)]
+mod name_promise_tests;
 #[cfg(test)]
 mod nested_if_tests;
 #[cfg(test)]

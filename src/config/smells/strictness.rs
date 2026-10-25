@@ -114,6 +114,24 @@ pub const TYPE_ESCAPE_CAST_LEVELS: &[StrictnessLevelDoc] = &[
     },
 ];
 
+pub const NAME_PROMISE_LEVELS: &[StrictnessLevelDoc] = &[
+    StrictnessLevelDoc {
+        title: "Low",
+        value: "low",
+        description: "Flags only database, network and scheduling writes.",
+    },
+    StrictnessLevelDoc {
+        title: "Medium",
+        value: "medium",
+        description: "Also flags mutating calls and assignments on parameters, own members and module-level names; skips caches and lazy initialisation.",
+    },
+    StrictnessLevelDoc {
+        title: "High",
+        value: "high",
+        description: "Also flags cache fills and lazy initialisation, and treats `load` and `fetch` names as reads.",
+    },
+];
+
 pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
     StrictnessRuleDoc {
         kind: SmellKind::LooseTyping,
@@ -144,6 +162,11 @@ pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
         kind: SmellKind::TypeEscapeCast,
         knob: "strictness",
         levels: TYPE_ESCAPE_CAST_LEVELS,
+    },
+    StrictnessRuleDoc {
+        kind: SmellKind::NamePromiseMismatch,
+        knob: "strictness",
+        levels: NAME_PROMISE_LEVELS,
     },
 ];
 

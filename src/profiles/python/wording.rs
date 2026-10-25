@@ -17,4 +17,6 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     double_api_prefixes: &["mock", "assert_"],
     test_file_prefix: "test_",
     test_file_suffix: "_test",
+    write_methods: &["append", "extend", "pop", "remove", "clear"],
+    private_name_prefixes: &['_'],
 };

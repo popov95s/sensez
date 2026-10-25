@@ -20,6 +20,7 @@ pub(crate) mod guard_clause;
 pub(crate) mod guard_fingerprint;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod handler_end;
+pub(crate) mod lazy_init;
 pub(crate) mod lexeme;
 pub(crate) mod lineage;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
@@ -282,6 +283,9 @@ pub trait DeadCodeProfile: Send + Sync {
 pub trait PerformanceProfile: Send + Sync {
     fn receiver_root<'a>(&self, receiver: &'a str) -> &'a str;
     fn is_mutating_call(&self, method: &str) -> bool;
+    fn scheduler_methods(&self) -> &'static [&'static str] {
+        &[]
+    }
     fn is_bounded_loop(&self, subject: &str) -> bool;
     fn is_external_loop_call(
         &self,

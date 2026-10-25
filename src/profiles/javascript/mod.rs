@@ -33,6 +33,7 @@ pub(crate) mod roots;
 pub(crate) mod runner_config;
 mod runtime_guard;
 pub(crate) mod scope;
+mod state_writes;
 mod stub_body;
 pub(crate) mod symbols;
 pub(crate) mod test_support;
@@ -194,6 +195,10 @@ impl PerformanceProfile for JsProfile {
 
     fn is_mutating_call(&self, method: &str) -> bool {
         performance::is_mutating_call(method)
+    }
+
+    fn scheduler_methods(&self) -> &'static [&'static str] {
+        performance::SCHEDULER_METHODS
     }
 
     fn is_bounded_loop(&self, subject: &str) -> bool {

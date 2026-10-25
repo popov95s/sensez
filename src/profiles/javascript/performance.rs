@@ -259,6 +259,9 @@ pub fn loop_line(node: Node, src: &[u8]) -> PerfLine {
     walk::perf_line(node, src, &["right", "value"])
 }
 
+/// Job-queue scheduling calls (`ctx.scheduler.runAfter`), lower-case without underscores.
+pub(crate) const SCHEDULER_METHODS: &[&str] = &["runafter", "runat"];
+
 pub(crate) fn is_mutating_call(method: &str) -> bool {
     MUTATING_METHODS.contains(&method)
 }
