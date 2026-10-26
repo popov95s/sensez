@@ -1,7 +1,6 @@
-//! Graph phase of imports whose specifiers are all inline `type`.
+//! Emit mode of inline `type`-only imports, from `tsconfig` compiler options.
 
-use super::paths::{read_tsconfig, ResolutionCache};
-use crate::spine::ir::{ImportContext, ImportPhase};
+use super::tsconfig::read_tsconfig;
 use serde_json::{Map, Value};
 use std::ffi::OsString;
 use std::path::{Path, PathBuf};
@@ -13,26 +12,6 @@ const MAX_EXTENDS_DEPTH: usize = 16;
 pub(super) enum TypeOnlyImports {
     Erased,
     Kept,
-}
-
-pub(super) fn edge_phase(
-    cache: &mut ResolutionCache,
-    import: &ImportContext,
-    importer_file: &Path,
-) -> ImportPhase {
-    let all_type = !import.binding_phases.is_empty()
-        && import
-            .binding_phases
-            .iter()
-            .all(|phase| *phase == ImportPhase::TypeOnly);
-    if import.phase == ImportPhase::TypeOnly || !all_type {
-        return import.phase;
-    }
-    let dir = importer_file.parent().unwrap_or(Path::new(""));
-    match cache.type_only_imports(dir) {
-        TypeOnlyImports::Erased => ImportPhase::TypeOnly,
-        TypeOnlyImports::Kept => ImportPhase::Runtime,
-    }
 }
 
 pub(super) fn load(config: &Path) -> TypeOnlyImports {

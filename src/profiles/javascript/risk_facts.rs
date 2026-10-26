@@ -121,6 +121,25 @@ fn test_callee<'a>(func: Lineage, src: &'a [u8]) -> Option<&'a str> {
     base_callee(call.child_by_field_name("function")?, src)
 }
 
+/// Identifier under `.only` / `.each` / `.concurrent` modifiers and curried calls.
+fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
+    match callee.kind() {
+        "identifier" => callee.utf8_text(src).ok(),
+        "call_expression" => base_callee(callee.child_by_field_name("function")?, src),
+        "member_expression" => {
+            let modifier = callee
+                .child_by_field_name("property")?
+                .utf8_text(src)
+                .ok()?;
+            if !matches!(modifier, "only" | "each" | "concurrent") {
+                return None;
+            }
+            base_callee(callee.child_by_field_name("object")?, src)
+        }
+        _ => None,
+    }
+}
+
 fn record_guard(
     unit: &mut FunctionUnit,
     guards: &mut HashMap<u64, usize>,
@@ -164,23 +183,4 @@ fn is_empty_fallback(node: Node<'_>) -> bool {
 fn is_empty_value(node: Node<'_>) -> bool {
     matches!(node.kind(), "null" | "array" | "object")
         && (node.kind() == "null" || node.named_child_count() == 0)
-}
-
-/// Identifier under `.only` / `.each` / `.concurrent` modifiers and curried calls.
-fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
-    match callee.kind() {
-        "identifier" => callee.utf8_text(src).ok(),
-        "call_expression" => base_callee(callee.child_by_field_name("function")?, src),
-        "member_expression" => {
-            let modifier = callee
-                .child_by_field_name("property")?
-                .utf8_text(src)
-                .ok()?;
-            if !matches!(modifier, "only" | "each" | "concurrent") {
-                return None;
-            }
-            base_callee(callee.child_by_field_name("object")?, src)
-        }
-        _ => None,
-    }
 }

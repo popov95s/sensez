@@ -20,6 +20,7 @@ use std::path::{Path, PathBuf};
 #[cfg(test)]
 #[path = "dead_code_tests.rs"]
 mod dead_code_tests;
+mod edge_phase;
 mod paths;
 pub(crate) use paths::ResolutionCache;
 #[cfg(test)]
@@ -28,6 +29,7 @@ mod duplication_tests;
 #[cfg(test)]
 #[path = "paths_tests.rs"]
 mod paths_tests;
+mod tsconfig;
 mod type_imports;
 #[cfg(test)]
 #[path = "type_imports_tests.rs"]
@@ -166,7 +168,7 @@ macro_rules! impl_ts_traits {
                 importer_file: &Path,
                 resolution_cache: &mut crate::profiles::ResolutionCache,
             ) -> ImportPhase {
-                type_imports::edge_phase(resolution_cache, import, importer_file)
+                edge_phase::edge_phase(resolution_cache, import, importer_file)
             }
 
             fn disambiguated_module_name(
