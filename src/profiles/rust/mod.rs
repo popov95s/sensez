@@ -7,6 +7,7 @@ pub(crate) mod comment_syntax;
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
+mod loops;
 mod method_call;
 mod params;
 pub(crate) mod performance;

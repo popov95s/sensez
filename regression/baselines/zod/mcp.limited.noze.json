@@ -636,7 +636,7 @@
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "nested_loop",
       "line": 86,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `fields` walks an independent collection for each item of `names`; combine the work or use a bulk operation.",
       "metric": 9,
       "symbol": "generate",
       "threshold": 1

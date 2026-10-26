@@ -325,7 +325,7 @@
       "message_chain": 1,
       "mutated_parameter": 3,
       "narrating_code": 3,
-      "nested_loop": 33,
+      "nested_loop": 26,
       "nested_ternary": 8,
       "shotgun_surgery_hazard": 3,
       "unnecessary_nested_if": 13
@@ -335,7 +335,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 169,
+    "smells_total": 162,
     "source_lines": 72099
   },
   "smells": [
@@ -485,7 +485,7 @@
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "nested_loop",
       "line": 86,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `fields` walks an independent collection for each item of `names`; combine the work or use a bulk operation.",
       "metric": 9,
       "symbol": "generate",
       "threshold": 1

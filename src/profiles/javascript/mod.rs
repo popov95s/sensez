@@ -14,6 +14,7 @@ pub(crate) mod generated;
 pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
+pub(crate) mod loops;
 pub(crate) mod manifest;
 mod member_visibility;
 mod membership;

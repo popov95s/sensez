@@ -1,7 +1,6 @@
 def grouped_names(groups: Groups) -> Names:
-    result = []
+    names = []
     for group in groups:
-        names = list(group.names)
+        names.extend(group.names)
         names.sort()
-        result.extend(names)
-    return result
+    return names

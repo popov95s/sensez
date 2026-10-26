@@ -196,7 +196,7 @@ def _rule_knob_fields() -> list[tuple[SmellTerm, str, str]]:
     list_knobs = [
         (SmellTerm(camel_to_snake(kind)), key, field)
         for kind, key, field in re.findall(
-            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*smells\.(\w+)\s*=',
+            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*\{?\s*smells\.(\w+)\s*=',
             list_body,
         )
     ]

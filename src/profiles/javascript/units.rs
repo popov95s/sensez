@@ -8,9 +8,10 @@ use super::chains::{chain_len, chain_root, is_chain_inner};
 use super::member_visibility::{function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
-use super::{classunit, conditionals, obsession, performance, symbols};
+use super::{classunit, conditionals, loops, obsession, performance, symbols};
 use crate::profiles::lexeme::{self, BoundNames};
 use crate::profiles::lineage::Lineage;
+use crate::profiles::walk;
 use crate::spine::ir::{bump, CallbackPosition, ChainHit, FunctionUnit, Walked};
 use std::collections::{HashMap, HashSet};
 use tree_sitter::Node;
@@ -38,7 +39,8 @@ pub struct FunctionFacts {
     body_start: usize,
     body_end: usize,
     depth: usize,
-    loop_depth: usize,
+    frames: Vec<usize>,
+    loop_nodes: Vec<(usize, usize)>,
     outer_names: BoundNames,
 }
 
@@ -70,13 +72,18 @@ impl FunctionFacts {
         unit.is_constructor = is_method && unit.name == "constructor";
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
+        let frames = loops::iteration_callback_frame(lineage, src)
+            .map(|frame| unit.performance.open_frame(frame))
+            .into_iter()
+            .collect();
         FunctionFacts {
             unit,
             guards: HashMap::new(),
             body_start: range.start,
             body_end: range.end,
             depth: 0,
-            loop_depth: 0,
+            frames,
+            loop_nodes: Vec::new(),
             outer_names: BoundNames::default(),
         }
     }
@@ -97,10 +104,11 @@ impl FunctionFacts {
             return None;
         }
         let prev_depth = self.depth;
-        let prev_loop_depth = self.loop_depth;
+        let entered_frame = self.enter_loop_part(lineage);
 
         obsession::scan(&mut self.unit, node, src);
-        performance::scan(&mut self.unit.performance, lineage, src, self.loop_depth);
+        let frame = self.frame();
+        performance::scan(&mut self.unit.performance, lineage, src, frame);
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
@@ -112,7 +120,10 @@ impl FunctionFacts {
             self.unit.max_nesting = self.unit.max_nesting.max(self.depth);
         }
         if performance::is_loop(kind) {
-            self.loop_depth += 1;
+            let frame = loops::loop_frame(node, src, self.frame());
+            let line = performance::loop_line(node, src);
+            let id = self.unit.performance.open_loop(line, frame);
+            self.loop_nodes.push((node.id(), id));
         }
         if let Some(weight) = cognitive_weight(kind, lineage, src, prev_depth) {
             self.unit.cognitive += weight;
@@ -151,12 +162,12 @@ impl FunctionFacts {
             "identifier" | "shorthand_property_identifier" => self.record_capture(node, src),
             _ => {}
         }
-        Some((self.depth - prev_depth, self.loop_depth - prev_loop_depth))
+        Some((self.depth - prev_depth, usize::from(entered_frame)))
     }
 
     pub fn leave(&mut self, frame: (usize, usize)) {
         self.depth -= frame.0;
-        self.loop_depth -= frame.1;
+        self.frames.truncate(self.frames.len() - frame.1);
     }
 
     pub fn finish(self) -> FunctionUnit {
@@ -165,6 +176,34 @@ impl FunctionFacts {
 }
 
 impl FunctionFacts {
+    fn frame(&self) -> Option<usize> {
+        self.frames.last().copied()
+    }
+
+    /// Open the enclosing loop's frame when `node` runs once per iteration.
+    fn enter_loop_part(&mut self, lineage: Lineage) -> bool {
+        let node = lineage.node();
+        let Some(loop_node) = lineage
+            .parent(node)
+            .filter(|p| performance::is_loop(p.kind()))
+        else {
+            return false;
+        };
+        if !loops::is_iterated_part(loop_node, node) {
+            return false;
+        }
+        let Some(&(_, id)) = self
+            .loop_nodes
+            .iter()
+            .rev()
+            .find(|(n, _)| *n == loop_node.id())
+        else {
+            return false;
+        };
+        self.frames.push(id);
+        true
+    }
+
     fn record_member(&mut self, node: Node, parent: Option<Node>, src: &[u8]) {
         if !is_chain_inner(node, parent) {
             self.unit.chain_hits.push(ChainHit {
@@ -201,6 +240,15 @@ impl FunctionFacts {
         };
         if is_own_member(left) {
             self.unit.self_writes += 1;
+        }
+        let frame = self.frame();
+        let paging = !matches!(left.kind(), "member_expression" | "subscript_expression")
+            && node.child_by_field_name("right").is_some_and(|value| {
+                walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
+            });
+        if paging {
+            let names = loops::names(Some(left), src);
+            self.unit.performance.note_advanced(frame, &names);
         }
         if let Some(name) = (left.kind() == "identifier")
             .then(|| left.utf8_text(src).ok())

@@ -2,7 +2,7 @@
 
 use crate::profiles::walk;
 use crate::spine::ir::{
-    ChainHit, FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, TypeHints,
+    ChainHit, FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
 };
 use tree_sitter::Node;
 
@@ -57,7 +57,7 @@ pub fn analyze_function(
     }
     if let Some(body) = func.child_by_field_name("body") {
         let mut acc = Acc { unit: &mut unit };
-        acc.visit(body, src, 0, 0);
+        acc.visit(body, src, 0, None);
     }
     unit
 }
@@ -67,13 +67,17 @@ struct Acc<'a> {
 }
 
 impl Acc<'_> {
-    fn visit(&mut self, node: Node, src: &[u8], depth: usize, loop_depth: usize) {
+    fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind();
         if matches!(kind, "function_item" | "closure_expression") {
             return;
         }
-        let child_loop_depth = loop_depth + usize::from(is_loop(kind));
-        self.scan(node, src, loop_depth);
+        let loop_frame = is_loop(kind).then(|| {
+            let opened = super::loops::loop_frame(node, src, frame);
+            let line = walk::perf_line(node, src, &["value", "condition"]);
+            self.unit.performance.open_loop(line, opened)
+        });
+        self.scan(node, src, frame);
 
         let child_depth = next_depth(kind, depth);
         if child_depth > depth {
@@ -88,39 +92,45 @@ impl Acc<'_> {
 
         let mut cursor = node.walk();
         for child in node.named_children(&mut cursor) {
-            self.visit(child, src, child_depth, child_loop_depth);
+            let child_frame = match loop_frame {
+                Some(id) if walk::is_field_child(node, child, &["body"]) => Some(id),
+                _ => frame,
+            };
+            self.visit(child, src, child_depth, child_frame);
         }
     }
 
-    fn scan(&mut self, node: Node, src: &[u8], loop_depth: usize) {
+    fn scan(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
         match node.kind() {
-            "for_expression" | "while_expression" | "loop_expression" => {
-                let line = walk::perf_line(node, src, &["value", "condition"]);
-                self.unit.performance.loops.push(line.clone());
-                if loop_depth > 0 {
-                    self.unit.performance.nested_loops.push(line);
-                }
-            }
             "return_expression" => {
                 self.unit.return_count += 1;
                 self.record_tuple_return(node);
             }
-            "let_declaration" => self.record_let(node, src),
+            "let_declaration" => self.record_let(node, src, frame),
             "assignment_expression" | "compound_assignment_expr" => {
-                self.record_assignment(node, src)
+                self.record_assignment(node, src, frame)
             }
             "field_expression" => self.record_field(node, src),
             "index_expression" => {
                 self.record_string_key(node, src);
                 self.record_index_mutation(node, src);
             }
-            "call_expression" => self.record_call(node, src, loop_depth),
+            "call_expression" => self.record_call(node, src, frame),
             "match_expression" => self.record_literal_match(node, src),
             _ => {}
         }
     }
 
-    fn record_let(&mut self, node: Node, src: &[u8]) {
+    fn record_let(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
+        if let Some(pattern) = node.child_by_field_name("pattern") {
+            let names = walk::identifiers(pattern, src, &["identifier"]);
+            self.unit.performance.note_declared(frame, &names);
+            if node.child_by_field_name("value").is_some_and(|value| {
+                walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
+            }) {
+                self.unit.performance.note_call_results(frame, &names);
+            }
+        }
         if let Some(pat) = node
             .child_by_field_name("pattern")
             .and_then(|p| pattern_name(p, src))
@@ -129,11 +139,20 @@ impl Acc<'_> {
         }
     }
 
-    fn record_assignment(&mut self, node: Node, src: &[u8]) {
+    fn record_assignment(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
         let Some(left) = node.child_by_field_name("left") else {
             return;
         };
         if let Some(name) = pattern_name(left, src) {
+            let paging = node.kind() == "assignment_expression"
+                && node.child_by_field_name("right").is_some_and(|value| {
+                    walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
+                });
+            if paging {
+                self.unit
+                    .performance
+                    .note_advanced(frame, std::slice::from_ref(&name));
+            }
             *self.unit.local_reassigns.entry(name).or_insert(0) += 1;
         }
         walk::record_mutation_root(self.unit, left, src, target_root);
@@ -169,9 +188,9 @@ impl Acc<'_> {
         }
     }
 
-    fn record_call(&mut self, node: Node, src: &[u8], loop_depth: usize) {
+    fn record_call(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
         self.record_literal_contains(node, src);
-        let Some(call) = call_fact(node, src) else {
+        let Some(mut call) = call_fact(node, src) else {
             return;
         };
         self.unit.performance.calls.push(call.clone());
@@ -188,14 +207,16 @@ impl Acc<'_> {
         if call.member && matches!(call.method.as_str(), "unwrap_or" | "unwrap_or_default") {
             self.record_short_string_arg(node, src);
         }
-        if loop_depth == 0 {
+        if frame.is_none() {
             return;
         }
+        call.frame = frame;
         if call.member && call.method.starts_with("sort") {
-            self.unit
-                .performance
-                .sorts_in_loops
-                .push(walk::perf_line(node, src, &["value"]));
+            self.unit.performance.sorts_in_loops.push(PerfLine {
+                line: call.line,
+                subject: call.base.clone(),
+                frame,
+            });
         } else {
             self.unit.performance.loop_calls.push(call);
         }

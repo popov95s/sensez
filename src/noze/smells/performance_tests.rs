@@ -40,8 +40,8 @@ def f(db, ids, xs):
 fn python_flags_direct_performance_shapes() {
     let src = "\
 def f(db, ids, xs):
+    rows = []
     for id in ids:
-        rows = []
         for x in xs:
             rows.append(x)
         rows.sort()

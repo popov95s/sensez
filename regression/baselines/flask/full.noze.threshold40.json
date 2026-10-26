@@ -240,7 +240,7 @@
       "magic_string_default": 3,
       "mutated_parameter": 3,
       "n_plus_one_call": 1,
-      "nested_loop": 13,
+      "nested_loop": 6,
       "shotgun_surgery_hazard": 1,
       "tuple_packing": 3
     },
@@ -249,7 +249,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 145,
+    "smells_total": 138,
     "source_lines": 18315
   },
   "smells": [
@@ -494,46 +494,6 @@
       "metric": 1,
       "symbol": "update_template_context",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "nested_loop",
-      "line": 1381,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "preprocess_request",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "nested_loop",
-      "line": 1412,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "process_response",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "nested_loop",
-      "line": 1444,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "do_teardown_request",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/app.py",
-      "kind": "nested_loop",
-      "line": 615,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "update_template_context",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -820,7 +780,7 @@
       "file": "<flask>/src/flask/config.py",
       "kind": "nested_loop",
       "line": 176,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `parts` walks an independent collection for each item of `sorted(os.environ)`; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "from_prefixed_env",
       "threshold": 1
@@ -929,29 +889,9 @@
       "action": "warning",
       "file": "<flask>/src/flask/debughelpers.py",
       "kind": "nested_loop",
-      "line": 116,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "_dump_loader_info",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/debughelpers.py",
-      "kind": "nested_loop",
       "line": 153,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
       "metric": 3,
-      "symbol": "explain_template_loading_attempts",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/debughelpers.py",
-      "kind": "nested_loop",
-      "line": 153,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
       "symbol": "explain_template_loading_attempts",
       "threshold": 1
     },
@@ -1489,19 +1429,9 @@
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "nested_loop",
       "line": 880,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `names` walks an independent collection for each item of `(code, None) if code is not None else (None,)`; combine the work or use a bulk operation.",
       "metric": 2,
       "symbol": "_find_error_handler",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/sansio/app.py",
-      "kind": "nested_loop",
-      "line": 978,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
-      "metric": 1,
-      "symbol": "inject_url_defaults",
       "threshold": 1
     },
     {
@@ -1659,7 +1589,7 @@
       "file": "<flask>/src/flask/templating.py",
       "kind": "nested_loop",
       "line": 117,
-      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "message": "inner loop over `loader.list_templates()` walks an independent collection for each item of `self.app.iter_blueprints()`; combine the work or use a bulk operation.",
       "metric": 1,
       "symbol": "list_templates",
       "threshold": 1

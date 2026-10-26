@@ -4178,7 +4178,9 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.n_plus_one_call]
 enabled = true
 action = "warning"
-# This detector has no extra threshold knobs.
+callees = [] # globs for base.method or plain calls that hit a backend
+max_constant_bound = 10 # loops with at most this literal trip count are skipped
+await_in_loop = false # also flag awaited per-item calls on outside receivers
 ```
 
 <details class="sensez-proposed-fix" markdown="1">
@@ -4307,12 +4309,11 @@ Repeated sorts turn a small loop into a surprisingly expensive one.
 
     ```python
     def grouped_names(groups: Groups) -> Names:
-        result = []
+        names = []
         for group in groups:
-            names = list(group.names)
+            names.extend(group.names)
             names.sort()
-            result.extend(names)
-        return result
+        return names
     ```
 
     <details class="sensez-proposed-fix" markdown="1">
@@ -4578,7 +4579,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
 [smells.<lang>.rules.weak_test_oracle]
 enabled = true
 action = "warning"
-assertion_functions = 10 # globs for imported helpers that count as checks
+assertion_functions = ["expect*", "assert*", "verify*"] # globs for imported helpers that count as checks
 ```
 
 <details class="sensez-proposed-fix" markdown="1">

@@ -1,6 +1,6 @@
 use super::knobs::{Smells, Strictness};
 use super::raw::RuleRaw;
-use super::rule_lists::string_list;
+use super::rule_lists::{globs, string_list};
 use super::strictness;
 use crate::report::SmellKind;
 use std::collections::BTreeMap;
@@ -66,6 +66,10 @@ fn apply_rule_knob(
                 smells.tuple_allow_homogeneous = b;
                 true
             }
+            (SmellKind::NPlusOneCall, "await_in_loop") => {
+                smells.n_plus_one_await_in_loop = b;
+                true
+            }
             _ => false,
         };
         return Ok(matched);
@@ -97,9 +101,10 @@ fn apply_list_knob(
     match (kind, key) {
         (SmellKind::MessageChain, "ignore_roots") => smells.message_chain_ignore_roots = items,
         (SmellKind::WeakTestOracle, "assertion_functions") => {
-            crate::globs::build_globset(&items)
-                .map_err(|err| format!("[smells.rules.{kind}] {key}: {err}"))?;
-            smells.assertion_functions = items;
+            smells.assertion_functions = globs(kind, key, items)?
+        }
+        (SmellKind::NPlusOneCall, "callees") => {
+            smells.n_plus_one_callees = globs(kind, key, items)?
         }
         _ => return Ok(false),
     }
@@ -182,6 +187,9 @@ fn apply_integer_knob(smells: &mut Smells, kind: SmellKind, key: &str, n: usize)
         (SmellKind::HeavyNestedFunction, "max_lines") => {
             set(&mut smells.max_nested_function_lines, n)
         }
+        (SmellKind::NPlusOneCall, "max_constant_bound") => {
+            set(&mut smells.n_plus_one_max_constant_bound, n)
+        }
         _ => false,
     }
 }
@@ -241,6 +249,7 @@ fn rule_knob_names(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::ImplicitSchema => &["min_keys"],
         SmellKind::LiteralMembership => &["skip_external_vocab"],
         SmellKind::WeakTestOracle => &["assertion_functions"],
+        SmellKind::NPlusOneCall => &["callees", "max_constant_bound", "await_in_loop"],
         _ => &[],
     }
 }
@@ -252,6 +261,7 @@ fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::LiteralMembership => &["skip_external_vocab"],
         SmellKind::HeavyNestedFunction => &["skip_capturing"],
         SmellKind::TuplePacking => &["allow_homogeneous"],
+        SmellKind::NPlusOneCall => &["await_in_loop"],
         _ => &[],
     }
 }
@@ -260,6 +270,7 @@ fn list_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
     match kind {
         SmellKind::MessageChain => &["ignore_roots"],
         SmellKind::WeakTestOracle => &["assertion_functions"],
+        SmellKind::NPlusOneCall => &["callees"],
         _ => &[],
     }
 }
