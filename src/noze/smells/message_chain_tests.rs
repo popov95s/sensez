@@ -55,10 +55,10 @@ export class Invoice {
 #[test]
 fn named_imports_from_generated_modules_are_api_navigation() {
     let generated = "\
-import { api } from './_generated/api';
-export function list() { return api.admin.billing.invoices.controller.list; }
+import { client } from './generated/client';
+export function list() { return client.admin.billing.invoices.items.list; }
 ";
     assert!(chains("ts", generated, &Smells::default()).is_empty());
-    let handwritten = generated.replace("./_generated/api", "./client");
+    let handwritten = generated.replace("./generated/client", "./client");
     assert_eq!(chains("ts", &handwritten, &Smells::default()), vec![5]);
 }
