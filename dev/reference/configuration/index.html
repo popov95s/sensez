@@ -1239,13 +1239,22 @@ only add what is specific to your project:</p>
 <span class="n">entrypoint_bases</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"AppConfig"</span><span class="p">]</span><span class="w">             </span><span class="c1"># base classes loaded dynamically</span>
 <span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/scripts/**"</span><span class="p">]</span><span class="w">             </span><span class="c1"># file globs reached outside the import graph</span>
 </code></pre></div>
+<p><code>entrypoints</code> and <code>entrypoint_names</code> accept a trailing <code>*</code> as a prefix pattern
+(<code>entrypoint_names = ["on*"]</code>). <code>entrypoint_names</code> also applies to methods under
+<code>unused_methods</code>. For JS/TS methods only, React lifecycle, custom-element and
+test-reporter callback names are live by default, and methods of a class that
+extends or implements anything outside the scan are not reported (they may be
+framework hooks). In JS/TS, <code>entrypoints</code> matches the callee of an
+exported initializer, so <code>entrypoints = ["register", "define*"]</code> keeps
+<code>export const send = register({ ... })</code> alive.</p>
 <p>If dead-code output feels incomplete, broader unused-symbol classes are
 available as opt-ins (your generated config shows their defaults):</p>
 <div class="highlight"><pre><span></span><code><span class="k">[dead_code]</span>
 <span class="n">unused_imports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">unused_methods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">unused_variables</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
+<p>Unused module-level variables and constants are reported by default; set
+<code>unused_variables = false</code> to turn them off.</p>
 <p>Prefer adding entry points over suppressing individual findings — one line of
 config fixes a whole class of false positives.</p>
 <h2 id="duplication">Duplication</h2>
@@ -1311,6 +1320,9 @@ line ranges grow to cover the others, and the folded groups are listed under
 <p>Cycles among test files are reported. Only <code>migrations/</code> (and Python
 <code>alembic/</code> and <code>versions/</code>) are excluded by default; add
 <code>exclude = ["**/tests/**"]</code> to silence test fixtures.</p>
+<p>Each cycle finding lists every module of the strongly connected group in
+<code>modules</code>; <code>edges</code> is one representative closed loop (the shortest one through
+the alphabetically first module), so following it returns to its start.</p>
 <h2 id="boundaries">Boundaries</h2>
 <p>Each rule forbids any module matching <code>from</code> from importing any module matching
 <code>to</code>:</p>
