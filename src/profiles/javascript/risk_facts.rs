@@ -102,7 +102,8 @@ const TEST_CHECKS: TestChecks = TestChecks {
     framework_calls: &["expect", "expectTypeOf"],
 };
 
-pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, node: Node, src: &[u8]) {
+pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, lineage: Lineage, src: &[u8]) {
+    let node = lineage.node();
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
     }
@@ -111,7 +112,7 @@ pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, node: Node, s
     }
     match node.kind() {
         "catch_clause" if swallows(node, src) => unit.review_risks.broad_handlers += 1,
-        "if_statement" => guards.record(unit, node, GUARD_SCOPES, src),
+        "if_statement" => guards.record(unit, lineage, GUARD_SCOPES, src),
         "binary_expression"
             if is_empty_fallback(node) && try_handling::inside_try(node, &TRY_SYNTAX) =>
         {

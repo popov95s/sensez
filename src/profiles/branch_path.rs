@@ -1,5 +1,6 @@
 //! Mutually exclusive branch arms enclosing a node.
 
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::BranchPath;
 use tree_sitter::Node;
 
@@ -12,10 +13,10 @@ pub(crate) struct BranchArms {
 }
 
 /// `(conditional id, arm index)` for every enclosing arm, outermost first.
-pub(crate) fn branch_path(node: Node, arms: &BranchArms) -> BranchPath {
+pub(crate) fn branch_path(lineage: Lineage, arms: &BranchArms) -> BranchPath {
     let mut path = Vec::new();
-    let mut child = node;
-    while let Some(parent) = child.parent() {
+    let mut child = lineage.node();
+    while let Some(parent) = lineage.parent(child) {
         if let Some(arm) = arm_index(parent, child, arms) {
             path.push((parent.id(), arm));
         }

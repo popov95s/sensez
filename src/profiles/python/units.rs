@@ -7,6 +7,7 @@ use super::{classunit, conditionals, control_shapes, loops, magic_numbers, perfo
 use crate::profiles::branch_path::branch_path;
 use crate::profiles::guard_clause::is_guard_return;
 use crate::profiles::guard_fingerprint::GuardLog;
+use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::{default_values, magic_number};
 use crate::profiles::walk;
 use crate::spine::ir::{ClassUnit, FunctionUnit};
@@ -97,22 +98,22 @@ impl<'u> Acc<'u> {
         match kind {
             "return_statement" => {
                 self.unit.return_count += 1;
-                if is_guard_return(node, &control_shapes::GUARD_CLAUSE) {
+                if is_guard_return(Lineage::detached(node), &control_shapes::GUARD_CLAUSE) {
                     self.unit.guard_returns += 1;
                 }
                 if let Some(constructor) = returned_constructor(node, src) {
                     self.unit.returned_constructors.insert(constructor);
                 }
             }
-            "integer" | "float" => {
-                self.unit
-                    .magic_numbers
-                    .extend(magic_number(node, src, &magic_numbers::SYNTAX))
-            }
+            "integer" | "float" => self.unit.magic_numbers.extend(magic_number(
+                Lineage::detached(node),
+                src,
+                &magic_numbers::SYNTAX,
+            )),
             "attribute" => {
                 self.unit
                     .chain_hits
-                    .extend(walk::chain_hit(node, src, &CHAIN));
+                    .extend(walk::chain_hit(node, node.parent(), src, &CHAIN));
                 if let Some(base) = node
                     .child_by_field_name("object")
                     .filter(|o| o.kind() == "identifier")
@@ -177,7 +178,10 @@ impl<'u> Acc<'u> {
                 .local_reassigns
                 .entry(target)
                 .or_default()
-                .push(branch_path(node, &control_shapes::BRANCH_ARMS));
+                .push(branch_path(
+                    Lineage::detached(node),
+                    &control_shapes::BRANCH_ARMS,
+                ));
         }
     }
 

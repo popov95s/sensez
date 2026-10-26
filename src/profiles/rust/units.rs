@@ -3,6 +3,7 @@
 use super::control_shapes;
 use crate::profiles::branch_path::branch_path;
 use crate::profiles::guard_clause::is_guard_return;
+use crate::profiles::lineage::Lineage;
 use crate::profiles::walk;
 use crate::spine::ir::{
     FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
@@ -106,7 +107,7 @@ impl Acc<'_> {
         match node.kind() {
             "return_expression" => {
                 self.unit.return_count += 1;
-                if is_guard_return(node, &control_shapes::GUARD_CLAUSE) {
+                if is_guard_return(Lineage::detached(node), &control_shapes::GUARD_CLAUSE) {
                     self.unit.guard_returns += 1;
                 }
                 self.record_tuple_return(node);
@@ -149,7 +150,10 @@ impl Acc<'_> {
             .local_reassigns
             .entry(name)
             .or_default()
-            .push(branch_path(node, &control_shapes::BRANCH_ARMS));
+            .push(branch_path(
+                Lineage::detached(node),
+                &control_shapes::BRANCH_ARMS,
+            ));
     }
 
     fn record_assignment(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
@@ -174,7 +178,7 @@ impl Acc<'_> {
     fn record_field(&mut self, node: Node, src: &[u8]) {
         self.unit
             .chain_hits
-            .extend(walk::chain_hit(node, src, &CHAIN));
+            .extend(walk::chain_hit(node, node.parent(), src, &CHAIN));
         let Some(base) = node
             .child_by_field_name("value")
             .filter(|n| matches!(n.kind(), "identifier" | "self"))

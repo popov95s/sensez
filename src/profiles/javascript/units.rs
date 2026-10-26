@@ -5,7 +5,7 @@
 //! receiver so the language-neutral detectors work unchanged.
 
 use super::chains::CHAIN;
-use super::member_visibility::{function_visibility, method_visibility};
+use super::member_visibility::{callback_position, function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
 use super::{
@@ -18,7 +18,7 @@ use crate::profiles::lexeme::{self, BoundNames};
 use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::{default_values, magic_number};
 use crate::profiles::walk;
-use crate::spine::ir::{bump, CallbackPosition, FunctionUnit, Walked};
+use crate::spine::ir::{bump, FunctionUnit, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -116,7 +116,7 @@ impl FunctionFacts {
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
-        super::risk_facts::scan(&mut self.unit, &mut self.guards, node, src);
+        super::risk_facts::scan(&mut self.unit, &mut self.guards, lineage, src);
 
         let kind = node.kind();
         if is_nesting(kind) && !is_else_if(lineage) {
@@ -147,7 +147,7 @@ impl FunctionFacts {
                 .extend(conditionals::nested_ternary(node)),
             "return_statement" => {
                 self.unit.return_count += 1;
-                if is_guard_return(node, &control_shapes::GUARD_CLAUSE) {
+                if is_guard_return(lineage, &control_shapes::GUARD_CLAUSE) {
                     self.unit.guard_returns += 1;
                 }
                 if let Some(constructor) = returned_constructor(node, src) {
@@ -160,10 +160,10 @@ impl FunctionFacts {
             "number" => {
                 self.unit
                     .magic_numbers
-                    .extend(magic_number(node, src, &magic_numbers::SYNTAX))
+                    .extend(magic_number(lineage, src, &magic_numbers::SYNTAX))
             }
-            "member_expression" => self.record_member(node, src),
-            "assignment_expression" => self.record_assignment(node, src),
+            "member_expression" => self.record_member(node, lineage.parent(node), src),
+            "assignment_expression" => self.record_assignment(lineage, src),
             "identifier" | "shorthand_property_identifier" => self.record_capture(node, src),
             _ => {}
         }
@@ -209,10 +209,10 @@ impl FunctionFacts {
         true
     }
 
-    fn record_member(&mut self, node: Node, src: &[u8]) {
+    fn record_member(&mut self, node: Node, parent: Option<Node>, src: &[u8]) {
         self.unit
             .chain_hits
-            .extend(walk::chain_hit(node, src, &CHAIN));
+            .extend(walk::chain_hit(node, parent, src, &CHAIN));
         let Some(obj) = node.child_by_field_name("object") else {
             return;
         };
@@ -235,7 +235,8 @@ impl FunctionFacts {
         }
     }
 
-    fn record_assignment(&mut self, node: Node, src: &[u8]) {
+    fn record_assignment(&mut self, lineage: Lineage, src: &[u8]) {
+        let node = lineage.node();
         let Some(left) = node.child_by_field_name("left") else {
             return;
         };
@@ -259,7 +260,7 @@ impl FunctionFacts {
                 .local_reassigns
                 .entry(name.to_string())
                 .or_default()
-                .push(branch_path(node, &control_shapes::BRANCH_ARMS));
+                .push(branch_path(lineage, &control_shapes::BRANCH_ARMS));
         }
     }
 
@@ -319,19 +320,6 @@ fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
 fn returned_name(node: Node<'_>, src: &[u8]) -> Option<String> {
     let value = node.named_child(0).filter(|v| v.kind() == "identifier")?;
     value.utf8_text(src).ok().map(str::to_string)
-}
-
-/// Callee name when `func` is passed directly as a call argument.
-fn callback_position(func: Lineage) -> CallbackPosition {
-    let is_argument = func
-        .parent(func.node())
-        .filter(|p| p.kind() == "arguments")
-        .and_then(|args| func.parent(args))
-        .is_some_and(|call| call.kind() == "call_expression");
-    match is_argument {
-        true => CallbackPosition::Argument,
-        false => CallbackPosition::Standalone,
-    }
 }
 
 fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {

@@ -91,8 +91,13 @@ pub(crate) struct ChainShape {
 }
 
 /// The chain hit for the outermost member of a pure `a.b.c.d` access; inner members yield `None`.
-pub(crate) fn chain_hit(node: Node, src: &[u8], shape: &ChainShape) -> Option<ChainHit> {
-    let is_inner = node.parent().is_some_and(|p| {
+pub(crate) fn chain_hit(
+    node: Node,
+    parent: Option<Node>,
+    src: &[u8],
+    shape: &ChainShape,
+) -> Option<ChainHit> {
+    let is_inner = parent.is_some_and(|p| {
         p.kind() == shape.member_kind
             && p.child_by_field_name(shape.object_field).map(|o| o.id()) == Some(node.id())
     });

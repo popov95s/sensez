@@ -1,5 +1,6 @@
 //! JS/TS literal contexts for the shared magic-number rules.
 
+use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::MagicSyntax;
 use tree_sitter::Node;
 
@@ -40,15 +41,17 @@ fn default_value(param: Node) -> Option<Node> {
 }
 
 /// `const TTL_MS = 5000`.
-fn is_named_constant(node: Node, src: &[u8]) -> bool {
-    node.parent()
+fn is_named_constant(lineage: Lineage, src: &[u8]) -> bool {
+    let node = lineage.node();
+    lineage
+        .parent(node)
         .filter(|declarator| declarator.kind() == "variable_declarator")
         .filter(|declarator| {
             declarator
                 .child_by_field_name("value")
                 .is_some_and(|value| value.id() == node.id())
         })
-        .and_then(|declarator| declarator.parent())
+        .and_then(|declarator| lineage.parent(declarator))
         .and_then(|declaration| declaration.child_by_field_name("kind"))
         .is_some_and(|kind| kind.utf8_text(src) == Ok("const"))
 }

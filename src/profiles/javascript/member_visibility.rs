@@ -1,7 +1,7 @@
 //! Visibility of functions and class members.
 
 use crate::profiles::lineage::Lineage;
-use crate::spine::ir::Visibility;
+use crate::spine::ir::{CallbackPosition, Visibility};
 use tree_sitter::Node;
 
 pub(super) fn method_visibility(func: Node, src: &[u8]) -> Visibility {
@@ -32,4 +32,17 @@ fn is_private_method(func: Node, src: &[u8]) -> bool {
         .children(&mut cursor)
         .any(|c| c.kind() == "accessibility_modifier" && c.utf8_text(src) == Ok("private"));
     hash_name || modifier
+}
+
+/// Callee name when `func` is passed directly as a call argument.
+pub(super) fn callback_position(func: Lineage) -> CallbackPosition {
+    let is_argument = func
+        .parent(func.node())
+        .filter(|p| p.kind() == "arguments")
+        .and_then(|args| func.parent(args))
+        .is_some_and(|call| call.kind() == "call_expression");
+    match is_argument {
+        true => CallbackPosition::Argument,
+        false => CallbackPosition::Standalone,
+    }
 }

@@ -1,5 +1,6 @@
 //! Language-neutral structural fingerprints for repeated guard detection.
 
+use crate::profiles::lineage::Lineage;
 use crate::profiles::typevocab::is_ident_char;
 use crate::spine::ir::FunctionUnit;
 use std::collections::hash_map::DefaultHasher;
@@ -34,14 +35,15 @@ impl GuardLog {
     pub(crate) fn record(
         &mut self,
         unit: &mut FunctionUnit,
-        branch: Node,
+        lineage: Lineage,
         scope_kinds: &[&str],
         src: &[u8],
     ) {
+        let branch = lineage.node();
         let Some(condition) = branch.child_by_field_name("condition") else {
             return;
         };
-        let mut ancestors = std::iter::successors(branch.parent(), Node::parent);
+        let mut ancestors = lineage.ancestors(branch);
         let scope = ancestors
             .clone()
             .find(|ancestor| scope_kinds.contains(&ancestor.kind()));

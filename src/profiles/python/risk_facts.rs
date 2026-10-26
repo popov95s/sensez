@@ -1,4 +1,5 @@
 use crate::profiles::guard_fingerprint::GuardLog;
+use crate::profiles::lineage::Lineage;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::profiles::try_handling::{self, TrySyntax};
 use crate::spine::ir::FunctionUnit;
@@ -85,7 +86,7 @@ pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, node: Node, s
     }
     match node.kind() {
         "except_clause" => handler(unit, node, src),
-        "if_statement" => guards.record(unit, node, &["block"], src),
+        "if_statement" => guards.record(unit, Lineage::detached(node), &["block"], src),
         "boolean_operator"
             if is_empty_fallback(node) && try_handling::inside_try(node, &TRY_SYNTAX) =>
         {

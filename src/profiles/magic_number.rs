@@ -1,5 +1,6 @@
 //! Shared context rules deciding whether a numeric literal needs a name.
 
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::{MagicContext, MagicNumber};
 use tree_sitter::Node;
 
@@ -21,15 +22,19 @@ pub(crate) struct MagicSyntax {
     /// Parent kinds pairing a status name with its literal (comparison, assignment, key).
     pub(crate) status_parents: &'static [&'static str],
     /// The literal is the whole initializer of an already-named constant.
-    pub(crate) is_named_constant: fn(Node, &[u8]) -> bool,
+    pub(crate) is_named_constant: fn(Lineage, &[u8]) -> bool,
     /// Default value node of one parameter.
     pub(crate) default_value: fn(Node) -> Option<Node>,
 }
 
 /// A magic literal at `node`, or `None` when it is allowed or always named by context.
-pub(crate) fn magic_number(node: Node, src: &[u8], syntax: &MagicSyntax) -> Option<MagicNumber> {
-    let context = context(node, src, syntax)?;
-    site(node, src, context)
+pub(crate) fn magic_number(
+    lineage: Lineage,
+    src: &[u8],
+    syntax: &MagicSyntax,
+) -> Option<MagicNumber> {
+    let context = context(lineage, src, syntax)?;
+    site(lineage.node(), src, context)
 }
 
 /// Magic literals in parameter default values (`(retries = 3) => …`).
@@ -62,11 +67,12 @@ fn site(node: Node, src: &[u8], context: MagicContext) -> Option<MagicNumber> {
     })
 }
 
-fn context(node: Node, src: &[u8], syntax: &MagicSyntax) -> Option<MagicContext> {
-    let parent = node.parent()?;
-    if (syntax.is_named_constant)(node, src)
-        || is_time_product(node, src, syntax)
-        || callee_matches(parent, src, syntax, syntax.exempt_callees)
+fn context(lineage: Lineage, src: &[u8], syntax: &MagicSyntax) -> Option<MagicContext> {
+    let node = lineage.node();
+    let parent = lineage.parent(node)?;
+    if (syntax.is_named_constant)(lineage, src)
+        || is_time_product(lineage, src, syntax)
+        || callee_matches(lineage, parent, src, syntax, syntax.exempt_callees)
     {
         return None;
     }
@@ -77,17 +83,18 @@ fn context(node: Node, src: &[u8], syntax: &MagicSyntax) -> Option<MagicContext>
     {
         return Some(MagicContext::ArrayIndex);
     }
-    if is_http_status(node, parent, src, syntax) {
+    if is_http_status(lineage, parent, src, syntax) {
         return Some(MagicContext::HttpStatus);
     }
     Some(MagicContext::Plain)
 }
 
 /// `24 * 60 * 60 * 1000`: every literal factor of the product is a time unit.
-fn is_time_product(node: Node, src: &[u8], syntax: &MagicSyntax) -> bool {
+fn is_time_product(lineage: Lineage, src: &[u8], syntax: &MagicSyntax) -> bool {
+    let node = lineage.node();
     let mut top = node;
-    while let Some(parent) = top
-        .parent()
+    while let Some(parent) = lineage
+        .parent(top)
         .filter(|p| p.kind() == "parenthesized_expression" || is_product(*p, src, syntax))
     {
         top = parent;
@@ -119,7 +126,8 @@ fn is_product(node: Node, src: &[u8], syntax: &MagicSyntax) -> bool {
             .is_some_and(|op| op.utf8_text(src) == Ok("*"))
 }
 
-fn is_http_status(node: Node, parent: Node, src: &[u8], syntax: &MagicSyntax) -> bool {
+fn is_http_status(lineage: Lineage, parent: Node, src: &[u8], syntax: &MagicSyntax) -> bool {
+    let node = lineage.node();
     let in_range = node
         .utf8_text(src)
         .ok()
@@ -128,7 +136,7 @@ fn is_http_status(node: Node, parent: Node, src: &[u8], syntax: &MagicSyntax) ->
     if !in_range {
         return false;
     }
-    if callee_matches(parent, src, syntax, syntax.status_names) {
+    if callee_matches(lineage, parent, src, syntax, syntax.status_names) {
         return true;
     }
     if !syntax.status_parents.contains(&parent.kind()) {
@@ -141,10 +149,16 @@ fn is_http_status(node: Node, parent: Node, src: &[u8], syntax: &MagicSyntax) ->
     })
 }
 
-fn callee_matches(arguments: Node, src: &[u8], syntax: &MagicSyntax, names: &[&str]) -> bool {
+fn callee_matches(
+    lineage: Lineage,
+    arguments: Node,
+    src: &[u8],
+    syntax: &MagicSyntax,
+    names: &[&str],
+) -> bool {
     arguments.kind() == syntax.arguments_kind
-        && arguments
-            .parent()
+        && lineage
+            .parent(arguments)
             .filter(|call| call.kind() == syntax.call_kind)
             .and_then(|call| call.child_by_field_name("function"))
             .is_some_and(|callee| ends_with_name(callee, src, names))
