@@ -4,7 +4,8 @@
 //! `Set<number>`, ...). TypeScript reuses this module (it reuses the JS walker).
 
 use crate::profiles::typevocab::{
-    base_type, has_domain_type, has_token, idents, split_top_level, LooseTypeKind,
+    base_type, has_domain_type, has_token, idents, is_nominal_ignoring, split_top_level,
+    LooseTypeKind,
 };
 use crate::spine::ir::MutatorFamily;
 
@@ -86,6 +87,38 @@ pub(crate) fn is_dictish(annotation: &str) -> bool {
         base_type(annotation),
         "Record" | "Map" | "object" | "any" | "unknown"
     ) || annotation.trim_start().starts_with('{')
+}
+
+/// `Record<"a" | "b", V>`, `Record<Key, V>`, `Record<string, number>`, `{ [k: string]: string }`.
+pub(crate) fn is_open_map(annotation: &str) -> bool {
+    let text = annotation.trim();
+    if let Some(args) = text
+        .strip_prefix("Record<")
+        .and_then(|rest| rest.strip_suffix('>'))
+    {
+        return match split_top_level(args, ',')[..] {
+            [key, value] => {
+                !matches!(key, "string" | "number" | "symbol" | "PropertyKey")
+                    || is_primitive_scalar_alias(value)
+            }
+            _ => false,
+        };
+    }
+    text.strip_prefix('{')
+        .and_then(|rest| rest.strip_suffix('}'))
+        .and_then(|body| body.trim().trim_end_matches([';', ',']).strip_prefix('['))
+        .and_then(|signature| signature.split_once(']'))
+        .and_then(|(_, rest)| rest.trim_start().strip_prefix(':'))
+        .is_some_and(is_primitive_scalar_alias)
+}
+
+/// `Order`, `Order | undefined`, `Order | null`.
+pub(crate) fn is_nominal_type(annotation: &str) -> bool {
+    is_nominal_ignoring(
+        annotation,
+        &["null", "undefined"],
+        super::wording::WORDING.identifier_extra_chars,
+    )
 }
 
 pub(crate) fn has_domain_model(annotation: &str) -> bool {
@@ -189,6 +222,12 @@ mod tests {
     }
 
     #[test]
+    fn open_map_key_with_nested_generic_is_read_whole() {
+        assert!(is_open_map("Record<Map<K, V>, Order>"));
+        assert!(!is_open_map("Record<string, Map<K, V>>"));
+    }
+
+    #[test]
     fn sets_and_records_mirror_python_loose_collections() {
         assert!(is_loose("Set<number>"));
         assert!(is_loose("Record<string, any>"));
@@ -203,5 +242,17 @@ mod tests {
         assert!(!is_bool("bool"));
         assert!(is_dictish("Record<string, number>"));
         assert!(!is_dictish("UserDto"));
+    }
+
+    #[test]
+    fn open_maps_have_typed_keys_or_primitive_values() {
+        assert!(is_open_map(r#"Record<"a" | "b" | "c", number>"#));
+        assert!(is_open_map("Record<Category, Item>"));
+        assert!(is_open_map("Record<string, number>"));
+        assert!(is_open_map("{ [k: string]: string }"));
+        assert!(!is_open_map("Record<string, any>"));
+        assert!(!is_open_map("{ [k: string]: Item }"));
+        assert!(!is_open_map("{ host: string; port: number }"));
+        assert!(!is_open_map("any"));
     }
 }

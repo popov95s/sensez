@@ -131,13 +131,27 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         .child_by_field_name("object")
         .filter(|v| v.kind() == "identifier")
         .and_then(|v| v.utf8_text(src).ok());
-    let key = node
-        .child_by_field_name("index")
+    let index = node.child_by_field_name("index");
+    if let (Some(recv), Some(index)) = (recv, index) {
+        if is_computed_key(index, src) {
+            unit.dynamic_key_receivers.insert(recv.to_string());
+        }
+    }
+    let key = index
         .filter(|k| k.kind() == "string")
         .and_then(|k| k.utf8_text(src).ok());
     if let (Some(recv), Some(key)) = (recv, key) {
         record_attr(&mut unit.str_keys, recv, key.trim_matches(['"', '\'', '`']));
         walk::record_str_key_line(unit, recv, node.start_position().row + 1);
+    }
+}
+
+/// `recv[cat]`, `recv[r.cat]`, `` recv[`${a}`] `` — a data-driven key, not a record field.
+fn is_computed_key(index: Node, src: &[u8]) -> bool {
+    match index.kind() {
+        "string" | "number" => false,
+        "template_string" => index.utf8_text(src).is_ok_and(|text| text.contains("${")),
+        _ => true,
     }
 }
 

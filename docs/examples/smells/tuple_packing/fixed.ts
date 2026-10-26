@@ -1,9 +1,9 @@
 interface UserSummary {
   name: string;
   email: string;
-  plan: string;
+  seats: number;
 }
 
 function summarize(user: User): UserSummary {
-  return { name: user.name, email: user.email, plan: user.plan };
+  return { name: user.name, email: user.email, seats: user.seats };
 }

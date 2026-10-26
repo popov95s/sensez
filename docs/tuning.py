@@ -22,6 +22,8 @@ EXAMPLE_LANGUAGES = (
 )
 
 KNOB_COMMENTS = {
+    "allow_homogeneous": "allow same-primitive tuples of up to 4 items",
+    "assertion_functions": "globs for imported helpers that count as checks",
     "ignore_roots": "chain roots never reported, e.g. a generated API client",
     "include_attributes": "also flag mutation of fields on parameters",
     "include_tests": "also flag test code and assertion arguments",
@@ -47,6 +49,7 @@ KNOB_COMMENTS = {
     "min_lines": "module lines required for a god module (or min_units)",
     "min_occurrences": "functions sharing the clump before flagging",
     "min_units": "top-level functions and classes required (or min_lines)",
+    "skip_capturing": "drop nested functions that read parent locals",
     "skip_external_vocab": "ignore extension, MIME, path, and error-code lists",
 }
 

@@ -6,9 +6,10 @@
 
 use super::chains::{chain_len, chain_root, is_chain_inner};
 use super::member_visibility::{function_visibility, method_visibility};
-use super::nesting::{cognitive_weight, is_branch, is_nesting};
+use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
-use super::{conditionals, obsession, performance, symbols};
+use super::{classunit, conditionals, obsession, performance, symbols};
+use crate::profiles::lexeme::{self, BoundNames};
 use crate::profiles::lineage::Lineage;
 use crate::spine::ir::{bump, CallbackPosition, ChainHit, FunctionUnit, Walked};
 use std::collections::{HashMap, HashSet};
@@ -38,31 +39,35 @@ pub struct FunctionFacts {
     body_end: usize,
     depth: usize,
     loop_depth: usize,
+    outer_names: BoundNames,
 }
 
 impl FunctionFacts {
     pub fn start(lineage: Lineage, src: &[u8], is_method: bool) -> Self {
         let func = lineage.node();
+        let tuple_return = classunit::tuple_return_elements(func, src);
         let mut unit = FunctionUnit {
             name: symbols::function_name(lineage, src).unwrap_or_default(),
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
             param_names: param_names(func, src),
             is_method,
-            max_tuple_return: super::classunit::tuple_return_arity(func, src),
+            max_tuple_return: classunit::tuple_return_arity(&tuple_return),
             callback_position: callback_position(lineage),
             visibility: if is_method {
                 method_visibility(func, src)
             } else {
                 function_visibility(lineage)
             },
+            homogeneous_tuple_return: classunit::is_homogeneous_primitive_tuple(&tuple_return),
             ..Default::default()
         };
         if !is_method && func.kind() == "function_declaration" {
             unit.review_risks.forwards_to =
                 super::risk_facts::forward_target(func, src, &unit.param_names);
         }
-        unit.review_risks.is_test_case = super::risk_facts::is_test_callback(func, src);
+        unit.review_risks.is_test_case = super::risk_facts::is_test_callback(lineage, src);
+        unit.is_constructor = is_method && unit.name == "constructor";
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
         FunctionFacts {
@@ -72,7 +77,13 @@ impl FunctionFacts {
             body_end: range.end,
             depth: 0,
             loop_depth: 0,
+            outer_names: BoundNames::default(),
         }
+    }
+
+    /// Flag `captures_parent` when the body reads any of `outer_names`.
+    pub fn watch_captures(&mut self, outer_names: BoundNames) {
+        self.outer_names = outer_names;
     }
 
     pub fn enter(&mut self, lineage: Lineage, src: &[u8]) -> Option<(usize, usize)> {
@@ -96,14 +107,14 @@ impl FunctionFacts {
         super::risk_facts::scan(&mut self.unit, &mut self.guards, node, src);
 
         let kind = node.kind();
-        if is_nesting(kind) {
+        if is_nesting(kind) && !is_else_if(lineage) {
             self.depth += 1;
             self.unit.max_nesting = self.unit.max_nesting.max(self.depth);
         }
         if performance::is_loop(kind) {
             self.loop_depth += 1;
         }
-        if let Some(weight) = cognitive_weight(kind, node, src, prev_depth) {
+        if let Some(weight) = cognitive_weight(kind, lineage, src, prev_depth) {
             self.unit.cognitive += weight;
         }
         if is_branch(kind, node, src) {
@@ -137,6 +148,7 @@ impl FunctionFacts {
             }
             "member_expression" => self.record_member(node, lineage.parent(node), src),
             "assignment_expression" => self.record_assignment(node, src),
+            "identifier" | "shorthand_property_identifier" => self.record_capture(node, src),
             _ => {}
         }
         Some((self.depth - prev_depth, self.loop_depth - prev_loop_depth))
@@ -184,12 +196,26 @@ impl FunctionFacts {
     }
 
     fn record_assignment(&mut self, node: Node, src: &[u8]) {
-        if let Some(left) = node
-            .child_by_field_name("left")
-            .filter(|l| l.kind() == "identifier")
-            .and_then(|l| l.utf8_text(src).ok())
+        let Some(left) = node.child_by_field_name("left") else {
+            return;
+        };
+        if is_own_member(left) {
+            self.unit.self_writes += 1;
+        }
+        if let Some(name) = (left.kind() == "identifier")
+            .then(|| left.utf8_text(src).ok())
+            .flatten()
         {
-            bump(&mut self.unit.local_reassigns, left);
+            bump(&mut self.unit.local_reassigns, name);
+        }
+    }
+
+    fn record_capture(&mut self, node: Node, src: &[u8]) {
+        if node
+            .utf8_text(src)
+            .is_ok_and(|name| self.outer_names.contains(&lexeme::hash(name)))
+        {
+            self.unit.captures_parent = true;
         }
     }
 }
@@ -265,4 +291,11 @@ fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
     (function.kind() == "identifier")
         .then(|| function.utf8_text(src).ok().map(str::to_string))
         .flatten()
+}
+
+fn is_own_member(node: Node) -> bool {
+    node.kind() == "member_expression"
+        && node
+            .child_by_field_name("object")
+            .is_some_and(|object| object.kind() == "this")
 }

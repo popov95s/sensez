@@ -52,7 +52,7 @@ def smell_kinds() -> set[SmellTerm]:
 
 def parse_rule_knobs() -> dict[SmellTerm, list[str]]:
     source = SMELL_RULES_RS.read_text()
-    body = source.split("fn integer_rule_knobs", 1)[1].split("fn bool_rule_knobs", 1)[0]
+    body = source.split("fn rule_knob_names", 1)[1].split("fn bool_rule_knobs", 1)[0]
     out = dict(integer_rule_knob_entries(body))
     return with_string_rule_knobs(out, strictness_rule_knob_entries())
 
@@ -159,7 +159,7 @@ def _default_smell_fields() -> dict[str, str]:
     source = SMELL_KNOBS_RS.read_text()
     default_impl = source.split("impl Default for Smells", 1)[1]
     body = default_impl.split("Smells {", 1)[1].split("}", 1)[0]
-    return dict(re.findall(r"(\w+):\s*([^,\n]+),", body))
+    return dict(re.findall(r"(\w+):\s*(\[[^\]\n]*\](?=[.,])|[^,\n]+(?=,))", body))
 
 
 def _enabled_fields() -> dict[SmellTerm, str]:

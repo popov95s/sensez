@@ -2,8 +2,11 @@
 //! lexical helpers live in [`crate::profiles::typevocab`]; this module owns only
 //! Python's conventions (`dict[str, Any]`, `Optional[...]`, `Literal`, ...).
 
-use crate::profiles::typevocab::{base_type, has_domain_type, has_token, LooseTypeKind};
+use crate::profiles::typevocab::{
+    base_type, has_domain_type, has_token, is_nominal_ignoring, split_top_level, LooseTypeKind,
+};
 use crate::spine::ir::MutatorFamily;
+use tree_sitter::Node;
 
 /// Annotation bases that are loose collections (a missing domain type).
 /// Sets are included: `set[int]` / `set[str]` is the same "collection of bare
@@ -90,6 +93,18 @@ pub(crate) fn has_domain_model(annotation: &str) -> bool {
     has_domain_type(annotation, &TYPING_NAMES)
 }
 
+/// `Order`, `Optional[Order]`, `Order | None`.
+pub(crate) fn is_nominal_type(annotation: &str) -> bool {
+    let text = annotation.trim();
+    let unwrapped = text
+        .strip_prefix("typing.")
+        .unwrap_or(text)
+        .strip_prefix("Optional[")
+        .and_then(|rest| rest.strip_suffix(']'))
+        .unwrap_or(text);
+    is_nominal_ignoring(unwrapped, &["None"], &[])
+}
+
 pub(crate) fn is_primitive_scalar_alias(annotation: &str) -> bool {
     matches!(
         base_type(annotation),
@@ -110,6 +125,30 @@ pub(crate) fn is_mutable_collection(annotation: &str, family: MutatorFamily) -> 
     }
 }
 
+/// `-> tuple[int, int]` / `-> Tuple[str, str, str]`: one primitive repeated.
+pub(crate) fn is_homogeneous_primitive_tuple(func: Node, src: &[u8]) -> bool {
+    let Some(annotation) = func
+        .child_by_field_name("return_type")
+        .and_then(|n| n.utf8_text(src).ok())
+    else {
+        return false;
+    };
+    let text = annotation.trim();
+    let text = text.strip_prefix("typing.").unwrap_or(text);
+    let Some(body) = ["tuple[", "Tuple["]
+        .iter()
+        .find_map(|open| text.strip_prefix(open))
+        .and_then(|rest| rest.strip_suffix(']'))
+    else {
+        return false;
+    };
+    let elements = split_top_level(body, ',');
+    elements.first().is_some_and(|first| {
+        matches!(*first, "int" | "str" | "float" | "bool" | "bytes")
+            && elements.iter().all(|element| element == first)
+    })
+}
+
 /// `Optional[dict[str, Any]]` → `dict[str, Any]` (best effort).
 fn inner(annotation: &str) -> &str {
     annotation
@@ -127,6 +166,12 @@ fn is_schema_erasing(annotation: &str) -> bool {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn qualified_optional_is_unwrapped_before_the_nominal_check() {
+        assert!(is_nominal_type("typing.Optional[Order]"));
+        assert!(!is_nominal_type("typing.Optional[Order | Invoice]"));
+    }
 
     #[test]
     fn sets_of_primitives_are_loose_but_sets_of_domain_types_are_not() {

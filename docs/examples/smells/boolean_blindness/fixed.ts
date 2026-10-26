@@ -2,8 +2,8 @@ interface InvoiceDelivery {
   deliver(invoice: Invoice): void;
 }
 
-interface InvoiceArchival {
-  archive(invoice: Invoice): void;
+interface InvoiceFollowUp {
+  run(invoice: Invoice): void;
 }
 
 class EmailDelivery implements InvoiceDelivery {
@@ -18,24 +18,26 @@ class ReviewQueueDelivery implements InvoiceDelivery {
   }
 }
 
-class PdfArchival implements InvoiceArchival {
-  archive(invoice: Invoice): void {
+class PdfArchival implements InvoiceFollowUp {
+  run(invoice: Invoice): void {
     archive.store(renderPdf(invoice));
   }
 }
 
-class SkipArchival implements InvoiceArchival {
-  archive(invoice: Invoice): void {
-    return;
+class OwnerNotification implements InvoiceFollowUp {
+  run(invoice: Invoice): void {
+    notifier.ping(invoice.owner);
   }
 }
 
 function publishInvoice(
   invoiceId: string,
   delivery: InvoiceDelivery,
-  archival: InvoiceArchival,
+  followUps: InvoiceFollowUp[],
 ): void {
   const invoice = repo.load(invoiceId);
   delivery.deliver(invoice);
-  archival.archive(invoice);
+  for (const followUp of followUps) {
+    followUp.run(invoice);
+  }
 }

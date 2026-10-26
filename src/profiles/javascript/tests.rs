@@ -116,6 +116,27 @@ fn function_facts_preserve_order_and_exclude_nested_bodies() {
 }
 
 #[test]
+fn else_if_chain_stays_at_one_nesting_level() {
+    let src = b"function pick(n) {\n  if (n === 1) {\n    return 'a';\n  } else if (n === 2) {\n    return 'b';\n  } else if (n === 3) {\n    return 'c';\n  } else if (n === 4) {\n    return 'd';\n  } else if (n === 5) {\n    return 'e';\n  }\n  return 'z';\n}\n";
+    let f = &parse_source(src, 0, "m", &JsProfile)
+        .unwrap()
+        .units
+        .functions[0];
+    assert_eq!(f.max_nesting, 1);
+    assert_eq!(f.cognitive, 5);
+}
+
+#[test]
+fn nested_blocks_still_count_every_level() {
+    let src = b"function walk(xs) {\n  if (xs) {\n    for (const row of xs) {\n      if (row) {\n        while (row.length) {\n          if (row.pop()) {\n            return 1;\n          }\n        }\n      }\n    }\n  }\n  return 0;\n}\n";
+    let f = &parse_source(src, 0, "m", &JsProfile)
+        .unwrap()
+        .units
+        .functions[0];
+    assert_eq!(f.max_nesting, 5);
+}
+
+#[test]
 fn only_the_outermost_member_records_a_chain() {
     let src = b"import * as ns from './api';\nfunction f(o) {\n  return o.a.b.c.d + ns.x.y.z;\n}\n";
     let functions = parse_source(src, 0, "m", &JsProfile)

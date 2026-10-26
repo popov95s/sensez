@@ -8,6 +8,7 @@ mod deadcode;
 mod generated;
 mod imports;
 mod lexeme;
+mod nested;
 mod obsession;
 mod performance;
 mod resolve;
@@ -164,6 +165,10 @@ impl PerformanceProfile for PythonProfile {
 }
 
 impl TypeVocabularyProfile for PythonProfile {
+    fn is_nominal_type(&self, annotation: &str) -> bool {
+        typevocab::is_nominal_type(annotation)
+    }
+
     fn loose_kind(&self, annotation: &str) -> Option<crate::profiles::typevocab::LooseTypeKind> {
         typevocab::loose_kind(annotation)
     }

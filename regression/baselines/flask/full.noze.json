@@ -254,6 +254,16 @@
     {
       "action": "advisory",
       "file": "<flask>/src/flask/helpers.py",
+      "kind": "heavy_nested_function",
+      "line": 126,
+      "message": "nested function inside `stream_with_context` spans 16 lines and reads `stream_with_context`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 16,
+      "symbol": "generator",
+      "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/helpers.py",
       "kind": "literal_membership",
       "line": 33,
       "lines": [
@@ -925,16 +935,6 @@
       "metric": 12,
       "symbol": "flask.globals",
       "threshold": 12
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/helpers.py",
-      "kind": "heavy_nested_function",
-      "line": 126,
-      "message": "nested function inside `stream_with_context` spans 16 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `stream_with_context`), so extract it to module/class level",
-      "metric": 16,
-      "symbol": "generator",
-      "threshold": 15
     },
     {
       "action": "warning",

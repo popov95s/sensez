@@ -35,7 +35,8 @@ pub fn detect(
 
 fn divergent_change(ctx: &SmellContext<'_>, class: &ClassUnit, out: &mut Vec<SmellFinding>) {
     // Data classes (Pydantic / settings / enums) hold fields, not behavior.
-    if class.bases.iter().any(|b| is_data_base(b)) {
+    // Interface members are cohesive by contract, not by shared state.
+    if class.bases.iter().any(|b| is_data_base(b)) || !class.implements.is_empty() {
         return;
     }
     // Methods that genuinely use instance state (ignore static/util methods that

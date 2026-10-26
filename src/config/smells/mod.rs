@@ -4,6 +4,7 @@ mod defaults;
 mod knobs;
 mod raw;
 mod resolve;
+mod rule_lists;
 mod rules;
 mod strictness;
 

@@ -47,6 +47,14 @@ mod mutation_tests;
 mod typing_tests;
 
 #[cfg(test)]
+#[path = "nested_function_tests.rs"]
+mod nested_function_tests;
+
+#[cfg(test)]
+#[path = "tuple_tests.rs"]
+mod tuple_tests;
+
+#[cfg(test)]
 #[path = "arrow_name_tests.rs"]
 mod arrow_name_tests;
 
@@ -232,6 +240,14 @@ macro_rules! impl_ts_traits {
 
             fn is_dictish(&self, annotation: &str) -> bool {
                 typevocab::is_dictish(annotation)
+            }
+
+            fn is_open_map(&self, annotation: &str) -> bool {
+                typevocab::is_open_map(annotation)
+            }
+
+            fn is_nominal_type(&self, annotation: &str) -> bool {
+                typevocab::is_nominal_type(annotation)
             }
 
             fn has_domain_model(&self, annotation: &str) -> bool {

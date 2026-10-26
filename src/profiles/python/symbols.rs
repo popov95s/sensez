@@ -77,6 +77,15 @@ fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
 }
 
 /// Assignment target names: handles `x = ...` and `a, b = ...`.
+/// `self.<attr>`.
+pub fn is_self_attribute(node: Node, src: &[u8]) -> bool {
+    node.kind() == "attribute"
+        && node
+            .child_by_field_name("object")
+            .and_then(|object| object.utf8_text(src).ok())
+            == Some("self")
+}
+
 pub fn assignment_targets(node: Node, src: &[u8]) -> Vec<String> {
     match node.child_by_field_name("left") {
         Some(left) => collect_target_names(left, src),

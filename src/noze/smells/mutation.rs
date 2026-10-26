@@ -215,14 +215,16 @@ fn implicit_schema(
     out: &mut Vec<SmellFinding>,
 ) {
     for (recv, keys) in schemas {
-        if keys.len() < cfg.implicit_schema_min_keys {
+        if keys.len() < cfg.implicit_schema_min_keys || m.dynamic_key_receivers.contains(recv) {
             continue;
         }
         let annotated = ctx
             .type_hints
             .param_type(m, recv)
             .or_else(|| ctx.type_hints.var_types.get(recv));
-        if annotated.is_some_and(|ty| !ctx.type_vocabulary.is_dictish(ty)) {
+        if annotated.is_some_and(|ty| {
+            !ctx.type_vocabulary.is_dictish(ty) || ctx.type_vocabulary.is_open_map(ty)
+        }) {
             continue;
         }
         if m.validated_names.contains(recv) || is_validated_boundary(ctx, m) {

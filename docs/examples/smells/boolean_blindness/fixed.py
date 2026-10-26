@@ -5,8 +5,8 @@ class InvoiceDelivery(Protocol):
     def deliver(self, invoice: Invoice) -> None: ...
 
 
-class InvoiceArchival(Protocol):
-    def archive(self, invoice: Invoice) -> None: ...
+class InvoiceFollowUp(Protocol):
+    def run(self, invoice: Invoice) -> None: ...
 
 
 class EmailDelivery:
@@ -20,20 +20,21 @@ class ReviewQueueDelivery:
 
 
 class PdfArchival:
-    def archive(self, invoice: Invoice) -> None:
+    def run(self, invoice: Invoice) -> None:
         archive.store(render_pdf(invoice))
 
 
-class SkipArchival:
-    def archive(self, invoice: Invoice) -> None:
-        return None
+class OwnerNotification:
+    def run(self, invoice: Invoice) -> None:
+        notifier.ping(invoice.owner)
 
 
 def publish_invoice(
     invoice_id: str,
     delivery: InvoiceDelivery,
-    archival: InvoiceArchival,
+    follow_ups: list[InvoiceFollowUp],
 ) -> None:
     invoice = repo.load(invoice_id)
     delivery.deliver(invoice)
-    archival.archive(invoice)
+    for follow_up in follow_ups:
+        follow_up.run(invoice)

@@ -528,7 +528,7 @@
     "smell_totals": {
       "data_clump": 3,
       "divergent_change": 7,
-      "feature_envy": 7,
+      "feature_envy": 5,
       "heavy_nested_function": 3,
       "large_class": 2,
       "loose_typing": 81,
@@ -546,7 +546,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 171,
+    "smells_total": 169,
     "source_lines": 72099
   },
   "smells": [
@@ -559,6 +559,16 @@
       "metric": 71,
       "symbol": "generateFields",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "heavy_nested_function",
+      "line": 2951,
+      "message": "nested function inside `_parse` spans 26 lines and reads `_parse`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 26,
+      "symbol": "handleResults",
+      "threshold": 15
     },
     {
       "action": "advisory",
@@ -737,6 +747,16 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/core.ts",
+      "kind": "heavy_nested_function",
+      "line": 22,
+      "message": "nested function inside `$constructor` spans 30 lines and reads `$constructor`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 30,
+      "symbol": "init",
+      "threshold": 15
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "data_clump",
       "line": 102,
@@ -800,6 +820,16 @@
       "metric": 1,
       "symbol": "objectClone",
       "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
+      "kind": "heavy_nested_function",
+      "line": 100,
+      "message": "nested function inside `error` spans 17 lines and reads `error`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 17,
+      "symbol": "getSizing",
+      "threshold": 15
     },
     {
       "action": "warning",
@@ -1275,16 +1305,6 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "feature_envy",
-      "line": 1108,
-      "message": "accesses `options` (| string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on | string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }",
-      "metric": 5,
-      "symbol": "datetime",
-      "threshold": 2
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "feature_envy",
       "line": 176,
       "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
       "metric": 5,
@@ -1330,16 +1350,6 @@
       "metric": 6,
       "symbol": "_parse",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "heavy_nested_function",
-      "line": 2951,
-      "message": "nested function inside `_parse` spans 26 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `_parse`), so extract it to module/class level",
-      "metric": 26,
-      "symbol": "handleResults",
-      "threshold": 15
     },
     {
       "action": "warning",
@@ -1623,16 +1633,6 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/core.ts",
-      "kind": "heavy_nested_function",
-      "line": 22,
-      "message": "nested function inside `$constructor` spans 30 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `$constructor`), so extract it to module/class level",
-      "metric": 30,
-      "symbol": "init",
-      "threshold": 15
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/core.ts",
       "kind": "loose_typing",
       "line": 70,
       "message": "params [inst: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
@@ -1708,16 +1708,6 @@
       "metric": 60,
       "symbol": "src/v4/core/errors",
       "threshold": 54
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
-      "kind": "feature_envy",
-      "line": 83,
-      "message": "accesses `params` (JSONSchemaGeneratorConstructorParams) 9\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on JSONSchemaGeneratorConstructorParams",
-      "metric": 9,
-      "symbol": "constructor",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -2260,16 +2250,6 @@
       "metric": 1,
       "symbol": "verbFor",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
-      "kind": "heavy_nested_function",
-      "line": 100,
-      "message": "nested function inside `error` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `error`), so extract it to module/class level",
-      "metric": 17,
-      "symbol": "getSizing",
-      "threshold": 15
     },
     {
       "action": "warning",

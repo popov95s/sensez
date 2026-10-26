@@ -539,16 +539,6 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "feature_envy",
-      "line": 1108,
-      "message": "accesses `options` (| string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }) 5\u00d7 vs. own data 2\u00d7 \u2014 behavior may belong on | string\n      | {\n          message?: string | undefined;\n          precision?: number | null;\n          offset?: boolean;\n          local?: boolean;\n        }",
-      "metric": 5,
-      "symbol": "datetime",
-      "threshold": 2
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "feature_envy",
       "line": 176,
       "message": "accesses `input` (ParseInput) 5\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on ParseInput",
       "metric": 5,
@@ -598,16 +588,6 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
-      "kind": "heavy_nested_function",
-      "line": 2951,
-      "message": "nested function inside `_parse` spans 26 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `_parse`), so extract it to module/class level",
-      "metric": 26,
-      "symbol": "handleResults",
-      "threshold": 15
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "large_class",
       "line": 158,
       "message": "32 methods (threshold 20)",
@@ -624,6 +604,16 @@
       "metric": 49,
       "symbol": "ZodString",
       "threshold": 20
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "loose_typing",
+      "line": 3241,
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 3,
+      "symbol": "mergeValues",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -656,16 +646,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/core.ts",
-      "kind": "heavy_nested_function",
-      "line": 22,
-      "message": "nested function inside `$constructor` spans 30 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `$constructor`), so extract it to module/class level",
-      "metric": 30,
-      "symbol": "init",
-      "threshold": 15
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/errors.ts",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 60 distinct modules \u2014 a change here scatters edits widely",
@@ -675,13 +655,23 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/json-schema-generator.ts",
-      "kind": "feature_envy",
-      "line": 83,
-      "message": "accesses `params` (JSONSchemaGeneratorConstructorParams) 9\u00d7 vs. own data 1\u00d7 \u2014 behavior may belong on JSONSchemaGeneratorConstructorParams",
-      "metric": 9,
-      "symbol": "constructor",
-      "threshold": 1
+      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+      "kind": "nested_ternary",
+      "line": 103,
+      "message": "1 nested ternary chain(s), deepest 3 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 3,
+      "symbol": "timeSource",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "loose_typing",
+      "line": 2495,
+      "message": "params [a: any, b: any]; returns { valid: true; data: any } | { valid: false; mergeErrorPath: (string | number)[] } \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 3,
+      "symbol": "mergeValues",
+      "threshold": 0
     },
     {
       "action": "warning",
@@ -698,22 +688,32 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "nested_ternary",
+      "line": 1136,
+      "message": "1 nested ternary chain(s), deepest 3 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 3,
+      "symbol": "parse",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 450,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 4,
+      "symbol": "finalize",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 63 distinct modules \u2014 a change here scatters edits widely",
       "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
-      "kind": "heavy_nested_function",
-      "line": 100,
-      "message": "nested function inside `error` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `error`), so extract it to module/class level",
-      "metric": 17,
-      "symbol": "getSizing",
-      "threshold": 15
     }
   ]
 }

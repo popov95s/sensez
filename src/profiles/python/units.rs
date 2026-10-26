@@ -18,8 +18,10 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         end_line: func.end_position().row + 1,
         param_names: symbols::param_names(func, src),
         is_method,
+        homogeneous_tuple_return: super::typevocab::is_homogeneous_primitive_tuple(func, src),
         ..Default::default()
     };
+    unit.is_constructor = is_method && unit.name == "__init__";
     if !is_method {
         unit.review_risks.forwards_to =
             super::risk_facts::forward_target(func, src, &unit.param_names);
@@ -141,6 +143,12 @@ impl<'u> Acc<'u> {
 
     /// Count a plain (non-augmented) assignment to each simple-identifier target.
     fn record_assignment(&mut self, node: Node, src: &[u8]) {
+        if node
+            .child_by_field_name("left")
+            .is_some_and(|left| symbols::is_self_attribute(left, src))
+        {
+            self.unit.self_writes += 1;
+        }
         for target in symbols::assignment_targets(node, src) {
             *self.unit.local_reassigns.entry(target).or_insert(0) += 1;
         }
@@ -151,15 +159,9 @@ fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
     if node.kind() != "call" {
         return None;
     }
-    let function = node.child_by_field_name("function")?;
-    if function.kind() != "attribute"
-        || function
-            .child_by_field_name("object")
-            .and_then(|object| object.utf8_text(src).ok())
-            != Some("self")
-    {
-        return None;
-    }
+    let function = node
+        .child_by_field_name("function")
+        .filter(|function| symbols::is_self_attribute(*function, src))?;
     function
         .child_by_field_name("attribute")
         .and_then(|method| method.utf8_text(src).ok())
@@ -298,3 +300,7 @@ fn cognitive_weight(kind: &str, depth: usize) -> Option<usize> {
         _ => None,
     }
 }
+
+#[cfg(test)]
+#[path = "units_tests.rs"]
+mod tests;
