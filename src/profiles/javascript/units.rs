@@ -119,7 +119,7 @@ impl FunctionFacts {
         obsession::scan(&mut self.unit, node, src);
         let frame = self.frame();
         performance::scan(&mut self.unit.performance, lineage, src, frame);
-        state_writes::scan(&mut self.unit, node, src);
+        state_writes::scan(&mut self.unit, lineage, src);
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }

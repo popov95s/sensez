@@ -57,8 +57,7 @@ use crate::spine::ir::{
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-/// Compile built-in profile globs once at their call site rather than
-/// duplicating filename conventions in consumers.
+/// Compile built-in profile globs once, where the conventions are declared.
 pub(crate) fn compile_profile_globs(patterns: &[&str]) -> globset::GlobSet {
     let compiled: Vec<String> = patterns
         .iter()

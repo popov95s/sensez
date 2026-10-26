@@ -2,6 +2,7 @@
 
 use super::control_shapes::is_function;
 use crate::profiles::lazy_init::is_guarded_by;
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::{FunctionUnit, StateWrite, StateWriteKind};
 use tree_sitter::Node;
 
@@ -33,7 +34,7 @@ fn assignment(node: Node, target: Node, src: &[u8]) -> Option<StateWrite> {
     };
     let kind = match (
         is_guarded_by(
-            node,
+            Lineage::detached(node),
             src,
             key,
             "if_statement",

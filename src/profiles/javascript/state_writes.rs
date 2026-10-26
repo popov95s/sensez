@@ -2,6 +2,7 @@
 
 use super::units::is_function;
 use crate::profiles::lazy_init::is_guarded_by;
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::{FunctionUnit, StateWrite, StateWriteKind};
 use tree_sitter::Node;
 
@@ -9,14 +10,15 @@ const LAZY_OPERATORS: &[&str] = &["??=", "||="];
 const READ_REQUEST_METHODS: &[&str] = &["GET", "HEAD", "OPTIONS"];
 
 /// Record the write `node` performs, when it is one.
-pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+pub fn scan(unit: &mut FunctionUnit, lineage: Lineage, src: &[u8]) {
+    let node = lineage.node();
     let write = match node.kind() {
         "assignment_expression" | "augmented_assignment_expression" => node
             .child_by_field_name("left")
-            .and_then(|left| assignment(node, left, src)),
+            .and_then(|left| assignment(lineage, left, src)),
         "update_expression" => node
             .child_by_field_name("argument")
-            .and_then(|target| assignment(node, target, src)),
+            .and_then(|target| assignment(lineage, target, src)),
         "call_expression" => request(node, src),
         _ => None,
     };
@@ -35,7 +37,8 @@ pub fn drop_locals(unit: &mut FunctionUnit) {
     });
 }
 
-fn assignment(node: Node, target: Node, src: &[u8]) -> Option<StateWrite> {
+fn assignment(lineage: Lineage, target: Node, src: &[u8]) -> Option<StateWrite> {
+    let node = lineage.node();
     let text = target.utf8_text(src).ok()?;
     let root = chain_root(target)?;
     let own = root.kind() == "this";
@@ -50,7 +53,7 @@ fn assignment(node: Node, target: Node, src: &[u8]) -> Option<StateWrite> {
         .and_then(|operator| operator.utf8_text(src).ok())
         .is_some_and(|operator| LAZY_OPERATORS.contains(&operator))
         || is_guarded_by(
-            node,
+            lineage,
             src,
             key,
             "if_statement",
