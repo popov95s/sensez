@@ -16,11 +16,11 @@ pub fn detect(
     _cfg: &Smells,
 ) -> Vec<SmellFinding> {
     // Performance smells need to look up callees by name to attribute
-    // helper-in-loop work to the caller, so we keep a per-name view of the
-    // metrics by name. The map is name → *metrics*, not name → *unit*, but
-    // the only field read for the lookup is `performance`.
-    let functions: BTreeMap<&str, &FunctionUnit> =
-        metrics.iter().map(|m| (m.name.as_str(), m)).collect();
+    // helper-in-loop work to the caller; same-named units stay ambiguous.
+    let mut functions: BTreeMap<&str, Vec<&FunctionUnit>> = BTreeMap::new();
+    for m in metrics {
+        functions.entry(m.name.as_str()).or_default().push(m);
+    }
     let profile = registry::performance_profile(ctx.language);
     metrics
         .iter()
@@ -35,7 +35,7 @@ pub fn detect(
 fn direct_findings(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
-    functions: &BTreeMap<&str, &FunctionUnit>,
+    functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
     profile: &dyn PerformanceProfile,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
@@ -90,7 +90,7 @@ fn direct_findings(
 fn helper_findings(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
-    functions: &BTreeMap<&str, &FunctionUnit>,
+    functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
     profile: &dyn PerformanceProfile,
 ) -> Vec<SmellFinding> {
     let mut out = Vec::new();
@@ -98,7 +98,7 @@ fn helper_findings(
         if call.target == m.name {
             continue;
         }
-        let Some(callee) = functions.get(call.target.as_str()).copied() else {
+        let Some(&[callee]) = functions.get(call.target.as_str()).map(Vec::as_slice) else {
             continue;
         };
         let callee_loops = significant_loops(profile, &callee.performance.loops);

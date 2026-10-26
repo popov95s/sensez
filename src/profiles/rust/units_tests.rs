@@ -21,17 +21,12 @@ fn decide(active: bool, dry_run: bool, tags: Vec<String>) -> (usize, String, boo
     assert_eq!(
         w.units
             .type_hints
-            .param_types
-            .get(&("decide".into(), "active".into()))
+            .param_type(f, "active")
             .map(String::as_str),
         Some("bool")
     );
     assert_eq!(
-        w.units
-            .type_hints
-            .return_types
-            .get("decide")
-            .map(String::as_str),
+        w.units.type_hints.return_type(f).map(String::as_str),
         Some("(usize, String, bool)")
     );
 }

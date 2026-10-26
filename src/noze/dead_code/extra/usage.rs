@@ -149,7 +149,7 @@ pub(super) fn typed_receivers(
             out.insert(name.to_string(), class.to_string());
         }
     }
-    for ((_, name), ty) in &hints.param_types {
+    for (name, ty) in hints.param_types.values().flatten() {
         if let Some(class) = type_class(ty, class_index) {
             out.insert(name.to_string(), class.to_string());
         }
@@ -188,16 +188,21 @@ fn returned_member_evidence(
     file: &ParsedFile,
     class_index: &ClassIndex,
 ) -> (HashSet<(String, String)>, HashSet<String>) {
+    let mut returns_by_name: HashMap<&str, Vec<&str>> = HashMap::new();
+    for (func, ty) in &type_hints(file).return_types {
+        returns_by_name.entry(&func.name).or_default().push(ty);
+    }
     file.walked
         .usage
         .call_result_attribute_accesses
         .iter()
-        .filter_map(|(function, attrs)| {
-            type_hints(file)
-                .return_types
-                .get(function)
-                .and_then(|ty| type_class(ty, class_index))
-                .map(|class| (class, attrs))
+        .flat_map(|(function, attrs)| {
+            returns_by_name
+                .get(function.as_str())
+                .into_iter()
+                .flatten()
+                .filter_map(|ty| type_class(ty, class_index))
+                .map(move |class| (class, attrs))
         })
         .fold(
             (HashSet::new(), HashSet::new()),

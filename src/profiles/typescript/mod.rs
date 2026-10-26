@@ -30,6 +30,10 @@ mod type_imports_tests;
 #[path = "default_export_tests.rs"]
 mod default_export_tests;
 
+#[cfg(test)]
+#[path = "arrow_name_tests.rs"]
+mod arrow_name_tests;
+
 static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["ts"],

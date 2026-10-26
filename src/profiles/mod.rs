@@ -10,6 +10,7 @@ pub(crate) mod comments;
 pub(crate) mod conditionals;
 pub(crate) mod guard_fingerprint;
 pub(crate) mod lexeme;
+pub(crate) mod lineage;
 pub(crate) mod node_query;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;

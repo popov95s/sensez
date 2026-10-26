@@ -9,25 +9,28 @@
 //! the main visit already reaches exactly these nodes in the same pre-order, so
 //! the collected hints are identical, one traversal cheaper.
 
-use crate::spine::ir::{TypeAlias, TypeHints};
+use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
 use tree_sitter::Node;
 
 /// Record a `function_definition`'s return + parameter annotations.
 pub fn record_function(node: Node, src: &[u8], hints: &mut TypeHints) {
-    let name = node
-        .child_by_field_name("name")
-        .and_then(|n| n.utf8_text(src).ok())
-        .unwrap_or("")
-        .to_string();
-    if let Some(ret) = type_text(node.child_by_field_name("return_type"), src) {
-        hints.return_types.insert(name.clone(), ret);
-    }
+    let key = FunctionKey {
+        name: node
+            .child_by_field_name("name")
+            .and_then(|n| n.utf8_text(src).ok())
+            .unwrap_or("")
+            .to_string(),
+        start_line: node.start_position().row + 1,
+    };
     if let Some(params) = node.child_by_field_name("parameters") {
-        collect_params(params, src, &name, hints);
+        collect_params(params, src, &key, hints);
+    }
+    if let Some(ret) = type_text(node.child_by_field_name("return_type"), src) {
+        hints.record_return(key, ret);
     }
 }
 
-fn collect_params(params: Node, src: &[u8], func: &str, hints: &mut TypeHints) {
+fn collect_params(params: Node, src: &[u8], func: &FunctionKey, hints: &mut TypeHints) {
     let mut cursor = params.walk();
     for p in params.named_children(&mut cursor) {
         if !matches!(p.kind(), "typed_parameter" | "typed_default_parameter") {
@@ -39,9 +42,7 @@ fn collect_params(params: Node, src: &[u8], func: &str, hints: &mut TypeHints) {
             .and_then(|n| n.utf8_text(src).ok());
         let ptype = type_text(p.child_by_field_name("type"), src);
         if let (Some(pname), Some(ptype)) = (pname, ptype) {
-            hints
-                .param_types
-                .insert((func.to_string(), pname.to_string()), ptype);
+            hints.record_param(func, pname, ptype);
         }
     }
 }

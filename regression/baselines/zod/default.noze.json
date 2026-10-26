@@ -666,12 +666,12 @@
       "god_module": 1,
       "heavy_nested_function": 3,
       "large_class": 2,
-      "loose_typing": 79,
+      "loose_typing": 118,
       "magic_string_default": 58,
       "message_chain": 1,
       "mutated_parameter": 3,
       "narrating_code": 3,
-      "nested_loop": 27,
+      "nested_loop": 33,
       "nested_ternary": 8,
       "repeated_iteration": 3,
       "shotgun_surgery_hazard": 3,
@@ -682,7 +682,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 221,
+    "smells_total": 266,
     "source_lines": 71956
   },
   "smells": [
@@ -693,7 +693,7 @@
       "line": 104,
       "message": "7 comment line(s), 54% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
       "metric": 54,
-      "symbol": "",
+      "symbol": "makeData callback",
       "threshold": 30
     },
     {
@@ -812,7 +812,7 @@
       "line": 62,
       "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 10,
-      "symbol": "",
+      "symbol": "errorMap",
       "threshold": 0
     },
     {
@@ -900,8 +900,8 @@
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "loose_typing",
       "line": 3559,
-      "message": "params [first: any, second: any, third: any] \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
-      "metric": 3,
+      "message": "params [first: any, second: any, third: any]; returns ZodRecord<any, any> \u2014 replace loose types with a typed object or interface; do not silence this with a shallow type alias",
+      "metric": 4,
       "symbol": "create",
       "threshold": 0
     },
@@ -990,7 +990,7 @@
       "line": 380,
       "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 2,
-      "symbol": "",
+      "symbol": "tupleProcessor",
       "threshold": 0
     },
     {
@@ -1020,7 +1020,7 @@
       "line": 4458,
       "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
       "metric": 5,
-      "symbol": "",
+      "symbol": "parse",
       "threshold": 4
     },
     {
@@ -1050,7 +1050,7 @@
       "line": 2211,
       "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
       "metric": 2,
-      "symbol": "",
+      "symbol": "util.defineLazy callback",
       "threshold": 1
     },
     {
@@ -1087,7 +1087,7 @@
       "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
       "kind": "heavy_nested_function",
       "line": 100,
-      "message": "nested function inside `<anon>` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `<anon>`), so extract it to module/class level",
+      "message": "nested function inside `error` spans 17 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `error`), so extract it to module/class level",
       "metric": 17,
       "symbol": "getSizing",
       "threshold": 15

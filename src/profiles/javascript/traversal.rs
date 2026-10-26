@@ -5,6 +5,7 @@
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::lineage::Lineage;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, credit_string, declare, register_method, Scope,
 };
@@ -17,11 +18,13 @@ struct ActiveFn {
     index: usize,
 }
 
-struct VisitCtx<'a> {
+struct VisitCtx<'a, 'tree> {
     scope: &'a mut Vec<Scope>,
     fn_bounds: &'a mut Vec<BoundNames>,
     out: &'a mut Walked,
     active_fns: &'a mut Vec<ActiveFn>,
+    /// Ancestors of the node being visited, root first.
+    path: Vec<Node<'tree>>,
 }
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
@@ -35,6 +38,7 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         fn_bounds: &mut fn_bounds,
         out: &mut out,
         active_fns: &mut active_fns,
+        path: Vec::new(),
     };
     visit(root, src, file_id, module_name, false, &mut ctx);
     crate::profiles::comments::attach(&mut out);
@@ -42,13 +46,13 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
     out
 }
 
-fn visit(
-    node: Node,
+fn visit<'tree>(
+    node: Node<'tree>,
     src: &[u8],
     file_id: u32,
     module_name: &str,
     is_member_property: bool,
-    ctx: &mut VisitCtx,
+    ctx: &mut VisitCtx<'_, 'tree>,
 ) {
     let kind = node.kind();
 
@@ -73,8 +77,9 @@ fn visit(
 
     // Directive prologues / bare string statements ("use strict") are not logic.
     if kind == "string"
-        && node
-            .parent()
+        && ctx
+            .path
+            .last()
             .is_some_and(|p| p.kind() == "expression_statement")
     {
         return;
@@ -125,7 +130,8 @@ fn visit(
 
     if units::is_function(kind) {
         let is_method = ctx.scope.last().is_some_and(|s| s.is_class);
-        let mut collector = units::FunctionFacts::start(node, src, is_method);
+        let lineage = Lineage::new(&ctx.path, node);
+        let mut collector = units::FunctionFacts::start(lineage, src, is_method);
         let enclosed_by_fn = ctx.scope.last().is_some_and(|s| !s.is_class);
         if enclosed_by_fn
             && matches!(
@@ -138,7 +144,7 @@ fn visit(
         }
         let index = ctx.out.units.functions.len();
         ctx.out.units.functions.push(Default::default());
-        typehints::record_function(node, src, &mut ctx.out.units.type_hints);
+        typehints::record_function(lineage, src, &mut ctx.out.units.type_hints);
         ctx.active_fns.push(ActiveFn { collector, index });
     }
 
@@ -148,11 +154,8 @@ fn visit(
 
     let opened = token_map::is_scope(kind);
     if opened {
-        let name = node
-            .child_by_field_name("name")
-            .and_then(|n| n.utf8_text(src).ok())
-            .unwrap_or("<anon>")
-            .to_string();
+        let name = symbols::function_name(Lineage::new(&ctx.path, node), src)
+            .unwrap_or_else(|| crate::spine::ir::ANONYMOUS.to_string());
         ctx.scope.push(Scope {
             name,
             is_class: token_map::is_class(kind),
@@ -166,6 +169,7 @@ fn visit(
     let property_id = (kind == "member_expression")
         .then(|| node.child_by_field_name("property").map(|child| child.id()))
         .flatten();
+    ctx.path.push(node);
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
         let frame = ctx
@@ -184,6 +188,7 @@ fn visit(
             ctx.active_fns.last_mut().unwrap().collector.leave(f);
         }
     }
+    ctx.path.pop();
 
     if opened_fn {
         ctx.fn_bounds.pop();

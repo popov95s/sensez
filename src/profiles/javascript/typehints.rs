@@ -4,16 +4,22 @@
 //! only obvious instantiations.
 
 use super::symbols;
-use crate::spine::ir::{TypeAlias, TypeHints};
+use crate::profiles::lineage::Lineage;
+use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
 use tree_sitter::Node;
 
 /// Record a function/method's return + parameter type annotations.
-pub fn record_function(node: Node, src: &[u8], hints: &mut TypeHints) {
-    let Some(name) = symbols::def_name(node, src) else {
-        return; // anonymous arrow/expression — nothing to key on
+pub fn record_function(lineage: Lineage, src: &[u8], hints: &mut TypeHints) {
+    let node = lineage.node();
+    let Some(name) = symbols::function_name(lineage, src) else {
+        return;
+    };
+    let key = FunctionKey {
+        name,
+        start_line: node.start_position().row + 1,
     };
     if let Some(ret) = type_text(node.child_by_field_name("return_type"), src) {
-        hints.return_types.insert(name.clone(), ret);
+        hints.record_return(key.clone(), ret);
     }
     if let Some(params) = node.child_by_field_name("parameters") {
         let mut cursor = params.walk();
@@ -27,9 +33,7 @@ pub fn record_function(node: Node, src: &[u8], hints: &mut TypeHints) {
                 .and_then(|n| n.utf8_text(src).ok());
             let ptype = type_text(p.child_by_field_name("type"), src);
             if let (Some(pname), Some(ptype)) = (pname, ptype) {
-                hints
-                    .param_types
-                    .insert((name.clone(), pname.to_string()), ptype);
+                hints.record_param(&key, pname, ptype);
             }
         }
     }

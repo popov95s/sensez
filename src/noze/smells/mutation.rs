@@ -125,8 +125,7 @@ fn implicit_schema(
         }
         let annotated = ctx
             .type_hints
-            .param_types
-            .get(&(m.name.clone(), recv.clone()))
+            .param_type(m, recv)
             .or_else(|| ctx.type_hints.var_types.get(recv));
         if annotated.is_some_and(|ty| !ctx.type_vocabulary.is_dictish(ty)) {
             continue;
@@ -191,8 +190,7 @@ fn propagated_schemas(metrics: &[FunctionUnit]) -> Vec<HashMap<String, HashSet<S
 
 fn is_validated_boundary(ctx: &SmellContext<'_>, metric: &FunctionUnit) -> bool {
     ctx.type_hints
-        .return_types
-        .get(&metric.name)
+        .return_type(metric)
         .is_some_and(|return_type| {
             ctx.type_vocabulary.has_domain_model(return_type)
                 && metric

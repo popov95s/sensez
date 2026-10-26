@@ -26,6 +26,9 @@ pub struct SchemaCall {
     pub arguments: Vec<String>,
 }
 
+/// Display name of a scope or function that has none in source.
+pub const ANONYMOUS: &str = "<anonymous>";
+
 /// Per-function structural summary used by the design-smell pillar.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct FunctionUnit {
@@ -148,20 +151,57 @@ pub struct TypeAlias {
     pub line: usize,
 }
 
+/// A function by name and 1-indexed start line (names alone repeat across classes).
+#[derive(Debug, Clone, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub struct FunctionKey {
+    pub name: String,
+    pub start_line: usize,
+}
+
+impl FunctionKey {
+    pub fn of(func: &FunctionUnit) -> Self {
+        FunctionKey {
+            name: func.name.clone(),
+            start_line: func.start_line,
+        }
+    }
+}
+
 /// Best-effort, annotation-driven type information (no full inference). Absent
 /// entries mean "unknown" — type-assisted smells skip rather than guess.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeHints {
-    /// (function name, param name) → annotated type text.
-    pub param_types: HashMap<(String, String), String>,
+    /// Function → param name → annotated type text.
+    pub param_types: HashMap<FunctionKey, HashMap<String, String>>,
     /// local/global variable name → type (annotation or `x = T(...)`).
     pub var_types: HashMap<String, String>,
     /// attribute path → type (for example, `self.model: ApiModel`).
     pub attr_types: HashMap<String, String>,
-    /// function name → annotated return type.
-    pub return_types: HashMap<String, String>,
+    /// Function → annotated return type.
+    pub return_types: HashMap<FunctionKey, String>,
     /// Top-level type aliases (`Payload = dict[...]`, `type Payload = ...`).
     pub type_aliases: Vec<TypeAlias>,
+}
+
+impl TypeHints {
+    pub fn record_param(&mut self, func: &FunctionKey, param: &str, ty: String) {
+        self.param_types
+            .entry(func.clone())
+            .or_default()
+            .insert(param.to_string(), ty);
+    }
+
+    pub fn record_return(&mut self, func: FunctionKey, ty: String) {
+        self.return_types.insert(func, ty);
+    }
+
+    pub fn param_type(&self, func: &FunctionUnit, param: &str) -> Option<&String> {
+        self.param_types.get(&FunctionKey::of(func))?.get(param)
+    }
+
+    pub fn return_type(&self, func: &FunctionUnit) -> Option<&String> {
+        self.return_types.get(&FunctionKey::of(func))
+    }
 }
 
 /// Increment `map[key]`, allocating the key only when absent. On the hot
