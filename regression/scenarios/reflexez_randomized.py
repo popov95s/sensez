@@ -33,7 +33,9 @@ class RandomizedResult:
 def run_randomized_source_scenario(context: RegressionRun) -> None:
     profile = context.target["profile"]
     seed = 1847 if profile == "py" else 2903
-    with tempfile.TemporaryDirectory(prefix=f"reflexez-random-{profile}-") as value:
+    with tempfile.TemporaryDirectory(
+        prefix=f"reflexez-random-{profile}-", ignore_cleanup_errors=True
+    ) as value:
         root = Path(value)
         marker = root / "runner.capture"
         _write_project(root, marker, profile)
