@@ -49,13 +49,12 @@ fn scan_call(unit: &mut FunctionUnit, call: Node<'_>, src: &[u8]) {
     let Some(callee) = call.child_by_field_name("function") else {
         return;
     };
-    let args = arguments(call);
     if callee.kind() != "member_expression" {
         return;
     }
     let text = callee.utf8_text(src).unwrap_or_default();
-    if EQUALITY_ASSERTS.contains(&text) && args.len() >= 2 {
-        record_echo(unit, call, args[0], args[1], src);
+    if let [actual, expected, ..] = equality_assert_args(call, text)[..] {
+        record_echo(unit, call, actual, expected, src);
         return;
     }
     let (Some(object), Some(member)) = (
@@ -78,10 +77,10 @@ fn scan_call(unit: &mut FunctionUnit, call: Node<'_>, src: &[u8]) {
         return;
     }
     let subject = expect_subject(object, src);
-    if let Some(subject) =
-        subject.filter(|_| EQUALITY_MATCHERS.contains(&member) && args.len() == 1)
-    {
-        record_echo(unit, call, subject, args[0], src);
+    if let Some(subject) = subject.filter(|_| EQUALITY_MATCHERS.contains(&member)) {
+        if let [expected] = arguments(call)[..] {
+            record_echo(unit, call, subject, expected, src);
+        }
     }
     if !CALLED_MATCHERS.contains(&member) {
         return;
@@ -127,8 +126,21 @@ fn expect_subject<'a>(node: Node<'a>, src: &[u8]) -> Option<Node<'a>> {
         return None;
     }
     let callee = node.child_by_field_name("function")?;
-    let args = arguments(node);
-    (callee.utf8_text(src).ok()? == "expect" && args.len() == 1).then(|| args[0])
+    if callee.utf8_text(src).ok()? != "expect" {
+        return None;
+    }
+    match arguments(node)[..] {
+        [subject] => Some(subject),
+        _ => None,
+    }
+}
+
+/// Arguments of `assert.equal(..)` and friends; empty for any other callee.
+fn equality_assert_args<'a>(call: Node<'a>, callee: &str) -> Vec<Node<'a>> {
+    match EQUALITY_ASSERTS.contains(&callee) {
+        true => arguments(call),
+        false => Vec::new(),
+    }
 }
 
 fn arguments(call: Node<'_>) -> Vec<Node<'_>> {
