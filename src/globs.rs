@@ -20,9 +20,9 @@ pub fn validate_patterns(label: &str, patterns: &[String]) -> Result<()> {
 }
 
 /// Compile `patterns` into a [`GlobSet`].
-pub fn build_globset(patterns: &[String]) -> Result<GlobSet> {
+pub fn build_globset(patterns: &[impl AsRef<str>]) -> Result<GlobSet> {
     let mut builder = GlobSet::builder();
-    for pattern in patterns {
+    for pattern in patterns.iter().map(AsRef::as_ref) {
         let glob = GlobBuilder::new(pattern)
             .literal_separator(true)
             .build()
@@ -32,6 +32,14 @@ pub fn build_globset(patterns: &[String]) -> Result<GlobSet> {
     builder
         .build()
         .map_err(|err| anyhow!("glob patterns failed to compile as a set: {err}"))
+}
+
+/// Compile patterns that config loading already validated; empty set if that ever fails.
+pub fn compile_validated(patterns: &[impl AsRef<str>]) -> GlobSet {
+    build_globset(patterns).unwrap_or_else(|err| {
+        debug_assert!(false, "unvalidated glob reached compile_validated: {err}");
+        GlobSet::empty()
+    })
 }
 
 #[cfg(test)]

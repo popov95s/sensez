@@ -22,6 +22,7 @@ pub struct SmellConfig {
     /// Opt-in test analysis still honors these paths.
     #[serde(skip)]
     pub explicit_exclude: Vec<String>,
+    pub include_tests: bool,
     python: Smells,
     javascript: Smells,
     typescript: Smells,
@@ -63,6 +64,7 @@ impl From<Smells> for SmellConfig {
             enabled: s.enabled,
             exclude: s.exclude.clone(),
             explicit_exclude: s.exclude.clone(),
+            include_tests: false,
             python: s.clone(),
             javascript: s.clone(),
             typescript: s.clone(),

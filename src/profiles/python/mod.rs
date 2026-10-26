@@ -34,6 +34,7 @@ pub struct PythonProfile;
 static PYTHON_INFO: LanguageInfo = LanguageInfo {
     language: Language::Python,
     extensions: &["py", "pyi"],
+    test_support: &[],
 };
 impl ParseProfile for PythonProfile {
     fn info(&self) -> &'static LanguageInfo {

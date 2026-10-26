@@ -7,6 +7,7 @@ pub(crate) mod conditionals;
 pub(crate) mod const_eval;
 pub(crate) mod deadcode;
 pub(crate) mod declaration;
+pub(crate) mod generated;
 pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
@@ -20,6 +21,7 @@ pub(crate) mod roots;
 pub(crate) mod runner_config;
 pub(crate) mod scope;
 pub(crate) mod symbols;
+pub(crate) mod test_support;
 pub(crate) mod tokens;
 pub(crate) mod traversal;
 pub(crate) mod typehints;
@@ -45,6 +47,7 @@ pub struct JsProfile;
 static JS_INFO: LanguageInfo = LanguageInfo {
     language: Language::JavaScript,
     extensions: &["js", "jsx", "mjs", "cjs"],
+    test_support: test_support::TEST_SUPPORT,
 };
 impl ParseProfile for JsProfile {
     fn info(&self) -> &'static LanguageInfo {
@@ -57,6 +60,10 @@ impl ParseProfile for JsProfile {
 
     fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         traversal::walk(root, src, file_id, module_name)
+    }
+
+    fn is_generated(&self, path: &Path, src: &[u8]) -> bool {
+        generated::is_generated(path, src)
     }
 }
 

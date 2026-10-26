@@ -43,3 +43,23 @@ fn groups_duplication_without_listing_every_occurrence() {
     assert_eq!(duplication.current_threshold, json!(50));
     assert_eq!(duplication.sample_file_paths, vec!["a.py", "c.py"]);
 }
+
+#[test]
+fn scope_lists_effective_excludes_and_skip_counts() {
+    let mut config = Config::default();
+    config.duplication.exclude = vec!["**/tests/**".to_string()];
+    let mut report = AnalysisReport::default();
+    report.meta.duplication_skipped.tests = 3;
+    report.meta.duplication_skipped.generated = 2;
+
+    let summary = serde_json::to_value(from_report(Path::new("/repo"), &report, &config)).unwrap();
+    assert_eq!(
+        summary["scope"]["duplication"]["exclude_effective"],
+        json!(["**/tests/**"])
+    );
+    assert_eq!(
+        summary["scope"]["duplication"]["skipped"],
+        json!({"config_exclude": 0, "tests": 3, "generated": 2})
+    );
+    assert_eq!(summary["scope"]["smells"]["include_tests"], json!(false));
+}

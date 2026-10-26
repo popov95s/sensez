@@ -1,7 +1,7 @@
 //! Aggregated scan summary for configuration tuning surfaces.
 
 use crate::config::Config;
-use crate::report::{AnalysisReport, ScanStage, SmellKind};
+use crate::report::{AnalysisReport, ScanStage, SkipCounts, SmellKind};
 use anyhow::{Context, Result};
 use serde::Serialize;
 use serde_json::{json, Value};
@@ -12,6 +12,16 @@ use std::path::{Path, PathBuf};
 struct ConfigurationSummary {
     total_count: usize,
     by_rule: BTreeMap<String, RuleSummary>,
+    scope: BTreeMap<&'static str, PillarScope>,
+}
+
+/// Files a source-level pillar leaves out, and why.
+#[derive(Debug, Serialize)]
+struct PillarScope {
+    exclude_effective: Vec<String>,
+    include_tests: bool,
+    include_generated: bool,
+    skipped: SkipCounts,
 }
 
 #[derive(Debug, Serialize)]
@@ -73,7 +83,31 @@ fn from_report(root: &Path, report: &AnalysisReport, config: &Config) -> Configu
     ConfigurationSummary {
         total_count,
         by_rule,
+        scope: scope(report, config),
     }
+}
+
+fn scope(report: &AnalysisReport, config: &Config) -> BTreeMap<&'static str, PillarScope> {
+    BTreeMap::from([
+        (
+            "duplication",
+            PillarScope {
+                exclude_effective: config.duplication.exclude.clone(),
+                include_tests: config.duplication.include_tests,
+                include_generated: config.duplication.include_generated,
+                skipped: report.meta.duplication_skipped,
+            },
+        ),
+        (
+            "smells",
+            PillarScope {
+                exclude_effective: config.smells.exclude.clone(),
+                include_tests: config.smells.include_tests,
+                include_generated: false,
+                skipped: report.meta.smells_skipped,
+            },
+        ),
+    ])
 }
 
 fn add_cycles(root: &Path, report: &AnalysisReport, by_rule: &mut BTreeMap<String, RuleSummary>) {

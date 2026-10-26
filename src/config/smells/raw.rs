@@ -7,6 +7,7 @@ use std::collections::BTreeMap;
 pub(super) struct SmellsRaw {
     pub(super) enabled: Option<bool>,
     pub(super) exclude: Vec<String>,
+    pub(super) include_tests: bool,
     pub(super) rules: BTreeMap<SmellKind, RuleRaw>,
     pub(super) python: toml::Table,
     pub(super) javascript: toml::Table,

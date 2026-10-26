@@ -70,6 +70,8 @@ pub struct LanguageInfo {
     pub language: Language,
     /// File extensions claimed by this profile, without the dot.
     pub extensions: &'static [&'static str],
+    /// Test helpers, mocks, fixtures and stories: skipped by smells and duplication, still live for dead code.
+    pub test_support: &'static [&'static str],
 }
 
 /// Dead-code conventions supplied by a language profile.
@@ -131,6 +133,10 @@ pub trait ParseProfile: Send + Sync {
         false
     }
     fn is_declaration_only(&self, _path: &Path) -> bool {
+        false
+    }
+    /// Parsed but machine-written: kept in the graph, skipped by smells and duplication.
+    fn is_generated(&self, _path: &Path, _src: &[u8]) -> bool {
         false
     }
 }

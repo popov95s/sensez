@@ -8,7 +8,7 @@ use super::make;
 use crate::config::smells::{SmellConfig, Smells};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::graph::CodebaseGraph;
+use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use rayon::prelude::*;
@@ -19,7 +19,12 @@ use rayon::prelude::*;
 /// configured absolute threshold.
 const BLAST_FLOOR_REPO_PERCENT: usize = 15;
 
-pub fn detect(graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
+/// `in_scope` drops skipped files both as candidates and as importers.
+pub fn detect(
+    graph: &CodebaseGraph,
+    cfg: &SmellConfig,
+    in_scope: &(dyn Fn(&ModuleNode) -> bool + Sync),
+) -> Vec<SmellFinding> {
     let nodes: Vec<_> = graph.graph.node_indices().collect();
     let internal = nodes
         .iter()
@@ -29,7 +34,7 @@ pub fn detect(graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
         .par_iter()
         .filter_map(|&idx| {
             let node = &graph.graph[idx];
-            if !is_graph_hotspot_candidate(node) {
+            if !is_graph_hotspot_candidate(node) || !in_scope(node) {
                 return None;
             }
             // Thresholds are per-language (a node's `language` selects the set).
@@ -37,7 +42,7 @@ pub fn detect(graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
             let blast_floor = lcfg
                 .shotgun_blast_threshold
                 .max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
-            let blast = afferent(graph, idx, &node.module_name);
+            let blast = afferent(graph, idx, &node.module_name, in_scope);
             let ce = efferent(graph, idx);
             shotgun(node, blast, blast_floor, lcfg).or_else(|| god_module(node, blast, ce, lcfg))
         })
@@ -54,12 +59,19 @@ fn is_graph_hotspot_candidate(node: &crate::spine::graph::ModuleNode) -> bool {
 /// Afferent coupling: distinct dependent modules, counting only real coupling
 /// edges (containment — `mod x;`, façade re-exports — is hierarchy, not blast
 /// radius). The module itself is excluded; siblings count.
-fn afferent(graph: &CodebaseGraph, idx: petgraph::graph::NodeIndex, own: &str) -> usize {
+fn afferent(
+    graph: &CodebaseGraph,
+    idx: petgraph::graph::NodeIndex,
+    own: &str,
+    in_scope: &(dyn Fn(&ModuleNode) -> bool + Sync),
+) -> usize {
     let mut sources: Vec<&str> = graph
         .graph
         .edges_directed(idx, Direction::Incoming)
         .filter(|e| !e.weight().is_module_decl)
-        .map(|e| graph.graph[e.source()].module_name.as_str())
+        .map(|e| &graph.graph[e.source()])
+        .filter(|source| in_scope(source))
+        .map(|source| source.module_name.as_str())
         .filter(|m| *m != own)
         .collect();
     sources.sort_unstable();

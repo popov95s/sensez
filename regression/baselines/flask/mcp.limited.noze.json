@@ -354,8 +354,8 @@
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "god_module",
-      "message": "fan-in 6 + fan-out 29 = 35 (threshold 25)",
-      "metric": 35,
+      "message": "fan-in 4 + fan-out 29 = 33 (threshold 25)",
+      "metric": 33,
       "symbol": "flask.cli",
       "threshold": 25
     },
@@ -403,8 +403,8 @@
       "action": "warning",
       "file": "<flask>/src/flask/globals.py",
       "kind": "shotgun_surgery_hazard",
-      "message": "depended on by 16 distinct modules \u2014 a change here scatters edits widely",
-      "metric": 16,
+      "message": "depended on by 12 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 12,
       "symbol": "flask.globals",
       "threshold": 12
     },

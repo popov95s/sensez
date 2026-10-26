@@ -23,11 +23,10 @@ mod semantic;
 mod test_support;
 
 use crate::config::model::Duplication;
-use crate::globs::build_globset;
+use crate::noze::source_scope::SourceScope;
 use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence, ScanIssue};
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::{FunctionUnit, ParsedFile};
-use globset::GlobSet;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::collections::BTreeMap;
@@ -74,12 +73,9 @@ pub fn detect_with_root(
     if files.is_empty() || config.threshold == 0 {
         return (Vec::new(), Vec::new());
     }
-    // Exclude tests/migrations from the corpus (kept in the graph elsewhere).
-    let excluded = build_globset(&config.exclude).unwrap_or_else(|_| GlobSet::empty());
-    let kept: Vec<&ParsedFile> = files
-        .iter()
-        .filter(|f| !excluded.is_match(&f.path))
-        .collect();
+    // Exclude tests/migrations/generated files from the corpus (kept in the graph elsewhere).
+    let scope = SourceScope::for_duplication(config);
+    let kept: Vec<&ParsedFile> = files.iter().filter(|f| scope.includes(f)).collect();
 
     let mut by_language: BTreeMap<crate::spine::ir::Language, Vec<&ParsedFile>> = BTreeMap::new();
     for file in &kept {

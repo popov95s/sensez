@@ -254,6 +254,10 @@ pub struct ReportMeta {
     pub duplication_total: usize,
     pub boundaries_total: usize,
     pub smells_total: usize,
+    #[serde(skip_serializing_if = "SkipCounts::is_empty", default)]
+    pub duplication_skipped: SkipCounts,
+    #[serde(skip_serializing_if = "SkipCounts::is_empty", default)]
+    pub smells_skipped: SkipCounts,
     #[serde(skip_serializing_if = "BTreeMap::is_empty", default)]
     pub smell_totals: BTreeMap<String, usize>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
@@ -273,7 +277,9 @@ pub struct GlossaryEntry {
 }
 
 mod analysis;
+mod skip_counts;
 pub use analysis::AnalysisReport;
+pub use skip_counts::SkipCounts;
 fn line_is_unknown(value: &usize) -> bool {
     *value == 0
 }

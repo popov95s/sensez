@@ -287,6 +287,9 @@ pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -
 }
 
 #[cfg(test)]
+#[path = "pipeline_scope_tests.rs"]
+mod scope_tests;
+#[cfg(test)]
 #[path = "pipeline_session_tests.rs"]
 mod session_tests;
 #[cfg(test)]

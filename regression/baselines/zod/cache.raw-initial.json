@@ -10,7 +10,17 @@
     "dead_code_total": 0,
     "duplication_total": 0,
     "boundaries_total": 0,
-    "smells_total": 0
+    "smells_total": 0,
+    "duplication_skipped": {
+      "config_exclude": 0,
+      "tests": 171,
+      "generated": 0
+    },
+    "smells_skipped": {
+      "config_exclude": 0,
+      "tests": 171,
+      "generated": 0
+    }
   },
   "cycles": [
     {

@@ -78,7 +78,7 @@ fn god_module_is_a_hub_not_an_entrypoint() {
         shotgun_blast_threshold: 100,
         ..Smells::default()
     };
-    let gm: Vec<String> = graphy::detect(&graph, &cfg.clone().into())
+    let gm: Vec<String> = graphy::detect(&graph, &cfg.clone().into(), &|_| true)
         .into_iter()
         .filter(|s| s.kind == SmellKind::GodModule)
         .map(|s| s.symbol)
@@ -179,7 +179,7 @@ fn shotgun_hazard_needs_blast_radius() {
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
     let cfg = Smells::default();
-    let findings = graphy::detect(&graph, &cfg.clone().into());
+    let findings = graphy::detect(&graph, &cfg.clone().into(), &|_| true);
     assert!(
         has(&findings, "shotgun_surgery_hazard"),
         "kinds: {:?}",
@@ -204,7 +204,7 @@ fn package_index_barrels_are_not_graph_hotspots() {
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
     let cfg = Smells::default();
-    let findings = graphy::detect(&graph, &cfg.clone().into());
+    let findings = graphy::detect(&graph, &cfg.clone().into(), &|_| true);
     assert!(
         findings
             .iter()

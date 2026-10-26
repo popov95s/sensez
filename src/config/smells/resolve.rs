@@ -19,6 +19,7 @@ pub(super) fn resolve_config(raw: SmellsRaw) -> Result<super::SmellConfig, Strin
         enabled: raw.enabled.unwrap_or(true),
         explicit_exclude: raw.exclude.clone(),
         exclude: raw.exclude,
+        include_tests: raw.include_tests,
         python: resolve(
             Language::Python,
             &raw.base,

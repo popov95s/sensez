@@ -1308,16 +1308,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/resolution/attw.test.ts",
-      "kind": "magic_string_default",
-      "line": 37,
-      "message": "1 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "nested_loop",
       "line": 120,
@@ -2508,8 +2498,8 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "shotgun_surgery_hazard",
-      "message": "depended on by 65 distinct modules \u2014 a change here scatters edits widely",
-      "metric": 65,
+      "message": "depended on by 63 distinct modules \u2014 a change here scatters edits widely",
+      "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
     },

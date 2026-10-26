@@ -29,6 +29,8 @@ pub struct ParsedFile {
     /// file's `Walked` (the parser) produces an `Arc`; analyzers read through
     /// it, and the one mutating caller uses [`Arc::make_mut`].
     pub walked: Arc<Walked>,
+    /// Machine-written source (profile path/header rules); kept for the graph, skipped by smells and duplication.
+    pub is_generated: bool,
 }
 
 #[derive(Debug, Default)]
@@ -195,6 +197,7 @@ fn parse_loaded_source(
         lines,
         fingerprint,
         walked: Arc::new(walked),
+        is_generated: profile.is_generated(path, src),
     })
 }
 
