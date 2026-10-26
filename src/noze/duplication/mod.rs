@@ -56,7 +56,7 @@ pub(super) fn span_index_range(
 
 #[cfg(test)]
 pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
-    detect_with_root(files, config, None).0
+    detect_with_root(files, config, &SourceScope::for_duplication(config), None).0
 }
 
 /// Detect duplication per the config (path excludes, threshold, gap stitching).
@@ -69,13 +69,12 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
 pub fn detect_with_root(
     files: &[ParsedFile],
     config: &Duplication,
+    scope: &SourceScope,
     root: Option<&Path>,
 ) -> (Vec<CloneClass>, Vec<ScanIssue>) {
     if files.is_empty() || config.threshold == 0 {
         return (Vec::new(), Vec::new());
     }
-    // Exclude tests/migrations/generated files from the corpus (kept in the graph elsewhere).
-    let scope = SourceScope::for_duplication(config);
     let kept: Vec<&ParsedFile> = files.iter().filter(|f| scope.includes(f)).collect();
 
     let mut by_family: BTreeMap<crate::spine::ir::Language, Vec<&ParsedFile>> = BTreeMap::new();

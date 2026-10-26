@@ -3,7 +3,7 @@
 use crate::profiles::registry;
 use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;
-use std::collections::HashMap;
+use std::collections::{BTreeSet, HashMap};
 use std::path::{Path, PathBuf};
 
 pub(super) struct ModuleIdentity {
@@ -20,10 +20,7 @@ pub(super) fn for_files(files: &[ParsedFile], configured: &[PathBuf]) -> Vec<Mod
         .map(|(file, root)| registry::module_profile(file.language).module_name(&file.path, root))
         .collect();
     let duplicates = duplicate_names(files, &logical_names);
-    let workspace = duplicates
-        .values()
-        .any(|count| *count > 1)
-        .then(|| workspace_root(files, configured));
+    let workspaces = workspace_roots(files, configured, &duplicates);
 
     files
         .iter()
@@ -35,8 +32,8 @@ pub(super) fn for_files(files: &[ParsedFile], configured: &[PathBuf]) -> Vec<Mod
                 .copied()
                 .unwrap_or_default()
                 > 1;
-            let name = workspace
-                .as_ref()
+            let name = workspaces
+                .get(&file.language)
                 .filter(|_| duplicate)
                 .map(|workspace| {
                     registry::module_profile(file.language).disambiguated_module_name(
@@ -71,22 +68,55 @@ fn duplicate_names(files: &[ParsedFile], names: &[String]) -> HashMap<(Language,
     counts
 }
 
-fn workspace_root(files: &[ParsedFile], configured: &[PathBuf]) -> PathBuf {
+/// Where colliding module names are made unique: a configured root, else the profile's workspace above the common directory.
+enum WorkspaceBase {
+    Configured(PathBuf),
+    Common(PathBuf),
+}
+
+fn workspace_roots(
+    files: &[ParsedFile],
+    configured: &[PathBuf],
+    duplicates: &HashMap<(Language, String), usize>,
+) -> HashMap<Language, PathBuf> {
+    let languages: BTreeSet<Language> = duplicates
+        .iter()
+        .filter(|(_, count)| **count > 1)
+        .map(|((language, _), _)| *language)
+        .collect();
+    if languages.is_empty() {
+        return HashMap::new();
+    }
+    let base = workspace_base(files, configured);
+    languages
+        .into_iter()
+        .map(|language| {
+            let root = match &base {
+                WorkspaceBase::Configured(root) => root.clone(),
+                WorkspaceBase::Common(common) => registry::module_profile(language)
+                    .workspace_root(common)
+                    .unwrap_or_else(|| common.clone()),
+            };
+            (language, root)
+        })
+        .collect()
+}
+
+fn workspace_base(files: &[ParsedFile], configured: &[PathBuf]) -> WorkspaceBase {
     if let Some(root) = configured
         .iter()
         .filter(|root| files.iter().all(|file| file.path.starts_with(root)))
         .max_by_key(|root| root.components().count())
     {
-        return root.clone();
+        return WorkspaceBase::Configured(root.clone());
     }
     let mut directories = files
         .iter()
         .filter_map(|file| file.path.parent().map(Path::to_path_buf));
     let Some(first) = directories.next() else {
-        return PathBuf::from(".");
+        return WorkspaceBase::Common(PathBuf::from("."));
     };
-    let common = directories.fold(first, common_ancestor);
-    package_root(&common).unwrap_or(common)
+    WorkspaceBase::Common(directories.fold(first, common_ancestor))
 }
 
 fn common_ancestor(left: PathBuf, right: PathBuf) -> PathBuf {
@@ -98,13 +128,6 @@ fn common_ancestor(left: PathBuf, right: PathBuf) -> PathBuf {
         candidate = parent.to_path_buf();
     }
     candidate
-}
-
-fn package_root(start: &Path) -> Option<PathBuf> {
-    start
-        .ancestors()
-        .find(|directory| directory.join("package.json").is_file())
-        .map(Path::to_path_buf)
 }
 
 fn root_for(
@@ -125,3 +148,7 @@ fn root_for(
         .or_insert_with(|| registry::module_profile(file.language).root_for(&file.path))
         .clone()
 }
+
+#[cfg(all(test, feature = "lang-typescript"))]
+#[path = "identity_tests.rs"]
+mod tests;

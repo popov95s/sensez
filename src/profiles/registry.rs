@@ -6,11 +6,11 @@
 
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageProfile, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use globset::GlobSet;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::sync::OnceLock;
 
@@ -73,6 +73,15 @@ pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {
     profile(language) as &dyn ModuleProfile
 }
 
+/// Fresh import resolver state for every compiled-in language, for one graph build.
+pub fn import_resolvers() -> BTreeMap<Language, Box<dyn ImportResolver>> {
+    PROFILES
+        .iter()
+        .map(|p| ParseProfile::info(*p).language)
+        .map(|language| (language, module_profile(language).import_resolver()))
+        .collect()
+}
+
 pub fn dead_code_profile(language: Language) -> &'static dyn DeadCodeProfile {
     profile(language) as &dyn DeadCodeProfile
 }
@@ -107,6 +116,14 @@ pub fn identifier_extra_chars_for_path(path: Option<&Path>) -> Vec<char> {
 
 pub fn smell_wording(language: Language) -> &'static SmellWording {
     profile(language).info().wording
+}
+
+/// Migration-script globs of every compiled-in language.
+pub fn migration_layouts() -> impl Iterator<Item = &'static str> {
+    PROFILES
+        .iter()
+        .flat_map(|profile| ParseProfile::info(*profile).migration_layouts)
+        .copied()
 }
 
 /// Match file conventions from the owning language profile, compiled once.

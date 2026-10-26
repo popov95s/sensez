@@ -1,6 +1,15 @@
 use anyhow::{Context, Result};
 use std::path::{Path, PathBuf};
 
+/// Whether pytest's default `python_files` patterns (`test_*.py`, `*_test.py`) collect `path`.
+pub fn is_test_file(path: &Path) -> bool {
+    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
+        return false;
+    };
+    path.extension().is_some_and(|ext| ext == "py")
+        && (name.starts_with("test_") || name.ends_with("_test.py"))
+}
+
 pub fn test_roots(root: &Path) -> Result<Vec<PathBuf>> {
     let configured = pyproject_roots(root)?.or_else(|| ini_roots(root));
     Ok(configured
@@ -119,5 +128,13 @@ mod tests {
         .unwrap();
 
         assert_eq!(test_roots(root.path()).unwrap().len(), 2);
+    }
+
+    #[test]
+    fn default_python_files_patterns_mark_test_files() {
+        assert!(is_test_file(Path::new("tests/test_api.py")));
+        assert!(is_test_file(Path::new("pkg/api_test.py")));
+        assert!(!is_test_file(Path::new("tests/conftest.py")));
+        assert!(!is_test_file(Path::new("web/test_api.ts")));
     }
 }

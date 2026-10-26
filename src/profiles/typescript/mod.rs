@@ -8,11 +8,12 @@ use crate::profiles::javascript::{
     deadcode, declaration, generated, manifest, performance, resolve, roots, test_support,
     traversal, typevocab, wording,
 };
+use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
-use crate::spine::ir::{ImportContext, ImportPhase, MutatorFamily, Walked};
+use crate::spine::ir::{MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -22,12 +23,11 @@ mod dead_code_reach_tests;
 #[cfg(test)]
 #[path = "dead_code_tests.rs"]
 mod dead_code_tests;
-mod edge_phase;
-mod paths;
-pub(crate) use paths::ResolutionCache;
 #[cfg(test)]
 #[path = "duplication_tests.rs"]
 mod duplication_tests;
+mod edge_phase;
+mod paths;
 #[cfg(test)]
 #[path = "paths_tests.rs"]
 mod paths_tests;
@@ -69,6 +69,8 @@ static TS_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["ts", "mts", "cts"],
     test_support: test_support::TEST_SUPPORT,
+    migration_layouts: &[],
+    test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     wording: &wording::WORDING,
 };
 
@@ -76,6 +78,8 @@ static TSX_INFO: LanguageInfo = LanguageInfo {
     language: Language::TypeScript,
     extensions: &["tsx"],
     test_support: test_support::TEST_SUPPORT,
+    migration_layouts: &[],
+    test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     wording: &wording::WORDING,
 };
 /// The TypeScript language profile (zero-sized).
@@ -155,24 +159,8 @@ macro_rules! impl_ts_traits {
                 resolve::containing_package(module_name, is_index)
             }
 
-            fn resolve_target(
-                &self,
-                import: &ImportContext,
-                _importer_package: &str,
-                file: &Path,
-                root: &Path,
-                resolution_cache: &mut crate::profiles::ResolutionCache,
-            ) -> String {
-                paths::resolve_target(resolution_cache, import, file, root)
-            }
-
-            fn edge_phase(
-                &self,
-                import: &ImportContext,
-                importer_file: &Path,
-                resolution_cache: &mut crate::profiles::ResolutionCache,
-            ) -> ImportPhase {
-                edge_phase::edge_phase(resolution_cache, import, importer_file)
+            fn import_resolver(&self) -> Box<dyn ImportResolver> {
+                Box::new(paths::ResolutionCache::default())
             }
 
             fn disambiguated_module_name(
@@ -182,6 +170,10 @@ macro_rules! impl_ts_traits {
                 _base: &str,
             ) -> String {
                 roots::module_name(file, workspace_root)
+            }
+
+            fn workspace_root(&self, common: &Path) -> Option<PathBuf> {
+                roots::workspace_root(common)
             }
 
             fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {

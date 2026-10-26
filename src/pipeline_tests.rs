@@ -39,9 +39,13 @@ fn session_scan_reuses_memory_without_creating_l2_artifacts() {
     fs::write(dir.join("b.py"), "def b():\n    return 2\n").unwrap();
 
     let session = AnalysisSession::default();
-    let first = analyze_path_in_session(&session, dir, None).unwrap().0;
+    let first = analyze_with_config(dir, None, Some(&session), Config::load_for_scan(dir))
+        .unwrap()
+        .0;
     fs::write(dir.join("a.py"), "def a():\n    return 3\n").unwrap();
-    let second = analyze_path_in_session(&session, dir, None).unwrap().0;
+    let second = analyze_with_config(dir, None, Some(&session), Config::load_for_scan(dir))
+        .unwrap()
+        .0;
     assert_eq!(first.meta.analyzed_files, second.meta.analyzed_files);
     assert!(!dir.join(".sensez/parse-v2.bin").exists());
 }
@@ -54,11 +58,11 @@ fn service_cache_honors_the_enabled_flag() {
     fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
     fs::write(dir.join("sensez.toml"), "[cache]\nenabled = false\n").unwrap();
 
-    analyze_path_in_service_with_session(&session, dir, None).unwrap();
+    analyze_in_session(&session, dir, None).unwrap();
     assert!(!session.has_workspace(dir));
 
     fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
-    analyze_path_in_service_with_session(&session, dir, None).unwrap();
+    analyze_in_session(&session, dir, None).unwrap();
     assert!(session.has_workspace(dir));
 }
 

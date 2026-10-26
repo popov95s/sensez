@@ -146,10 +146,10 @@ fn unreachable_modules_report_until_declared_entry_points() {
     assert_eq!(reason(&findings, "soloDead"), Some("unreachable_module"));
     assert_eq!(kept_confidence(&findings, "run"), None);
 
-    config.entry_points = vec!["**/tools/**".to_string()];
+    config.entry_globs = vec!["**/tools/**".to_string()];
     assert_eq!(kept_confidence(&scan(&sources, &config), "soloDead"), None);
 
-    config.entry_points.clear();
+    config.entry_globs.clear();
     config.orphan_modules = false;
     assert_eq!(kept_confidence(&scan(&sources, &config), "soloDead"), None);
 }
@@ -180,7 +180,7 @@ fn entry_point_imports_count_as_usage() {
         ),
     ];
     let mut config = Config::default().dead_code;
-    config.entry_points = vec!["**/scripts/**".to_string()];
+    config.entry_globs = vec!["**/scripts/**".to_string()];
     let findings = scan(&sources, &config);
 
     assert_eq!(kept_confidence(&findings, "seedRows"), None);

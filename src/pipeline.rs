@@ -37,26 +37,19 @@ pub(crate) fn analyze_path_with_config(
     analyze_keeping_config(path, threshold, None, Config::load_for_scan(path))
 }
 
-#[cfg(test)]
-fn analyze_path_in_session(
-    session: &AnalysisSession,
-    path: &Path,
-    threshold: Option<usize>,
-) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    let loaded = Config::load_for_scan(path);
-    analyze_with_config(path, threshold, Some(session), loaded)
-}
-
+/// [`analyze_path`] for the long-lived MCP/LSP service, reusing parses when `[cache]` is enabled.
 pub(crate) fn analyze_path_in_service(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    let session = SERVICE_SESSION.get_or_init(AnalysisSession::default);
-    analyze_loaded_in_service(session, path, threshold, Config::load_for_scan(path))
+    analyze_in_session(
+        SERVICE_SESSION.get_or_init(AnalysisSession::default),
+        path,
+        threshold,
+    )
 }
 
-#[cfg(test)]
-fn analyze_path_in_service_with_session(
+fn analyze_in_session(
     session: &AnalysisSession,
     path: &Path,
     threshold: Option<usize>,
@@ -148,15 +141,6 @@ fn analyze_keeping_config(
     let mut report = noze::run_with_root(&parsed.files, &graph, &config, Some(path));
     report.meta.issues.extend(config_issues);
     report.meta.issues.extend(discovery.issues);
-    debug_assert_eq!(
-        discovery.skipped,
-        report
-            .meta
-            .issues
-            .iter()
-            .filter(|issue| issue.stage == ScanStage::Discover)
-            .count()
-    );
     report.meta.issues.extend(parsed.issues);
     report.meta.issues.extend(cache_issues);
     report.meta.files_skipped = report

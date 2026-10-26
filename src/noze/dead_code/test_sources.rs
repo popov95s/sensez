@@ -5,10 +5,10 @@ use std::path::Path;
 
 fn cfg() -> DeadCode {
     DeadCode {
-        entrypoints: vec![],
+        registration_decorators: vec![],
         entrypoint_names: vec![],
         entrypoint_bases: vec![],
-        entry_points: vec![],
+        entry_globs: vec![],
         test_sources: vec![],
         test_support: vec![],
         entry_modules: vec![],
@@ -154,7 +154,7 @@ fn entry_point_files_do_not_emit_dead_code_findings() {
     ];
     let cg = crate::spine::graph::build(&files, &[]);
     let mut config = cfg();
-    config.entry_points = vec!["**/public_api.py".to_string()];
+    config.entry_globs = vec!["**/public_api.py".to_string()];
     config.unused_imports = true;
     config.unused_methods = true;
     config.unused_properties = true;

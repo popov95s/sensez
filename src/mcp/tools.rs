@@ -55,7 +55,7 @@ fn scan() -> Value {
             "properties": {
                 "path": {"type": "string", "description": "Absolute path to the REPOSITORY ROOT (not a subdirectory)"},
                 "threshold": {"type": "integer", "minimum": 0, "description": "Duplication token threshold (0 = off)"},
-                "limit": {"type": "integer", "minimum": 0, "default": 0, "description": "Cap each pillar to top-N ranked findings (0 = unlimited)"},
+                "limit": {"type": "integer", "minimum": 0, "default": 0, "description": "Cap each pillar to top-N ranked findings (0 = unlimited); the same knob as CLI `--max`, except smells are capped in total rather than per kind"},
                 "diff": {"type": "boolean", "default": true, "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Defaults to true; pass false for a full-repository report. Full-graph analysis either way."}
             },
             "required": ["path"]

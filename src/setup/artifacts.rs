@@ -51,10 +51,10 @@ enabled = true
 # unused_methods = false
 # unused_properties = false
 # unused_variables = true
-# entrypoints = []       # user-added decorator names (JS/TS: `export const x = name(...)` callees); `prefix*` allowed
+# registration_decorators = []  # user-added decorator names (JS/TS: `export const x = name(...)` callees); `prefix*` allowed
 # entrypoint_names = []  # user-added dynamic function/class/method names; `prefix*` allowed
 # entrypoint_bases = []  # user-added dynamic base classes
-# entry_points = []      # user-added file globs reached outside the import graph (roots)
+# entry_globs = []      # user-added file globs reached outside the import graph (roots)
 # test_sources = []      # user-added test-runner file globs (test roots)
 # test_support = []      # user-added test-helper globs: test importers count as users
 # orphan_modules = true  # report exports of modules no root reaches (Medium, "unreachable_module")

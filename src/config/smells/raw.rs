@@ -9,10 +9,6 @@ pub(super) struct SmellsRaw {
     pub(super) exclude: Vec<String>,
     pub(super) include_tests: bool,
     pub(super) rules: BTreeMap<SmellKind, RuleRaw>,
-    pub(super) python: toml::Table,
-    pub(super) javascript: toml::Table,
-    pub(super) typescript: toml::Table,
-    pub(super) rust: toml::Table,
     #[serde(flatten)]
     pub(super) base: toml::Table,
 }
@@ -24,6 +20,18 @@ pub(super) struct RuleRaw {
     pub(super) action: Option<crate::report::ActionLevel>,
     #[serde(flatten)]
     pub(super) knobs: toml::Table,
+}
+
+/// Pop the `[smells.<lang>]` table off the base table (empty when absent).
+pub(super) fn take_language_table(
+    base: &mut toml::Table,
+    scope: &str,
+) -> Result<toml::Table, String> {
+    match base.remove(scope) {
+        Some(toml::Value::Table(table)) => Ok(table),
+        Some(_) => Err(format!("[smells.{scope}] must be a table")),
+        None => Ok(toml::Table::new()),
+    }
 }
 
 /// Pop the `rules` sub-table off `table`, returning (the remaining per-

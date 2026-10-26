@@ -17,3 +17,22 @@ pub struct SetupFile {
     pub config: PathBuf,
     pub key: String,
 }
+
+/// A test runner reflexez can plan for.
+#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
+#[serde(rename_all = "snake_case")]
+pub enum RunnerKind {
+    Pytest,
+    Vitest,
+    Jest,
+}
+
+impl RunnerKind {
+    pub fn label(self) -> &'static str {
+        match self {
+            Self::Pytest => "pytest",
+            Self::Vitest => "vitest",
+            Self::Jest => "jest",
+        }
+    }
+}

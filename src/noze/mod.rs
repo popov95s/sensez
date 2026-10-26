@@ -9,13 +9,13 @@ pub mod smells;
 mod source_scope;
 
 use crate::report::{
-    ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, SmellFinding,
+    ActionLevel, AnalysisReport, Confidence, LimitPolicy, ReportMeta, ReportMode, SmellFinding,
 };
 
 use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
-use source_scope::SourceScope;
+use source_scope::PillarScopes;
 use std::path::Path;
 
 /// Run every analyzer pillar without project-root context. Test seam for
@@ -34,7 +34,7 @@ pub fn run_with_root(
     config: &Config,
     root: Option<&Path>,
 ) -> AnalysisReport {
-    let smells_scope = SourceScope::for_smells(&config.smells);
+    let scopes = PillarScopes::new(config);
     let parallel::AnalyzerFindings {
         mut cycles,
         mut dead_code,
@@ -42,7 +42,7 @@ pub fn run_with_root(
         mut duplication,
         mut smells,
         issues,
-    } = parallel::detect(files, graph, config, root, &smells_scope);
+    } = parallel::detect(files, graph, config, root, &scopes);
 
     for cycle in &mut cycles {
         if cycle.action != ActionLevel::Info {
@@ -84,9 +84,8 @@ pub fn run_with_root(
             files_skipped: 0,
             analyzed_files: files.len(),
             source_lines: files.iter().map(|f| f.lines as usize).sum(),
-            duplication_skipped: SourceScope::for_duplication(&config.duplication)
-                .skip_counts(files),
-            smells_skipped: smells_scope.skip_counts(files),
+            duplication_skipped: scopes.duplication.skip_counts(files),
+            smells_skipped: scopes.smells.skip_counts(files),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues,
             ..ReportMeta::default()
@@ -111,16 +110,12 @@ fn apply_smell_actions(smells: &mut [SmellFinding], policy: &ActionPolicy) {
     }
 }
 
-/// Truncate each pillar to the top `max` ranked findings (0 = unlimited).
+/// Cap every pillar, smells included, to the top `max` ranked findings (0 = unlimited).
 pub fn limit(report: &mut AnalysisReport, max: usize) {
     if max == 0 {
         return;
     }
-    report.cycles.truncate(max);
-    report.dead_code.truncate(max);
-    report.boundaries.truncate(max);
-    report.duplication.truncate(max);
-    report.smells.truncate(max);
+    crate::report::limit(report, LimitPolicy::flat(max));
     report.meta.glossary = crate::noze::glossary::for_report(report);
 }
 

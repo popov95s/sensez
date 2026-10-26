@@ -45,10 +45,10 @@ const NEUTRAL_NAMES: &[&str] = &[
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entrypoints: &["route", "fixture", "task", "command", "app", "cli"],
+        registration_decorators: &["route", "fixture", "task", "command", "app", "cli"],
         entrypoint_names: &["register", "main", "setup"],
         entrypoint_bases: &["AppConfig"],
-        entry_points: &["**/alembic/**", "**/migrations/**"],
+        entry_globs: &["**/alembic/**", "**/migrations/**"],
         test_sources: &[
             "**/docs/**",
             "**/docs_src/**",

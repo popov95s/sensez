@@ -5,10 +5,10 @@ use std::fs;
 
 fn cfg() -> DeadCode {
     DeadCode {
-        entrypoints: vec![],
+        registration_decorators: vec![],
         entrypoint_names: vec![],
         entrypoint_bases: vec![],
-        entry_points: vec![],
+        entry_globs: vec![],
         test_sources: vec![],
         test_support: vec![],
         entry_modules: vec![],

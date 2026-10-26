@@ -249,7 +249,7 @@ fn type_only_namespace_manifest_does_not_silence_modules() {
 #[test]
 fn configured_registration_callee_keeps_its_export_live() {
     let mut config = Config::default().dead_code;
-    config.entrypoints = vec!["register".to_string()];
+    config.registration_decorators = vec!["register".to_string()];
     assert_eq!(
         kept_confidence(&scan(&MANIFEST_SOURCES, &config), "send"),
         None
@@ -259,7 +259,7 @@ fn configured_registration_callee_keeps_its_export_live() {
 #[test]
 fn registration_callees_mark_exports_as_entrypoints() {
     let mut config = Config::default().dead_code;
-    config.entrypoints = vec!["register".to_string(), "define*".to_string()];
+    config.registration_decorators = vec!["register".to_string(), "define*".to_string()];
     let findings = scan(
         &[
             (
