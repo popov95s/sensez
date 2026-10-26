@@ -22,7 +22,7 @@ const LAZY_TS: &str =
 
 #[test]
 fn database_insert_in_a_getter_is_reported() {
-    let source = "export async function getInvoice(ctx, id) {\n  const row = await ctx.db.get(id);\n  if (!row) await ctx.db.insert(\"invoices\", { id });\n  return row;\n}\n";
+    let source = "export async function getInvoice(db, id) {\n  const row = await db.invoices.find(id);\n  if (!row) await db.invoices.insert({ id });\n  return row;\n}\n";
     let found = hits("billing.ts", source);
     assert_eq!(found.len(), 1);
     assert_eq!(found[0].lines, vec![3]);
@@ -30,11 +30,12 @@ fn database_insert_in_a_getter_is_reported() {
 
 #[test]
 fn message_names_the_write_and_its_line() {
-    let source = "export async function getInvoice(ctx, id) {\n  await ctx.db.patch(id, { seen: true });\n}\n";
+    let source =
+        "export async function getInvoice(repo, id) {\n  await repo.save(id, { seen: true });\n}\n";
     let found = hits("billing.ts", source);
     assert!(found[0]
         .message
-        .contains("`getInvoice` writes: `ctx.db.patch` at L2"));
+        .contains("`getInvoice` writes: `repo.save` at L2"));
 }
 
 #[test]
@@ -44,7 +45,9 @@ fn names_that_admit_the_write_are_quiet() {
         "ensureInvoice",
         "checkAndStoreInvoice",
     ] {
-        let source = format!("export async function {name}(ctx, id) {{\n  await ctx.db.insert(\"invoices\", {{ id }});\n}}\n");
+        let source = format!(
+            "export async function {name}(db, id) {{\n  await db.invoices.insert({{ id }});\n}}\n"
+        );
         assert!(hits("billing.ts", &source).is_empty(), "{name}");
     }
 }
@@ -115,8 +118,14 @@ fn get_fetch_is_quiet() {
 
 #[test]
 fn write_inside_an_inline_callback_is_reported() {
-    let source = "export async function listSeen(ctx, ids) {\n  await Promise.all(ids.map((id) => ctx.db.patch(id, { seen: true })));\n}\n";
+    let source = "export async function listSeen(store, ids) {\n  await Promise.all(ids.map((id) => store.users.update(id, { seen: true })));\n}\n";
     assert_eq!(hits("users.ts", source).len(), 1);
+}
+
+#[test]
+fn enqueuing_a_job_in_a_getter_is_reported() {
+    let source = "export async function getReport(queue, id) {\n  await queue.enqueue(\"build-report\", { id });\n}\n";
+    assert_eq!(hits("reports.ts", source).len(), 1);
 }
 
 #[test]
@@ -127,7 +136,7 @@ fn validate_ignores_in_memory_error_lists() {
 
 #[test]
 fn validate_reports_persistent_writes() {
-    let source = "export async function validateOrder(ctx, id) {\n  await ctx.db.patch(id, { checked: true });\n}\n";
+    let source = "export async function validateOrder(repo, id) {\n  await repo.save(id, { checked: true });\n}\n";
     assert_eq!(hits("order.ts", source).len(), 1);
 }
 
@@ -140,7 +149,8 @@ fn accessors_are_quiet() {
 
 #[test]
 fn test_sources_are_quiet() {
-    let source = "export async function getInvoice(ctx, id) {\n  await ctx.db.insert(\"invoices\", { id });\n}\n";
+    let source =
+        "export async function getInvoice(db, id) {\n  await db.invoices.insert({ id });\n}\n";
     assert!(hits("billing.test.ts", source).is_empty());
 }
 
@@ -152,8 +162,7 @@ fn low_strictness_skips_in_memory_writes() {
 
 #[test]
 fn high_strictness_treats_load_as_a_read() {
-    let source =
-        "export async function loadUser(ctx, id) {\n  await ctx.db.insert(\"users\", { id });\n}\n";
+    let source = "export async function loadUser(db, id) {\n  await db.users.insert({ id });\n}\n";
     assert!(hits("users.ts", source).is_empty());
     assert_eq!(
         hits_with("users.ts", source, &at(Strictness::High)).len(),
@@ -163,8 +172,7 @@ fn high_strictness_treats_load_as_a_read() {
 
 #[test]
 fn read_prefixes_knob_adds_a_prefix() {
-    let source =
-        "export async function peekUser(ctx, id) {\n  await ctx.db.insert(\"users\", { id });\n}\n";
+    let source = "export async function peekUser(db, id) {\n  await db.users.insert({ id });\n}\n";
     let mut config = Smells::default();
     config.name_promise_read_prefixes.push("peek".to_string());
     assert_eq!(hits_with("users.ts", source, &config).len(), 1);
@@ -172,8 +180,7 @@ fn read_prefixes_knob_adds_a_prefix() {
 
 #[test]
 fn write_methods_knob_replaces_the_vocabulary() {
-    let source =
-        "export async function getUser(ctx, id) {\n  await ctx.db.insert(\"users\", { id });\n}\n";
+    let source = "export async function getUser(db, id) {\n  await db.users.insert({ id });\n}\n";
     let config = Smells {
         name_promise_write_methods: vec!["archive".to_string()],
         ..Smells::default()
