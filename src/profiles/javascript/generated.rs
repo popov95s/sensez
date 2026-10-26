@@ -44,7 +44,7 @@ mod tests {
     #[test]
     fn generated_paths_and_headers_are_detected() {
         let plain = b"export const a = 1;\n";
-        assert!(is_generated(Path::new("src/_generated/api.ts"), plain));
+        assert!(is_generated(Path::new("src/_generated/types.ts"), plain));
         assert!(is_generated(Path::new("src/__generated__/q.ts"), plain));
         assert!(is_generated(Path::new("src/routes.gen.ts"), plain));
         assert!(is_generated(Path::new("src/schema.generated.js"), plain));

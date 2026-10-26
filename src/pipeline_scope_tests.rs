@@ -96,7 +96,7 @@ fn generated_files_are_not_graph_or_local_smell_hotspots() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path();
     write(dir, "package.json", "{}\n");
-    write(dir, "src/_generated/api.ts", "export const api = 1;\n");
+    write(dir, "src/__generated__/sdk.ts", "export const sdk = 1;\n");
     write(dir, "src/core/util.ts", "export const util = 1;\n");
     write(
         dir,
@@ -107,12 +107,12 @@ fn generated_files_are_not_graph_or_local_smell_hotspots() {
         write(
             dir,
             &format!("src/pages/p{n}.ts"),
-            "import { api } from '../_generated/api';\nimport { util } from '../core/util';\nexport const v = api + util;\n",
+            "import { sdk } from '../__generated__/sdk';\nimport { util } from '../core/util';\nexport const v = sdk + util;\n",
         );
     }
 
     let (report, _) = analyze_path(dir, None).unwrap();
-    assert!(smells_in(&report, "src/_generated/api.ts").is_empty());
+    assert!(smells_in(&report, "src/__generated__/sdk.ts").is_empty());
     assert!(smells_in(&report, "src/lib/header.ts").is_empty());
     assert!(smells_in(&report, "src/core/util.ts").contains(&SmellKind::ShotgunSurgeryHazard));
     assert_eq!(report.meta.smells_skipped.generated, 2);
@@ -146,7 +146,7 @@ fn duplication_skips_test_and_generated_copies() {
     for rel in [
         "src/__tests__/a.ts",
         "src/lib/x.test.ts",
-        "src/_generated/api.ts",
+        "src/__generated__/sdk.ts",
         "src/lib/routes.gen.ts",
         "src/__mocks__/api.ts",
         "src/lib/testing-utils.ts",
