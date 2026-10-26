@@ -1238,7 +1238,34 @@ only add what is specific to your project:</p>
 <span class="n">entrypoint_names</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"register"</span><span class="p">,</span><span class="w"> </span><span class="s2">"main"</span><span class="p">]</span><span class="w">      </span><span class="c1"># function/class names invoked dynamically</span>
 <span class="n">entrypoint_bases</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"AppConfig"</span><span class="p">]</span><span class="w">             </span><span class="c1"># base classes loaded dynamically</span>
 <span class="n">entry_points</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/scripts/**"</span><span class="p">]</span><span class="w">             </span><span class="c1"># file globs reached outside the import graph</span>
+<span class="n">test_sources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/*.e2e.ts"</span><span class="p">]</span><span class="w">               </span><span class="c1"># extra test-runner globs (test roots)</span>
+<span class="n">test_support</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/testing/**"</span><span class="p">]</span><span class="w">             </span><span class="c1"># extra test-helper globs</span>
+<span class="n">orphan_modules</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">                        </span><span class="c1"># report modules no root reaches</span>
 </code></pre></div>
+<p>Dead code walks the import graph from two kinds of roots:</p>
+<ul>
+<li><strong>Production roots:</strong> <code>entry_points</code> globs, manifest entries (<code>pyproject.toml</code>
+  scripts, Cargo binaries and <code>lib.rs</code>, <code>package.json</code> <code>main</code> / <code>module</code> / <code>bin</code>
+  / <code>exports</code>, where a <code>dist/</code>, <code>lib/</code>, <code>build/</code> or <code>out/</code> target also names its
+  <code>src/</code> twin), and tool configs such as <code>*.config.ts</code>. An entry-point file is
+  never reported, and its imports count as usage.</li>
+<li><strong>Test roots:</strong> <code>test_sources</code> globs plus the profile's test files.</li>
+</ul>
+<p>A symbol that only tests import is reported at Medium with <code>reason =
+"test_only"</code>. Files matching <code>test_support</code> (JS/TS default: <code>**/e2e/**</code>,
+<code>**/test-utils/**</code>, <code>**/fixtures/**</code>, <code>**/__fixtures__/**</code>) are test helpers:
+their test importers count as users, so only truly unused helpers are reported.
+A module that nothing imports and no root reaches is reported at Medium with
+<code>reason = "unreachable_module"</code>; add its path to <code>entry_points</code> if a tool runs
+it, or set <code>orphan_modules = false</code>.</p>
+<p>Names a barrel re-exports (<code>export { x } from "./x"</code>) count as used in their
+defining module only when someone imports them from the barrel (chains and
+<code>export *</code> included). A re-export nobody imports is reported with kind
+<code>reexport</code>.</p>
+<p>Confidence is High unless evidence suggests hidden use, then Medium: a default
+export, an importer that binds the module whole or not at all (<code>import()</code>,
+<code>import mod</code>), a type-only namespace reference, an import from a tool config,
+test-only use, or an unreachable module.</p>
 <p><code>entrypoints</code> and <code>entrypoint_names</code> accept a trailing <code>*</code> as a prefix pattern
 (<code>entrypoint_names = ["on*"]</code>). <code>entrypoint_names</code> also applies to methods under
 <code>unused_methods</code>. For JS/TS methods only, React lifecycle, custom-element and
@@ -1259,8 +1286,8 @@ available as opt-ins (your generated config shows their defaults):</p>
 config fixes a whole class of false positives.</p>
 <h2 id="duplication">Duplication</h2>
 <div class="highlight"><pre><span></span><code><span class="k">[duplication]</span>
-<span class="n">threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w">   </span><span class="c1"># minimum structural-token run to report a clone; raise to quieten</span>
-<span class="n">max_gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w">     </span><span class="c1"># stitch clones across small consistent edits; 0 disables</span>
+<span class="n">threshold</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w">   </span><span class="c1"># minimum structural-token run to report a clone; raise to quieten, 0 disables</span>
+<span class="n">max_gap</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">25</span><span class="w">     </span><span class="c1"># stitch clones across small consistent edits; 0 disables</span>
 <span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/tests/**"</span><span class="p">,</span><span class="w"> </span><span class="s2">"**/migrations/**"</span><span class="p">]</span><span class="w">   </span><span class="c1"># clone-only excludes (files stay in the graph)</span>
 <span class="n">include_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w">       </span><span class="c1"># true also compares test files</span>
 <span class="n">include_generated</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w">   </span><span class="c1"># true also compares generated files</span>
@@ -1296,27 +1323,40 @@ offline with no cached model), the scan records an <code>analyze</code> issue in
 scan" rather than passing.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[duplication.semantic]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
-<span class="n">min_shape_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w">       </span><span class="c1"># token 4-gram overlap (0-100) for an edited copy; above 100 is an error</span>
-<span class="n">comment_boost_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">85</span><span class="w">   </span><span class="c1"># doc similarity (50-100) an edited copy needs; below 50 is an error</span>
-<span class="n">comment_required</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">    </span><span class="c1"># false also pairs undocumented functions (overlap &gt;= 70 needed)</span>
+<span class="n">min_shape_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w">       </span><span class="c1"># token 4-gram overlap (0-100) separating edited copies from rewrites; above 100 is an error</span>
+<span class="n">comment_boost_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">85</span><span class="w">   </span><span class="c1"># doc similarity (50-100) that confirms an edited copy; below 50 is an error</span>
+<span class="n">comment_required</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w">   </span><span class="c1"># true compares documented functions only</span>
 </code></pre></div>
-<p>Semantic groups only consider functions of at least <code>threshold</code> tokens and
-carry one of two verdicts:</p>
+<p>Semantic groups only consider functions of at least <code>threshold</code> tokens. Each
+pair is scored four ways: structural overlap (4-gram Jaccard), and the cosine,
+under the code embedding model, of the two functions' source, of their
+signatures (name and parameter words, ignoring words that many functions in
+the codebase share) and of their doc comments. A group carries one of two
+verdicts:</p>
 <ul>
-<li><code>semantic: edited copy (structure 0.76, docs 0.91)</code>: overlap at least
-  <code>min_shape_score</code> and matching docs (<code>docs n/a</code> when neither function has
-  one). Reported at the duplication action level.</li>
-<li><code>semantic: near-identical docs on structurally different code (structure 0.01, docs 0.95)</code>:
-  a rewrite, or a copy-pasted doc comment. Reported as <code>info</code>. Only doc
-  comments sharing at least half their words are compared.</li>
+<li><code>semantic: edited copy (structure 0.48, code 0.91, names 0.88, docs n/a)</code>:
+  overlap at least <code>min_shape_score</code>, confirmed by similar source and similar
+  signatures, or by matching doc comments. Reported at the duplication action
+  level.</li>
+<li><code>semantic: same intent, structurally different code (structure 0.12, code 0.86, names 0.92, docs n/a)</code>:
+  a rewrite of the same function, for example a loop and a <code>filter</code>/<code>map</code>
+  chain. Reported as <code>info</code>.</li>
 </ul>
+<p>Pairs are only compared when they share enough uncommon structure, signature
+words or doc words; words and shapes used by most functions in the codebase
+never pair two functions on their own.</p>
 <p>When several detectors report the same code, the widest group is kept, its
 line ranges grow to cover the others, and the folded groups are listed under
 <code>absorbed</code> in JSON output. Each group's source is in <code>detector</code>.</p>
 <h2 id="cycles">Cycles</h2>
 <div class="highlight"><pre><span></span><code><span class="k">[cycles]</span>
 <span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/vendor/**"</span><span class="p">]</span><span class="w">   </span><span class="c1"># import edges here never report a cycle</span>
+<span class="n">include_type_only</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">     </span><span class="c1"># also report cycles closed only by type imports</span>
 </code></pre></div>
+<p>A cycle that only exists through type-level imports (TypeScript
+<code>import type</code>, Python <code>if TYPE_CHECKING:</code>) is reported at <code>info</code> with a "type
+coupling" hint. Set <code>include_type_only = false</code> to drop those; this is
+recommended for TypeScript, where type imports vanish at build time.</p>
 <p>Cycles among test files are reported. Only <code>migrations/</code> (and Python
 <code>alembic/</code> and <code>versions/</code>) are excluded by default; add
 <code>exclude = ["**/tests/**"]</code> to silence test fixtures.</p>
@@ -1351,7 +1391,13 @@ every teammate and their agents:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[accept]</span>
 <span class="n">dead_code</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"legacy.compat::shim"</span><span class="p">]</span><span class="w">        </span><span class="c1"># a specific accepted symbol</span>
 <span class="s2">"smells/god_module"</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"app.registry"</span><span class="p">]</span><span class="w">     </span><span class="c1"># a specific accepted detector hit</span>
+<span class="n">duplication</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"legacy-fork/"</span><span class="p">]</span><span class="w">             </span><span class="c1"># an accepted copy location</span>
 </code></pre></div>
+<p><code>duplication</code> patterns work per location. A plain path substring drops the
+matching occurrences from every clone group, and a group stays reported while
+two or more other copies remain, so accepting a fork never hides duplication
+elsewhere. A pattern containing <code>" + "</code> matches the group label
+(<code>a.ts + b.ts + c.ts</code>) and hides that whole group.</p>
 <p>There are three ways to silence findings — pick by scope:</p>
 <table>
 <thead>

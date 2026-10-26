@@ -566,6 +566,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sensez-eyez-reindex-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sensez eyez reindex --help
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sensez eyez reindex --help">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#embedding-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1083,6 +1111,34 @@
   
 </li>
       
+        <li class="md-nav__item">
+  <a href="#sensez-eyez-reindex-help" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        sensez eyez reindex --help
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="sensez eyez reindex --help">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#embedding-model" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Embedding model
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
     </ul>
   
 </nav>
@@ -1152,7 +1208,7 @@ Arguments:
 
 Options:
       --threshold &lt;THRESHOLD&gt;
-          Minimum structural-token run length for the duplication detector
+          Minimum structural-token run length for the duplication detector (0 = off)
 
       --summary
           Emit aggregated per-rule JSON for configuration tuning
@@ -1191,14 +1247,10 @@ Options:
           Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
       --fail-on [&lt;LEVEL&gt;]
-          Exit non-zero if any finding meets or exceeds the given action level. Defaults to `must_fix` when the flag is present without a value
-
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if any finding meets or exceeds the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --fail-on-new [&lt;LEVEL&gt;]
-          Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
-
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if diff-scoped findings meet or exceed the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --explain
           Append a plain-English legend defining each finding category shown
@@ -1246,7 +1298,7 @@ Arguments:
 
 Options:
       --threshold &lt;THRESHOLD&gt;
-          Minimum structural-token run length for the duplication detector
+          Minimum structural-token run length for the duplication detector (0 = off)
 
       --summary
           Emit aggregated per-rule JSON for configuration tuning
@@ -1285,14 +1337,10 @@ Options:
           Keep only findings touching a unified diff read from FILE ("-" = stdin)
 
       --fail-on [&lt;LEVEL&gt;]
-          Exit non-zero if any finding meets or exceeds the given action level. Defaults to `must_fix` when the flag is present without a value
-
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if any finding meets or exceeds the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --fail-on-new [&lt;LEVEL&gt;]
-          Exit non-zero if diff-scoped findings meet or exceed the given action level. Defaults to `must_fix` when the flag is present without a value
-
-          [possible values: must_fix, warning, advisory, info]
+          Exit non-zero if diff-scoped findings meet or exceed the given action level (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value
 
       --explain
           Append a plain-English legend defining each finding category shown
@@ -1315,6 +1363,23 @@ Examples:
   flags such as <code>--dead-code</code> and <code>--output-glob</code> filter the gate too, and
   low-confidence dead code never trips it. The display cap does not: a
   finding hidden by <code>--max</code> still fails the gate.</li>
+<li>Pillar flags leave the other pillars out of the report: the terminal omits
+  their sections, and JSON lists them in <code>meta.filtered_pillars</code>, so a <code>0</code>
+  total there means "not asked", not "clean".</li>
+<li><code>--summary</code> counts the same selected findings: it honours <code>--diff</code>,
+  <code>--diff-from</code>, <code>--fail-on-new</code>, the pillar flags and <code>--output-glob</code>, and
+  its exit code follows <code>--fail-on</code> / <code>--fail-on-new</code> like a normal run.</li>
+<li><code>--output-glob '!PATTERN'</code> excludes matching files (quote it for the shell).
+  Includes and excludes combine: a finding is kept when its file matches an
+  include (or no include is given) and no exclude. A clone group drops only its
+  excluded occurrences and stays while two or more remain. <code>!</code> alone or <code>!!…</code>
+  is rejected (exit <code>2</code>).</li>
+<li><code>--fail-on-new</code> implies <code>--diff</code> and says so on stderr. In diff mode the
+  terminal report starts with "diff mode: only findings touching changed
+  lines".</li>
+<li>A level that is not <code>must_fix</code>, <code>warning</code>, <code>advisory</code> or <code>info</code> is rejected.
+  <code>--fail-on</code> takes the next word as its level, so write <code>sensez noze . --fail-on</code>
+  or <code>--fail-on=must_fix .</code>, not <code>--fail-on .</code>.</li>
 </ul>
 <h2 id="sensez-noze-explain-help"><code>sensez noze explain --help</code></h2>
 <div class="highlight"><pre><span></span><code>Explain a finding category in plain English
@@ -1422,14 +1487,11 @@ Options:
 <h2 id="sensez-eyez-search-help"><code>sensez eyez search --help</code></h2>
 <div class="highlight"><pre><span></span><code>Semantic search over docstrings + comments
 
-Usage: search [OPTIONS] &lt;PATH&gt; &lt;QUERY&gt;
+Usage: sensez eyez search [OPTIONS] [PATH] &lt;QUERY&gt;
 
 Arguments:
-  &lt;PATH&gt;
-          Root directory of the target project
-
-  &lt;QUERY&gt;
-          Natural-language intent query
+  &lt;PATH&gt; &lt;QUERY&gt;...
+          Project root (default: current directory), then a natural-language intent query
 
 Options:
       --top-k &lt;TOP_K&gt;
@@ -1443,6 +1505,38 @@ Options:
   -h, --help
           Print help
 </code></pre></div>
+<h2 id="sensez-eyez-reindex-help"><code>sensez eyez reindex --help</code></h2>
+<div class="highlight"><pre><span></span><code>Refresh eyez caches for the repository
+
+Usage: reindex [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]
+          Root directory of the target project (default: current directory)
+
+Options:
+      --force
+          Delete existing eyez caches before rebuilding
+
+      --semantic
+          Also warm semantic-duplication bundles when configured
+
+  -h, --help
+          Print help
+</code></pre></div>
+<h3 id="embedding-model">Embedding model</h3>
+<p><code>eyez search</code>, <code>eyez reindex</code> and <code>[duplication.semantic]</code> use the
+<code>minishlab/potion-code-16M-v2</code> model at a pinned revision. It is looked up,
+in order:</p>
+<ol>
+<li><code>SENSEZ_EYEZ_MODEL_DIR</code>: a directory holding <code>config.json</code>,
+   <code>tokenizer.json</code> and <code>model.safetensors</code>. Nothing is downloaded.</li>
+<li>The HuggingFace cache: <code>$HF_HOME/hub</code>, else <code>~/.cache/huggingface/hub</code>.</li>
+<li>A download (about 35 MB) into that cache. Sensez prints one line to
+   stderr before it starts; <code>HF_ENDPOINT</code> changes the host.</li>
+</ol>
+<p>With <code>HF_HUB_OFFLINE=1</code> or <code>SENSEZ_OFFLINE=1</code>, step 3 is skipped and a missing
+model is an error that names the cache it checked.</p>
 
 
 

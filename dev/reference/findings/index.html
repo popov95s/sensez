@@ -1917,7 +1917,7 @@
 <h2 id="api-clarity-and-constants">API Clarity and Constants</h2>
 <h3 id="boolean-blindness-boolean_blindness">Boolean Blindness (<code>boolean_blindness</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>Bare booleans whose meaning is invisible at the call site (<code>f(True, False)</code>) — use an enum or keyword args so calls read clearly.</p>
+<p>Bare booleans whose meaning is invisible at the call site (<code>f(true, false)</code>) — use a closed type (enum or literal union) or named options so calls read clearly.</p>
 <p><strong>Why it's bad</strong></p>
 <p>Call sites stop reading like code and start reading like truth tables.</p>
 <p><strong>Example</strong></p>
@@ -1929,6 +1929,7 @@
     <span class="n">invoice_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">email_customer</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
     <span class="n">archive_pdf</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
+    <span class="n">notify_owner</span><span class="p">:</span> <span class="nb">bool</span><span class="p">,</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">invoice</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">invoice_id</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">email_customer</span><span class="p">:</span>
@@ -1937,6 +1938,8 @@
         <span class="n">review_queue</span><span class="o">.</span><span class="n">add</span><span class="p">(</span><span class="n">invoice</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">archive_pdf</span><span class="p">:</span>
         <span class="n">archive</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">render_pdf</span><span class="p">(</span><span class="n">invoice</span><span class="p">))</span>
+    <span class="k">if</span> <span class="n">notify_owner</span><span class="p">:</span>
+        <span class="n">notifier</span><span class="o">.</span><span class="n">ping</span><span class="p">(</span><span class="n">invoice</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -1948,8 +1951,8 @@
     <span class="k">def</span><span class="w"> </span><span class="nf">deliver</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">InvoiceArchival</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">InvoiceFollowUp</span><span class="p">(</span><span class="n">Protocol</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span> <span class="o">...</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">EmailDelivery</span><span class="p">:</span>
@@ -1963,29 +1966,35 @@
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">PdfArchival</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">archive</span><span class="o">.</span><span class="n">store</span><span class="p">(</span><span class="n">render_pdf</span><span class="p">(</span><span class="n">invoice</span><span class="p">))</span>
 
 
-<span class="k">class</span><span class="w"> </span><span class="nc">SkipArchival</span><span class="p">:</span>
-    <span class="k">def</span><span class="w"> </span><span class="nf">archive</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="k">return</span> <span class="kc">None</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">OwnerNotification</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">run</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">invoice</span><span class="p">:</span> <span class="n">Invoice</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">notifier</span><span class="o">.</span><span class="n">ping</span><span class="p">(</span><span class="n">invoice</span><span class="o">.</span><span class="n">owner</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">publish_invoice</span><span class="p">(</span>
     <span class="n">invoice_id</span><span class="p">:</span> <span class="nb">str</span><span class="p">,</span>
     <span class="n">delivery</span><span class="p">:</span> <span class="n">InvoiceDelivery</span><span class="p">,</span>
-    <span class="n">archival</span><span class="p">:</span> <span class="n">InvoiceArchival</span><span class="p">,</span>
+    <span class="n">follow_ups</span><span class="p">:</span> <span class="nb">list</span><span class="p">[</span><span class="n">InvoiceFollowUp</span><span class="p">],</span>
 <span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
     <span class="n">invoice</span> <span class="o">=</span> <span class="n">repo</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="n">invoice_id</span><span class="p">)</span>
     <span class="n">delivery</span><span class="o">.</span><span class="n">deliver</span><span class="p">(</span><span class="n">invoice</span><span class="p">)</span>
-    <span class="n">archival</span><span class="o">.</span><span class="n">archive</span><span class="p">(</span><span class="n">invoice</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">follow_up</span> <span class="ow">in</span> <span class="n">follow_ups</span><span class="p">:</span>
+        <span class="n">follow_up</span><span class="o">.</span><span class="n">run</span><span class="p">(</span><span class="n">invoice</span><span class="p">)</span>
 </code></pre></div>
 </details></p>
 </div>
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">publishInvoice</span><span class="p">(</span><span class="nx">invoiceId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="nx">emailCustomer</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">,</span><span class="w"> </span><span class="nx">archivePdf</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">publishInvoice</span><span class="p">(</span>
+<span class="w">  </span><span class="nx">invoiceId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">emailCustomer</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">archivePdf</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">notifyOwner</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">,</span>
+<span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">invoice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">repo</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">invoiceId</span><span class="p">);</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">emailCustomer</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">mailer</span><span class="p">.</span><span class="nx">send</span><span class="p">(</span><span class="nx">invoice</span><span class="p">);</span>
@@ -1994,6 +2003,9 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">archivePdf</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">archive</span><span class="p">.</span><span class="nx">store</span><span class="p">(</span><span class="nx">renderPdf</span><span class="p">(</span><span class="nx">invoice</span><span class="p">));</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">notifyOwner</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">notifier</span><span class="p">.</span><span class="nx">ping</span><span class="p">(</span><span class="nx">invoice</span><span class="p">.</span><span class="nx">owner</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
@@ -2004,8 +2016,8 @@
 <span class="w">  </span><span class="nx">deliver</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="p">;</span>
 <span class="p">}</span>
 
-<span class="kd">interface</span><span class="w"> </span><span class="nx">InvoiceArchival</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">archive</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="p">;</span>
+<span class="kd">interface</span><span class="w"> </span><span class="nx">InvoiceFollowUp</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">run</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="p">;</span>
 <span class="p">}</span>
 
 <span class="kd">class</span><span class="w"> </span><span class="nx">EmailDelivery</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">InvoiceDelivery</span><span class="w"> </span><span class="p">{</span>
@@ -2020,26 +2032,28 @@
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kd">class</span><span class="w"> </span><span class="nx">PdfArchival</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">InvoiceArchival</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">archive</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">PdfArchival</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">InvoiceFollowUp</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">run</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="nx">archive</span><span class="p">.</span><span class="nx">store</span><span class="p">(</span><span class="nx">renderPdf</span><span class="p">(</span><span class="nx">invoice</span><span class="p">));</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
-<span class="kd">class</span><span class="w"> </span><span class="nx">SkipArchival</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">InvoiceArchival</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="nx">archive</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="k">return</span><span class="p">;</span>
+<span class="kd">class</span><span class="w"> </span><span class="nx">OwnerNotification</span><span class="w"> </span><span class="k">implements</span><span class="w"> </span><span class="nx">InvoiceFollowUp</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="nx">run</span><span class="p">(</span><span class="nx">invoice</span><span class="o">:</span><span class="w"> </span><span class="kt">Invoice</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">notifier</span><span class="p">.</span><span class="nx">ping</span><span class="p">(</span><span class="nx">invoice</span><span class="p">.</span><span class="nx">owner</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 
 <span class="kd">function</span><span class="w"> </span><span class="nx">publishInvoice</span><span class="p">(</span>
 <span class="w">  </span><span class="nx">invoiceId</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span>
 <span class="w">  </span><span class="nx">delivery</span><span class="o">:</span><span class="w"> </span><span class="kt">InvoiceDelivery</span><span class="p">,</span>
-<span class="w">  </span><span class="nx">archival</span><span class="o">:</span><span class="w"> </span><span class="kt">InvoiceArchival</span><span class="p">,</span>
+<span class="w">  </span><span class="nx">followUps</span><span class="o">:</span><span class="w"> </span><span class="kt">InvoiceFollowUp</span><span class="p">[],</span>
 <span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="ow">void</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">invoice</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">repo</span><span class="p">.</span><span class="nx">load</span><span class="p">(</span><span class="nx">invoiceId</span><span class="p">);</span>
 <span class="w">  </span><span class="nx">delivery</span><span class="p">.</span><span class="nx">deliver</span><span class="p">(</span><span class="nx">invoice</span><span class="p">);</span>
-<span class="w">  </span><span class="nx">archival</span><span class="p">.</span><span class="nx">archive</span><span class="p">(</span><span class="nx">invoice</span><span class="p">);</span>
+<span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">followUp</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">followUps</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nx">followUp</span><span class="p">.</span><span class="nx">run</span><span class="p">(</span><span class="nx">invoice</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
 <span class="p">}</span>
 </code></pre></div>
 </details></p>
@@ -2068,7 +2082,7 @@
 
 <h3 id="literal-membership-literal_membership">Literal Membership (<code>literal_membership</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>Branching on membership in a literal string list (<code>x in ['a','b']</code>) — stringly-typed categories; use an Enum.</p>
+<p>Branching on membership in a literal string list — stringly-typed categories; use a closed type (enum or literal union).</p>
 <p><strong>Why it's bad</strong></p>
 <p>Hard-coded string sets become a hidden enum that tools cannot help with.</p>
 <p><strong>Example</strong></p>
@@ -2108,7 +2122,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>Use a union type, enum, or const object with a derived type.</p>
+<p>Use a string-literal union type or a named <code>as const</code> set shared with its type.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">enum</span><span class="w"> </span><span class="nx">InvoiceStatus</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">Draft</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"draft"</span><span class="p">,</span>
 <span class="w">  </span><span class="nx">Paid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"paid"</span><span class="p">,</span>
@@ -2130,7 +2144,7 @@
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.literal_membership]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">skip_external_vocab</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># ignore extension, MIME, path, and error-code lists</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -2147,13 +2161,33 @@
 
 <h3 id="magic-string-default-magic_string_default">Magic String Default (<code>magic_string_default</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>A fallback empty or one-character string is standing in for an optional/nullable value (<code>or ""</code>, <code>|| "?"</code>) — the contract is hiding in a sentinel; prefer a nullable/optional string or a dedicated sum type.</p>
+<p>A fallback empty, one-character, or placeholder string (<code>?? ""</code>, <code>or "n/a"</code>) is stored, compared, or returned in place of a missing value — the contract is hiding in a sentinel; prefer a nullable/optional string or a dedicated sum type.</p>
 <p><strong>Why it's bad</strong></p>
 <p>A sentinel string hides the real optionality of the value.</p>
 <p><strong>Example</strong></p>
 <div class="tabbed-set tabbed-alternate" data-tabs="3:2"><input checked="checked" id="__tabbed_3_1" name="__tabbed_3" type="radio" /><input id="__tabbed_3_2" name="__tabbed_3" type="radio" /><div class="tabbed-labels"><label for="__tabbed_3_1">Python</label><label for="__tabbed_3_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
+<div class="tabbed-set tabbed-alternate" data-tabs="4:3"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><input id="__tabbed_4_3" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Low</label><label for="__tabbed_4_2">Medium</label><label for="__tabbed_4_3">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Flags empty, one-character, or sentinel-word fallbacks that are stored, sent, or compared.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">save_owner</span><span class="p">(</span><span class="n">owner</span><span class="p">:</span> <span class="n">Owner</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="n">store</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">label</span><span class="o">=</span><span class="n">owner</span><span class="o">.</span><span class="n">label</span> <span class="ow">or</span> <span class="s2">""</span><span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Reject a missing required string explicitly instead of hiding it behind a sentinel fallback.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span>
+</code></pre></div>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">return</span> <span class="n">name</span> <span class="ow">or</span> <span class="s2">""</span>
@@ -2161,14 +2195,56 @@
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Reject a missing required string explicitly instead of hiding it behind a sentinel fallback.</p>
-<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
         <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">name</span>
 </code></pre></div>
-</details></p>
+</details>
 </div>
 <div class="tabbed-block">
+<p>Flags every empty, one-character, or sentinel-word fallback wherever it flows.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">greeting</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="sa">f</span><span class="s2">"Hello </span><span class="si">{</span><span class="n">name</span><span class="w"> </span><span class="ow">or</span><span class="w"> </span><span class="s1">''</span><span class="si">}</span><span class="s2">"</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Reject a missing required string explicitly instead of hiding it behind a sentinel fallback.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">display_name</span><span class="p">(</span><span class="n">name</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">name</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">name</span>
+</code></pre></div>
+</details>
+</div>
+</div>
+</div>
+</div>
+<div class="tabbed-block">
+<div class="tabbed-set tabbed-alternate" data-tabs="5:3"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><input id="__tabbed_5_3" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Low</label><label for="__tabbed_5_2">Medium</label><label for="__tabbed_5_3">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Flags empty, one-character, or sentinel-word fallbacks that are stored, sent, or compared.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">async</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">saveOwner</span><span class="p">(</span><span class="nx">owner</span><span class="o">:</span><span class="w"> </span><span class="kt">Owner</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nb">Promise</span><span class="o">&lt;</span><span class="ow">void</span><span class="o">&gt;</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">await</span><span class="w"> </span><span class="nx">store</span><span class="p">.</span><span class="nx">save</span><span class="p">({</span><span class="w"> </span><span class="nx">label</span><span class="o">:</span><span class="w"> </span><span class="kt">owner.label</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s2">"n/a"</span><span class="w"> </span><span class="p">});</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Throw on a missing required string, or model optionality explicitly when absence is valid.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="w"> </span><span class="o">||</span><span class="w"> </span><span class="s2">"?"</span><span class="p">;</span>
@@ -2177,24 +2253,69 @@
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Throw on a missing required string, or model optionality explicitly when absence is valid.</p>
-<p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">);</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
-</details></p>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Flags every empty, one-character, or sentinel-word fallback wherever it flows.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">greeting</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="sb">`Hello </span><span class="si">${</span><span class="nx">name</span><span class="w"> </span><span class="o">??</span><span class="w"> </span><span class="s2">""</span><span class="si">}</span><span class="sb">`</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Throw on a missing required string, or model optionality explicitly when absence is valid.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">displayName</span><span class="p">(</span><span class="nx">name?</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">name</span><span class="w"> </span><span class="o">===</span><span class="w"> </span><span class="kc">undefined</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">throw</span><span class="w"> </span><span class="ow">new</span><span class="w"> </span><span class="ne">Error</span><span class="p">(</span><span class="s2">"display name is required"</span><span class="p">);</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">name</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <p><strong>Tune It</strong></p>
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="6:3"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><input id="__tabbed_6_3" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Low</label><label for="__tabbed_6_2">Medium</label><label for="__tabbed_6_3">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.magic_string_default]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"low"</span>
 </code></pre></div>
+<p>Flags empty, one-character, or sentinel-word fallbacks that are stored, sent, or compared.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.magic_string_default]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"medium"</span>
+</code></pre></div>
+<p>Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.magic_string_default]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"high"</span>
+</code></pre></div>
+<p>Flags every empty, one-character, or sentinel-word fallback wherever it flows.</p>
+</div>
+</div>
+</div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
 
@@ -2214,7 +2335,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Numbers without names are hard to audit and easy to copy blindly.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="4:2"><input checked="checked" id="__tabbed_4_1" name="__tabbed_4" type="radio" /><input id="__tabbed_4_2" name="__tabbed_4" type="radio" /><div class="tabbed-labels"><label for="__tabbed_4_1">Python</label><label for="__tabbed_4_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Python</label><label for="__tabbed_7_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2256,7 +2377,10 @@
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.magic_numbers]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">ignore</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="c1"># numeric literals never reported</span>
+<span class="n">ignore_array_indexes</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># skip literal array indexes such as x[3]</span>
+<span class="n">ignore_default_values</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># skip literals in parameter default values</span>
+<span class="n">allow_http_status</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># skip 100-599 compared or assigned to a status field</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -2283,7 +2407,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The control flow becomes hard to scan and easy to misread in review.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="5:2"><input checked="checked" id="__tabbed_5_1" name="__tabbed_5" type="radio" /><input id="__tabbed_5_2" name="__tabbed_5" type="radio" /><div class="tabbed-labels"><label for="__tabbed_5_1">Python</label><label for="__tabbed_5_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Python</label><label for="__tabbed_8_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2372,7 +2496,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The reader has to simulate too many branches and nesting levels at once.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="6:2"><input checked="checked" id="__tabbed_6_1" name="__tabbed_6" type="radio" /><input id="__tabbed_6_2" name="__tabbed_6" type="radio" /><div class="tabbed-labels"><label for="__tabbed_6_1">Python</label><label for="__tabbed_6_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Python</label><label for="__tabbed_9_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2519,7 +2643,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The function accumulates too many distinct paths to reason about confidently.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="7:2"><input checked="checked" id="__tabbed_7_1" name="__tabbed_7" type="radio" /><input id="__tabbed_7_2" name="__tabbed_7" type="radio" /><div class="tabbed-labels"><label for="__tabbed_7_1">Python</label><label for="__tabbed_7_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Python</label><label for="__tabbed_10_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2641,18 +2765,18 @@
 <p><strong>Why it's bad</strong></p>
 <p>Many exit points make the function harder to follow and test.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="8:2"><input checked="checked" id="__tabbed_8_1" name="__tabbed_8" type="radio" /><input id="__tabbed_8_2" name="__tabbed_8" type="radio" /><div class="tabbed-labels"><label for="__tabbed_8_1">Python</label><label for="__tabbed_8_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Python</label><label for="__tabbed_11_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">status_for</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">cancelled</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"cancelled"</span>
-    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">refunded</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">order</span><span class="o">.</span><span class="n">refunded</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"refunded"</span>
-    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">order</span><span class="o">.</span><span class="n">failed</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"failed"</span>
-    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">paid</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">order</span><span class="o">.</span><span class="n">paid</span><span class="p">:</span>
         <span class="k">return</span> <span class="s2">"paid"</span>
     <span class="k">return</span> <span class="s2">"open"</span>
 </code></pre></div>
@@ -2678,14 +2802,11 @@
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">statusFor</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">cancelled</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"cancelled"</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">refunded</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">refunded</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"refunded"</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">failed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">failed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"failed"</span><span class="p">;</span>
-<span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">paid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="p">}</span><span class="w"> </span><span class="k">else</span><span class="w"> </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">paid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="s2">"paid"</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="s2">"open"</span><span class="p">;</span>
@@ -2720,6 +2841,7 @@
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_returns</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed return statements before flagging</span>
+<span class="n">count_guard_clauses</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="c1"># also count top-level guard-clause returns</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -2740,13 +2862,17 @@
 </ul>
 <h3 id="nested-ternary-nested_ternary">Nested Ternary (<code>nested_ternary</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>A conditional expression contains another conditional expression, forcing readers to match several branches mentally — extract the result into a named function or flatten it into if statements with early returns.</p>
+<p>A conditional expression is a branch or condition of another conditional expression, forcing readers to match several branches mentally — extract the result into a named function or flatten it into if statements with early returns.</p>
 <p><strong>Why it's bad</strong></p>
 <p>Nested conditional expressions force readers to mentally match several conditions with their results, making agent-generated logic difficult to review and change.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="9:2"><input checked="checked" id="__tabbed_9_1" name="__tabbed_9" type="radio" /><input id="__tabbed_9_2" name="__tabbed_9" type="radio" /><div class="tabbed-labels"><label for="__tabbed_9_1">Python</label><label for="__tabbed_9_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Python</label><label for="__tabbed_12_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
+<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Medium</label><label for="__tabbed_13_2">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Flags direct chains, where one conditional is a branch or condition of another.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_status</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeliveryStatus</span><span class="p">:</span>
     <span class="k">return</span> <span class="p">(</span>
@@ -2760,16 +2886,45 @@
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Extract the decision into a named helper, or replace the expression with ordered if statements and early returns.</p>
-<p><div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_status</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeliveryStatus</span><span class="p">:</span>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_status</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeliveryStatus</span><span class="p">:</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_paid</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">READY</span>
     <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">payment_retry_allowed</span><span class="p">:</span>
         <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">RETRY</span>
     <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">BLOCKED</span>
 </code></pre></div>
-</details></p>
+</details>
 </div>
 <div class="tabbed-block">
+<p>Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_label</span><span class="p">(</span><span class="n">order</span><span class="p">:</span> <span class="n">Order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">str</span><span class="p">:</span>
+    <span class="k">return</span> <span class="p">(</span>
+        <span class="n">format_label</span><span class="p">(</span><span class="s2">"gift"</span> <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_gift</span> <span class="k">else</span> <span class="s2">"standard"</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_paid</span>
+        <span class="k">else</span> <span class="s2">"pending"</span>
+    <span class="p">)</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Extract the decision into a named helper, or replace the expression with ordered if statements and early returns.</p>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">delivery_status</span><span class="p">(</span><span class="n">order</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">DeliveryStatus</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">is_paid</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">READY</span>
+    <span class="k">if</span> <span class="n">order</span><span class="o">.</span><span class="n">payment_retry_allowed</span><span class="p">:</span>
+        <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">RETRY</span>
+    <span class="k">return</span> <span class="n">DeliveryStatus</span><span class="o">.</span><span class="n">BLOCKED</span>
+</code></pre></div>
+</details>
+</div>
+</div>
+</div>
+</div>
+<div class="tabbed-block">
+<div class="tabbed-set tabbed-alternate" data-tabs="14:2"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Medium</label><label for="__tabbed_14_2">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
+<p>Flags direct chains, where one conditional is a branch or condition of another.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryStatus</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">order</span><span class="p">.</span><span class="nx">isPaid</span>
@@ -2782,7 +2937,7 @@
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Move result selection into a named function and use explicit if branches with early returns.</p>
-<p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryStatus</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="w"> </span><span class="p">{</span>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryStatus</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">isPaid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
 <span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Ready</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
@@ -2792,17 +2947,57 @@
 <span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Blocked</span><span class="p">;</span>
 <span class="p">}</span>
 </code></pre></div>
-</details></p>
+</details>
+</div>
+<div class="tabbed-block">
+<p>Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.</p>
+<p><strong>Problem</strong></p>
+<div class="highlight"><pre><span></span><code><span class="k">export</span><span class="w"> </span><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryLabel</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">order</span><span class="p">.</span><span class="nx">isPaid</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="nx">formatLabel</span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">isGift</span><span class="w"> </span><span class="o">?</span><span class="w"> </span><span class="s2">"gift"</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">"standard"</span><span class="p">)</span><span class="w"> </span><span class="o">:</span><span class="w"> </span><span class="s2">"pending"</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+<p><details class="sensez-proposed-fix" markdown="1">
+<summary>Proposed fix</summary></p>
+<p>Move result selection into a named function and use explicit if branches with early returns.</p>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">deliveryStatus</span><span class="p">(</span><span class="nx">order</span><span class="o">:</span><span class="w"> </span><span class="kt">Order</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">isPaid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Ready</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">order</span><span class="p">.</span><span class="nx">paymentRetryAllowed</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Retry</span><span class="p">;</span>
+<span class="w">  </span><span class="p">}</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="nx">DeliveryStatus</span><span class="p">.</span><span class="nx">Blocked</span><span class="p">;</span>
+<span class="p">}</span>
+</code></pre></div>
+</details>
+</div>
+</div>
+</div>
 </div>
 </div>
 </div>
 <p><strong>Tune It</strong></p>
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
+<div class="tabbed-set tabbed-alternate" data-tabs="15:2"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Medium</label><label for="__tabbed_15_2">High</label></div>
+<div class="tabbed-content">
+<div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.nested_ternary]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"medium"</span>
 </code></pre></div>
+<p>Flags direct chains, where one conditional is a branch or condition of another.</p>
+</div>
+<div class="tabbed-block">
+<div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.nested_ternary]</span>
+<span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
+<span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
+<span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"high"</span>
+</code></pre></div>
+<p>Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.</p>
+</div>
+</div>
+</div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
 
@@ -2826,7 +3021,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The code says 'if' twice when the condition really belongs on one line.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="10:2"><input checked="checked" id="__tabbed_10_1" name="__tabbed_10" type="radio" /><input id="__tabbed_10_2" name="__tabbed_10" type="radio" /><div class="tabbed-labels"><label for="__tabbed_10_1">Python</label><label for="__tabbed_10_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="16:2"><input checked="checked" id="__tabbed_16_1" name="__tabbed_16" type="radio" /><input id="__tabbed_16_2" name="__tabbed_16" type="radio" /><div class="tabbed-labels"><label for="__tabbed_16_1">Python</label><label for="__tabbed_16_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2901,7 +3096,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Repeated guards obscure which invariants have already been established.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="11:2"><input checked="checked" id="__tabbed_11_1" name="__tabbed_11" type="radio" /><input id="__tabbed_11_2" name="__tabbed_11" type="radio" /><div class="tabbed-labels"><label for="__tabbed_11_1">Python</label><label for="__tabbed_11_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="17:2"><input checked="checked" id="__tabbed_17_1" name="__tabbed_17" type="radio" /><input id="__tabbed_17_2" name="__tabbed_17" type="radio" /><div class="tabbed-labels"><label for="__tabbed_17_1">Python</label><label for="__tabbed_17_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -2969,11 +3164,11 @@
 <h2 id="size-and-responsibility">Size and Responsibility</h2>
 <h3 id="god-module-god_module">God Module (<code>god_module</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>A module that too much of the codebase depends on (high centrality) — a coupling and change-risk hotspot; split its responsibilities.</p>
+<p>A sizeable module that many modules depend on and that itself depends on many internal modules at runtime (high centrality) — a coupling and change-risk hotspot; split its responsibilities.</p>
 <p><strong>Why it's bad</strong></p>
 <p>A single module becomes a hot spot with too many reasons to change.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="12:2"><input checked="checked" id="__tabbed_12_1" name="__tabbed_12" type="radio" /><input id="__tabbed_12_2" name="__tabbed_12" type="radio" /><div class="tabbed-labels"><label for="__tabbed_12_1">Python</label><label for="__tabbed_12_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="18:2"><input checked="checked" id="__tabbed_18_1" name="__tabbed_18" type="radio" /><input id="__tabbed_18_2" name="__tabbed_18" type="radio" /><div class="tabbed-labels"><label for="__tabbed_18_1">Python</label><label for="__tabbed_18_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3046,6 +3241,10 @@
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_fan</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">25</span><span class="w"> </span><span class="c1"># combined incoming/outgoing fan before god-module risk</span>
+<span class="n">min_fan_in</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="c1"># importing modules required for a god module</span>
+<span class="n">min_fan_out</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="c1"># internal runtime imports required for a god module</span>
+<span class="n">min_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">150</span><span class="w"> </span><span class="c1"># module lines required for a god module (or min_units)</span>
+<span class="n">min_units</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="c1"># top-level functions and classes required (or min_lines)</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -3066,7 +3265,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Nested helpers hide important behavior and make tests awkward.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="13:2"><input checked="checked" id="__tabbed_13_1" name="__tabbed_13" type="radio" /><input id="__tabbed_13_2" name="__tabbed_13" type="radio" /><div class="tabbed-labels"><label for="__tabbed_13_1">Python</label><label for="__tabbed_13_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="19:2"><input checked="checked" id="__tabbed_19_1" name="__tabbed_19" type="radio" /><input id="__tabbed_19_2" name="__tabbed_19" type="radio" /><div class="tabbed-labels"><label for="__tabbed_19_1">Python</label><label for="__tabbed_19_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3135,6 +3334,7 @@
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">15</span><span class="w"> </span><span class="c1"># allowed function or nested-function length</span>
+<span class="n">skip_capturing</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="c1"># drop nested functions that read parent locals</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -3155,7 +3355,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The class stops having a clear job and becomes a grab bag.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="14:2"><input checked="checked" id="__tabbed_14_1" name="__tabbed_14" type="radio" /><input id="__tabbed_14_2" name="__tabbed_14" type="radio" /><div class="tabbed-labels"><label for="__tabbed_14_1">Python</label><label for="__tabbed_14_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="20:2"><input checked="checked" id="__tabbed_20_1" name="__tabbed_20" type="radio" /><input id="__tabbed_20_2" name="__tabbed_20" type="radio" /><div class="tabbed-labels"><label for="__tabbed_20_1">Python</label><label for="__tabbed_20_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3273,7 +3473,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The function becomes a scroll instead of a unit you can hold in your head.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="15:2"><input checked="checked" id="__tabbed_15_1" name="__tabbed_15" type="radio" /><input id="__tabbed_15_2" name="__tabbed_15" type="radio" /><div class="tabbed-labels"><label for="__tabbed_15_1">Python</label><label for="__tabbed_15_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="21:2"><input checked="checked" id="__tabbed_21_1" name="__tabbed_21" type="radio" /><input id="__tabbed_21_2" name="__tabbed_21" type="radio" /><div class="tabbed-labels"><label for="__tabbed_21_1">Python</label><label for="__tabbed_21_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3386,7 +3586,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The call contract becomes noisy and easy to pass in the wrong order.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="16:2"><input checked="checked" id="__tabbed_16_1" name="__tabbed_16" type="radio" /><input id="__tabbed_16_2" name="__tabbed_16" type="radio" /><div class="tabbed-labels"><label for="__tabbed_16_1">Python</label><label for="__tabbed_16_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="22:2"><input checked="checked" id="__tabbed_22_1" name="__tabbed_22" type="radio" /><input id="__tabbed_22_2" name="__tabbed_22" type="radio" /><div class="tabbed-labels"><label for="__tabbed_22_1">Python</label><label for="__tabbed_22_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3463,11 +3663,11 @@
 </ul>
 <h3 id="narrating-code-narrating_code">Narrating Code (<code>narrating_code</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>A function is packed with explanatory comments — prefer clearer names or extracted helpers, keeping comments for why.</p>
+<p>A function is packed with step-by-step narration or commented-out code — prefer clearer names or extracted helpers, delete dead code, and keep comments for why.</p>
 <p><strong>Why it's bad</strong></p>
 <p>The prose becomes a second implementation that readers must keep in sync with the code.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="17:2"><input checked="checked" id="__tabbed_17_1" name="__tabbed_17" type="radio" /><input id="__tabbed_17_2" name="__tabbed_17" type="radio" /><div class="tabbed-labels"><label for="__tabbed_17_1">Python</label><label for="__tabbed_17_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Python</label><label for="__tabbed_23_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3560,6 +3760,7 @@
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">min_comment_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">5</span><span class="w"> </span><span class="c1"># detector-specific threshold</span>
 <span class="n">max_comment_ratio_percent</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w"> </span><span class="c1"># detector-specific threshold</span>
+<span class="n">min_function_lines</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">12</span><span class="w"> </span><span class="c1"># shorter functions are flagged only for commented-out code</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -3581,7 +3782,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>The same bundle has to be kept in sync everywhere it travels.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="18:2"><input checked="checked" id="__tabbed_18_1" name="__tabbed_18" type="radio" /><input id="__tabbed_18_2" name="__tabbed_18" type="radio" /><div class="tabbed-labels"><label for="__tabbed_18_1">Python</label><label for="__tabbed_18_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3672,7 +3873,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>One file starts changing for unrelated reasons, so fixes get tangled.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="19:2"><input checked="checked" id="__tabbed_19_1" name="__tabbed_19" type="radio" /><input id="__tabbed_19_2" name="__tabbed_19" type="radio" /><div class="tabbed-labels"><label for="__tabbed_19_1">Python</label><label for="__tabbed_19_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3772,7 +3973,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A forced common type couples two implementations whose real responsibilities no longer match.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="20:2"><input checked="checked" id="__tabbed_20_1" name="__tabbed_20" type="radio" /><input id="__tabbed_20_2" name="__tabbed_20" type="radio" /><div class="tabbed-labels"><label for="__tabbed_20_1">Python</label><label for="__tabbed_20_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3869,7 +4070,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Logic sits next to the wrong data, so edits keep reaching through a foreign object.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="21:2"><input checked="checked" id="__tabbed_21_1" name="__tabbed_21" type="radio" /><input id="__tabbed_21_2" name="__tabbed_21" type="radio" /><div class="tabbed-labels"><label for="__tabbed_21_1">Python</label><label for="__tabbed_21_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="27:2"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Python</label><label for="__tabbed_27_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -3974,7 +4175,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Two classes know too much about each other's internals, so refactors ripple.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="22:2"><input checked="checked" id="__tabbed_22_1" name="__tabbed_22" type="radio" /><input id="__tabbed_22_2" name="__tabbed_22" type="radio" /><div class="tabbed-labels"><label for="__tabbed_22_1">Python</label><label for="__tabbed_22_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="28:2"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Python</label><label for="__tabbed_28_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4065,7 +4266,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Deep property walking couples the caller to the whole object graph.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="23:2"><input checked="checked" id="__tabbed_23_1" name="__tabbed_23" type="radio" /><input id="__tabbed_23_2" name="__tabbed_23" type="radio" /><div class="tabbed-labels"><label for="__tabbed_23_1">Python</label><label for="__tabbed_23_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="29:2"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Python</label><label for="__tabbed_29_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4136,6 +4337,7 @@
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_depth</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">4</span><span class="w"> </span><span class="c1"># allowed depth before flagging</span>
+<span class="n">ignore_roots</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="c1"># chain roots never reported, e.g. a generated API client</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -4156,7 +4358,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Inheritance promises behavior the subclass does not actually want.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="24:2"><input checked="checked" id="__tabbed_24_1" name="__tabbed_24" type="radio" /><input id="__tabbed_24_2" name="__tabbed_24" type="radio" /><div class="tabbed-labels"><label for="__tabbed_24_1">Python</label><label for="__tabbed_24_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="30:2"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Python</label><label for="__tabbed_30_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4245,7 +4447,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>One edit fans out to many dependents.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="25:2"><input checked="checked" id="__tabbed_25_1" name="__tabbed_25" type="radio" /><input id="__tabbed_25_2" name="__tabbed_25" type="radio" /><div class="tabbed-labels"><label for="__tabbed_25_1">Python</label><label for="__tabbed_25_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4317,7 +4519,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Stringly typed payloads drift silently when the shape changes.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="26:2"><input checked="checked" id="__tabbed_26_1" name="__tabbed_26" type="radio" /><input id="__tabbed_26_2" name="__tabbed_26" type="radio" /><div class="tabbed-labels"><label for="__tabbed_26_1">Python</label><label for="__tabbed_26_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4397,10 +4599,10 @@
 <p><strong>Why it's bad</strong></p>
 <p>Weak types make invalid states look valid until runtime.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="27:2"><input checked="checked" id="__tabbed_27_1" name="__tabbed_27" type="radio" /><input id="__tabbed_27_2" name="__tabbed_27" type="radio" /><div class="tabbed-labels"><label for="__tabbed_27_1">Python</label><label for="__tabbed_27_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="33:2"><input checked="checked" id="__tabbed_33_1" name="__tabbed_33" type="radio" /><input id="__tabbed_33_2" name="__tabbed_33" type="radio" /><div class="tabbed-labels"><label for="__tabbed_33_1">Python</label><label for="__tabbed_33_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
-<div class="tabbed-set tabbed-alternate" data-tabs="28:3"><input checked="checked" id="__tabbed_28_1" name="__tabbed_28" type="radio" /><input id="__tabbed_28_2" name="__tabbed_28" type="radio" /><input id="__tabbed_28_3" name="__tabbed_28" type="radio" /><div class="tabbed-labels"><label for="__tabbed_28_1">Low</label><label for="__tabbed_28_2">Medium</label><label for="__tabbed_28_3">High</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="34:3"><input checked="checked" id="__tabbed_34_1" name="__tabbed_34" type="radio" /><input id="__tabbed_34_2" name="__tabbed_34" type="radio" /><input id="__tabbed_34_3" name="__tabbed_34" type="radio" /><div class="tabbed-labels"><label for="__tabbed_34_1">Low</label><label for="__tabbed_34_2">Medium</label><label for="__tabbed_34_3">High</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>Flags only direct escape hatches.</p>
@@ -4459,7 +4661,7 @@
 </details>
 </div>
 <div class="tabbed-block">
-<p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
+<p>Flags everything in medium, primitive-only collections, bare <code>unknown</code> params, and shallow aliases.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="n">EmailAddress</span> <span class="o">=</span> <span class="nb">str</span>
 
@@ -4490,7 +4692,7 @@
 </div>
 </div>
 <div class="tabbed-block">
-<div class="tabbed-set tabbed-alternate" data-tabs="29:3"><input checked="checked" id="__tabbed_29_1" name="__tabbed_29" type="radio" /><input id="__tabbed_29_2" name="__tabbed_29" type="radio" /><input id="__tabbed_29_3" name="__tabbed_29" type="radio" /><div class="tabbed-labels"><label for="__tabbed_29_1">Low</label><label for="__tabbed_29_2">Medium</label><label for="__tabbed_29_3">High</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="35:3"><input checked="checked" id="__tabbed_35_1" name="__tabbed_35" type="radio" /><input id="__tabbed_35_2" name="__tabbed_35" type="radio" /><input id="__tabbed_35_3" name="__tabbed_35" type="radio" /><div class="tabbed-labels"><label for="__tabbed_35_1">Low</label><label for="__tabbed_35_2">Medium</label><label for="__tabbed_35_3">High</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p>Flags only direct escape hatches.</p>
@@ -4503,7 +4705,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
+<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare <code>unknown</code> params only at high strictness. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
@@ -4528,7 +4730,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
+<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare <code>unknown</code> params only at high strictness. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
@@ -4543,7 +4745,7 @@
 </details>
 </div>
 <div class="tabbed-block">
-<p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
+<p>Flags everything in medium, primitive-only collections, bare <code>unknown</code> params, and shallow aliases.</p>
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kr">type</span><span class="w"> </span><span class="nx">EmailAddress</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 
@@ -4555,7 +4757,7 @@
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
-<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
+<p>Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare <code>unknown</code> params only at high strictness. Do not fix this by creating a shallow alias such as <code>type UserPayload = Record&lt;string, any&gt;</code> or <code>type UserId = string</code>.</p>
 <div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">User</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">active</span><span class="o">:</span><span class="w"> </span><span class="kt">boolean</span><span class="p">;</span>
@@ -4576,7 +4778,7 @@
 </div>
 <p><strong>Tune It</strong></p>
 <p>Replace <code>&lt;lang&gt;</code> with <code>python</code>, <code>javascript</code>, <code>typescript</code>, or <code>rust</code>.</p>
-<div class="tabbed-set tabbed-alternate" data-tabs="30:3"><input checked="checked" id="__tabbed_30_1" name="__tabbed_30" type="radio" /><input id="__tabbed_30_2" name="__tabbed_30" type="radio" /><input id="__tabbed_30_3" name="__tabbed_30" type="radio" /><div class="tabbed-labels"><label for="__tabbed_30_1">Low</label><label for="__tabbed_30_2">Medium</label><label for="__tabbed_30_3">High</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="36:3"><input checked="checked" id="__tabbed_36_1" name="__tabbed_36" type="radio" /><input id="__tabbed_36_2" name="__tabbed_36" type="radio" /><input id="__tabbed_36_3" name="__tabbed_36" type="radio" /><div class="tabbed-labels"><label for="__tabbed_36_1">Low</label><label for="__tabbed_36_2">Medium</label><label for="__tabbed_36_3">High</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.loose_typing]</span>
@@ -4600,7 +4802,7 @@
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">strictness</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"high"</span>
 </code></pre></div>
-<p>Flags everything in medium, primitive-only collections, and shallow aliases.</p>
+<p>Flags everything in medium, primitive-only collections, bare <code>unknown</code> params, and shallow aliases.</p>
 </div>
 </div>
 </div>
@@ -4623,12 +4825,12 @@
 <p><strong>Why it's bad</strong></p>
 <p>Positional bundles hide meaning and make the code brittle to reorderings.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="31:2"><input checked="checked" id="__tabbed_31_1" name="__tabbed_31" type="radio" /><input id="__tabbed_31_2" name="__tabbed_31" type="radio" /><div class="tabbed-labels"><label for="__tabbed_31_1">Python</label><label for="__tabbed_31_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="37:2"><input checked="checked" id="__tabbed_37_1" name="__tabbed_37" type="radio" /><input id="__tabbed_37_2" name="__tabbed_37" type="radio" /><div class="tabbed-labels"><label for="__tabbed_37_1">Python</label><label for="__tabbed_37_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
-<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">User</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">]:</span>
-    <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">plan</span>
+<div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">User</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">tuple</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="nb">int</span><span class="p">]:</span>
+    <span class="k">return</span> <span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">user</span><span class="o">.</span><span class="n">seats</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -4640,18 +4842,18 @@
 <span class="k">class</span><span class="w"> </span><span class="nc">UserSummary</span><span class="p">:</span>
     <span class="n">name</span><span class="p">:</span> <span class="nb">str</span>
     <span class="n">email</span><span class="p">:</span> <span class="nb">str</span>
-    <span class="n">plan</span><span class="p">:</span> <span class="nb">str</span>
+    <span class="n">seats</span><span class="p">:</span> <span class="nb">int</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">summarize</span><span class="p">(</span><span class="n">user</span><span class="p">:</span> <span class="n">User</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">UserSummary</span><span class="p">:</span>
-    <span class="k">return</span> <span class="n">UserSummary</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">plan</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">plan</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">UserSummary</span><span class="p">(</span><span class="n">name</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">name</span><span class="p">,</span> <span class="n">email</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">email</span><span class="p">,</span> <span class="n">seats</span><span class="o">=</span><span class="n">user</span><span class="o">.</span><span class="n">seats</span><span class="p">)</span>
 </code></pre></div>
 </details></p>
 </div>
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
-<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">summarize</span><span class="p">(</span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">User</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="nx">user</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">,</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">plan</span><span class="p">];</span>
+<div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">summarize</span><span class="p">(</span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">User</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="p">[</span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">string</span><span class="p">,</span><span class="w"> </span><span class="kt">number</span><span class="p">]</span><span class="w"> </span><span class="p">{</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">[</span><span class="nx">user</span><span class="p">.</span><span class="nx">name</span><span class="p">,</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">email</span><span class="p">,</span><span class="w"> </span><span class="nx">user</span><span class="p">.</span><span class="nx">seats</span><span class="p">];</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
@@ -4660,11 +4862,11 @@
 <p><div class="highlight"><pre><span></span><code><span class="kd">interface</span><span class="w"> </span><span class="nx">UserSummary</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
 <span class="w">  </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
-<span class="w">  </span><span class="nx">plan</span><span class="o">:</span><span class="w"> </span><span class="kt">string</span><span class="p">;</span>
+<span class="w">  </span><span class="nx">seats</span><span class="o">:</span><span class="w"> </span><span class="kt">number</span><span class="p">;</span>
 <span class="p">}</span>
 
 <span class="kd">function</span><span class="w"> </span><span class="nx">summarize</span><span class="p">(</span><span class="nx">user</span><span class="o">:</span><span class="w"> </span><span class="kt">User</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">UserSummary</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">user.name</span><span class="p">,</span><span class="w"> </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">user.email</span><span class="p">,</span><span class="w"> </span><span class="nx">plan</span><span class="o">:</span><span class="w"> </span><span class="kt">user.plan</span><span class="w"> </span><span class="p">};</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">name</span><span class="o">:</span><span class="w"> </span><span class="kt">user.name</span><span class="p">,</span><span class="w"> </span><span class="nx">email</span><span class="o">:</span><span class="w"> </span><span class="kt">user.email</span><span class="p">,</span><span class="w"> </span><span class="nx">seats</span><span class="o">:</span><span class="w"> </span><span class="kt">user.seats</span><span class="w"> </span><span class="p">};</span>
 <span class="p">}</span>
 </code></pre></div>
 </details></p>
@@ -4677,6 +4879,7 @@
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
 <span class="n">max_tuple_return</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">2</span><span class="w"> </span><span class="c1"># allowed positional tuple items in a return</span>
+<span class="n">allow_homogeneous</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w"> </span><span class="c1"># allow same-primitive tuples of up to 4 items</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -4697,7 +4900,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Broad catches plus empty defaults turn contract violations into plausible but wrong data.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="32:2"><input checked="checked" id="__tabbed_32_1" name="__tabbed_32" type="radio" /><input id="__tabbed_32_2" name="__tabbed_32" type="radio" /><div class="tabbed-labels"><label for="__tabbed_32_1">Python</label><label for="__tabbed_32_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="38:2"><input checked="checked" id="__tabbed_38_1" name="__tabbed_38" type="radio" /><input id="__tabbed_38_2" name="__tabbed_38" type="radio" /><div class="tabbed-labels"><label for="__tabbed_38_1">Python</label><label for="__tabbed_38_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4770,7 +4973,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Mutating inputs hides side effects and makes call order matter.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="33:2"><input checked="checked" id="__tabbed_33_1" name="__tabbed_33" type="radio" /><input id="__tabbed_33_2" name="__tabbed_33" type="radio" /><div class="tabbed-labels"><label for="__tabbed_33_1">Python</label><label for="__tabbed_33_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="39:2"><input checked="checked" id="__tabbed_39_1" name="__tabbed_39" type="radio" /><input id="__tabbed_39_2" name="__tabbed_39" type="radio" /><div class="tabbed-labels"><label for="__tabbed_39_1">Python</label><label for="__tabbed_39_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4836,7 +5039,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Rebinding a parameter muddies the original meaning of the value.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="34:2"><input checked="checked" id="__tabbed_34_1" name="__tabbed_34" type="radio" /><input id="__tabbed_34_2" name="__tabbed_34" type="radio" /><div class="tabbed-labels"><label for="__tabbed_34_1">Python</label><label for="__tabbed_34_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="40:2"><input checked="checked" id="__tabbed_40_1" name="__tabbed_40" type="radio" /><input id="__tabbed_40_2" name="__tabbed_40" type="radio" /><div class="tabbed-labels"><label for="__tabbed_40_1">Python</label><label for="__tabbed_40_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4902,7 +5105,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A variable with multiple meanings is a trap for both readers and debuggers.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="35:2"><input checked="checked" id="__tabbed_35_1" name="__tabbed_35" type="radio" /><input id="__tabbed_35_2" name="__tabbed_35" type="radio" /><div class="tabbed-labels"><label for="__tabbed_35_1">Python</label><label for="__tabbed_35_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="41:2"><input checked="checked" id="__tabbed_41_1" name="__tabbed_41" type="radio" /><input id="__tabbed_41_2" name="__tabbed_41" type="radio" /><div class="tabbed-labels"><label for="__tabbed_41_1">Python</label><label for="__tabbed_41_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -4972,7 +5175,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>Costs grow faster than the data and the code gets hard to flatten.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="36:2"><input checked="checked" id="__tabbed_36_1" name="__tabbed_36" type="radio" /><input id="__tabbed_36_2" name="__tabbed_36" type="radio" /><div class="tabbed-labels"><label for="__tabbed_36_1">Python</label><label for="__tabbed_36_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="42:2"><input checked="checked" id="__tabbed_42_1" name="__tabbed_42" type="radio" /><input id="__tabbed_42_2" name="__tabbed_42" type="radio" /><div class="tabbed-labels"><label for="__tabbed_42_1">Python</label><label for="__tabbed_42_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -5065,7 +5268,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A per-item call can explode runtime and hit the backend one request at a time.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="37:2"><input checked="checked" id="__tabbed_37_1" name="__tabbed_37" type="radio" /><input id="__tabbed_37_2" name="__tabbed_37" type="radio" /><div class="tabbed-labels"><label for="__tabbed_37_1">Python</label><label for="__tabbed_37_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="43:2"><input checked="checked" id="__tabbed_43_1" name="__tabbed_43" type="radio" /><input id="__tabbed_43_2" name="__tabbed_43" type="radio" /><div class="tabbed-labels"><label for="__tabbed_43_1">Python</label><label for="__tabbed_43_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -5113,7 +5316,9 @@
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.n_plus_one_call]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">callees</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[]</span><span class="w"> </span><span class="c1"># globs for base.method or plain calls that hit a backend</span>
+<span class="n">max_constant_bound</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">10</span><span class="w"> </span><span class="c1"># loops with at most this literal trip count are skipped</span>
+<span class="n">await_in_loop</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="c1"># also flag awaited per-item calls on outside receivers</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -5130,11 +5335,11 @@
 
 <h3 id="repeated-iteration-repeated_iteration">Repeated Iteration (<code>repeated_iteration</code>)</h3>
 <p><strong>What it is</strong></p>
-<p>The same collection is iterated several times in one scope — fuse the passes so the data is scanned once.</p>
+<p>The same collection gets several full passes (map/filter/reduce-style) in one scope with nothing forcing them apart — fuse the passes so the data is scanned once.</p>
 <p><strong>Why it's bad</strong></p>
 <p>The same collection gets scanned over and over when one pass would do.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="38:2"><input checked="checked" id="__tabbed_38_1" name="__tabbed_38" type="radio" /><input id="__tabbed_38_2" name="__tabbed_38" type="radio" /><div class="tabbed-labels"><label for="__tabbed_38_1">Python</label><label for="__tabbed_38_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="44:2"><input checked="checked" id="__tabbed_44_1" name="__tabbed_44" type="radio" /><input id="__tabbed_44_2" name="__tabbed_44" type="radio" /><div class="tabbed-labels"><label for="__tabbed_44_1">Python</label><label for="__tabbed_44_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -5159,22 +5364,24 @@
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">summarize</span><span class="p">(</span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="kt">Items</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Summary</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">hasItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">items</span><span class="p">.</span><span class="nx">some</span><span class="p">(</span><span class="nb">Boolean</span><span class="p">);</span>
+<span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">paid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">items</span><span class="p">.</span><span class="nx">filter</span><span class="p">((</span><span class="nx">item</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">item</span><span class="p">.</span><span class="nx">paid</span><span class="p">).</span><span class="nx">length</span><span class="p">;</span>
 <span class="w">  </span><span class="kd">const</span><span class="w"> </span><span class="nx">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="nx">items</span><span class="p">.</span><span class="nx">reduce</span><span class="p">((</span><span class="nx">sum</span><span class="p">,</span><span class="w"> </span><span class="nx">item</span><span class="p">)</span><span class="w"> </span><span class="p">=&gt;</span><span class="w"> </span><span class="nx">sum</span><span class="w"> </span><span class="o">+</span><span class="w"> </span><span class="nx">item</span><span class="p">.</span><span class="nx">price</span><span class="p">,</span><span class="w"> </span><span class="mf">0</span><span class="p">);</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">hasItems</span><span class="p">,</span><span class="w"> </span><span class="nx">total</span><span class="w"> </span><span class="p">};</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">paid</span><span class="p">,</span><span class="w"> </span><span class="nx">total</span><span class="w"> </span><span class="p">};</span>
 <span class="p">}</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
 <p>Combine loops when the operations share the same traversal.</p>
 <p><div class="highlight"><pre><span></span><code><span class="kd">function</span><span class="w"> </span><span class="nx">summarize</span><span class="p">(</span><span class="nx">items</span><span class="o">:</span><span class="w"> </span><span class="kt">Items</span><span class="p">)</span><span class="o">:</span><span class="w"> </span><span class="nx">Summary</span><span class="w"> </span><span class="p">{</span>
-<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">hasItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="p">;</span>
+<span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">paid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
 <span class="w">  </span><span class="kd">let</span><span class="w"> </span><span class="nx">total</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mf">0</span><span class="p">;</span>
 <span class="w">  </span><span class="k">for</span><span class="w"> </span><span class="p">(</span><span class="kd">const</span><span class="w"> </span><span class="nx">item</span><span class="w"> </span><span class="k">of</span><span class="w"> </span><span class="nx">items</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
-<span class="w">    </span><span class="nx">hasItems</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="p">;</span>
+<span class="w">    </span><span class="k">if</span><span class="w"> </span><span class="p">(</span><span class="nx">item</span><span class="p">.</span><span class="nx">paid</span><span class="p">)</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nx">paid</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="mf">1</span><span class="p">;</span>
+<span class="w">    </span><span class="p">}</span>
 <span class="w">    </span><span class="nx">total</span><span class="w"> </span><span class="o">+=</span><span class="w"> </span><span class="nx">item</span><span class="p">.</span><span class="nx">price</span><span class="p">;</span>
 <span class="w">  </span><span class="p">}</span>
-<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">hasItems</span><span class="p">,</span><span class="w"> </span><span class="nx">total</span><span class="w"> </span><span class="p">};</span>
+<span class="w">  </span><span class="k">return</span><span class="w"> </span><span class="p">{</span><span class="w"> </span><span class="nx">paid</span><span class="p">,</span><span class="w"> </span><span class="nx">total</span><span class="w"> </span><span class="p">};</span>
 <span class="p">}</span>
 </code></pre></div>
 </details></p>
@@ -5186,7 +5393,7 @@
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.repeated_iteration]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">include_tests</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span><span class="w"> </span><span class="c1"># also flag test code and assertion arguments</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -5207,17 +5414,16 @@
 <p><strong>Why it's bad</strong></p>
 <p>Repeated sorts turn a small loop into a surprisingly expensive one.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="39:2"><input checked="checked" id="__tabbed_39_1" name="__tabbed_39" type="radio" /><input id="__tabbed_39_2" name="__tabbed_39" type="radio" /><div class="tabbed-labels"><label for="__tabbed_39_1">Python</label><label for="__tabbed_39_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="45:2"><input checked="checked" id="__tabbed_45_1" name="__tabbed_45" type="radio" /><input id="__tabbed_45_2" name="__tabbed_45" type="radio" /><div class="tabbed-labels"><label for="__tabbed_45_1">Python</label><label for="__tabbed_45_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
 <div class="highlight"><pre><span></span><code><span class="k">def</span><span class="w"> </span><span class="nf">grouped_names</span><span class="p">(</span><span class="n">groups</span><span class="p">:</span> <span class="n">Groups</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Names</span><span class="p">:</span>
-    <span class="n">result</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="n">names</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">group</span> <span class="ow">in</span> <span class="n">groups</span><span class="p">:</span>
-        <span class="n">names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
+        <span class="n">names</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">group</span><span class="o">.</span><span class="n">names</span><span class="p">)</span>
         <span class="n">names</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
-        <span class="n">result</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">names</span><span class="p">)</span>
-    <span class="k">return</span> <span class="n">result</span>
+    <span class="k">return</span> <span class="n">names</span>
 </code></pre></div>
 <p><details class="sensez-proposed-fix" markdown="1">
 <summary>Proposed fix</summary></p>
@@ -5285,7 +5491,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>An unchanged forwarding layer adds indirection without behavior and makes navigation harder.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="40:2"><input checked="checked" id="__tabbed_40_1" name="__tabbed_40" type="radio" /><input id="__tabbed_40_2" name="__tabbed_40" type="radio" /><div class="tabbed-labels"><label for="__tabbed_40_1">Python</label><label for="__tabbed_40_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="46:2"><input checked="checked" id="__tabbed_46_1" name="__tabbed_46" type="radio" /><input id="__tabbed_46_2" name="__tabbed_46" type="radio" /><div class="tabbed-labels"><label for="__tabbed_46_1">Python</label><label for="__tabbed_46_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -5371,7 +5577,7 @@
 <p><strong>Why it's bad</strong></p>
 <p>A test that only executes code can pass when behavior is wrong.</p>
 <p><strong>Example</strong></p>
-<div class="tabbed-set tabbed-alternate" data-tabs="41:2"><input checked="checked" id="__tabbed_41_1" name="__tabbed_41" type="radio" /><input id="__tabbed_41_2" name="__tabbed_41" type="radio" /><div class="tabbed-labels"><label for="__tabbed_41_1">Python</label><label for="__tabbed_41_2">JS / TS</label></div>
+<div class="tabbed-set tabbed-alternate" data-tabs="47:2"><input checked="checked" id="__tabbed_47_1" name="__tabbed_47" type="radio" /><input id="__tabbed_47_2" name="__tabbed_47" type="radio" /><div class="tabbed-labels"><label for="__tabbed_47_1">Python</label><label for="__tabbed_47_2">JS / TS</label></div>
 <div class="tabbed-content">
 <div class="tabbed-block">
 <p><strong>Problem</strong></p>
@@ -5430,7 +5636,7 @@
 <div class="highlight"><pre><span></span><code><span class="k">[smells.</span><span class="err">&lt;</span><span class="k">lang</span><span class="err">&gt;</span><span class="k">.rules.weak_test_oracle]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">action</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="s2">"warning"</span>
-<span class="c1"># This detector has no extra threshold knobs.</span>
+<span class="n">assertion_functions</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"expect*"</span><span class="p">,</span><span class="w"> </span><span class="s2">"assert*"</span><span class="p">,</span><span class="w"> </span><span class="s2">"verify*"</span><span class="p">]</span><span class="w"> </span><span class="c1"># globs for imported helpers that count as checks</span>
 </code></pre></div>
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>

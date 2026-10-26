@@ -52,7 +52,7 @@ def smell_kinds() -> set[SmellTerm]:
 
 def parse_rule_knobs() -> dict[SmellTerm, list[str]]:
     source = SMELL_RULES_RS.read_text()
-    body = source.split("fn integer_rule_knobs", 1)[1].split("fn bool_rule_knobs", 1)[0]
+    body = source.split("fn rule_knob_names", 1)[1].split("fn bool_rule_knobs", 1)[0]
     out = dict(integer_rule_knob_entries(body))
     return with_string_rule_knobs(out, strictness_rule_knob_entries())
 
@@ -117,7 +117,8 @@ def default_knob_values() -> dict[str, str]:
     fields = _default_smell_fields()
     knobs = {}
     for kind, key, field in _rule_knob_fields():
-        knobs[f"{kind}.{key}"] = fields.get(field, "10")
+        value = fields.get(field, "10")
+        knobs[f"{kind}.{key}"] = "[]" if value == "Vec::new()" else value
     return knobs
 
 
@@ -158,7 +159,7 @@ def _default_smell_fields() -> dict[str, str]:
     source = SMELL_KNOBS_RS.read_text()
     default_impl = source.split("impl Default for Smells", 1)[1]
     body = default_impl.split("Smells {", 1)[1].split("}", 1)[0]
-    return dict(re.findall(r"(\w+):\s*([^,\n]+),", body))
+    return dict(re.findall(r"(\w+):\s*(\[[^\]\n]*\](?=[.,])|[^,\n]+(?=,))", body))
 
 
 def _enabled_fields() -> dict[SmellTerm, str]:
@@ -191,7 +192,15 @@ def _rule_knob_fields() -> list[tuple[SmellTerm, str, str]]:
             bool_body,
         )
     ]
-    return integer_knobs + bool_knobs
+    list_body = source.split("fn apply_list_knob", 1)[1].split("fn apply_string_knob", 1)[0]
+    list_knobs = [
+        (SmellTerm(camel_to_snake(kind)), key, field)
+        for kind, key, field in re.findall(
+            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*\{?\s*smells\.(\w+)\s*=',
+            list_body,
+        )
+    ]
+    return integer_knobs + bool_knobs + list_knobs
 
 
 def _js_ts_overrides() -> dict[str, set[SmellTerm]]:

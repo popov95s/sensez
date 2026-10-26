@@ -22,10 +22,22 @@ EXAMPLE_LANGUAGES = (
 )
 
 KNOB_COMMENTS = {
+    "allow_http_status": "skip 100-599 compared or assigned to a status field",
+    "allow_homogeneous": "allow same-primitive tuples of up to 4 items",
+    "assertion_functions": "globs for imported helpers that count as checks",
+    "await_in_loop": "also flag awaited per-item calls on outside receivers",
+    "callees": "globs for base.method or plain calls that hit a backend",
+    "count_guard_clauses": "also count top-level guard-clause returns",
+    "ignore": "numeric literals never reported",
+    "ignore_array_indexes": "skip literal array indexes such as x[3]",
+    "ignore_default_values": "skip literals in parameter default values",
+    "ignore_roots": "chain roots never reported, e.g. a generated API client",
     "include_attributes": "also flag mutation of fields on parameters",
+    "include_tests": "also flag test code and assertion arguments",
     "max_bool_params": "allowed boolean parameters before flagging",
     "max_chain_depth": "allowed property/call chain depth",
     "max_cognitive": "allowed cognitive complexity score",
+    "max_constant_bound": "loops with at most this literal trip count are skipped",
     "max_cyclomatic": "allowed independent control-flow paths",
     "max_depth": "allowed depth before flagging",
     "max_lines": "allowed function or nested-function length",
@@ -37,9 +49,16 @@ KNOB_COMMENTS = {
     "min_assigns": "assignments to one local before flagging",
     "min_blast": "dependent modules before shotgun-surgery risk",
     "min_fan": "combined incoming/outgoing fan before god-module risk",
+    "min_fan_in": "importing modules required for a god module",
+    "min_fan_out": "internal runtime imports required for a god module",
     "min_fields": "shared fields required for a data clump",
+    "min_function_lines": "shorter functions are flagged only for commented-out code",
     "min_keys": "string keys on one object before implicit-schema risk",
+    "min_lines": "module lines required for a god module (or min_units)",
     "min_occurrences": "functions sharing the clump before flagging",
+    "min_units": "top-level functions and classes required (or min_lines)",
+    "skip_capturing": "drop nested functions that read parent locals",
+    "skip_external_vocab": "ignore extension, MIME, path, and error-code lists",
 }
 
 
