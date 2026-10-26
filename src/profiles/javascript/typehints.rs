@@ -4,12 +4,14 @@
 //! only obvious instantiations.
 
 use super::symbols;
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
 use tree_sitter::Node;
 
 /// Record a function/method's return + parameter type annotations.
-pub fn record_function(node: Node, src: &[u8], hints: &mut TypeHints) {
-    let Some(name) = symbols::function_name(node, src) else {
+pub fn record_function(lineage: Lineage, src: &[u8], hints: &mut TypeHints) {
+    let node = lineage.node();
+    let Some(name) = symbols::function_name(lineage, src) else {
         return;
     };
     let key = FunctionKey {

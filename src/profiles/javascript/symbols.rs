@@ -1,5 +1,6 @@
 //! Top-level declaration extraction for JavaScript/TypeScript.
 
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::SymbolKind;
 use tree_sitter::Node;
 
@@ -21,17 +22,18 @@ pub fn is_default_export(node: Node) -> bool {
 }
 
 /// Name of a function/class node: its own name, the binding it is assigned to, or its call site.
-pub fn function_name(node: Node, src: &[u8]) -> Option<String> {
+pub fn function_name(lineage: Lineage, src: &[u8]) -> Option<String> {
+    let node = lineage.node();
     if let Some(name) = def_name(node, src) {
         return Some(name);
     }
-    let parent = node.parent()?;
+    let parent = lineage.parent(node)?;
     let field = match parent.kind() {
         "variable_declarator" | "public_field_definition" => "name",
         "field_definition" => "property",
         "pair" => return pair_key_name(parent.child_by_field_name("key")?, src),
         "assignment_expression" => "left",
-        "arguments" => return callback_name(parent, src),
+        "arguments" => return callback_name(lineage, parent, src),
         _ => return None,
     };
     let text = parent.child_by_field_name(field)?.utf8_text(src).ok()?;
@@ -49,8 +51,10 @@ fn pair_key_name(key: Node, src: &[u8]) -> Option<String> {
 }
 
 /// `describe callback`, or `it("adds rows") callback` when a string title comes first.
-fn callback_name(args: Node, src: &[u8]) -> Option<String> {
-    let call = args.parent().filter(|p| p.kind() == "call_expression")?;
+fn callback_name(lineage: Lineage, args: Node, src: &[u8]) -> Option<String> {
+    let call = lineage
+        .parent(args)
+        .filter(|p| p.kind() == "call_expression")?;
     let callee = call.child_by_field_name("function")?.utf8_text(src).ok()?;
     let callee = if callee.contains(['(', '\n']) {
         last_segment(callee)

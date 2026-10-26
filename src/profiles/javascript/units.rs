@@ -8,6 +8,7 @@ use super::chains::chain_len;
 use super::nesting::{cognitive_weight, is_branch, is_nesting};
 use super::params::param_names;
 use super::{conditionals, obsession, performance, symbols};
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::{bump, FunctionUnit};
 use std::collections::HashMap;
 use tree_sitter::Node;
@@ -39,9 +40,10 @@ pub struct FunctionFacts {
 }
 
 impl FunctionFacts {
-    pub fn start(func: Node, src: &[u8], is_method: bool) -> Self {
+    pub fn start(lineage: Lineage, src: &[u8], is_method: bool) -> Self {
+        let func = lineage.node();
         let mut unit = FunctionUnit {
-            name: symbols::function_name(func, src).unwrap_or_default(),
+            name: symbols::function_name(lineage, src).unwrap_or_default(),
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
             param_names: param_names(func, src),
