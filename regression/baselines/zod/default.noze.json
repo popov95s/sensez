@@ -258,7 +258,7 @@
           "start_row": 7
         }
       ],
-      "token_length": 148
+      "token_length": 147
     },
     {
       "action": "advisory",
@@ -310,7 +310,7 @@
       "generated": 0,
       "tests": 171
     },
-    "duplication_total": 22,
+    "duplication_total": 20,
     "external_edges": 462,
     "internal_edges": 521,
     "mode": "full",

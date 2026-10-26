@@ -10,7 +10,7 @@
       "cycles": 2,
       "dead_code/import": 1,
       "dead_code/variable": 4,
-      "duplication": 22,
+      "duplication": 20,
       "smells/data_clump": 3,
       "smells/divergent_change": 7,
       "smells/feature_envy": 5,

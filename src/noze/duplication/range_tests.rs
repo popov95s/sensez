@@ -48,7 +48,7 @@ fn helper_before_different_declarations_ends_at_its_brace() {
     );
     assert_eq!(
         clones(&refs(&files), 30, 0),
-        vec![(38, vec![(1, 13), (1, 13)])]
+        vec![(37, vec![(1, 13), (1, 13)])]
     );
 }
 
@@ -79,7 +79,7 @@ fn clone_ending_in_multi_line_call_is_kept() {
     let b = format!("{head}console.log(cfg.url);\n");
     assert_eq!(
         clones(&[("a.ts", &a), ("b.ts", &b)], 20, 0),
-        vec![(23, vec![(1, 8), (1, 8)])]
+        vec![(22, vec![(1, 8), (1, 8)])]
     );
 }
 
@@ -126,6 +126,16 @@ fn clone_diverging_inside_loop_ends_at_last_full_line() {
     let b = format!("function two(fn, attempts) {{\n{edited}  throw lastError;\n}}\n");
     assert_eq!(
         clones(&[("a.ts", &a), ("b.ts", &b)], 15, 0),
-        vec![(22, vec![(1, 7), (1, 7)])]
+        vec![(21, vec![(1, 7), (1, 7)])]
     );
+}
+
+#[test]
+fn straddled_tokens_do_not_lift_a_helper_over_the_threshold() {
+    let files = helper_then(
+        "const loadUsers = async (client) => {\n  return client.query(\"users\");\n};\n",
+        "const saveOrder = async (order) => {\n  return api.post(\"/orders\", order);\n};\n",
+    );
+    assert!(clones(&refs(&files), 38, 0).is_empty());
+    assert_eq!(clones(&refs(&files), 37, 0).len(), 1);
 }
