@@ -13,7 +13,7 @@ fn enabled() -> Smells {
 
 fn with_callees() -> Smells {
     Smells {
-        n_plus_one_callees: ["*.db.*", "*.run*", "*Store.*"].map(String::from).to_vec(),
+        n_plus_one_callees: ["*.db.*", "*.fetch*", "*Repo.*"].map(String::from).to_vec(),
         ..enabled()
     }
 }
@@ -86,8 +86,8 @@ fn nested_loop_keeps_independent_and_self_joins() {
 #[test]
 fn n_plus_one_skips_header_bounded_and_paging_loops() {
     for src in [
-        "export async function a5(ctx) { for (const row of await ctx.db.query(\"t\").collect()) use(row); }\n",
-        "export async function a6(ctx) { let cursor = null; do { const page = await ctx.db.query(cursor); cursor = page.next; } while (cursor); }\n",
+        "export async function a5(app) { for (const row of await app.db.select(\"t\").all()) use(row); }\n",
+        "export async function a6(client) { let cursor = null; do { const page = await client.fetchPage(cursor); cursor = page.next; } while (cursor); }\n",
         "export async function more(api) { let more = true; while (more) { const res = await api.query(); more = res.hasMore; } }\n",
         "export async function token(api, token) { while (token) { token = (await api.query(token)).next; } }\n",
         "export async function a7(api) { for (const s of [\"a\", \"b\", \"c\"]) await api.query(s); }\n",
@@ -128,10 +128,10 @@ fn n_plus_one_keeps_per_item_calls() {
 #[test]
 fn n_plus_one_callees_catch_data_layer_calls() {
     for src in [
-        "export async function a1(ctx, ids) { for (const id of ids) await ctx.db.get(id); }\n",
-        "export async function a2(ctx, ids, ref) { for (const id of ids) await ctx.runQuery(ref, { id }); }\n",
-        "export async function a3(ctx, ids) { await Promise.all(ids.map((id) => ctx.db.patch(id, {}))); }\n",
-        "export async function a4(ctx, ids) { for (const id of ids) await itemsStore.getById(ctx, id); }\n",
+        "export async function a1(app, ids) { for (const id of ids) await app.db.get(id); }\n",
+        "export async function a2(client, ids) { for (const id of ids) await client.fetchItem(id); }\n",
+        "export async function a3(app, ids) { await Promise.all(ids.map((id) => app.db.update(id, {}))); }\n",
+        "export async function a4(usersRepo, ids) { for (const id of ids) await usersRepo.byId(id); }\n",
     ] {
         assert!(fires("ts", src, &with_callees(), SmellKind::NPlusOneCall), "{src}");
         assert!(!fires("ts", src, &enabled(), SmellKind::NPlusOneCall), "{src}");
