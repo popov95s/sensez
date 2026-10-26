@@ -57,6 +57,17 @@ pub(crate) fn classify(
     src: &[u8],
     syntax: &CommentSyntax,
 ) -> CommentClass {
+    classify_in(node, &block_nodes(node, parent), parent, src, syntax)
+}
+
+/// Classify `node`, whose run of same-kind comments on adjacent lines is `block`.
+pub(crate) fn classify_in(
+    node: Node,
+    block: &[Node],
+    parent: Option<Node>,
+    src: &[u8],
+    syntax: &CommentSyntax,
+) -> CommentClass {
     let lines = body_lines(node, src, syntax);
     if lines.first().is_some_and(|line| is_directive(line, syntax)) {
         return CommentClass::Directive;
@@ -64,18 +75,18 @@ pub(crate) fn classify(
     if parent.is_some_and(|p| syntax.markup_parents.contains(&p.kind())) {
         return CommentClass::Markup;
     }
-    let block: Vec<&str> = block_nodes(node, parent)
-        .into_iter()
-        .flat_map(|comment| body_lines(comment, src, syntax))
+    let block_lines: Vec<&str> = block
+        .iter()
+        .flat_map(|comment| body_lines(*comment, src, syntax))
         .collect();
     let is_code = |line: &&str| looks_like_code(line, syntax);
-    if block.iter().filter(|line| is_code(line)).count() >= 2
+    if block_lines.iter().filter(|line| is_code(line)).count() >= 2
         && !lines.is_empty()
         && lines.iter().all(is_code)
     {
         return CommentClass::Code;
     }
-    if has_rationale(&block.join(" ")) {
+    if has_rationale(&block_lines.join(" ")) {
         return CommentClass::Rationale;
     }
     CommentClass::Narration

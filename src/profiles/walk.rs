@@ -281,3 +281,20 @@ pub(crate) fn record_comment_span(
         class: comment_class::classify(node, parent, src, syntax),
     });
 }
+
+/// Record each comment of `block`, a run of adjacent comment children of `parent`.
+pub(crate) fn record_comment_block(
+    out: &mut Walked,
+    block: &[Node],
+    parent: Node,
+    src: &[u8],
+    syntax: &CommentSyntax,
+) {
+    out.units
+        .comment_spans
+        .extend(block.iter().map(|node| CommentSpan {
+            start_line: node.start_position().row + 1,
+            end_line: node.end_position().row + 1,
+            class: comment_class::classify_in(*node, block, Some(parent), src, syntax),
+        }));
+}

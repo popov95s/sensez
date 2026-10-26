@@ -3,6 +3,7 @@
 
 mod chains;
 pub(crate) mod classunit;
+mod comment_runs;
 pub(crate) mod comment_syntax;
 pub(crate) mod conditionals;
 pub(crate) mod const_eval;

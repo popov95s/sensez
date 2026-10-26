@@ -3,7 +3,7 @@
 //! metric collection is fused into this single walk — there is no second
 //! per-function body pass.
 
-use super::comment_syntax::COMMENT_SYNTAX;
+use super::comment_runs::CommentRun;
 use super::{imports, lexeme, namespaces, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::lineage::Lineage;
@@ -90,7 +90,6 @@ fn visit<'tree>(
     // Comments never map to a structural token, so capturing their text for the
     // eyez index cannot affect duplication.
     if kind == "comment" {
-        walk::record_comment_span(ctx.out, node, parent, src, &COMMENT_SYNTAX);
         #[cfg(feature = "eyez")]
         {
             let scope_path: Vec<&str> = ctx.scope.iter().map(|s| s.name.as_str()).collect();
@@ -176,8 +175,10 @@ fn visit<'tree>(
         .then(|| node.child_by_field_name("property").map(|child| child.id()))
         .flatten();
     ctx.path.push(node);
+    let mut comments = CommentRun::default();
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
+        comments.push(ctx.out, child, node, src);
         let frame = ctx
             .active_fns
             .last_mut()
@@ -194,6 +195,7 @@ fn visit<'tree>(
             ctx.active_fns.last_mut().unwrap().collector.leave(f);
         }
     }
+    comments.flush(ctx.out, node, src);
     ctx.path.pop();
 
     if opened_fn {
