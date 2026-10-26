@@ -459,6 +459,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="sensez noze --help">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-limits-and-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output limits and gates
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -959,6 +976,23 @@
     </span>
   </a>
   
+    <nav class="md-nav" aria-label="sensez noze --help">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#output-limits-and-gates" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Output limits and gates
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -1127,7 +1161,7 @@ Options:
           Emit machine-readable JSON instead of a human-readable report
 
       --max &lt;MAX&gt;
-          Cap each pillar to its top-N ranked findings (0 = unlimited)
+          Cap each pillar to its top-N ranked findings; smells are capped per kind (0 = unlimited)
 
       --all
           Print every finding instead of the default top offenders
@@ -1221,7 +1255,7 @@ Options:
           Emit machine-readable JSON instead of a human-readable report
 
       --max &lt;MAX&gt;
-          Cap each pillar to its top-N ranked findings (0 = unlimited)
+          Cap each pillar to its top-N ranked findings; smells are capped per kind (0 = unlimited)
 
       --all
           Print every finding instead of the default top offenders
@@ -1271,6 +1305,17 @@ Examples:
   sensez noze . --diff --fail-on-new warning
   sensez noze . --diff --fail-on-new must_fix
 </code></pre></div>
+<h3 id="output-limits-and-gates">Output limits and gates</h3>
+<ul>
+<li>By default each pillar shows its top 5 findings and smells show their top 3
+  per kind. <code>--max N</code> sets that cap for every pillar and every smell kind, so
+  <code>--smells --max 1</code> prints one finding per smell kind. <code>--all</code> prints every
+  finding and cannot be combined with <code>--max</code>.</li>
+<li><code>--fail-on</code> and <code>--fail-on-new</code> see the findings this run selected: pillar
+  flags such as <code>--dead-code</code> and <code>--output-glob</code> filter the gate too, and
+  low-confidence dead code never trips it. The display cap does not: a
+  finding hidden by <code>--max</code> still fails the gate.</li>
+</ul>
 <h2 id="sensez-noze-explain-help"><code>sensez noze explain --help</code></h2>
 <div class="highlight"><pre><span></span><code>Explain a finding category in plain English
 
@@ -1388,7 +1433,7 @@ Arguments:
 
 Options:
       --top-k &lt;TOP_K&gt;
-          Number of results to return
+          Number of results to return (at least 1)
 
           [default: 10]
 

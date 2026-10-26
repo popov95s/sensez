@@ -1008,6 +1008,11 @@ uv<span class="w"> </span>tool<span class="w"> </span>install<span class="w"> </
 </tr>
 </tbody>
 </table>
+<p>The MCP config starts <code>node_modules/.bin/sensez</code> when Sensez is a project
+dependency and the agent launches servers from the workspace root (Claude
+Code), or <code>sensez</code> when the running binary is the one on <code>PATH</code>. Otherwise it
+stores this machine's absolute path and <code>init</code> prints a note, since that entry
+will not work for teammates.</p>
 <h2 id="3-restart-your-agent">3. Restart your agent</h2>
 <p>Agents load MCP servers at startup. Restart the agent (or reload the window)
 after <code>init</code>, or the sensez tools will not appear.</p>
