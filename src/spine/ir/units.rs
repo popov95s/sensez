@@ -26,6 +26,49 @@ pub struct SchemaCall {
     pub arguments: Vec<String>,
 }
 
+/// The outermost member of one `a.b.c.d` attribute chain.
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct ChainHit {
+    pub line: usize,
+    pub depth: usize,
+    /// Identifier (or own-instance receiver) the chain starts from.
+    pub root: Option<String>,
+}
+
+/// One membership test against a literal list of strings.
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct LiteralMembership {
+    pub line: usize,
+    /// Tested value when it is an identifier or member path.
+    pub operand: Option<String>,
+    pub literals: Vec<String>,
+}
+
+/// Receiver shape a mutating method call implies.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash, serde::Serialize, serde::Deserialize)]
+pub enum MutatorFamily {
+    Array,
+    Collection,
+}
+
+/// Whether callers outside the module can reach a function.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum Visibility {
+    #[default]
+    Unknown,
+    Private,
+    Exported,
+}
+
+/// Where a function literal sits relative to a call.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+pub enum CallbackPosition {
+    #[default]
+    Standalone,
+    /// Passed inline as a call argument (`xs.map((x) => ...)`).
+    Argument,
+}
+
 /// Display name of a scope or function that has none in source.
 pub const ANONYMOUS: &str = "<anonymous>";
 
@@ -42,8 +85,8 @@ pub struct FunctionUnit {
     pub return_count: usize,
     /// Decision points (cyclomatic basis): cyclomatic complexity = 1 + this.
     pub branch_count: usize,
-    /// `if x { if y { ... } }` shapes with no else/default path.
-    pub collapsible_nested_ifs: usize,
+    /// Outer-`if` lines of `if x { if y { ... } }` shapes with no else/default path.
+    pub collapsible_nested_if_lines: Vec<usize>,
     /// Conditional expressions nested inside another conditional expression.
     pub nested_ternaries: Vec<NestedTernary>,
     /// Nesting-weighted cognitive-complexity accumulator (Sonar-style).
@@ -58,8 +101,8 @@ pub struct FunctionUnit {
     pub code_comment_lines: usize,
     /// First line of a narration or commented-out-code comment.
     pub first_noisy_comment_line: Option<usize>,
-    /// Longest `a.b.c.d` attribute chain (Law of Demeter / message chains).
-    pub max_chain_depth: usize,
+    /// Outermost `a.b.c.d` attribute chains (Law of Demeter / message chains).
+    pub chain_hits: Vec<ChainHit>,
     pub is_method: bool,
     /// Local name → number of plain (non-augmented) assignments to it.
     pub local_reassigns: HashMap<String, usize>,
@@ -75,6 +118,8 @@ pub struct FunctionUnit {
     /// Receiver identifier → distinct string-literal subscript keys
     /// (`cfg["host"]`, reads and writes alike) — implicit-schema detection.
     pub str_keys: HashMap<String, HashSet<String>>,
+    /// Receiver identifier → line of its first string-literal subscript.
+    pub str_key_lines: HashMap<String, usize>,
     /// Direct helper calls with identifier arguments, used to propagate
     /// dictionary shapes across small helper boundaries.
     pub schema_calls: Vec<SchemaCall>,
@@ -82,6 +127,8 @@ pub struct FunctionUnit {
     pub validated_names: HashSet<String>,
     /// Domain constructors directly returned by this function.
     pub returned_constructors: HashSet<String>,
+    /// Identifiers directly returned by this function (`return x`).
+    pub returned_names: HashSet<String>,
     /// Identifiers whose *object* is mutated in this body: subscript-assign,
     /// `del x[k]`, or a known mutating method call (`x.append(...)`).
     pub mutated_names: HashSet<String>,
@@ -91,11 +138,14 @@ pub struct FunctionUnit {
     /// disturbing the default (`self.cache.update()` lands here as `self`,
     /// then is filtered out by the self/cls guard).
     pub attr_mutated_names: HashSet<String>,
+    /// Identifiers mutated by a known method call, kept apart from
+    /// `mutated_names` so detectors can check the receiver's declared type.
+    pub method_mutations: HashSet<(String, MutatorFamily)>,
     /// Largest arity among bare tuple returns (`return a, b, c`).
     pub max_tuple_return: usize,
-    /// Count of `x in ["a", "b", ...]` membership tests against a literal
-    /// collection of strings (stringly-typed category logic).
-    pub literal_membership_tests: usize,
+    /// `x in ["a", "b", ...]` membership tests against a literal collection of
+    /// strings (stringly-typed category logic).
+    pub literal_memberships: Vec<LiteralMembership>,
     /// String literals used as fallbacks (`or ""`, `?? "n/a"`, `x ? x : "?"`).
     pub string_fallbacks: Vec<StringFallback>,
     /// Compact call/loop facts consumed by performance smell detectors.
@@ -107,6 +157,8 @@ pub struct FunctionUnit {
     pub is_nested: bool,
     /// Name of the enclosing function when `is_nested` (empty otherwise).
     pub parent: String,
+    pub callback_position: CallbackPosition,
+    pub visibility: Visibility,
 }
 
 /// Source span for a comment node. Language profiles record these during the

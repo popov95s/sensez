@@ -27,6 +27,7 @@ fn smell(file: &str, line: usize, end_line: usize) -> SmellFinding {
         file: file.into(),
         line,
         end_line,
+        lines: Vec::new(),
         symbol: "f".into(),
         severity: Severity::Warning,
         metric: 0,
@@ -165,4 +166,33 @@ fn diff_hint_preserves_detector_context() {
     let hint = merged_dup_hint(&class, &changed);
     assert!(hint.contains("class property overlap"));
     assert!(hint.contains("b.py:40"));
+}
+
+#[test]
+fn listed_hit_lines_scope_a_smell_to_those_lines() {
+    let mut changed = ChangedLines::default();
+    changed.add(Path::new("a.py"), 1, 2);
+    changed.add(Path::new("b.py"), 7, 7);
+
+    let mut header_only = smell("a.py", 1, 30);
+    header_only.lines = vec![5, 12];
+    let mut hit_touched = smell("b.py", 5, 5);
+    hit_touched.lines = vec![5, 7];
+    let mut report = AnalysisReport {
+        smells: vec![smell("a.py", 1, 30), header_only, hit_touched],
+        ..Default::default()
+    };
+
+    apply(&mut report, &changed, &std::collections::HashMap::new());
+
+    let kept: Vec<(&Path, Vec<usize>)> = report
+        .smells
+        .iter()
+        .map(|s| (s.file.as_path(), s.lines.clone()))
+        .collect();
+    assert_eq!(
+        kept,
+        vec![(Path::new("a.py"), vec![]), (Path::new("b.py"), vec![5, 7])],
+        "a touched header alone does not surface a hit elsewhere in the body"
+    );
 }

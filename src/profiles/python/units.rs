@@ -2,9 +2,9 @@
 //!
 //! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
-use super::chains::chain_len;
+use super::chains::{chain_len, chain_root, is_chain_inner};
 use super::{classunit, conditionals, performance, symbols};
-use crate::spine::ir::{ClassUnit, FunctionUnit};
+use crate::spine::ir::{ChainHit, ClassUnit, FunctionUnit};
 use std::collections::HashMap;
 use tree_sitter::Node;
 
@@ -76,7 +76,9 @@ impl<'u> Acc<'u> {
             self.unit.branch_count += 1;
         }
         if conditionals::is_collapsible_nested_if(node) {
-            self.unit.collapsible_nested_ifs += 1;
+            self.unit
+                .collapsible_nested_if_lines
+                .push(node.start_position().row + 1);
         }
         if kind == "conditional_expression" {
             self.unit
@@ -98,7 +100,13 @@ impl<'u> Acc<'u> {
                 }
             }
             "attribute" => {
-                self.unit.max_chain_depth = self.unit.max_chain_depth.max(chain_len(node));
+                if !is_chain_inner(node) {
+                    self.unit.chain_hits.push(ChainHit {
+                        line: node.start_position().row + 1,
+                        depth: chain_len(node),
+                        root: chain_root(node, src),
+                    });
+                }
                 if let Some(base) = node
                     .child_by_field_name("object")
                     .filter(|o| o.kind() == "identifier")

@@ -1,6 +1,7 @@
 //! Rust type-annotation vocabulary for smell detectors.
 
 use crate::profiles::typevocab::{base_type, has_domain_type, idents, LooseTypeKind};
+use crate::spine::ir::MutatorFamily;
 
 const BUILTINS: &[&str] = &[
     "Vec", "HashMap", "BTreeMap", "HashSet", "BTreeSet", "Option", "Result", "Box", "Rc", "Arc",
@@ -22,6 +23,10 @@ pub fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
     None
 }
 
+pub fn is_void(annotation: &str) -> bool {
+    annotation.trim() == "()"
+}
+
 pub fn is_bool(annotation: &str) -> bool {
     annotation.trim_start_matches('&').trim() == "bool"
 }
@@ -29,6 +34,19 @@ pub fn is_bool(annotation: &str) -> bool {
 pub fn is_dictish(annotation: &str) -> bool {
     let base = base_type(annotation).trim_start_matches('&').trim();
     matches!(base, "HashMap" | "BTreeMap")
+}
+
+pub fn is_mutable_collection(annotation: &str, family: MutatorFamily) -> bool {
+    let base = base_type(annotation)
+        .trim_start_matches('&')
+        .trim_start_matches("mut ")
+        .trim();
+    match family {
+        MutatorFamily::Array => matches!(base, "Vec" | "VecDeque"),
+        MutatorFamily::Collection => {
+            matches!(base, "HashSet" | "BTreeSet") || is_dictish(annotation)
+        }
+    }
 }
 
 pub fn has_domain_model(annotation: &str) -> bool {

@@ -1,13 +1,16 @@
 //! Per-function structural metrics for Rust smells.
 
 use crate::profiles::walk;
-use crate::spine::ir::{FallbackSink, FunctionKey, FunctionUnit, TypeHints};
+use crate::spine::ir::{
+    ChainHit, FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, TypeHints,
+};
 use tree_sitter::Node;
 
+use super::method_call::method_call;
 use super::params::param_names;
 use super::unit_helpers::{
-    call_fact, chain_len, cognitive_weight, is_branch, is_loop, is_nesting, is_string,
-    pattern_name, target_root, tuple_type_arity, type_text, unquote,
+    call_fact, chain_len, chain_root, cognitive_weight, is_branch, is_chain_inner, is_loop,
+    is_nesting, is_string, pattern_name, target_root, tuple_type_arity, type_text, unquote,
 };
 
 const ITER_METHODS: &[&str] = &["fold", "any", "all", "count", "sum", "position"];
@@ -112,7 +115,7 @@ impl Acc<'_> {
                 self.record_index_mutation(node, src);
             }
             "call_expression" => self.record_call(node, src, loop_depth),
-            "match_expression" => self.record_literal_match(node),
+            "match_expression" => self.record_literal_match(node, src),
             _ => {}
         }
     }
@@ -137,7 +140,13 @@ impl Acc<'_> {
     }
 
     fn record_field(&mut self, node: Node, src: &[u8]) {
-        self.unit.max_chain_depth = self.unit.max_chain_depth.max(chain_len(node));
+        if !is_chain_inner(node) {
+            self.unit.chain_hits.push(ChainHit {
+                line: node.start_position().row + 1,
+                depth: chain_len(node),
+                root: chain_root(node, src),
+            });
+        }
         let Some(base) = node
             .child_by_field_name("value")
             .filter(|n| matches!(n.kind(), "identifier" | "self"))
@@ -161,9 +170,7 @@ impl Acc<'_> {
     }
 
     fn record_call(&mut self, node: Node, src: &[u8], loop_depth: usize) {
-        if self.record_literal_contains(node) {
-            self.unit.literal_membership_tests += 1;
-        }
+        self.record_literal_contains(node, src);
         let Some(call) = call_fact(node, src) else {
             return;
         };
@@ -204,6 +211,7 @@ impl Acc<'_> {
                     .entry(recv.to_string())
                     .or_default()
                     .insert(unquote(key));
+                walk::record_str_key_line(self.unit, recv, node.start_position().row + 1);
             }
         }
     }
@@ -228,17 +236,52 @@ impl Acc<'_> {
         }
     }
 
-    fn record_literal_contains(&self, call: Node) -> bool {
-        call.child_by_field_name("function")
-            .filter(|f| f.kind() == "field_expression")
-            .and_then(|f| f.child_by_field_name("value"))
-            .is_some_and(|v| v.kind() == "array_expression")
+    /// `[..].contains(x)` or `[..].iter().any(..)` on an array literal.
+    fn record_literal_contains(&mut self, call: Node, src: &[u8]) {
+        let Some((method, receiver)) = method_call(call, src) else {
+            return;
+        };
+        let (array, operand) = match method {
+            "contains" => (
+                receiver,
+                call.child_by_field_name("arguments")
+                    .and_then(|args| args.named_child(0)),
+            ),
+            "any" => match method_call(receiver, src) {
+                Some(("iter", inner)) => (inner, None),
+                _ => return,
+            },
+            _ => return,
+        };
+        if array.kind() == "array_expression" {
+            self.push_literal_membership(call, operand, array, src);
+        }
     }
 
-    fn record_literal_match(&mut self, node: Node) {
+    fn record_literal_match(&mut self, node: Node, src: &[u8]) {
         if node.children(&mut node.walk()).any(|c| is_string(c.kind())) {
-            self.unit.literal_membership_tests += 1;
+            self.push_literal_membership(node, node.child_by_field_name("value"), node, src);
         }
+    }
+
+    fn push_literal_membership(&mut self, at: Node, operand: Option<Node>, list: Node, src: &[u8]) {
+        let mut cursor = list.walk();
+        let literals: Vec<String> = list
+            .children(&mut cursor)
+            .filter(|c| is_string(c.kind()))
+            .filter_map(|c| c.utf8_text(src).ok())
+            .map(unquote)
+            .collect();
+        if literals.is_empty() {
+            return;
+        }
+        self.unit.literal_memberships.push(LiteralMembership {
+            line: at.start_position().row + 1,
+            operand: operand
+                .and_then(|o| o.utf8_text(src).ok())
+                .map(|text| text.trim_start_matches('&').to_string()),
+            literals,
+        });
     }
 
     fn record_short_string_arg(&mut self, node: Node, src: &[u8]) {

@@ -208,6 +208,7 @@ mod tests {
             file: file.into(),
             line: 1,
             end_line: 1,
+            lines: Vec::new(),
             symbol: "f".into(),
             severity: Severity::Warning,
             metric: 0,

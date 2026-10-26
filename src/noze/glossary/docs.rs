@@ -311,7 +311,7 @@ FindingDocs {
                 },
                 LanguageBlock {
                     language: "typescript",
-                    body: "Use a union type, enum, or const object with a derived type.",
+                    body: "Use a string-literal union type or a named `as const` set shared with its type.",
                 },
             ],
         },
@@ -369,7 +369,7 @@ FindingDocs {
                 },
                 LanguageBlock {
                     language: "typescript",
-                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
+                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
                 },
             ],
         },

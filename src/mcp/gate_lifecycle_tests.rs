@@ -145,6 +145,7 @@ fn smell_report(file: &Path, line: usize) -> crate::report::AnalysisReport {
             file: file.to_path_buf(),
             line,
             end_line: line + 4,
+            lines: Vec::new(),
             symbol: "f".to_string(),
             severity: Severity::Warning,
             metric: 12,

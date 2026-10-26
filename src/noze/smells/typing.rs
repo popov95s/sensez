@@ -8,7 +8,7 @@
 
 use super::{magic_string, make, SmellContext};
 use crate::config::smells::{Smells, Strictness};
-use crate::profiles::typevocab::{base_type, LooseTypeKind};
+use crate::profiles::typevocab::{base_type, split_top_level, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionUnit;
 
@@ -43,55 +43,54 @@ fn loose_typing(
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
-    let (offenders, param_escape) =
-        m.param_names
-            .iter()
-            .fold((Vec::new(), false), |(mut labels, escape), p| {
-                if matches!(p.as_str(), "self" | "cls" | "args" | "kwargs") {
-                    return (labels, escape);
-                }
-                if m.validated_names.contains(p) {
-                    return (labels, escape);
-                }
-                let next = ctx.type_hints.param_type(m, p).and_then(|ty| {
-                    reportable_loose(ctx, ty, cfg.loose_typing_strictness)
-                        .map(|kind| (format!("{p}: {ty}"), kind))
-                });
-                if let Some((label, kind)) = next {
-                    labels.push(label);
-                    (labels, escape || kind == LooseTypeKind::EscapeHatch)
-                } else {
-                    (labels, escape)
-                }
-            });
+    let return_type = ctx.type_hints.return_type(m);
+    let guarded = return_type.and_then(|ty| ctx.type_vocabulary.guarded_param(ty));
+    let offenders: Vec<(String, LooseTypeKind)> = m
+        .param_names
+        .iter()
+        .filter(|p| !matches!(p.as_str(), "self" | "cls" | "args" | "kwargs"))
+        .filter(|p| !p.starts_with('_') && guarded != Some(p.as_str()))
+        .filter(|p| !m.validated_names.contains(*p))
+        .filter_map(|p| {
+            let ty = ctx.type_hints.param_type(m, p)?;
+            reportable_loose(ctx, ty, cfg.loose_typing_strictness)
+                .map(|kind| (format!("{p}: {ty}"), kind))
+        })
+        .collect();
     // Tuple returns are tuple_packing's finding — don't double-report here.
-    let ret = ctx
-        .type_hints
-        .return_type(m)
-        .and_then(|ty| reportable_return(ctx, ty, cfg.loose_typing_strictness));
+    let ret = return_type.and_then(|ty| reportable_return(ctx, ty, cfg.loose_typing_strictness));
     if offenders.is_empty() && ret.is_none() {
         return;
     }
     let mut parts = Vec::new();
     if !offenders.is_empty() {
-        parts.push(format!("params [{}]", offenders.join(", ")));
+        let labels: Vec<&str> = offenders.iter().map(|(label, _)| label.as_str()).collect();
+        parts.push(format!("params [{}]", labels.join(", ")));
     }
     if let Some((ty, _)) = ret {
         parts.push(format!("returns {ty}"));
     }
-    let any = param_escape || ret.is_some_and(|(_, kind)| kind == LooseTypeKind::EscapeHatch);
+    let mut kinds = offenders
+        .iter()
+        .map(|(_, kind)| *kind)
+        .chain(ret.map(|(_, kind)| kind));
+    let any = kinds.clone().any(|kind| kind == LooseTypeKind::EscapeHatch);
     let severity = if any {
         Severity::Warning
     } else {
         Severity::Info
     };
+    let advice = if kinds.all(|kind| kind == LooseTypeKind::SafeTop) {
+        ctx.wording.safe_top_advice.to_string()
+    } else {
+        format!(
+            "replace loose types with {}; do not silence this with a shallow type alias",
+            ctx.wording.structure
+        )
+    };
     out.push(make(
         SmellKind::LooseTyping,
-        format!(
-            "{} — replace loose types with {}; do not silence this with a shallow type alias",
-            parts.join("; "),
-            ctx.wording.structure
-        ),
+        format!("{} — {advice}", parts.join("; ")),
         ctx.path,
         m.start_line,
         &m.name,
@@ -171,7 +170,12 @@ fn reportable_return<'a>(
     if matches!(base_type(ty), "tuple" | "Tuple") {
         return None;
     }
-    reportable_loose(ctx, ty, strictness).map(|kind| (ty, kind))
+    // Returning a top type hands the narrowing burden to every caller.
+    let kind = match ctx.type_vocabulary.loose_kind(ty)? {
+        LooseTypeKind::SafeTop => LooseTypeKind::SchemaErasing,
+        kind => kind,
+    };
+    reportable(kind, strictness).map(|kind| (ty, kind))
 }
 
 fn reportable_loose(
@@ -179,7 +183,10 @@ fn reportable_loose(
     annotation: &str,
     strictness: Strictness,
 ) -> Option<LooseTypeKind> {
-    let kind = ctx.type_vocabulary.loose_kind(annotation)?;
+    reportable(ctx.type_vocabulary.loose_kind(annotation)?, strictness)
+}
+
+fn reportable(kind: LooseTypeKind, strictness: Strictness) -> Option<LooseTypeKind> {
     match (strictness, kind) {
         (Strictness::Low, LooseTypeKind::EscapeHatch)
         | (Strictness::Medium, LooseTypeKind::EscapeHatch)
@@ -222,34 +229,5 @@ fn tuple_arity(annotation: &str) -> usize {
     if body.is_empty() {
         return 0;
     }
-    let mut depth = BracketDepth::default();
-    let mut count = 1usize;
-    for c in body.chars() {
-        match c {
-            '[' | '(' => depth.open(),
-            ']' | ')' => depth.close(),
-            ',' if depth.is_top_level() => count += 1,
-            _ => {}
-        }
-    }
-    count
-}
-
-#[derive(Default)]
-struct BracketDepth {
-    value: usize,
-}
-
-impl BracketDepth {
-    fn open(&mut self) {
-        self.value += 1;
-    }
-
-    fn close(&mut self) {
-        self.value = self.value.saturating_sub(1);
-    }
-
-    fn is_top_level(&self) -> bool {
-        self.value == 0
-    }
+    split_top_level(body, ',').len()
 }

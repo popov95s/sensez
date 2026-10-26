@@ -4,13 +4,14 @@
 //! [`FunctionUnit`] — and `this.<attr>` is normalized to the canonical `"self"`
 //! receiver so the language-neutral detectors work unchanged.
 
-use super::chains::chain_len;
+use super::chains::{chain_len, chain_root, is_chain_inner};
+use super::member_visibility::{function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_nesting};
 use super::params::param_names;
 use super::{conditionals, obsession, performance, symbols};
 use crate::profiles::lineage::Lineage;
-use crate::spine::ir::{bump, FunctionUnit};
-use std::collections::HashMap;
+use crate::spine::ir::{bump, CallbackPosition, ChainHit, FunctionUnit, Walked};
+use std::collections::{HashMap, HashSet};
 use tree_sitter::Node;
 
 /// Numeric literals that are never "magic".
@@ -49,6 +50,12 @@ impl FunctionFacts {
             param_names: param_names(func, src),
             is_method,
             max_tuple_return: super::classunit::tuple_return_arity(func, src),
+            callback_position: callback_position(lineage),
+            visibility: if is_method {
+                method_visibility(func, src)
+            } else {
+                function_visibility(lineage)
+            },
             ..Default::default()
         };
         if !is_method && func.kind() == "function_declaration" {
@@ -103,7 +110,9 @@ impl FunctionFacts {
             self.unit.branch_count += 1;
         }
         if conditionals::is_collapsible_nested_if(node) {
-            self.unit.collapsible_nested_ifs += 1;
+            self.unit
+                .collapsible_nested_if_lines
+                .push(node.start_position().row + 1);
         }
         match kind {
             "ternary_expression" => self
@@ -115,6 +124,9 @@ impl FunctionFacts {
                 if let Some(constructor) = returned_constructor(node, src) {
                     self.unit.returned_constructors.insert(constructor);
                 }
+                if let Some(name) = returned_name(node, src) {
+                    self.unit.returned_names.insert(name);
+                }
             }
             "number" => {
                 if let Ok(t) = node.utf8_text(src) {
@@ -123,7 +135,7 @@ impl FunctionFacts {
                     }
                 }
             }
-            "member_expression" => self.record_member(node, src),
+            "member_expression" => self.record_member(node, lineage.parent(node), src),
             "assignment_expression" => self.record_assignment(node, src),
             _ => {}
         }
@@ -141,8 +153,14 @@ impl FunctionFacts {
 }
 
 impl FunctionFacts {
-    fn record_member(&mut self, node: Node, src: &[u8]) {
-        self.unit.max_chain_depth = self.unit.max_chain_depth.max(chain_len(node));
+    fn record_member(&mut self, node: Node, parent: Option<Node>, src: &[u8]) {
+        if !is_chain_inner(node, parent) {
+            self.unit.chain_hits.push(ChainHit {
+                line: node.start_position().row + 1,
+                depth: chain_len(node),
+                root: chain_root(node, src),
+            });
+        }
         let Some(obj) = node.child_by_field_name("object") else {
             return;
         };
@@ -176,6 +194,31 @@ impl FunctionFacts {
     }
 }
 
+/// A hop through an `import * as ns` binding is a module path, not navigation.
+pub fn discount_namespace_hops(out: &mut Walked) {
+    let namespaces: HashSet<&str> = out
+        .symbols
+        .imports
+        .iter()
+        .flat_map(|import| import.imported_symbols.iter().zip(&import.bindings))
+        .filter(|(symbol, _)| *symbol == "*")
+        .map(|(_, binding)| binding.as_str())
+        .collect();
+    if namespaces.is_empty() {
+        return;
+    }
+    for hit in out
+        .units
+        .functions
+        .iter_mut()
+        .flat_map(|f| f.chain_hits.iter_mut())
+    {
+        if hit.root.as_deref().is_some_and(|r| namespaces.contains(r)) {
+            hit.depth = hit.depth.saturating_sub(1);
+        }
+    }
+}
+
 fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
     if node.kind() != "call_expression" {
         return None;
@@ -192,6 +235,24 @@ fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
         .child_by_field_name("property")
         .and_then(|method| method.utf8_text(src).ok())
         .map(str::to_string)
+}
+
+fn returned_name(node: Node<'_>, src: &[u8]) -> Option<String> {
+    let value = node.named_child(0).filter(|v| v.kind() == "identifier")?;
+    value.utf8_text(src).ok().map(str::to_string)
+}
+
+/// Callee name when `func` is passed directly as a call argument.
+fn callback_position(func: Lineage) -> CallbackPosition {
+    let is_argument = func
+        .parent(func.node())
+        .filter(|p| p.kind() == "arguments")
+        .and_then(|args| func.parent(args))
+        .is_some_and(|call| call.kind() == "call_expression");
+    match is_argument {
+        true => CallbackPosition::Argument,
+        false => CallbackPosition::Standalone,
+    }
 }
 
 fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {

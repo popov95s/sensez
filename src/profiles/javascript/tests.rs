@@ -115,6 +115,25 @@ fn function_facts_preserve_order_and_exclude_nested_bodies() {
     assert_eq!(functions[0].branch_count, 1);
 }
 
+#[test]
+fn only_the_outermost_member_records_a_chain() {
+    let src = b"import * as ns from './api';\nfunction f(o) {\n  return o.a.b.c.d + ns.x.y.z;\n}\n";
+    let functions = parse_source(src, 0, "m", &JsProfile)
+        .unwrap()
+        .units
+        .functions;
+    let hits: Vec<(usize, usize, Option<&str>)> = functions[0]
+        .chain_hits
+        .iter()
+        .map(|h| (h.line, h.depth, h.root.as_deref()))
+        .collect();
+    assert_eq!(
+        hits,
+        vec![(3, 4, Some("o")), (3, 2, Some("ns"))],
+        "one hit per chain; the namespace hop is not navigation"
+    );
+}
+
 /// Relative imports resolve to sibling module keys and a mutual import is a cycle.
 #[test]
 fn relative_imports_resolve_and_detect_cycle() {

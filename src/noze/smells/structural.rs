@@ -1,6 +1,7 @@
 //! Structural smells: deep nesting, long parameter lists, too many returns,
 //! magic numbers, message chains (Law of Demeter), and split variables.
 
+use super::lines::{hit_lines, line_list};
 use super::{make, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -110,41 +111,60 @@ impl StructuralDetector<'_, '_> {
     }
 
     fn message_chains(&mut self, m: &FunctionUnit) {
-        if m.max_chain_depth <= self.cfg.max_chain_depth {
+        let hits: Vec<_> = m
+            .chain_hits
+            .iter()
+            .filter(|hit| hit.depth > self.cfg.max_chain_depth)
+            .filter(|hit| {
+                hit.root
+                    .as_ref()
+                    .is_none_or(|root| !self.cfg.message_chain_ignore_roots.contains(root))
+            })
+            .collect();
+        let Some(depth) = hits.iter().map(|hit| hit.depth).max() else {
             return;
-        }
-        self.out.push(make(
+        };
+        let lines = hit_lines(hits.iter().map(|hit| hit.line));
+        let Some(&first) = lines.first() else {
+            return;
+        };
+        let finding = make(
             SmellKind::MessageChain,
             format!(
-                "attribute chain depth {} (threshold {}) — Law of Demeter",
-                m.max_chain_depth, self.cfg.max_chain_depth
+                "attribute chain depth {depth} (threshold {}) at {} — Law of Demeter",
+                self.cfg.max_chain_depth,
+                line_list(&lines)
             ),
             self.ctx.path,
-            m.start_line,
+            first,
             &m.name,
             Severity::Warning,
-            m.max_chain_depth as u32,
+            depth as u32,
             self.cfg.max_chain_depth as u32,
-        ));
+        );
+        self.out.push(SmellFinding { lines, ..finding });
     }
 
     fn unnecessary_nested_if(&mut self, m: &FunctionUnit) {
-        if m.collapsible_nested_ifs == 0 {
+        let lines = hit_lines(m.collapsible_nested_if_lines.iter().copied());
+        let Some(&line) = lines.first() else {
             return;
-        }
-        self.out.push(make(
+        };
+        let count = m.collapsible_nested_if_lines.len();
+        let finding = make(
             SmellKind::UnnecessaryNestedIf,
             format!(
-                "{} nested if(s) can be combined with a boolean AND",
-                m.collapsible_nested_ifs
+                "{count} nested if(s) at {} can be combined with a boolean AND",
+                line_list(&lines)
             ),
             self.ctx.path,
-            m.start_line,
+            line,
             &m.name,
             Severity::Info,
-            m.collapsible_nested_ifs as u32,
+            count as u32,
             0,
-        ));
+        );
+        self.out.push(SmellFinding { lines, ..finding });
     }
 
     fn nested_ternary(&mut self, m: &FunctionUnit) {

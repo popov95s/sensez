@@ -13,7 +13,7 @@ use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
     TypeVocabularyProfile, WordingProfile,
 };
-use crate::spine::ir::{ImportContext, ImportPhase, Walked};
+use crate::spine::ir::{ImportContext, ImportPhase, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -37,6 +37,14 @@ mod default_export_tests;
 #[cfg(test)]
 #[path = "wording_tests.rs"]
 mod wording_tests;
+
+#[cfg(test)]
+#[path = "mutation_tests.rs"]
+mod mutation_tests;
+
+#[cfg(test)]
+#[path = "typing_tests.rs"]
+mod typing_tests;
 
 #[cfg(test)]
 #[path = "arrow_name_tests.rs"]
@@ -232,6 +240,22 @@ macro_rules! impl_ts_traits {
 
             fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
                 typevocab::is_primitive_scalar_alias(annotation)
+            }
+
+            fn guarded_param<'a>(&self, return_annotation: &'a str) -> Option<&'a str> {
+                typevocab::guarded_param(return_annotation)
+            }
+
+            fn is_literal_union(&self, annotation: &str) -> bool {
+                typevocab::is_literal_union(annotation)
+            }
+
+            fn is_mutable_collection(&self, annotation: &str, family: MutatorFamily) -> bool {
+                typevocab::is_mutable_collection(annotation, family)
+            }
+
+            fn is_void(&self, annotation: &str) -> bool {
+                typevocab::is_void(annotation)
             }
         }
 

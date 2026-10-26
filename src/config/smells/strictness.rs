@@ -30,7 +30,7 @@ pub const LOOSE_TYPING_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "High",
         value: "high",
-        description: "Flags everything in medium, primitive-only collections, and shallow aliases.",
+        description: "Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.",
     },
 ];
 

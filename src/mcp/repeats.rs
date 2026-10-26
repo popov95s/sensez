@@ -204,12 +204,17 @@ fn clone_key(finding: &CloneClass) -> String {
 }
 
 fn smell_key(finding: &SmellFinding) -> String {
+    let span = if finding.lines.is_empty() {
+        format!("{}-{}", finding.line, finding.end_line.max(finding.line))
+    } else {
+        let lines: Vec<String> = finding.lines.iter().map(usize::to_string).collect();
+        lines.join(",")
+    };
     format!(
-        "smells/{}|{}:{}-{}|{}",
+        "smells/{}|{}:{}|{}",
         finding.kind,
         path(&finding.file),
-        finding.line,
-        finding.end_line.max(finding.line),
+        span,
         finding.symbol
     )
 }

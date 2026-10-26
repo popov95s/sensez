@@ -38,6 +38,7 @@ mod tests {
             file: "src/config/model.rs".into(),
             line: 0,
             end_line: 0,
+            lines: Vec::new(),
             symbol: "src/config/model".into(),
             severity: crate::report::Severity::Warning,
             metric: 26,

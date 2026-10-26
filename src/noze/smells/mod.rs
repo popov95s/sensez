@@ -9,6 +9,7 @@ mod clumps;
 mod cohesion;
 mod complexity;
 mod coupling;
+mod external_vocab;
 mod graphy;
 mod inherit;
 mod lines;
@@ -23,6 +24,8 @@ mod union_find;
 
 #[cfg(test)]
 mod cohesion_tests;
+#[cfg(test)]
+mod god_module_tests;
 #[cfg(test)]
 mod graph_tests;
 #[cfg(test)]
@@ -112,7 +115,7 @@ pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) ->
     );
 
     out.extend(clumps::detect(&kept, cfg));
-    out.extend(graphy::detect(graph, cfg, &|node: &ModuleNode| {
+    out.extend(graphy::detect(graph, files, cfg, &|node: &ModuleNode| {
         node.source_index
             .and_then(|index| files.get(index))
             .is_some_and(|file| scope.includes(file))
@@ -210,6 +213,7 @@ pub(super) fn make(
         file: file.to_path_buf(),
         line,
         end_line: 0, // filled per file by `fill_spans` (0 => anchor-line scope)
+        lines: Vec::new(),
         symbol: symbol.to_string(),
         severity,
         metric,
@@ -225,7 +229,11 @@ mod determinism_tests;
 #[cfg(test)]
 mod discipline_tests;
 #[cfg(test)]
+mod line_anchor_tests;
+#[cfg(test)]
 mod magic_string_tests;
+#[cfg(test)]
+mod message_chain_tests;
 #[cfg(test)]
 mod nested_if_tests;
 #[cfg(test)]

@@ -64,7 +64,7 @@ fn scan(items: &[String], code: &str) {
 "#,
     );
     let f = &w.units.functions[0];
-    assert_eq!(f.literal_membership_tests, 1);
+    assert_eq!(f.literal_memberships.len(), 1);
     assert!(
         f.performance.iteration_calls.len() >= 2,
         "{:?}",

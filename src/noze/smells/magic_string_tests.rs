@@ -108,14 +108,7 @@ fn python_keeps_short_fallbacks_but_requires_a_self_guard() {
 }
 
 #[test]
-fn sentinel_words_come_from_the_language_profile() {
-    use crate::profiles::registry::smell_wording;
-    use crate::spine::ir::Language;
-    let ts = smell_wording(Language::TypeScript).sentinel_words;
-    let py = smell_wording(Language::Python).sentinel_words;
-    assert!(ts.contains(&"undefined") && ts.contains(&"null"));
-    assert!(!py.contains(&"undefined") && !py.contains(&"null"));
-    assert!(py.contains(&"none"));
+fn typescript_undefined_is_a_sentinel_word() {
     assert!(fires(
         "ts",
         "export async function tag(o: { l?: string }) { await save({ l: o.l ?? \"undefined\" }); }\n",

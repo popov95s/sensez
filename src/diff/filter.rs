@@ -110,12 +110,10 @@ fn cycle_module_touches_diff(
 }
 
 fn smell_body_touches_diff(finding: &SmellFinding, changed: &ChangedLines) -> bool {
-    finding.line > 0
-        && changed.touches(
-            &finding.file,
-            finding.line,
-            finding.end_line.max(finding.line),
-        )
+    finding
+        .spans()
+        .into_iter()
+        .any(|(start, end)| start > 0 && changed.touches(&finding.file, start, end))
 }
 
 /// n-way-aware guidance: if any copy predates the change, point at it to reuse;

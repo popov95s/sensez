@@ -49,8 +49,7 @@ pub(crate) const BASELINE_TEST_EXCLUDE: [&str; 5] = [
     "**/*_test.py",
 ];
 
-/// Migration scripts are generated and often cyclic by design; `alembic` and
-/// `versions` are Python conventions, so they never hide JS/TS/Rust sources.
+/// Generated, often cyclic migration scripts; `alembic`/`versions` globs are Python-only.
 pub(crate) const BASELINE_MIGRATION_EXCLUDE: [&str; 3] = [
     "**/alembic/**/*.py",
     "**/migrations/**",

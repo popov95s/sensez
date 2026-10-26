@@ -43,3 +43,44 @@ fn nested_ternary_strictness_has_no_low_level() {
 
     assert!(err.contains("medium, high"), "{err}");
 }
+
+#[test]
+fn precision_rule_knobs_parse() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.message_chain]
+            ignore_roots = ["api"]
+
+            [rules.literal_membership]
+            skip_external_vocab = false
+
+            [rules.god_module]
+            min_fan_in = 2
+            min_fan_out = 3
+            min_lines = 40
+            min_units = 4
+        "#,
+    )
+    .unwrap();
+
+    let ts = cfg.for_language(Language::TypeScript);
+    assert_eq!(ts.message_chain_ignore_roots, vec!["api".to_string()]);
+    assert!(!ts.literal_membership_skip_external_vocab);
+    assert_eq!(ts.god_module_min_fan_in, 2);
+    assert_eq!(ts.god_module_min_fan_out, 3);
+    assert_eq!(ts.god_module_min_lines, 40);
+    assert_eq!(ts.god_module_min_units, 4);
+
+    let defaults = SmellConfig::default();
+    let py = defaults.for_language(Language::Python);
+    assert!(py.message_chain_ignore_roots.is_empty());
+    assert!(py.literal_membership_skip_external_vocab);
+    assert_eq!(
+        (py.god_module_min_fan_in, py.god_module_min_fan_out),
+        (5, 10)
+    );
+    assert_eq!(
+        (py.god_module_min_lines, py.god_module_min_units),
+        (150, 12)
+    );
+}

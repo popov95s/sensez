@@ -100,9 +100,9 @@ fn fused_collector_json_identity() {
     assert_eq!(f.branch_count, 2);
     assert_eq!(f.cognitive, 3);
     assert_eq!(f.magic_numbers, 0);
-    assert_eq!(f.collapsible_nested_ifs, 0);
+    assert!(f.collapsible_nested_if_lines.is_empty());
     assert_eq!(f.comment_lines, 0);
-    assert_eq!(f.max_chain_depth, 0);
+    assert!(f.chain_hits.is_empty());
     assert!(!f.is_method);
     assert!(!f.is_nested);
     assert_eq!(f.parent, "");
@@ -128,6 +128,6 @@ fn fused_collector_json_identity() {
     assert_eq!(f.review_risks.broad_handlers, 0);
     assert_eq!(f.review_risks.empty_fallbacks, 0);
     assert_eq!(f.review_risks.repeated_guards, 0);
-    assert_eq!(f.literal_membership_tests, 0);
+    assert!(f.literal_memberships.is_empty());
     assert!(f.string_fallbacks.is_empty());
 }

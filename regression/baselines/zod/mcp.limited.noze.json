@@ -517,12 +517,13 @@
   "smells": [
     {
       "action": "warning",
-      "file": "<zod>/packages/bench/metabench.ts",
-      "kind": "god_module",
-      "message": "fan-in 29 + fan-out 6 = 35 (threshold 25)",
-      "metric": 35,
-      "symbol": "metabench",
-      "threshold": 25
+      "file": "<zod>/packages/tsc/generate.ts",
+      "kind": "nested_loop",
+      "line": 265,
+      "message": "nested loop multiplies work per input item; combine the work or use a bulk operation.",
+      "metric": 4,
+      "symbol": "generateExtendChain",
+      "threshold": 1
     },
     {
       "action": "warning",
@@ -686,8 +687,11 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "message_chain",
-      "line": 4458,
-      "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
+      "line": 4470,
+      "lines": [
+        4470
+      ],
+      "message": "attribute chain depth 5 (threshold 4) at L4470 \u2014 Law of Demeter",
       "metric": 5,
       "symbol": "parse",
       "threshold": 4

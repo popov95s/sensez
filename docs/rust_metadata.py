@@ -117,7 +117,8 @@ def default_knob_values() -> dict[str, str]:
     fields = _default_smell_fields()
     knobs = {}
     for kind, key, field in _rule_knob_fields():
-        knobs[f"{kind}.{key}"] = fields.get(field, "10")
+        value = fields.get(field, "10")
+        knobs[f"{kind}.{key}"] = "[]" if value == "Vec::new()" else value
     return knobs
 
 
@@ -191,7 +192,15 @@ def _rule_knob_fields() -> list[tuple[SmellTerm, str, str]]:
             bool_body,
         )
     ]
-    return integer_knobs + bool_knobs
+    list_body = source.split("fn apply_list_knob", 1)[1].split("fn apply_string_knob", 1)[0]
+    list_knobs = [
+        (SmellTerm(camel_to_snake(kind)), key, field)
+        for kind, key, field in re.findall(
+            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*smells\.(\w+)\s*=',
+            list_body,
+        )
+    ]
+    return integer_knobs + bool_knobs + list_knobs
 
 
 def _js_ts_overrides() -> dict[str, set[SmellTerm]]:

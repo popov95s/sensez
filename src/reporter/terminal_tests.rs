@@ -48,6 +48,7 @@ fn smell_output_shows_only_action_label() {
         file: "x.tsx".into(),
         line: 12,
         end_line: 12,
+        lines: Vec::new(),
         symbol: "Widget".into(),
         severity: Severity::Warning,
         metric: 1,
@@ -61,6 +62,7 @@ fn smell_output_shows_only_action_label() {
         file: "y.tsx".into(),
         line: 20,
         end_line: 20,
+        lines: Vec::new(),
         symbol: "Widget".into(),
         severity: Severity::Info,
         metric: 1,
@@ -85,6 +87,7 @@ fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
         file: "a.ts".into(),
         line: 4,
         end_line: 4,
+        lines: Vec::new(),
         symbol: "one".into(),
         severity: Severity::Warning,
         metric: 1,
@@ -99,6 +102,7 @@ fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
         file: "b.ts".into(),
         line: 8,
         end_line: 8,
+        lines: Vec::new(),
         symbol: "two".into(),
         severity: Severity::Warning,
         metric: 1,
@@ -131,6 +135,7 @@ fn smell_output_names_empty_symbol_anonymous() {
         metric: 1,
         threshold: 0,
         reason: String::new(),
+        lines: Vec::new(),
     });
 
     let text = render(&report, false);

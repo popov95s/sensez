@@ -5,6 +5,7 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     grouped_value: "a NamedTuple or dataclass",
     category: "an Enum",
     options: "an Enum",
+    safe_top_advice: "narrow it with isinstance checks or a model parse at the boundary",
     fallback_example: r#"`or ""`"#,
     fallback_advice:
         "prefer a tighter contract with an optional string value or a dedicated default",
