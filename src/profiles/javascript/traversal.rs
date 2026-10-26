@@ -3,6 +3,7 @@
 //! metric collection is fused into this single walk — there is no second
 //! per-function body pass.
 
+use super::comment_syntax::COMMENT_SYNTAX;
 use super::{imports, lexeme, namespaces, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::lineage::Lineage;
@@ -59,6 +60,7 @@ fn visit<'tree>(
     ctx: &mut VisitCtx<'_, 'tree>,
 ) {
     let kind = node.kind();
+    let parent = ctx.path.last().copied();
 
     // ES imports / re-exports: extracted, not descended into.
     if imports::is_import_statement(kind) {
@@ -81,19 +83,14 @@ fn visit<'tree>(
     }
 
     // Directive prologues / bare string statements ("use strict") are not logic.
-    if kind == "string"
-        && ctx
-            .path
-            .last()
-            .is_some_and(|p| p.kind() == "expression_statement")
-    {
+    if kind == "string" && parent.is_some_and(|p| p.kind() == "expression_statement") {
         return;
     }
 
     // Comments never map to a structural token, so capturing their text for the
     // eyez index cannot affect duplication.
     if kind == "comment" {
-        walk::record_comment_span(ctx.out, node, src, &super::comment_syntax::COMMENT_SYNTAX);
+        walk::record_comment_span(ctx.out, node, parent, src, &COMMENT_SYNTAX);
         #[cfg(feature = "eyez")]
         {
             let scope_path: Vec<&str> = ctx.scope.iter().map(|s| s.name.as_str()).collect();
@@ -123,7 +120,7 @@ fn visit<'tree>(
         ctx.free_reads.record(node, &ctx.path, src);
     }
     if kind == "string" {
-        if let Some(value) = quoted_string_value(node, src) {
+        if let Some(value) = symbols::quoted_string_value(node, src) {
             credit_string(ctx.out, value);
         }
     }
@@ -184,7 +181,7 @@ fn visit<'tree>(
         let frame = ctx
             .active_fns
             .last_mut()
-            .and_then(|active| active.collector.enter(child, src));
+            .and_then(|active| active.collector.enter(Lineage::new(&ctx.path, child), src));
         visit(
             child,
             src,
@@ -228,13 +225,6 @@ fn leading_function(node: Node, src: &[u8]) -> Option<String> {
         }
         _ => None,
     }
-}
-
-fn quoted_string_value<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
-    let text = node.utf8_text(src).ok()?.trim();
-    let quote = text.chars().next().filter(|ch| matches!(ch, '"' | '\''))?;
-    let body = text.get(quote.len_utf8()..)?;
-    Some(body.strip_suffix(quote).unwrap_or(body))
 }
 
 /// Per-unit structural summaries for the design-smell pillar. Function-metric

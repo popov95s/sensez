@@ -60,7 +60,13 @@ fn visit(
     // Comments never map to a structural token (`map_kind` returns `None`), so
     // capturing their text here cannot affect duplication either.
     if kind == "comment" {
-        walk::record_comment_span(out, node, src, &super::comment_syntax::COMMENT_SYNTAX);
+        walk::record_comment_span(
+            out,
+            node,
+            node.parent(),
+            src,
+            &super::comment_syntax::COMMENT_SYNTAX,
+        );
         #[cfg(feature = "eyez")]
         {
             let scope_path: Vec<&str> = scope.iter().map(|s| s.name.as_str()).collect();

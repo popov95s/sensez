@@ -271,12 +271,13 @@ pub(crate) fn record_string_fallback(
 pub(crate) fn record_comment_span(
     out: &mut Walked,
     node: Node,
+    parent: Option<Node>,
     src: &[u8],
     syntax: &CommentSyntax,
 ) {
     out.units.comment_spans.push(CommentSpan {
         start_line: node.start_position().row + 1,
         end_line: node.end_position().row + 1,
-        class: comment_class::classify(node, src, syntax),
+        class: comment_class::classify(node, parent, src, syntax),
     });
 }

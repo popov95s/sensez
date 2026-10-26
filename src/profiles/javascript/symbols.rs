@@ -118,3 +118,11 @@ pub fn initializer_callees(node: Node, src: &[u8]) -> Vec<(String, String)> {
         })
         .collect()
 }
+
+/// Body of a `"…"` / `'…'` string literal.
+pub fn quoted_string_value<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
+    let text = node.utf8_text(src).ok()?.trim();
+    let quote = text.chars().next().filter(|ch| matches!(ch, '"' | '\''))?;
+    let body = text.get(quote.len_utf8()..)?;
+    Some(body.strip_suffix(quote).unwrap_or(body))
+}

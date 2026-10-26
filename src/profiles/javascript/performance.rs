@@ -1,5 +1,6 @@
 //! JS/TS AST facts for performance-oriented smells.
 
+use crate::profiles::lineage::Lineage;
 use crate::profiles::walk;
 use crate::spine::ir::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
@@ -46,7 +47,8 @@ const EXTERNAL_TYPE_PARTS: &[&str] = &[
     "session",
     "transport",
 ];
-pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: usize) {
+pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], loop_depth: usize) {
+    let node = lineage.node();
     let kind = node.kind();
     if is_loop(kind) {
         let loop_line = line(node, src);
@@ -63,11 +65,11 @@ pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: us
     if kind != "call_expression" {
         return;
     }
-    let Some(call) = call_fact(node, src) else {
+    let Some(call) = call_fact(lineage, src) else {
         return;
     };
     facts.calls.push(call.clone());
-    if let Some(iteration) = iteration_call(node, src, &call) {
+    if let Some(iteration) = iteration_call(lineage, src, &call) {
         facts.iteration_calls.push(iteration);
     }
     if loop_depth == 0 {
@@ -90,7 +92,8 @@ pub fn is_loop(kind: &str) -> bool {
     )
 }
 
-fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
+fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
+    let node = lineage.node();
     let func = node.child_by_field_name("function")?;
     let line = node.start_position().row + 1;
     let mut call = match func.kind() {
@@ -107,12 +110,13 @@ fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
         }
         _ => None,
     }?;
-    call.region = control_region(node);
+    call.region = control_region(lineage);
     call.offset = node.start_byte();
     Some(call)
 }
 
-fn iteration_call(node: Node, src: &[u8], call: &CallFact) -> Option<CallFact> {
+fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> Option<CallFact> {
+    let node = lineage.node();
     if !call.member {
         return None;
     }
@@ -124,7 +128,7 @@ fn iteration_call(node: Node, src: &[u8], call: &CallFact) -> Option<CallFact> {
     };
     Some(CallFact {
         pass,
-        in_assertion: in_assertion(node, src),
+        in_assertion: in_assertion(lineage, src),
         arg_idents: node
             .child_by_field_name("arguments")
             .map(|args| identifiers(args, src))
@@ -164,9 +168,9 @@ fn sole_parameter(arrow: Node) -> Option<Node> {
         .map(|param| param.child_by_field_name("pattern").unwrap_or(param))
 }
 
-fn in_assertion(node: Node, src: &[u8]) -> bool {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
+fn in_assertion(lineage: Lineage, src: &[u8]) -> bool {
+    let mut current = lineage.node();
+    while let Some(parent) = lineage.parent(current) {
         if super::units::is_function(parent.kind()) {
             return false;
         }
@@ -229,9 +233,9 @@ fn stable_receiver(node: &Node<'_>) -> bool {
                 .is_some_and(|base| stable_receiver(&base)))
 }
 
-fn control_region(node: Node<'_>) -> usize {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
+fn control_region(lineage: Lineage) -> usize {
+    let mut current = lineage.node();
+    while let Some(parent) = lineage.parent(current) {
         if matches!(
             parent.kind(),
             "if_statement" | "switch_case" | "ternary_expression"

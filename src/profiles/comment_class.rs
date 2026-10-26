@@ -51,18 +51,20 @@ const RATIONALE_MARKERS: &[&str] = &[
 ];
 const RATIONALE_MIN_WORDS: usize = 12;
 
-pub(crate) fn classify(node: Node, src: &[u8], syntax: &CommentSyntax) -> CommentClass {
+pub(crate) fn classify(
+    node: Node,
+    parent: Option<Node>,
+    src: &[u8],
+    syntax: &CommentSyntax,
+) -> CommentClass {
     let lines = body_lines(node, src, syntax);
     if lines.first().is_some_and(|line| is_directive(line, syntax)) {
         return CommentClass::Directive;
     }
-    if node
-        .parent()
-        .is_some_and(|p| syntax.markup_parents.contains(&p.kind()))
-    {
+    if parent.is_some_and(|p| syntax.markup_parents.contains(&p.kind())) {
         return CommentClass::Markup;
     }
-    let block: Vec<&str> = block_nodes(node)
+    let block: Vec<&str> = block_nodes(node, parent)
         .into_iter()
         .flat_map(|comment| body_lines(comment, src, syntax))
         .collect();
@@ -80,21 +82,24 @@ pub(crate) fn classify(node: Node, src: &[u8], syntax: &CommentSyntax) -> Commen
 }
 
 /// `node` plus the same-kind comments on directly adjacent lines.
-fn block_nodes(node: Node) -> Vec<Node> {
+fn block_nodes<'t>(node: Node<'t>, parent: Option<Node<'t>>) -> Vec<Node<'t>> {
+    let Some(parent) = parent else {
+        return vec![node];
+    };
     let adjacent = |upper: &Node, lower: &Node| {
         upper.kind() == lower.kind() && upper.end_position().row + 1 >= lower.start_position().row
     };
-    let mut block: Vec<Node> = std::iter::successors(Some(node), |n| {
-        n.prev_named_sibling().filter(|prev| adjacent(prev, n))
-    })
-    .collect();
-    block.reverse();
-    block.extend(
-        std::iter::successors(Some(node), |n| {
-            n.next_named_sibling().filter(|next| adjacent(n, next))
-        })
-        .skip(1),
-    );
+    let mut cursor = parent.walk();
+    let mut block: Vec<Node> = Vec::new();
+    for sibling in parent.named_children(&mut cursor) {
+        if block.last().is_some_and(|last| !adjacent(last, &sibling)) {
+            if block.iter().any(|member| member.id() == node.id()) {
+                break;
+            }
+            block.clear();
+        }
+        block.push(sibling);
+    }
     block
 }
 
