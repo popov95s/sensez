@@ -104,9 +104,7 @@ fn call_write(
     cfg: &Smells,
 ) -> Option<Write> {
     let method = normalized(&call.method);
-    let schedules = method.starts_with("schedule")
-        || SCHEDULE_METHODS.contains(&method.as_str())
-        || profile.scheduler_methods().contains(&method.as_str());
+    let schedules = method.starts_with("schedule") || SCHEDULE_METHODS.contains(&method.as_str());
     if !call.member {
         return schedules.then(|| write(call, Reach::Persistent));
     }
@@ -186,7 +184,7 @@ fn names_cache(target: &str) -> bool {
     CACHE_WORDS.iter().any(|word| lower.contains(word))
 }
 
-/// Lower-case with `_` removed, so `run_after` and `runAfter` compare equal.
+/// Lower-case with `_` removed, so `save_all` and `saveAll` compare equal.
 pub(super) fn normalized(name: &str) -> String {
     name.chars()
         .filter(|ch| *ch != '_')

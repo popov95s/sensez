@@ -247,10 +247,6 @@ macro_rules! impl_ts_traits {
                 performance::is_mutating_call(method)
             }
 
-            fn scheduler_methods(&self) -> &'static [&'static str] {
-                performance::SCHEDULER_METHODS
-            }
-
             fn is_bounded_loop(&self, subject: &str) -> bool {
                 performance::is_bounded_loop(subject)
             }
