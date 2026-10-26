@@ -204,9 +204,9 @@ pub enum EyezAction {
         path: PathBuf,
         /// Natural-language intent query.
         query: String,
-        /// Number of results to return.
-        #[arg(long, default_value_t = 10)]
-        top_k: usize,
+        /// Number of results to return (at least 1).
+        #[arg(long, default_value_t = 10, value_parser = clap::value_parser!(u16).range(1..))]
+        top_k: u16,
         /// Emit machine-readable JSON instead of a human-readable list.
         #[arg(long)]
         json: bool,
@@ -236,11 +236,11 @@ pub struct ScanOptions {
     /// Emit machine-readable JSON instead of a human-readable report.
     #[arg(long)]
     pub json: bool,
-    /// Cap each pillar to its top-N ranked findings (0 = unlimited).
+    /// Cap each pillar to its top-N ranked findings; smells are capped per kind (0 = unlimited).
     #[arg(long)]
     pub max: Option<usize>,
     /// Print every finding instead of the default top offenders.
-    #[arg(long)]
+    #[arg(long, conflicts_with = "max")]
     pub all: bool,
     /// Report only duplicate-code findings.
     #[arg(long = "duplicates")]

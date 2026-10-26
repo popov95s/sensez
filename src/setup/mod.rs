@@ -1,5 +1,6 @@
 mod agents;
 mod artifacts;
+mod command;
 mod gate;
 mod prompts;
 mod providers;
@@ -140,10 +141,12 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
             false,
         )?;
 
-    let sensez_bin = std::env::current_exe()
-        .context("locating the sensez executable")?
-        .to_string_lossy()
-        .into_owned();
+    let sensez_bin = command::mcp_command(
+        &root,
+        install_scope,
+        agent_spec.mcp_launch_dir,
+        &std::env::current_exe().context("locating the sensez executable")?,
+    );
     let mut done = Vec::new();
     if install_scope == InstallScope::Project {
         done.push(artifacts::write_config(
@@ -169,6 +172,12 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
             &sensez_bin,
         )?);
     } else if install_scope == InstallScope::Project && agent_spec.mcp_relpath.is_some() {
+        if std::path::Path::new(&sensez_bin).is_absolute() {
+            eprintln!(
+                "note: the MCP config stores this machine's absolute sensez path; \
+                 add sensez as a project dependency or put it on PATH to make it portable."
+            );
+        }
         done.push(artifacts::write_mcp_config(&root, &agent, &sensez_bin)?);
     } else {
         done.push(
@@ -236,3 +245,7 @@ mod template_tests;
 #[cfg(test)]
 #[path = "mcp_config_tests.rs"]
 mod mcp_config_tests;
+
+#[cfg(test)]
+#[path = "mcp_command_tests.rs"]
+mod mcp_command_tests;

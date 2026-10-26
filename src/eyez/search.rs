@@ -25,6 +25,9 @@ pub struct SearchHit {
 
 /// The `k` docs whose vectors are most similar to `query`.
 pub fn top_k(vectors: &[Vec<f32>], docs: &[CachedDoc], query: &[f32], k: usize) -> Vec<SearchHit> {
+    if k == 0 {
+        return Vec::new();
+    }
     let mut scored: Vec<(f32, usize)> = vectors
         .par_iter()
         .enumerate()
@@ -85,5 +88,12 @@ mod tests {
         assert_eq!(hits.len(), 2, "k caps the result count");
         assert_eq!(hits[0].symbol_path, "b", "best match first");
         assert!(hits[0].score >= hits[1].score, "scores are descending");
+    }
+
+    #[test]
+    fn top_k_zero_returns_empty() {
+        let docs = vec![cached("a"), cached("b")];
+        let vectors = vec![vec![1.0, 0.0], vec![0.0, 1.0]];
+        assert!(top_k(&vectors, &docs, &[0.0, 1.0], 0).is_empty());
     }
 }

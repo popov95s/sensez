@@ -9,6 +9,13 @@ pub enum AgentKind {
     Other,
 }
 
+/// Working directory the agent starts project MCP servers in.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum McpLaunchDir {
+    WorkspaceRoot,
+    Unknown,
+}
+
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct AgentSpec {
     pub kind: AgentKind,
@@ -19,6 +26,7 @@ pub struct AgentSpec {
     pub global_mcp_relpath: Option<&'static str>,
     pub global_skill_relpath: Option<&'static str>,
     pub mcp_adapter: Option<McpAdapter>,
+    pub mcp_launch_dir: McpLaunchDir,
     pub supports_hooks: bool,
 }
 
@@ -32,6 +40,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: Some(".claude.json"),
         global_skill_relpath: Some(".claude/skills/sensez"),
         mcp_adapter: Some(McpAdapter::Standard),
+        mcp_launch_dir: McpLaunchDir::WorkspaceRoot,
         supports_hooks: true,
     },
     AgentSpec {
@@ -43,6 +52,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: Some(".cursor/mcp.json"),
         global_skill_relpath: None,
         mcp_adapter: Some(McpAdapter::Standard),
+        mcp_launch_dir: McpLaunchDir::Unknown,
         supports_hooks: false,
     },
     AgentSpec {
@@ -54,6 +64,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: Some(".cline/data/settings/cline_mcp_settings.json"),
         global_skill_relpath: Some(".cline/skills/sensez"),
         mcp_adapter: Some(McpAdapter::Standard),
+        mcp_launch_dir: McpLaunchDir::Unknown,
         supports_hooks: false,
     },
     AgentSpec {
@@ -65,6 +76,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: Some(".codex/config.toml"),
         global_skill_relpath: Some(".codex/skills/sensez"),
         mcp_adapter: Some(McpAdapter::Codex),
+        mcp_launch_dir: McpLaunchDir::Unknown,
         supports_hooks: false,
     },
     AgentSpec {
@@ -76,6 +88,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: Some(".config/opencode/opencode.json"),
         global_skill_relpath: Some(".config/opencode/skills/sensez"),
         mcp_adapter: Some(McpAdapter::OpenCode),
+        mcp_launch_dir: McpLaunchDir::Unknown,
         supports_hooks: false,
     },
     AgentSpec {
@@ -87,6 +100,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: Some(".pi/agent/mcp.json"),
         global_skill_relpath: Some(".pi/agent/skills/sensez"),
         mcp_adapter: Some(McpAdapter::Standard),
+        mcp_launch_dir: McpLaunchDir::Unknown,
         supports_hooks: false,
     },
     AgentSpec {
@@ -98,6 +112,7 @@ pub const AGENTS: &[AgentSpec] = &[
         global_mcp_relpath: None,
         global_skill_relpath: None,
         mcp_adapter: None,
+        mcp_launch_dir: McpLaunchDir::Unknown,
         supports_hooks: false,
     },
 ];

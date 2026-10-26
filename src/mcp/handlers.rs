@@ -110,32 +110,27 @@ fn scan_tool(args: &Value) -> ToolResult {
 }
 
 #[derive(Debug, Deserialize)]
-#[serde(default)]
 struct ScanArgs {
     /// Repository path to scan.
     path: String,
     /// Override the duplication token threshold for this scan.
+    #[serde(default)]
     threshold: Option<usize>,
     /// Per-pillar cap on returned findings (`0` = no cap).
+    #[serde(default)]
     limit: usize,
     /// Scope the scan to the diff vs. HEAD (`true` is the agent-friendly
     /// default; pass `false` for a full scan).
+    #[serde(default = "enabled")]
     diff: bool,
     /// `false` for a shape-only call (e.g. an agent-facing limited
     /// preview) that should not record into brainz.
+    #[serde(default = "enabled")]
     record: bool,
 }
 
-impl Default for ScanArgs {
-    fn default() -> Self {
-        Self {
-            path: String::new(),
-            threshold: None,
-            limit: 0,
-            diff: true,
-            record: true,
-        }
-    }
+fn enabled() -> bool {
+    true
 }
 
 fn run_scan(path: &Path, args: &ScanArgs) -> anyhow::Result<(String, Value)> {
@@ -163,7 +158,7 @@ fn run_scan(path: &Path, args: &ScanArgs) -> anyhow::Result<(String, Value)> {
 fn search_docs(args: &Value) -> ToolResult {
     let path = required_str(args, "path")?;
     let query = required_str(args, "query")?;
-    let top_k = args.get("top_k").and_then(Value::as_u64).unwrap_or(10) as usize;
+    let top_k = top_k_arg(args)?;
 
     let start = Instant::now();
     let result = crate::eyez::Index::open(Path::new(path)).map(|index| {
@@ -193,6 +188,18 @@ fn search_docs(args: &Value) -> ToolResult {
         }
         Err(err) => Ok(text_result(format!("{err:#}"), true)),
     }
+}
+
+#[cfg(feature = "eyez")]
+fn top_k_arg(args: &Value) -> Result<usize, (i64, String)> {
+    let Some(value) = args.get("top_k") else {
+        return Ok(10);
+    };
+    value
+        .as_u64()
+        .filter(|&k| k > 0)
+        .and_then(|k| usize::try_from(k).ok())
+        .ok_or((-32602, "'top_k' must be a positive integer".to_string()))
 }
 
 fn explain(args: &Value) -> ToolResult {

@@ -26,22 +26,24 @@ fn write_stdout(f: impl FnOnce(&mut io::StdoutLock<'_>) -> io::Result<()>) -> io
     out.flush()
 }
 
-pub fn apply(report: &mut AnalysisReport, options: &ScanOptions) {
+/// Keeps only the findings this run is about: requested pillars, no low-confidence dead code.
+pub fn select(report: &mut AnalysisReport, options: &ScanOptions) {
     apply_pillar_filter(report, options);
     report
         .dead_code
         .retain(|finding| finding.confidence != Confidence::Low);
     refresh_totals(report);
     report.meta.smell_totals = smell_totals(&report.smells);
+}
 
+/// Truncates selected findings for display and attaches the glossary.
+pub fn shape(report: &mut AnalysisReport, options: &ScanOptions) {
     if !options.all {
         limit_top(
             report,
             options.max.unwrap_or(DEFAULT_PILLAR_TOP),
             options.max.unwrap_or(DEFAULT_SMELL_KIND_TOP),
         );
-    } else if let Some(max) = options.max {
-        limit_top(report, max, max);
     }
     report.meta.glossary = crate::noze::glossary::for_report(report);
 }

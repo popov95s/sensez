@@ -170,6 +170,9 @@ fn validate_revision(rev: &str) -> Result<()> {
 }
 
 fn run(args: &[&str], cwd: &Path) -> Result<String> {
+    if !cwd.is_dir() {
+        anyhow::bail!("{} is not an existing directory", cwd.display());
+    }
     let output = run_with_timeout(Command::new("git").args(args), cwd)
         .context("failed to run `git` (is it installed and on PATH?)")?;
     if !output.status.success() {
