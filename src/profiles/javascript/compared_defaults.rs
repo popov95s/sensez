@@ -7,39 +7,61 @@ use tree_sitter::Node;
 
 const EQUALITY: &[&str] = &["===", "!==", "==", "!="];
 
-pub(super) fn compared_defaults(func: Node, src: &[u8]) -> Vec<StringFallback> {
-    let mut defaults = Vec::new();
-    let mut comparisons = Vec::new();
-    let mut cursor = func.walk();
-    for child in func.named_children(&mut cursor) {
-        collect(child, src, &mut defaults, &mut comparisons);
+/// String defaults and literal comparisons of one function, gathered as its walk reaches them.
+#[derive(Default)]
+pub(super) struct ComparedDefaults {
+    defaults: Vec<Default>,
+    comparisons: Vec<Comparison>,
+}
+
+impl ComparedDefaults {
+    /// Defaults outside `func`'s body; the walk feeds the body through [`Self::scan`].
+    pub(super) fn start(func: Node, src: &[u8]) -> Self {
+        let mut found = Self::default();
+        let body = func.child_by_field_name("body").map(|body| body.id());
+        let mut cursor = func.walk();
+        for child in func.named_children(&mut cursor) {
+            if Some(child.id()) != body {
+                found.collect(child, src);
+            }
+        }
+        found
     }
-    defaults
-        .into_iter()
-        .filter(|(name, literal, _)| comparisons.contains(&(name.clone(), literal.clone())))
-        .map(|(_, literal, line)| StringFallback {
-            line,
-            literal,
-            sink: FallbackSink::Compared,
-            target: String::new(),
-        })
-        .collect()
+
+    pub(super) fn scan(&mut self, node: Node, src: &[u8]) {
+        self.defaults.extend(string_default(node, src));
+        self.comparisons.extend(literal_comparison(node, src));
+    }
+
+    /// The defaults the function also compares against.
+    pub(super) fn finish(self) -> Vec<StringFallback> {
+        let comparisons = self.comparisons;
+        self.defaults
+            .into_iter()
+            .filter(|(name, literal, _)| comparisons.contains(&(name.clone(), literal.clone())))
+            .map(|(_, literal, line)| StringFallback {
+                line,
+                literal,
+                sink: FallbackSink::Compared,
+                target: String::new(),
+            })
+            .collect()
+    }
+
+    fn collect(&mut self, node: Node, src: &[u8]) {
+        if is_function(node.kind()) {
+            return;
+        }
+        self.scan(node, src);
+        let mut cursor = node.walk();
+        for child in node.named_children(&mut cursor) {
+            self.collect(child, src);
+        }
+    }
 }
 
 type Default = (String, String, usize);
 type Comparison = (String, String);
-
-fn collect(node: Node, src: &[u8], defaults: &mut Vec<Default>, comparisons: &mut Vec<Comparison>) {
-    if is_function(node.kind()) {
-        return;
-    }
-    defaults.extend(string_default(node, src));
-    comparisons.extend(literal_comparison(node, src));
-    let mut cursor = node.walk();
-    for child in node.named_children(&mut cursor) {
-        collect(child, src, defaults, comparisons);
-    }
-}
 
 fn string_default(node: Node, src: &[u8]) -> Option<Default> {
     let (name, value) = match node.kind() {

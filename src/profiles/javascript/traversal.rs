@@ -218,7 +218,7 @@ fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut Vi
     let mut collector = units::FunctionFacts::start(lineage, src, is_method);
     let parent = ctx.scope.last().filter(|s| !s.is_class);
     if parent.is_some_and(|parent| {
-        super::local_functions::is_named_local_function(node, kind, &parent.name)
+        super::local_functions::is_named_local_function(lineage, kind, &parent.name)
     }) {
         collector.unit.is_nested = true;
         collector.unit.parent = ctx.scope.last().map(|s| s.name.clone()).unwrap_or_default();

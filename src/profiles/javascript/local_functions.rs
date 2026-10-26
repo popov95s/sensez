@@ -1,13 +1,13 @@
 //! Which functions defined inside another function count as nested helpers.
 
-use tree_sitter::Node;
+use crate::profiles::lineage::Lineage;
 
 /// `function f() {}`, or `const f = () => {}` outside a component or hook.
-pub(super) fn is_named_local_function(node: Node, kind: &str, parent: &str) -> bool {
+pub(super) fn is_named_local_function(node: Lineage, kind: &str, parent: &str) -> bool {
     match kind {
         "function_declaration" | "generator_function_declaration" => true,
         "arrow_function" | "function_expression" => {
-            node.parent()
+            node.parent(node.node())
                 .is_some_and(|binding| binding.kind() == "variable_declarator")
                 && !is_component_or_hook(parent)
         }

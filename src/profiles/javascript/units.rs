@@ -5,7 +5,7 @@
 //! receiver so the language-neutral detectors work unchanged.
 
 use super::chains::CHAIN;
-use super::compared_defaults::compared_defaults;
+use super::compared_defaults::ComparedDefaults;
 use super::member_visibility::{callback_position, function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
@@ -55,6 +55,7 @@ pub struct FunctionFacts {
     loop_parts: FxHashMap<usize, usize>,
     /// Parent-scope names whose read flags `captures_parent`.
     pub(super) outer_names: BoundNames,
+    compared_defaults: ComparedDefaults,
 }
 
 impl FunctionFacts {
@@ -77,7 +78,6 @@ impl FunctionFacts {
             },
             homogeneous_tuple_return: classunit::is_homogeneous_primitive_tuple(&tuple_return),
             magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
-            string_fallbacks: compared_defaults(func, src),
             ..Default::default()
         };
         if !is_method && func.kind() == "function_declaration" {
@@ -103,6 +103,7 @@ impl FunctionFacts {
             frames,
             loop_parts: FxHashMap::default(),
             outer_names: BoundNames::default(),
+            compared_defaults: ComparedDefaults::start(func, src),
         }
     }
 
@@ -120,6 +121,7 @@ impl FunctionFacts {
         let frames = self.enter_loop_part(node);
 
         obsession::scan(&mut self.unit, node, src);
+        self.compared_defaults.scan(node, src);
         let frame = self.frame();
         performance::scan(&mut self.unit.performance, lineage, src, frame);
         state_writes::scan(&mut self.unit, lineage, src);
@@ -196,6 +198,8 @@ impl FunctionFacts {
     }
 
     pub fn finish(mut self) -> FunctionUnit {
+        let compared = self.compared_defaults.finish();
+        self.unit.string_fallbacks.splice(0..0, compared);
         state_writes::drop_locals(&mut self.unit);
         self.unit
     }

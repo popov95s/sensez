@@ -55,7 +55,7 @@ pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: O
         }
         _ => {}
     }
-    if let Some(pass) = loop_pass(node, src) {
+    if let Some(pass) = loop_pass(lineage, src) {
         facts.iteration_calls.push(pass);
     }
     if kind != "call_expression" {
@@ -65,7 +65,7 @@ pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: O
         return;
     };
     facts.calls.push(call.clone());
-    if let Some(iteration) = iteration_call(node, src, &call) {
+    if let Some(iteration) = iteration_call(lineage, src, &call) {
         facts.iteration_calls.push(iteration);
     }
     if frame.is_none() {

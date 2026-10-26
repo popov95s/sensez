@@ -24,13 +24,14 @@ const JSX_KINDS: &[&str] = &["jsx_element", "jsx_self_closing_element", "jsx_fra
 const ASSERTION_CALLEES: &[&str] = &["expect", "assert"];
 const ASSIGNMENT_KINDS: &[&str] = &["assignment_expression", "augmented_assignment_expression"];
 
-pub(super) fn iteration_call(node: Node, src: &[u8], call: &CallFact) -> Option<CallFact> {
-    if !call.member || builds_index(node, src) {
+pub(super) fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> Option<CallFact> {
+    let node = lineage.node();
+    if !call.member || builds_index(lineage, src) {
         return None;
     }
     Some(CallFact {
-        pass: pass_kind(node, src, &call.method)?,
-        in_assertion: in_assertion(node, src),
+        pass: pass_kind(lineage, src, &call.method)?,
+        in_assertion: in_assertion(lineage, src),
         arg_idents: node
             .child_by_field_name("arguments")
             .map(|args| super::loops::names(Some(args), src))
@@ -40,7 +41,8 @@ pub(super) fn iteration_call(node: Node, src: &[u8], call: &CallFact) -> Option<
 }
 
 /// `for (const x of xs)` as one loop pass over `xs`.
-pub(super) fn loop_pass(node: Node, src: &[u8]) -> Option<CallFact> {
+pub(super) fn loop_pass(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
+    let node = lineage.node();
     if node.kind() != "for_in_statement" {
         return None;
     }
@@ -58,7 +60,7 @@ pub(super) fn loop_pass(node: Node, src: &[u8]) -> Option<CallFact> {
         node.start_position().row + 1,
     );
     pass.pass = IterationPass::Loop;
-    pass.region = control_region(Lineage::new(&[], node));
+    pass.region = control_region(lineage);
     pass.offset = node.start_byte();
     pass.arg_idents = node
         .child_by_field_name("body")
@@ -67,15 +69,18 @@ pub(super) fn loop_pass(node: Node, src: &[u8]) -> Option<CallFact> {
     Some(pass)
 }
 
-fn pass_kind(node: Node, src: &[u8], method: &str) -> Option<IterationPass> {
+fn pass_kind(lineage: Lineage, src: &[u8], method: &str) -> Option<IterationPass> {
+    let node = lineage.node();
     match method {
-        "map" if is_trivial_projection(node, src) && is_reduced(node, src) => {
+        "map" if is_trivial_projection(node, src) && is_reduced(lineage, src) => {
             Some(IterationPass::Aggregate)
         }
         "map" if is_trivial_projection(node, src) || renders_markup(node) => {
             Some(IterationPass::Projection)
         }
-        method if AGGREGATE_METHODS.contains(&method) || is_counted_filter(node, src, method) => {
+        method
+            if AGGREGATE_METHODS.contains(&method) || is_counted_filter(lineage, src, method) =>
+        {
             Some(IterationPass::Aggregate)
         }
         method if PASS_METHODS.contains(&method) => Some(IterationPass::Full),
@@ -84,8 +89,8 @@ fn pass_kind(node: Node, src: &[u8], method: &str) -> Option<IterationPass> {
 }
 
 /// `xs.map(x => x.n).reduce(..)`.
-fn is_reduced(call: Node, src: &[u8]) -> bool {
-    call.parent()
+fn is_reduced(call: Lineage, src: &[u8]) -> bool {
+    call.parent(call.node())
         .filter(|parent| parent.kind() == "member_expression")
         .and_then(|parent| parent.child_by_field_name("property"))
         .and_then(|property| walk::node_text(property, src))
@@ -107,10 +112,10 @@ fn renders_markup(call: Node) -> bool {
 }
 
 /// `xs.filter(..).length`.
-fn is_counted_filter(call: Node, src: &[u8], method: &str) -> bool {
+fn is_counted_filter(call: Lineage, src: &[u8], method: &str) -> bool {
     method == "filter"
         && call
-            .parent()
+            .parent(call.node())
             .filter(|parent| parent.kind() == "member_expression")
             .and_then(|parent| parent.child_by_field_name("property"))
             .and_then(|property| walk::node_text(property, src))
@@ -118,11 +123,11 @@ fn is_counted_filter(call: Node, src: &[u8], method: &str) -> bool {
 }
 
 /// `new Set(xs.map(..))`, `new Map(..)`, `Object.fromEntries(xs.map(..))`.
-fn builds_index(call: Node, src: &[u8]) -> bool {
+fn builds_index(call: Lineage, src: &[u8]) -> bool {
     let Some(owner) = call
-        .parent()
+        .parent(call.node())
         .filter(|parent| parent.kind() == "arguments")
-        .and_then(|args| args.parent())
+        .and_then(|args| call.parent(args))
     else {
         return false;
     };
@@ -195,9 +200,9 @@ fn sole_parameter(arrow: Node) -> Option<Node> {
         .map(|param| param.child_by_field_name("pattern").unwrap_or(param))
 }
 
-fn in_assertion(node: Node, src: &[u8]) -> bool {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
+fn in_assertion(lineage: Lineage, src: &[u8]) -> bool {
+    let mut current = lineage.node();
+    while let Some(parent) = lineage.parent(current) {
         if super::units::is_function(parent.kind()) {
             return false;
         }
