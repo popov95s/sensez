@@ -1,5 +1,6 @@
 //! Visibility of functions and class members.
 
+use crate::profiles::lineage::Lineage;
 use crate::spine::ir::Visibility;
 use tree_sitter::Node;
 
@@ -7,8 +8,11 @@ pub(super) fn method_visibility(func: Node, src: &[u8]) -> Visibility {
     private_when(is_private_method(func, src))
 }
 
-pub(super) fn function_visibility(func: Node) -> Visibility {
-    private_when(func.parent().is_none_or(|p| p.kind() != "export_statement"))
+pub(super) fn function_visibility(func: Lineage) -> Visibility {
+    private_when(
+        func.parent(func.node())
+            .is_none_or(|p| p.kind() != "export_statement"),
+    )
 }
 
 fn private_when(private: bool) -> Visibility {

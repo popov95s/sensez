@@ -50,11 +50,11 @@ impl FunctionFacts {
             param_names: param_names(func, src),
             is_method,
             max_tuple_return: super::classunit::tuple_return_arity(func, src),
-            callback_position: callback_position(func),
+            callback_position: callback_position(lineage),
             visibility: if is_method {
                 method_visibility(func, src)
             } else {
-                function_visibility(func)
+                function_visibility(lineage)
             },
             ..Default::default()
         };
@@ -135,7 +135,7 @@ impl FunctionFacts {
                     }
                 }
             }
-            "member_expression" => self.record_member(node, src),
+            "member_expression" => self.record_member(node, lineage.parent(node), src),
             "assignment_expression" => self.record_assignment(node, src),
             _ => {}
         }
@@ -153,8 +153,8 @@ impl FunctionFacts {
 }
 
 impl FunctionFacts {
-    fn record_member(&mut self, node: Node, src: &[u8]) {
-        if !is_chain_inner(node) {
+    fn record_member(&mut self, node: Node, parent: Option<Node>, src: &[u8]) {
+        if !is_chain_inner(node, parent) {
             self.unit.chain_hits.push(ChainHit {
                 line: node.start_position().row + 1,
                 depth: chain_len(node),
@@ -243,11 +243,11 @@ fn returned_name(node: Node<'_>, src: &[u8]) -> Option<String> {
 }
 
 /// Callee name when `func` is passed directly as a call argument.
-fn callback_position(func: Node) -> CallbackPosition {
+fn callback_position(func: Lineage) -> CallbackPosition {
     let is_argument = func
-        .parent()
+        .parent(func.node())
         .filter(|p| p.kind() == "arguments")
-        .and_then(|args| args.parent())
+        .and_then(|args| func.parent(args))
         .is_some_and(|call| call.kind() == "call_expression");
     match is_argument {
         true => CallbackPosition::Argument,

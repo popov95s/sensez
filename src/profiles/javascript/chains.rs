@@ -15,8 +15,8 @@ pub(super) fn chain_len(node: Node) -> usize {
 
 /// True when `node` is the object of an enclosing member access, so only the
 /// outermost member of `a.b.c` records a chain.
-pub(super) fn is_chain_inner(node: Node) -> bool {
-    node.parent().is_some_and(|p| {
+pub(super) fn is_chain_inner(node: Node, parent: Option<Node>) -> bool {
+    parent.is_some_and(|p| {
         p.kind() == "member_expression"
             && p.child_by_field_name("object").map(|o| o.id()) == Some(node.id())
     })
