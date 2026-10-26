@@ -52,6 +52,7 @@ class SmellTerm(StrEnum):
     SHOTGUN_SURGERY_HAZARD = "shotgun_surgery_hazard"
     SORT_IN_LOOP = "sort_in_loop"
     SPLIT_VARIABLE = "split_variable"
+    SWALLOWED_ERROR_SENTINEL = "swallowed_error_sentinel"
     TOO_MANY_RETURNS = "too_many_returns"
     TUPLE_PACKING = "tuple_packing"
     UNNECESSARY_NESTED_IF = "unnecessary_nested_if"

@@ -17,6 +17,7 @@ pub fn detect(
     for metric in metrics {
         defensive_fallback(ctx, metric, out);
         redundant_validation(ctx, metric, out);
+        super::swallowed_error::detect(ctx, metric, config, out);
     }
     weak_test_oracles(ctx, metrics, config, out);
     wrapper_chains(ctx, metrics, config.max_wrapper_depth, out);

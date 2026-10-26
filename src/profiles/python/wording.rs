@@ -10,4 +10,7 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     fallback_example: r#"`or ""`"#,
     fallback_advice: wording::FALLBACK_ADVICE,
     sentinel_words: wording::SENTINEL_WORDS,
+    handler_clause: "except",
+    swallowed_error_advice:
+        "re-raise it (`raise ... from error`) or return a typed failure the caller must handle",
 };

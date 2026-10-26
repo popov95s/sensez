@@ -73,7 +73,7 @@ impl<'u> Acc<'u> {
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
-        super::risk_facts::scan(self.unit, &mut self.guards, node, src);
+        super::risk_facts::scan(self.unit, &mut self.guards, node, src, frame);
 
         let mut child_depth = depth;
         if is_nesting(kind) {

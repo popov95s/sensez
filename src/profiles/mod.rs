@@ -15,6 +15,8 @@ pub(crate) mod fallback_guard;
 pub(crate) mod for_loop;
 pub(crate) mod guard_clause;
 pub(crate) mod guard_fingerprint;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
+pub(crate) mod handler_end;
 pub(crate) mod lexeme;
 pub(crate) mod lineage;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
@@ -27,7 +29,6 @@ pub(crate) mod runner_config;
 #[cfg(test)]
 pub(crate) mod test_fixtures;
 pub(crate) mod test_oracle;
-#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod try_handling;
 pub mod typevocab;
 pub(crate) mod walk;
@@ -292,6 +293,10 @@ pub trait TypeVocabularyProfile: Send + Sync {
     /// Whether a value of this annotation is mutated by a `family` method call.
     fn is_mutable_collection(&self, annotation: &str, family: MutatorFamily) -> bool;
     fn is_void(&self, annotation: &str) -> bool;
+    /// The annotation admits a missing value (`T | null`, `Optional[T]`).
+    fn admits_missing(&self, _annotation: &str) -> bool {
+        false
+    }
     /// A named type (not an inline literal, union or intersection) that behaviour could move onto.
     fn is_nominal_type(&self, annotation: &str) -> bool {
         typevocab::is_nominal(annotation, &[])

@@ -2,7 +2,7 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
-use super::{MagicNumber, PerformanceFacts, StringFallback};
+use super::{MagicNumber, PerformanceFacts, SentinelHandler, StringFallback};
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
@@ -20,6 +20,8 @@ pub struct ReviewRiskFacts {
     pub test_has_nested_function: bool,
     /// Whether the language profile identified this unit as a test case.
     pub is_test_case: bool,
+    /// Handlers that swallow the error and return a placeholder or only log.
+    pub sentinel_handlers: Vec<SentinelHandler>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]

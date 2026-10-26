@@ -645,6 +645,7 @@
       "nested_loop": 26,
       "nested_ternary": 8,
       "shotgun_surgery_hazard": 3,
+      "swallowed_error_sentinel": 1,
       "unnecessary_nested_if": 13
     },
     "smells_skipped": {
@@ -652,7 +653,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 162,
+    "smells_total": 163,
     "source_lines": 72099
   },
   "smells": [
@@ -2266,6 +2267,16 @@
       "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "swallowed_error_sentinel",
+      "line": 380,
+      "message": "catch at line 380 returns `false` and drops the error, so callers get a plausible value instead of a failure; rethrow it or return a typed failure (`{ ok: false, error }`) the caller must handle",
+      "metric": 1,
+      "symbol": "cached callback",
+      "threshold": 0
     },
     {
       "action": "warning",
