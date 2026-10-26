@@ -96,3 +96,16 @@ fn download_notice_is_one_line_naming_the_overrides() {
     assert!(notice.contains("HF_HOME"));
     assert!(notice.contains("SENSEZ_EYEZ_MODEL_DIR"));
 }
+
+#[test]
+fn hub_client_honours_hf_endpoint() {
+    let _env = crate::test_support::metrics_guard();
+    let tmp = tempfile::tempdir().unwrap();
+    std::env::set_var("HF_ENDPOINT", "https://mirror.example.test");
+
+    let client = hub_client(&Cache::new(tmp.path().to_path_buf()));
+    std::env::remove_var("HF_ENDPOINT");
+
+    let url = client.unwrap().repo(model_repo()).url("config.json");
+    assert!(url.starts_with("https://mirror.example.test/"), "{url}");
+}

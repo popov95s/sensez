@@ -100,9 +100,10 @@ fn download(cache: &Cache) -> Result<PathBuf> {
     snapshot.context("the model download returned no file")
 }
 
-/// Hub client writing into `cache`.
+/// Hub client honouring `HF_ENDPOINT` and `HF_TOKEN`, writing into `cache`.
 fn hub_client(cache: &Cache) -> Result<Api> {
-    ApiBuilder::from_cache(cache.clone())
+    ApiBuilder::from_env()
+        .with_cache_dir(cache.path().clone())
         .with_progress(std::io::stderr().is_terminal())
         .build()
         .context("starting the HuggingFace Hub client")
