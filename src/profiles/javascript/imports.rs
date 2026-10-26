@@ -29,8 +29,29 @@ pub fn extract(
         None => return Vec::new(), // local `export { ... }` / `export const` — no edge
     };
     let phase = import_phase(node, src);
-    let clause = clause_symbols(node, src, phase);
-    vec![context(source, clause, node, source_module, scope, phase)]
+    let mut clause = clause_symbols(node, src, phase);
+    let namespace = clause.namespace.take();
+    let mut out = Vec::new();
+    if namespace.is_none() || !clause.bindings.is_empty() {
+        out.push(context(
+            source.clone(),
+            clause,
+            node,
+            source_module,
+            scope,
+            phase,
+        ));
+    }
+    if let Some(binding) = namespace {
+        let clause = ImportClause {
+            symbols: vec!["*".to_string()],
+            bindings: vec![binding],
+            binding_phases: vec![phase],
+            namespace: None,
+        };
+        out.push(context(source, clause, node, source_module, scope, phase));
+    }
+    out
 }
 
 /// Extract a CommonJS `require("…")` / dynamic `import("…")` call as an import.
@@ -164,6 +185,7 @@ fn context(
         phase,
         is_inline: scope.is_some(),
         is_module_decl: false,
+        is_reexport: node.kind() == "export_statement",
         enclosing_scope: scope.map(str::to_string),
     }
 }
@@ -173,6 +195,8 @@ struct ImportClause {
     symbols: Vec<String>,
     bindings: Vec<String>,
     binding_phases: Vec<ImportPhase>,
+    /// `* as ns` binding, emitted as its own context so it can be narrowed to `ns.member` uses.
+    namespace: Option<String>,
 }
 
 fn import_phase(node: Node, src: &[u8]) -> ImportPhase {
@@ -189,7 +213,7 @@ fn import_phase(node: Node, src: &[u8]) -> ImportPhase {
 
 /// Collect (imported symbols, local bindings) from an import/export clause.
 /// `import Foo` → default; `* as ns` → namespace; `{ a, b as c }` → named;
-/// `export * from` → symbol `*`.
+/// `export * from` / `export * as ns from` → symbol `*`.
 fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
     let mut clause = ImportClause::default();
     let mut cursor = node.walk();
@@ -200,6 +224,7 @@ fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
                 clause.symbols.extend(nested.symbols);
                 clause.bindings.extend(nested.bindings);
                 clause.binding_phases.extend(nested.binding_phases);
+                clause.namespace = nested.namespace.or(clause.namespace.take());
             }
             "identifier" => {
                 if let Ok(name) = child.utf8_text(src) {
@@ -208,14 +233,9 @@ fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
                     clause.binding_phases.push(phase);
                 }
             }
-            "namespace_import" => {
-                if let Some(name) = first_identifier(child, src) {
-                    clause.symbols.push("*".to_string());
-                    clause.bindings.push(name);
-                    clause.binding_phases.push(phase);
-                }
-            }
+            "namespace_import" => clause.namespace = first_identifier(child, src),
             "named_imports" | "export_clause" => collect_specifiers(child, src, phase, &mut clause),
+            "namespace_export" => clause.symbols.push("*".to_string()),
             _ => {}
         }
     }

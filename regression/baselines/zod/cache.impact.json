@@ -5,16 +5,16 @@
         "action": "warning",
         "edges": [
           {
-            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
-            "from_module": "src/sensez-cache-cycle-b",
-            "line": 1,
-            "to_module": "src/sensez-cache-cycle-a"
-          },
-          {
             "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
             "from_module": "src/sensez-cache-cycle-a",
             "line": 1,
             "to_module": "src/sensez-cache-cycle-b"
+          },
+          {
+            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
+            "from_module": "src/sensez-cache-cycle-b",
+            "line": 1,
+            "to_module": "src/sensez-cache-cycle-a"
           }
         ],
         "modules": [
@@ -52,16 +52,16 @@
         "action": "warning",
         "edges": [
           {
-            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
-            "from_module": "src/sensez-cache-cycle-b",
-            "line": 1,
-            "to_module": "src/sensez-cache-cycle-a"
-          },
-          {
             "file": "<zod>/packages/zod/src/sensez-cache-cycle-a.ts",
             "from_module": "src/sensez-cache-cycle-a",
             "line": 1,
             "to_module": "src/sensez-cache-cycle-b"
+          },
+          {
+            "file": "<zod>/packages/zod/src/sensez-cache-cycle-b.ts",
+            "from_module": "src/sensez-cache-cycle-b",
+            "line": 1,
+            "to_module": "src/sensez-cache-cycle-a"
           }
         ],
         "modules": [

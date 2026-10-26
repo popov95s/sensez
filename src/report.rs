@@ -17,8 +17,8 @@ pub struct CycleFinding {
     pub modules: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub hint: Option<String>,
-    /// One import edge per module in the cycle (the "next hop"), with the
-    /// source file/line so each is clickable.
+    /// One representative closed loop through the cycle (the shortest through
+    /// the first module by name), in order; `modules` lists every member.
     pub edges: Vec<CycleEdge>,
 }
 

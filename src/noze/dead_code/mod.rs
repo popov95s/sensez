@@ -15,7 +15,7 @@ mod extra;
 mod reachability;
 
 use crate::config::model::DeadCode;
-use crate::globs::build_globset;
+use crate::globs::{build_globset, matches_name};
 use crate::profiles::registry;
 use crate::report::{ActionLevel, DeadCodeFinding};
 use crate::spine::graph::CodebaseGraph;
@@ -79,7 +79,7 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
                 &rules.entrypoints,
             );
             if dclass.is_registration()
-                || rules.entrypoint_names.contains(symbol.as_str())
+                || rules.is_entrypoint_name(symbol)
                 || class_entrypoints.is_entrypoint(&node.file_path, symbol, kind)
                 || skip_symbol(file, profile, symbol, &inbound.used)
             {
@@ -135,7 +135,7 @@ pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Ve
                 |language, name| {
                     rule_sets
                         .for_language(language)
-                        .is_some_and(|rules| rules.entrypoint_names.contains(name))
+                        .is_some_and(|rules| rules.is_method_entrypoint_name(name))
                 },
             ));
         }
@@ -156,8 +156,23 @@ struct RuleSets {
 struct RuleSet {
     entrypoints: HashSet<String>,
     entrypoint_names: HashSet<String>,
+    method_entrypoint_names: HashSet<String>,
     entry_globs: GlobSet,
     test_source_globs: GlobSet,
+}
+
+impl RuleSet {
+    fn is_entrypoint_name(&self, name: &str) -> bool {
+        matches_any(&self.entrypoint_names, name)
+    }
+
+    fn is_method_entrypoint_name(&self, name: &str) -> bool {
+        self.is_entrypoint_name(name) || matches_any(&self.method_entrypoint_names, name)
+    }
+}
+
+fn matches_any(patterns: &HashSet<String>, name: &str) -> bool {
+    patterns.iter().any(|pattern| matches_name(pattern, name))
 }
 
 impl RuleSets {
@@ -170,6 +185,7 @@ impl RuleSets {
                 let entrypoints = merged_set(&config.entrypoints, defaults.entrypoints);
                 let entrypoint_names =
                     merged_set(&config.entrypoint_names, defaults.entrypoint_names);
+                let method_entrypoint_names = merged_set(&[], defaults.method_entrypoint_names);
                 let entry_globs = merged_globset(&config.entry_points, defaults.entry_points);
                 let test_source_globs = merged_globset(&[], defaults.test_sources);
                 (
@@ -177,6 +193,7 @@ impl RuleSets {
                     RuleSet {
                         entrypoints,
                         entrypoint_names,
+                        method_entrypoint_names,
                         entry_globs,
                         test_source_globs,
                     },

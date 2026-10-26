@@ -101,7 +101,7 @@ fn flags_unused_functions_only_by_default() {
         .collect();
     assert!(dead.contains(&"dead_fn".to_string()));
     assert!(!dead.contains(&"used_fn".to_string()));
-    // module-level variable is OFF by default
+    // module-level variables are off in this config
     assert!(!dead.contains(&"DEAD_CONST".to_string()));
 
     let mut on = cfg();

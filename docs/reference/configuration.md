@@ -91,6 +91,15 @@ entrypoint_bases = ["AppConfig"]             # base classes loaded dynamically
 entry_points = ["**/scripts/**"]             # file globs reached outside the import graph
 ```
 
+`entrypoints` and `entrypoint_names` accept a trailing `*` as a prefix pattern
+(`entrypoint_names = ["on*"]`). `entrypoint_names` also applies to methods under
+`unused_methods`. For JS/TS methods only, React lifecycle, custom-element and
+test-reporter callback names are live by default, and methods of a class that
+extends or implements anything outside the scan are not reported (they may be
+framework hooks). In JS/TS, `entrypoints` matches the callee of an
+exported initializer, so `entrypoints = ["register", "define*"]` keeps
+`export const send = register({ ... })` alive.
+
 If dead-code output feels incomplete, broader unused-symbol classes are
 available as opt-ins (your generated config shows their defaults):
 
@@ -98,8 +107,10 @@ available as opt-ins (your generated config shows their defaults):
 [dead_code]
 unused_imports = true
 unused_methods = true
-unused_variables = true
 ```
+
+Unused module-level variables and constants are reported by default; set
+`unused_variables = false` to turn them off.
 
 Prefer adding entry points over suppressing individual findings — one line of
 config fixes a whole class of false positives.
@@ -178,6 +189,10 @@ exclude = ["**/vendor/**"]   # import edges here never report a cycle
 Cycles among test files are reported. Only `migrations/` (and Python
 `alembic/` and `versions/`) are excluded by default; add
 `exclude = ["**/tests/**"]` to silence test fixtures.
+
+Each cycle finding lists every module of the strongly connected group in
+`modules`; `edges` is one representative closed loop (the shortest one through
+the alphabetically first module), so following it returns to its start.
 
 ## Boundaries
 

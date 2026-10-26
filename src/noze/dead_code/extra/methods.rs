@@ -1,4 +1,5 @@
 use super::{usage::ProjectUsage, MemberFiles};
+use crate::profiles::{registry, ExternalBases};
 use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
 use crate::spine::ir::{ClassUnit, Language};
 use crate::spine::parser::{ParsedFile, SymbolKind};
@@ -25,6 +26,9 @@ fn unused_methods_in_file(
     is_entrypoint_name: &impl Fn(Language, &str) -> bool,
 ) -> Vec<DeadCodeFinding> {
     let module = modmap.get(&file.path).cloned().unwrap_or_default();
+    let external_bases = registry::dead_code_profile(file.language)
+        .dead_code_defaults()
+        .external_bases;
     file.walked
         .units
         .classes
@@ -35,7 +39,7 @@ fn unused_methods_in_file(
                 if is_dunder(name) || is_entrypoint_name(file.language, name) {
                     return None;
                 }
-                let confidence = dead_method_confidence(usage, class, name)?;
+                let confidence = dead_method_confidence(usage, class, name, external_bases)?;
                 if confidence == Confidence::Low {
                     return None;
                 }
@@ -58,6 +62,7 @@ fn dead_method_confidence(
     usage: &ProjectUsage,
     class: &ClassUnit,
     method: &str,
+    external_bases: ExternalBases,
 ) -> Option<Confidence> {
     if usage.method_overrides_base(&class.name, method)
         || class
@@ -71,6 +76,7 @@ fn dead_method_confidence(
     }
     if usage.has_unresolved_member_reference(method)
         || usage.class_is_exposed_api(&class.name)
+        || usage.class_has_external_contract(&class.name, external_bases)
         || !usage.class_has_member_evidence(&class.name)
     {
         return Some(Confidence::Low);

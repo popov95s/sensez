@@ -95,3 +95,26 @@ pub fn declared_vars(node: Node, src: &[u8]) -> Vec<(String, SymbolKind)> {
         })
         .collect()
 }
+
+/// `(name, callee)` for each `name = callee(...)` declarator, e.g. `("send", "fw.register")`.
+pub fn initializer_callees(node: Node, src: &[u8]) -> Vec<(String, String)> {
+    let mut cursor = node.walk();
+    node.named_children(&mut cursor)
+        .filter(|c| c.kind() == "variable_declarator")
+        .filter_map(|d| {
+            let name = d.child_by_field_name("name")?;
+            let value = d.child_by_field_name("value")?;
+            if name.kind() != "identifier" || value.kind() != "call_expression" {
+                return None;
+            }
+            let callee = value.child_by_field_name("function")?;
+            if !matches!(callee.kind(), "identifier" | "member_expression") {
+                return None;
+            }
+            Some((
+                name.utf8_text(src).ok()?.to_string(),
+                callee.utf8_text(src).ok()?.to_string(),
+            ))
+        })
+        .collect()
+}

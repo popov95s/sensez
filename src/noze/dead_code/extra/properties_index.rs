@@ -28,6 +28,16 @@ impl ClassIndex {
         out
     }
 
+    /// True when `class` names a base or interface outside the scan and not in `except`.
+    pub(super) fn has_external_base(&self, class: &str, except: &[&str]) -> bool {
+        self.bases.get(class).is_some_and(|bases| {
+            bases
+                .iter()
+                .flat_map(|base| type_parts(base))
+                .any(|part| !self.names.contains_key(part) && !except.contains(&part))
+        })
+    }
+
     fn collect_descendants(&self, class: &str, seen: &mut HashSet<String>, out: &mut Vec<String>) {
         let Some(children) = self.children.get(class) else {
             return;

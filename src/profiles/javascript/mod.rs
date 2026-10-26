@@ -11,6 +11,7 @@ pub(crate) mod generated;
 pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
+mod namespaces;
 mod nesting;
 pub(crate) mod obsession;
 mod params;

@@ -11,7 +11,7 @@ use std::path::{Component, Path, PathBuf};
 
 const MARKERS: [&str; 1] = ["package.json"];
 const BOUNDARIES: [&str; 3] = ["node_modules", ".git", ".venv"];
-const EXTENSIONS: [&str; 6] = ["ts", "tsx", "js", "jsx", "mjs", "cjs"];
+const EXTENSIONS: [&str; 8] = ["ts", "tsx", "mts", "cts", "js", "jsx", "mjs", "cjs"];
 
 /// True for a JS/TS package index file (`index.js`, `index.ts`, ...).
 pub fn is_package_index(path: &Path) -> bool {

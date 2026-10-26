@@ -3,6 +3,7 @@
 use crate::profiles::DeadCodeProfile;
 use crate::report::Confidence;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
+use crate::spine::ir::ImportPhase;
 use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
 use petgraph::graph::NodeIndex;
@@ -16,6 +17,8 @@ pub(super) struct Inbound {
     pub used: HashSet<String>,
     /// Any inbound `from mod import *`.
     pub star: bool,
+    /// Any inbound type-only star (`import type * as ns` used as a whole): caps confidence.
+    pub type_star: bool,
     /// Number of inbound import edges.
     pub count: usize,
 }
@@ -26,7 +29,7 @@ pub(super) fn inbound_usage(
     skip_source: impl Fn(&ModuleNode) -> bool,
 ) -> Inbound {
     let mut used = HashSet::new();
-    let (mut star, mut count) = (false, 0usize);
+    let (mut star, mut type_star, mut count) = (false, false, 0usize);
     for edge in cg.graph.edges_directed(idx, Direction::Incoming) {
         let source = &cg.graph[edge.source()];
         if skip_source(source) {
@@ -34,14 +37,21 @@ pub(super) fn inbound_usage(
         }
         count += 1;
         for sym in &edge.weight().imported_symbols {
-            if sym == "*" {
-                star = true;
-            } else {
-                used.insert(sym.clone());
+            match (sym.as_str(), edge.weight().phase) {
+                ("*", ImportPhase::TypeOnly) => type_star = true,
+                ("*", ImportPhase::Runtime) => star = true,
+                _ => {
+                    used.insert(sym.clone());
+                }
             }
         }
     }
-    Inbound { used, star, count }
+    Inbound {
+        used,
+        star,
+        type_star,
+        count,
+    }
 }
 
 /// Cheap, decoration-independent reasons a symbol is not a dead candidate.
@@ -80,12 +90,13 @@ pub(super) fn skip_symbol(
 
 /// Confidence from what sensez can actually prove (no framework assumptions):
 /// - the module is imported *by name* somewhere, yet this symbol never is → **High**;
-/// - the module is imported only plainly (`import mod`) → **Medium** (attribute access may hide use);
+/// - the module is imported only plainly (`import mod`) or referenced as a whole type
+///   namespace → **Medium** (attribute access may hide use);
 /// - nothing imports the module → **Low** (it may be an undeclared entry point).
 pub(super) fn confidence_of(inbound: &Inbound) -> Confidence {
     if inbound.count == 0 {
         Confidence::Low
-    } else if !inbound.used.is_empty() {
+    } else if !inbound.used.is_empty() && !inbound.type_star {
         Confidence::High
     } else {
         Confidence::Medium

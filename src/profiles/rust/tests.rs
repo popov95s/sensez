@@ -87,6 +87,7 @@ fn path_resolution() {
             phase: crate::spine::parser::ImportPhase::Runtime,
             is_inline: false,
             is_module_decl: false,
+            is_reexport: false,
             enclosing_scope: None,
         };
         super::resolve::resolve_target(&ctx, importer, &dir)

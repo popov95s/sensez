@@ -84,7 +84,7 @@ pub fn unused_imports<'a>(
             .symbols
             .imports
             .iter()
-            .filter(|i| !i.is_inline && i.phase == ImportPhase::Runtime)
+            .filter(|i| !i.is_inline && !i.is_reexport && i.phase == ImportPhase::Runtime)
         {
             debug_assert_eq!(import.bindings.len(), import.binding_phases.len());
             for (binding, phase) in import.bindings.iter().zip(&import.binding_phases) {

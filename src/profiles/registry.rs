@@ -164,6 +164,14 @@ mod tests {
                 Language::TypeScript,
                 Path::new("__tests__/api.ts")
             ));
+            assert!(is_test_source(
+                Language::TypeScript,
+                Path::new("src/api.test.mts")
+            ));
+            assert!(is_test_source(
+                Language::TypeScript,
+                Path::new("src/api.spec.cts")
+            ));
             assert!(!is_test_source(
                 Language::TypeScript,
                 Path::new("src/test_api.ts")

@@ -1,4 +1,4 @@
-use crate::profiles::registry;
+use crate::profiles::{registry, ExternalBases};
 use crate::spine::ir::TypeHints;
 use crate::spine::parser::ParsedFile;
 use std::collections::{HashMap, HashSet};
@@ -19,6 +19,7 @@ pub(super) struct ProjectUsage {
     classes_with_member_evidence: HashSet<String>,
     override_methods: HashSet<(String, String)>,
     exposed_classes: HashSet<String>,
+    class_index: ClassIndex,
 }
 
 impl ProjectUsage {
@@ -37,7 +38,10 @@ impl ProjectUsage {
             .iter()
             .map(|file| FileUsage::from_file(file, &class_index))
             .for_each(|file_usage| usage.merge(file_usage));
-        usage
+        Self {
+            class_index,
+            ..usage
+        }
     }
 
     pub(super) fn class_has_member_evidence(&self, class_name: &str) -> bool {
@@ -59,6 +63,15 @@ impl ProjectUsage {
 
     pub(super) fn class_is_exposed_api(&self, class: &str) -> bool {
         self.exposed_classes.contains(class)
+    }
+
+    pub(super) fn class_has_external_contract(&self, class: &str, bases: ExternalBases) -> bool {
+        match bases {
+            ExternalBases::Ignored => false,
+            ExternalBases::ImplyContract { except } => {
+                self.class_index.has_external_base(class, except)
+            }
+        }
     }
 
     pub(super) fn typed_member_is_used(&self, class: &str, member: &str) -> bool {

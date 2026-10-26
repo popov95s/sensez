@@ -106,6 +106,29 @@ fn methods_overriding_known_base_methods_are_not_reported() {
 }
 
 #[test]
+fn python_external_bases_keep_unused_methods_reported() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    fs::write(
+        dir.join("handlers.py"),
+        "import logging\n\nclass Plain(object):\n    value: int\n\n    def touch(self):\n        return self.value\n\n    def plain_orphan(self):\n        return 2\n\nclass Sink(logging.Handler):\n    label: str\n\n    def peek(self):\n        return self.label\n\n    def sink_orphan(self):\n        return 2\n",
+    )
+    .unwrap();
+
+    let files = parse_files(&dir, &["handlers.py"]);
+    let report = run_with_unused_methods(&files);
+    let methods: Vec<_> = report
+        .dead_code
+        .iter()
+        .filter(|finding| finding.kind == SymbolKind::Method)
+        .map(|finding| finding.symbol.as_str())
+        .collect();
+
+    assert!(methods.contains(&"plain_orphan"), "{methods:?}");
+    assert!(methods.contains(&"sink_orphan"), "{methods:?}");
+}
+
+#[test]
 fn methods_on_package_reexported_classes_are_external_api() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();

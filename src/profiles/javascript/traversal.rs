@@ -3,7 +3,7 @@
 //! metric collection is fused into this single walk — there is no second
 //! per-function body pass.
 
-use super::{imports, lexeme, scope, symbols, tokens as token_map, typehints, units};
+use super::{imports, lexeme, namespaces, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::walk::{
@@ -25,6 +25,7 @@ struct VisitCtx<'a, 'tree> {
     active_fns: &'a mut Vec<ActiveFn>,
     /// Ancestors of the node being visited, root first.
     path: Vec<Node<'tree>>,
+    free_reads: namespaces::FreeReads,
 }
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
@@ -39,8 +40,11 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         out: &mut out,
         active_fns: &mut active_fns,
         path: Vec::new(),
+        free_reads: namespaces::FreeReads::default(),
     };
     visit(root, src, file_id, module_name, false, &mut ctx);
+    let free_reads = ctx.free_reads;
+    namespaces::narrow(&free_reads, &mut out.symbols.imports);
     crate::profiles::comments::attach(&mut out);
     walk::attach_method_attrs(&mut out);
     out
@@ -62,6 +66,7 @@ fn visit<'tree>(
         let ctxs = imports::extract(node, src, module_name, enclosing);
         if !ctxs.is_empty() {
             ctx.out.symbols.imports.extend(ctxs);
+            ctx.free_reads.skipped(node, src);
             return;
         }
     }
@@ -115,6 +120,7 @@ fn visit<'tree>(
         "identifier" | "shorthand_property_identifier" | "type_identifier"
     ) {
         credit_name(ctx.out, node, src);
+        ctx.free_reads.record(node, &ctx.path, src);
     }
     if kind == "string" {
         if let Some(value) = quoted_string_value(node, src) {
@@ -123,6 +129,9 @@ fn visit<'tree>(
     }
     if kind == "member_expression" {
         credit_attr(ctx.out, node, src, "object", "property");
+    }
+    if kind == "nested_type_identifier" {
+        credit_attr(ctx.out, node, src, "module", "name");
     }
 
     record_declarations(node, src, kind, ctx);
@@ -282,6 +291,19 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
                     .entry(name.clone())
                     .or_insert(line);
                 ctx.out.symbols.declared.push(name);
+            }
+            if node
+                .parent()
+                .is_some_and(|p| p.kind() == "export_statement")
+            {
+                for (name, callee) in symbols::initializer_callees(node, src) {
+                    ctx.out
+                        .symbols
+                        .decorators
+                        .entry(name)
+                        .or_default()
+                        .push(callee);
+                }
             }
         }
         _ => {}
