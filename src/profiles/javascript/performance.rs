@@ -118,8 +118,8 @@ fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     }?;
     call.region = control_region(lineage);
     call.offset = node.start_byte();
-    call.awaited = node
-        .parent()
+    call.awaited = lineage
+        .parent(node)
         .is_some_and(|parent| parent.kind() == "await_expression");
     Some(call)
 }

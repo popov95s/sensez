@@ -72,7 +72,7 @@ impl FunctionFacts {
         unit.is_constructor = is_method && unit.name == "constructor";
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
-        let frames = loops::iteration_callback_frame(func, src)
+        let frames = loops::iteration_callback_frame(lineage, src)
             .map(|frame| unit.performance.open_frame(frame))
             .into_iter()
             .collect();
@@ -104,7 +104,7 @@ impl FunctionFacts {
             return None;
         }
         let prev_depth = self.depth;
-        let entered_frame = self.enter_loop_part(node);
+        let entered_frame = self.enter_loop_part(lineage);
 
         obsession::scan(&mut self.unit, node, src);
         let frame = self.frame();
@@ -181,8 +181,12 @@ impl FunctionFacts {
     }
 
     /// Open the enclosing loop's frame when `node` runs once per iteration.
-    fn enter_loop_part(&mut self, node: Node) -> bool {
-        let Some(loop_node) = node.parent().filter(|p| performance::is_loop(p.kind())) else {
+    fn enter_loop_part(&mut self, lineage: Lineage) -> bool {
+        let node = lineage.node();
+        let Some(loop_node) = lineage
+            .parent(node)
+            .filter(|p| performance::is_loop(p.kind()))
+        else {
             return false;
         };
         if !loops::is_iterated_part(loop_node, node) {

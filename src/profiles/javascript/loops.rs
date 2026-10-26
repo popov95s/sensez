@@ -1,6 +1,7 @@
 //! JS/TS loop frames: loop kind, bindings, bound and per-item callbacks.
 
 use crate::profiles::for_loop::{self, RangeEnd};
+use crate::profiles::lineage::Lineage;
 use crate::profiles::walk;
 use crate::spine::ir::{LoopBound, LoopFrame, LoopKind};
 use tree_sitter::Node;
@@ -54,11 +55,11 @@ pub fn loop_frame(node: Node, src: &[u8], parent: Option<usize>) -> LoopFrame {
 }
 
 /// Synthetic frame for a callback passed to `xs.map(...)` and friends.
-pub fn iteration_callback_frame(func: Node, src: &[u8]) -> Option<LoopFrame> {
-    let call = func
-        .parent()
-        .filter(|p| p.kind() == "arguments")?
-        .parent()
+pub fn iteration_callback_frame(lineage: Lineage, src: &[u8]) -> Option<LoopFrame> {
+    let func = lineage.node();
+    let args = lineage.parent(func).filter(|p| p.kind() == "arguments")?;
+    let call = lineage
+        .parent(args)
         .filter(|p| p.kind() == "call_expression")?;
     let callee = call
         .child_by_field_name("function")
