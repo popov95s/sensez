@@ -96,6 +96,25 @@
       "line": 54,
       "module": "flask.typing",
       "symbol": "BeforeFirstRequestCallable"
+    },
+    {
+      "action": "advisory",
+      "confidence": "High",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "variable",
+      "line": 9,
+      "module": "flask.views",
+      "symbol": "F"
+    },
+    {
+      "action": "advisory",
+      "confidence": "Medium",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "class",
+      "line": 138,
+      "module": "flask.views",
+      "reason": "test_only",
+      "symbol": "MethodView"
     }
   ],
   "duplication": [
@@ -200,15 +219,15 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 4,
+    "dead_code_total": 6,
     "duplication_skipped": {
       "config_exclude": 0,
       "generated": 0,
       "tests": 58
     },
     "duplication_total": 5,
-    "external_edges": 329,
-    "internal_edges": 304,
+    "external_edges": 328,
+    "internal_edges": 305,
     "mode": "full",
     "smell_totals": {
       "boolean_blindness": 4,

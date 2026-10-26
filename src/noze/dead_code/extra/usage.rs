@@ -68,9 +68,7 @@ impl ProjectUsage {
     pub(super) fn class_has_external_contract(&self, class: &str, bases: ExternalBases) -> bool {
         match bases {
             ExternalBases::Ignored => false,
-            ExternalBases::ImplyContract { except } => {
-                self.class_index.has_external_base(class, except)
-            }
+            ExternalBases::ImplyContract => self.class_index.has_external_base(class),
         }
     }
 

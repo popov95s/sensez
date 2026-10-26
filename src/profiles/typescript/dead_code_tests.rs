@@ -4,24 +4,29 @@ use crate::report::{Confidence, DeadCodeFinding};
 use crate::spine::parser::{parse_file, SymbolKind};
 use std::fs;
 
-fn scan(sources: &[(&str, &str)], config: &DeadCode) -> Vec<DeadCodeFinding> {
+pub(super) fn scan(sources: &[(&str, &str)], config: &DeadCode) -> Vec<DeadCodeFinding> {
     let tmp = tempfile::tempdir().unwrap();
     fs::write(tmp.path().join("package.json"), "{}").unwrap();
-    let files: Vec<_> = sources
+    let paths: Vec<_> = sources
         .iter()
-        .enumerate()
-        .map(|(index, (name, source))| {
+        .map(|(name, source)| {
             let path = tmp.path().join(name);
             fs::create_dir_all(path.parent().unwrap()).unwrap();
             fs::write(&path, source).unwrap();
-            parse_file(&path, index as u32).unwrap()
+            path
         })
+        .collect();
+    let files: Vec<_> = paths
+        .iter()
+        .filter(|path| path.extension().is_some_and(|ext| ext != "json"))
+        .enumerate()
+        .map(|(index, path)| parse_file(path, index as u32).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     detect(&cg, &files, config)
 }
 
-fn reported(findings: &[DeadCodeFinding], symbol: &str) -> Option<Confidence> {
+pub(super) fn reported(findings: &[DeadCodeFinding], symbol: &str) -> Option<Confidence> {
     findings
         .iter()
         .find(|finding| finding.symbol == symbol && finding.confidence != Confidence::Low)

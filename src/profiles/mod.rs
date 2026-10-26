@@ -93,7 +93,12 @@ pub struct DeadCodeDefaults {
     pub external_bases: ExternalBases,
     pub entrypoint_bases: &'static [&'static str],
     pub entry_points: &'static [&'static str],
+    /// Runner-executed files (test roots).
     pub test_sources: &'static [&'static str],
+    /// Test helpers whose test importers count as users.
+    pub test_support: &'static [&'static str],
+    /// Tool config files: roots, and their imports are weaker evidence.
+    pub runner_configs: &'static [&'static str],
 }
 
 impl DeadCodeDefaults {
@@ -109,6 +114,8 @@ impl DeadCodeDefaults {
         entrypoint_bases: &[],
         entry_points: &[],
         test_sources: &[],
+        test_support: &[],
+        runner_configs: &[],
     };
 }
 
@@ -117,8 +124,8 @@ impl DeadCodeDefaults {
 pub enum ExternalBases {
     /// Out-of-scan bases say nothing about method liveness.
     Ignored,
-    /// Any out-of-scan base or interface may call methods, except the listed names.
-    ImplyContract { except: &'static [&'static str] },
+    /// Any out-of-scan base or interface may call methods.
+    ImplyContract,
 }
 
 /// Result of classifying a symbol's decorator set for dead-code liveness.
@@ -237,7 +244,14 @@ pub trait DeadCodeProfile: Send + Sync {
         false
     }
     fn dead_code_defaults(&self) -> DeadCodeDefaults;
-    fn entry_modules(&self, project_root: &Path) -> Vec<String>;
+    /// Module keys a project manifest names as entry points.
+    fn entry_modules(&self, _project_root: &Path) -> Vec<String> {
+        Vec::new()
+    }
+    /// Files a package manifest names as entry points.
+    fn manifest_entry_files(&self, _files: &[&Path]) -> Vec<PathBuf> {
+        Vec::new()
+    }
 }
 
 pub trait PerformanceProfile: Send + Sync {

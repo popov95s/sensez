@@ -1,150 +1,93 @@
 //! Pillar 2: unreferenced-symbol detection (reachability + evidence, tiered).
 //!
-//! Liveness is modeled from declared entry points (pyproject scripts/plugins +
-//! `sensez.toml` globs/base conventions) and usage evidence. Confidence reflects
-//! what sensez can actually prove: a symbol in an imported-by-name module that's
-//! never referenced is **High**; a module
-//! nothing imports is inherently ambiguous (possible undeclared entry point)
-//! so its symbols are **Low**. Decorators are classified by *shape*:
+//! Liveness is a walk from production roots (manifest entries, entry globs,
+//! tool configs) and test roots (test sources). Importers count as usage when
+//! production reaches them; a symbol only tests ask for is reported as
+//! `test_only`, and a module no root reaches as `unreachable_module`. Names a
+//! barrel re-exports are credited to their origin only when someone asks the
+//! barrel for them. Confidence is High unless evidence suggests hidden use
+//! (default export, opaque or type-namespace importer, tool config, test-only,
+//! unreachable) → Medium. Decorators are classified by *shape*:
 //! registration-shaped (`@app.get`) ⇒ live, neutral (`@property`) ⇒ ignored,
-//! unknown (`@lru_cache`) ⇒ downgraded to Low. Default scope is top-level
-//! functions/classes; imports/methods/variables are opt-in.
+//! unknown (`@lru_cache`) ⇒ not reported.
 
 mod class_entrypoints;
+mod confidence;
+mod demand;
 mod extra;
+mod modules;
+mod reach;
 mod reachability;
+mod reexports;
+mod roots;
 
 use crate::config::model::DeadCode;
-use crate::globs::{build_globset, matches_name};
+use crate::globs::{compile_validated, matches_any};
 use crate::profiles::registry;
-use crate::report::{ActionLevel, DeadCodeFinding};
-use crate::spine::graph::CodebaseGraph;
+use crate::report::DeadCodeFinding;
+use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;
-use crate::spine::parser::SymbolKind;
+use demand::TestImporters;
 use globset::GlobSet;
-use reachability::{confidence_of, inbound_usage, is_entry_module, skip_symbol};
 use std::collections::BTreeMap;
 use std::collections::HashSet;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// Find unreferenced symbols across the codebase.
 pub fn detect(cg: &CodebaseGraph, files: &[ParsedFile], config: &DeadCode) -> Vec<DeadCodeFinding> {
-    let entry_modules: HashSet<&str> = config.entry_modules.iter().map(String::as_str).collect();
     let rule_sets = RuleSets::from_files(files, config);
-    let class_entrypoints =
-        class_entrypoints::ClassEntrypoints::from_files(files, &config.entrypoint_bases);
+    let scan = modules::ModuleScan::new(cg, files, config, &rule_sets);
+    let mut findings: Vec<DeadCodeFinding> = cg
+        .graph
+        .node_indices()
+        .flat_map(|idx| scan.findings(idx))
+        .collect();
+    findings.extend(extra_findings(cg, files, config, &rule_sets));
+    findings
+}
+
+/// Unused imports, methods and properties, each behind its own knob.
+fn extra_findings(
+    cg: &CodebaseGraph,
+    files: &[ParsedFile],
+    config: &DeadCode,
+    rule_sets: &RuleSets,
+) -> Vec<DeadCodeFinding> {
     let mut findings = Vec::new();
-
-    for idx in cg.graph.node_indices() {
-        let node = &cg.graph[idx];
-        let profile = registry::dead_code_profile(node.language);
-        let Some(rules) = rule_sets.for_language(node.language) else {
-            continue;
-        };
-        if node.is_external || is_entry_module(node, profile, &entry_modules, &rules.entry_globs) {
-            continue;
-        }
-        let Some(file) = node.source_index.and_then(|index| files.get(index)) else {
-            continue;
-        };
-        if rules.test_source_globs.is_match(&node.file_path) {
-            continue;
-        }
-        let inbound = inbound_usage(cg, idx, |source| {
-            rule_sets
-                .for_language(source.language)
-                .is_some_and(|rules| rules.test_source_globs.is_match(&source.file_path))
-        });
-        if inbound.star {
-            continue; // `from mod import *` consumes everything
-        }
-        let mut seen = HashSet::new();
-        for symbol in &file.walked.symbols.declared {
-            if !seen.insert(symbol.as_str()) {
-                continue;
-            }
-            let kind = file
-                .walked
-                .symbols
-                .declared_kinds
-                .get(symbol)
-                .copied()
-                .unwrap_or(SymbolKind::Function);
-            if kind == SymbolKind::Variable && !config.unused_variables {
-                continue; // module-level variables are opt-in
-            }
-            let dclass = profile.classify_decorator(
-                file.walked.symbols.decorators.get(symbol),
-                &rules.entrypoints,
-            );
-            if dclass.is_registration()
-                || rules.is_entrypoint_name(symbol)
-                || class_entrypoints.is_entrypoint(&node.file_path, symbol, kind)
-                || skip_symbol(file, profile, symbol, &inbound.used)
-            {
-                continue;
-            }
-            let confidence = confidence_of(&inbound);
-            if dclass.is_unknown() {
-                // Decorated by an unrecognized wrapper — dynamic dispatch may
-                // keep it live. Every consumer drops Low-confidence findings
-                // (pillar ranking and the CLI default both retain !Low), so
-                // emitting one here is guaranteed-discarded work; skipping
-                // keeps "absent" meaning exactly "not reported as dead".
-                continue;
-            }
-            findings.push(DeadCodeFinding {
-                action: ActionLevel::Advisory,
-                module: node.module_name.clone(),
-                symbol: symbol.clone(),
-                kind,
-                confidence,
-                file: node.file_path.clone(),
-                line: file
-                    .walked
-                    .symbols
-                    .declared_lines
-                    .get(symbol)
-                    .copied()
-                    .unwrap_or(0),
-                reason: String::new(),
-            });
-        }
+    if !(config.unused_imports || config.unused_methods || config.unused_properties) {
+        return findings;
     }
-
-    if config.unused_imports || config.unused_methods || config.unused_properties {
-        let modmap = extra::module_map(cg);
-        let report_files: Vec<_> = files
-            .iter()
-            .filter(|file| !rule_sets.is_ignored_source(file.language, &file.path))
-            .collect();
-        let usage_files: Vec<_> = files
-            .iter()
-            .filter(|file| !rule_sets.is_test_source(file.language, &file.path))
-            .collect();
-        if config.unused_imports {
-            findings.extend(extra::unused_imports(report_files.iter().copied(), &modmap));
-        }
-        if config.unused_methods {
-            let member_files =
-                extra::MemberFiles::new(report_files.iter().copied(), usage_files.iter().copied());
-            findings.extend(extra::unused_methods(
-                &member_files,
-                &modmap,
-                |language, name| {
-                    rule_sets
-                        .for_language(language)
-                        .is_some_and(|rules| rules.is_method_entrypoint_name(name))
-                },
-            ));
-        }
-        if config.unused_properties {
-            findings.extend(extra::unused_properties(
-                report_files.iter().copied(),
-                &modmap,
-            ));
-        }
+    let modmap = extra::module_map(cg);
+    let report_files: Vec<_> = files
+        .iter()
+        .filter(|file| !rule_sets.is_ignored_source(file.language, &file.path))
+        .collect();
+    let usage_files: Vec<_> = files
+        .iter()
+        .filter(|file| !rule_sets.is_test_source(file.language, &file.path))
+        .collect();
+    if config.unused_imports {
+        findings.extend(extra::unused_imports(report_files.iter().copied(), &modmap));
+    }
+    if config.unused_methods {
+        let member_files =
+            extra::MemberFiles::new(report_files.iter().copied(), usage_files.iter().copied());
+        findings.extend(extra::unused_methods(
+            &member_files,
+            &modmap,
+            |language, name| {
+                rule_sets
+                    .for_language(language)
+                    .is_some_and(|rules| rules.is_method_entrypoint_name(name))
+            },
+        ));
+    }
+    if config.unused_properties {
+        findings.extend(extra::unused_properties(
+            report_files.iter().copied(),
+            &modmap,
+        ));
     }
     findings
 }
@@ -155,13 +98,24 @@ struct RuleSets {
 
 struct RuleSet {
     entrypoints: HashSet<String>,
-    entrypoint_names: HashSet<String>,
-    method_entrypoint_names: HashSet<String>,
+    entrypoint_names: Vec<String>,
+    method_entrypoint_names: Vec<String>,
     entry_globs: GlobSet,
+    config_globs: GlobSet,
     test_source_globs: GlobSet,
+    test_support_globs: GlobSet,
+    manifest_entries: HashSet<PathBuf>,
 }
 
 impl RuleSet {
+    fn test_importers(&self, path: &Path) -> TestImporters {
+        if self.test_support_globs.is_match(path) {
+            TestImporters::Count
+        } else {
+            TestImporters::ReportAsTestOnly
+        }
+    }
+
     fn is_entrypoint_name(&self, name: &str) -> bool {
         matches_any(&self.entrypoint_names, name)
     }
@@ -171,10 +125,6 @@ impl RuleSet {
     }
 }
 
-fn matches_any(patterns: &HashSet<String>, name: &str) -> bool {
-    patterns.iter().any(|pattern| matches_name(pattern, name))
-}
-
 impl RuleSets {
     fn from_files(files: &[ParsedFile], config: &DeadCode) -> Self {
         let languages: HashSet<_> = files.iter().map(|file| file.language).collect();
@@ -182,12 +132,15 @@ impl RuleSets {
             .into_iter()
             .map(|language| {
                 let defaults = registry::dead_code_profile(language).dead_code_defaults();
-                let entrypoints = merged_set(&config.entrypoints, defaults.entrypoints);
-                let entrypoint_names =
-                    merged_set(&config.entrypoint_names, defaults.entrypoint_names);
-                let method_entrypoint_names = merged_set(&[], defaults.method_entrypoint_names);
+                let entrypoints = merged(&config.entrypoints, defaults.entrypoints);
+                let entrypoint_names = merged(&config.entrypoint_names, defaults.entrypoint_names);
+                let method_entrypoint_names = merged(&[], defaults.method_entrypoint_names);
                 let entry_globs = merged_globset(&config.entry_points, defaults.entry_points);
-                let test_source_globs = merged_globset(&[], defaults.test_sources);
+                let config_globs = merged_globset(&[], defaults.runner_configs);
+                let test_source_globs = merged_globset(&config.test_sources, defaults.test_sources);
+                let test_support_globs =
+                    merged_globset(&config.test_support, defaults.test_support);
+                let manifest_entries = manifest_entries(files, language);
                 (
                     language,
                     RuleSet {
@@ -195,7 +148,10 @@ impl RuleSets {
                         entrypoint_names,
                         method_entrypoint_names,
                         entry_globs,
+                        config_globs,
                         test_source_globs,
+                        test_support_globs,
+                        manifest_entries,
                     },
                 )
             })
@@ -218,9 +174,26 @@ impl RuleSets {
         self.for_language(language)
             .is_some_and(|rules| rules.test_source_globs.is_match(path))
     }
+
+    fn is_config_file(&self, node: &ModuleNode) -> bool {
+        self.for_language(node.language)
+            .is_some_and(|rules| rules.config_globs.is_match(&node.file_path))
+    }
 }
 
-fn merged_set(configured: &[String], defaults: &'static [&'static str]) -> HashSet<String> {
+fn manifest_entries(files: &[ParsedFile], language: Language) -> HashSet<PathBuf> {
+    let paths: Vec<&Path> = files
+        .iter()
+        .filter(|file| file.language == language)
+        .map(|file| file.path.as_path())
+        .collect();
+    registry::dead_code_profile(language)
+        .manifest_entry_files(&paths)
+        .into_iter()
+        .collect()
+}
+
+fn merged<C: FromIterator<String>>(configured: &[String], defaults: &'static [&'static str]) -> C {
     defaults
         .iter()
         .copied()
@@ -230,13 +203,7 @@ fn merged_set(configured: &[String], defaults: &'static [&'static str]) -> HashS
 }
 
 fn merged_globset(configured: &[String], defaults: &'static [&'static str]) -> GlobSet {
-    let globs: Vec<String> = defaults
-        .iter()
-        .copied()
-        .map(str::to_string)
-        .chain(configured.iter().cloned())
-        .collect();
-    build_globset(&globs).unwrap_or_else(|_| GlobSet::empty())
+    compile_validated(&merged::<Vec<String>>(configured, defaults))
 }
 
 #[cfg(test)]

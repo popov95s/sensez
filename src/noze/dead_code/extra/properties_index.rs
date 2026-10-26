@@ -28,13 +28,13 @@ impl ClassIndex {
         out
     }
 
-    /// True when `class` names a base or interface outside the scan and not in `except`.
-    pub(super) fn has_external_base(&self, class: &str, except: &[&str]) -> bool {
+    /// True when `class` names a base or interface outside the scan.
+    pub(super) fn has_external_base(&self, class: &str) -> bool {
         self.bases.get(class).is_some_and(|bases| {
             bases
                 .iter()
                 .flat_map(|base| type_parts(base))
-                .any(|part| !self.names.contains_key(part) && !except.contains(&part))
+                .any(|part| !self.names.contains_key(part))
         })
     }
 

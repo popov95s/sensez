@@ -54,7 +54,10 @@ enabled = true
 # entrypoints = []       # user-added decorator names (JS/TS: `export const x = name(...)` callees); `prefix*` allowed
 # entrypoint_names = []  # user-added dynamic function/class/method names; `prefix*` allowed
 # entrypoint_bases = []  # user-added dynamic base classes
-# entry_points = []      # user-added file globs reached outside the import graph
+# entry_points = []      # user-added file globs reached outside the import graph (roots)
+# test_sources = []      # user-added test-runner file globs (test roots)
+# test_support = []      # user-added test-helper globs: test importers count as users
+# orphan_modules = true  # report exports of modules no root reaches (Medium, "unreachable_module")
 
 [action]
 # Agent/gate policy for each pillar. Values: "info", "advisory", "warning", "must_fix".

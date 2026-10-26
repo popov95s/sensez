@@ -169,17 +169,17 @@ impl StructuralDetector<'_, '_> {
 
     fn nested_ternary(&mut self, m: &FunctionUnit) {
         let lexical = self.cfg.nested_ternary_strictness == Strictness::High;
-        let counted = m
+        let counted: Vec<_> = m
             .nested_ternaries
             .iter()
-            .filter(|ternary| ternary.depth > 0 || lexical);
+            .filter(|ternary| ternary.depth > 0 || lexical)
+            .collect();
         let mut chains: BTreeMap<usize, usize> = BTreeMap::new();
-        let mut anchor: Option<usize> = None;
-        for ternary in counted {
+        for ternary in &counted {
             let levels = chains.entry(ternary.root_line).or_default();
             *levels = (*levels).max(ternary.depth.max(1) + 1);
-            anchor = Some(anchor.map_or(ternary.line, |line| line.min(ternary.line)));
         }
+        let anchor = counted.iter().map(|ternary| ternary.line).min();
         let (Some(line), Some(&deepest)) = (anchor, chains.values().max()) else {
             return;
         };

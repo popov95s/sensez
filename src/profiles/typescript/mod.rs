@@ -5,8 +5,8 @@
 //! to no structural token). TS decorators are a deferred enhancement.
 
 use crate::profiles::javascript::{
-    deadcode, declaration, generated, performance, resolve, roots, test_support, traversal,
-    typevocab, wording,
+    deadcode, declaration, generated, manifest, performance, resolve, roots, test_support,
+    traversal, typevocab, wording,
 };
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
@@ -17,6 +17,9 @@ use crate::spine::ir::{ImportContext, ImportPhase, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
+#[cfg(test)]
+#[path = "dead_code_reach_tests.rs"]
+mod dead_code_reach_tests;
 #[cfg(test)]
 #[path = "dead_code_tests.rs"]
 mod dead_code_tests;
@@ -210,8 +213,8 @@ macro_rules! impl_ts_traits {
                 deadcode::typescript_defaults()
             }
 
-            fn entry_modules(&self, _project_root: &Path) -> Vec<String> {
-                Vec::new()
+            fn manifest_entry_files(&self, files: &[&Path]) -> Vec<PathBuf> {
+                manifest::entry_files(files)
             }
         }
 

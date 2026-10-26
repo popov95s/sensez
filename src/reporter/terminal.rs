@@ -110,16 +110,17 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
     );
     for finding in &report.dead_code {
         let dead_loc = location(&finding.file, finding.line);
-        let _ = writeln!(
-            out,
-            "    [{}] {}  {}::{} ({}) [{}]",
+        let line = format!(
+            "    [{}] {}  {}::{} ({}) [{}] {}",
             action_label(finding.action),
             dead_loc,
             finding.module,
             finding.symbol,
             finding.kind,
-            confidence_label(finding.confidence)
+            confidence_label(finding.confidence),
+            finding.reason
         );
+        let _ = writeln!(out, "{}", line.trim_end());
     }
 
     section(

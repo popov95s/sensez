@@ -49,7 +49,7 @@ fn credit(function: &mut FunctionUnit, comment: &CommentSpan) {
     match comment.class {
         CommentClass::Narration => function.narration_comment_lines += lines,
         CommentClass::Code => function.code_comment_lines += lines,
-        CommentClass::Directive | CommentClass::Markup | CommentClass::Rationale => return,
+        CommentClass::Exempt => return,
     }
     function.first_noisy_comment_line = Some(
         function
