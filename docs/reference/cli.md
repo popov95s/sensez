@@ -393,13 +393,13 @@ Options:
 ### Embedding model
 
 `eyez search`, `eyez reindex` and `[duplication.semantic]` use the
-`minishlab/potion-retrieval-32M` model at a pinned revision. It is looked up,
+`minishlab/potion-code-16M-v2` model at a pinned revision. It is looked up,
 in order:
 
 1. `SENSEZ_EYEZ_MODEL_DIR`: a directory holding `config.json`,
    `tokenizer.json` and `model.safetensors`. Nothing is downloaded.
 2. The HuggingFace cache: `$HF_HOME/hub`, else `~/.cache/huggingface/hub`.
-3. A download (about 130 MB) into that cache. Sensez prints one line to
+3. A download (about 35 MB) into that cache. Sensez prints one line to
    stderr before it starts; `HF_ENDPOINT` changes the host.
 
 With `HF_HUB_OFFLINE=1` or `SENSEZ_OFFLINE=1`, step 3 is skipped and a missing

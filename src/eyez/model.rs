@@ -7,7 +7,7 @@ use hf_hub::{Cache, Repo, RepoType};
 use std::io::IsTerminal;
 use std::path::{Path, PathBuf};
 
-const MODEL_REVISION: &str = "6fc8051fab2a1e0ee76689cf08c853792ac285e7";
+const MODEL_REVISION: &str = "e9d2a44ca6a05ac6685f3b23709ea57eb7352d5b";
 const MODEL_FILES: [&str; 3] = ["config.json", "tokenizer.json", "model.safetensors"];
 
 /// Where the model comes from, decided without touching the network.
@@ -118,7 +118,7 @@ fn model_repo() -> Repo {
 
 fn download_notice(cache_dir: &Path) -> String {
     format!(
-        "[sensez] eyez: first use downloads {MODEL_ID} (~130 MB) to {} \
+        "[sensez] eyez: first use downloads {MODEL_ID} (~35 MB) to {} \
          (set HF_HOME or SENSEZ_EYEZ_MODEL_DIR to change)",
         cache_dir.display()
     )

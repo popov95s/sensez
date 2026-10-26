@@ -45,10 +45,9 @@ mod fused_collector_tests;
 #[cfg(test)]
 mod tests;
 
-use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile, WordingProfile,
+    TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -61,6 +60,7 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     language: Language::JavaScript,
     extensions: &["js", "jsx", "mjs", "cjs"],
     test_support: test_support::TEST_SUPPORT,
+    wording: &wording::WORDING,
 };
 impl ParseProfile for JsProfile {
     fn info(&self) -> &'static LanguageInfo {
@@ -212,11 +212,5 @@ impl TypeVocabularyProfile for JsProfile {
 
     fn is_void(&self, annotation: &str) -> bool {
         typevocab::is_void(annotation)
-    }
-}
-
-impl WordingProfile for JsProfile {
-    fn smell_wording(&self) -> &'static SmellWording {
-        &wording::WORDING
     }
 }

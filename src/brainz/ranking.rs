@@ -33,27 +33,27 @@ pub fn rank_by_precision(root: &Path, report: &mut crate::report::AnalysisReport
     let prints = fingerprint::fingerprints(&value);
     fingerprint::partition_by_fingerprint(
         &mut report.cycles,
-        prints.get(&fingerprint::Namespace::Cycles),
+        prints.get(&fingerprint::Pillar::Cycles),
         |p| noisy.contains(&p.class.to_string()),
     );
     fingerprint::partition_by_fingerprint(
         &mut report.dead_code,
-        prints.get(&fingerprint::Namespace::DeadCode),
+        prints.get(&fingerprint::Pillar::DeadCode),
         |p| noisy.contains(&p.class.to_string()),
     );
     fingerprint::partition_by_fingerprint(
         &mut report.boundaries,
-        prints.get(&fingerprint::Namespace::Boundaries),
+        prints.get(&fingerprint::Pillar::Boundaries),
         |p| noisy.contains(&p.class.to_string()),
     );
     fingerprint::partition_by_fingerprint(
         &mut report.duplication,
-        prints.get(&fingerprint::Namespace::Duplication),
+        prints.get(&fingerprint::Pillar::Duplication),
         |p| noisy.contains(&p.class.to_string()),
     );
     fingerprint::partition_by_fingerprint(
         &mut report.smells,
-        prints.get(&fingerprint::Namespace::Smells),
+        prints.get(&fingerprint::Pillar::Smells),
         |p| noisy.contains(&p.class.to_string()),
     );
 }
@@ -74,7 +74,7 @@ mod tests {
         let print = |hash, noisy| {
             Print::identity(
                 hash,
-                fingerprint::Namespace::Smells,
+                fingerprint::Pillar::Smells,
                 fingerprint::Label::Smell {
                     smell: crate::report::SmellKind::LongFunction,
                     file: String::new(),

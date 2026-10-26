@@ -7,7 +7,7 @@
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile, WordingProfile,
+    TypeVocabularyProfile,
 };
 use globset::GlobSet;
 use std::collections::HashMap;
@@ -89,7 +89,7 @@ pub fn identifier_extra_chars(language: Language) -> &'static [char] {
 }
 
 pub fn smell_wording(language: Language) -> &'static SmellWording {
-    WordingProfile::smell_wording(profile(language))
+    profile(language).info().wording
 }
 
 /// Match file conventions from the owning language profile, compiled once.

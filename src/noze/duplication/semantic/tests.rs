@@ -26,7 +26,7 @@ fn repeated_method_name_uses_nearest_documentation() {
         end_line: 29,
         ..Default::default()
     };
-    assert_eq!(comment_for(&comments, &func).unwrap().0, "m::Second.run");
+    assert!(comment_for(&comments, &func).unwrap().contains("second"));
 }
 
 #[test]
@@ -64,12 +64,13 @@ fn regression_documented_functions_form_a_candidate_without_internal_comment_noi
     .map(|(index, name)| parse_file(&fixture_root.join(name), index as u32).unwrap())
     .collect();
     let refs: Vec<_> = files.iter().collect();
-    let units = collect_units(&refs, &SemanticDuplication::default(), 20);
+    let documented_only = SemanticDuplication {
+        comment_required: true,
+        ..SemanticDuplication::default()
+    };
+    let (units, _) = collect_units(&refs, &documented_only, 20);
     assert_eq!(units.len(), 2, "only leading function docs should qualify");
-    assert_eq!(
-        candidate_pairs(&units, &SemanticDuplication::default()).len(),
-        1
-    );
+    assert_eq!(candidate_pairs(&units, &documented_only).len(), 1);
     assert!(units.iter().all(|unit| unit
         .doc
         .as_ref()
@@ -136,7 +137,7 @@ fn units_for(
     let tmp = tempfile::tempdir().unwrap();
     let files = crate::noze::duplication::test_support::write_files(tmp.path(), sources);
     let refs: Vec<_> = files.iter().collect();
-    collect_units(&refs, config, threshold)
+    collect_units(&refs, config, threshold).0
 }
 
 fn undocumented() -> SemanticDuplication {
@@ -182,10 +183,19 @@ fn undocumented_near_copy_is_labelled_without_docs() {
         &undocumented(),
         20,
     );
+    let same = vec![1.0, 0.0];
+    let other = vec![0.0, 1.0];
+    let vectors = Vectors::from_iter([Slot::Name, Slot::Code].into_iter().flat_map(|slot| {
+        [
+            ((0, slot), same.clone()),
+            ((1, slot), same.clone()),
+            ((2, slot), other.clone()),
+        ]
+    }));
     let found = findings(
         &units,
         candidate_pairs(&units, &undocumented()),
-        &[None, None, None],
+        &vectors,
         &undocumented(),
     );
     assert_eq!(found.len(), 1);
@@ -224,18 +234,18 @@ fn only_overlapping_structure_or_doc_words_become_candidates() {
 }
 
 #[test]
-fn documented_unit_paired_only_with_undocumented_code_is_not_embedded() {
-    let units = units_for(
-        &[
-            (
-                "a.js",
-                &format!("/** Sum the amounts per day for a report. */\n{TOTALS}"),
-            ),
-            ("b.js", TOTALS_EDITED),
-        ],
-        &undocumented(),
-        20,
+fn unreadable_file_is_an_issue_and_pairs_with_nothing() {
+    let tmp = tempfile::tempdir().unwrap();
+    let files = crate::noze::duplication::test_support::write_files(
+        tmp.path(),
+        &[("a.js", TOTALS), ("b.js", TOTALS)],
     );
-    let vectors = vectors_for(None, &units, &[(0, 1)]).unwrap();
-    assert!(vectors.iter().all(Option::is_none));
+    std::fs::remove_file(tmp.path().join("b.js")).unwrap();
+    let refs: Vec<_> = files.iter().collect();
+
+    let (classes, issues) = detect(&refs, &undocumented(), 20, None).unwrap();
+
+    assert!(classes.is_empty(), "{classes:?}");
+    assert_eq!(issues.len(), 1);
+    assert!(issues[0].file.as_ref().unwrap().ends_with("b.js"));
 }

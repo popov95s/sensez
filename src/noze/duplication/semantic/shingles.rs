@@ -1,6 +1,7 @@
+use crate::noze::duplication::near_miss::canonical_key;
 use crate::spine::parser::tokens::StructuralToken;
-use rustc_hash::FxHashSet;
-use std::hash::{Hash, Hasher};
+use rustc_hash::{FxBuildHasher, FxHashSet};
+use std::hash::BuildHasher;
 
 const SHINGLE: usize = 4;
 
@@ -8,7 +9,7 @@ const SHINGLE: usize = 4;
 pub(super) fn shingles(tokens: &[(StructuralToken, u64)]) -> FxHashSet<u64> {
     tokens
         .windows(SHINGLE)
-        .map(|window| hash(&super::super::near_miss::canonical_key(window)))
+        .map(|window| FxBuildHasher.hash_one(canonical_key(window)))
         .collect()
 }
 
@@ -16,7 +17,7 @@ pub(super) fn shingles(tokens: &[(StructuralToken, u64)]) -> FxHashSet<u64> {
 pub(super) fn words(text: &str) -> FxHashSet<u64> {
     text.split(|c: char| !c.is_alphanumeric())
         .filter(|word| !word.is_empty())
-        .map(|word| hash(&word.to_lowercase()))
+        .map(|word| FxBuildHasher.hash_one(word.to_lowercase()))
         .collect()
 }
 
@@ -27,12 +28,6 @@ pub(super) fn jaccard(left: &FxHashSet<u64>, right: &FxHashSet<u64>) -> f32 {
         return 0.0;
     }
     shared as f32 / union as f32
-}
-
-fn hash<T: Hash + ?Sized>(value: &T) -> u64 {
-    let mut h = rustc_hash::FxHasher::default();
-    value.hash(&mut h);
-    h.finish()
 }
 
 #[cfg(test)]

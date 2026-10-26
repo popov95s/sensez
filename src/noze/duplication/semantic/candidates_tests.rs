@@ -37,3 +37,31 @@ fn prefix_shrinks_as_the_threshold_rises() {
     assert_eq!(prefix_len(10, 1.0), 1);
     assert_eq!(prefix_len(0, 0.5), 0);
 }
+
+#[test]
+fn items_most_sets_share_cannot_pair_sets() {
+    let common = 999;
+    let sets: Vec<FxHashSet<u64>> = (0..20u64).map(|i| set([common, i])).collect();
+    let refs: Vec<&FxHashSet<u64>> = sets.iter().collect();
+    let pruned = without_common(&refs, 0.5, 2);
+    assert!(pruned.iter().all(|set| !set.contains(&common)));
+    let pruned_refs: Vec<&FxHashSet<u64>> = pruned.iter().collect();
+    assert!(similar_pairs(&pruned_refs, 0.3).is_empty());
+}
+
+#[test]
+fn common_items_limit_floors_the_share() {
+    let groups: Vec<Vec<u64>> = (0..10u64)
+        .map(|i| match i {
+            0..=1 => vec![1, 2],
+            2 => vec![1],
+            _ => vec![i + 10],
+        })
+        .collect();
+    let common = common_items(groups.iter(), 0.25, 1);
+    assert_eq!(
+        common,
+        FxHashSet::from_iter([1]),
+        "2.5 floors to 2: three uses are common, two are not"
+    );
+}

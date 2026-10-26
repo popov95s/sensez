@@ -190,20 +190,29 @@ scan" rather than passing.
 ```toml
 [duplication.semantic]
 enabled = true
-min_shape_score = 50       # token 4-gram overlap (0-100) for an edited copy; above 100 is an error
-comment_boost_score = 85   # doc similarity (50-100) an edited copy needs; below 50 is an error
-comment_required = true    # false also pairs undocumented functions (overlap >= 70 needed)
+min_shape_score = 30       # token 4-gram overlap (0-100) separating edited copies from rewrites; above 100 is an error
+comment_boost_score = 85   # doc similarity (50-100) that confirms an edited copy; below 50 is an error
+comment_required = false   # true compares documented functions only
 ```
 
-Semantic groups only consider functions of at least `threshold` tokens and
-carry one of two verdicts:
+Semantic groups only consider functions of at least `threshold` tokens. Each
+pair is scored four ways: structural overlap (4-gram Jaccard), and the cosine,
+under the code embedding model, of the two functions' source, of their
+signatures (name and parameter words, ignoring words that many functions in
+the codebase share) and of their doc comments. A group carries one of two
+verdicts:
 
-- `semantic: edited copy (structure 0.76, docs 0.91)`: overlap at least
-  `min_shape_score` and matching docs (`docs n/a` when neither function has
-  one). Reported at the duplication action level.
-- `semantic: near-identical docs on structurally different code (structure 0.01, docs 0.95)`:
-  a rewrite, or a copy-pasted doc comment. Reported as `info`. Only doc
-  comments sharing at least half their words are compared.
+- `semantic: edited copy (structure 0.48, code 0.91, names 0.88, docs n/a)`:
+  overlap at least `min_shape_score`, confirmed by similar source and similar
+  signatures, or by matching doc comments. Reported at the duplication action
+  level.
+- `semantic: same intent, structurally different code (structure 0.12, code 0.86, names 0.92, docs n/a)`:
+  a rewrite of the same function, for example a loop and a `filter`/`map`
+  chain. Reported as `info`.
+
+Pairs are only compared when they share enough uncommon structure, signature
+words or doc words; words and shapes used by most functions in the codebase
+never pair two functions on their own.
 
 When several detectors report the same code, the widest group is kept, its
 line ranges grow to cover the others, and the folded groups are listed under

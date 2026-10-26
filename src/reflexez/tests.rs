@@ -310,11 +310,7 @@ pub(super) fn args() -> ReflexezArgs {
     }
 }
 
-pub(super) fn write(root: &Path, relative: &str, source: &str) {
-    let path = root.join(relative);
-    fs::create_dir_all(path.parent().unwrap()).unwrap();
-    fs::write(path, source).unwrap();
-}
+pub(super) use crate::test_support::write;
 
 pub(super) fn git(root: &Path, arguments: &[&str]) {
     let status = Command::new("git")

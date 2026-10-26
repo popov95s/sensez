@@ -1,4 +1,4 @@
-use crate::profiles::wording::SmellWording;
+use crate::profiles::wording::{self, SmellWording};
 
 pub(crate) const WORDING: SmellWording = SmellWording {
     identifier_extra_chars: &[],
@@ -8,7 +8,6 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     options: "an enum",
     safe_top_advice: "parse it into a concrete type at the boundary",
     fallback_example: r#"`unwrap_or("")`"#,
-    fallback_advice:
-        "prefer a tighter contract with an optional string value or a dedicated default",
-    sentinel_words: &["n/a", "na", "none", "unknown", "tbd", "-", "--", "?", "??"],
+    fallback_advice: wording::FALLBACK_ADVICE,
+    sentinel_words: wording::SENTINEL_WORDS,
 };

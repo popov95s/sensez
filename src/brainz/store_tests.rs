@@ -1,5 +1,5 @@
 use super::events::{Event, OutcomeKey, Totals};
-use super::fingerprint::{Aged, AgedEntry, Detector, Label, Namespace, ResolvedHistory};
+use super::fingerprint::{Aged, AgedEntry, Detector, Label, Pillar, ResolvedHistory};
 use super::store::*;
 use std::collections::BTreeMap;
 use std::fs;
@@ -35,7 +35,7 @@ fn totals_and_events_roundtrip() {
     assert_eq!(log.lines().count(), 2, "appends accumulate");
 
     let prints: Aged = BTreeMap::from([(
-        Namespace::DeadCode,
+        Pillar::DeadCode,
         BTreeMap::from([(
             "7".to_string(),
             AgedEntry {
@@ -62,7 +62,7 @@ fn fingerprints_are_isolated_per_branch() {
     let tmp = tempfile::tempdir().unwrap();
     let root = tmp.path().to_path_buf();
     let prints: Aged = BTreeMap::from([(
-        Namespace::DeadCode,
+        Pillar::DeadCode,
         BTreeMap::from([(
             "abc".to_string(),
             AgedEntry {

@@ -1,7 +1,6 @@
 use crate::config::model::Duplication;
+use crate::noze::duplication::test_support::{pairs, write_files};
 use crate::report::CloneClass;
-use crate::spine::parser::parse_file;
-use std::fs;
 
 const JS_SUMMARY: &str = "export function summarize(orders, limit) {
   const totals = new Map();
@@ -58,15 +57,7 @@ const JSX_CARD: &str = "export function Card({ title, items, onSelect }) {
 
 fn detect(files: &[(&str, &str)], max_gap: usize) -> Vec<CloneClass> {
     let tmp = tempfile::tempdir().unwrap();
-    let parsed: Vec<_> = files
-        .iter()
-        .enumerate()
-        .map(|(i, (name, body))| {
-            let path = tmp.path().join(name);
-            fs::write(&path, body).unwrap();
-            parse_file(&path, i as u32).unwrap()
-        })
-        .collect();
+    let parsed = write_files(tmp.path(), files);
     let config = Duplication {
         exclude: vec![],
         max_gap,
@@ -77,13 +68,6 @@ fn detect(files: &[(&str, &str)], max_gap: usize) -> Vec<CloneClass> {
 
 fn detect_default(files: &[(&str, &str)]) -> Vec<CloneClass> {
     detect(files, Duplication::default().max_gap)
-}
-
-fn pairs(clones: &[CloneClass], left: &str, right: &str) -> bool {
-    clones.iter().any(|class| {
-        let has = |name: &str| class.occurrences.iter().any(|o| o.file.ends_with(name));
-        has(left) && has(right)
-    })
 }
 
 #[test]

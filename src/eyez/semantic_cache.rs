@@ -13,10 +13,9 @@ use std::path::Path;
 const CACHE_REL: &str = ".sensez/semantic-dup-cache.bin";
 const SCHEMA_VERSION: u32 = 1;
 
-#[derive(Clone)]
-pub(crate) struct BundleInput {
+pub(crate) struct BundleInput<'a> {
     pub key: u64,
-    pub text: String,
+    pub text: &'a str,
 }
 
 #[derive(Default, Serialize, Deserialize)]
@@ -60,7 +59,7 @@ pub(crate) fn vectors(root: &Path, inputs: &[BundleInput]) -> Result<Vec<Vec<f32
         let mut texts = Vec::with_capacity(missing.len());
         for input in missing {
             keys.push(input.key);
-            texts.push(input.text.clone());
+            texts.push(input.text.to_owned());
         }
         let embedded = embedder.embed(&texts);
         if embedded.len() != keys.len() {

@@ -2,8 +2,6 @@ use crate::report::SmellKind;
 use serde::{Deserialize, Serialize};
 use std::fmt::{Display, Formatter};
 
-pub use crate::report::Pillar as Namespace;
-
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
 pub enum Detector {
