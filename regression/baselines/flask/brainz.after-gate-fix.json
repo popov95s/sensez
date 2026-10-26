@@ -32,11 +32,11 @@
         "count": 1
       }
     },
-    "scan_files_total": 502,
-    "scan_loc_total": 109924,
-    "scans": 6,
+    "scan_files_total": 418,
+    "scan_loc_total": 91602,
+    "scans": 5,
     "scans_by_origin": {
-      "gate": 3,
+      "gate": 2,
       "tool": 3
     },
     "searches": 0,
@@ -61,10 +61,10 @@
   },
   "gate_funnel": {
     "by_origin": {
-      "gate": 3,
+      "gate": 2,
       "tool": 3
     },
-    "gate_share": 0.5
+    "gate_share": 0.4
   },
   "mean_resolution_days": {
     "_overall": 0.0,
@@ -93,7 +93,7 @@
         "resolved": 1
       }
     },
-    "scans": 6
+    "scans": 5
   },
   "search_health": {
     "searches": 0,
@@ -101,8 +101,8 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 83.67,
-    "scans": 6
+    "mean_files": 83.6,
+    "scans": 5
   },
   "stale_findings": [],
   "triaged": []

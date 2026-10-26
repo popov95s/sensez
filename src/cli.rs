@@ -59,7 +59,7 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
                     [query] => (PathBuf::from("."), query.as_str()),
                     _ => anyhow::bail!("eyez search takes [PATH] QUERY"),
                 };
-                run_search(&path, query, usize::from(top_k), json).map(|()| ExitCode::SUCCESS)
+                run_search(&path, query, top_k, json).map(|()| ExitCode::SUCCESS)
             }
             spec::EyezAction::Reindex {
                 path,
@@ -117,7 +117,7 @@ fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
 
 /// Build/refresh the eyez index for `path` and print the top hits for `query`.
 #[cfg(feature = "eyez")]
-fn run_search(path: &Path, query: &str, top_k: usize, json: bool) -> Result<()> {
+fn run_search(path: &Path, query: &str, top_k: std::num::NonZeroUsize, json: bool) -> Result<()> {
     let index = crate::eyez::Index::open(path)?;
     let hits = index.search(query, top_k);
     if json {

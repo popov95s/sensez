@@ -73,3 +73,52 @@ fn skipped_analyzer_fails_only_gated_runs() {
         "incomplete scan: duplication.semantic skipped: offline"
     );
 }
+
+#[test]
+fn fail_on_new_sees_a_finding_in_a_non_ascii_file() {
+    let Some(repo) = crate::test_support::GitTestRepo::importing("ümlaut.py", "x") else {
+        return;
+    };
+    std::fs::write(&repo.file, "def live():\n    return 1\n").unwrap();
+    assert!(repo.commit_all());
+    std::fs::write(
+        &repo.file,
+        "def live():\n    return 1\n\n\ndef orphan():\n    return 2\n",
+    )
+    .unwrap();
+
+    assert_eq!(
+        run_scan(&repo.root, &fail_on_new()).unwrap(),
+        ExitCode::FAILURE
+    );
+}
+
+#[test]
+fn fail_on_new_sees_a_function_whose_only_caller_was_removed() {
+    let Some(repo) = crate::test_support::GitTestRepo::importing("calls.py", "x") else {
+        return;
+    };
+    std::fs::write(
+        &repo.file,
+        "def helper():\n    return 1\n\n\ndef live():\n    return helper()\n",
+    )
+    .unwrap();
+    assert!(repo.commit_all());
+    std::fs::write(
+        &repo.file,
+        "def helper():\n    return 1\n\n\ndef live():\n    return 2\n",
+    )
+    .unwrap();
+
+    assert_eq!(
+        run_scan(&repo.root, &fail_on_new()).unwrap(),
+        ExitCode::FAILURE
+    );
+}
+
+fn fail_on_new() -> spec::ScanOptions {
+    spec::ScanOptions {
+        fail_on_new: Some(FailOnNewLevel::Advisory),
+        ..scan_options()
+    }
+}

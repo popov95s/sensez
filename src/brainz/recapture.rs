@@ -36,7 +36,7 @@ pub(super) fn run() {
             continue;
         }
         if branch_changed_since_baseline(&root, &base.branch, base.ts) {
-            hub::mark_rescanned(&root);
+            hub::mark_rescanned(&root, hub::now());
             continue;
         }
         recapture(&root, &base.branch, base.threshold, base.ts);
@@ -49,7 +49,7 @@ fn branch_changed_since_baseline(root: &Path, branch: &str, baseline_ts: u64) ->
 
 fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u64) {
     if branch_changed_since_baseline(root, branch, baseline_ts) {
-        hub::mark_rescanned(root);
+        hub::mark_rescanned(root, hub::now());
         return;
     }
     let report = match crate::analyze_path_in_service(root, threshold) {
@@ -63,7 +63,7 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u
         return;
     };
     if branch_changed_since_baseline(root, branch, baseline_ts) {
-        hub::mark_rescanned(root);
+        hub::mark_rescanned(root, hub::now());
         return;
     }
     let previous = store::load_fingerprints(root, branch);
@@ -85,7 +85,7 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u
     ) {
         Ok(true) => {}
         Ok(false) => {
-            hub::mark_rescanned(root);
+            hub::mark_rescanned(root, hub::now());
             return;
         }
         Err(err) => {
@@ -93,7 +93,7 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u
             return;
         }
     }
-    hub::mark_rescanned(root);
+    hub::mark_rescanned(root, now);
     let (resolved, reintroduced) = (aging.resolved, aging.reintroduced);
     if !resolved.is_empty() || !reintroduced.is_empty() {
         hub::push(root, move |session, branch| Event::AutoResolve {

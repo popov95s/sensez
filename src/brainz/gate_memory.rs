@@ -1,16 +1,26 @@
-//! Remember which finding identities have already blocked the gate.
+//! Finding identities the gate remembers, and pruning a report by them.
 
-use super::events::Event;
-use super::{fingerprint, store};
+use super::fingerprint;
 use crate::report::AnalysisReport;
-use std::collections::BTreeSet;
+use std::collections::{BTreeMap, BTreeSet};
 
+/// Fingerprint key to human label for every finding in `report`.
+pub fn finding_identities(report: &AnalysisReport) -> BTreeMap<String, String> {
+    let Ok(value) = serde_json::to_value(report) else {
+        return BTreeMap::new();
+    };
+    fingerprint::fingerprints(&value)
+        .values()
+        .flatten()
+        .map(|print| (print.key(), print.label.to_string()))
+        .collect()
+}
+
+/// Drop findings whose identity is in `blocked`; returns how many remain.
 pub fn retain_unseen_gate_findings(
-    root: &std::path::Path,
-    scope: Option<&str>,
     report: &mut AnalysisReport,
+    blocked: &BTreeSet<String>,
 ) -> usize {
-    let blocked = blocked_fingerprints(root, scope);
     if blocked.is_empty() {
         return report.finding_count();
     }
@@ -18,48 +28,34 @@ pub fn retain_unseen_gate_findings(
         return report.finding_count();
     };
     let prints = fingerprint::fingerprints(&value);
+    let unseen = |print: &fingerprint::Print| !blocked.contains(&print.key());
     fingerprint::retain_by_fingerprint(
         &mut report.cycles,
         prints.get(&fingerprint::Pillar::Cycles),
-        |p| !blocked.contains(&p.key()),
+        unseen,
     );
     fingerprint::retain_by_fingerprint(
         &mut report.dead_code,
         prints.get(&fingerprint::Pillar::DeadCode),
-        |p| !blocked.contains(&p.key()),
+        unseen,
     );
     fingerprint::retain_by_fingerprint(
         &mut report.boundaries,
         prints.get(&fingerprint::Pillar::Boundaries),
-        |p| !blocked.contains(&p.key()),
+        unseen,
     );
     fingerprint::retain_by_fingerprint(
         &mut report.duplication,
         prints.get(&fingerprint::Pillar::Duplication),
-        |p| !blocked.contains(&p.key()),
+        unseen,
     );
     fingerprint::retain_by_fingerprint(
         &mut report.smells,
         prints.get(&fingerprint::Pillar::Smells),
-        |p| !blocked.contains(&p.key()),
+        unseen,
     );
     report.meta.glossary = crate::noze::glossary::for_report(report);
     report.finding_count()
-}
-
-fn blocked_fingerprints(root: &std::path::Path, scope: Option<&str>) -> BTreeSet<String> {
-    store::load_events(root)
-        .into_iter()
-        .filter_map(|event| match event {
-            Event::GateBlock {
-                scope: event_scope,
-                fingerprints,
-                ..
-            } if event_scope.as_deref() == scope => Some(fingerprints),
-            _ => None,
-        })
-        .flatten()
-        .collect()
 }
 
 #[cfg(test)]
@@ -67,55 +63,26 @@ mod tests {
     use super::*;
     use crate::report::{ActionLevel, Confidence, DeadCodeFinding};
     use crate::spine::ir::SymbolKind;
-    use std::path::{Path, PathBuf};
+    use std::path::PathBuf;
 
     #[test]
     fn previously_blocked_identity_is_pruned_by_fingerprint() {
-        let _metrics = crate::test_support::metrics_guard();
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        let mut first = report_with(root, &[("alpha", 4)]);
-        let value = serde_json::to_value(&first).unwrap();
-        crate::brainz::record_gate_block(root, None, &value);
-        crate::brainz::flush();
+        let mut first = report_with(&[("alpha", 4)]);
+        let blocked: BTreeSet<String> = finding_identities(&first).into_keys().collect();
 
-        let mut next = report_with(root, &[("alpha", 40), ("beta", 12)]);
-        assert_eq!(retain_unseen_gate_findings(root, None, &mut next), 1);
-        assert_eq!(next.dead_code.len(), 1);
+        let mut next = report_with(&[("alpha", 40), ("beta", 12)]);
+        assert_eq!(retain_unseen_gate_findings(&mut next, &blocked), 1);
         assert_eq!(next.dead_code[0].symbol, "beta");
 
         first.dead_code[0].line = 400;
         assert_eq!(
-            retain_unseen_gate_findings(root, None, &mut first),
+            retain_unseen_gate_findings(&mut first, &blocked),
             0,
             "line drift keeps the same finding identity"
         );
     }
 
-    #[test]
-    fn blocked_findings_are_isolated_by_session_scope() {
-        let _metrics = crate::test_support::metrics_guard();
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path();
-        let first = report_with(root, &[("alpha", 4)]);
-        let value = serde_json::to_value(&first).unwrap();
-        crate::brainz::record_gate_block(root, Some("session:one"), &value);
-        crate::brainz::flush();
-
-        let mut other_session = report_with(root, &[("alpha", 4)]);
-        assert_eq!(
-            retain_unseen_gate_findings(root, Some("session:two"), &mut other_session),
-            1
-        );
-
-        let mut original_session = report_with(root, &[("alpha", 4)]);
-        assert_eq!(
-            retain_unseen_gate_findings(root, Some("session:one"), &mut original_session),
-            0
-        );
-    }
-
-    fn report_with(root: &Path, symbols: &[(&str, usize)]) -> AnalysisReport {
+    fn report_with(symbols: &[(&str, usize)]) -> AnalysisReport {
         AnalysisReport {
             dead_code: symbols
                 .iter()
@@ -125,7 +92,7 @@ mod tests {
                     symbol: (*symbol).to_string(),
                     kind: SymbolKind::Function,
                     confidence: Confidence::High,
-                    file: PathBuf::from(root).join("sample.py"),
+                    file: PathBuf::from("sample.py"),
                     line: *line,
                     reason: String::new(),
                 })

@@ -23,8 +23,14 @@ pub struct SearchHit {
     pub score: f32,
 }
 
-/// The `k` docs whose vectors are most similar to `query`; `k` is at least 1.
-pub fn top_k(vectors: &[Vec<f32>], docs: &[CachedDoc], query: &[f32], k: usize) -> Vec<SearchHit> {
+/// The `k` docs whose vectors are most similar to `query`.
+pub fn top_k(
+    vectors: &[Vec<f32>],
+    docs: &[CachedDoc],
+    query: &[f32],
+    wanted: std::num::NonZeroUsize,
+) -> Vec<SearchHit> {
+    let k = wanted.get();
     let mut scored: Vec<(f32, usize)> = vectors
         .par_iter()
         .enumerate()
@@ -81,7 +87,12 @@ mod tests {
             vec![0.0, 1.0], // b: aligned with query
             vec![0.7, 0.7], // c: partial
         ];
-        let hits = top_k(&vectors, &docs, &[0.0, 1.0], 2);
+        let hits = top_k(
+            &vectors,
+            &docs,
+            &[0.0, 1.0],
+            std::num::NonZeroUsize::new(2).unwrap(),
+        );
         assert_eq!(hits.len(), 2, "k caps the result count");
         assert_eq!(hits[0].symbol_path, "b", "best match first");
         assert!(hits[0].score >= hits[1].score, "scores are descending");

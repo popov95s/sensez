@@ -55,7 +55,7 @@ pub struct DeadCodeFinding {
     /// 1-indexed source line; 0 is an internal "unknown/not applicable" sentinel.
     #[serde(skip_serializing_if = "line_is_unknown", default)]
     pub line: usize,
-    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance ("added_unreferenced").
+    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance ("added_unreferenced", "reference_removed").
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub reason: String,
 }

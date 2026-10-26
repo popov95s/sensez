@@ -1,14 +1,15 @@
 //! Tool-call handlers for the MCP surface.
 
-use anyhow::Context;
 use serde::Deserialize;
 use serde_json::{json, Value};
 use std::path::Path;
-use std::process::Command;
 #[cfg(feature = "eyez")]
 use std::time::Instant;
 
 pub(super) type ToolResult = Result<Value, (i64, String)>;
+
+/// JSON-RPC error code for invalid method parameters.
+pub(super) const INVALID_PARAMS: i64 = -32602;
 
 pub(super) fn call(name: &str, args: &Value) -> ToolResult {
     match name {
@@ -20,14 +21,14 @@ pub(super) fn call(name: &str, args: &Value) -> ToolResult {
         "noze_explain" | "explain" => explain(args),
         "brainz_triage" | "triage_finding" => triage_finding(args),
         "brainz_report" | "usage_report" => usage_report(args),
-        other => Err((-32602, format!("unknown tool: {other}"))),
+        other => Err((INVALID_PARAMS, format!("unknown tool: {other}"))),
     }
 }
 
 pub(super) fn required_str<'a>(args: &'a Value, key: &str) -> Result<&'a str, (i64, String)> {
     args.get(key)
         .and_then(Value::as_str)
-        .ok_or((-32602, format!("missing '{key}' argument")))
+        .ok_or_else(|| (INVALID_PARAMS, format!("missing '{key}' argument")))
 }
 
 pub(super) fn text_result(text: String, is_error: bool) -> Value {
@@ -35,71 +36,25 @@ pub(super) fn text_result(text: String, is_error: bool) -> Value {
 }
 
 fn configuration_summary(args: &Value) -> ToolResult {
-    let path = required_str(args, "path")?;
-    let mut command_args = vec!["noze", path, "--summary"];
-    if args.get("diff").and_then(Value::as_bool).unwrap_or(false) {
-        command_args.push("--diff");
-    }
-    match run_summary_command(&command_args) {
+    let path = Path::new(required_str(args, "path")?);
+    let scope = if args.get("diff").and_then(Value::as_bool).unwrap_or(false) {
+        super::scan::Scope::DiffVsHead
+    } else {
+        super::scan::Scope::Full
+    };
+    let summary =
+        super::scan::run(path, None, 0, scope).and_then(|(report, _snapshot, _elapsed)| {
+            crate::config_summary::render(path, &report, None)
+        });
+    match summary {
         Ok(text) => Ok(text_result(text, false)),
         Err(err) => Ok(text_result(format!("{err:#}"), true)),
     }
 }
 
-fn run_summary_command(args: &[&str]) -> anyhow::Result<String> {
-    use std::process::Stdio;
-    use std::time::Duration;
-    use wait_timeout::ChildExt;
-
-    const SUMMARY_TIMEOUT: Duration = Duration::from_secs(60);
-
-    let exe = std::env::current_exe().context("resolving current executable")?;
-    let mut child = Command::new(exe)
-        .args(args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
-        .spawn()
-        .context("running `sensez noze --summary`")?;
-    let stdout_pipe = child.stdout.take().context("capturing summary stdout")?;
-    let stderr_pipe = child.stderr.take().context("capturing summary stderr")?;
-    let out_reader = read_to_end(stdout_pipe);
-    let err_reader = read_to_end(stderr_pipe);
-
-    match child
-        .wait_timeout(SUMMARY_TIMEOUT)
-        .context("waiting for summary")?
-    {
-        Some(status) => {
-            let stdout = out_reader.join().unwrap_or_default();
-            let stderr = err_reader.join().unwrap_or_default();
-            if !status.success() {
-                anyhow::bail!("summary command failed: {stderr}");
-            }
-            String::from_utf8(stdout.into_bytes())
-                .map_err(|_| anyhow::anyhow!("summary command emitted non-UTF-8 output"))
-        }
-        None => {
-            let _ = child.kill();
-            let _ = child.wait();
-            anyhow::bail!(
-                "summary command timed out after {}s",
-                SUMMARY_TIMEOUT.as_secs()
-            )
-        }
-    }
-}
-
-fn read_to_end<R: std::io::Read + Send + 'static>(mut pipe: R) -> std::thread::JoinHandle<String> {
-    std::thread::spawn(move || {
-        let mut buf = String::new();
-        let _ = pipe.read_to_string(&mut buf);
-        buf
-    })
-}
-
 fn scan_tool(args: &Value) -> ToolResult {
     let scan_args: ScanArgs = serde_json::from_value(args.clone())
-        .map_err(|e| (-32602, format!("invalid arguments: {e}")))?;
+        .map_err(|e| (INVALID_PARAMS, format!("invalid arguments: {e}")))?;
 
     match run_scan(Path::new(&scan_args.path), &scan_args) {
         Ok((text, _snapshot)) => {
@@ -125,26 +80,27 @@ struct ScanArgs {
     limit: usize,
     /// Scope the scan to the diff vs. HEAD (`true` is the agent-friendly
     /// default; pass `false` for a full scan).
-    #[serde(default = "enabled")]
+    #[serde(default = "default_true")]
     diff: bool,
     /// `false` for a shape-only call (e.g. an agent-facing limited
     /// preview) that should not record into brainz.
-    #[serde(default = "enabled")]
+    #[serde(default = "default_true")]
     record: bool,
 }
 
-fn enabled() -> bool {
+fn default_true() -> bool {
     true
 }
 
 fn run_scan(path: &Path, args: &ScanArgs) -> anyhow::Result<(String, Value)> {
     // Scan first; the caller decides whether to record. Keeps the scan
     // pipeline independent of the metrics layer.
-    let (report, snapshot, elapsed) = if args.diff {
-        super::scan::diff(path, args.threshold, args.limit)?
+    let scope = if args.diff {
+        super::scan::Scope::DiffVsHead
     } else {
-        super::scan::full(path, args.threshold, args.limit)?
+        super::scan::Scope::Full
     };
+    let (report, snapshot, elapsed) = super::scan::run(path, args.threshold, args.limit, scope)?;
     if args.record {
         crate::brainz::record_scan(
             path,
@@ -195,15 +151,20 @@ fn search_docs(args: &Value) -> ToolResult {
 }
 
 #[cfg(feature = "eyez")]
-fn top_k_arg(args: &Value) -> Result<usize, (i64, String)> {
+fn top_k_arg(args: &Value) -> Result<std::num::NonZeroUsize, (i64, String)> {
     let Some(value) = args.get("top_k") else {
-        return Ok(10);
+        return Ok(crate::eyez::DEFAULT_TOP_K);
     };
     value
         .as_u64()
-        .filter(|&k| k > 0)
         .and_then(|k| usize::try_from(k).ok())
-        .ok_or((-32602, "'top_k' must be a positive integer".to_string()))
+        .and_then(std::num::NonZeroUsize::new)
+        .ok_or_else(|| {
+            (
+                INVALID_PARAMS,
+                "'top_k' must be a positive integer".to_string(),
+            )
+        })
 }
 
 fn explain(args: &Value) -> ToolResult {

@@ -24,10 +24,13 @@ pub fn apply(
 
     report
         .dead_code
-        .retain(|finding| dead_symbol_def_touches_diff(finding, changed));
-    for finding in &mut report.dead_code {
-        finding.reason = "added_unreferenced".to_string();
-    }
+        .retain_mut(|finding| match dead_code_provenance(finding, changed) {
+            Some(reason) => {
+                finding.reason = reason.to_string();
+                true
+            }
+            None => false,
+        });
 
     report
         .boundaries
@@ -64,8 +67,15 @@ fn merged_dup_hint(class: &CloneClass, changed: &ChangedLines) -> String {
     }
 }
 
-fn dead_symbol_def_touches_diff(finding: &DeadCodeFinding, changed: &ChangedLines) -> bool {
-    finding.line > 0 && changed.touches(&finding.file, finding.line, finding.line)
+/// Why the change is responsible for a dead symbol: its definition changed, or a removed line referred to it.
+fn dead_code_provenance(finding: &DeadCodeFinding, changed: &ChangedLines) -> Option<&'static str> {
+    if finding.line > 0 && changed.touches(&finding.file, finding.line, finding.line) {
+        Some("added_unreferenced")
+    } else if changed.removed_mentions(&finding.symbol) {
+        Some("reference_removed")
+    } else {
+        None
+    }
 }
 
 fn boundary_import_touches_diff(

@@ -7,6 +7,9 @@ mod providers;
 mod scope;
 mod skills;
 
+#[cfg(feature = "mcp")]
+pub(crate) use gate::MCP_REQUEST_TIMEOUT_SECS;
+
 use anyhow::{bail, Context, Result};
 use scope::InstallScope;
 use std::path::PathBuf;
@@ -141,12 +144,13 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
             false,
         )?;
 
-    let sensez_bin = command::mcp_command(
+    let mcp_command = command::mcp_command(
         &root,
         install_scope,
         agent_spec.mcp_launch_dir,
         &std::env::current_exe().context("locating the sensez executable")?,
     );
+    let sensez_bin = mcp_command.as_config_value();
     let mut done = Vec::new();
     let config_write = if install_scope == InstallScope::Project {
         Some(artifacts::write_config(
@@ -177,7 +181,7 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
             &sensez_bin,
         )?);
     } else if install_scope == InstallScope::Project && agent_spec.mcp_relpath.is_some() {
-        if std::path::Path::new(&sensez_bin).is_absolute() {
+        if matches!(mcp_command, command::McpCommand::Absolute(_)) {
             eprintln!(
                 "note: the MCP config stores this machine's absolute sensez path; \
                  add sensez as a project dependency or put it on PATH to make it portable."

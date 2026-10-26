@@ -20,6 +20,12 @@ supported — and the agent launches it automatically at startup. See
   and `limit` to cap findings per pillar.
 - `noze_gate` — experimental end-of-turn diff gate, intended for hook
   integration rather than direct calls. May be noisy on short or Q&A turns.
+  The Stop hook from `sensez init --gate` passes `stop_hook_active`, so the
+  gate blocks at most once per stop chain, and waits up to 600 s, the
+  server's own request limit, so a slow scan is not cut off into a silent
+  allow. The gate blocks a finding once per session unless it is fixed and
+  then reintroduced, which is reported as a regression. Its memory lives in
+  `.sensez/gate/`, separate from metrics, and expires after seven idle days.
 - `noze_explain` — explain a finding category in plain English.
 - `get_configuration_summary` — summarize the effective configuration and the
   noisiest rules, as a starting point for tuning.

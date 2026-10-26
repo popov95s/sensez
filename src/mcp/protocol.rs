@@ -3,12 +3,11 @@
 use super::handlers::{self, ToolResult};
 use serde_json::{json, Value};
 
-/// The version this server speaks when the client requests nothing we know.
-const DEFAULT_PROTOCOL_VERSION: &str = "2024-11-05";
-/// Protocol versions this server can speak. When the client requests one of
-/// these, `initialize` echoes it back so both sides agree on the newest
-/// shared version instead of the server unilaterally downgrading.
+/// Protocol versions this server can speak, oldest first. A supported request is
+/// echoed back; anything else gets the latest, as the MCP spec asks.
 const SUPPORTED_PROTOCOL_VERSIONS: [&str; 3] = ["2024-11-05", "2025-03-26", "2025-06-18"];
+const LATEST_PROTOCOL_VERSION: &str =
+    SUPPORTED_PROTOCOL_VERSIONS[SUPPORTED_PROTOCOL_VERSIONS.len() - 1];
 
 pub fn handle_message(msg: &Value) -> Option<Value> {
     let Some(method) = msg.get("method") else {
@@ -50,7 +49,7 @@ fn initialize_result(requested: Option<&Value>) -> Value {
     let negotiated = requested
         .and_then(Value::as_str)
         .filter(|version| SUPPORTED_PROTOCOL_VERSIONS.contains(version))
-        .unwrap_or(DEFAULT_PROTOCOL_VERSION);
+        .unwrap_or(LATEST_PROTOCOL_VERSION);
     json!({
         "protocolVersion": negotiated,
         "capabilities": {"tools": {}, "prompts": {}},
@@ -59,11 +58,11 @@ fn initialize_result(requested: Option<&Value>) -> Value {
 }
 
 fn handle_tool_call(params: Option<&Value>) -> ToolResult {
-    let request = params.ok_or((-32602, "missing params".to_string()))?;
+    let request = params.ok_or_else(|| (handlers::INVALID_PARAMS, "missing params".to_string()))?;
     let name = request
         .get("name")
         .and_then(Value::as_str)
-        .unwrap_or_default();
+        .ok_or_else(|| (handlers::INVALID_PARAMS, "missing 'name'".to_string()))?;
     let args = request
         .get("arguments")
         .cloned()
@@ -80,6 +79,21 @@ mod tests {
         let req = json!({"jsonrpc": "2.0", "id": 1, "method": "initialize"});
         let resp = handle_message(&req).unwrap();
         assert_eq!(resp["result"]["serverInfo"]["name"], "sensez");
+    }
+
+    #[test]
+    fn unknown_protocol_version_gets_the_latest_supported() {
+        let req = json!({"jsonrpc": "2.0", "id": 1, "method": "initialize",
+            "params": {"protocolVersion": "2099-01-01"}});
+        let resp = handle_message(&req).unwrap();
+        assert_eq!(resp["result"]["protocolVersion"], "2025-06-18");
+    }
+
+    #[test]
+    fn tool_call_without_a_name_says_so() {
+        let req = json!({"jsonrpc": "2.0", "id": 3, "method": "tools/call", "params": {}});
+        let resp = handle_message(&req).unwrap();
+        assert_eq!(resp["error"]["message"], "missing 'name'");
     }
 
     #[test]
