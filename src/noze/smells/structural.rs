@@ -169,9 +169,10 @@ impl StructuralDetector<'_, '_> {
             .iter()
             .filter(|hit| hit.depth > self.cfg.max_chain_depth)
             .filter(|hit| {
-                hit.root
-                    .as_ref()
-                    .is_none_or(|root| !self.cfg.message_chain_ignore_roots.contains(root))
+                hit.root.as_ref().is_none_or(|root| {
+                    !self.cfg.message_chain_ignore_roots.contains(root)
+                        && !self.ctx.generated_roots.contains(root.as_str())
+                })
             })
             .collect();
         let Some(depth) = hits.iter().map(|hit| hit.depth).max() else {

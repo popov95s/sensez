@@ -49,6 +49,11 @@ pub fn should_parse_path(path: &Path) -> bool {
     parse_for_path(path).is_some_and(|profile| !profile.is_generated_or_data_source(path))
 }
 
+/// Whether an import target names machine-written source (by the importing language's path rules).
+pub fn is_generated_import(language: Language, target: &str) -> bool {
+    profile(language).is_generated(Path::new(target), b"")
+}
+
 pub fn is_declaration_only(path: &Path) -> bool {
     parse_for_path(path).is_some_and(|profile| profile.is_declaration_only(path))
 }
