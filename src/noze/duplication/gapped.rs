@@ -6,7 +6,7 @@
 //! tokens — by an occurrence of the second. The merged span includes the gap,
 //! but `matched` counts only the genuinely-identical tokens.
 
-use super::clones::RawGroup;
+use super::clones::{Nesting, RawGroup};
 use crate::spine::parser::tokens::TokenSpan;
 use std::collections::HashMap;
 
@@ -24,6 +24,25 @@ pub struct Cluster {
 /// bounding worst-case work on adversarial input. Real inputs exit after a
 /// pass merges nothing (usually pass 1 or 2).
 const MAX_MERGE_PASSES: usize = 8;
+
+/// Minimum share of matched tokens in every stitched occurrence's span.
+const MIN_DENSITY: f64 = 0.6;
+
+/// Shortest fragment worth stitching; stops tiny idioms from chaining.
+const MIN_SEED: usize = 12;
+
+/// Extraction length and nesting: stitching needs sub-threshold fragments.
+pub fn seed(threshold: usize, max_gap: usize) -> (usize, Nesting) {
+    match max_gap {
+        0 => (threshold, Nesting::Outermost),
+        _ => (
+            (threshold / 2).max(MIN_SEED).min(threshold),
+            Nesting::Seeded {
+                report_len: threshold,
+            },
+        ),
+    }
+}
 
 /// Stitch exact clone groups into (possibly gapped) clusters.
 pub fn stitch(groups: Vec<RawGroup>, spans: &[TokenSpan], max_gap: usize) -> Vec<Cluster> {
@@ -52,11 +71,14 @@ pub fn stitch(groups: Vec<RawGroup>, spans: &[TokenSpan], max_gap: usize) -> Vec
     clusters
 }
 
+/// Occurrence starts: start token -> `(cluster, end)` of every occurrence there.
+type Starts = HashMap<usize, Vec<(usize, usize)>>;
+
 fn merge_pass(clusters: &mut Vec<Cluster>, spans: &[TokenSpan], max_gap: usize) -> bool {
-    let mut start_of: HashMap<usize, usize> = HashMap::new();
+    let mut starts: Starts = HashMap::new();
     for (ci, c) in clusters.iter().enumerate() {
-        for &(s, _) in &c.occ {
-            start_of.insert(s, ci);
+        for &(s, e) in &c.occ {
+            starts.entry(s).or_default().push((ci, e));
         }
     }
     let mut consumed = vec![false; clusters.len()];
@@ -65,9 +87,9 @@ fn merge_pass(clusters: &mut Vec<Cluster>, spans: &[TokenSpan], max_gap: usize) 
         if consumed[i] {
             continue;
         }
-        if let Some(j) = unique_follower(&clusters[i], &start_of, spans, max_gap) {
-            if j != i && !consumed[j] && clusters[i].occ.len() == clusters[j].occ.len() {
-                merged.push(merge_two(&clusters[i], &clusters[j], spans, max_gap));
+        if let Some((j, candidate)) = stitched(clusters, i, &starts, spans, max_gap) {
+            if !consumed[j] && is_dense(&candidate) {
+                merged.push(candidate);
                 consumed[i] = true;
                 consumed[j] = true;
             }
@@ -86,46 +108,60 @@ fn merge_pass(clusters: &mut Vec<Cluster>, spans: &[TokenSpan], max_gap: usize) 
     true
 }
 
-/// The single cluster that follows *every* occurrence of `c` within the gap.
-fn unique_follower(
-    c: &Cluster,
-    start_of: &HashMap<usize, usize>,
+/// Cluster `i` stitched to the one same-sized cluster following (or overlapping) every occurrence within the gap.
+fn stitched(
+    clusters: &[Cluster],
+    i: usize,
+    starts: &Starts,
     spans: &[TokenSpan],
     max_gap: usize,
-) -> Option<usize> {
+) -> Option<(usize, Cluster)> {
+    let c = &clusters[i];
     let mut follower: Option<usize> = None;
+    let mut overlap = 0;
+    let mut occ = Vec::with_capacity(c.occ.len());
     for &(s, e) in &c.occ {
-        let hit = (e..=e + max_gap).find_map(|cand| {
-            start_of
-                .get(&cand)
-                .filter(|_| same_file(spans, s, cand))
-                .copied()
-        })?;
-        match follower {
-            None => follower = Some(hit),
-            Some(f) if f != hit => return None,
-            _ => {}
+        let lo = (s + 1).max(e.saturating_sub(max_gap));
+        let (j, start, end) = (e..=e + max_gap)
+            .chain((lo..e).rev())
+            .find_map(|cand| follower_at(clusters, i, starts, spans, (s, e), cand))?;
+        if *follower.get_or_insert(j) != j {
+            return None;
         }
+        overlap = overlap.max(e.saturating_sub(start));
+        occ.push((s, end));
     }
-    follower
+    let j = follower?;
+    occ.sort_unstable();
+    let matched = (c.matched + clusters[j].matched).saturating_sub(overlap);
+    Some((j, Cluster { matched, occ }))
 }
 
-fn merge_two(a: &Cluster, b: &Cluster, spans: &[TokenSpan], max_gap: usize) -> Cluster {
-    let mut occ: Vec<(usize, usize)> = a
-        .occ
+/// A same-sized cluster other than `i` with an occurrence starting at `cand` that ends past occurrence `(s, e)`.
+fn follower_at(
+    clusters: &[Cluster],
+    i: usize,
+    starts: &Starts,
+    spans: &[TokenSpan],
+    (s, e): (usize, usize),
+    cand: usize,
+) -> Option<(usize, usize, usize)> {
+    starts
+        .get(&cand)?
         .iter()
-        .filter_map(|&(s, e)| {
-            b.occ
-                .iter()
-                .find(|&&(bs, _)| bs >= e && bs <= e + max_gap && same_file(spans, s, bs))
-                .map(|&(_, be)| (s, be))
+        .find(|&&(j, end)| {
+            j != i
+                && end > e
+                && clusters[j].occ.len() == clusters[i].occ.len()
+                && same_file(spans, s, cand)
         })
-        .collect();
-    occ.sort_unstable();
-    Cluster {
-        matched: a.matched + b.matched,
-        occ,
-    }
+        .map(|&(j, end)| (j, cand, end))
+}
+
+fn is_dense(c: &Cluster) -> bool {
+    c.occ
+        .iter()
+        .all(|&(s, e)| c.matched as f64 >= (e - s) as f64 * MIN_DENSITY)
 }
 
 fn same_file(spans: &[TokenSpan], a: usize, b: usize) -> bool {
@@ -193,5 +229,63 @@ mod tests {
         let clusters = stitch(groups(), &spans(), 0);
         assert_eq!(clusters.len(), 2);
         assert!(clusters.iter().all(|c| c.matched == 2));
+    }
+
+    #[test]
+    fn shared_start_picks_the_same_sized_follower() {
+        let mut clusters = groups();
+        clusters.push(RawGroup {
+            len: 1,
+            positions: vec![3, 11, 12],
+        });
+        let stitched = stitch(clusters, &spans(), 3);
+        assert!(stitched
+            .iter()
+            .any(|c| c.matched == 4 && c.occ == vec![(0, 5), (7, 13)]));
+    }
+
+    #[test]
+    fn overlapping_follower_is_stitched_without_double_counting() {
+        let clusters = vec![
+            RawGroup {
+                len: 3,
+                positions: vec![0, 7],
+            },
+            RawGroup {
+                len: 3,
+                positions: vec![2, 10],
+            },
+        ];
+        let stitched = stitch(clusters, &spans(), 3);
+        assert_eq!(stitched.len(), 1);
+        assert_eq!(stitched[0].matched, 5);
+        assert_eq!(stitched[0].occ, vec![(0, 5), (7, 13)]);
+    }
+
+    #[test]
+    fn sparse_stitch_fails_the_density_guard() {
+        // Layout: indices 0..=7 file 0, 8 separator, 9..=16 file 1.
+        let f = |id: u32| TokenSpan {
+            file_id: id,
+            start_row: 1,
+            end_row: 1,
+            start_byte: 0,
+            end_byte: 0,
+        };
+        let mut spans: Vec<TokenSpan> = (0..8).map(|_| f(0)).collect();
+        spans.push(f(u32::MAX));
+        spans.extend((0..8).map(|_| f(1)));
+        let clusters = vec![
+            RawGroup {
+                len: 2,
+                positions: vec![0, 9],
+            },
+            RawGroup {
+                len: 2,
+                positions: vec![5, 14],
+            },
+        ];
+        // 4 matched tokens over a 7-token span is below the 60% density floor.
+        assert_eq!(stitch(clusters, &spans, 3).len(), 2);
     }
 }

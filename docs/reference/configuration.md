@@ -120,7 +120,7 @@ config fixes a whole class of false positives.
 ```toml
 [duplication]
 threshold = 50   # minimum structural-token run to report a clone; raise to quieten
-max_gap = 10     # stitch clones across small consistent edits; 0 disables
+max_gap = 25     # stitch clones across small consistent edits; 0 disables
 exclude = ["**/tests/**", "**/migrations/**"]   # clone-only excludes (files stay in the graph)
 include_tests = false       # true also compares test files
 include_generated = false   # true also compares generated files

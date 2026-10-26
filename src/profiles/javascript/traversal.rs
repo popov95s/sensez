@@ -4,6 +4,7 @@
 //! per-function body pass.
 
 use super::comment_runs::CommentRun;
+use super::typespace::TypeSpace;
 use super::{
     imports, lexeme, namespaces, risk_facts, scope, symbols, tokens as token_map, typehints, units,
 };
@@ -46,7 +47,15 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         path: Vec::new(),
         free_reads: namespaces::FreeReads::default(),
     };
-    visit(root, src, file_id, module_name, false, &mut ctx);
+    visit(
+        root,
+        src,
+        file_id,
+        module_name,
+        false,
+        TypeSpace::Value,
+        &mut ctx,
+    );
     let free_reads = ctx.free_reads;
     units::discount_namespace_hops(&mut out);
     namespaces::narrow(&free_reads, &mut out.symbols.imports);
@@ -61,6 +70,7 @@ fn visit<'tree>(
     file_id: u32,
     module_name: &str,
     is_member_property: bool,
+    space: TypeSpace,
     ctx: &mut VisitCtx<'_, 'tree>,
 ) {
     let kind = node.kind();
@@ -112,7 +122,9 @@ fn visit<'tree>(
 
     if let Some(token) = token_map::map_kind(kind) {
         let code = lexeme::code(node, token, src, ctx.fn_bounds, is_member_property);
-        walk::emit(ctx.out, file_id, node, token, code);
+        if let Some(code) = space.code(code) {
+            walk::emit(ctx.out, file_id, node, token, code);
+        }
     }
 
     if matches!(
@@ -177,6 +189,7 @@ fn visit<'tree>(
             file_id,
             module_name,
             property_id == Some(child.id()),
+            space.enter(node, child),
             ctx,
         );
         if let Some(f) = frame {

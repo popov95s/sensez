@@ -76,6 +76,10 @@ pub fn performance_profile(language: Language) -> &'static dyn PerformanceProfil
     profile(language) as &dyn PerformanceProfile
 }
 
+pub fn clone_family(language: Language) -> Language {
+    profile(language).clone_family()
+}
+
 pub fn type_vocabulary(language: Language) -> &'static dyn TypeVocabularyProfile {
     profile(language) as &dyn TypeVocabularyProfile
 }

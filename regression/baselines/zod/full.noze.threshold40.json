@@ -150,6 +150,40 @@
           "detector": {
             "kind": "structural"
           },
+          "token_length": 120
+        }
+      ],
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "hint": "structural clone; also structural clone (120 tokens, 2 of 3 copies)",
+      "occurrences": [
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/resolution/src/index.cts",
+          "start_row": 11
+        },
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/resolution/src/index.mts",
+          "start_row": 11
+        },
+        {
+          "end_row": 37,
+          "file": "<zod>/packages/resolution/src/index.ts",
+          "start_row": 11
+        }
+      ],
+      "token_length": 119
+    },
+    {
+      "absorbed": [
+        {
+          "copies": 2,
+          "detector": {
+            "kind": "structural"
+          },
           "token_length": 225
         }
       ],
@@ -160,7 +194,7 @@
       "hint": "structural clone; also structural clone (225 tokens, 2 of 3 copies)",
       "occurrences": [
         {
-          "end_row": 39,
+          "end_row": 81,
           "file": "<zod>/packages/bench/init.ts",
           "start_row": 27
         },
@@ -175,26 +209,53 @@
           "start_row": 6
         }
       ],
-      "token_length": 43
+      "token_length": 129
     },
     {
+      "absorbed": [
+        {
+          "copies": 3,
+          "detector": {
+            "kind": "structural"
+          },
+          "token_length": 55
+        },
+        {
+          "copies": 2,
+          "detector": {
+            "kind": "structural"
+          },
+          "token_length": 63
+        }
+      ],
       "action": "advisory",
       "detector": {
         "kind": "structural"
       },
+      "hint": "structural clone; also structural clone (55 tokens, 3 of 4 copies); also structural clone (63 tokens, 2 of 4 copies)",
       "occurrences": [
         {
-          "end_row": 1023,
-          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
-          "start_row": 1010
+          "end_row": 1327,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1310
         },
         {
-          "end_row": 536,
-          "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
-          "start_row": 521
+          "end_row": 1595,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1573
+        },
+        {
+          "end_row": 1818,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1796
+        },
+        {
+          "end_row": 1983,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1967
         }
       ],
-      "token_length": 41
+      "token_length": 52
     },
     {
       "action": "advisory",
@@ -213,7 +274,26 @@
           "start_row": 102
         }
       ],
-      "token_length": 103
+      "token_length": 100
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "occurrences": [
+        {
+          "end_row": 1419,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1400
+        },
+        {
+          "end_row": 1671,
+          "file": "<zod>/packages/zod/src/v3/types.ts",
+          "start_row": 1653
+        }
+      ],
+      "token_length": 72
     },
     {
       "action": "advisory",
@@ -232,26 +312,7 @@
           "start_row": 1711
         }
       ],
-      "token_length": 79
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 1595,
-          "file": "<zod>/packages/zod/src/v3/types.ts",
-          "start_row": 1573
-        },
-        {
-          "end_row": 1818,
-          "file": "<zod>/packages/zod/src/v3/types.ts",
-          "start_row": 1796
-        }
-      ],
-      "token_length": 65
+      "token_length": 73
     },
     {
       "action": "advisory",
@@ -279,17 +340,17 @@
       },
       "occurrences": [
         {
-          "end_row": 21,
-          "file": "<zod>/packages/zod/src/v4/locales/fr-CA.ts",
-          "start_row": 5
+          "end_row": 2092,
+          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+          "start_row": 2082
         },
         {
-          "end_row": 21,
-          "file": "<zod>/packages/zod/src/v4/locales/fr.ts",
-          "start_row": 5
+          "end_row": 1673,
+          "file": "<zod>/packages/zod/src/v4/core/api.ts",
+          "start_row": 1664
         }
       ],
-      "token_length": 44
+      "token_length": 43
     },
     {
       "action": "advisory",
@@ -308,7 +369,7 @@
           "start_row": 2297
         }
       ],
-      "token_length": 59
+      "token_length": 58
     },
     {
       "action": "advisory",
@@ -336,6 +397,25 @@
       },
       "occurrences": [
         {
+          "end_row": 2607,
+          "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+          "start_row": 2578
+        },
+        {
+          "end_row": 1947,
+          "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
+          "start_row": 1920
+        }
+      ],
+      "token_length": 57
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
+      "occurrences": [
+        {
           "end_row": 2697,
           "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
           "start_row": 2672
@@ -346,7 +426,7 @@
           "start_row": 1825
         }
       ],
-      "token_length": 51
+      "token_length": 49
     },
     {
       "action": "advisory",
@@ -355,17 +435,17 @@
       },
       "occurrences": [
         {
-          "end_row": 2925,
+          "end_row": 2932,
           "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
           "start_row": 2917
         },
         {
-          "end_row": 3003,
+          "end_row": 3010,
           "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
           "start_row": 2995
         }
       ],
-      "token_length": 42
+      "token_length": 62
     },
     {
       "action": "advisory",
@@ -374,17 +454,17 @@
       },
       "occurrences": [
         {
-          "end_row": 306,
+          "end_row": 312,
           "file": "<zod>/packages/zod/src/v4/core/errors.ts",
           "start_row": 295
         },
         {
-          "end_row": 361,
+          "end_row": 370,
           "file": "<zod>/packages/zod/src/v4/core/errors.ts",
           "start_row": 349
         }
       ],
-      "token_length": 69
+      "token_length": 96
     },
     {
       "action": "advisory",
@@ -432,30 +512,6 @@
       "occurrences": [
         {
           "end_row": 37,
-          "file": "<zod>/packages/resolution/src/index.cts",
-          "start_row": 11
-        },
-        {
-          "end_row": 37,
-          "file": "<zod>/packages/resolution/src/index.mts",
-          "start_row": 11
-        },
-        {
-          "end_row": 37,
-          "file": "<zod>/packages/resolution/src/index.ts",
-          "start_row": 11
-        }
-      ],
-      "token_length": 119
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 37,
           "file": "<zod>/packages/zod/src/v4/locales/be.ts",
           "start_row": 5
         },
@@ -465,7 +521,7 @@
           "start_row": 5
         }
       ],
-      "token_length": 62
+      "token_length": 61
     },
     {
       "action": "advisory",
@@ -476,15 +532,15 @@
         {
           "end_row": 4021,
           "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-          "start_row": 4014
+          "start_row": 3995
         },
         {
           "end_row": 4080,
           "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-          "start_row": 4073
+          "start_row": 4055
         }
       ],
-      "token_length": 59
+      "token_length": 91
     },
     {
       "action": "advisory",
@@ -514,15 +570,15 @@
         {
           "end_row": 44,
           "file": "<zod>/packages/bench/ipv4-regex.ts",
-          "start_row": 18
+          "start_row": 3
         },
         {
           "end_row": 46,
           "file": "<zod>/packages/zod/src/v3/benchmarks/ipv4.ts",
-          "start_row": 20
+          "start_row": 5
         }
       ],
-      "token_length": 72
+      "token_length": 102
     },
     {
       "action": "advisory",
@@ -579,7 +635,7 @@
           "start_row": 491
         }
       ],
-      "token_length": 51
+      "token_length": 50
     },
     {
       "action": "advisory",
@@ -590,15 +646,15 @@
         {
           "end_row": 50,
           "file": "<zod>/packages/bench/datetime-regex.ts",
-          "start_row": 16
+          "start_row": 5
         },
         {
           "end_row": 50,
           "file": "<zod>/packages/zod/src/v3/benchmarks/datetime.ts",
-          "start_row": 16
+          "start_row": 5
         }
       ],
-      "token_length": 122
+      "token_length": 156
     },
     {
       "action": "advisory",
@@ -626,30 +682,6 @@
       },
       "occurrences": [
         {
-          "end_row": 60,
-          "file": "<zod>/packages/bench/init.ts",
-          "start_row": 48
-        },
-        {
-          "end_row": 40,
-          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
-          "start_row": 28
-        },
-        {
-          "end_row": 32,
-          "file": "<zod>/packages/bench/object-moltar.ts",
-          "start_row": 20
-        }
-      ],
-      "token_length": 43
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
           "end_row": 61,
           "file": "<zod>/packages/zod/src/v4/locales/az.ts",
           "start_row": 13
@@ -660,7 +692,7 @@
           "start_row": 14
         }
       ],
-      "token_length": 101
+      "token_length": 98
     },
     {
       "action": "advisory",
@@ -736,7 +768,7 @@
           "start_row": 8
         }
       ],
-      "token_length": 166
+      "token_length": 164
     },
     {
       "action": "advisory",
@@ -745,22 +777,22 @@
       },
       "occurrences": [
         {
-          "end_row": 81,
-          "file": "<zod>/packages/bench/init.ts",
-          "start_row": 69
+          "end_row": 89,
+          "file": "<zod>/packages/zod/src/v4/locales/da.ts",
+          "start_row": 76
         },
         {
-          "end_row": 54,
-          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
-          "start_row": 42
+          "end_row": 107,
+          "file": "<zod>/packages/zod/src/v4/locales/es.ts",
+          "start_row": 94
         },
         {
-          "end_row": 46,
-          "file": "<zod>/packages/bench/object-moltar.ts",
-          "start_row": 34
+          "end_row": 97,
+          "file": "<zod>/packages/zod/src/v4/locales/hr.ts",
+          "start_row": 84
         }
       ],
-      "token_length": 43
+      "token_length": 59
     }
   ],
   "meta": {

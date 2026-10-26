@@ -102,10 +102,6 @@ pub(crate) fn credit_name(out: &mut Walked, node: Node, src: &[u8]) {
 /// (e.g. `x.inner.a` credits `inner → x` and records the leaf `a`).
 /// The field names are per-grammar (`object`/`attribute`, `object`/`property`,
 /// `value`/`field`, `path`/`name`).
-#[cfg_attr(
-    not(any(feature = "lang-javascript", feature = "lang-rust")),
-    allow(dead_code)
-)]
 pub(crate) fn credit_attr(
     out: &mut Walked,
     node: Node,
@@ -134,19 +130,14 @@ pub(crate) fn credit_attr_with_base_path(
     base_field: &str,
     attr_field: &str,
 ) {
-    let Some(attr) = named_child_text(node, src, attr_field) else {
-        return;
+    let base_path = match ident_child_text(node, src, base_field) {
+        Some(_) => None,
+        None => named_child_text(node, src, base_field),
     };
-    if let Some(base) = ident_child_text(node, src, base_field) {
-        record_attr(&mut out.usage.attribute_accesses, base, attr);
-        return;
-    }
-    if let Some(base) = named_child_text(node, src, base_field) {
+    if let (Some(base), Some(attr)) = (base_path, named_child_text(node, src, attr_field)) {
         record_attr(&mut out.usage.attribute_path_accesses, base, attr);
     }
-    if !out.usage.chained_attribute_names.contains(attr) {
-        out.usage.chained_attribute_names.insert(attr.to_string());
-    }
+    credit_attr(out, node, src, base_field, attr_field);
 }
 
 fn named_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'a str> {
