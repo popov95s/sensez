@@ -139,7 +139,14 @@ mod tests {
             None,
             Origin::Tool,
         );
-        triage_finding(root, "dead_code", "orphan_two", "false_positive", None).unwrap();
+        triage_finding(
+            root,
+            crate::report::Pillar::DeadCode,
+            "orphan_two",
+            crate::brainz::TriageVerdict::FalsePositive,
+            None,
+        )
+        .unwrap();
 
         let (mut report, _) = crate::analyze_path(root, None).unwrap();
         apply_suppressions(root, &BTreeMap::new(), &mut report);

@@ -44,7 +44,8 @@ fn configuration_summary(args: &Value) -> ToolResult {
     };
     let summary =
         super::scan::run(path, None, 0, scope).and_then(|(report, _snapshot, _elapsed)| {
-            crate::config_summary::render(path, &report, None)
+            let (config, _issues) = crate::config::model::Config::load_for_scan(path);
+            crate::config_summary::render(path, &report, &config)
         });
     match summary {
         Ok(text) => Ok(text_result(text, false)),
@@ -194,6 +195,13 @@ fn triage_finding(args: &Value) -> ToolResult {
     let pattern = required_str(args, "match")?;
     let verdict = required_str(args, "verdict")?;
     let note = args.get("note").and_then(Value::as_str).map(str::to_string);
+    let Some(pillar) = crate::report::Pillar::from_name(pillar) else {
+        return Ok(text_result(format!("unknown pillar '{pillar}'"), true));
+    };
+    let Some(verdict) = crate::brainz::TriageVerdict::from_name(verdict) else {
+        let accepted = crate::brainz::VERDICTS.join(" | ");
+        return Ok(text_result(format!("verdict must be {accepted}"), true));
+    };
     match crate::brainz::triage_finding(Path::new(path), pillar, pattern, verdict, note) {
         Ok(labels) => Ok(text_result(
             format!("marked {verdict}: {}", labels.join(" | ")),
@@ -214,3 +222,6 @@ fn usage_report(args: &Value) -> ToolResult {
 #[cfg(test)]
 #[path = "handlers_tests.rs"]
 mod tests;
+#[cfg(test)]
+#[path = "handlers_triage_tests.rs"]
+mod triage_tests;

@@ -133,6 +133,13 @@ impl Config {
         crate::globs::validate_patterns("dead_code.test_support", &self.dead_code.test_support)?;
         crate::globs::validate_patterns("cycles.exclude", &self.cycles.exclude)?;
         crate::globs::validate_patterns("smells.exclude", &self.smells.exclude)?;
+        let boundary_patterns: Vec<String> = self
+            .boundaries
+            .forbidden
+            .iter()
+            .flat_map(|rule| [rule.from.clone(), rule.to.clone()])
+            .collect();
+        crate::globs::validate_patterns("boundaries.forbidden", &boundary_patterns)?;
         Ok(())
     }
 }

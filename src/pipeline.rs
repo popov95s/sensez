@@ -1,9 +1,9 @@
-//! End-to-end scan orchestration shared by the CLI and the Python surface.
+//! End-to-end scan orchestration shared by the CLI, MCP server and LSP.
 
 use crate::config::model::Config;
 use crate::noze;
 use crate::profiles::registry;
-use crate::report::{AnalysisReport, ScanStage};
+use crate::report::{AnalysisReport, ScanIssue, ScanStage};
 use crate::reporter::{self, Format};
 use crate::spine::parser::ParsedFile;
 use crate::spine::{crawler, graph};
@@ -25,7 +25,16 @@ pub fn analyze_path(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    analyze_path_inner(path, threshold, None)
+    analyze_path_with_config(path, threshold)
+        .map(|(report, module_files, _)| (report, module_files))
+}
+
+/// [`analyze_path`] plus the configuration the scan ran on.
+pub(crate) fn analyze_path_with_config(
+    path: &Path,
+    threshold: Option<usize>,
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>, Config)> {
+    analyze_keeping_config(path, threshold, None, Config::load_for_scan(path))
 }
 
 #[cfg(test)]
@@ -59,27 +68,28 @@ fn analyze_loaded_in_service(
     session: &AnalysisSession,
     path: &Path,
     threshold: Option<usize>,
-    loaded: (Config, Vec<crate::report::ScanIssue>),
+    loaded: (Config, Vec<ScanIssue>),
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
     let cached_session = loaded.0.cache_enabled().then_some(session);
     analyze_with_config(path, threshold, cached_session, loaded)
-}
-
-fn analyze_path_inner(
-    path: &Path,
-    threshold: Option<usize>,
-    session: Option<&AnalysisSession>,
-) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    let loaded = Config::load_for_scan(path);
-    analyze_with_config(path, threshold, session, loaded)
 }
 
 fn analyze_with_config(
     path: &Path,
     threshold: Option<usize>,
     session: Option<&AnalysisSession>,
-    (mut config, config_issues): (Config, Vec<crate::report::ScanIssue>),
+    loaded: (Config, Vec<ScanIssue>),
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    analyze_keeping_config(path, threshold, session, loaded)
+        .map(|(report, module_files, _)| (report, module_files))
+}
+
+fn analyze_keeping_config(
+    path: &Path,
+    threshold: Option<usize>,
+    session: Option<&AnalysisSession>,
+    (mut config, config_issues): (Config, Vec<ScanIssue>),
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>, Config)> {
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
@@ -90,8 +100,19 @@ fn analyze_with_config(
     })
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
+    let mut cache_issues = Vec::new();
     let project = if session.is_some() && config_issues.is_empty() && discovery.issues.is_empty() {
-        crate::spine::cache::load_project(&discovery.files).ok()
+        match crate::spine::cache::load_project(&discovery.files) {
+            Ok(project) => Some(project),
+            Err(err) => {
+                cache_issues.push(ScanIssue {
+                    stage: ScanStage::Discover,
+                    file: None,
+                    message: format!("analysis cache skipped: {err:#}"),
+                });
+                None
+            }
+        }
     } else {
         None
     };
@@ -137,6 +158,7 @@ fn analyze_with_config(
             .count()
     );
     report.meta.issues.extend(parsed.issues);
+    report.meta.issues.extend(cache_issues);
     report.meta.files_skipped = report
         .meta
         .issues
@@ -159,7 +181,7 @@ fn analyze_with_config(
     crate::brainz::apply_suppressions(path, &config.accept, &mut report);
     crate::brainz::rank_by_precision(path, &mut report);
 
-    Ok((report, module_files))
+    Ok((report, module_files, config))
 }
 
 fn observe_source_state(
@@ -286,7 +308,7 @@ pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -
     let (mut report, _module_files) = analyze_path(path, threshold)?;
     noze::limit(&mut report, max);
     match format {
-        Format::Json => reporter::to_json(&report),
+        Format::Json => reporter::to_json(&report, reporter::ScanDiagnostics::from_env()),
         Format::Terminal => Ok(reporter::render(&report, false)),
     }
 }

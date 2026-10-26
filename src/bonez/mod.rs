@@ -10,7 +10,7 @@
 use crate::config::model::ForbiddenRule;
 use crate::report::{ActionLevel, BoundaryViolation};
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
-use globset::{Glob, GlobSet};
+use globset::GlobSet;
 use petgraph::visit::EdgeRef;
 use std::path::Path;
 
@@ -93,11 +93,7 @@ pub fn audit(cg: &CodebaseGraph, rules: &[ForbiddenRule]) -> BoundaryAudit {
 
 fn compile(pattern: &str) -> Matcher {
     if pattern.contains(['*', '?', '[']) {
-        let mut builder = GlobSet::builder();
-        if let Ok(glob) = Glob::new(pattern) {
-            builder.add(glob);
-        }
-        Matcher::Glob(builder.build().unwrap_or_else(|_| GlobSet::empty()))
+        Matcher::Glob(crate::globs::compile_validated(&[pattern]))
     } else {
         Matcher::Prefix(pattern.to_string())
     }
@@ -221,5 +217,53 @@ mod tests {
             1,
             "path-from + path-to matches an unresolved import"
         );
+    }
+
+    fn graph_of(files: &[(&str, &str)]) -> (tempfile::TempDir, CodebaseGraph) {
+        let tmp = tempfile::tempdir().unwrap();
+        let parsed: Vec<_> = files
+            .iter()
+            .enumerate()
+            .map(|(i, (name, text))| {
+                let path = tmp.path().join(name);
+                fs::create_dir_all(path.parent().unwrap()).unwrap();
+                fs::write(&path, text).unwrap();
+                parse_file(&path, i as u32).unwrap()
+            })
+            .collect();
+        let cg = crate::spine::graph::build(&parsed, &[]);
+        (tmp, cg)
+    }
+
+    #[test]
+    fn glob_to_matches_import_with_no_file_in_repo() {
+        let (_tmp, cg) = graph_of(&[(
+            "app/api/users.py",
+            "from vendor.payments.client import Pay\n",
+        )]);
+
+        let audit = audit(&cg, &[rule("**/api/**", "vendor.payments.*")]);
+
+        assert_eq!(audit.violations.len(), 1);
+        assert_eq!(audit.violations[0].line, 1);
+    }
+
+    #[test]
+    fn path_glob_from_matching_no_file_is_unmatched() {
+        let (_tmp, cg) = graph_of(&[("app/api/users.py", "from app.db import models\n")]);
+
+        let audit = audit(&cg, &[rule("**/services/**", "app.db.*")]);
+
+        assert!(audit.violations.is_empty());
+        assert_eq!(audit.unmatched_rules, vec!["**/services/** -x-> app.db.*"]);
+    }
+
+    #[test]
+    fn path_glob_from_matching_a_file_is_not_unmatched() {
+        let (_tmp, cg) = graph_of(&[("app/api/users.py", "import os\n")]);
+
+        let audit = audit(&cg, &[rule("**/api/*.py", "app.db")]);
+
+        assert!(audit.unmatched_rules.is_empty());
     }
 }

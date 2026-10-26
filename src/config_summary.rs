@@ -62,16 +62,8 @@ impl RuleSummary {
 }
 
 /// Per-rule summary JSON of an already selected report.
-pub(crate) fn render(
-    path: &Path,
-    report: &AnalysisReport,
-    threshold: Option<usize>,
-) -> Result<String> {
-    let mut config = Config::load(path).context("loading configuration for summary")?;
-    if let Some(value) = threshold {
-        config.duplication.threshold = value;
-    }
-    let summary = from_report(path, report, &config);
+pub(crate) fn render(path: &Path, report: &AnalysisReport, config: &Config) -> Result<String> {
+    let summary = from_report(path, report, config);
     serde_json::to_string_pretty(&summary).context("serializing configuration summary")
 }
 

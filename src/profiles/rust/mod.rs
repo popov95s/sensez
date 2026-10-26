@@ -11,6 +11,7 @@ pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
 mod loops;
+mod manifest;
 mod nesting;
 mod params;
 pub(crate) mod performance;

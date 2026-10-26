@@ -47,6 +47,7 @@
     "searches_zero_hit": 0
   },
   "calibration": [],
+  "config_issues": [],
   "config_pressure": {
     "changes": 0,
     "scope": {

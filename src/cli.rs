@@ -162,11 +162,11 @@ fn run_explain(term: Option<&str>) -> Result<()> {
 }
 
 fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
-    let mut report = selected_report(path, options)?;
+    let (mut report, config) = selected_report(path, options)?;
     let report_started = std::time::Instant::now();
     let gate_fails = gate_fails(&report, options);
     let rendered = if options.summary {
-        crate::config_summary::render(path, &report, options.threshold)?
+        crate::config_summary::render(path, &report, &config)?
     } else {
         output::shape(&mut report, options);
         render_report(&report, options)?
@@ -187,7 +187,10 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
 }
 
 /// Analyze `path` and keep what this run asked for: diff scope, output globs, pillars.
-fn selected_report(path: &Path, options: &ScanOptions) -> Result<crate::report::AnalysisReport> {
+fn selected_report(
+    path: &Path,
+    options: &ScanOptions,
+) -> Result<(crate::report::AnalysisReport, crate::config::Config)> {
     let wants_diff = options.diff || options.diff_from.is_some() || options.fail_on_new.is_some();
     if options.fail_on_new.is_some() && !options.diff && options.diff_from.is_none() {
         eprintln!(
@@ -203,7 +206,8 @@ fn selected_report(path: &Path, options: &ScanOptions) -> Result<crate::report::
         "diff mode was requested but no diff could be read; refusing to fall back to a full scan \
          (run inside a git work tree, pass --diff-from FILE, or drop --diff/--fail-on-new)",
     )?;
-    let (mut report, module_files) = crate::analyze_path(path, options.threshold)?;
+    let (mut report, module_files, config) =
+        crate::pipeline::analyze_path_with_config(path, options.threshold)?;
     if let Some(changed) = changed.as_ref() {
         crate::diff::apply(&mut report, changed, &module_files);
     }
@@ -221,12 +225,12 @@ fn selected_report(path: &Path, options: &ScanOptions) -> Result<crate::report::
     crate::reporter::apply(&mut report, path, &options.output_glob)
         .context("applying output glob filter")?;
     output::select(&mut report, options);
-    Ok(report)
+    Ok((report, config))
 }
 
 fn render_report(report: &crate::report::AnalysisReport, options: &ScanOptions) -> Result<String> {
     if options.json {
-        return crate::reporter::to_json(report);
+        return crate::reporter::to_json(report, crate::reporter::ScanDiagnostics::from_env());
     }
     Ok(crate::reporter::render(report, options.explain))
 }

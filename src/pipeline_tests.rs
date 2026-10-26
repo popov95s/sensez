@@ -222,7 +222,7 @@ fn duplicate_module_names_stay_out_of_scan_issues() {
 
     assert_eq!(report.meta.files_skipped, 0);
     assert!(report.meta.issues.is_empty());
-    assert!(!reporter::to_json(&report)
+    assert!(!reporter::to_json(&report, reporter::ScanDiagnostics::Show)
         .unwrap()
         .contains("already defined"));
     let json = scan(&dir, None, Format::Json, 0).unwrap();
