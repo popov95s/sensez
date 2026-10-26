@@ -50,6 +50,7 @@ class SmellTerm(StrEnum):
     REFUSED_BEQUEST = "refused_bequest"
     REPEATED_ITERATION = "repeated_iteration"
     SHOTGUN_SURGERY_HAZARD = "shotgun_surgery_hazard"
+    SIBLING_HELPER_REDEFINITION = "sibling_helper_redefinition"
     SORT_IN_LOOP = "sort_in_loop"
     SPLIT_VARIABLE = "split_variable"
     SWALLOWED_ERROR_SENTINEL = "swallowed_error_sentinel"

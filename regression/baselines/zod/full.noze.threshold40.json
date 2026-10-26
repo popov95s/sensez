@@ -854,6 +854,7 @@
       "nested_loop": 26,
       "nested_ternary": 8,
       "shotgun_surgery_hazard": 3,
+      "sibling_helper_redefinition": 94,
       "swallowed_error_sentinel": 1,
       "unnecessary_nested_if": 13
     },
@@ -862,10 +863,20 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 163,
+    "smells_total": 257,
     "source_lines": 72099
   },
   "smells": [
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/bench/benchUtil.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 14,
+      "message": "`randomString` (1 params) is defined again with a near-identical body in zod/src/v4/core/util.ts:L334 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "randomString",
+      "threshold": 2
+    },
     {
       "action": "advisory",
       "file": "<zod>/packages/tsc/generate.ts",
@@ -875,6 +886,16 @@
       "metric": 71,
       "symbol": "generateFields",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/helpers/util.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 73,
+      "message": "`jsonStringifyReplacer` (2 params) is defined again with a near-identical body in v4/core/util.ts:L219 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "jsonStringifyReplacer",
+      "threshold": 2
     },
     {
       "action": "advisory",
@@ -1033,6 +1054,56 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 10,
+      "message": "`number` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1128, mini/coerce.ts:L10, mini/schemas.ts:L557 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "number",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 15,
+      "message": "`boolean` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1183, mini/coerce.ts:L15, mini/schemas.ts:L619 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "boolean",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 20,
+      "message": "`bigint` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1234, mini/coerce.ts:L20, mini/schemas.ts:L636 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "bigint",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 25,
+      "message": "`date` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1376, mini/coerce.ts:L25, mini/schemas.ts:L801 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "date",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 5,
+      "message": "`string` (1 params) is defined again with a near-identical body in classic/schemas.ts:L569, mini/coerce.ts:L5, mini/schemas.ts:L104 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "string",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
       "kind": "narrating_code",
       "line": 31,
@@ -1040,6 +1111,46 @@
       "metric": 35,
       "symbol": "initializer",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/iso.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 10,
+      "message": "`date` (1 params) is defined again with a near-identical body in mini/iso.ts:L32 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "date",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/iso.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 14,
+      "message": "`time` (1 params) is defined again with a near-identical body in mini/iso.ts:L48 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "time",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/iso.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 18,
+      "message": "`duration` (1 params) is defined again with a near-identical body in mini/iso.ts:L64 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "duration",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/iso.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 6,
+      "message": "`datetime` (1 params) is defined again with a near-identical body in mini/iso.ts:L16 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "datetime",
+      "threshold": 2
     },
     {
       "action": "advisory",
@@ -1053,6 +1164,806 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1005,
+      "message": "`hostname` (1 params) is defined again with a near-identical body in mini/schemas.ts:L515 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "hostname",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1009,
+      "message": "`hex` (1 params) is defined again with a near-identical body in mini/schemas.ts:L520 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "hex",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1013,
+      "message": "`hash` (2 params) is defined again with a near-identical body in mini/schemas.ts:L525 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "hash",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1146,
+      "message": "`int` (1 params) is defined again with a near-identical body in mini/schemas.ts:L574 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "int",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1152,
+      "message": "`float32` (1 params) is defined again with a near-identical body in mini/schemas.ts:L581 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "float32",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1158,
+      "message": "`float64` (1 params) is defined again with a near-identical body in mini/schemas.ts:L588 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "float64",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1164,
+      "message": "`int32` (1 params) is defined again with a near-identical body in mini/schemas.ts:L595 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "int32",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1170,
+      "message": "`uint32` (1 params) is defined again with a near-identical body in mini/schemas.ts:L602 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "uint32",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1252,
+      "message": "`int64` (1 params) is defined again with a near-identical body in mini/schemas.ts:L657 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "int64",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1257,
+      "message": "`uint64` (1 params) is defined again with a near-identical body in mini/schemas.ts:L664 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "uint64",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1269,
+      "message": "`symbol` (1 params) is defined again with a near-identical body in mini/schemas.ts:L681 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "symbol",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1284,
+      "message": "`_undefined` (1 params) is defined again with a near-identical body in mini/schemas.ts:L698 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_undefined",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1297,
+      "message": "`_null` (1 params) is defined again with a near-identical body in mini/schemas.ts:L716 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_null",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1334,
+      "message": "`never` (1 params) is defined again with a near-identical body in mini/schemas.ts:L765 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "never",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1346,
+      "message": "`_void` (1 params) is defined again with a near-identical body in mini/schemas.ts:L782 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_void",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1423,
+      "message": "`keyof` (1 params) is defined again with a near-identical body in mini/schemas.ts:L831 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "keyof",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1572,
+      "message": "`object` (2 params) is defined again with a near-identical body in mini/schemas.ts:L854 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "object",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1586,
+      "message": "`strictObject` (2 params) is defined again with a near-identical body in mini/schemas.ts:L868 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "strictObject",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1600,
+      "message": "`looseObject` (2 params) is defined again with a near-identical body in mini/schemas.ts:L882 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "looseObject",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1626,
+      "message": "`union` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1033 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "union",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1654,
+      "message": "`xor` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1057 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "xor",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1684,
+      "message": "`discriminatedUnion` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1085 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "discriminatedUnion",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1716,
+      "message": "`intersection` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1115 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "intersection",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1757,
+      "message": "`tuple` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1149 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "tuple",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1792,
+      "message": "`record` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1181 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "record",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1814,
+      "message": "`partialRecord` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1203 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "partialRecord",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1829,
+      "message": "`looseRecord` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1218 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "looseRecord",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1867,
+      "message": "`map` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1243 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "map",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1901,
+      "message": "`set` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1266 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "set",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1977,
+      "message": "`_enum` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1295 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_enum",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 1995,
+      "message": "`nativeEnum` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1314 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "nativeEnum",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2035,
+      "message": "`literal` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1344 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "literal",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2060,
+      "message": "`file` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1365 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "file",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2113,
+      "message": "`transform` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1382 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "transform",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2140,
+      "message": "`optional` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1406 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "optional",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2165,
+      "message": "`exactOptional` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1428 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "exactOptional",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2190,
+      "message": "`nullable` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1449 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "nullable",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2198,
+      "message": "`nullish` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1458 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "nullish",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2220,
+      "message": "`_default` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1475 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_default",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2250,
+      "message": "`prefault` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1501 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "prefault",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2281,
+      "message": "`nonoptional` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1528 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "nonoptional",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2307,
+      "message": "`success` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1552 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "success",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2332,
+      "message": "`_catch` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1572 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_catch",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2356,
+      "message": "`nan` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1596 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "nan",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2381,
+      "message": "`pipe` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1614 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "pipe",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2403,
+      "message": "`codec` (3 params) is defined again with a near-identical body in mini/schemas.ts:L1641 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "codec",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2420,
+      "message": "`invertCodec` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1659 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "invertCodec",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2465,
+      "message": "`readonly` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1684 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "readonly",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2487,
+      "message": "`templateLiteral` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1705 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "templateLiteral",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2535,
+      "message": "`promise` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1753 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "promise",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2596,
+      "message": "`_function` (1 params) is defined again with a near-identical body in mini/schemas.ts:L1936 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_function",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2632,
+      "message": "`custom` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1787 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "custom",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2639,
+      "message": "`refine` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1796 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "refine",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2647,
+      "message": "`superRefine` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1805 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "superRefine",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 2663,
+      "message": "`_instanceof` (2 params) is defined again with a near-identical body in mini/schemas.ts:L1821 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_instanceof",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 660,
+      "message": "`email` (1 params) is defined again with a near-identical body in mini/schemas.ts:L133 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "email",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 674,
+      "message": "`guid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L150 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "guid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 688,
+      "message": "`uuid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L167 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "uuid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 692,
+      "message": "`uuidv4` (1 params) is defined again with a near-identical body in mini/schemas.ts:L172 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "uuidv4",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 698,
+      "message": "`uuidv6` (1 params) is defined again with a near-identical body in mini/schemas.ts:L179 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "uuidv6",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 704,
+      "message": "`uuidv7` (1 params) is defined again with a near-identical body in mini/schemas.ts:L186 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "uuidv7",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 718,
+      "message": "`url` (1 params) is defined again with a near-identical body in mini/schemas.ts:L200 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "url",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 722,
+      "message": "`httpUrl` (1 params) is defined again with a near-identical body in mini/schemas.ts:L205 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "httpUrl",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 740,
+      "message": "`emoji` (1 params) is defined again with a near-identical body in mini/schemas.ts:L226 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "emoji",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 754,
+      "message": "`nanoid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L243 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "nanoid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 785,
+      "message": "`cuid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L277 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "cuid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 799,
+      "message": "`cuid2` (1 params) is defined again with a near-identical body in mini/schemas.ts:L294 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "cuid2",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 813,
+      "message": "`ulid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L311 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "ulid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 827,
+      "message": "`xid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L325 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "xid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 841,
+      "message": "`ksuid` (1 params) is defined again with a near-identical body in mini/schemas.ts:L342 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "ksuid",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 869,
+      "message": "`ipv4` (1 params) is defined again with a near-identical body in mini/schemas.ts:L359 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "ipv4",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 882,
+      "message": "`mac` (1 params) is defined again with a near-identical body in mini/schemas.ts:L424 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "mac",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 895,
+      "message": "`ipv6` (1 params) is defined again with a near-identical body in mini/schemas.ts:L376 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "ipv6",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 908,
+      "message": "`cidrv4` (1 params) is defined again with a near-identical body in mini/schemas.ts:L393 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "cidrv4",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 921,
+      "message": "`cidrv6` (1 params) is defined again with a near-identical body in mini/schemas.ts:L410 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "cidrv6",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 934,
+      "message": "`base64` (1 params) is defined again with a near-identical body in mini/schemas.ts:L440 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "base64",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 950,
+      "message": "`base64url` (1 params) is defined again with a near-identical body in mini/schemas.ts:L456 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "base64url",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 964,
+      "message": "`e164` (1 params) is defined again with a near-identical body in mini/schemas.ts:L473 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "e164",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 978,
+      "message": "`jwt` (1 params) is defined again with a near-identical body in mini/schemas.ts:L487 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "jwt",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 997,
+      "message": "`stringFormat` (3 params) is defined again with a near-identical body in mini/schemas.ts:L506 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "stringFormat",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "narrating_code",
       "line": 1357,
@@ -1060,6 +1971,16 @@
       "metric": 123,
       "symbol": "_enum",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/config.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 12,
+      "message": "`config` (1 params) is defined again with a near-identical body in core.ts:L150 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "config",
+      "threshold": 2
     },
     {
       "action": "advisory",
@@ -1136,6 +2057,26 @@
       "metric": 1,
       "symbol": "objectClone",
       "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 5,
+      "message": "`error` (0 params) is defined again with a near-identical body in az.ts:L5, ca.ts:L5, cs.ts:L5, da.ts:L5, de.ts:L5, el.ts:L5, eo.ts:L5, fa.ts:L5, fr-CA.ts:L5, fr.ts:L5, hu.ts:L5, id.ts:L5, is.ts:L5, it.ts:L5, ja.ts:L5, ka.ts:L5, km.ts:L5, mk.ts:L5, ms.ts:L5, no.ts:L5, ota.ts:L5, pl.ts:L5, ps.ts:L5, pt.ts:L5, sl.ts:L5, sv.ts:L5, ta.ts:L5, th.ts:L5, tr.ts:L5, uk.ts:L5, ur.ts:L5, uz.ts:L5, vi.ts:L5, yo.ts:L5, zh-CN.ts:L5, zh-TW.ts:L5 \u2014 keep one and import it",
+      "metric": 37,
+      "symbol": "error",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/locales/be.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 33,
+      "message": "`error` (0 params) is defined again with a near-identical body in ru.ts:L33 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "error",
+      "threshold": 2
     },
     {
       "action": "advisory",

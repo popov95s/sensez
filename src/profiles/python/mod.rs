@@ -46,6 +46,7 @@ static PYTHON_INFO: LanguageInfo = LanguageInfo {
     test_support: &[],
     migration_layouts: &["**/alembic/**/*.py", "**/versions/**/*.py"],
     test_runners: &[RunnerKind::Pytest],
+    default_off_smells: &[],
     wording: &wording::WORDING,
 };
 impl ParseProfile for PythonProfile {

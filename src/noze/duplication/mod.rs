@@ -14,6 +14,7 @@ mod clones;
 mod consolidate;
 mod flatten;
 mod gapped;
+mod lexeme_similarity;
 mod near_miss;
 mod open_tail;
 #[cfg(test)]
@@ -22,6 +23,8 @@ mod range_tests;
 mod semantic;
 #[cfg(test)]
 pub(crate) mod test_support;
+
+pub(crate) use lexeme_similarity::{function_lexemes, length_ceiling_percent, similarity_percent};
 
 use crate::config::model::Duplication;
 use crate::noze::source_scope::SourceScope;

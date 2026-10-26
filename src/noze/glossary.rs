@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 39] = {
+pub const ALL_SMELLS: [SmellKind; 40] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -56,6 +56,7 @@ pub const ALL_SMELLS: [SmellKind; 39] = {
         RefusedBequest,
         RepeatedIteration,
         ShotgunSurgeryHazard,
+        SiblingHelperRedefinition,
         SplitVariable,
         SortInLoop,
         SwallowedErrorSentinel,
@@ -66,7 +67,7 @@ pub const ALL_SMELLS: [SmellKind; 39] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 39] = {
+pub const SMELLS: [SmellDoc; 40] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -100,6 +101,7 @@ pub const SMELLS: [SmellDoc; 39] = {
         SmellDoc { kind: RedundantWrapperChain, title: "Redundant Wrapper Chain", explanation: "A local function forwards arguments unchanged without adding behavior — remove the wrapper or allow a deliberate depth in configuration." },
         SmellDoc { kind: RefusedBequest, title: "Refused Bequest", explanation: "A subclass inherits methods/fields it doesn't use or stubs out — the inheritance is wrong; prefer composition." },
         SmellDoc { kind: RepeatedIteration, title: "Repeated Iteration", explanation: "The same collection gets several full passes (map/filter/reduce-style) in one scope with nothing forcing them apart — fuse the passes so the data is scanned once." },
+        SmellDoc { kind: SiblingHelperRedefinition, title: "Sibling Helper Redefinition", explanation: "The same small helper — same name, same parameter count, near-identical body — is written again in another module instead of imported." },
         SmellDoc { kind: ShotgunSurgeryHazard, title: "Shotgun Surgery Hazard", explanation: "A symbol so widely depended-on that one change ripples across many modules — a blast-radius hotspot." },
         SmellDoc { kind: SplitVariable, title: "Split Variable", explanation: "One local is reassigned to mean different things at different points — use distinct, single-purpose bindings." },
         SmellDoc { kind: SortInLoop, title: "Sort In Loop", explanation: "A collection is sorted inside a loop — hoist sorting or maintain ordered data to avoid repeated O(n log n) work." },

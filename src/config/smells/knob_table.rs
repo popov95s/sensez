@@ -123,6 +123,16 @@ pub(super) const RULE_KNOBS: &[(SmellKind, &str, Knob)] = &[
         Integer(|s| &mut s.data_clump_min_occurrences),
     ),
     (
+        K::SiblingHelperRedefinition,
+        "min_similarity",
+        Integer(|s| &mut s.sibling_helper_min_similarity),
+    ),
+    (
+        K::SiblingHelperRedefinition,
+        "min_lexemes",
+        Integer(|s| &mut s.sibling_helper_min_lexemes),
+    ),
+    (
         K::ShotgunSurgeryHazard,
         "min_blast",
         Integer(|s| &mut s.shotgun_blast_threshold),

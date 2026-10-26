@@ -24,6 +24,8 @@ pub struct SmellWording {
     pub handler_clause: &'static str,
     /// Advice for a handler that swallows its error (`swallowed_error_sentinel`).
     pub swallowed_error_advice: &'static str,
+    /// Function names a framework calls by spelling, so copies are not helpers (`sibling_helper_redefinition`).
+    pub framework_names: &'static [&'static str],
 }
 
 /// Missing-value placeholders shared by languages without `null`/`undefined` literals.

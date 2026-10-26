@@ -118,6 +118,15 @@ pub fn smell_wording(language: Language) -> &'static SmellWording {
     profile(language).info().wording
 }
 
+/// Smells `language`'s profile switches off by default; none when it is not compiled in.
+pub fn default_off_smells(language: Language) -> &'static [crate::report::SmellKind] {
+    PROFILES
+        .iter()
+        .map(|profile| ParseProfile::info(*profile))
+        .find(|info| info.language == language)
+        .map_or(&[], |info| info.default_off_smells)
+}
+
 /// Migration-script globs of every compiled-in language.
 pub fn migration_layouts() -> impl Iterator<Item = &'static str> {
     PROFILES

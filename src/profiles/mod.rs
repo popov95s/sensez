@@ -72,6 +72,8 @@ pub struct LanguageInfo {
     pub migration_layouts: &'static [&'static str],
     /// Test runners that collect this language's tests; empty when reflexez cannot select them.
     pub test_runners: &'static [runner_config::RunnerKind],
+    /// Smells this language switches off by default, before any `sensez.toml` overlay.
+    pub default_off_smells: &'static [crate::report::SmellKind],
     pub wording: &'static wording::SmellWording,
 }
 
