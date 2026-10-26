@@ -92,7 +92,7 @@ fn magic_string_default_flags_empty_and_short_fallbacks() {
     assert_eq!(s.severity, Severity::Warning);
     assert_eq!(s.metric, 2, "empty and one-char fallbacks count");
     assert_eq!(s.line, 2, "finding should point at the fallback expression");
-    assert!(s.message.contains("fallback string literal"));
+    assert!(s.message.contains("fallback string sentinel"));
     let ok = "def g(name=None):\n    return name or \"valid\"\n";
     assert!(find(&local("msd_ok", ok, &cfg), "magic_string_default").is_none());
 }

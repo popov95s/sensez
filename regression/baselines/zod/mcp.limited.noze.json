@@ -536,16 +536,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v3/locales/en.ts",
-      "kind": "nested_ternary",
-      "line": 62,
-      "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 10,
-      "symbol": "errorMap",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v3/types.ts",
       "kind": "feature_envy",
       "line": 1108,
@@ -646,6 +636,16 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
+      "kind": "nested_loop",
+      "line": 415,
+      "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
+      "metric": 5,
+      "symbol": "convertBaseSchema",
+      "threshold": 1
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/checks.ts",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 56 distinct modules \u2014 a change here scatters edits widely",
@@ -684,22 +684,22 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "message_chain",
+      "line": 4458,
+      "message": "attribute chain depth 5 (threshold 4) \u2014 Law of Demeter",
+      "metric": 5,
+      "symbol": "parse",
+      "threshold": 4
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/util.ts",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 63 distinct modules \u2014 a change here scatters edits widely",
       "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/he.ts",
-      "kind": "magic_string_default",
-      "line": 106,
-      "message": "12 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 12,
-      "symbol": "",
-      "threshold": 0
     },
     {
       "action": "warning",

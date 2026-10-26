@@ -6,8 +6,11 @@
 //! Each language module is `#[cfg(feature)]`-gated so an unbuilt language
 //! compiles to nothing.
 
+pub(crate) mod comment_class;
 pub(crate) mod comments;
 pub(crate) mod conditionals;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
+pub(crate) mod fallback_guard;
 pub(crate) mod guard_fingerprint;
 pub(crate) mod lexeme;
 pub(crate) mod lineage;
@@ -19,6 +22,7 @@ pub(crate) mod runner_config;
 pub(crate) mod test_oracle;
 pub mod typevocab;
 pub(crate) mod walk;
+pub mod wording;
 
 #[cfg(feature = "lang-javascript")]
 pub mod javascript;
@@ -254,12 +258,27 @@ pub trait TypeVocabularyProfile: Send + Sync {
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool;
 }
 
+/// Language-owned phrases spliced into smell messages.
+pub trait WordingProfile: Send + Sync {
+    fn smell_wording(&self) -> &'static wording::SmellWording;
+}
+
 pub trait LanguageProfile:
-    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
+    ParseProfile
+    + ModuleProfile
+    + DeadCodeProfile
+    + PerformanceProfile
+    + TypeVocabularyProfile
+    + WordingProfile
 {
 }
 
 impl<T> LanguageProfile for T where
-    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
+    T: ParseProfile
+        + ModuleProfile
+        + DeadCodeProfile
+        + PerformanceProfile
+        + TypeVocabularyProfile
+        + WordingProfile
 {
 }

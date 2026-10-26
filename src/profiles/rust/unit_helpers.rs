@@ -26,6 +26,7 @@ pub(super) fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
         _ => None,
     }?;
     call.region = control_region(node);
+    call.offset = node.start_byte();
     Some(call)
 }
 

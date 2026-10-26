@@ -68,7 +68,8 @@ impl FunctionFacts {
         }
     }
 
-    pub fn enter(&mut self, node: Node, src: &[u8]) -> Option<(usize, usize)> {
+    pub fn enter(&mut self, lineage: Lineage, src: &[u8]) -> Option<(usize, usize)> {
+        let node = lineage.node();
         let range = node.byte_range();
         if range.start < self.body_start || range.end > self.body_end {
             return None;
@@ -81,7 +82,7 @@ impl FunctionFacts {
         let prev_loop_depth = self.loop_depth;
 
         obsession::scan(&mut self.unit, node, src);
-        performance::scan(&mut self.unit.performance, node, src, self.loop_depth);
+        performance::scan(&mut self.unit.performance, lineage, src, self.loop_depth);
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
@@ -105,10 +106,10 @@ impl FunctionFacts {
             self.unit.collapsible_nested_ifs += 1;
         }
         match kind {
-            "ternary_expression" if conditionals::is_nested_ternary(node) => self
+            "ternary_expression" => self
                 .unit
-                .nested_ternary_lines
-                .push(node.start_position().row + 1),
+                .nested_ternaries
+                .extend(conditionals::nested_ternary(node)),
             "return_statement" => {
                 self.unit.return_count += 1;
                 if let Some(constructor) = returned_constructor(node, src) {

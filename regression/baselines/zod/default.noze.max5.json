@@ -267,13 +267,12 @@
       "heavy_nested_function": 3,
       "large_class": 2,
       "loose_typing": 118,
-      "magic_string_default": 58,
+      "magic_string_default": 4,
       "message_chain": 1,
       "mutated_parameter": 3,
       "narrating_code": 3,
       "nested_loop": 33,
       "nested_ternary": 8,
-      "repeated_iteration": 3,
       "shotgun_surgery_hazard": 3,
       "unnecessary_nested_if": 13
     },
@@ -282,27 +281,17 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 266,
+    "smells_total": 209,
     "source_lines": 72099
   },
   "smells": [
     {
       "action": "advisory",
-      "file": "<zod>/packages/bench/discriminated-union.ts",
-      "kind": "narrating_code",
-      "line": 104,
-      "message": "7 comment line(s), 54% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 54,
-      "symbol": "makeData callback",
-      "threshold": 30
-    },
-    {
-      "action": "advisory",
       "file": "<zod>/packages/tsc/generate.ts",
       "kind": "narrating_code",
-      "line": 327,
-      "message": "12 comment line(s), 42% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 42,
+      "line": 330,
+      "message": "6 line(s) of commented-out code, 71% of code lines (threshold 30%) \u2014 delete them; version control keeps the history",
+      "metric": 71,
       "symbol": "generateFields",
       "threshold": 30
     },
@@ -358,11 +347,21 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
+      "kind": "narrating_code",
+      "line": 31,
+      "message": "10 narrating comment line(s), 35% of code lines (threshold 30%) \u2014 prefer clearer names or extracted helpers; keep comments for why",
+      "metric": 35,
+      "symbol": "initializer",
+      "threshold": 30
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "narrating_code",
-      "line": 1355,
-      "message": "11 comment line(s), 55% of function (threshold 30%) \u2014 prefer clearer names or extracted helpers unless the comment explains why",
-      "metric": 55,
+      "line": 1357,
+      "message": "11 line(s) of commented-out code, 123% of code lines (threshold 30%) \u2014 delete them; version control keeps the history",
+      "metric": 123,
       "symbol": "_enum",
       "threshold": 30
     },
@@ -460,8 +459,8 @@
       "file": "<zod>/packages/zod/src/v3/locales/en.ts",
       "kind": "nested_ternary",
       "line": 62,
-      "message": "10 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 10,
+      "message": "10 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
       "symbol": "errorMap",
       "threshold": 0
     },
@@ -597,6 +596,16 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "nested_ternary",
+      "line": 4909,
+      "message": "1 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 2,
+      "symbol": "cleanParams",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/from-json-schema.ts",
       "kind": "nested_loop",
       "line": 380,
@@ -646,16 +655,6 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/doc.ts",
-      "kind": "repeated_iteration",
-      "line": 29,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "write",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/errors.ts",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 60 distinct modules \u2014 a change here scatters edits widely",
@@ -678,7 +677,7 @@
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "nested_ternary",
       "line": 380,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "message": "1 nested ternary chain(s), deepest 2 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
       "metric": 2,
       "symbol": "tupleProcessor",
       "threshold": 0
@@ -686,10 +685,20 @@
     {
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
+      "kind": "magic_string_default",
+      "line": 70,
+      "message": "1 fallback string sentinel(s) (first: `\":\"` stored or sent at line 70) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "metric": 1,
+      "symbol": "mac",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
       "kind": "nested_ternary",
       "line": 103,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 2,
+      "message": "1 nested ternary chain(s), deepest 3 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 3,
       "symbol": "timeSource",
       "threshold": 0
     },
@@ -728,30 +737,10 @@
       "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
       "kind": "nested_ternary",
       "line": 1136,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 2,
+      "message": "1 nested ternary chain(s), deepest 3 levels \u2014 extract the result into a named helper or flatten it with if statements and early returns",
+      "metric": 3,
       "symbol": "parse",
       "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "repeated_iteration",
-      "line": 2175,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "handleUnionResults",
-      "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "repeated_iteration",
-      "line": 2211,
-      "message": "same collection is iterated multiple times in this scope; combine the work or use a bulk operation.",
-      "metric": 2,
-      "symbol": "util.defineLazy callback",
-      "threshold": 1
     },
     {
       "action": "warning",
@@ -774,31 +763,11 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
+      "file": "<zod>/packages/zod/src/v4/locales/he.ts",
       "kind": "magic_string_default",
-      "line": 72,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/bg.ts",
-      "kind": "magic_string_default",
-      "line": 74,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/el.ts",
-      "kind": "magic_string_default",
-      "line": 75,
-      "message": "4 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 4,
+      "line": 106,
+      "message": "2 fallback string sentinel(s) (first: `\"\"` used at line 106) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "metric": 2,
       "symbol": "",
       "threshold": 0
     },
@@ -806,10 +775,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/locales/he.ts",
       "kind": "magic_string_default",
-      "line": 106,
-      "message": "12 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 12,
-      "symbol": "",
+      "line": 51,
+      "message": "1 fallback string sentinel(s) (first: `\"m\"` used at line 51) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "metric": 1,
+      "symbol": "verbFor",
       "threshold": 0
     },
     {
@@ -824,32 +793,22 @@
     },
     {
       "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/nl.ts",
-      "kind": "nested_ternary",
-      "line": 74,
-      "message": "2 nested ternary expressions are hard to follow \u2014 extract the result into a named helper or flatten it with if statements and early returns",
-      "metric": 2,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/locales/zh-TW.ts",
-      "kind": "magic_string_default",
-      "line": 71,
-      "message": "5 fallback string literal(s) (`or \"\"` / `|| \"?\"` / other 0-1 char sentinels) \u2014 hidden sentinel values; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 5,
-      "symbol": "",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "mutated_parameter",
       "line": 77,
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/scripts/write-stub-package-jsons.ts",
+      "kind": "magic_string_default",
+      "line": 38,
+      "message": "1 fallback string sentinel(s) (first: `\".\"` stored or sent at line 38) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "metric": 1,
+      "symbol": "findIndexJsFiles",
       "threshold": 0
     }
   ]

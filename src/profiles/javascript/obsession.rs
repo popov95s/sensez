@@ -3,6 +3,8 @@
 //! against JS/TS node kinds. Collects raw structure only — thresholds and
 //! severity live in `noze::smells`.
 
+use super::fallback_sink::fallback_sink;
+use crate::profiles::fallback_guard::{guards_own_value, GuardSyntax};
 use crate::profiles::walk;
 use crate::spine::ir::{record_attr, FunctionUnit, SchemaCall};
 use tree_sitter::Node;
@@ -24,6 +26,19 @@ const MUTATORS: [&str; 14] = [
     "clear",
     "remove",
 ];
+
+const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
+    truthy_prefixes: &["!!"],
+    presence_suffixes: &[
+        " != null",
+        " !== null",
+        " != undefined",
+        " !== undefined",
+        " !== \"\"",
+        " !== ''",
+    ],
+    accessors: &[".", "?.", "["],
+};
 
 /// Record everything this node contributes to the discipline smells.
 pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
@@ -56,47 +71,59 @@ fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(right) = node.child_by_field_name("right") else {
         return;
     };
-    walk::record_short_string_fallback(
+    walk::record_string_fallback(
         unit,
-        string_literal_len(right, src),
+        string_literal_text(right, src),
+        fallback_sink(node, src),
         right.start_position().row + 1,
     );
 }
 
-/// `condition ? value : "?"` — the fallback is the named `alternative` branch.
+/// `x ? x : "?"` — a ternary is a fallback only when it guards its own value.
 fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let Some(fallback) = node.child_by_field_name("alternative") else {
+    let (Some(condition), Some(value), Some(fallback)) = (
+        node.child_by_field_name("condition"),
+        node.child_by_field_name("consequence"),
+        node.child_by_field_name("alternative"),
+    ) else {
         return;
     };
-    walk::record_short_string_fallback(
+    let guarded = walk::node_text(condition, src)
+        .zip(walk::node_text(value, src))
+        .is_some_and(|(condition, value)| guards_own_value(condition, value, &GUARD_SYNTAX));
+    if !guarded {
+        return;
+    }
+    walk::record_string_fallback(
         unit,
-        string_literal_len(fallback, src),
+        string_literal_text(fallback, src),
+        fallback_sink(node, src),
         fallback.start_position().row + 1,
     );
 }
 
-fn string_literal_len(node: Node, src: &[u8]) -> Option<usize> {
+fn string_literal_text(node: Node, src: &[u8]) -> Option<String> {
     match node.kind() {
         "parenthesized_expression" => node
             .named_child(0)
-            .and_then(|child| string_literal_len(child, src)),
-        "string" => quoted_string_len(node.utf8_text(src).ok()?, ['"', '\'']),
-        "template_string" => template_string_len(node.utf8_text(src).ok()?),
+            .and_then(|child| string_literal_text(child, src)),
+        "string" => quoted_string_body(node.utf8_text(src).ok()?, ['"', '\'']),
+        "template_string" => template_string_body(node.utf8_text(src).ok()?),
         _ => None,
     }
 }
 
-fn quoted_string_len(text: &str, quotes: [char; 2]) -> Option<usize> {
+fn quoted_string_body(text: &str, quotes: [char; 2]) -> Option<String> {
     let quote = text.chars().next().filter(|ch| quotes.contains(ch))?;
     let body = text.get(quote.len_utf8()..)?;
-    Some(body.strip_suffix(quote)?.chars().count())
+    Some(body.strip_suffix(quote)?.to_string())
 }
 
-fn template_string_len(text: &str) -> Option<usize> {
+fn template_string_body(text: &str) -> Option<String> {
     if text.contains("${") {
         return None;
     }
-    Some(text.strip_prefix('`')?.strip_suffix('`')?.chars().count())
+    Some(text.strip_prefix('`')?.strip_suffix('`')?.to_string())
 }
 
 /// `recv["key"]` — record the distinct string-literal key per receiver.

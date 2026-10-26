@@ -11,6 +11,8 @@ mod complexity;
 mod coupling;
 mod graphy;
 mod inherit;
+mod lines;
+mod magic_string;
 mod mutation;
 mod performance;
 mod review_risks;
@@ -31,6 +33,7 @@ mod schema_tests;
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::build_globset;
 use crate::noze::source_scope::SourceScope;
+use crate::profiles::wording::SmellWording;
 use crate::profiles::{registry, TypeVocabularyProfile};
 use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
@@ -52,6 +55,7 @@ pub(super) struct SmellContext<'a> {
     pub language: Language,
     pub type_hints: &'a TypeHints,
     pub type_vocabulary: &'static dyn TypeVocabularyProfile,
+    pub wording: &'static SmellWording,
     pub test_source: bool,
 }
 
@@ -62,6 +66,7 @@ impl<'a> SmellContext<'a> {
             language: file.language,
             type_hints: &file.walked.units.type_hints,
             type_vocabulary: registry::type_vocabulary(file.language),
+            wording: registry::smell_wording(file.language),
             test_source: registry::is_test_source(file.language, &file.path),
         }
     }
@@ -213,28 +218,14 @@ pub(super) fn make(
     }
 }
 
-pub(super) fn structure_target(language: Language) -> &'static str {
-    match language {
-        Language::Python => "a dataclass or model",
-        Language::JavaScript | Language::TypeScript => "a typed object or interface",
-        Language::Rust => "a struct",
-    }
-}
-
-pub(super) fn grouped_value_target(language: Language) -> &'static str {
-    match language {
-        Language::Python => "a NamedTuple or dataclass",
-        Language::JavaScript | Language::TypeScript => "a typed object or tuple shape",
-        Language::Rust => "a struct",
-    }
-}
-
 #[cfg(test)]
 mod comments_tests;
 #[cfg(test)]
 mod determinism_tests;
 #[cfg(test)]
 mod discipline_tests;
+#[cfg(test)]
+mod magic_string_tests;
 #[cfg(test)]
 mod nested_if_tests;
 #[cfg(test)]

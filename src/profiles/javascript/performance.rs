@@ -1,20 +1,20 @@
 //! JS/TS AST facts for performance-oriented smells.
 
+use crate::profiles::lineage::Lineage;
 use crate::profiles::walk;
-use crate::spine::ir::{CallFact, PerfLine, PerformanceFacts};
+use crate::spine::ir::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
 
-const ITER_METHODS: [&str; 9] = [
-    "some",
-    "every",
+const FULL_PASS_METHODS: &[&str] = &[
     "filter",
     "map",
     "reduce",
     "reduceRight",
-    "find",
-    "findIndex",
     "forEach",
+    "flatMap",
 ];
+const SHORT_CIRCUIT_METHODS: &[&str] = &["some", "every", "find", "findIndex"];
+const ASSERTION_CALLEES: &[&str] = &["expect", "assert"];
 const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "all", "execute", "fetch", "fetchOne", "find", "findOne", "load", "query", "request", "save",
 ];
@@ -47,7 +47,8 @@ const EXTERNAL_TYPE_PARTS: &[&str] = &[
     "session",
     "transport",
 ];
-pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: usize) {
+pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], loop_depth: usize) {
+    let node = lineage.node();
     let kind = node.kind();
     if is_loop(kind) {
         let loop_line = line(node, src);
@@ -56,15 +57,20 @@ pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], loop_depth: us
             facts.nested_loops.push(loop_line);
         }
     }
+    match kind {
+        "return_statement" | "throw_statement" => facts.exits.push(node.end_byte()),
+        "variable_declarator" => record_bindings(facts, node, src),
+        _ => {}
+    }
     if kind != "call_expression" {
         return;
     }
-    let Some(call) = call_fact(node, src) else {
+    let Some(call) = call_fact(lineage, src) else {
         return;
     };
     facts.calls.push(call.clone());
-    if call.member && ITER_METHODS.contains(&call.method.as_str()) {
-        facts.iteration_calls.push(call.clone());
+    if let Some(iteration) = iteration_call(lineage, src, &call) {
+        facts.iteration_calls.push(iteration);
     }
     if loop_depth == 0 {
         return;
@@ -86,7 +92,8 @@ pub fn is_loop(kind: &str) -> bool {
     )
 }
 
-fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
+fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
+    let node = lineage.node();
     let func = node.child_by_field_name("function")?;
     let line = node.start_position().row + 1;
     let mut call = match func.kind() {
@@ -103,8 +110,119 @@ fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
         }
         _ => None,
     }?;
-    call.region = control_region(node);
+    call.region = control_region(lineage);
+    call.offset = node.start_byte();
     Some(call)
+}
+
+fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> Option<CallFact> {
+    let node = lineage.node();
+    if !call.member {
+        return None;
+    }
+    let pass = match call.method.as_str() {
+        method if SHORT_CIRCUIT_METHODS.contains(&method) => IterationPass::ShortCircuit,
+        "map" if is_trivial_projection(node, src) => IterationPass::Projection,
+        method if FULL_PASS_METHODS.contains(&method) => IterationPass::Full,
+        _ => return None,
+    };
+    Some(CallFact {
+        pass,
+        in_assertion: in_assertion(lineage, src),
+        arg_idents: node
+            .child_by_field_name("arguments")
+            .map(|args| identifiers(args, src))
+            .unwrap_or_default(),
+        ..call.clone()
+    })
+}
+
+/// `xs.map(x => x.field)`.
+fn is_trivial_projection(call: Node, src: &[u8]) -> bool {
+    let Some(arrow) = call
+        .child_by_field_name("arguments")
+        .filter(|args| args.named_child_count() == 1)
+        .and_then(|args| args.named_child(0))
+        .filter(|arg| arg.kind() == "arrow_function")
+    else {
+        return false;
+    };
+    let param = arrow
+        .child_by_field_name("parameter")
+        .or_else(|| sole_parameter(arrow))
+        .and_then(|p| walk::node_text(p, src));
+    let object = arrow
+        .child_by_field_name("body")
+        .filter(|body| body.kind() == "member_expression")
+        .and_then(|body| body.child_by_field_name("object"))
+        .and_then(|object| walk::node_text(object, src));
+    param.is_some() && param == object
+}
+
+/// `p` in `(p) => …`.
+fn sole_parameter(arrow: Node) -> Option<Node> {
+    arrow
+        .child_by_field_name("parameters")
+        .filter(|params| params.named_child_count() == 1)
+        .and_then(|params| params.named_child(0))
+        .map(|param| param.child_by_field_name("pattern").unwrap_or(param))
+}
+
+fn in_assertion(lineage: Lineage, src: &[u8]) -> bool {
+    let mut current = lineage.node();
+    while let Some(parent) = lineage.parent(current) {
+        if super::units::is_function(parent.kind()) {
+            return false;
+        }
+        if parent.kind() == "call_expression" && is_assertion_call(parent, src) {
+            return true;
+        }
+        current = parent;
+    }
+    false
+}
+
+/// `expect(..)`, `expect(..).toBe(..)`, `assert(..)`, `assert.equal(..)`.
+fn is_assertion_call(call: Node, src: &[u8]) -> bool {
+    let mut callee = call.child_by_field_name("function");
+    while let Some(node) = callee {
+        callee = match node.kind() {
+            "member_expression" => node.child_by_field_name("object"),
+            "call_expression" => node.child_by_field_name("function"),
+            "identifier" => {
+                return walk::node_text(node, src)
+                    .is_some_and(|name| ASSERTION_CALLEES.contains(&name))
+            }
+            _ => None,
+        };
+    }
+    false
+}
+
+fn record_bindings(facts: &mut PerformanceFacts, declarator: Node, src: &[u8]) {
+    let end = declarator.end_byte();
+    if let Some(name) = declarator.child_by_field_name("name") {
+        facts
+            .bindings
+            .extend(identifiers(name, src).into_iter().map(|ident| (ident, end)));
+    }
+}
+
+fn identifiers(node: Node, src: &[u8]) -> Vec<String> {
+    if matches!(
+        node.kind(),
+        "identifier" | "shorthand_property_identifier_pattern"
+    ) {
+        return walk::node_text(node, src)
+            .map(|name| vec![name.to_string()])
+            .unwrap_or_default();
+    }
+    let mut cursor = node.walk();
+    let children: Vec<Node> = node.named_children(&mut cursor).collect();
+    children
+        .into_iter()
+        .flat_map(|child| identifiers(child, src))
+        .collect()
 }
 
 fn stable_receiver(node: &Node<'_>) -> bool {
@@ -115,9 +233,9 @@ fn stable_receiver(node: &Node<'_>) -> bool {
                 .is_some_and(|base| stable_receiver(&base)))
 }
 
-fn control_region(node: Node<'_>) -> usize {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
+fn control_region(lineage: Lineage) -> usize {
+    let mut current = lineage.node();
+    while let Some(parent) = lineage.parent(current) {
         if matches!(
             parent.kind(),
             "if_statement" | "switch_case" | "ternary_expression"

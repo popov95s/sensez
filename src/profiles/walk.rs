@@ -5,10 +5,13 @@
 //! [`Walked`] output is identical everywhere and lives here once.
 
 pub(crate) use super::node_query::{node_text, perf_line};
+use crate::profiles::comment_class::{self, CommentSyntax};
 use crate::profiles::comments;
 use crate::profiles::lexeme::BoundNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
-use crate::spine::ir::{bump, record_attr, CommentSpan, FunctionUnit, SymbolKind, Walked};
+use crate::spine::ir::{
+    bump, record_attr, CommentSpan, FallbackSink, FunctionUnit, StringFallback, SymbolKind, Walked,
+};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -248,21 +251,50 @@ pub(crate) fn record_mutation_root(
     }
 }
 
-/// Record a short string fallback literal occurrence.
-pub(crate) fn record_short_string_fallback(
+/// Record a string-literal fallback; non-literal fallbacks are ignored.
+pub(crate) fn record_string_fallback(
     unit: &mut FunctionUnit,
-    literal_len: Option<usize>,
+    literal: Option<String>,
+    sink: FallbackSink,
     line: usize,
 ) {
-    if literal_len.is_some_and(|len| len <= 1) {
-        unit.short_string_fallback_lines.push(line);
+    if let Some(literal) = literal {
+        unit.string_fallbacks.push(StringFallback {
+            line,
+            literal,
+            sink,
+        });
     }
 }
 
-/// Record a source comment span for shared post-walk attachment.
-pub(crate) fn record_comment_span(out: &mut Walked, node: Node) {
+/// Record a classified source comment span for shared post-walk attachment.
+pub(crate) fn record_comment_span(
+    out: &mut Walked,
+    node: Node,
+    parent: Option<Node>,
+    src: &[u8],
+    syntax: &CommentSyntax,
+) {
     out.units.comment_spans.push(CommentSpan {
         start_line: node.start_position().row + 1,
         end_line: node.end_position().row + 1,
+        class: comment_class::classify(node, parent, src, syntax),
     });
+}
+
+/// Record each comment of `block`, a run of adjacent comment children of `parent`.
+pub(crate) fn record_comment_block(
+    out: &mut Walked,
+    block: &[Node],
+    parent: Node,
+    src: &[u8],
+    syntax: &CommentSyntax,
+) {
+    out.units
+        .comment_spans
+        .extend(block.iter().map(|node| CommentSpan {
+            start_line: node.start_position().row + 1,
+            end_line: node.end_position().row + 1,
+            class: comment_class::classify_in(*node, block, Some(parent), src, syntax),
+        }));
 }

@@ -2,6 +2,7 @@
 
 mod chains;
 mod classunit;
+mod comment_syntax;
 mod conditionals;
 mod deadcode;
 mod generated;
@@ -19,10 +20,12 @@ mod traversal;
 mod typehints;
 pub(crate) mod typevocab;
 mod units;
+mod wording;
 
+use crate::profiles::wording::SmellWording;
 use crate::profiles::{
     DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    TypeVocabularyProfile, WordingProfile,
 };
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, Walked};
 use std::collections::HashSet;
@@ -179,6 +182,12 @@ impl TypeVocabularyProfile for PythonProfile {
 
     fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
         typevocab::is_primitive_scalar_alias(annotation)
+    }
+}
+
+impl WordingProfile for PythonProfile {
+    fn smell_wording(&self) -> &'static SmellWording {
+        &wording::WORDING
     }
 }
 

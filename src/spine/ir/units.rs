@@ -2,7 +2,7 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
-use super::PerformanceFacts;
+use super::{PerformanceFacts, StringFallback};
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
@@ -44,15 +44,20 @@ pub struct FunctionUnit {
     pub branch_count: usize,
     /// `if x { if y { ... } }` shapes with no else/default path.
     pub collapsible_nested_ifs: usize,
-    /// Source lines of conditional expressions nested inside another
-    /// conditional expression in this function.
-    pub nested_ternary_lines: Vec<usize>,
+    /// Conditional expressions nested inside another conditional expression.
+    pub nested_ternaries: Vec<NestedTernary>,
     /// Nesting-weighted cognitive-complexity accumulator (Sonar-style).
     pub cognitive: usize,
     /// Count of "magic" numeric literals (not 0/1/2).
     pub magic_numbers: usize,
     /// Number of source lines occupied by comments inside this function body.
     pub comment_lines: usize,
+    /// Comment lines classed as step-by-step narration.
+    pub narration_comment_lines: usize,
+    /// Comment lines classed as commented-out code.
+    pub code_comment_lines: usize,
+    /// First line of a narration or commented-out-code comment.
+    pub first_noisy_comment_line: Option<usize>,
     /// Longest `a.b.c.d` attribute chain (Law of Demeter / message chains).
     pub max_chain_depth: usize,
     pub is_method: bool,
@@ -91,9 +96,8 @@ pub struct FunctionUnit {
     /// Count of `x in ["a", "b", ...]` membership tests against a literal
     /// collection of strings (stringly-typed category logic).
     pub literal_membership_tests: usize,
-    /// Source rows for empty/1-char string fallback literals (`or ""`,
-    /// `|| "?"`, `cond ? value : "?"`, etc.).
-    pub short_string_fallback_lines: Vec<usize>,
+    /// String literals used as fallbacks (`or ""`, `?? "n/a"`, `x ? x : "?"`).
+    pub string_fallbacks: Vec<StringFallback>,
     /// Compact call/loop facts consumed by performance smell detectors.
     pub performance: PerformanceFacts,
     /// Conservative evidence for AI-generated-code patterns.
@@ -111,6 +115,26 @@ pub struct FunctionUnit {
 pub struct CommentSpan {
     pub start_line: usize,
     pub end_line: usize,
+    pub class: CommentClass,
+}
+
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum CommentClass {
+    Directive,
+    Markup,
+    Code,
+    #[default]
+    Narration,
+    Rationale,
+}
+
+/// A nested conditional expression; `depth` 0 means nested only across an expression boundary.
+#[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
+pub struct NestedTernary {
+    pub line: usize,
+    pub root_line: usize,
+    pub depth: usize,
 }
 
 /// Per-class structural summary used by the design-smell pillar.
