@@ -1,3 +1,4 @@
+use crate::profiles::lineage::Lineage;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::spine::ir::FunctionUnit;
 use std::collections::HashMap;
@@ -96,11 +97,11 @@ pub(super) fn scan(
     }
 }
 
-pub(super) fn is_test_callback(func: Node<'_>, src: &[u8]) -> bool {
+pub(super) fn is_test_callback(func: Lineage, src: &[u8]) -> bool {
     test_callee(func, src).is_some_and(|name| matches!(name, "test" | "it"))
 }
 
-pub(super) fn is_test_framework_callback(func: Node<'_>, src: &[u8]) -> bool {
+pub(super) fn is_test_framework_callback(func: Lineage, src: &[u8]) -> bool {
     test_callee(func, src).is_some_and(|name| {
         matches!(
             name,
@@ -110,12 +111,12 @@ pub(super) fn is_test_framework_callback(func: Node<'_>, src: &[u8]) -> bool {
 }
 
 /// Base name of the test-framework call receiving `func` (`it.only`, `test.each(...)` → `it`, `test`).
-fn test_callee<'a>(func: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
+fn test_callee<'a>(func: Lineage, src: &'a [u8]) -> Option<&'a str> {
     let args = func
-        .parent()
+        .parent(func.node())
         .filter(|parent| parent.kind() == "arguments")?;
-    let call = args
-        .parent()
+    let call = func
+        .parent(args)
         .filter(|parent| parent.kind() == "call_expression")?;
     base_callee(call.child_by_field_name("function")?, src)
 }

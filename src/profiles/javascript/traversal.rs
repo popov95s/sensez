@@ -226,7 +226,7 @@ fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut Vi
     ctx.active_fns.push(ActiveFn {
         collector,
         index,
-        is_test_framework_callback: risk_facts::is_test_framework_callback(node, src),
+        is_test_framework_callback: risk_facts::is_test_framework_callback(lineage, src),
     });
 }
 

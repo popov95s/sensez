@@ -1,5 +1,6 @@
 //! Nesting depth and cognitive weight of syntax nodes.
 
+use crate::profiles::lineage::Lineage;
 use tree_sitter::Node;
 
 /// Kinds that increase block-nesting depth.
@@ -35,9 +36,15 @@ pub(super) fn is_branch(kind: &str, node: Node, src: &[u8]) -> bool {
 
 /// Cognitive-complexity increment (Sonar-style): control structures cost
 /// `1 + nesting`; logical operators a flat `1`.
-pub(super) fn cognitive_weight(kind: &str, node: Node, src: &[u8], depth: usize) -> Option<usize> {
+pub(super) fn cognitive_weight(
+    kind: &str,
+    lineage: Lineage,
+    src: &[u8],
+    depth: usize,
+) -> Option<usize> {
+    let node = lineage.node();
     match kind {
-        "if_statement" if is_else_if(node) => Some(1),
+        "if_statement" if is_else_if(lineage) => Some(1),
         "if_statement" | "for_statement" | "for_in_statement" | "while_statement"
         | "do_statement" | "switch_statement" | "ternary_expression" | "catch_clause" => {
             Some(1 + depth)
@@ -48,9 +55,9 @@ pub(super) fn cognitive_weight(kind: &str, node: Node, src: &[u8], depth: usize)
 }
 
 /// `else if`: an `if` that is the `alternative` of another `if`.
-pub(super) fn is_else_if(node: Node) -> bool {
-    node.parent()
+pub(super) fn is_else_if(node: Lineage) -> bool {
+    node.parent(node.node())
         .filter(|parent| parent.kind() == "else_clause")
-        .and_then(|clause| clause.parent())
+        .and_then(|clause| node.parent(clause))
         .is_some_and(|grand| grand.kind() == "if_statement")
 }
