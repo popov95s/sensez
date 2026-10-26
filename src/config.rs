@@ -70,7 +70,7 @@ impl Config {
             source::discover(project_root).map_err(|problem| ConfigErrors(vec![problem]))?;
         let (mut config, warnings) = parse::parse(&source).map_err(ConfigErrors)?;
         config.resolve_paths(project_root);
-        config.validate_globs().map_err(|err| {
+        config.validate().map_err(|err| {
             ConfigErrors(vec![ConfigProblem {
                 file: source.file(),
                 position: None,
@@ -119,6 +119,28 @@ impl Config {
         }
     }
 
+    fn validate(&self) -> Result<()> {
+        self.validate_globs()?;
+        self.validate_semantic()
+    }
+
+    fn validate_semantic(&self) -> Result<()> {
+        let semantic = &self.duplication.semantic;
+        if semantic.comment_boost_score < 50 {
+            anyhow::bail!(
+                "duplication.semantic.comment_boost_score must be at least 50, got {}",
+                semantic.comment_boost_score
+            );
+        }
+        if semantic.min_shape_score > 100 {
+            anyhow::bail!(
+                "duplication.semantic.min_shape_score must be at most 100, got {}",
+                semantic.min_shape_score
+            );
+        }
+        Ok(())
+    }
+
     fn validate_globs(&self) -> Result<()> {
         crate::globs::validate_patterns("exclude", &self.exclude)?;
         crate::globs::validate_patterns("duplication.exclude", &self.duplication.exclude)?;
@@ -141,3 +163,7 @@ fn config_issue(problem: ConfigProblem) -> ScanIssue {
 #[cfg(test)]
 #[path = "config/tests.rs"]
 mod tests;
+
+#[cfg(test)]
+#[path = "config/semantic_tests.rs"]
+mod semantic_tests;

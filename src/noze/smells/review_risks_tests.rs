@@ -4,11 +4,11 @@ use crate::report::{SmellFinding, SmellKind};
 use crate::spine::parser::parse_file;
 use std::fs;
 
-fn local(ext: &str, source: &str) -> Vec<SmellFinding> {
+pub(super) fn local(ext: &str, source: &str) -> Vec<SmellFinding> {
     local_with_config(ext, source, &review_risk_config())
 }
 
-fn local_with_config(ext: &str, source: &str, config: &Smells) -> Vec<SmellFinding> {
+pub(super) fn local_with_config(ext: &str, source: &str, config: &Smells) -> Vec<SmellFinding> {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join(format!("sample.{ext}"));
     fs::write(&path, source).unwrap();
@@ -16,7 +16,7 @@ fn local_with_config(ext: &str, source: &str, config: &Smells) -> Vec<SmellFindi
     detect_local(&file, config)
 }
 
-fn review_risk_config() -> Smells {
+pub(super) fn review_risk_config() -> Smells {
     let mut config = Smells::default();
     config.disabled.retain(|kind| {
         *kind != SmellKind::DefensiveFallback && *kind != SmellKind::RedundantValidation
@@ -24,7 +24,7 @@ fn review_risk_config() -> Smells {
     config
 }
 
-fn has(findings: &[SmellFinding], kind: SmellKind) -> bool {
+pub(super) fn has(findings: &[SmellFinding], kind: SmellKind) -> bool {
     findings.iter().any(|finding| finding.kind == kind)
 }
 

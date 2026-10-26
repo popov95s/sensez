@@ -39,9 +39,9 @@ enabled = true
 #
 # [duplication.semantic]  # opt-in, requires the `eyez` feature
 # enabled = false
-# min_shape_score = 82       # structural candidate gate, as a 0-100 score
-# comment_boost_score = 85   # doc/comment embedding score needed to promote
-# comment_required = true    # default: semantic findings need comments/docstrings
+# min_shape_score = 50       # token 4-gram overlap (0-100) for an edited copy
+# comment_boost_score = 85   # doc similarity (50-100) an edited copy needs
+# comment_required = true    # false also pairs undocumented near-copies
 
 [dead_code]
 # unused_imports = false
@@ -110,7 +110,7 @@ pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<String> 
         body.push_str(
             "\n[duplication.semantic]\n\
              enabled = true\n\
-             # min_shape_score = 82\n\
+             # min_shape_score = 50\n\
              # comment_boost_score = 85\n\
              # comment_required = true\n",
         );

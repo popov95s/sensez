@@ -27,6 +27,9 @@
     "duplication": [
       {
         "action": "advisory",
+        "detector": {
+          "kind": "structural"
+        },
         "occurrences": [
           {
             "end_row": 14,
@@ -71,6 +74,9 @@
     "duplication": [
       {
         "action": "advisory",
+        "detector": {
+          "kind": "structural"
+        },
         "occurrences": [
           {
             "end_row": 14,
@@ -93,6 +99,9 @@
     "duplication": [
       {
         "action": "advisory",
+        "detector": {
+          "kind": "structural"
+        },
         "occurrences": [
           {
             "end_row": 14,

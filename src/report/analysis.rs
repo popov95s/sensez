@@ -155,12 +155,14 @@ mod tests {
                     token_length: 10,
                     occurrences: Vec::new(),
                     hint: None,
+                    ..Default::default()
                 },
                 CloneClass {
                     action: ActionLevel::MustFix,
                     token_length: 20,
                     occurrences: Vec::new(),
                     hint: None,
+                    ..Default::default()
                 },
             ],
             ..AnalysisReport::default()

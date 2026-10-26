@@ -240,6 +240,7 @@ mod tests {
                 })
                 .collect(),
             hint: None,
+            ..Default::default()
         }
     }
 }

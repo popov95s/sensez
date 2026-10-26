@@ -4,12 +4,11 @@
 //! one grammar's node kinds), but the bookkeeping that targets the shared
 //! [`Walked`] output is identical everywhere and lives here once.
 
+pub(crate) use super::node_query::{node_text, perf_line};
 use crate::profiles::comments;
 use crate::profiles::lexeme::BoundNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
-use crate::spine::ir::{
-    bump, record_attr, CommentSpan, FunctionUnit, PerfLine, SymbolKind, Walked,
-};
+use crate::spine::ir::{bump, record_attr, CommentSpan, FunctionUnit, SymbolKind, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -266,24 +265,4 @@ pub(crate) fn record_comment_span(out: &mut Walked, node: Node) {
         start_line: node.start_position().row + 1,
         end_line: node.end_position().row + 1,
     });
-}
-
-pub(crate) fn node_text<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
-    node.utf8_text(src).ok()
-}
-
-pub(crate) fn perf_line(node: Node, src: &[u8], subject_fields: &[&str]) -> PerfLine {
-    PerfLine {
-        line: node.start_position().row + 1,
-        subject: loop_subject(node, src, subject_fields).unwrap_or_default(),
-    }
-}
-
-fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<String> {
-    subject_fields
-        .iter()
-        .find_map(|field| node.child_by_field_name(field))
-        .and_then(|n| node_text(n, src))
-        .filter(|text| text.len() <= 120)
-        .map(str::to_string)
 }

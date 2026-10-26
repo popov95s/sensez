@@ -139,6 +139,24 @@ fn near_miss_consistent_rename() {
     assert_eq!(clones[0].hint.as_deref(), Some("consistent-rename clone"));
 }
 
+#[test]
+fn near_miss_over_a_structural_sub_range_is_reported_once() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path().to_path_buf();
+    let users = "def fetch_users(db):\n    rows = db.query(\"users\")\n    out = []\n    for row in rows:\n        out.append(row.id)\n        out.append(row.name)\n    return out\n";
+    let orders = "def fetch_orders(db):\n    rows = db.query(\"orders\")\n    out = []\n    for row in rows:\n        out.append(row.id)\n        out.append(row.name)\n    return out\n";
+    let files = write_files(&dir, &[("u.py", users), ("o.py", orders)]);
+    assert_eq!(detect(&files, &cfg(10)).len(), 1, "structural sub-range");
+    let clones = detect(&files, &cfg_near_miss(10));
+    assert_eq!(clones.len(), 1, "got {clones:?}");
+    assert_eq!(clones[0].detector, crate::report::CloneDetector::Structural);
+    assert_eq!(
+        clones[0].absorbed[0].detector,
+        crate::report::CloneDetector::NearMiss
+    );
+    assert!(clones[0].occurrences.iter().all(|o| o.start_row == 1));
+}
+
 /// Near-miss must not flag short, unrelated functions that merely share a shape
 /// (the length threshold filters them out).
 #[test]

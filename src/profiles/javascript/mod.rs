@@ -1,6 +1,7 @@
 //! JavaScript language profile. TypeScript reuses these helpers with a
 //! different grammar.
 
+mod chains;
 pub(crate) mod classunit;
 pub(crate) mod conditionals;
 pub(crate) mod const_eval;
@@ -9,7 +10,9 @@ pub(crate) mod declaration;
 pub(crate) mod grammar;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
+mod nesting;
 pub(crate) mod obsession;
+mod params;
 pub(crate) mod performance;
 pub(crate) mod resolve;
 pub(crate) mod risk_facts;
@@ -23,6 +26,8 @@ pub(crate) mod typehints;
 pub(crate) mod typevocab;
 pub(crate) mod units;
 
+#[cfg(test)]
+mod fused_collector_tests;
 #[cfg(test)]
 mod tests;
 

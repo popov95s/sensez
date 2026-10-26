@@ -11,6 +11,7 @@
 
 mod class_shapes;
 mod clones;
+mod consolidate;
 mod flatten;
 mod gapped;
 mod near_miss;
@@ -23,7 +24,7 @@ mod test_support;
 
 use crate::config::model::Duplication;
 use crate::globs::build_globset;
-use crate::report::{ActionLevel, CloneClass, CloneOccurrence, ScanIssue};
+use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence, ScanIssue};
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::{FunctionUnit, ParsedFile};
 use globset::GlobSet;
@@ -150,6 +151,8 @@ fn detect_partition(
             token_length: cluster.matched,
             occurrences: cluster_occurrences,
             hint: None,
+            detector: CloneDetector::Structural,
+            absorbed: Vec::new(),
         });
     }
 
@@ -178,7 +181,7 @@ fn detect_partition(
     #[cfg(not(feature = "eyez"))]
     let issues = Vec::new();
 
-    (out, issues)
+    (consolidate::consolidate(out), issues)
 }
 
 /// Opt-in comment-backed semantic clones; an unusable embedder is a scan issue.
@@ -190,7 +193,7 @@ fn semantic_pass(
     seen: &mut FxHashSet<u64>,
     out: &mut Vec<CloneClass>,
 ) -> Vec<ScanIssue> {
-    let classes = match semantic::detect(kept, &config.semantic, root) {
+    let classes = match semantic::detect(kept, &config.semantic, config.threshold, root) {
         Ok(classes) => classes,
         Err(err) => {
             return vec![ScanIssue {
@@ -212,7 +215,6 @@ fn semantic_pass(
             continue;
         }
         out.push(CloneClass {
-            action: ActionLevel::Advisory,
             occurrences: semantic_occurrences,
             ..class
         });

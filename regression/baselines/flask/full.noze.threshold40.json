@@ -191,6 +191,9 @@
   "duplication": [
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 24,
@@ -207,6 +210,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 30,
@@ -223,6 +229,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 321,
@@ -239,6 +248,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 415,
@@ -255,6 +267,9 @@
     },
     {
       "action": "advisory",
+      "detector": {
+        "kind": "structural"
+      },
       "occurrences": [
         {
           "end_row": 77,
