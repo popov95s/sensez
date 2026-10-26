@@ -25,6 +25,7 @@ struct VisitCtx<'a, 'tree> {
     active_fns: &'a mut Vec<ActiveFn>,
     /// Ancestors of the node being visited, root first.
     path: Vec<Node<'tree>>,
+    free_reads: namespaces::FreeReads,
 }
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
@@ -39,9 +40,11 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         out: &mut out,
         active_fns: &mut active_fns,
         path: Vec::new(),
+        free_reads: namespaces::FreeReads::default(),
     };
     visit(root, src, file_id, module_name, false, &mut ctx);
-    namespaces::narrow(root, src, &mut out.symbols.imports);
+    let free_reads = ctx.free_reads;
+    namespaces::narrow(&free_reads, &mut out.symbols.imports);
     crate::profiles::comments::attach(&mut out);
     walk::attach_method_attrs(&mut out);
     out
@@ -63,6 +66,7 @@ fn visit<'tree>(
         let ctxs = imports::extract(node, src, module_name, enclosing);
         if !ctxs.is_empty() {
             ctx.out.symbols.imports.extend(ctxs);
+            ctx.free_reads.skipped(node, src);
             return;
         }
     }
@@ -116,6 +120,7 @@ fn visit<'tree>(
         "identifier" | "shorthand_property_identifier" | "type_identifier"
     ) {
         credit_name(ctx.out, node, src);
+        ctx.free_reads.record(node, &ctx.path, src);
     }
     if kind == "string" {
         if let Some(value) = quoted_string_value(node, src) {
