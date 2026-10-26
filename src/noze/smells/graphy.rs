@@ -26,7 +26,7 @@ pub fn detect(
     graph: &CodebaseGraph,
     files: &[ParsedFile],
     cfg: &SmellConfig,
-    in_scope: &(dyn Fn(&ModuleNode) -> bool + Sync),
+    in_scope: &(impl Fn(&ModuleNode) -> bool + Sync),
 ) -> Vec<SmellFinding> {
     let nodes: Vec<_> = graph.graph.node_indices().collect();
     let internal = nodes
@@ -45,16 +45,28 @@ pub fn detect(
             let blast_floor = lcfg
                 .shotgun_blast_threshold
                 .max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
-            let blast = afferent(graph, idx, &node.module_name, in_scope);
-            let ce = efferent(graph, idx);
-            let size = node
-                .source_index
-                .and_then(|i| files.get(i))
-                .map(module_size);
-            shotgun(node, blast, blast_floor, lcfg)
-                .or_else(|| god_module(node, blast, ce, size.unwrap_or_default(), lcfg))
+            let blast = afferent(graph, idx, &node.module_name, in_scope, Edges::Any);
+            shotgun(node, blast, blast_floor, lcfg).or_else(|| {
+                let size = module_size(files.get(node.source_index?)?);
+                let runtime_fan_in =
+                    afferent(graph, idx, &node.module_name, in_scope, Edges::Runtime);
+                god_module(node, runtime_fan_in, efferent(graph, idx), size, lcfg)
+            })
         })
         .collect()
+}
+
+/// Which importers count toward fan-in: any (change blast radius) or runtime only (coupling).
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum Edges {
+    Any,
+    Runtime,
+}
+
+impl Edges {
+    fn admits(self, phase: ImportPhase) -> bool {
+        self == Edges::Any || phase == ImportPhase::Runtime
+    }
 }
 
 /// API barrels/re-export surfaces are expected to have high fan-in. They still
@@ -71,12 +83,14 @@ fn afferent(
     graph: &CodebaseGraph,
     idx: petgraph::graph::NodeIndex,
     own: &str,
-    in_scope: &(dyn Fn(&ModuleNode) -> bool + Sync),
+    in_scope: &impl Fn(&ModuleNode) -> bool,
+    edges: Edges,
 ) -> usize {
     let mut sources: Vec<&str> = graph
         .graph
         .edges_directed(idx, Direction::Incoming)
         .filter(|e| !e.weight().is_module_decl)
+        .filter(|e| edges.admits(e.weight().phase))
         .map(|e| &graph.graph[e.source()])
         .filter(|source| in_scope(source))
         .map(|source| source.module_name.as_str())
@@ -129,7 +143,7 @@ fn shotgun(
 }
 
 /// Source lines and top-level functions + classes of one module.
-#[derive(Default, Clone, Copy)]
+#[derive(Clone, Copy)]
 struct ModuleSize {
     lines: usize,
     units: usize,
