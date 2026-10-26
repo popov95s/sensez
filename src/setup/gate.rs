@@ -1,6 +1,6 @@
 //! Claude Code gate hooks that pass existing transcript metadata to Sensez.
 
-use super::providers::load_json_config;
+use super::providers::{load_json_config, write_json};
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
 use std::path::Path;
@@ -14,8 +14,7 @@ pub(super) fn write(root: &Path) -> Result<String> {
     let mut settings = load_json_config(&path)?.unwrap_or_else(|| json!({}));
     install(&mut settings, "Stop", gate_hook())?;
     remove_legacy_subagent_hook(&mut settings);
-    std::fs::write(&path, serde_json::to_string_pretty(&settings)?)
-        .with_context(|| format!("writing {}", path.display()))?;
+    write_json(&path, &settings)?;
     Ok("installed session-scoped Claude Code gate hook".into())
 }
 
@@ -58,7 +57,6 @@ fn remove_legacy_subagent_hook(settings: &mut Value) {
 fn gate_hook() -> Value {
     let input = json!({
         "path": "${cwd}",
-        "stop_hook_active": "${stop_hook_active}",
         "session_id": "${session_id}",
         "transcript_path": "${transcript_path}"
     });

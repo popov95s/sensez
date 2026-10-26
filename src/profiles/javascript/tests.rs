@@ -182,7 +182,7 @@ fn relative_imports_resolve_and_detect_cycle() {
     assert!(cg.name_to_index.contains_key("src/a"));
     assert!(cg.name_to_index.contains_key("src/b"));
 
-    let cycles = crate::noze::cycles::detect(&cg, &[]);
+    let cycles = crate::noze::cycles::detect(&cg, &crate::config::Cycles::default());
     assert_eq!(cycles.len(), 1, "src/a <-> src/b is a circular import");
 }
 

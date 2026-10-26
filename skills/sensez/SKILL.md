@@ -65,7 +65,7 @@ the user asked for a full audit.
 Important `meta` fields:
 
 - `mode`: `full` or `diff`.
-- `*_total`: true counts before `limit` truncation.
+- `totals`: per-pillar counts before `limit` truncation; `truncated` is `true` when `limit` cut any pillar.
 - `boundaries_configured`: `false` means boundaries were not checked.
 - `external_edges` vs `internal_edges`: a very high external ratio may mean roots/imports were not resolved well.
 

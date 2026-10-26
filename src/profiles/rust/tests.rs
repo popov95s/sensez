@@ -141,7 +141,7 @@ fn mutual_use_is_a_cycle() {
         "mod decl creates lib -> a edge"
     );
 
-    let cycles = crate::noze::cycles::detect(&cg, &[]);
+    let cycles = crate::noze::cycles::detect(&cg, &crate::config::Cycles::default());
     assert_eq!(cycles.len(), 1, "src/a <-> src/b is a circular use");
 }
 
@@ -179,7 +179,7 @@ fn module_hierarchy_is_not_a_cycle() {
         "both hierarchy and use edges exist (dead-code still credits them)"
     );
 
-    let cycles = crate::noze::cycles::detect(&cg, &[]);
+    let cycles = crate::noze::cycles::detect(&cg, &crate::config::Cycles::default());
     assert!(
         cycles.is_empty(),
         "mod decl + use super:: is containment, not a cycle: {cycles:?}"
@@ -213,7 +213,7 @@ fn facade_reexport_is_not_a_cycle() {
         .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
-    let cycles = crate::noze::cycles::detect(&cg, &[]);
+    let cycles = crate::noze::cycles::detect(&cg, &crate::config::Cycles::default());
     assert!(
         cycles.is_empty(),
         "façade re-export + use super:: is containment, not a cycle: {cycles:?}"

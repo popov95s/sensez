@@ -6,7 +6,7 @@
 //! suppressions and precision ranking):
 //!
 //! 1. drop scan-issues from the report, except skipped analyzers and config problems
-//! 2. cap each pillar to its top-N findings (`max = 0` skips)
+//! 2. count each pillar, then cap it to its top-N findings (`max = 0` skips)
 
 use crate::report::{AnalysisReport, ScanStage};
 use anyhow::{Context, Result};
@@ -25,6 +25,7 @@ pub(super) fn full(
         .with_context(|| format!("scanning {}", path.display()))?;
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);
+    report.refresh_totals();
     crate::noze::limit(&mut report, max);
     Ok((report, snapshot, start.elapsed()))
 }
@@ -114,6 +115,31 @@ mod tests {
 
     #[test]
     fn diff_keeps_changed_findings_beyond_the_full_report_limit() {
+        let (mut report, file) = three_smells();
+        let mut changed = crate::diff::ChangedLines::default();
+        changed.add(&file, 3, 3);
+
+        finish_diff(&mut report, &changed, &HashMap::new(), 1);
+
+        assert_eq!(report.smells.len(), 1);
+        assert_eq!(report.smells[0].line, 3);
+    }
+
+    #[test]
+    fn limited_diff_report_keeps_pre_limit_totals() {
+        let (mut report, file) = three_smells();
+        let mut changed = crate::diff::ChangedLines::default();
+        changed.add(&file, 1, 3);
+
+        finish_diff(&mut report, &changed, &HashMap::new(), 1);
+        let compact = super::super::compact::tool_report(report);
+        let meta = serde_json::to_value(compact).unwrap()["meta"].clone();
+
+        assert_eq!(meta["totals"]["smells"], 3);
+        assert_eq!(meta["truncated"], true);
+    }
+
+    fn three_smells() -> (AnalysisReport, PathBuf) {
         let file = PathBuf::from("changed.py");
         let mut report = AnalysisReport::default();
         for line in 1..=3 {
@@ -132,12 +158,6 @@ mod tests {
                 reason: String::new(),
             });
         }
-        let mut changed = crate::diff::ChangedLines::default();
-        changed.add(&file, 3, 3);
-
-        finish_diff(&mut report, &changed, &HashMap::new(), 1);
-
-        assert_eq!(report.smells.len(), 1);
-        assert_eq!(report.smells[0].line, 3);
+        (report, file)
     }
 }

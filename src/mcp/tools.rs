@@ -46,15 +46,15 @@ fn scan() -> Value {
                         uncommitted changes touch — analysis still covers the \
                         whole repo, so diff results are focused but never \
                         wrong. Pass diff=false for an explicit full-repository \
-                        audit. The returned JSON is compact and omits \
-                        aggregate totals; use the CLI when you need full \
-                        report metadata.",
+                        audit. The returned JSON is compact: meta.totals \
+                        counts each pillar before `limit`, and meta.truncated \
+                        says whether `limit` cut anything.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Absolute path to the REPOSITORY ROOT (not a subdirectory)"},
-                "threshold": {"type": "integer", "description": "Duplication token threshold"},
-                "limit": {"type": "integer", "description": "Cap each pillar to top-N ranked findings (0 = unlimited)"},
+                "threshold": {"type": "integer", "minimum": 0, "description": "Duplication token threshold (0 = off)"},
+                "limit": {"type": "integer", "minimum": 0, "default": 0, "description": "Cap each pillar to top-N ranked findings (0 = unlimited)"},
                 "diff": {"type": "boolean", "default": true, "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Defaults to true; pass false for a full-repository report. Full-graph analysis either way."}
             },
             "required": ["path"]
@@ -81,7 +81,8 @@ fn configuration_summary() -> Value {
         "inputSchema": {
             "type": "object",
             "properties": {
-                "path": {"type": "string", "description": "Absolute path to the repository root"}
+                "path": {"type": "string", "description": "Absolute path to the repository root"},
+                "diff": {"type": "boolean", "default": false, "description": "Count only findings touching uncommitted changes vs HEAD (needs git). Defaults to false: threshold tuning needs the whole repository."}
             },
             "required": ["path"]
         }
@@ -152,7 +153,7 @@ fn gate() -> Value {
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Repository root"},
-                "stop_hook_active": {"description": "Pass ${stop_hook_active} from the hook input"}
+                "stop_hook_active": {"type": ["boolean", "string"], "description": "Ignored; accepted so older hooks still validate"}
             },
             "required": ["path"]
         }
@@ -200,13 +201,14 @@ fn triage_finding() -> Value {
                 "path": {"type": "string", "description": "Project root"},
                 "pillar": {
                     "type": "string",
-                    "description": "duplication | dead_code | cycles | boundaries | smells"
+                    "enum": crate::report::Pillar::ALL.map(crate::report::Pillar::as_str),
+                    "description": "Pillar the finding belongs to"
                 },
                 "match": {
                     "type": "string",
                     "description": "Case-insensitive substring of the finding label (as shown in scan output / brainz_report.stale_findings)"
                 },
-                "verdict": {"type": "string", "description": "debt | false_positive | clear"},
+                "verdict": {"type": "string", "enum": crate::brainz::VERDICTS, "description": "The user's verdict"},
                 "note": {"type": "string", "description": "Optional one-line user rationale"}
             },
             "required": ["path", "pillar", "match", "verdict"]

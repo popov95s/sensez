@@ -199,11 +199,11 @@ pub struct EyezArgs {
 #[derive(Subcommand, Debug)]
 pub enum EyezAction {
     /// Semantic search over docstrings + comments.
+    #[command(override_usage = "sensez eyez search [OPTIONS] [PATH] <QUERY>")]
     Search {
-        /// Root directory of the target project.
-        path: PathBuf,
-        /// Natural-language intent query.
-        query: String,
+        /// Project root (default: current directory), then a natural-language intent query.
+        #[arg(num_args = 1..=2, required = true, value_names = ["PATH", "QUERY"])]
+        args: Vec<String>,
         /// Number of results to return (at least 1).
         #[arg(long, default_value_t = 10, value_parser = clap::value_parser!(u16).range(1..))]
         top_k: u16,
@@ -213,8 +213,8 @@ pub enum EyezAction {
     },
     /// Refresh eyez caches for the repository.
     Reindex {
-        /// Root directory of the target project.
-        path: PathBuf,
+        /// Root directory of the target project (default: current directory).
+        path: Option<PathBuf>,
         /// Delete existing eyez caches before rebuilding.
         #[arg(long)]
         force: bool,
@@ -227,7 +227,7 @@ pub enum EyezAction {
 /// Flags shared by every scan invocation.
 #[derive(Args, Debug)]
 pub struct ScanOptions {
-    /// Minimum structural-token run length for the duplication detector.
+    /// Minimum structural-token run length for the duplication detector (0 = off).
     #[arg(long)]
     pub threshold: Option<usize>,
     /// Emit aggregated per-rule JSON for configuration tuning.
@@ -266,13 +266,13 @@ pub struct ScanOptions {
     /// Keep only findings touching a unified diff read from FILE ("-" = stdin).
     #[arg(long, value_name = "FILE", conflicts_with = "diff")]
     pub diff_from: Option<String>,
-    /// Exit non-zero if any finding meets or exceeds the given action level.
-    /// Defaults to `must_fix` when the flag is present without a value.
-    #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1, conflicts_with_all = ["diff", "diff_from", "fail_on_new"])]
+    /// Exit non-zero if any finding meets or exceeds the given action level
+    /// (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value.
+    #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1, value_parser = parse_level, conflicts_with_all = ["diff", "diff_from", "fail_on_new"])]
     pub fail_on: Option<FailOnNewLevel>,
-    /// Exit non-zero if diff-scoped findings meet or exceed the given action level.
-    /// Defaults to `must_fix` when the flag is present without a value.
-    #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1)]
+    /// Exit non-zero if diff-scoped findings meet or exceed the given action level
+    /// (must_fix | warning | advisory | info). Defaults to `must_fix` when the flag is present without a value.
+    #[arg(long, value_name = "LEVEL", default_missing_value = "must_fix", num_args = 0..=1, value_parser = parse_level)]
     pub fail_on_new: Option<FailOnNewLevel>,
     /// Append a plain-English legend defining each finding category shown.
     #[arg(long)]
@@ -286,4 +286,14 @@ pub enum FailOnNewLevel {
     Warning,
     Advisory,
     Info,
+}
+
+/// Level parser whose error explains the `--fail-on PATH` mix-up.
+fn parse_level(value: &str) -> Result<FailOnNewLevel, String> {
+    <FailOnNewLevel as clap::ValueEnum>::from_str(value, true).map_err(|_| {
+        format!(
+            "'{value}' is not a level (must_fix | warning | advisory | info). \
+             If '{value}' is the PATH, put it before the flag or write --fail-on=must_fix {value}"
+        )
+    })
 }

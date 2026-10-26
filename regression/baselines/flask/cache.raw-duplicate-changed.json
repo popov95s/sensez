@@ -20,7 +20,13 @@
       "config_exclude": 0,
       "tests": 58,
       "generated": 0
-    }
+    },
+    "filtered_pillars": [
+      "dead_code",
+      "boundaries",
+      "duplication",
+      "smells"
+    ]
   },
   "cycles": [
     {

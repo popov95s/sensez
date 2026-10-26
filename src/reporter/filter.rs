@@ -11,10 +11,10 @@ use anyhow::Result;
 use globset::{Glob, GlobSet};
 use std::path::{Path, PathBuf};
 
-/// Drop findings from `report` whose source paths do not match any
-/// `--output-glob` pattern. Updates the per-pillar totals and the derived
-/// `smell_totals` / `glossary` so the rendered report stays internally
-/// consistent.
+/// Drop findings from `report` whose source paths do not match the
+/// `--output-glob` patterns (`!pattern` excludes). Updates the per-pillar
+/// totals and the derived `smell_totals` / `glossary` so the rendered report
+/// stays internally consistent.
 pub fn apply(report: &mut AnalysisReport, root: &Path, patterns: &[String]) -> Result<()> {
     if patterns.is_empty() {
         return Ok(());
@@ -30,11 +30,12 @@ pub fn apply(report: &mut AnalysisReport, root: &Path, patterns: &[String]) -> R
     report
         .boundaries
         .retain(|violation| filter.matches(&violation.file));
-    report.duplication.retain(|class| {
-        class
-            .occurrences
-            .iter()
-            .any(|occurrence| filter.matches(&occurrence.file))
+    report.duplication.retain_mut(|class| {
+        class.keep_occurrences(|occurrence| !filter.excludes(&occurrence.file))
+            && class
+                .occurrences
+                .iter()
+                .any(|occurrence| filter.matches(&occurrence.file))
     });
     report
         .smells
@@ -44,35 +45,62 @@ pub fn apply(report: &mut AnalysisReport, root: &Path, patterns: &[String]) -> R
         .issues
         .retain(|issue| issue.file.as_ref().is_none_or(|file| filter.matches(file)));
 
-    report.meta.cycles_total = report.cycles.len();
-    report.meta.dead_code_total = report.dead_code.len();
-    report.meta.boundaries_total = report.boundaries.len();
-    report.meta.duplication_total = report.duplication.len();
-    report.meta.smells_total = report.smells.len();
-    report.meta.smell_totals = smell_totals(&report.smells);
+    report.refresh_totals();
     report.meta.files_skipped = report.meta.issues.len();
     report.meta.glossary = crate::noze::glossary::for_report(report);
     Ok(())
 }
 
-fn smell_totals(
-    smells: &[crate::report::SmellFinding],
-) -> std::collections::BTreeMap<String, usize> {
-    let mut totals = std::collections::BTreeMap::new();
-    for smell in smells {
-        *totals.entry(smell.kind.as_str().to_string()).or_default() += 1;
-    }
-    totals
-}
-
 struct OutputPathFilter {
     root: PathBuf,
-    globs: GlobSet,
-    component_patterns: Vec<String>,
+    include: PatternSet,
+    exclude: PatternSet,
 }
 
 impl OutputPathFilter {
     fn new(root: &Path, patterns: &[String]) -> Result<Self> {
+        let mut includes = Vec::new();
+        let mut excludes = Vec::new();
+        for pattern in patterns {
+            match pattern.strip_prefix('!') {
+                Some(body) => excludes.push(exclude_body(pattern, body)?),
+                None => includes.push(pattern.as_str()),
+            }
+        }
+        Ok(Self {
+            root: root.to_path_buf(),
+            include: PatternSet::new(&includes)?,
+            exclude: PatternSet::new(&excludes)?,
+        })
+    }
+
+    /// A path matches when no exclude hits and, if includes are given, one of them does.
+    fn matches(&self, path: &Path) -> bool {
+        (self.include.is_empty() || self.include.hits(&self.root, path)) && !self.excludes(path)
+    }
+
+    fn excludes(&self, path: &Path) -> bool {
+        self.exclude.hits(&self.root, path)
+    }
+}
+
+fn exclude_body<'a>(pattern: &str, body: &'a str) -> Result<&'a str> {
+    if body.is_empty() || body.starts_with('!') {
+        anyhow::bail!(
+            "--output-glob {pattern:?} can never match: write one leading '!' followed by a glob"
+        );
+    }
+    Ok(body)
+}
+
+/// Globs plus bare directory names; a path hits when either strategy does.
+struct PatternSet {
+    globs: GlobSet,
+    component_patterns: Vec<String>,
+}
+
+impl PatternSet {
+    fn new(patterns: &[&str]) -> Result<Self> {
         let mut builder = GlobSet::builder();
         let mut component_patterns = Vec::new();
         for pattern in patterns {
@@ -82,39 +110,33 @@ impl OutputPathFilter {
             }
         }
         Ok(Self {
-            root: root.to_path_buf(),
             globs: builder.build()?,
             component_patterns,
         })
     }
 
-    /// A path matches when **any** of the three strategies below hits. The
-    /// strategies are intentionally split (vs. one nested-closure soup) so
-    /// each rule is independently testable and so new strategies — e.g. a
-    /// case-insensitive variant — can be slotted in without a rewrite.
-    fn matches(&self, path: &Path) -> bool {
-        self.glob_matches(path) || self.component_matches(path)
+    fn is_empty(&self) -> bool {
+        self.globs.is_empty()
     }
 
-    /// Strategy 1: glob match against either the path as-given or its
-    /// root-relative form. Catches the common "package-relative" case where
-    /// `--output-glob` is written the way the user thinks of the repo.
-    fn glob_matches(&self, path: &Path) -> bool {
+    fn hits(&self, root: &Path, path: &Path) -> bool {
+        self.glob_matches(root, path) || self.component_matches(root, path)
+    }
+
+    /// Glob match against either the path as-given or its root-relative form.
+    fn glob_matches(&self, root: &Path, path: &Path) -> bool {
         if self.globs.is_match(path) {
             return true;
         }
-        path.strip_prefix(&self.root)
+        path.strip_prefix(root)
             .ok()
             .is_some_and(|relative| self.globs.is_match(relative))
     }
 
-    /// Strategy 2: literal path-component match. `--output-glob packages`
-    /// (no metacharacters) matches any path that has `packages` as a
-    /// directory component, so it lines up with how developers point at a
-    /// directory rather than writing `**/packages/**`.
-    fn component_matches(&self, path: &Path) -> bool {
+    /// Literal path-component match: `packages` matches any path with a `packages` directory.
+    fn component_matches(&self, root: &Path, path: &Path) -> bool {
         self.component_patterns.iter().any(|pattern| {
-            path_has_component(path, pattern) || relative_has_component(path, &self.root, pattern)
+            path_has_component(path, pattern) || relative_has_component(path, root, pattern)
         })
     }
 }
@@ -178,6 +200,58 @@ mod tests {
         assert_eq!(report.meta.boundaries_total, 1);
         assert_eq!(report.meta.duplication_total, 1);
         assert_eq!(report.meta.mode, ReportMode::Full);
+    }
+
+    #[test]
+    fn negated_glob_drops_only_the_excluded_clone_occurrence() {
+        let root = Path::new("/repo");
+        let mut report = AnalysisReport {
+            duplication: vec![clone_class(&[
+                "/repo/core/util.ts",
+                "/repo/forkv2/util.ts",
+                "/repo/other/util.ts",
+            ])],
+            dead_code: vec![dead("/repo/forkv2/a.ts"), dead("/repo/core/b.ts")],
+            ..Default::default()
+        };
+
+        apply(&mut report, root, &["!**/forkv2/**".to_string()]).unwrap();
+
+        let files: Vec<_> = report.duplication[0]
+            .occurrences
+            .iter()
+            .map(|occurrence| occurrence.file.clone())
+            .collect();
+        assert_eq!(
+            files,
+            [
+                PathBuf::from("/repo/core/util.ts"),
+                PathBuf::from("/repo/other/util.ts")
+            ]
+        );
+        assert_eq!(report.dead_code.len(), 1);
+        assert_eq!(report.meta.dead_code_total, 1);
+    }
+
+    #[test]
+    fn clone_left_with_one_occurrence_is_dropped() {
+        let mut report = AnalysisReport {
+            duplication: vec![clone_class(&["/repo/core/a.ts", "/repo/forkv2/a.ts"])],
+            ..Default::default()
+        };
+
+        apply(&mut report, Path::new("/repo"), &["!forkv2".to_string()]).unwrap();
+
+        assert!(report.duplication.is_empty());
+    }
+
+    #[test]
+    fn negation_that_can_never_match_is_rejected() {
+        for pattern in ["!", "!!src/**"] {
+            let mut report = AnalysisReport::default();
+            let err = apply(&mut report, Path::new("/repo"), &[pattern.to_string()]).unwrap_err();
+            assert!(err.to_string().contains("can never match"), "{err}");
+        }
     }
 
     #[test]

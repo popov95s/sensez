@@ -1,6 +1,6 @@
 //! Human-readable colored terminal renderer (a view over [`AnalysisReport`]).
 
-use crate::report::{ActionLevel, AnalysisReport, Confidence, SkipCounts};
+use crate::report::{ActionLevel, AnalysisReport, Confidence, Pillar, ReportMode, SkipCounts};
 use colored::Colorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
@@ -12,6 +12,14 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         "{}",
         "sensez — structural maintainability report".bold()
     );
+    if report.meta.mode == ReportMode::Diff {
+        let _ = writeln!(
+            out,
+            "{}",
+            "diff mode: only findings touching changed lines".dimmed()
+        );
+    }
+    let shown = |pillar| !report.meta.filtered_pillars.contains(&pillar);
     if report.meta.files_skipped > 0 && crate::report::scan_diagnostics_enabled() {
         let _ = writeln!(
             out,
@@ -40,12 +48,14 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
     }
 
-    section(
-        &mut out,
-        "Circular imports",
-        report.cycles.len(),
-        report.meta.cycles_total,
-    );
+    if shown(Pillar::Cycles) {
+        section(
+            &mut out,
+            "Circular imports",
+            report.cycles.len(),
+            report.meta.cycles_total,
+        );
+    }
     for cycle in &report.cycles {
         let _ = writeln!(
             out,
@@ -69,14 +79,16 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
     }
 
-    section(
-        &mut out,
-        "Duplication",
-        report.duplication.len(),
-        report.meta.duplication_total,
-    );
-    if let Some(line) = skipped_line(&report.meta.duplication_skipped) {
-        let _ = writeln!(out, "    {}", line.dimmed());
+    if shown(Pillar::Duplication) {
+        section(
+            &mut out,
+            "Duplication",
+            report.duplication.len(),
+            report.meta.duplication_total,
+        );
+        if let Some(line) = skipped_line(&report.meta.duplication_skipped) {
+            let _ = writeln!(out, "    {}", line.dimmed());
+        }
     }
     for class in &report.duplication {
         let detail = class.hint.as_deref().unwrap_or("structural clone");
@@ -102,12 +114,14 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
     }
 
-    section(
-        &mut out,
-        "Dead code candidates",
-        report.dead_code.len(),
-        report.meta.dead_code_total,
-    );
+    if shown(Pillar::DeadCode) {
+        section(
+            &mut out,
+            "Dead code candidates",
+            report.dead_code.len(),
+            report.meta.dead_code_total,
+        );
+    }
     for finding in &report.dead_code {
         let dead_loc = location(&finding.file, finding.line);
         let line = format!(
@@ -123,12 +137,14 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         let _ = writeln!(out, "{}", line.trim_end());
     }
 
-    section(
-        &mut out,
-        "Code smells",
-        report.smells.len(),
-        report.meta.smells_total,
-    );
+    if shown(Pillar::Smells) {
+        section(
+            &mut out,
+            "Code smells",
+            report.smells.len(),
+            report.meta.smells_total,
+        );
+    }
     let mut seen_suggestions: HashSet<String> = HashSet::new();
     let shown_by_kind: HashMap<&str, usize> = {
         let mut counts: HashMap<&str, usize> = HashMap::new();
@@ -173,20 +189,8 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         );
     }
 
-    if report.meta.boundaries_configured {
-        section(
-            &mut out,
-            "Boundary violations",
-            report.boundaries.len(),
-            report.meta.boundaries_total,
-        );
-    } else {
-        let _ = writeln!(
-            out,
-            "\n{} ({})",
-            "Boundary violations".bold().cyan(),
-            "not configured".dimmed()
-        );
+    if shown(Pillar::Boundaries) {
+        boundaries_header(&mut out, report);
     }
     for violation in &report.boundaries {
         let _ = writeln!(
@@ -231,6 +235,24 @@ fn section(out: &mut String, title: &str, shown: usize, total: usize) {
         String::new()
     };
     let _ = writeln!(out, "\n{} ({}){}", title.bold().cyan(), colored, suffix);
+}
+
+fn boundaries_header(out: &mut String, report: &AnalysisReport) {
+    if report.meta.boundaries_configured {
+        section(
+            out,
+            "Boundary violations",
+            report.boundaries.len(),
+            report.meta.boundaries_total,
+        );
+    } else {
+        let _ = writeln!(
+            out,
+            "\n{} ({})",
+            "Boundary violations".bold().cyan(),
+            "not configured".dimmed()
+        );
+    }
 }
 
 fn skipped_line(skipped: &SkipCounts) -> Option<String> {

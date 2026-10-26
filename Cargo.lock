@@ -1789,6 +1789,7 @@ dependencies = [
  "fs4",
  "gen-lsp-types",
  "globset",
+ "hf-hub",
  "ignore",
  "libsais",
  "lsp-server",

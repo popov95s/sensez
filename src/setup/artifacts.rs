@@ -31,7 +31,7 @@ const CONFIG_TEMPLATE: &str = r#"# sensez — the structural maintainability lay
 enabled = true
 
 [duplication]
-# threshold = 50     # minimum matched token-run length to report a clone
+# threshold = 50     # minimum matched token-run length to report a clone (0 = off)
 # max_gap = 25       # Type-3 gapped-clone stitching (0 = off)
 # near_miss = false  # consistent-rename clone detection (opt-in)
 # class_name_duplicates = false  # same-name class duplication. Can be noisy for teams that follow same patterns for business logic services, stores, etc.(opt-in)
@@ -58,6 +58,9 @@ enabled = true
 # test_sources = []      # user-added test-runner file globs (test roots)
 # test_support = []      # user-added test-helper globs: test importers count as users
 # orphan_modules = true  # report exports of modules no root reaches (Medium, "unreachable_module")
+
+[cycles]
+# include_type_only = true  # false hides cycles closed only by type imports; recommended for TypeScript, where they vanish at build time
 
 [action]
 # Agent/gate policy for each pillar. Values: "info", "advisory", "warning", "must_fix".
@@ -108,6 +111,7 @@ enabled = true
 # finding label (as shown in brainz_report / a scan).
 # [accept]
 # dead_code = ["legacy.compat::shim"]          # a specific accepted symbol
+# duplication = ["legacy-fork/"]               # drop this location from every clone group; "a.ts + b.ts" hides one whole group
 # "smells/god_module" = ["app.registry"]       # a specific accepted detector hit
 "#;
 
@@ -117,7 +121,21 @@ pub struct WriteConfigOptions {
     pub semantic_duplication: bool,
 }
 
-pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<String> {
+/// Whether `init` wrote a fresh config or kept the one already there.
+pub enum ConfigWrite {
+    Created(String),
+    Kept(String),
+}
+
+impl ConfigWrite {
+    pub fn message(&self) -> &str {
+        match self {
+            ConfigWrite::Created(message) | ConfigWrite::Kept(message) => message,
+        }
+    }
+}
+
+pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<ConfigWrite> {
     let mut body = CONFIG_TEMPLATE.to_string();
     if !options.self_improvement {
         body = body.replace("\nenabled = true\n", "\nenabled = false\n");
@@ -135,7 +153,9 @@ pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<String> 
         let path = root.join("pyproject.toml");
         let existing = read_existing(&path)?;
         if existing.contains("[tool.sensez") {
-            return Ok("pyproject.toml already has [tool.sensez] — left as is".into());
+            return Ok(ConfigWrite::Kept(
+                "pyproject.toml already has [tool.sensez] — left as is".into(),
+            ));
         }
         if !existing.trim().is_empty() {
             existing.parse::<toml::Value>().with_context(|| {
@@ -160,14 +180,20 @@ pub fn write_config(root: &Path, options: WriteConfigOptions) -> Result<String> 
             .collect();
         std::fs::write(&path, format!("{existing}\n{section}"))
             .with_context(|| format!("appending {}", path.display()))?;
-        Ok("added [tool.sensez] sections to pyproject.toml".into())
+        Ok(ConfigWrite::Created(
+            "added [tool.sensez] sections to pyproject.toml".into(),
+        ))
     } else {
         let path = root.join("sensez.toml");
         if path.exists() {
-            return Ok("sensez.toml already exists — left as is".into());
+            return Ok(ConfigWrite::Kept(
+                "sensez.toml already exists — left as is".into(),
+            ));
         }
         std::fs::write(&path, body).with_context(|| format!("writing {}", path.display()))?;
-        Ok("wrote sensez.toml with commented defaults".into())
+        Ok(ConfigWrite::Created(
+            "wrote sensez.toml with commented defaults".into(),
+        ))
     }
 }
 

@@ -32,7 +32,7 @@ def beta():
 ",
         ),
     ]);
-    let cycles = detect(&cg, &[]);
+    let cycles = detect(&cg, &Cycles::default());
     assert_eq!(cycles.len(), 1);
     assert_eq!(cycles[0].modules.len(), 2);
     assert_eq!(cycles[0].edges.len(), 2);
@@ -62,7 +62,7 @@ from c import c
 ",
         ),
     ]);
-    let cycles = detect(&cg, &[]);
+    let cycles = detect(&cg, &Cycles::default());
     assert_eq!(cycles.len(), 1);
     assert_eq!(cycles[0].modules.len(), 3);
     let hops: Vec<_> = cycles[0]
@@ -94,7 +94,7 @@ fn reported_edges_always_chain_and_close() {
             cg.graph
                 .add_edge(from, to, synthetic_import(line as usize, phase));
         }
-        for cycle in detect(&cg, &[]) {
+        for cycle in detect(&cg, &Cycles::default()) {
             let (first, last) = (&cycle.edges[0], &cycle.edges[cycle.edges.len() - 1]);
             assert_eq!(last.to_module, first.from_module);
             assert!(cycle
@@ -107,6 +107,45 @@ fn reported_edges_always_chain_and_close() {
                 .all(|e| cycle.modules.contains(&e.from_module)));
         }
     }
+}
+
+#[test]
+fn type_only_cycles_can_be_switched_off() {
+    let mut cg = CodebaseGraph::default();
+    for (from, to, phase) in [
+        ("x", "y", ImportPhase::Runtime),
+        ("p", "q", ImportPhase::TypeOnly),
+    ] {
+        let (a, b) = (
+            synthetic_module(&mut cg, from),
+            synthetic_module(&mut cg, to),
+        );
+        cg.graph.add_edge(a, b, synthetic_import(1, phase));
+        cg.graph.add_edge(b, a, synthetic_import(1, phase));
+    }
+    let off = Cycles {
+        include_type_only: false,
+        ..Cycles::default()
+    };
+
+    let modules = |config: &Cycles| -> Vec<Vec<String>> {
+        let mut found: Vec<_> = detect(&cg, config)
+            .into_iter()
+            .map(|cycle| {
+                let mut modules = cycle.modules;
+                modules.sort();
+                modules
+            })
+            .collect();
+        found.sort();
+        found
+    };
+
+    assert_eq!(modules(&off), vec![vec!["x", "y"]]);
+    assert_eq!(
+        modules(&Cycles::default()),
+        vec![vec!["p", "q"], vec!["x", "y"]]
+    );
 }
 
 fn synthetic_module(cg: &mut CodebaseGraph, name: &str) -> NodeIndex {
@@ -157,7 +196,7 @@ fn inline_imports_do_not_form_cycle() {
         ),
     ]);
     assert!(
-        detect(&cg, &[]).is_empty(),
+        detect(&cg, &Cycles::default()).is_empty(),
         "inline-only mutual imports must not be a load-time cycle"
     );
 }
@@ -185,7 +224,7 @@ class B:
 ",
         ),
     ]);
-    let cycles = detect(&cg, &[]);
+    let cycles = detect(&cg, &Cycles::default());
     assert_eq!(cycles.len(), 1);
     assert_eq!(cycles[0].action, ActionLevel::Info);
     assert!(cycles[0]
@@ -212,7 +251,11 @@ fn excluded_test_fixture_cycles_are_silent() {
 ",
         ),
     ]);
-    assert!(detect(&cg, &["**/tests/**".to_string()]).is_empty());
+    let config = Cycles {
+        exclude: vec!["**/tests/**".to_string()],
+        ..Cycles::default()
+    };
+    assert!(detect(&cg, &config).is_empty());
 }
 
 #[test]
@@ -228,7 +271,7 @@ fn self_import_does_not_shortcut_a_multi_module_loop() {
         .add_edge(a, b, synthetic_import(2, ImportPhase::Runtime));
     cg.graph
         .add_edge(b, a, synthetic_import(3, ImportPhase::Runtime));
-    let hops: Vec<_> = detect(&cg, &[])[0]
+    let hops: Vec<_> = detect(&cg, &Cycles::default())[0]
         .edges
         .iter()
         .map(|e| (e.from_module.clone(), e.to_module.clone()))

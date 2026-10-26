@@ -16,7 +16,15 @@
   "duplication": [],
   "meta": {
     "boundaries_configured": false,
-    "mode": "diff"
+    "mode": "diff",
+    "totals": {
+      "boundaries": 0,
+      "cycles": 0,
+      "dead_code": 1,
+      "duplication": 0,
+      "smells": 0
+    },
+    "truncated": false
   },
   "smells": []
 }

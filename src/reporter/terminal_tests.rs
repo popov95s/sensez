@@ -141,3 +141,26 @@ fn smell_output_names_empty_symbol_anonymous() {
     let text = render(&report, false);
     assert!(text.contains("z.ts:3  <anonymous> — threshold"));
 }
+
+#[test]
+fn filtered_pillar_is_not_rendered_as_zero() {
+    let mut report = AnalysisReport::default();
+    report.meta.filtered_pillars = vec![
+        crate::report::Pillar::Cycles,
+        crate::report::Pillar::Boundaries,
+    ];
+
+    let text = render(&report, false);
+
+    assert!(!text.contains("Circular imports"));
+    assert!(!text.contains("Boundary violations"));
+    assert!(text.contains("Dead code candidates"));
+}
+
+#[test]
+fn diff_mode_is_announced_in_header() {
+    let mut report = AnalysisReport::default();
+    assert!(!render(&report, false).contains("diff mode"));
+    report.meta.mode = crate::report::ReportMode::Diff;
+    assert!(render(&report, false).contains("diff mode: only findings touching changed lines"));
+}

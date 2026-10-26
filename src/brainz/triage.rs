@@ -27,6 +27,9 @@ pub struct Verdict {
     pub note: Option<String>,
 }
 
+/// Accepted `verdict` values; `clear` removes an earlier verdict.
+pub const VERDICTS: [&str; 3] = ["debt", "false_positive", "clear"];
+
 /// Fingerprint key (hex) → verdict.
 pub type Triage = BTreeMap<String, Verdict>;
 
@@ -55,14 +58,14 @@ pub fn mark(
     verdict: &str,
     note: Option<String>,
 ) -> Result<Vec<(String, String)>> {
-    if !matches!(verdict, "debt" | "false_positive" | "clear") {
-        return Err(anyhow!("verdict must be debt | false_positive | clear"));
+    if !VERDICTS.contains(&verdict) {
+        return Err(anyhow!("verdict must be {}", VERDICTS.join(" | ")));
     }
     let aged = store::load_fingerprints(root, branch);
     let needle = pattern.to_lowercase();
     // (fingerprint key, label, detector) for each matched finding.
     let namespace =
-        Namespace::from_str(pillar).ok_or_else(|| anyhow!("unknown pillar '{pillar}'"))?;
+        Namespace::from_name(pillar).ok_or_else(|| anyhow!("unknown pillar '{pillar}'"))?;
     let matches: Vec<(String, String, String)> = aged
         .get(&namespace)
         .map(|prints| {

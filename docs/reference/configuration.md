@@ -149,7 +149,7 @@ config fixes a whole class of false positives.
 
 ```toml
 [duplication]
-threshold = 50   # minimum structural-token run to report a clone; raise to quieten
+threshold = 50   # minimum structural-token run to report a clone; raise to quieten, 0 disables
 max_gap = 25     # stitch clones across small consistent edits; 0 disables
 exclude = ["**/tests/**", "**/migrations/**"]   # clone-only excludes (files stay in the graph)
 include_tests = false       # true also compares test files
@@ -214,7 +214,13 @@ line ranges grow to cover the others, and the folded groups are listed under
 ```toml
 [cycles]
 exclude = ["**/vendor/**"]   # import edges here never report a cycle
+include_type_only = true     # also report cycles closed only by type imports
 ```
+
+A cycle that only exists through type-level imports (TypeScript
+`import type`, Python `if TYPE_CHECKING:`) is reported at `info` with a "type
+coupling" hint. Set `include_type_only = false` to drop those; this is
+recommended for TypeScript, where type imports vanish at build time.
 
 Cycles among test files are reported. Only `migrations/` (and Python
 `alembic/` and `versions/`) are excluded by default; add
@@ -260,7 +266,14 @@ every teammate and their agents:
 [accept]
 dead_code = ["legacy.compat::shim"]        # a specific accepted symbol
 "smells/god_module" = ["app.registry"]     # a specific accepted detector hit
+duplication = ["legacy-fork/"]             # an accepted copy location
 ```
+
+`duplication` patterns work per location. A plain path substring drops the
+matching occurrences from every clone group, and a group stays reported while
+two or more other copies remain, so accepting a fork never hides duplication
+elsewhere. A pattern containing `" + "` matches the group label
+(`a.ts + b.ts + c.ts`) and hides that whole group.
 
 There are three ways to silence findings — pick by scope:
 

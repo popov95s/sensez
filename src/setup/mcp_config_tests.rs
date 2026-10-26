@@ -86,3 +86,16 @@ fn all_mcp_config_writers_are_idempotent() {
         }
     }
 }
+
+#[test]
+fn init_preserves_mcp_json_key_order_and_newline() {
+    let (_tmp, root) = temp_root();
+    fs::write(root.join(".mcp.json"), "{\"zeta\":1,\"mcpServers\":{}}\n").unwrap();
+
+    artifacts::write_mcp_config(&root, "claude-code", "/bin/sensez").unwrap();
+
+    let text = fs::read_to_string(root.join(".mcp.json")).unwrap();
+    assert!(text.find("zeta") < text.find("mcpServers"), "{text}");
+    assert!(text.find("\"command\"") < text.find("\"args\""), "{text}");
+    assert!(text.ends_with("}\n"), "{text:?}");
+}

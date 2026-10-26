@@ -33,11 +33,23 @@
             "type": "string"
           },
           "pillar": {
-            "description": "duplication | dead_code | cycles | boundaries | smells",
+            "description": "Pillar the finding belongs to",
+            "enum": [
+              "cycles",
+              "dead_code",
+              "boundaries",
+              "duplication",
+              "smells"
+            ],
             "type": "string"
           },
           "verdict": {
-            "description": "debt | false_positive | clear",
+            "description": "The user's verdict",
+            "enum": [
+              "debt",
+              "false_positive",
+              "clear"
+            ],
             "type": "string"
           }
         },
@@ -55,6 +67,11 @@
       "description": "Use this tool when the user explicitly asks to tune, optimize, or adjust their sensez linting and code-smell thresholds. It returns a high-level statistical summary of rule violations across the repository without flooding the context window.\n\nProtocol after invoking: analyze which rules generate the most noise based on counts; present a concise, conversational summary highlighting the top 2-3 noisy rules; offer specific adjustments to the .toml configuration file, such as raising a complexity threshold or disabling a rule; after user approval, use normal file-writing capabilities to update the configuration .toml directly.",
       "inputSchema": {
         "properties": {
+          "diff": {
+            "default": false,
+            "description": "Count only findings touching uncommitted changes vs HEAD (needs git). Defaults to false: threshold tuning needs the whole repository.",
+            "type": "boolean"
+          },
           "path": {
             "description": "Absolute path to the repository root",
             "type": "string"
@@ -89,7 +106,11 @@
             "type": "string"
           },
           "stop_hook_active": {
-            "description": "Pass ${stop_hook_active} from the hook input"
+            "description": "Ignored; accepted so older hooks still validate",
+            "type": [
+              "boolean",
+              "string"
+            ]
           }
         },
         "required": [
@@ -100,7 +121,7 @@
       "name": "noze_gate"
     },
     {
-      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. By default, results are diff-focused to show only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong. Pass diff=false for an explicit full-repository audit. The returned JSON is compact and omits aggregate totals; use the CLI when you need full report metadata.",
+      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. By default, results are diff-focused to show only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong. Pass diff=false for an explicit full-repository audit. The returned JSON is compact: meta.totals counts each pillar before `limit`, and meta.truncated says whether `limit` cut anything.",
       "inputSchema": {
         "properties": {
           "diff": {
@@ -109,7 +130,9 @@
             "type": "boolean"
           },
           "limit": {
+            "default": 0,
             "description": "Cap each pillar to top-N ranked findings (0 = unlimited)",
+            "minimum": 0,
             "type": "integer"
           },
           "path": {
@@ -117,7 +140,8 @@
             "type": "string"
           },
           "threshold": {
-            "description": "Duplication token threshold",
+            "description": "Duplication token threshold (0 = off)",
+            "minimum": 0,
             "type": "integer"
           }
         },

@@ -95,6 +95,14 @@ pub struct CloneClass {
     pub absorbed: Vec<AbsorbedClone>,
 }
 
+impl CloneClass {
+    /// Keep the occurrences `keep` accepts; whether it is still a clone (two or more left).
+    pub fn keep_occurrences(&mut self, keep: impl Fn(&CloneOccurrence) -> bool) -> bool {
+        self.occurrences.retain(|occurrence| keep(occurrence));
+        self.occurrences.len() >= 2
+    }
+}
+
 /// Which duplication pass produced a clone class.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case")]
@@ -277,6 +285,9 @@ pub struct ReportMeta {
     pub smell_totals: BTreeMap<String, usize>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub unmatched_boundary_rules: Vec<String>,
+    /// Pillars this run left out on request; their totals are 0 by filter, not by a clean scan.
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
+    pub filtered_pillars: Vec<Pillar>,
     #[serde(skip_serializing_if = "hide_scan_diagnostics", default)]
     pub issues: Vec<ScanIssue>,
     #[serde(skip)]
@@ -292,8 +303,10 @@ pub struct GlossaryEntry {
 }
 
 mod analysis;
+mod pillar;
 mod skip_counts;
 pub use analysis::AnalysisReport;
+pub use pillar::Pillar;
 pub use skip_counts::SkipCounts;
 fn line_is_unknown(value: &usize) -> bool {
     *value == 0

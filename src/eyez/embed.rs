@@ -1,6 +1,6 @@
 //! Embedding backend. Default: Model2Vec `potion-retrieval-32M` — a pure-Rust
-//! static embedding model (token lookup + pool, no ONNX runtime), downloaded
-//! from the HuggingFace Hub on first use and cached by the `hf-hub` layer.
+//! static embedding model (token lookup + pool, no ONNX runtime), located or
+//! downloaded by [`super::model`].
 //!
 //! Embeddings are L2-normalized (`normalize = Some(true)`), so a dot product over
 //! two vectors equals their cosine similarity — what the linear search relies on.
@@ -52,6 +52,6 @@ impl Embedder {
 }
 
 fn build() -> Result<StaticModel> {
-    StaticModel::from_pretrained(MODEL_ID, None, Some(true), None)
+    StaticModel::from_pretrained(super::model::model_dir()?, None, Some(true), None)
         .map_err(|e| anyhow!("loading Model2Vec model {MODEL_ID}: {e}"))
 }

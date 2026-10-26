@@ -1,5 +1,6 @@
 //! Pillar 3: circular-import detection via Tarjan's SCC algorithm.
 
+use crate::config::Cycles;
 use crate::globs::build_globset;
 use crate::report::{ActionLevel, CycleEdge, CycleFinding};
 use crate::spine::graph::CodebaseGraph;
@@ -15,8 +16,8 @@ const RUNTIME: &[ImportPhase] = &[ImportPhase::Runtime];
 const TYPE_LEVEL: &[ImportPhase] = &[ImportPhase::Runtime, ImportPhase::TypeOnly];
 
 /// Find strongly connected module components; each finding lists every member and one closed loop.
-pub fn detect(cg: &CodebaseGraph, exclude: &[String]) -> Vec<CycleFinding> {
-    let excluded = build_globset(exclude).unwrap_or_else(|_| globset::GlobSet::empty());
+pub fn detect(cg: &CodebaseGraph, config: &Cycles) -> Vec<CycleFinding> {
+    let excluded = build_globset(&config.exclude).unwrap_or_else(|_| globset::GlobSet::empty());
     let runtime = EdgeFiltered::from_fn(&cg.graph, |edge| is_cycle_edge(edge, RUNTIME));
     let runtime_sccs: Vec<Vec<NodeIndex>> = filter_reportable_sccs(
         cg,
@@ -26,6 +27,9 @@ pub fn detect(cg: &CodebaseGraph, exclude: &[String]) -> Vec<CycleFinding> {
         &excluded,
     );
     let mut findings = findings_for(cg, &runtime_sccs, ActionLevel::Warning, None, RUNTIME);
+    if !config.include_type_only {
+        return findings;
+    }
     let runtime_keys: HashSet<String> = runtime_sccs.iter().map(|scc| scc_key(cg, scc)).collect();
 
     let type_level = EdgeFiltered::from_fn(&cg.graph, |edge| is_cycle_edge(edge, TYPE_LEVEL));
