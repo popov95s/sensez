@@ -87,6 +87,15 @@ enabled = true
 # [smells.rules.mutated_parameter]
 # include_attributes = false  # also flag mutation through a param's attribute
 #                             # (msg.kwargs[k] = v); stricter, opt-in
+#
+# [smells.rules.too_many_returns]
+# count_guard_clauses = false  # also count top-level guard-clause returns
+#
+# [smells.rules.magic_numbers]
+# ignore = []                   # numeric literals never reported
+# ignore_array_indexes = true   # skip literal array indexes such as x[3]
+# ignore_default_values = true  # skip literals in parameter default values
+# allow_http_status = true      # skip 100-599 compared or assigned to a status field
 
 # Architectural contracts ("core must never import api"):
 # [[boundaries.forbidden]]

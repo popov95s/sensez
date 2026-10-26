@@ -4,11 +4,11 @@
 //! complement Clippy instead of re-reporting its local style lints.
 
 pub(crate) mod comment_syntax;
+mod control_shapes;
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
 mod loops;
-mod method_call;
 mod params;
 pub(crate) mod performance;
 pub(crate) mod resolve;

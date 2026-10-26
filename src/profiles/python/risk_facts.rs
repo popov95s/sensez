@@ -1,7 +1,25 @@
+use crate::profiles::guard_fingerprint::GuardLog;
+use crate::profiles::lineage::Lineage;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
+use crate::profiles::try_handling::{self, TrySyntax};
 use crate::spine::ir::FunctionUnit;
-use std::collections::HashMap;
 use tree_sitter::Node;
+
+const TRY_SYNTAX: TrySyntax = TrySyntax {
+    try_kind: "try_statement",
+    handler_kind: "except_clause",
+    throw_kinds: &["raise_statement"],
+    call_kind: "call",
+    loggers: &[
+        "log*",
+        "logging.*",
+        "print",
+        "*.exception",
+        "*.error",
+        "*.warning",
+    ],
+    is_function: super::control_shapes::is_function,
+};
 
 pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> Option<String> {
     if func
@@ -59,12 +77,7 @@ const TEST_CHECKS: TestChecks = TestChecks {
     framework_calls: &[],
 };
 
-pub(super) fn scan(
-    unit: &mut FunctionUnit,
-    guards: &mut HashMap<u64, usize>,
-    node: Node,
-    src: &[u8],
-) {
+pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, node: Node, src: &[u8]) {
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
     }
@@ -73,50 +86,28 @@ pub(super) fn scan(
     }
     match node.kind() {
         "except_clause" => handler(unit, node, src),
-        "if_statement" => record_guard(unit, guards, node, src),
-        "boolean_operator" if is_empty_fallback(node) => {
+        "if_statement" => guards.record(unit, Lineage::detached(node), &["block"], src),
+        "boolean_operator"
+            if is_empty_fallback(node) && try_handling::inside_try(node, &TRY_SYNTAX) =>
+        {
             unit.review_risks.empty_fallbacks += 1;
+        }
+        "await" | "yield" => guards.clear(),
+        "assignment" | "augmented_assignment" => {
+            if let Some(left) = node.child_by_field_name("left") {
+                guards.forget_written(left, src);
+            }
         }
         _ => {}
     }
 }
 
-fn record_guard(
-    unit: &mut FunctionUnit,
-    guards: &mut HashMap<u64, usize>,
-    node: Node<'_>,
-    src: &[u8],
-) {
-    let Some(condition) = node.child_by_field_name("condition") else {
-        return;
-    };
-    crate::profiles::guard_fingerprint::record_repeated_guard(
-        unit,
-        guards,
-        condition,
-        ancestor_condition(node),
-        node.start_position().row + 1,
-        src,
-    );
-}
-
-fn ancestor_condition(node: Node<'_>) -> Option<Node<'_>> {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
-        if parent.kind() == "if_statement" {
-            return parent.child_by_field_name("condition");
-        }
-        current = parent;
-    }
-    None
-}
-
-fn handler(unit: &mut FunctionUnit, node: Node, _src: &[u8]) {
-    let only_body = node.named_child_count() == 1
-        && node
-            .named_child(0)
-            .is_some_and(|child| child.kind() == "block");
-    if only_body {
+fn handler(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let bare_body = (node.named_child_count() == 1)
+        .then(|| node.named_child(0))
+        .flatten()
+        .filter(|child| child.kind() == "block");
+    if bare_body.is_some_and(|body| try_handling::swallows(body, None, src, &TRY_SYNTAX)) {
         unit.review_risks.broad_handlers += 1;
     }
 }

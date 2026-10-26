@@ -2,14 +2,16 @@
 //!
 //! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
-use super::chains::{chain_len, chain_root, is_chain_inner};
-use super::{classunit, conditionals, loops, performance, symbols};
+use super::chains::CHAIN;
+use super::{classunit, conditionals, control_shapes, loops, magic_numbers, performance, symbols};
+use crate::profiles::branch_path::branch_path;
+use crate::profiles::guard_clause::is_guard_return;
+use crate::profiles::guard_fingerprint::GuardLog;
+use crate::profiles::lineage::Lineage;
+use crate::profiles::magic_number::{default_values, magic_number};
 use crate::profiles::walk;
-use crate::spine::ir::{ChainHit, ClassUnit, FunctionUnit};
-use std::collections::HashMap;
+use crate::spine::ir::{ClassUnit, FunctionUnit};
 use tree_sitter::Node;
-
-const ALLOWED_NUMS: [&str; 5] = ["0", "1", "2", "0.0", "1.0"];
 
 /// Build a [`FunctionUnit`] for a `function_definition` node.
 pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit {
@@ -19,6 +21,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         end_line: func.end_position().row + 1,
         param_names: symbols::param_names(func, src),
         is_method,
+        magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
         homogeneous_tuple_return: super::typevocab::is_homogeneous_primitive_tuple(func, src),
         ..Default::default()
     };
@@ -40,14 +43,14 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
 /// Body-walk accumulator. Borrows the unit so helpers stay small.
 struct Acc<'u> {
     unit: &'u mut FunctionUnit,
-    guards: HashMap<u64, usize>,
+    guards: GuardLog,
 }
 
 impl<'u> Acc<'u> {
     fn new(unit: &'u mut FunctionUnit) -> Self {
         Acc {
             unit,
-            guards: HashMap::new(),
+            guards: GuardLog::new(super::wording::WORDING.identifier_extra_chars),
         }
     }
 
@@ -95,25 +98,22 @@ impl<'u> Acc<'u> {
         match kind {
             "return_statement" => {
                 self.unit.return_count += 1;
+                if is_guard_return(Lineage::detached(node), &control_shapes::GUARD_CLAUSE) {
+                    self.unit.guard_returns += 1;
+                }
                 if let Some(constructor) = returned_constructor(node, src) {
                     self.unit.returned_constructors.insert(constructor);
                 }
             }
-            "integer" | "float" => {
-                if let Ok(t) = node.utf8_text(src) {
-                    if !ALLOWED_NUMS.contains(&t) {
-                        self.unit.magic_numbers += 1;
-                    }
-                }
-            }
+            "integer" | "float" => self.unit.magic_numbers.extend(magic_number(
+                Lineage::detached(node),
+                src,
+                &magic_numbers::SYNTAX,
+            )),
             "attribute" => {
-                if !is_chain_inner(node) {
-                    self.unit.chain_hits.push(ChainHit {
-                        line: node.start_position().row + 1,
-                        depth: chain_len(node),
-                        root: chain_root(node, src),
-                    });
-                }
+                self.unit
+                    .chain_hits
+                    .extend(walk::chain_hit(node, node.parent(), src, &CHAIN));
                 if let Some(base) = node
                     .child_by_field_name("object")
                     .filter(|o| o.kind() == "identifier")
@@ -174,7 +174,14 @@ impl<'u> Acc<'u> {
             self.unit.performance.note_advanced(frame, &targets);
         }
         for target in targets {
-            *self.unit.local_reassigns.entry(target).or_insert(0) += 1;
+            self.unit
+                .local_reassigns
+                .entry(target)
+                .or_default()
+                .push(branch_path(
+                    Lineage::detached(node),
+                    &control_shapes::BRANCH_ARMS,
+                ));
         }
     }
 

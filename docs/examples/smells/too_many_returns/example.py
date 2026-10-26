@@ -1,10 +1,10 @@
 def status_for(order: Order) -> str:
     if order.cancelled:
         return "cancelled"
-    if order.refunded:
+    elif order.refunded:
         return "refunded"
-    if order.failed:
+    elif order.failed:
         return "failed"
-    if order.paid:
+    elif order.paid:
         return "paid"
     return "open"

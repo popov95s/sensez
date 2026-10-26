@@ -214,8 +214,7 @@ fn redundant_validation(
     metric: &FunctionUnit,
     out: &mut Vec<SmellFinding>,
 ) {
-    let reassigned_local = metric.local_reassigns.values().any(|count| *count > 1);
-    if metric.review_risks.repeated_guards == 0 || reassigned_local {
+    if metric.review_risks.repeated_guards == 0 {
         return;
     }
     out.push(make(

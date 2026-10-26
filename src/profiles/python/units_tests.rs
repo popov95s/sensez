@@ -90,3 +90,34 @@ fn repeated_primitive_tuple_annotation_is_homogeneous() {
     assert!(function(src, "span").homogeneous_tuple_return);
     assert!(!function(src, "pair").homogeneous_tuple_return);
 }
+
+#[test]
+fn status_sibling_waives_only_compared_or_assigned_literals() {
+    use crate::spine::ir::MagicContext;
+    let src =
+        "def check(res, status):\n    if res.status_code == 404:\n        retry(status, 503)\n";
+    let contexts: Vec<_> = function(src, "check")
+        .magic_numbers
+        .into_iter()
+        .map(|magic| (magic.text, magic.context))
+        .collect();
+    assert_eq!(
+        contexts,
+        vec![
+            ("404".to_string(), MagicContext::HttpStatus),
+            ("503".to_string(), MagicContext::Plain),
+        ]
+    );
+}
+
+#[test]
+fn every_call_fact_records_its_start_byte() {
+    let src = "def run(xs):\n    xs.sort()\n    xs.append(1)\n";
+    let offsets: Vec<usize> = function(src, "run")
+        .performance
+        .calls
+        .iter()
+        .map(|call| call.offset)
+        .collect();
+    assert_eq!(offsets, vec![17, 31]);
+}

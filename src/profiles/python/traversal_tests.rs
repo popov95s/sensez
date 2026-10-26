@@ -147,3 +147,17 @@ fn captures_docs_with_qualified_symbol_paths() {
         "method docstring qualified under class"
     );
 }
+
+#[test]
+fn inverted_self_guard_is_a_string_fallback() {
+    let fallbacks = |body: &str| {
+        walked(format!("def f(x):\n    return {body}\n").as_bytes())
+            .units
+            .functions[0]
+            .string_fallbacks
+            .len()
+    };
+    assert_eq!(fallbacks("\"\" if x is None else x"), 1);
+    assert_eq!(fallbacks("\"\" if not x else x.strip()"), 1);
+    assert_eq!(fallbacks("\"\" if x else y"), 0);
+}

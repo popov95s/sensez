@@ -15,6 +15,11 @@ impl<'a, 'tree> Lineage<'a, 'tree> {
         Self { ancestors, node }
     }
 
+    /// `node` with no known ancestors: every lookup asks tree-sitter.
+    pub(crate) fn detached(node: Node<'tree>) -> Self {
+        Self::new(&[], node)
+    }
+
     pub(crate) fn node(&self) -> Node<'tree> {
         self.node
     }
@@ -32,5 +37,13 @@ impl<'a, 'tree> Lineage<'a, 'tree> {
             Some(depth) if depth > 0 => Some(self.ancestors[depth - 1]),
             _ => node.parent(),
         }
+    }
+
+    /// Ancestors of `node`, nearest first.
+    pub(crate) fn ancestors(
+        self,
+        node: Node<'tree>,
+    ) -> impl Iterator<Item = Node<'tree>> + Clone + 'a {
+        std::iter::successors(self.parent(node), move |step| self.parent(*step))
     }
 }

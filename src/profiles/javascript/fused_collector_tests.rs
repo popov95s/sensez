@@ -99,7 +99,7 @@ fn fused_collector_json_identity() {
     assert_eq!(f.return_count, 1);
     assert_eq!(f.branch_count, 2);
     assert_eq!(f.cognitive, 3);
-    assert_eq!(f.magic_numbers, 0);
+    assert_eq!(f.magic_numbers.len(), 0);
     assert!(f.collapsible_nested_if_lines.is_empty());
     assert_eq!(f.comment_lines, 0);
     assert!(f.chain_hits.is_empty());

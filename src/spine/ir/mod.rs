@@ -8,6 +8,7 @@ mod fallback;
 mod import_context;
 mod lang;
 mod loop_frame;
+mod magic_number;
 mod performance;
 pub mod tokens;
 mod units;
@@ -18,13 +19,14 @@ pub use fallback::{FallbackSink, StringFallback};
 pub use import_context::{ImportContext, ImportPhase};
 pub use lang::Language;
 pub use loop_frame::{LoopBound, LoopFrame, LoopKind};
+pub use magic_number::{MagicContext, MagicNumber};
 pub use performance::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 pub use tokens::{StructuralToken, TokenSpan};
 pub(crate) use units::{bump, record_attr};
 pub use units::{
-    CallbackPosition, ChainHit, ClassProperty, ClassUnit, CommentClass, CommentSpan, FunctionKey,
-    FunctionUnit, LiteralMembership, MutatorFamily, NestedTernary, SchemaCall, TypeAlias,
-    TypeHints, Visibility, ANONYMOUS,
+    BranchPath, CallbackPosition, ChainHit, ClassProperty, ClassUnit, CommentClass, CommentSpan,
+    FunctionKey, FunctionUnit, LiteralMembership, MutatorFamily, NestedTernary, SchemaCall,
+    TypeAlias, TypeHints, Visibility, ANONYMOUS,
 };
 
 use std::collections::{HashMap, HashSet};

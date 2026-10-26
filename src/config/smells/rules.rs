@@ -1,6 +1,6 @@
 use super::knobs::{Smells, Strictness};
 use super::raw::RuleRaw;
-use super::rule_lists::{globs, string_list};
+use super::rule_lists::{globs, number_list, string_list};
 use super::strictness;
 use crate::report::SmellKind;
 use std::collections::BTreeMap;
@@ -70,6 +70,22 @@ fn apply_rule_knob(
                 smells.n_plus_one_await_in_loop = b;
                 true
             }
+            (SmellKind::TooManyReturns, "count_guard_clauses") => {
+                smells.count_guard_clauses = b;
+                true
+            }
+            (SmellKind::MagicNumbers, "ignore_array_indexes") => {
+                smells.magic_number_ignore_array_indexes = b;
+                true
+            }
+            (SmellKind::MagicNumbers, "ignore_default_values") => {
+                smells.magic_number_ignore_default_values = b;
+                true
+            }
+            (SmellKind::MagicNumbers, "allow_http_status") => {
+                smells.magic_number_allow_http_status = b;
+                true
+            }
             _ => false,
         };
         return Ok(matched);
@@ -96,15 +112,21 @@ fn apply_list_knob(
     key: &str,
     value: &toml::Value,
 ) -> Result<bool, String> {
-    let items = string_list(value)
-        .ok_or_else(|| format!("[smells.rules.{kind}] {key} must be a list of strings"))?;
+    let strings = || {
+        string_list(value)
+            .ok_or_else(|| format!("[smells.rules.{kind}] {key} must be a list of strings"))
+    };
     match (kind, key) {
-        (SmellKind::MessageChain, "ignore_roots") => smells.message_chain_ignore_roots = items,
+        (SmellKind::MessageChain, "ignore_roots") => smells.message_chain_ignore_roots = strings()?,
         (SmellKind::WeakTestOracle, "assertion_functions") => {
-            smells.assertion_functions = globs(kind, key, items)?
+            smells.assertion_functions = globs(kind, key, strings()?)?
         }
         (SmellKind::NPlusOneCall, "callees") => {
-            smells.n_plus_one_callees = globs(kind, key, items)?
+            smells.n_plus_one_callees = globs(kind, key, strings()?)?
+        }
+        (SmellKind::MagicNumbers, "ignore") => {
+            smells.magic_number_ignore = number_list(value)
+                .ok_or_else(|| format!("[smells.rules.{kind}] {key} must be a list of numbers"))?
         }
         _ => return Ok(false),
     }
@@ -222,7 +244,13 @@ fn rule_knob_names(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::HeavyNestedFunction => &["max_lines", "skip_capturing"],
         SmellKind::LargeClass => &["max_methods"],
         SmellKind::LongParameterList => &["max_params"],
-        SmellKind::TooManyReturns => &["max_returns"],
+        SmellKind::TooManyReturns => &["max_returns", "count_guard_clauses"],
+        SmellKind::MagicNumbers => &[
+            "ignore",
+            "ignore_array_indexes",
+            "ignore_default_values",
+            "allow_http_status",
+        ],
         SmellKind::HighComplexity => &["max_cyclomatic"],
         SmellKind::HighCognitiveComplexity => &["max_cognitive"],
         SmellKind::DeepNesting => &["max_nesting"],
@@ -262,6 +290,12 @@ fn bool_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::HeavyNestedFunction => &["skip_capturing"],
         SmellKind::TuplePacking => &["allow_homogeneous"],
         SmellKind::NPlusOneCall => &["await_in_loop"],
+        SmellKind::TooManyReturns => &["count_guard_clauses"],
+        SmellKind::MagicNumbers => &[
+            "ignore_array_indexes",
+            "ignore_default_values",
+            "allow_http_status",
+        ],
         _ => &[],
     }
 }
@@ -271,6 +305,7 @@ fn list_rule_knobs(kind: SmellKind) -> &'static [&'static str] {
         SmellKind::MessageChain => &["ignore_roots"],
         SmellKind::WeakTestOracle => &["assertion_functions"],
         SmellKind::NPlusOneCall => &["callees"],
+        SmellKind::MagicNumbers => &["ignore"],
         _ => &[],
     }
 }

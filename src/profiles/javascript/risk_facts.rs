@@ -1,8 +1,35 @@
+use crate::profiles::guard_fingerprint::GuardLog;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
+use crate::profiles::try_handling::{self, TrySyntax};
 use crate::spine::ir::FunctionUnit;
-use std::collections::HashMap;
 use tree_sitter::Node;
+
+const TRY_SYNTAX: TrySyntax = TrySyntax {
+    try_kind: "try_statement",
+    handler_kind: "catch_clause",
+    throw_kinds: &["throw_statement"],
+    call_kind: "call_expression",
+    loggers: &[
+        "console.*",
+        "log*",
+        "*.log",
+        "*.error",
+        "*.warn",
+        "*.info",
+        "*.debug",
+    ],
+    is_function: super::units::is_function,
+};
+
+/// Nodes a repeated guard is scoped to: its block or loop.
+const GUARD_SCOPES: &[&str] = &[
+    "statement_block",
+    "for_statement",
+    "for_in_statement",
+    "while_statement",
+    "do_statement",
+];
 
 pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> Option<String> {
     if func
@@ -75,12 +102,8 @@ const TEST_CHECKS: TestChecks = TestChecks {
     framework_calls: &["expect", "expectTypeOf"],
 };
 
-pub(super) fn scan(
-    unit: &mut FunctionUnit,
-    guards: &mut HashMap<u64, usize>,
-    node: Node,
-    src: &[u8],
-) {
+pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, lineage: Lineage, src: &[u8]) {
+    let node = lineage.node();
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
     }
@@ -88,10 +111,23 @@ pub(super) fn scan(
         unit.review_risks.helper_calls.push(helper.to_string());
     }
     match node.kind() {
-        "catch_clause" => unit.review_risks.broad_handlers += 1,
-        "if_statement" => record_guard(unit, guards, node, src),
-        "binary_expression" if is_empty_fallback(node) => {
+        "catch_clause" if swallows(node, src) => unit.review_risks.broad_handlers += 1,
+        "if_statement" => guards.record(unit, lineage, GUARD_SCOPES, src),
+        "binary_expression"
+            if is_empty_fallback(node) && try_handling::inside_try(node, &TRY_SYNTAX) =>
+        {
             unit.review_risks.empty_fallbacks += 1;
+        }
+        "await_expression" | "yield_expression" => guards.clear(),
+        "assignment_expression" | "augmented_assignment_expression" => {
+            if let Some(left) = node.child_by_field_name("left") {
+                guards.forget_written(left, src);
+            }
+        }
+        "update_expression" => {
+            if let Some(argument) = node.child_by_field_name("argument") {
+                guards.forget_written(argument, src);
+            }
         }
         _ => {}
     }
@@ -140,34 +176,14 @@ fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
     }
 }
 
-fn record_guard(
-    unit: &mut FunctionUnit,
-    guards: &mut HashMap<u64, usize>,
-    node: Node<'_>,
-    src: &[u8],
-) {
-    let Some(condition) = node.child_by_field_name("condition") else {
-        return;
-    };
-    crate::profiles::guard_fingerprint::record_repeated_guard(
-        unit,
-        guards,
-        condition,
-        ancestor_condition(node),
-        node.start_position().row + 1,
-        src,
-    );
-}
-
-fn ancestor_condition(node: Node<'_>) -> Option<Node<'_>> {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
-        if parent.kind() == "if_statement" {
-            return parent.child_by_field_name("condition");
-        }
-        current = parent;
-    }
-    None
+/// A catch that neither rethrows nor uses its error beyond logging it.
+fn swallows(handler: Node<'_>, src: &[u8]) -> bool {
+    let error = handler
+        .child_by_field_name("parameter")
+        .and_then(|parameter| parameter.utf8_text(src).ok());
+    handler
+        .child_by_field_name("body")
+        .is_some_and(|body| try_handling::swallows(body, error, src, &TRY_SYNTAX))
 }
 
 fn is_empty_fallback(node: Node<'_>) -> bool {

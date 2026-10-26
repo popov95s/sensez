@@ -15,3 +15,11 @@ pub(super) fn string_list(value: &toml::Value) -> Option<Vec<String>> {
         .map(|item| item.as_str().map(str::to_string))
         .collect()
 }
+
+pub(super) fn number_list(value: &toml::Value) -> Option<Vec<String>> {
+    value
+        .as_array()?
+        .iter()
+        .map(|item| (item.is_integer() || item.is_float()).then(|| item.to_string()))
+        .collect()
+}

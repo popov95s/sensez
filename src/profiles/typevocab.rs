@@ -22,7 +22,7 @@ pub enum LooseTypeKind {
 
 /// Split `text` on `sep` outside any bracket pair, trimming each part.
 pub(crate) fn split_top_level(text: &str, sep: char) -> Vec<&str> {
-    let mut depth = BracketDepth::default();
+    let mut depth = 0usize;
     let mut parts = Vec::new();
     let mut start = 0;
     let mut previous = None;
@@ -31,9 +31,9 @@ pub(crate) fn split_top_level(text: &str, sep: char) -> Vec<&str> {
         previous = Some(c);
         match c {
             '>' if arrow => {}
-            '<' | '[' | '(' | '{' => depth.open(),
-            '>' | ']' | ')' | '}' => depth.close(),
-            _ if c == sep && depth.is_top_level() => {
+            '<' | '[' | '(' | '{' => depth += 1,
+            '>' | ']' | ')' | '}' => depth = depth.saturating_sub(1),
+            _ if c == sep && depth == 0 => {
                 parts.push(text[start..i].trim());
                 start = i + c.len_utf8();
             }
@@ -42,25 +42,6 @@ pub(crate) fn split_top_level(text: &str, sep: char) -> Vec<&str> {
     }
     parts.push(text[start..].trim());
     parts
-}
-
-#[derive(Default)]
-struct BracketDepth {
-    value: usize,
-}
-
-impl BracketDepth {
-    fn open(&mut self) {
-        self.value += 1;
-    }
-
-    fn close(&mut self) {
-        self.value = self.value.saturating_sub(1);
-    }
-
-    fn is_top_level(&self) -> bool {
-        self.value == 0
-    }
 }
 
 /// Base name of an annotation: `dict[str, Any]` → `dict`,

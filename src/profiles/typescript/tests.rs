@@ -313,5 +313,22 @@ fn fused_collector_ts_return_annotation_not_in_body() {
     assert_eq!(f.cognitive, 0);
     assert_eq!(f.branch_count, 0);
     assert_eq!(f.max_nesting, 0);
-    assert_eq!(f.magic_numbers, 0);
+    assert_eq!(f.magic_numbers.len(), 0);
+}
+
+#[test]
+fn inverted_self_guard_is_a_string_fallback() {
+    let fallbacks = |body: &str| {
+        let src = format!("export function f(x?: string) {{ return {body}; }}\n");
+        parse_source(src.as_bytes(), 0, "m", &TsProfile)
+            .unwrap()
+            .units
+            .functions[0]
+            .string_fallbacks
+            .len()
+    };
+    assert_eq!(fallbacks("!x ? \"\" : x"), 1);
+    assert_eq!(fallbacks("x == null ? \"?\" : x.trim()"), 1);
+    assert_eq!(fallbacks("!!x ? \"\" : x"), 0);
+    assert_eq!(fallbacks("x ? \"\" : y"), 0);
 }

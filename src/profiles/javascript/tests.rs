@@ -110,8 +110,8 @@ fn function_facts_preserve_order_and_exclude_nested_bodies() {
     assert_eq!(functions[1].parent, "outer");
     assert_eq!(functions[0].return_count, 2);
     assert_eq!(functions[1].return_count, 1);
-    assert_eq!(functions[0].magic_numbers, 0);
-    assert_eq!(functions[1].magic_numbers, 1);
+    assert_eq!(functions[0].magic_numbers.len(), 0);
+    assert_eq!(functions[1].magic_numbers.len(), 1);
     assert_eq!(functions[0].branch_count, 1);
 }
 

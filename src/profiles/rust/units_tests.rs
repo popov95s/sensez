@@ -53,6 +53,36 @@ fn normalize(input: &mut Vec<String>, row: HashMap<String, String>) {
 }
 
 #[test]
+fn records_branch_arms_and_guard_returns() {
+    let w = walked(
+        r#"
+fn pick(kind: u8, ready: bool) -> Option<u8> {
+    if !ready {
+        return None;
+    }
+    let label;
+    match kind {
+        0 => label = 3,
+        _ => label = 4,
+    }
+    if kind > label {
+        return Some(kind);
+    } else {
+        return Some(label);
+    }
+}
+"#,
+    );
+    let f = &w.units.functions[0];
+    let paths = &f.local_reassigns["label"];
+    assert_eq!(paths.len(), 3);
+    assert_ne!(paths[1], paths[2]);
+    assert_eq!(paths[1].len(), 1);
+    assert_eq!(f.return_count, 3);
+    assert_eq!(f.guard_returns, 1);
+}
+
+#[test]
 fn records_literal_membership_and_iteration_facts() {
     let w = walked(
         r#"
