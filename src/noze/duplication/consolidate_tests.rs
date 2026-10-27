@@ -55,10 +55,6 @@ fn longer_pair_inside_n_way_group_folds_and_widens() {
             copies: 2,
         }]
     );
-    assert_eq!(
-        out[0].hint.as_deref(),
-        Some("structural clone; also structural clone (94 tokens, 2 of 5 copies)")
-    );
 }
 
 #[test]

@@ -6,7 +6,8 @@ class UserPayload:
     email: str
     plan: str
     active: bool
+    seats: int
 
 
 def create_user(payload: UserPayload) -> User:
-    return users.create(payload.email, payload.plan, payload.active)
+    return users.create(payload)

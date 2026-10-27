@@ -9,10 +9,13 @@
 //! groups ([`clones`]), optionally gap-stitched ([`gapped`]); occurrences are
 //! mapped back to file/line ranges, de-overlapped, de-duped, and ranked.
 
+mod advice;
 mod class_shapes;
 mod clones;
 mod consolidate;
 mod flatten;
+#[cfg(test)]
+mod gap_tests;
 mod gapped;
 mod lexeme_similarity;
 mod near_miss;
@@ -163,24 +166,19 @@ fn detect_partition(
         });
     }
 
-    // Opt-in: consistent-rename near-miss clones (function granularity). Routed
-    // through the same dedup so a near-miss already covered as an exact clone
-    // doesn't double-report.
-    if config.near_miss {
-        for class in near_miss::detect(kept, config.threshold) {
-            let near_miss_occurrences = suppress_overlaps(class.occurrences);
-            if near_miss_occurrences.len() < 2 {
-                continue;
-            }
-            if !seen.insert(dedup_key(&near_miss_occurrences, class.token_length)) {
-                continue;
-            }
-            out.push(CloneClass {
-                action: ActionLevel::Advisory,
-                occurrences: near_miss_occurrences,
-                ..class
-            });
+    for class in near_miss::detect(kept, near_miss::min_tokens(config)) {
+        let near_miss_occurrences = suppress_overlaps(class.occurrences);
+        if near_miss_occurrences.len() < 2 {
+            continue;
         }
+        if !seen.insert(dedup_key(&near_miss_occurrences, class.token_length)) {
+            continue;
+        }
+        out.push(CloneClass {
+            action: ActionLevel::Advisory,
+            occurrences: near_miss_occurrences,
+            ..class
+        });
     }
 
     #[cfg(feature = "eyez")]
@@ -188,7 +186,11 @@ fn detect_partition(
     #[cfg(not(feature = "eyez"))]
     let issues = Vec::new();
 
-    (consolidate::consolidate(out), issues)
+    let described = consolidate::consolidate(out)
+        .into_iter()
+        .map(advice::describe)
+        .collect();
+    (described, issues)
 }
 
 /// Opt-in comment-backed semantic clones; an unusable embedder is a scan issue.

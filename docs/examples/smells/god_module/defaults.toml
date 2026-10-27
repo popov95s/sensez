@@ -1,0 +1,9 @@
+# The example stays small; at defaults a god module needs a fan of 25, 150 lines
+# and 12 functions or classes, and with four callers shotgun_surgery_hazard wins.
+[smells]
+god_module_fan = 4
+god_module_min_fan_in = 4
+god_module_min_fan_out = 4
+god_module_min_lines = 0
+god_module_min_units = 0
+shotgun_blast_threshold = 5

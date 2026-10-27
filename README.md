@@ -52,7 +52,7 @@ Circular imports (1)
         ./shop/cart.py:1  shop.cart → shop.promo
 
 Duplication (1)
-    [advisory] structural clone (53):
+    [advisory] structural clone: 53 tokens, 2 copies — extract a shared helper:
       ./shop/clone_a.py:1-12
       ./shop/clone_b.py:1-12
 

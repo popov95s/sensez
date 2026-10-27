@@ -178,125 +178,178 @@
         {
           "copies": 2,
           "detector": {
-            "kind": "structural"
+            "kind": "near_miss"
           },
-          "token_length": 120
-        }
-      ],
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "hint": "structural clone; also structural clone (120 tokens, 2 of 3 copies)",
-      "occurrences": [
-        {
-          "end_row": 37,
-          "file": "<zod>/packages/resolution/src/index.cts",
-          "start_row": 11
+          "token_length": 327
         },
-        {
-          "end_row": 37,
-          "file": "<zod>/packages/resolution/src/index.mts",
-          "start_row": 11
-        },
-        {
-          "end_row": 37,
-          "file": "<zod>/packages/resolution/src/index.ts",
-          "start_row": 11
-        }
-      ],
-      "token_length": 119
-    },
-    {
-      "absorbed": [
         {
           "copies": 2,
           "detector": {
-            "kind": "structural"
+            "kind": "near_miss"
           },
-          "token_length": 225
+          "token_length": 325
+        },
+        {
+          "copies": 2,
+          "detector": {
+            "kind": "near_miss"
+          },
+          "token_length": 321
         }
       ],
       "action": "advisory",
       "detector": {
-        "kind": "structural"
+        "kind": "near_miss"
       },
-      "hint": "structural clone; also structural clone (225 tokens, 2 of 3 copies)",
+      "hint": "consistent-rename clone: 225\u2013327 tokens, 11 copies \u2014 extract a shared helper (+3 overlapping clones)",
       "occurrences": [
         {
-          "end_row": 81,
-          "file": "<zod>/packages/bench/init.ts",
-          "start_row": 27
+          "end_row": 104,
+          "file": "<zod>/packages/zod/src/v4/locales/az.ts",
+          "start_row": 56
         },
         {
-          "end_row": 89,
-          "file": "<zod>/packages/bench/object-moltar-jitless.ts",
-          "start_row": 14
-        },
-        {
-          "end_row": 81,
-          "file": "<zod>/packages/bench/object-moltar.ts",
-          "start_row": 6
-        }
-      ],
-      "token_length": 129
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 41,
-          "file": "<zod>/packages/integration/fixtures/internal-types/cjs-test.cts",
-          "start_row": 6
-        },
-        {
-          "end_row": 42,
-          "file": "<zod>/packages/integration/fixtures/internal-types/index.ts",
-          "start_row": 7
-        }
-      ],
-      "token_length": 147
-    },
-    {
-      "action": "advisory",
-      "detector": {
-        "kind": "structural"
-      },
-      "occurrences": [
-        {
-          "end_row": 50,
-          "file": "<zod>/packages/bench/datetime-regex.ts",
+          "end_row": 110,
+          "file": "<zod>/packages/zod/src/v4/locales/de.ts",
           "start_row": 5
         },
         {
-          "end_row": 50,
-          "file": "<zod>/packages/zod/src/v3/benchmarks/datetime.ts",
+          "end_row": 111,
+          "file": "<zod>/packages/zod/src/v4/locales/hu.ts",
+          "start_row": 5
+        },
+        {
+          "end_row": 109,
+          "file": "<zod>/packages/zod/src/v4/locales/id.ts",
+          "start_row": 5
+        },
+        {
+          "end_row": 111,
+          "file": "<zod>/packages/zod/src/v4/locales/mk.ts",
+          "start_row": 58
+        },
+        {
+          "end_row": 109,
+          "file": "<zod>/packages/zod/src/v4/locales/no.ts",
+          "start_row": 58
+        },
+        {
+          "end_row": 111,
+          "file": "<zod>/packages/zod/src/v4/locales/ota.ts",
+          "start_row": 5
+        },
+        {
+          "end_row": 111,
+          "file": "<zod>/packages/zod/src/v4/locales/ta.ts",
+          "start_row": 59
+        },
+        {
+          "end_row": 104,
+          "file": "<zod>/packages/zod/src/v4/locales/tr.ts",
+          "start_row": 56
+        },
+        {
+          "end_row": 113,
+          "file": "<zod>/packages/zod/src/v4/locales/ur.ts",
+          "start_row": 5
+        },
+        {
+          "end_row": 109,
+          "file": "<zod>/packages/zod/src/v4/locales/zh-TW.ts",
           "start_row": 5
         }
       ],
-      "token_length": 156
+      "token_length": 225
     },
     {
       "action": "advisory",
       "detector": {
-        "kind": "structural"
+        "kind": "near_miss"
       },
+      "hint": "consistent-rename clone: 218 tokens, 2 copies \u2014 extract a shared helper",
       "occurrences": [
         {
-          "end_row": 79,
-          "file": "<zod>/packages/zod/src/v3/benchmarks/discriminatedUnion.ts",
-          "start_row": 8
+          "end_row": 112,
+          "file": "<zod>/packages/zod/src/v4/locales/th.ts",
+          "start_row": 59
         },
         {
-          "end_row": 79,
-          "file": "<zod>/packages/zod/src/v3/benchmarks/union.ts",
-          "start_row": 8
+          "end_row": 109,
+          "file": "<zod>/packages/zod/src/v4/locales/zh-CN.ts",
+          "start_row": 59
         }
       ],
-      "token_length": 164
+      "token_length": 218
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "near_miss"
+      },
+      "hint": "consistent-rename clone: 222 tokens, 2 copies \u2014 extract a shared helper",
+      "occurrences": [
+        {
+          "end_row": 108,
+          "file": "<zod>/packages/zod/src/v4/locales/ms.ts",
+          "start_row": 57
+        },
+        {
+          "end_row": 110,
+          "file": "<zod>/packages/zod/src/v4/locales/vi.ts",
+          "start_row": 58
+        }
+      ],
+      "token_length": 222
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "near_miss"
+      },
+      "hint": "consistent-rename clone: 225 tokens, 3 copies \u2014 extract a shared helper",
+      "occurrences": [
+        {
+          "end_row": 119,
+          "file": "<zod>/packages/zod/src/v4/locales/fa.ts",
+          "start_row": 58
+        },
+        {
+          "end_row": 119,
+          "file": "<zod>/packages/zod/src/v4/locales/ps.ts",
+          "start_row": 58
+        },
+        {
+          "end_row": 111,
+          "file": "<zod>/packages/zod/src/v4/locales/sl.ts",
+          "start_row": 58
+        }
+      ],
+      "token_length": 225
+    },
+    {
+      "action": "advisory",
+      "detector": {
+        "kind": "near_miss"
+      },
+      "hint": "consistent-rename clone: 232 tokens, 3 copies \u2014 extract a shared helper",
+      "occurrences": [
+        {
+          "end_row": 109,
+          "file": "<zod>/packages/zod/src/v4/locales/ca.ts",
+          "start_row": 56
+        },
+        {
+          "end_row": 111,
+          "file": "<zod>/packages/zod/src/v4/locales/eo.ts",
+          "start_row": 59
+        },
+        {
+          "end_row": 109,
+          "file": "<zod>/packages/zod/src/v4/locales/pt.ts",
+          "start_row": 58
+        }
+      ],
+      "token_length": 232
     }
   ],
   "meta": {
@@ -310,7 +363,7 @@
       "generated": 0,
       "tests": 171
     },
-    "duplication_total": 20,
+    "duplication_total": 27,
     "external_edges": 458,
     "internal_edges": 525,
     "mode": "full",

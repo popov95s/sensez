@@ -1,21 +1,27 @@
 class Order {
-  shippingCity(): string {
-    return this.customer.shippingCity();
+  shippingCountry(): string {
+    return this.customer.shippingCountry();
   }
 }
 
 class Customer {
-  shippingCity(): string {
-    return this.address.cityName();
+  shippingCountry(): string {
+    return this.address.countryName();
   }
 }
 
 class Address {
-  cityName(): string {
-    return this.city.name;
+  countryName(): string {
+    return this.city.countryName();
   }
 }
 
-function city(order: Order): string {
-  return order.shippingCity();
+class City {
+  countryName(): string {
+    return this.country.name;
+  }
+}
+
+function country(order: Order): string {
+  return order.shippingCountry();
 }

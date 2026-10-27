@@ -105,7 +105,16 @@ fn hash_operator(operator: &str) -> u64 {
 
 /// Rehash a code for a type-declaration position so it rarely equals the value code.
 pub(crate) fn type_position(code: u64) -> u64 {
-    HASH_BASE + ((code ^ 0x9e37_79b9_7f4a_7c15) % (HASH_SPAN - HASH_BASE))
+    rehash(code, 0x9e37_79b9_7f4a_7c15)
+}
+
+/// Rehash a code for a shorthand property key so it differs from the same name read as a member.
+pub(crate) fn shorthand_position(code: u64) -> u64 {
+    rehash(code, 0xc2b2_ae3d_27d4_eb4f)
+}
+
+fn rehash(code: u64, salt: u64) -> u64 {
+    HASH_BASE + ((code ^ salt) % (HASH_SPAN - HASH_BASE))
 }
 
 pub(crate) fn hash(text: &str) -> u64 {

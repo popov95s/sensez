@@ -85,7 +85,7 @@ pub struct CloneClass {
     pub action: ActionLevel,
     pub token_length: usize,
     pub occurrences: Vec<CloneOccurrence>,
-    /// Diff-mode guidance for an agent; empty in full scans.
+    /// Reader-facing summary and advice; diff mode appends why the change is responsible.
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub hint: Option<String>,
     #[serde(default)]

@@ -95,18 +95,11 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         );
     }
     for class in &report.duplication {
-        let detail = class.hint.as_deref().unwrap_or("structural clone");
-        if class.token_length > 0 {
-            let _ = writeln!(
-                out,
-                "    [{}] {} ({}):",
-                action_label(class.action),
-                detail,
-                class.token_length.to_string().bold()
-            );
-        } else {
-            let _ = writeln!(out, "    [{}] {}:", action_label(class.action), detail);
-        }
+        let detail = class
+            .hint
+            .clone()
+            .unwrap_or_else(|| format!("structural clone: {} tokens", class.token_length));
+        let _ = writeln!(out, "    [{}] {}:", action_label(class.action), detail);
         for occ in &class.occurrences {
             let _ = writeln!(
                 out,

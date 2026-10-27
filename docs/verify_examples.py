@@ -11,6 +11,9 @@ stages per language suffix:
   ``.py`` and ``.ts`` (collateral findings are tolerated).
 * fixed — only files whose top-level path component starts with ``fixed``:
   no finding from any pillar may emit on ``fixed.<ext>``.
+* defaults — a smell that is on by default must also fire on its bad example
+  with no config, apart from the folder's optional ``defaults.toml`` note for an
+  example kept below the default thresholds.
 
 Run via uv with no project install: ``uv run docs/verify_examples.py``.
 ``SENSEZ_BIN`` overrides the binary; rebuilt from source if missing. This
@@ -29,8 +32,13 @@ from pathlib import Path
 
 from finding_types import SmellTerm
 from generate import discover_examples
-from rust_metadata import smell_kinds, strictness_rules
-from verify_examples_with_strictness import verify_examples_with_strictness
+from rust_metadata import (
+    default_enabled,
+    default_strictness,
+    smell_kinds,
+    strictness_rules,
+)
+from verify_examples_with_strictness import level_example, verify_examples_with_strictness
 
 ROOT = Path(__file__).resolve().parents[1]
 EXAMPLES = ROOT / "docs/examples"
@@ -39,6 +47,8 @@ DEFAULT_BIN = ROOT / "target/debug/sensez"
 BIN = Path(os.environ.get("SENSEZ_BIN", DEFAULT_BIN))
 SUFFIXES = (".py", ".ts")
 MANIFESTS = {".py": ("pyproject.toml",), ".ts": ("package.json",)}
+LANGUAGES = {".py": "python", ".ts": "typescript"}
+DEFAULTS_NOTE = "defaults.toml"
 JsonReport = dict[str, object]
 FileList = list[str]
 KindSet = set[str]
@@ -172,7 +182,7 @@ def verify_smell_folder(folder: Path, smell_kind: str, failures: FailureList) ->
     box = folder.name
     examples = discover_examples(smell_kind)
     for suffix in SUFFIXES:
-        language = "python" if suffix == ".py" else "typescript"
+        language = LANGUAGES[suffix]
         bad_file, fixed_file = examples.get(
             language, (folder / f"example{suffix}", folder / f"fixed{suffix}")
         )
@@ -200,6 +210,43 @@ def verify_smell_folder(folder: Path, smell_kind: str, failures: FailureList) ->
             )
         _fixed_pillar_leaks(fixed_report, folder, suffix, fixed_file.name, failures)
         shutil.rmtree(fixed, ignore_errors=True)
+
+
+def default_example(
+    folder: Path,
+    smell_kind: str,
+    suffix: str,
+    discovered: tuple[Path, Path] | None,
+) -> str:
+    """Example path under the folder that the default config must flag."""
+    smell = SmellTerm(smell_kind)
+    if smell in strictness_rules():
+        level = default_strictness(smell)
+        return f"{level}/{level_example(folder / level, suffix).name}"
+    return discovered[0].name if discovered else f"example{suffix}"
+
+
+def verify_default_config(folder: Path, smell_kind: str, failures: FailureList) -> None:
+    """A default-on smell fires on its example at defaults, plus the folder's ``defaults.toml`` note."""
+    note = folder / DEFAULTS_NOTE
+    config = note.read_text() if note.exists() else ""
+    examples = discover_examples(smell_kind)
+    for suffix in SUFFIXES:
+        language = LANGUAGES[suffix]
+        if not default_enabled(SmellTerm(smell_kind), language):
+            continue
+        example = default_example(folder, smell_kind, suffix, examples.get(language))
+        root = build_scan_root(folder, "bad", suffix)
+        (root / "sensez.toml").write_text(config)
+        report = run_noze(root)
+        files = _endswith(_smell_files(report), folder.name, example)
+        kinds = _smell_kinds(report, files)
+        if smell_kind not in kinds:
+            failures.append(
+                f"{folder.name}/{example}: expected {smell_kind} at default config, "
+                f"saw {sorted(kinds) or 'no smells'}",
+            )
+        shutil.rmtree(root, ignore_errors=True)
 
 
 def verify_pillar_folder(folder: Path, pillar: str, failures: FailureList) -> None:
@@ -248,9 +295,10 @@ def verify_folder(folder: Path, smells: set[SmellTerm]) -> FailureList:
     if smell not in smells:
         print(f"warning: skipping unrecognized example folder: {folder.name}")
         return failures
+    verify_default_config(folder, folder.name, failures)
     strictness_rule = strictness_rules().get(smell)
     if strictness_rule:
-        return verify_examples_with_strictness(
+        return failures + verify_examples_with_strictness(
             folder,
             CONFIG,
             SUFFIXES,

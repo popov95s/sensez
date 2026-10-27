@@ -1,2 +1,2 @@
-def city(order: Order) -> str:
-    return order.customer.address.city.name
+def country(order: Order) -> str:
+    return order.customer.address.city.country.name

@@ -19,6 +19,7 @@ SMELL_RESOLVE_RS = ROOT / "src/config/smells/resolve.rs"
 SMELL_KNOB_TABLE_RS = ROOT / "src/config/smells/knob_table.rs"
 SMELL_TOGGLES_RS = ROOT / "src/config/smells/toggles.rs"
 SMELL_STRICTNESS_RS = ROOT / "src/config/smells/strictness.rs"
+SMELL_RULES_RS = ROOT / "src/config/smells/rules.rs"
 
 LANGUAGE_ROWS = (
     (("python",), "Python"),
@@ -128,6 +129,11 @@ def _const_list(value: str) -> str:
     return f"[{', '.join(items)}]"
 
 
+def default_strictness(smell_term: SmellTerm) -> str:
+    value = _default_smell_fields()[_strictness_fields()[smell_term]]
+    return value.rsplit("::", 1)[1].lower()
+
+
 def default_enabled(smell_term: SmellTerm, language: str) -> bool:
     fields = _default_smell_fields()
     enabled = _default_for_kind(smell_term, fields)
@@ -158,6 +164,14 @@ def _default_disabled() -> set[SmellTerm]:
     return {
         SmellTerm(camel_to_snake(kind))
         for kind in re.findall(r"SmellKind::(\w+)", match.group(1))
+    }
+
+
+def _strictness_fields() -> dict[SmellTerm, str]:
+    body = SMELL_RULES_RS.read_text().split("fn set_strictness_knob", 1)[1].split("};", 1)[0]
+    return {
+        SmellTerm(camel_to_snake(kind)): field
+        for kind, field in re.findall(r"SmellKind::(\w+)\s*=>\s*&mut smells\.(\w+)", body)
     }
 
 

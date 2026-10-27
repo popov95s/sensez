@@ -30,6 +30,7 @@
         "detector": {
           "kind": "structural"
         },
+        "hint": "structural clone: 75 tokens, 2 copies \u2014 extract a shared helper",
         "occurrences": [
           {
             "end_row": 14,
@@ -77,6 +78,7 @@
         "detector": {
           "kind": "structural"
         },
+        "hint": "structural clone: 75 tokens, 2 copies \u2014 extract a shared helper",
         "occurrences": [
           {
             "end_row": 14,
@@ -98,18 +100,28 @@
     "dead_code": [],
     "duplication": [
       {
+        "absorbed": [
+          {
+            "copies": 2,
+            "detector": {
+              "kind": "near_miss"
+            },
+            "token_length": 77
+          }
+        ],
         "action": "advisory",
         "detector": {
           "kind": "structural"
         },
+        "hint": "structural clone: 75\u201377 tokens, 2 copies \u2014 extract a shared helper (+1 overlapping clone)",
         "occurrences": [
           {
-            "end_row": 14,
+            "end_row": 15,
             "file": "<zod>/packages/zod/src/sensez-cache-duplicate-left.ts",
             "start_row": 1
           },
           {
-            "end_row": 14,
+            "end_row": 15,
             "file": "<zod>/packages/zod/src/sensez-cache-duplicate-right.ts",
             "start_row": 1
           }

@@ -1,0 +1,3 @@
+# The example stays short; at defaults the nested function needs more than 15 lines.
+[smells]
+max_nested_function_lines = 4

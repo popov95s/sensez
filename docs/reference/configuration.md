@@ -185,14 +185,19 @@ Duplication and smells skip, on top of `exclude`:
 `scope`, and the human report prints one dimmed line under Duplication when
 files were skipped.
 
-Opt-in detectors for harder clones: `near_miss` (consistent renames),
-`class_name_duplicates`, `class_property_overlap_min`, and
-`[duplication.semantic]` (only in builds with the `eyez` feature). If the
-semantic pass is enabled but its embedding model cannot load (for example
-offline with no cached model), the scan records an `analyze` issue in
-`meta.issues` (present in `--json` output when `SENSEZ_SCAN_DIAGNOSTICS` or
-`SENSEZ_TIMING` is set), and `--fail-on` / `--fail-on-new` exit `2` with "incomplete
-scan" rather than passing.
+Structural matching keeps member, property and type names, so a copy that
+renames only locals is still a clone. Whole functions at least twice the
+`threshold` are also compared after a consistent rename of every name and
+literal, so a copy that renames its members is found too. `near_miss = true`
+extends that rename pass to functions down to `threshold`.
+
+Opt-in detectors for harder clones: `class_name_duplicates`,
+`class_property_overlap_min`, and `[duplication.semantic]` (only in builds with
+the `eyez` feature). If the semantic pass is enabled but its embedding model
+cannot load (for example offline with no cached model), the scan prints an
+`analyze` issue on stderr, and `--fail-on` / `--fail-on-new` exit `2` with
+"incomplete scan" rather than passing. JSON output lists the issue under
+`meta.issues` only when `SENSEZ_SCAN_DIAGNOSTICS` or `SENSEZ_TIMING` is set.
 
 ```toml
 [duplication.semantic]
@@ -223,7 +228,9 @@ never pair two functions on their own.
 
 When several detectors report the same code, the widest group is kept, its
 line ranges grow to cover the others, and the folded groups are listed under
-`absorbed` in JSON output. Each group's source is in `detector`.
+`absorbed` in JSON output. Each group's source is in `detector`. The `hint`
+says the token count (a range when a folded group is wider), the number of
+copies, what to do, and how many overlapping groups were folded in.
 
 ## Cycles
 

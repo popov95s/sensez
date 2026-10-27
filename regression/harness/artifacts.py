@@ -2,7 +2,7 @@ import json
 from pathlib import Path
 
 from ..normalize import dump_json, normalize_artifact
-from .models import Target
+from .models import RegressionRun, Target
 
 
 def dump_metrics_schema(path: Path, repo: Path) -> None:
@@ -18,6 +18,15 @@ def dump_metrics_schema(path: Path, repo: Path) -> None:
 
 def dump_normalized(path: Path, value: object, repo: Path, target: Target) -> None:
     dump_json(path, normalize_artifact(value, repo, target["name"]))
+
+
+def dump_run_artifact(
+    context: RegressionRun,
+    repo: Path,
+    artifact: str,
+    value: object,
+) -> None:
+    dump_normalized(context.out / artifact, value, repo, context.target)
 
 
 def dump_normalized_text(

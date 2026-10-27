@@ -3,8 +3,6 @@
 use crate::report::{AbsorbedClone, CloneClass, CloneOccurrence};
 use std::cmp::Reverse;
 
-const DEFAULT_CLONE_HINT: &str = "structural clone";
-
 /// Fold a class into a kept one when each of its occurrences overlaps a distinct kept occurrence.
 pub(super) fn consolidate(mut classes: Vec<CloneClass>) -> Vec<CloneClass> {
     classes.sort_by_key(|c| {
@@ -48,14 +46,6 @@ fn absorb(host: &mut CloneClass, class: CloneClass, slots: &[usize]) {
         target.start_row = target.start_row.min(occ.start_row);
         target.end_row = target.end_row.max(occ.end_row);
     }
-    let base = host.hint.as_deref().unwrap_or(DEFAULT_CLONE_HINT);
-    let label = class.hint.as_deref().unwrap_or(DEFAULT_CLONE_HINT);
-    host.hint = Some(format!(
-        "{base}; also {label} ({} tokens, {} of {} copies)",
-        class.token_length,
-        slots.len(),
-        host.occurrences.len()
-    ));
     host.absorbed.push(AbsorbedClone {
         detector: class.detector,
         token_length: class.token_length,
