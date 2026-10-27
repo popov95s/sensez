@@ -50,6 +50,7 @@ pub(crate) mod typevocab;
 pub(crate) mod units;
 pub(crate) mod utilities;
 pub(crate) mod wording;
+mod workflows;
 
 #[cfg(test)]
 mod fused_collector_tests;

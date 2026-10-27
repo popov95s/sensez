@@ -1,6 +1,6 @@
 //! `package.json` reading: entry targets as dead-code roots, dependencies for utility lookups.
 
-use super::roots;
+use super::{roots, workflows};
 use crate::profiles::dependencies::{manifest_dirs, DeclaredPackages, DependencyScope};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -69,7 +69,14 @@ fn manifest_keys(root: &Path) -> HashSet<String> {
     if let Some(scripts) = manifest.get("scripts") {
         collect_strings(scripts, &mut commands);
     }
-    targets.extend(commands.iter().flat_map(|command| script_files(command)));
+    let workflow_commands = workflows::run_commands(root);
+    targets.extend(
+        commands
+            .iter()
+            .copied()
+            .chain(workflow_commands.iter().map(String::as_str))
+            .flat_map(script_files),
+    );
     targets
         .iter()
         .filter(|target| !target.contains('*'))
@@ -144,6 +151,26 @@ mod tests {
         let entries = entry_files(&files);
 
         assert_eq!(entries, paths[..4].to_vec());
+    }
+
+    #[test]
+    fn workflow_run_commands_are_entries() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        fs::write(root.join("package.json"), "{}").unwrap();
+        fs::create_dir_all(root.join(".github/workflows")).unwrap();
+        fs::write(
+            root.join(".github/workflows/report.yml"),
+            "jobs:\n  report:\n    steps:\n      - run: node tools/report.mjs\n",
+        )
+        .unwrap();
+        let paths: Vec<PathBuf> = ["tools/report.mjs", "tools/other.mjs"]
+            .iter()
+            .map(|name| root.join(name))
+            .collect();
+        let files: Vec<&Path> = paths.iter().map(PathBuf::as_path).collect();
+
+        assert_eq!(entry_files(&files), paths[..1].to_vec());
     }
 
     #[test]
