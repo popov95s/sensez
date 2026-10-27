@@ -12,7 +12,7 @@ use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 use crate::spine::ir::{
     bump, record_attr, CommentSpan, FallbackSite, FunctionUnit, StringFallback, SymbolKind, Walked,
 };
-use std::collections::HashSet;
+use rustc_hash::FxHashSet;
 use tree_sitter::Node;
 
 /// One frame of a walker's lexical scope stack.
@@ -192,7 +192,7 @@ pub(crate) fn register_method(out: &mut Walked, name: String, line: usize) {
 
 /// Fill each class's `method_attr_use` and `method_calls` from its direct methods' units.
 pub(crate) fn attach_method_attrs(out: &mut Walked) {
-    let assignments: Vec<(usize, String, HashSet<String>, HashSet<String>)> = out
+    let assignments: Vec<(usize, String, FxHashSet<String>, FxHashSet<String>)> = out
         .units
         .functions
         .iter()
