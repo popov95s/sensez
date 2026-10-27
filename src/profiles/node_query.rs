@@ -42,7 +42,7 @@ pub(crate) fn field_identifiers(node: Node, src: &[u8], field: &str) -> Vec<Stri
         .unwrap_or_default()
 }
 
-/// `value` contains a `call_kind` node or reads a loop local holding a call result.
+/// Inside a loop, `value` contains a `call_kind` node or reads a loop local holding a call result.
 pub(crate) fn fed_by_call(
     facts: &PerformanceFacts,
     frame: Option<usize>,
@@ -50,10 +50,11 @@ pub(crate) fn fed_by_call(
     src: &[u8],
     call_kind: &str,
 ) -> bool {
-    contains_kind(value, call_kind)
-        || identifiers(value, src, &["identifier"])
-            .iter()
-            .any(|name| facts.is_call_result(frame, name))
+    frame.is_some()
+        && (contains_kind(value, call_kind)
+            || identifiers(value, src, &["identifier"])
+                .iter()
+                .any(|name| facts.is_call_result(frame, name)))
 }
 
 fn contains_kind(node: Node, kind: &str) -> bool {

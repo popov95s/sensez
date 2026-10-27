@@ -4,8 +4,8 @@ use tree_sitter::Node;
 
 pub(super) fn param_names(func: Node, src: &[u8]) -> Vec<String> {
     let mut out = Vec::new();
-    if let Some(p) = func.child_by_field_name("parameter") {
-        push_param(p, src, &mut out); // single-identifier arrow
+    if let Some(arrow_parameter) = func.child_by_field_name("parameter") {
+        push_param(arrow_parameter, src, &mut out);
     }
     if let Some(params) = func.child_by_field_name("parameters") {
         let mut cursor = params.walk();

@@ -58,7 +58,7 @@ impl<'u> Acc<'u> {
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind();
         // Nested functions/lambdas get their own unit — do not descend.
-        if matches!(kind, "function_definition" | "lambda") {
+        if control_shapes::is_function(kind) {
             self.unit.review_risks.test_has_nested_function = true;
             return;
         }
@@ -165,11 +165,9 @@ impl<'u> Acc<'u> {
             .cloned()
             .collect();
         self.unit.performance.note_declared(frame, &declared);
-        if frame.is_some()
-            && node.child_by_field_name("right").is_some_and(|value| {
-                walk::fed_by_call(&self.unit.performance, frame, value, src, "call")
-            })
-        {
+        if node.child_by_field_name("right").is_some_and(|value| {
+            walk::fed_by_call(&self.unit.performance, frame, value, src, "call")
+        }) {
             self.unit.performance.note_call_results(frame, &targets);
             self.unit.performance.note_advanced(frame, &targets);
         }

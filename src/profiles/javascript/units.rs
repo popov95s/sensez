@@ -19,6 +19,7 @@ use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::{default_values, magic_number};
 use crate::profiles::walk;
 use crate::spine::ir::{bump, FunctionUnit, Walked};
+use rustc_hash::FxHashMap;
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -43,8 +44,10 @@ pub struct FunctionFacts {
     body_end: usize,
     depth: usize,
     frames: Vec<usize>,
-    loop_nodes: Vec<(usize, usize)>,
-    outer_names: BoundNames,
+    /// Node id of a per-iteration loop part → its loop frame.
+    loop_parts: FxHashMap<usize, usize>,
+    /// Parent-scope names whose read flags `captures_parent`.
+    pub(super) outer_names: BoundNames,
 }
 
 impl FunctionFacts {
@@ -87,14 +90,9 @@ impl FunctionFacts {
             body_end: range.end,
             depth: 0,
             frames,
-            loop_nodes: Vec::new(),
+            loop_parts: FxHashMap::default(),
             outer_names: BoundNames::default(),
         }
-    }
-
-    /// Flag `captures_parent` when the body reads any of `outer_names`.
-    pub fn watch_captures(&mut self, outer_names: BoundNames) {
-        self.outer_names = outer_names;
     }
 
     pub fn enter(&mut self, lineage: Lineage, src: &[u8]) -> Option<(usize, usize)> {
@@ -108,7 +106,7 @@ impl FunctionFacts {
             return None;
         }
         let prev_depth = self.depth;
-        let entered_frame = self.enter_loop_part(lineage);
+        let entered_frame = self.enter_loop_part(node);
 
         obsession::scan(&mut self.unit, node, src);
         let frame = self.frame();
@@ -127,7 +125,11 @@ impl FunctionFacts {
             let frame = loops::loop_frame(node, src, self.frame());
             let line = performance::loop_line(node, src);
             let id = self.unit.performance.open_loop(line, frame);
-            self.loop_nodes.push((node.id(), id));
+            self.loop_parts.extend(
+                loops::iterated_parts(node)
+                    .into_iter()
+                    .map(|part| (part.id(), id)),
+            );
         }
         if let Some(weight) = cognitive_weight(kind, lineage, src, prev_depth) {
             self.unit.cognitive += weight;
@@ -186,23 +188,8 @@ impl FunctionFacts {
     }
 
     /// Open the enclosing loop's frame when `node` runs once per iteration.
-    fn enter_loop_part(&mut self, lineage: Lineage) -> bool {
-        let node = lineage.node();
-        let Some(loop_node) = lineage
-            .parent(node)
-            .filter(|p| performance::is_loop(p.kind()))
-        else {
-            return false;
-        };
-        if !loops::is_iterated_part(loop_node, node) {
-            return false;
-        }
-        let Some(&(_, id)) = self
-            .loop_nodes
-            .iter()
-            .rev()
-            .find(|(n, _)| *n == loop_node.id())
-        else {
+    fn enter_loop_part(&mut self, node: Node) -> bool {
+        let Some(&id) = self.loop_parts.get(&node.id()) else {
             return false;
         };
         self.frames.push(id);

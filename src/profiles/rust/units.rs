@@ -72,7 +72,7 @@ struct Acc<'a> {
 impl Acc<'_> {
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind();
-        if matches!(kind, "function_item" | "closure_expression") {
+        if control_shapes::is_function(kind) {
             return;
         }
         let loop_frame = is_loop(kind).then(|| {
@@ -128,7 +128,10 @@ impl Acc<'_> {
     }
 
     fn record_let(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
-        if let Some(pattern) = node.child_by_field_name("pattern") {
+        let Some(pattern) = node.child_by_field_name("pattern") else {
+            return;
+        };
+        if frame.is_some() {
             let names = walk::identifiers(pattern, src, &["identifier"]);
             self.unit.performance.note_declared(frame, &names);
             if node.child_by_field_name("value").is_some_and(|value| {
@@ -137,11 +140,8 @@ impl Acc<'_> {
                 self.unit.performance.note_call_results(frame, &names);
             }
         }
-        if let Some(pat) = node
-            .child_by_field_name("pattern")
-            .and_then(|p| pattern_name(p, src))
-        {
-            self.record_local(pat, node);
+        if let Some(name) = pattern_name(pattern, src) {
+            self.record_local(name, node);
         }
     }
 
