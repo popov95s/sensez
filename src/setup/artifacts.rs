@@ -50,14 +50,15 @@ enabled = true
 # unused_imports = false
 # unused_methods = false
 # unused_properties = false
-# unused_variables = true
+# unused_variables = false
 # registration_decorators = []  # user-added decorator names (JS/TS: `export const x = name(...)` callees); `prefix*` allowed
 # entrypoint_names = []  # user-added dynamic function/class/method names; `prefix*` allowed
 # entrypoint_bases = []  # user-added dynamic base classes
 # entry_globs = []      # user-added file globs reached outside the import graph (roots)
 # test_sources = []      # user-added test-runner file globs (test roots)
 # test_support = []      # user-added test-helper globs: test importers count as users
-# orphan_modules = true  # report exports of modules no root reaches (Medium, "unreachable_module")
+# orphan_modules = true  # report modules no root reaches (Medium, "unreachable_module")
+# unimported_dir_share = 50  # % of a directory's modules nothing imports that marks it runtime-loaded (0 = off)
 
 [cycles]
 # include_type_only = true  # false hides cycles closed only by type imports; recommended for TypeScript, where they vanish at build time

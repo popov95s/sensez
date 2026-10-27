@@ -1,24 +1,26 @@
 //! Pillar 2: unreferenced-symbol detection (reachability + evidence, tiered).
 //!
 //! Liveness is a walk from production roots (manifest entries, entry globs,
-//! tool configs) and test roots (test sources). Importers count as usage when
-//! production reaches them; a symbol only tests ask for is reported as
-//! `test_only`, and a module no root reaches as `unreachable_module`. Names a
-//! barrel re-exports are credited to their origin only when someone asks the
-//! barrel for them. Confidence is High unless evidence suggests hidden use
-//! (default export, opaque or type-namespace importer, tool config, test-only,
-//! unreachable) → Medium. Decorators are classified by *shape*:
-//! registration-shaped (`@app.get`) ⇒ live, neutral (`@property`) ⇒ ignored,
-//! unknown (`@lru_cache`) ⇒ not reported.
+//! tool configs, runtime-loaded directories) and test roots (test sources).
+//! Importers count as usage when production reaches them; a symbol only tests
+//! ask for is reported as `test_only`. Reachability is a module property: a
+//! module no root reaches, or only tests reach, is reported once as kind
+//! `module`. An unused name is reported where it is defined; a barrel
+//! re-export only when nothing defines or uses the name elsewhere. Confidence
+//! is High unless evidence suggests hidden use (default export, opaque or
+//! type-namespace importer, tool config, test-only, unreachable) → Medium.
+//! Decorators are classified by *shape*: registration-shaped (`@app.get`) ⇒
+//! live, neutral (`@property`) ⇒ ignored, unknown (`@lru_cache`) ⇒ not reported.
 
 mod class_entrypoints;
 mod confidence;
 mod demand;
 mod extra;
+mod loaded_dirs;
+mod manifest_callees;
 mod modules;
 mod reach;
 mod reachability;
-mod reexports;
 mod roots;
 
 use crate::config::model::DeadCode;

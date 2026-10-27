@@ -119,11 +119,11 @@ fn test_only_usage_is_its_own_reason() {
         Some(Confidence::High)
     );
     assert_eq!(reason(&findings, "zeroRefs"), Some(""));
-    assert_eq!(reason(&findings, "helperA"), Some("test_only"));
     assert_eq!(
-        kept_confidence(&findings, "helperDead"),
-        Some(Confidence::High)
+        kind_of(&findings, "helperA, helperDead"),
+        vec![SymbolKind::Module]
     );
+    assert_eq!(reason(&findings, "helperA, helperDead"), Some("test_only"));
 }
 
 #[test]
@@ -188,7 +188,7 @@ fn entry_point_imports_count_as_usage() {
 }
 
 #[test]
-fn unconsumed_reexports_are_reported_and_not_forwarded() {
+fn unconsumed_reexports_are_reported_once_at_their_origin() {
     let mut config = Config::default().dead_code;
     config.unused_imports = true;
     let findings = scan(
@@ -211,10 +211,7 @@ fn unconsumed_reexports_are_reported_and_not_forwarded() {
     );
 
     assert_eq!(kind_of(&findings, "helper"), vec![]);
-    assert_eq!(
-        kind_of(&findings, "orphan"),
-        vec![SymbolKind::Function, SymbolKind::ReExport]
-    );
+    assert_eq!(kind_of(&findings, "orphan"), vec![SymbolKind::Function]);
     assert_eq!(kind_of(&findings, "unusedThing"), vec![SymbolKind::Import]);
 }
 
@@ -239,14 +236,7 @@ fn reexport_chains_and_stars_forward_to_a_fixed_point() {
 
     assert_eq!(kept_confidence(&findings, "viaChain"), None);
     assert_eq!(kept_confidence(&findings, "viaStar"), None);
-    assert_eq!(
-        kind_of(&findings, "chainDead"),
-        vec![
-            SymbolKind::Function,
-            SymbolKind::ReExport,
-            SymbolKind::ReExport
-        ]
-    );
+    assert_eq!(kind_of(&findings, "chainDead"), vec![SymbolKind::Function]);
 }
 
 fn hidden_use_findings() -> Vec<DeadCodeFinding> {
@@ -307,5 +297,54 @@ fn config_importer_keeps_default_live_and_lowers_the_rest() {
     assert_eq!(
         kept_confidence(&findings, "reporterExtra"),
         Some(Confidence::Medium)
+    );
+}
+
+#[test]
+fn source_used_only_by_a_tests_directory_helper_is_test_only() {
+    let findings = scan(
+        &[
+            ("src/math.ts", "export function addUsed() {}\nexport function onlyHelped() {}\n"),
+            ("src/app.ts", "import { addUsed } from \"./math\";\naddUsed();\n"),
+            (
+                "tests/billing/helper.ts",
+                "import { onlyHelped } from \"../../src/math\";\nexport function runHelper() { onlyHelped(); }\n",
+            ),
+        ],
+        &Config::default().dead_code,
+    );
+
+    assert_eq!(reason(&findings, "onlyHelped"), Some("test_only"));
+}
+
+#[test]
+fn modules_imported_by_a_main_guarded_script_are_live() {
+    let findings = scan(
+        &[
+            (
+                "tools/export.ts",
+                "import { buildSheet } from \"./sheet\";\nexport function helperForTests() {}\nif (import.meta.main) {\n  buildSheet();\n}\n",
+            ),
+            ("tools/sheet.ts", "export function buildSheet() {}\n"),
+            (
+                "tools/cli.ts",
+                "#!/usr/bin/env node\nimport { render } from \"./render\";\nrender();\n",
+            ),
+            ("tools/render.ts", "export function render() {}\n"),
+            (
+                "tools/library.ts",
+                "import { argvHelper } from \"./argvHelper\";\nexport function flag() {\n  return process.argv[1] + argvHelper();\n}\n",
+            ),
+            ("tools/argvHelper.ts", "export function argvHelper() { return 1; }\n"),
+            ("src/app.ts", "export function main() {}\n"),
+        ],
+        &Config::default().dead_code,
+    );
+
+    assert!(findings.iter().all(|f| !f.file.ends_with("sheet.ts")));
+    assert!(findings.iter().all(|f| !f.file.ends_with("render.ts")));
+    assert!(
+        findings.iter().any(|f| f.file.ends_with("library.ts")),
+        "{findings:?}"
     );
 }

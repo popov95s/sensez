@@ -131,45 +131,6 @@
       "line": 5,
       "module": "rollup.config",
       "symbol": "bundleSize"
-    },
-    {
-      "action": "advisory",
-      "confidence": "High",
-      "file": "<zod>/packages/tsc/generate.ts",
-      "kind": "variable",
-      "line": 16,
-      "module": "generate",
-      "symbol": "VALIBOT"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/treeshake/zod-full.ts",
-      "kind": "variable",
-      "line": 3,
-      "module": "zod-full",
-      "reason": "unreachable_module",
-      "symbol": "schema"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/treeshake/zod-mini-full.ts",
-      "kind": "variable",
-      "line": 3,
-      "module": "zod-mini-full",
-      "reason": "unreachable_module",
-      "symbol": "schema"
-    },
-    {
-      "action": "advisory",
-      "confidence": "Medium",
-      "file": "<zod>/packages/treeshake/zod3-full.ts",
-      "kind": "variable",
-      "line": 3,
-      "module": "zod3-full",
-      "reason": "unreachable_module",
-      "symbol": "schema"
     }
   ],
   "duplication": [
@@ -357,7 +318,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 5,
+    "dead_code_total": 1,
     "duplication_skipped": {
       "config_exclude": 0,
       "generated": 0,

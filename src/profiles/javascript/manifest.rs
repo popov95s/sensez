@@ -1,6 +1,6 @@
 //! `package.json` reading: entry targets as dead-code roots, dependencies for utility lookups.
 
-use super::roots;
+use super::{programs, roots, workflows};
 use crate::profiles::dependencies::{manifest_dirs, DeclaredPackages, DependencyScope};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -16,7 +16,7 @@ const DEPENDENCY_SECTIONS: [(&str, DependencyScope); 4] = [
     ("devDependencies", DependencyScope::Development),
 ];
 
-/// Files named by their package's manifest, directly or through a `src/` twin of a build path.
+/// Files named by their package's manifest (directly or through a `src/` twin of a build path) or run as programs.
 pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
     let mut keys_by_root: HashMap<PathBuf, HashSet<String>> = HashMap::new();
     let mut entries = Vec::new();
@@ -26,7 +26,7 @@ pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
         let keys = keys_by_root
             .entry(root)
             .or_insert_with_key(|root| manifest_keys(root));
-        if keys.contains(&key) {
+        if keys.contains(&key) || programs::is_program(file) {
             entries.push(file.to_path_buf());
         }
     }
@@ -65,6 +65,18 @@ fn manifest_keys(root: &Path) -> HashSet<String> {
             collect_strings(value, &mut targets);
         }
     }
+    let mut commands = Vec::new();
+    if let Some(scripts) = manifest.get("scripts") {
+        collect_strings(scripts, &mut commands);
+    }
+    let workflow_commands = workflows::run_commands(root);
+    targets.extend(
+        commands
+            .iter()
+            .copied()
+            .chain(workflow_commands.iter().map(String::as_str))
+            .flat_map(script_files),
+    );
     targets
         .iter()
         .filter(|target| !target.contains('*'))
@@ -79,6 +91,14 @@ fn collect_strings<'a>(value: &'a Value, out: &mut Vec<&'a str>) {
         Value::Object(map) => map.values().for_each(|item| collect_strings(item, out)),
         _ => {}
     }
+}
+
+/// Source files a `scripts` command runs, e.g. `node ./tools/sync.mjs --dry`.
+fn script_files(command: &str) -> impl Iterator<Item = &str> {
+    command
+        .split_whitespace()
+        .map(|token| token.trim_matches(|c| c == '"' || c == '\''))
+        .filter(|token| !token.starts_with('-') && roots::has_source_extension(Path::new(token)))
 }
 
 fn source_keys(target: &str) -> Vec<String> {
@@ -109,13 +129,19 @@ mod tests {
         let root = tmp.path();
         fs::write(
             root.join("package.json"),
-            r#"{"main": "./dist/index.js", "bin": {"tool": "bin/cli.mjs"}, "exports": {".": {"import": "./lib/esm.js"}, "./*": "./dist/*.js"}}"#,
+            r#"{"main": "./dist/index.js", "bin": {"tool": "bin/cli.mjs"}, "exports": {".": {"import": "./lib/esm.js"}, "./*": "./dist/*.js"}, "scripts": {"sync": "node ./tools/sync.mjs --dry", "lint": "eslint src"}}"#,
         )
         .unwrap();
-        let paths: Vec<PathBuf> = ["src/index.ts", "bin/cli.mjs", "src/esm.ts", "src/other.ts"]
-            .iter()
-            .map(|name| root.join(name))
-            .collect();
+        let paths: Vec<PathBuf> = [
+            "src/index.ts",
+            "bin/cli.mjs",
+            "src/esm.ts",
+            "tools/sync.mjs",
+            "src/other.ts",
+        ]
+        .iter()
+        .map(|name| root.join(name))
+        .collect();
         for path in &paths {
             fs::create_dir_all(path.parent().unwrap()).unwrap();
             fs::write(path, "").unwrap();
@@ -124,7 +150,27 @@ mod tests {
 
         let entries = entry_files(&files);
 
-        assert_eq!(entries, paths[..3].to_vec());
+        assert_eq!(entries, paths[..4].to_vec());
+    }
+
+    #[test]
+    fn workflow_run_commands_are_entries() {
+        let tmp = tempfile::tempdir().unwrap();
+        let root = tmp.path();
+        fs::write(root.join("package.json"), "{}").unwrap();
+        fs::create_dir_all(root.join(".github/workflows")).unwrap();
+        fs::write(
+            root.join(".github/workflows/report.yml"),
+            "jobs:\n  report:\n    steps:\n      - run: node tools/report.mjs\n",
+        )
+        .unwrap();
+        let paths: Vec<PathBuf> = ["tools/report.mjs", "tools/other.mjs"]
+            .iter()
+            .map(|name| root.join(name))
+            .collect();
+        let files: Vec<&Path> = paths.iter().map(PathBuf::as_path).collect();
+
+        assert_eq!(entry_files(&files), paths[..1].to_vec());
     }
 
     #[test]

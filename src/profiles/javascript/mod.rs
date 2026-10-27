@@ -30,6 +30,7 @@ mod nesting;
 pub(crate) mod obsession;
 mod params;
 pub(crate) mod performance;
+mod programs;
 pub(crate) mod resolve;
 mod returned_names;
 pub(crate) mod risk_facts;
@@ -50,6 +51,7 @@ pub(crate) mod typevocab;
 pub(crate) mod units;
 pub(crate) mod utilities;
 pub(crate) mod wording;
+mod workflows;
 
 #[cfg(test)]
 mod fused_collector_tests;

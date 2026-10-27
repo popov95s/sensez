@@ -13,6 +13,7 @@ fn cfg() -> DeadCode {
         test_support: vec![],
         entry_modules: vec![],
         orphan_modules: true,
+        unimported_dir_share: 50,
         unused_imports: false,
         unused_methods: false,
         unused_properties: false,

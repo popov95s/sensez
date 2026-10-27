@@ -54,13 +54,16 @@ pub fn key_from_parts(mut parts: Vec<String>) -> String {
     parts.join("/")
 }
 
+/// `path` ends in a JS/TS source extension.
+pub fn has_source_extension(path: &Path) -> bool {
+    path.extension()
+        .is_some_and(|ext| EXTENSIONS.iter().any(|known| ext == *known))
+}
+
 /// Extension-less, `index`-collapsed path naming the module at `path`.
 pub fn path_key(path: &Path) -> PathBuf {
     let mut key = normalize(path);
-    if key
-        .extension()
-        .is_some_and(|ext| EXTENSIONS.iter().any(|known| ext == *known))
-    {
+    if has_source_extension(&key) {
         key.set_extension("");
     }
     if key.file_name().is_some_and(|name| name == "index") {

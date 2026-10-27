@@ -8,6 +8,8 @@ use crate::report::Confidence;
 pub(super) enum Reached {
     FromRoot,
     Orphan,
+    /// Only test sources reach the module.
+    TestsOnly,
 }
 
 /// Why a candidate is reported below High beyond its importers.
@@ -52,7 +54,7 @@ pub(super) fn grade(evidence: &Evidence) -> Grade {
     if evidence.reached == Reached::Orphan {
         return medium(Some(DeadCodeReason::UnreachableModule));
     }
-    if evidence.test_only {
+    if evidence.test_only || evidence.reached == Reached::TestsOnly {
         return medium(Some(DeadCodeReason::TestOnly));
     }
     let inbound = evidence.inbound;

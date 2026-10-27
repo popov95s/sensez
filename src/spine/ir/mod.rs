@@ -55,8 +55,8 @@ pub enum SymbolKind {
     Method,
     Import,
     Property,
-    #[serde(rename = "reexport")]
-    ReExport,
+    /// A whole module, for findings about modules rather than one symbol.
+    Module,
 }
 
 impl SymbolKind {
@@ -69,7 +69,7 @@ impl SymbolKind {
             SymbolKind::Method => "method",
             SymbolKind::Import => "import",
             SymbolKind::Property => "property",
-            SymbolKind::ReExport => "reexport",
+            SymbolKind::Module => "module",
         }
     }
 }

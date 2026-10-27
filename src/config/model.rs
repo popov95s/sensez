@@ -68,6 +68,8 @@ pub struct DeadCode {
     #[serde(skip)]
     pub entry_modules: Vec<String>,
     pub orphan_modules: bool,
+    /// Percent of a directory's modules with no importers that marks it as runtime-loaded (0 = off).
+    pub unimported_dir_share: u8,
     pub unused_imports: bool,
     pub unused_methods: bool,
     pub unused_properties: bool,
@@ -145,10 +147,11 @@ impl Default for Config {
                 test_support: Vec::new(),
                 entry_modules: Vec::new(),
                 orphan_modules: true,
+                unimported_dir_share: 50,
                 unused_imports: false,
                 unused_methods: false,
                 unused_properties: false,
-                unused_variables: true,
+                unused_variables: false,
             },
             boundaries: Boundaries {
                 forbidden: Vec::new(),
