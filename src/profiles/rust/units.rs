@@ -6,7 +6,7 @@ use crate::profiles::guard_clause::is_guard_return;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::walk;
 use crate::spine::ir::{
-    FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
+    CallFact, FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
 };
 use tree_sitter::Node;
 
@@ -210,7 +210,10 @@ impl Acc<'_> {
         };
         self.unit.performance.calls.push(call.clone());
         if call.member && ITER_METHODS.contains(&call.method.as_str()) {
-            self.unit.performance.iteration_calls.push(call.clone());
+            self.unit.performance.iteration_calls.push(CallFact {
+                pass: super::performance::iteration_pass(&call.method),
+                ..call.clone()
+            });
         }
         if call.member && MUTATORS.contains(&call.method.as_str()) {
             if let Some(func) = node.child_by_field_name("function") {
@@ -330,7 +333,7 @@ impl Acc<'_> {
         walk::record_string_fallback(
             self.unit,
             arg.utf8_text(src).ok().map(unquote),
-            FallbackSink::Unclassified,
+            FallbackSink::Unclassified.into(),
             arg.start_position().row + 1,
         );
     }

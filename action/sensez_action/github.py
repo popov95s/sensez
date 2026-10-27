@@ -65,7 +65,7 @@ class GitHubClient:
         try:
             with urllib.request.urlopen(request, timeout=30) as response:
                 payload = response.read().decode("utf-8")
-                links = _parse_link_header(response.headers.get("Link", ""))
+                links = _parse_link_header(response.headers.get("Link"))
                 return json.loads(payload) if payload else None, links
         except urllib.error.HTTPError as error:
             detail = error.read().decode("utf-8", "replace")
@@ -79,8 +79,10 @@ class GitHubClient:
         return f"{self.api_url}/repos/{self.repository}/{path.lstrip('/')}"
 
 
-def _parse_link_header(value: str) -> LinkHeaders:
+def _parse_link_header(value: Optional[str]) -> LinkHeaders:
     links: dict[str, str] = {}
+    if value is None:
+        return LinkHeaders(links)
     for part in value.split(","):
         section = part.strip()
         if not section:

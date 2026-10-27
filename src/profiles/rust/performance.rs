@@ -1,12 +1,13 @@
 //! Rust performance-smell profile policy.
 
 use crate::profiles::walk;
-use crate::spine::ir::PerfLine;
+use crate::spine::ir::{IterationPass, PerfLine};
 use tree_sitter::Node;
 
 const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "execute", "fetch", "find", "load", "query", "read", "request", "save", "send",
 ];
+const AGGREGATE_METHODS: &[&str] = &["count", "fold", "sum"];
 const MUTATING_METHODS: &[&str] = &[
     "append",
     "clear",
@@ -105,4 +106,12 @@ fn has_literal_take(subject: &str) -> bool {
 
 fn is_literal_collection(subject: &str) -> bool {
     subject.starts_with('[') && subject.ends_with(']') && subject.split(',').count() <= 12
+}
+
+pub(crate) fn iteration_pass(method: &str) -> IterationPass {
+    if AGGREGATE_METHODS.contains(&method) {
+        IterationPass::Aggregate
+    } else {
+        IterationPass::Full
+    }
 }

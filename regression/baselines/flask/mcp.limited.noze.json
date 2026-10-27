@@ -207,7 +207,7 @@
       "cycles": 2,
       "dead_code": 6,
       "duplication": 4,
-      "smells": 148
+      "smells": 190
     },
     "truncated": true
   },

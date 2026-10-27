@@ -1,11 +1,18 @@
 //! Python AST facts for performance-oriented smells.
 
 use crate::profiles::walk;
-use crate::spine::ir::{CallFact, PerfLine, PerformanceFacts};
+use crate::spine::ir::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
 
 const ITER_FUNCTIONS: [&str; 8] = ["any", "all", "sum", "min", "max", "sorted", "list", "set"];
 const ITER_METHODS: [&str; 3] = ["count", "index", "copy"];
+const AGGREGATES: [&str; 2] = ["sum", "count"];
+const COMPREHENSIONS: [&str; 4] = [
+    "list_comprehension",
+    "set_comprehension",
+    "dictionary_comprehension",
+    "generator_expression",
+];
 const EXPENSIVE_LOOP_METHODS: &[&str] = &[
     "all", "execute", "fetch", "fetchone", "find", "load", "query", "request", "save", "select",
 ];
@@ -32,6 +39,9 @@ const EXTERNAL_TYPE_PARTS: &[&str] = &[
     "transport",
 ];
 pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], frame: Option<usize>) {
+    if let Some(pass) = comprehension_pass(node, src) {
+        facts.iteration_calls.push(pass);
+    }
     if node.kind() != "call" {
         return;
     }
@@ -85,27 +95,89 @@ fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
 }
 
 fn iteration_call(node: Node, src: &[u8], call: &CallFact) -> Option<CallFact> {
+    let pass = pass_kind(&call.method);
     if call.member && ITER_METHODS.contains(&call.method.as_str()) {
-        return Some(call.clone());
+        return Some(CallFact {
+            pass,
+            ..call.clone()
+        });
     }
     if !call.member && ITER_FUNCTIONS.contains(&call.method.as_str()) {
-        let base = first_stable_arg(node, src)?;
+        let base = iterated_argument(node, src)?;
         return Some(CallFact {
             base: base.to_string(),
+            pass,
             ..call.clone()
         });
     }
     None
 }
 
-fn first_stable_arg<'a>(call: Node, src: &'a [u8]) -> Option<&'a str> {
+fn pass_kind(method: &str) -> IterationPass {
+    if AGGREGATES.contains(&method) {
+        IterationPass::Aggregate
+    } else {
+        IterationPass::Full
+    }
+}
+
+/// A comprehension that is not already the argument of a counted builtin.
+fn comprehension_pass(node: Node, src: &[u8]) -> Option<CallFact> {
+    if !COMPREHENSIONS.contains(&node.kind()) || builtin_argument(node, src).is_some() {
+        return None;
+    }
+    let base = comprehension_source(node, src)?;
+    let mut pass = CallFact::member(base, "comprehension", node.start_position().row + 1);
+    pass.region = control_region(node);
+    pass.offset = node.start_byte();
+    if enclosing_call_name(node, src) == Some("len") {
+        pass.pass = IterationPass::Aggregate;
+    }
+    Some(pass)
+}
+
+/// The counted builtin (`sum`, `any`, …) that takes `node` as its argument.
+fn builtin_argument<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
+    enclosing_call_name(node, src).filter(|name| ITER_FUNCTIONS.contains(name))
+}
+
+fn enclosing_call_name<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
+    let parent = node.parent()?;
+    let call = match parent.kind() {
+        "call" => parent,
+        "argument_list" => parent.parent()?,
+        _ => return None,
+    };
+    call.child_by_field_name("function")
+        .filter(|func| func.kind() == "identifier")
+        .and_then(|func| walk::node_text(func, src))
+}
+
+/// `xs` in `sum(xs)`, `sum(x.n for x in xs)` and `len([x for x in xs])`.
+fn iterated_argument<'a>(call: Node, src: &'a [u8]) -> Option<&'a str> {
     let args = call.child_by_field_name("arguments")?;
+    if COMPREHENSIONS.contains(&args.kind()) {
+        return comprehension_source(args, src);
+    }
     let mut cursor = args.walk();
-    let result = args
+    let first = args.named_children(&mut cursor).next()?;
+    match first.kind() {
+        kind if COMPREHENSIONS.contains(&kind) => comprehension_source(first, src),
+        _ if stable_receiver(&first) => walk::node_text(first, src),
+        _ => None,
+    }
+}
+
+/// `xs` in `[x for x in xs]`.
+fn comprehension_source<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
+    let mut cursor = node.walk();
+    let clause = node
         .named_children(&mut cursor)
-        .find(|n| stable_receiver(n))
-        .and_then(|n| walk::node_text(n, src));
-    result
+        .find(|child| child.kind() == "for_in_clause")?;
+    clause
+        .child_by_field_name("right")
+        .filter(|right| stable_receiver(right))
+        .and_then(|right| walk::node_text(right, src))
 }
 
 fn stable_receiver(node: &Node<'_>) -> bool {

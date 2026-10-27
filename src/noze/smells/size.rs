@@ -30,7 +30,7 @@ pub fn detect(
         if cfg.is_enabled(SmellKind::NarratingCode) {
             narrating_code(ctx, cfg, out, m, lines);
         }
-        if is_reportable_nested(m, cfg, lines) {
+        if is_reportable_nested(m, cfg, lines) && !returned_by_parent(m, metrics) {
             out.push(heavy_nested_function(ctx, cfg, m, lines));
         }
     }
@@ -59,6 +59,13 @@ fn is_reportable_nested(m: &FunctionUnit, cfg: &Smells, lines: usize) -> bool {
         && lines > cfg.max_nested_function_lines
         && !m.parent_is_test_callback
         && !skipped_capture
+}
+
+/// A factory's product: the parent returns it (`return inner`, `return { inner }`).
+fn returned_by_parent(m: &FunctionUnit, metrics: &[FunctionUnit]) -> bool {
+    metrics
+        .iter()
+        .any(|parent| parent.name == m.parent && parent.returned_names.contains(&m.name))
 }
 
 fn heavy_nested_function(

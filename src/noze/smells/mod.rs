@@ -14,8 +14,10 @@ mod exclusive_paths;
 mod external_vocab;
 mod fixture_echo;
 mod graphy;
+mod implicit_schema;
 mod inherit;
 mod lines;
+mod loose_fields;
 mod magic_string;
 mod mock_modules;
 mod mocked_subject;
@@ -205,6 +207,9 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
         cfg,
         &mut out,
     );
+    if cfg.is_enabled(SmellKind::LooseTyping) {
+        loose_fields::detect(&ctx, classes, cfg, &mut out);
+    }
     mutation::detect(&ctx, metrics, cfg, &mut out);
     fixture_echo::detect(&ctx, metrics, cfg, &mut out);
     name_promise::detect(&ctx, metrics, cfg, &mut out);
@@ -292,11 +297,19 @@ mod discipline_tests;
 #[cfg(test)]
 mod line_anchor_tests;
 #[cfg(test)]
+mod literal_membership_tests;
+#[cfg(test)]
 mod loop_frame_tests;
+#[cfg(test)]
+mod loose_typing_tests;
+#[cfg(test)]
+mod magic_string_sink_tests;
 #[cfg(test)]
 mod magic_string_tests;
 #[cfg(test)]
 mod message_chain_tests;
+#[cfg(test)]
+mod mutated_parameter_tests;
 #[cfg(test)]
 mod name_promise_tests;
 #[cfg(test)]
@@ -305,6 +318,8 @@ mod nested_if_tests;
 mod nested_ternary_tests;
 #[cfg(test)]
 mod performance_tests;
+#[cfg(test)]
+mod repeated_iteration_tests;
 #[cfg(test)]
 mod swallowed_error_tests;
 #[cfg(test)]

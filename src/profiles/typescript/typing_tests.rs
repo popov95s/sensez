@@ -49,8 +49,8 @@ export function f(m: Map<string, any>): void {}
     assert_eq!(symbols, vec!["anyBag", "readProp", "withOverrides", "f"]);
     let read_prop = &findings[1];
     assert_eq!(
-        read_prop.metric, 2,
-        "param and return: {}",
+        read_prop.metric, 1,
+        "object param only, the unknown return waits for high: {}",
         read_prop.message
     );
 }

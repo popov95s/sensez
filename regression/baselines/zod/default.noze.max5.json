@@ -372,15 +372,17 @@
       "divergent_change": 7,
       "feature_envy": 5,
       "fixture_echo_assertion": 7,
-      "heavy_nested_function": 3,
+      "heavy_nested_function": 13,
       "large_class": 2,
-      "loose_typing": 81,
+      "literal_membership": 4,
+      "loose_typing": 82,
       "magic_string_default": 4,
       "message_chain": 1,
-      "mutated_parameter": 3,
+      "mutated_parameter": 2,
       "narrating_code": 3,
       "nested_loop": 26,
       "nested_ternary": 8,
+      "repeated_iteration": 1,
       "shotgun_surgery_hazard": 3,
       "sibling_helper_redefinition": 94,
       "swallowed_error_sentinel": 1,
@@ -392,7 +394,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 558,
+    "smells_total": 573,
     "source_lines": 72099
   },
   "smells": [
@@ -408,13 +410,26 @@
     },
     {
       "action": "advisory",
-      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "file": "<zod>/packages/zod/src/v3/ZodError.ts",
       "kind": "heavy_nested_function",
-      "line": 2951,
-      "message": "nested function inside `_parse` spans 26 lines and reads `_parse`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
-      "metric": 26,
-      "symbol": "handleResults",
+      "line": 224,
+      "message": "nested function inside `format` spans 37 lines and reads `format`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 37,
+      "symbol": "processError",
       "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v3/types.ts",
+      "kind": "literal_membership",
+      "line": 1605,
+      "lines": [
+        1605
+      ],
+      "message": "1 membership test(s) against literal string lists at L1605 \u2014 stringly-typed categories; consider a string-literal union or `as const` object",
+      "metric": 1,
+      "symbol": "isFinite",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -613,12 +628,12 @@
     },
     {
       "action": "advisory",
-      "file": "<zod>/packages/zod/src/v4/core/core.ts",
+      "file": "<zod>/packages/zod/src/v4/core/errors.ts",
       "kind": "heavy_nested_function",
-      "line": 22,
-      "message": "nested function inside `$constructor` spans 30 lines and reads `$constructor`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
-      "metric": 30,
-      "symbol": "init",
+      "line": 349,
+      "message": "nested function inside `treeifyError` spans 41 lines and reads `treeifyError`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 41,
+      "symbol": "processError",
       "threshold": 15
     },
     {
@@ -654,6 +669,19 @@
     {
       "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "literal_membership",
+      "line": 52,
+      "lines": [
+        52
+      ],
+      "message": "1 membership test(s) against literal string lists at L52 \u2014 stringly-typed categories; consider a string-literal union or `as const` object",
+      "metric": 1,
+      "symbol": "regexes.map callback",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
       "kind": "type_escape_cast",
       "line": 634,
       "lines": [
@@ -671,6 +699,52 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "heavy_nested_function",
+      "line": 1990,
+      "message": "nested function inside `core.$constructor(\"$ZodObjectJIT\") callback` spans 102 lines and reads `core.$constructor(\"$ZodObjectJIT\") callback`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 102,
+      "symbol": "generateFastpass",
+      "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "heavy_nested_function",
+      "line": 367,
+      "message": "nested function inside `finalize` spans 81 lines and reads `finalize`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
+      "metric": 81,
+      "symbol": "flattenRef",
+      "threshold": 15
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "literal_membership",
+      "line": 386,
+      "lines": [
+        386
+      ],
+      "message": "1 membership test(s) against literal string lists at L386 \u2014 stringly-typed categories; consider a string-literal union or `as const` object",
+      "metric": 1,
+      "symbol": "flattenRef",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
+      "kind": "literal_membership",
+      "line": 546,
+      "lines": [
+        546
+      ],
+      "message": "1 membership test(s) against literal string lists at L546 \u2014 stringly-typed categories; consider a string-literal union or `as const` object",
+      "metric": 1,
+      "symbol": "isTransforming",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
       "kind": "sibling_helper_redefinition",
       "line": 5,
@@ -678,16 +752,6 @@
       "metric": 37,
       "symbol": "error",
       "threshold": 2
-    },
-    {
-      "action": "advisory",
-      "file": "<zod>/packages/zod/src/v4/locales/lt.ts",
-      "kind": "heavy_nested_function",
-      "line": 100,
-      "message": "nested function inside `error` spans 17 lines and reads `error`'s locals \u2014 extract with explicit parameters so it can be tested on its own",
-      "metric": 17,
-      "symbol": "getSizing",
-      "threshold": 15
     },
     {
       "action": "warning",
@@ -913,7 +977,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
       "kind": "mutated_parameter",
-      "line": 278,
+      "line": 279,
+      "lines": [
+        279
+      ],
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "register",
@@ -992,7 +1059,7 @@
       "file": "<zod>/packages/zod/src/v4/core/regexes.ts",
       "kind": "magic_string_default",
       "line": 70,
-      "message": "1 fallback string sentinel(s) (first: `\":\"` stored or sent at line 70) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "message": "1 fallback string sentinel(s) (first: `\":\"` passed to `escapeRegex` at line 70) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
       "metric": 1,
       "symbol": "mac",
       "threshold": 0
@@ -1006,6 +1073,16 @@
       "metric": 3,
       "symbol": "timeSource",
       "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "heavy_nested_function",
+      "line": 218,
+      "message": "nested function inside `core.$constructor(\"$ZodType\") callback` spans 43 lines \u2014 not a simple wrapper; it cannot be unit-tested in isolation (only reachable through `core.$constructor(\"$ZodType\") callback`), so extract it to module/class level",
+      "metric": 43,
+      "symbol": "runChecks",
+      "threshold": 15
     },
     {
       "action": "warning",
@@ -1025,20 +1102,10 @@
       "lines": [
         4470
       ],
-      "message": "attribute chain depth 5 (threshold 4) at L4470 \u2014 Law of Demeter",
+      "message": "attribute chain depth 5 (threshold 4) at L4470 \u2014 Law of Demeter; if `inst` is plain data or config, add it to `ignore_roots`",
       "metric": 5,
       "symbol": "parse",
       "threshold": 4
-    },
-    {
-      "action": "warning",
-      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
-      "kind": "mutated_parameter",
-      "line": 1856,
-      "message": "mutates input parameter(s) [proms] \u2014 caller-visible side effect; return a new value instead",
-      "metric": 1,
-      "symbol": "handleCatchall",
-      "threshold": 0
     },
     {
       "action": "warning",
@@ -1049,6 +1116,16 @@
       "metric": 3,
       "symbol": "parse",
       "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/schemas.ts",
+      "kind": "repeated_iteration",
+      "line": 2003,
+      "message": "`normalized.keys` is iterated 2 times in this scope (lines 2003, 2009: for-of); combine the work or use a bulk operation.",
+      "metric": 2,
+      "symbol": "generateFastpass",
+      "threshold": 1
     },
     {
       "action": "warning",
@@ -1113,7 +1190,10 @@
       "action": "warning",
       "file": "<zod>/packages/zod/src/v4/mini/schemas.ts",
       "kind": "mutated_parameter",
-      "line": 77,
+      "line": 78,
+      "lines": [
+        78
+      ],
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "",
@@ -1124,7 +1204,7 @@
       "file": "<zod>/scripts/write-stub-package-jsons.ts",
       "kind": "magic_string_default",
       "line": 38,
-      "message": "1 fallback string sentinel(s) (first: `\".\"` stored or sent at line 38) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
+      "message": "1 fallback string sentinel(s) (first: `\".\"` passed to `push` at line 38) \u2014 hidden sentinel values like `?? \"\"` / `|| \"\"`; pass `undefined`/`null` through or reject the missing value",
       "metric": 1,
       "symbol": "findIndexJsFiles",
       "threshold": 0

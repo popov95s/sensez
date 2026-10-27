@@ -27,6 +27,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         ..Default::default()
     };
     unit.is_constructor = is_method && unit.name == "__init__";
+    unit.visibility = symbols::visibility(&unit.name);
     if !is_method {
         unit.review_risks.forwards_to =
             super::risk_facts::forward_target(func, src, &unit.param_names);

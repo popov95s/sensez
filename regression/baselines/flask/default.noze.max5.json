@@ -211,9 +211,9 @@
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
       "literal_membership": 4,
-      "loose_typing": 95,
-      "magic_string_default": 3,
-      "mutated_parameter": 3,
+      "loose_typing": 122,
+      "magic_string_default": 4,
+      "mutated_parameter": 17,
       "n_plus_one_call": 1,
       "name_promise_mismatch": 1,
       "nested_loop": 6,
@@ -227,7 +227,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 148,
+    "smells_total": 190,
     "source_lines": 18315
   },
   "smells": [
@@ -509,7 +509,7 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "magic_string_default",
       "line": 546,
-      "message": "1 fallback string sentinel(s) (first: `\"\"` used at line 546) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"\"` stored in `subdomain` at line 546) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "create_url_adapter",
       "threshold": 0
@@ -518,10 +518,42 @@
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
       "kind": "mutated_parameter",
-      "line": 590,
+      "line": 1213,
+      "lines": [
+        1213
+      ],
+      "message": "mutates input parameter(s) [values] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "url_for",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "mutated_parameter",
+      "line": 616,
+      "lines": [
+        616,
+        618
+      ],
       "message": "mutates input parameter(s) [context] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "update_template_context",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "mutated_parameter",
+      "line": 739,
+      "lines": [
+        739,
+        740,
+        741
+      ],
+      "message": "mutates input parameter(s) [options] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "run",
       "threshold": 0
     },
     {
@@ -609,9 +641,35 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "magic_string_default",
       "line": 1081,
-      "message": "1 fallback string sentinel(s) (first: `\"\"` used at line 1081) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"\"` passed to `append` at line 1081) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "routes_command",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "mutated_parameter",
+      "line": 420,
+      "lines": [
+        420
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "command",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "mutated_parameter",
+      "line": 436,
+      "lines": [
+        436
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "group",
       "threshold": 0
     },
     {
@@ -643,16 +701,6 @@
       "metric": 1,
       "symbol": "from_prefixed_env",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/debughelpers.py",
-      "kind": "magic_string_default",
-      "line": 159,
-      "message": "1 fallback string sentinel(s) (first: `\"<string>\"` used at line 159) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "explain_template_loading_attempts",
-      "threshold": 0
     },
     {
       "action": "warning",
@@ -716,11 +764,21 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/sansio/blueprints.py",
-      "kind": "mutated_parameter",
-      "line": 380,
-      "message": "mutates input parameter(s) [parent_dict] \u2014 caller-visible side effect; return a new value instead",
+      "kind": "magic_string_default",
+      "line": 302,
+      "message": "1 fallback string sentinel(s) (first: `\"\"` stored in `name_prefix` at line 302) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
-      "symbol": "extend",
+      "symbol": "register",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "magic_string_default",
+      "line": 80,
+      "message": "1 fallback string sentinel(s) (first: `\"\"` stored in `self.name_prefix` at line 80) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "symbol": "__init__",
       "threshold": 0
     },
     {
@@ -732,16 +790,6 @@
       "metric": 5,
       "symbol": "Scaffold",
       "threshold": 1
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/testing.py",
-      "kind": "mutated_parameter",
-      "line": 193,
-      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
-      "metric": 1,
-      "symbol": "_request_from_builder_args",
-      "threshold": 0
     },
     {
       "action": "warning",

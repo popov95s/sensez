@@ -7,7 +7,7 @@ from ..mcp_client import McpClient, text_json
 
 @dataclass(frozen=True)
 class ReportFields:
-    values: dict[str, object]
+    values: dict[str, int]
 
     def contains(self, key: str) -> bool:
         return key in self.values

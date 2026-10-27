@@ -241,9 +241,9 @@
       "heavy_nested_function": 1,
       "high_cognitive_complexity": 8,
       "literal_membership": 4,
-      "loose_typing": 95,
-      "magic_string_default": 3,
-      "mutated_parameter": 3,
+      "loose_typing": 122,
+      "magic_string_default": 4,
+      "mutated_parameter": 17,
       "n_plus_one_call": 1,
       "name_promise_mismatch": 1,
       "nested_loop": 6,
@@ -257,7 +257,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 148,
+    "smells_total": 190,
     "source_lines": 18315
   },
   "smells": [
@@ -574,6 +574,16 @@
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
       "kind": "loose_typing",
+      "line": 1102,
+      "message": "params [values: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "url_for",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "loose_typing",
       "line": 590,
       "message": "params [context: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
@@ -588,6 +598,16 @@
       "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "make_shell_context",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "loose_typing",
+      "line": 632,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "run",
       "threshold": 0
     },
     {
@@ -615,7 +635,7 @@
       "file": "<flask>/src/flask/app.py",
       "kind": "magic_string_default",
       "line": 546,
-      "message": "1 fallback string sentinel(s) (first: `\"\"` used at line 546) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"\"` stored in `subdomain` at line 546) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "create_url_adapter",
       "threshold": 0
@@ -624,10 +644,42 @@
       "action": "warning",
       "file": "<flask>/src/flask/app.py",
       "kind": "mutated_parameter",
-      "line": 590,
+      "line": 1213,
+      "lines": [
+        1213
+      ],
+      "message": "mutates input parameter(s) [values] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "url_for",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "mutated_parameter",
+      "line": 616,
+      "lines": [
+        616,
+        618
+      ],
       "message": "mutates input parameter(s) [context] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "update_template_context",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "mutated_parameter",
+      "line": 739,
+      "lines": [
+        739,
+        740,
+        741
+      ],
+      "message": "mutates input parameter(s) [options] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "run",
       "threshold": 0
     },
     {
@@ -774,6 +826,26 @@
       "action": "warning",
       "file": "<flask>/src/flask/cli.py",
       "kind": "loose_typing",
+      "line": 563,
+      "message": "params [extra: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
+      "line": 657,
+      "message": "params [extra: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "make_context",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "loose_typing",
       "line": 791,
       "message": "params [value: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 2,
@@ -805,9 +877,63 @@
       "file": "<flask>/src/flask/cli.py",
       "kind": "magic_string_default",
       "line": 1081,
-      "message": "1 fallback string sentinel(s) (first: `\"\"` used at line 1081) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "message": "1 fallback string sentinel(s) (first: `\"\"` passed to `append` at line 1081) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
       "metric": 1,
       "symbol": "routes_command",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "mutated_parameter",
+      "line": 420,
+      "lines": [
+        420
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "command",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "mutated_parameter",
+      "line": 436,
+      "lines": [
+        436
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "group",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "mutated_parameter",
+      "line": 572,
+      "lines": [
+        572,
+        583,
+        585
+      ],
+      "message": "mutates input parameter(s) [extra] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/cli.py",
+      "kind": "mutated_parameter",
+      "line": 670,
+      "lines": [
+        670
+      ],
+      "message": "mutates input parameter(s) [extra] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "make_context",
       "threshold": 0
     },
     {
@@ -1013,16 +1139,6 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/debughelpers.py",
-      "kind": "magic_string_default",
-      "line": 159,
-      "message": "1 fallback string sentinel(s) (first: `\"<string>\"` used at line 159) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
-      "metric": 1,
-      "symbol": "explain_template_loading_attempts",
-      "threshold": 0
-    },
-    {
-      "action": "warning",
-      "file": "<flask>/src/flask/debughelpers.py",
       "kind": "nested_loop",
       "line": 153,
       "message": "helper called in a loop also iterates; combine the work or use a bulk operation.",
@@ -1063,6 +1179,16 @@
       "action": "warning",
       "file": "<flask>/src/flask/helpers.py",
       "kind": "loose_typing",
+      "line": 200,
+      "message": "params [values: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "url_for",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "loose_typing",
       "line": 304,
       "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1075,6 +1201,20 @@
       "kind": "loose_typing",
       "line": 402,
       "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "_prepare_send_file_kwargs",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/helpers.py",
+      "kind": "mutated_parameter",
+      "line": 406,
+      "lines": [
+        406,
+        408
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "_prepare_send_file_kwargs",
       "threshold": 0
@@ -1121,6 +1261,32 @@
     },
     {
       "action": "warning",
+      "file": "<flask>/src/flask/json/__init__.py",
+      "kind": "mutated_parameter",
+      "line": 43,
+      "lines": [
+        43
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "dumps",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/__init__.py",
+      "kind": "mutated_parameter",
+      "line": 73,
+      "lines": [
+        73
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "dump",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<flask>/src/flask/json/provider.py",
       "kind": "divergent_change",
       "line": 19,
@@ -1137,6 +1303,16 @@
       "message": "params [o: t.Any]; returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 2,
       "symbol": "_default",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "loose_typing",
+      "line": 138,
+      "message": "fields [default: t.Callable[[t.Any], t.Any]] \u2014 replace loose types with a dataclass or model",
+      "metric": 1,
+      "symbol": "DefaultJSONProvider",
       "threshold": 0
     },
     {
@@ -1207,6 +1383,21 @@
       "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_prepare_response_obj",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/json/provider.py",
+      "kind": "mutated_parameter",
+      "line": 176,
+      "lines": [
+        176,
+        177,
+        178
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "dumps",
       "threshold": 0
     },
     {
@@ -1543,6 +1734,36 @@
       "action": "warning",
       "file": "<flask>/src/flask/sansio/app.py",
       "kind": "loose_typing",
+      "line": 248,
+      "message": "fields [jinja_options: dict[str, t.Any], default_config: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model",
+      "metric": 2,
+      "symbol": "App",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "loose_typing",
+      "line": 570,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "register_blueprint",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "loose_typing",
+      "line": 605,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "add_url_rule",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "loose_typing",
       "line": 960,
       "message": "params [values: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1557,6 +1778,20 @@
       "message": "params [values: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "handle_url_build_error",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/app.py",
+      "kind": "mutated_parameter",
+      "line": 615,
+      "lines": [
+        615,
+        616
+      ],
+      "message": "mutates input parameter(s) [options] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "add_url_rule",
       "threshold": 0
     },
     {
@@ -1603,6 +1838,16 @@
       "action": "warning",
       "file": "<flask>/src/flask/sansio/blueprints.py",
       "kind": "loose_typing",
+      "line": 256,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "register_blueprint",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "loose_typing",
       "line": 273,
       "message": "params [options: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1632,8 +1877,65 @@
     {
       "action": "warning",
       "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "loose_typing",
+      "line": 413,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "add_url_rule",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "loose_typing",
+      "line": 87,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "add_url_rule",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "magic_string_default",
+      "line": 302,
+      "message": "1 fallback string sentinel(s) (first: `\"\"` stored in `name_prefix` at line 302) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "symbol": "register",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "magic_string_default",
+      "line": 80,
+      "message": "1 fallback string sentinel(s) (first: `\"\"` stored in `self.name_prefix` at line 80) \u2014 hidden sentinel values like `or \"\"`; prefer a tighter contract with an optional string value or a dedicated default",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
       "kind": "mutated_parameter",
-      "line": 380,
+      "line": 103,
+      "lines": [
+        103,
+        108
+      ],
+      "message": "mutates input parameter(s) [options] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "add_url_rule",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/blueprints.py",
+      "kind": "mutated_parameter",
+      "line": 386,
+      "lines": [
+        386
+      ],
       "message": "mutates input parameter(s) [parent_dict] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "extend",
@@ -1657,6 +1959,76 @@
       "message": "params [options: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_method_route",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 296,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "get",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 304,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "post",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 312,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "put",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 320,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "delete",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 328,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "patch",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 336,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "route",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/sansio/scaffold.py",
+      "kind": "loose_typing",
+      "line": 368,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "add_url_rule",
       "threshold": 0
     },
     {
@@ -1703,6 +2075,26 @@
       "action": "warning",
       "file": "<flask>/src/flask/templating.py",
       "kind": "loose_typing",
+      "line": 136,
+      "message": "params [context: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "render_template",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/templating.py",
+      "kind": "loose_typing",
+      "line": 151,
+      "message": "params [context: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "render_template_string",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/templating.py",
+      "kind": "loose_typing",
       "line": 163,
       "message": "params [context: dict[str, t.Any]] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
@@ -1713,10 +2105,53 @@
       "action": "warning",
       "file": "<flask>/src/flask/templating.py",
       "kind": "loose_typing",
+      "line": 181,
+      "message": "params [context: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "stream_template",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/templating.py",
+      "kind": "loose_typing",
+      "line": 200,
+      "message": "params [context: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "stream_template_string",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/templating.py",
+      "kind": "loose_typing",
       "line": 21,
       "message": "returns dict[str, t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "_default_template_ctx_processor",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/templating.py",
+      "kind": "loose_typing",
+      "line": 42,
+      "message": "params [options: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 1,
+      "symbol": "__init__",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/templating.py",
+      "kind": "mutated_parameter",
+      "line": 44,
+      "lines": [
+        44
+      ],
+      "message": "mutates input parameter(s) [options] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "__init__",
       "threshold": 0
     },
     {
@@ -1753,10 +2188,46 @@
       "action": "warning",
       "file": "<flask>/src/flask/testing.py",
       "kind": "mutated_parameter",
-      "line": 193,
+      "line": 196,
+      "lines": [
+        196
+      ],
       "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "_request_from_builder_args",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/testing.py",
+      "kind": "mutated_parameter",
+      "line": 296,
+      "lines": [
+        296
+      ],
+      "message": "mutates input parameter(s) [kwargs] \u2014 caller-visible side effect; return a new value instead",
+      "metric": 1,
+      "symbol": "invoke",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "loose_typing",
+      "line": 64,
+      "message": "fields [decorators: t.ClassVar[list[t.Callable[..., t.Any]]]] \u2014 replace loose types with a dataclass or model",
+      "metric": 1,
+      "symbol": "View",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/views.py",
+      "kind": "loose_typing",
+      "line": 86,
+      "message": "params [class_args: t.Any, class_kwargs: t.Any] \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
+      "metric": 2,
+      "symbol": "as_view",
       "threshold": 0
     },
     {
@@ -1777,6 +2248,16 @@
       "message": "returns t.Any \u2014 replace loose types with a dataclass or model; do not silence this with a shallow type alias",
       "metric": 1,
       "symbol": "on_json_loading_failed",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<flask>/src/flask/wrappers.py",
+      "kind": "loose_typing",
+      "line": 31,
+      "message": "fields [json_module: t.Any, view_args: dict[str, t.Any] | None] \u2014 replace loose types with a dataclass or model",
+      "metric": 2,
+      "symbol": "Request",
       "threshold": 0
     }
   ]

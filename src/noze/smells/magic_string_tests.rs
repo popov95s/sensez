@@ -65,7 +65,7 @@ fn message_names_the_sink_and_first_hit_in_typescript_syntax() {
         .expect("stored sentinel must fire");
     assert_eq!(finding.line, 2);
     assert!(
-        finding.message.contains("stored or sent"),
+        finding.message.contains("stored in `parentId`"),
         "{}",
         finding.message
     );
@@ -112,9 +112,9 @@ fn typescript_undefined_is_a_sentinel_word() {
 }
 
 #[test]
-fn python_sentinel_words_fire_without_a_classified_sink() {
+fn python_sentinel_words_fire_when_stored() {
     assert!(fires(
         "py",
-        "def label(order=None):\n    return order or \"n/a\"\n"
+        "def label(store, order=None):\n    store.save({\"label\": order or \"n/a\"})\n"
     ));
 }

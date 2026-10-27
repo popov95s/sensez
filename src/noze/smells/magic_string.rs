@@ -27,7 +27,7 @@ pub(super) fn detect(
             "{} fallback string sentinel(s) (first: `{:?}` {} at line {}) — hidden sentinel values like {}; {}",
             hits.len(),
             first.literal,
-            sink_phrase(first.sink),
+            sink_phrase(first),
             first.line,
             ctx.wording.fallback_example,
             ctx.wording.fallback_advice,
@@ -49,7 +49,10 @@ fn is_sentinel(ctx: &SmellContext<'_>, fallback: &StringFallback, strictness: St
         .iter()
         .any(|word| fallback.literal.eq_ignore_ascii_case(word))
         || is_bracketed(&fallback.literal);
-    let storing = matches!(fallback.sink, FallbackSink::Stored | FallbackSink::Compared);
+    let storing = matches!(
+        fallback.sink,
+        FallbackSink::Stored | FallbackSink::Passed | FallbackSink::Compared
+    );
     match (strictness, fallback.sink) {
         (_, FallbackSink::Unclassified) => short || wordy,
         (Strictness::Low, _) => storing && (short || wordy),
@@ -69,13 +72,18 @@ fn is_bracketed(literal: &str) -> bool {
             .any(|(open, close)| literal.starts_with(*open) && literal.ends_with(*close))
 }
 
-fn sink_phrase(sink: FallbackSink) -> &'static str {
-    match sink {
+fn sink_phrase(fallback: &StringFallback) -> String {
+    let target = &fallback.target;
+    let phrase = match fallback.sink {
+        FallbackSink::Passed if !target.is_empty() => return format!("passed to `{target}`"),
+        FallbackSink::Stored if !target.is_empty() => return format!("stored in `{target}`"),
         FallbackSink::Rendered => "rendered",
         FallbackSink::StringOp => "passed to a string operation",
-        FallbackSink::Stored => "stored or sent",
+        FallbackSink::Passed => "passed to a call",
+        FallbackSink::Stored => "stored",
         FallbackSink::Compared => "compared",
         FallbackSink::Returned => "returned",
         FallbackSink::Other | FallbackSink::Unclassified => "used",
-    }
+    };
+    phrase.to_string()
 }

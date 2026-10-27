@@ -365,11 +365,11 @@ FindingDocs {
             fixes: &[
                 LanguageBlock {
                     language: "python",
-                    body: "Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.",
+                    body: "Use a dataclass or another concrete model so callers pass named fields instead of loose keys. A mapping with a typed value such as `dict[str, int]` is reported only at high strictness. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.",
                 },
                 LanguageBlock {
                     language: "typescript",
-                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
+                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects and predicates are never reported, nor callbacks whose result is `unknown`; bare `unknown` params and returns only at high strictness. This rule reads signatures and class fields only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
                 },
             ],
         },

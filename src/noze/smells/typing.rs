@@ -58,7 +58,7 @@ fn loose_typing(
         .filter_map(|p| {
             let ty = ctx.type_hints.param_type(m, p)?;
             reportable_loose(ctx, ty, cfg.loose_typing_strictness)
-                .map(|kind| (format!("{p}: {ty}"), kind))
+                .map(|kind| (format!("{}: {ty}", shown_param(p)), kind))
         })
         .collect();
     // Tuple returns are tuple_packing's finding — don't double-report here.
@@ -102,6 +102,14 @@ fn loose_typing(
         (offenders.len() + ret.is_some() as usize) as u32,
         0,
     ));
+}
+
+/// `{ … }` for a destructured parameter, else its name.
+fn shown_param(name: &str) -> &str {
+    match name {
+        "{}" => "{ … }",
+        _ => name,
+    }
 }
 
 /// More than `max_bool_params` bool-annotated parameters.
@@ -173,18 +181,14 @@ fn reportable_return<'a>(
     ty: &'a str,
     strictness: Strictness,
 ) -> Option<(&'a str, LooseTypeKind)> {
-    if matches!(base_type(ty), "tuple" | "Tuple") {
+    if matches!(base_type(ty), "tuple" | "Tuple") || ctx.type_vocabulary.guarded_param(ty).is_some()
+    {
         return None;
     }
-    // Returning a top type hands the narrowing burden to every caller.
-    let kind = match ctx.type_vocabulary.loose_kind(ty)? {
-        LooseTypeKind::SafeTop => LooseTypeKind::SchemaErasing,
-        kind => kind,
-    };
-    reportable(kind, strictness).map(|kind| (ty, kind))
+    reportable_loose(ctx, ty, strictness).map(|kind| (ty, kind))
 }
 
-fn reportable_loose(
+pub(super) fn reportable_loose(
     ctx: &SmellContext<'_>,
     annotation: &str,
     strictness: Strictness,

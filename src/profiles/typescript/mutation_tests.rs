@@ -65,7 +65,7 @@ export function addAll(target: Set<string>, xs: string[]) {
 }
 
 #[test]
-fn private_output_parameter_is_info() {
+fn private_output_parameter_is_not_reported() {
     let body = "\
 interface Node { name: string; children: Node[] }
 function walk(node: Node, out: string[]): void {
@@ -74,10 +74,7 @@ function walk(node: Node, out: string[]): void {
 export function names(root: Node): string[] { const out: string[] = []; walk(root, out); return out; }
 ";
     let found = mutated(body);
-    assert_eq!(found.len(), 1);
-    assert_eq!(found[0].symbol, "walk");
-    assert_eq!(found[0].severity, Severity::Info);
-    assert!(found[0].message.contains("private collectors"));
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]

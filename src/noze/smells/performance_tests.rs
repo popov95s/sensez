@@ -253,7 +253,7 @@ fn js_repeated_iteration_true_positives_keep_firing() {
     for src in [
         "export function buckets(xs: X[]) { const a = xs.filter(x => x.k === \"a\"); const b = xs.filter(x => x.k === \"b\"); const c = xs.filter(x => x.k === \"c\"); return [a, b, c]; }\n",
         "export function totals(xs: X[]) { const n = xs.filter(x => x.ok).length; const s = xs.map(x => x.v).reduce((p, q) => p + q, 0); return [n, s]; }\n",
-        "export function spread(xs: X[][]) { return [xs.flatMap(x => x), xs.flatMap(x => x.slice(1))]; }\n",
+        "export function spread(xs: X[][]) { return [xs.flatMap(x => x), xs.flatMap(x => x.slice(1)), xs.flatMap(x => x.slice(2))]; }\n",
     ] {
         assert!(has(&local("ts", src), SmellKind::RepeatedIteration), "{src}");
     }
@@ -261,16 +261,16 @@ fn js_repeated_iteration_true_positives_keep_firing() {
 
 #[test]
 fn repeated_iteration_message_lists_lines_and_methods() {
-    let src = "export function buckets(xs: X[]) {\n  const a = xs.filter(x => x.k === \"a\");\n  const b = xs.filter(x => x.k === \"b\");\n  return [a, b];\n}\n";
+    let src = "export function buckets(xs: X[]) {\n  const a = xs.filter(x => x.k === \"a\");\n  const b = xs.filter(x => x.k === \"b\");\n  const c = xs.filter(x => x.k === \"c\");\n  return [a, b, c];\n}\n";
     let finding = local("ts", src)
         .into_iter()
         .find(|f| f.kind == SmellKind::RepeatedIteration)
-        .expect("partition must fire");
+        .expect("three filters must fire");
     assert_eq!(finding.line, 2);
     assert!(
         finding
             .message
-            .contains("`xs` is iterated 2 times in this scope (lines 2, 3: filter)"),
+            .contains("`xs` is iterated 3 times in this scope (lines 2, 3, 4: filter)"),
         "{}",
         finding.message
     );
@@ -278,7 +278,7 @@ fn repeated_iteration_message_lists_lines_and_methods() {
 
 #[test]
 fn include_tests_restores_assertion_passes() {
-    let src = "it(\"splits\", () => { expect(xs.filter(x => x.ok)).toHaveLength(3); expect(xs.filter(x => !x.ok)).toHaveLength(1); });\n";
+    let src = "it(\"splits\", () => { expect(xs.filter(x => x.ok).length).toBe(3); expect(xs.filter(x => !x.ok)).toHaveLength(1); });\n";
     let file = fixture::parsed("rows.test.ts", src);
     let cfg = Smells {
         repeated_iteration_include_tests: true,

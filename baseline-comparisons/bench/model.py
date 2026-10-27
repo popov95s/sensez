@@ -34,7 +34,7 @@ class SensezFindings:
     dup: int
     smells: int
     total: int
-    tiers: dict = field(default_factory=dict)  # {High,Medium,Low} counts
+    tiers: dict[str, int] = field(default_factory=dict)  # {High,Medium,Low} counts
     dead_set: set = field(default_factory=set)  # (basename, symbol)
     high_set: set = field(default_factory=set)  # (basename, symbol), High tier
 

@@ -5,6 +5,7 @@
 //! receiver so the language-neutral detectors work unchanged.
 
 use super::chains::CHAIN;
+use super::compared_defaults::ComparedDefaults;
 use super::member_visibility::{callback_position, function_visibility, method_visibility};
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
@@ -54,6 +55,7 @@ pub struct FunctionFacts {
     loop_parts: FxHashMap<usize, usize>,
     /// Parent-scope names whose read flags `captures_parent`.
     pub(super) outer_names: BoundNames,
+    compared_defaults: ComparedDefaults,
 }
 
 impl FunctionFacts {
@@ -65,6 +67,7 @@ impl FunctionFacts {
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
             param_names: param_names(func, src),
+            destructured_params: super::params::destructured_params(func, src),
             is_method,
             max_tuple_return: classunit::tuple_return_arity(&tuple_return),
             callback_position: callback_position(lineage),
@@ -100,6 +103,7 @@ impl FunctionFacts {
             frames,
             loop_parts: FxHashMap::default(),
             outer_names: BoundNames::default(),
+            compared_defaults: ComparedDefaults::start(func, src),
         }
     }
 
@@ -117,6 +121,7 @@ impl FunctionFacts {
         let frames = self.enter_loop_part(node);
 
         obsession::scan(&mut self.unit, node, src);
+        self.compared_defaults.scan(node, src);
         let frame = self.frame();
         performance::scan(&mut self.unit.performance, lineage, src, frame);
         state_writes::scan(&mut self.unit, lineage, src);
@@ -167,9 +172,9 @@ impl FunctionFacts {
                 if let Some(constructor) = returned_constructor(node, src) {
                     self.unit.returned_constructors.insert(constructor);
                 }
-                if let Some(name) = returned_name(node, src) {
-                    self.unit.returned_names.insert(name);
-                }
+                self.unit
+                    .returned_names
+                    .extend(super::returned_names::returned_names(node, src));
             }
             "number" => {
                 self.unit
@@ -193,6 +198,8 @@ impl FunctionFacts {
     }
 
     pub fn finish(mut self) -> FunctionUnit {
+        let compared = self.compared_defaults.finish();
+        self.unit.string_fallbacks.splice(0..0, compared);
         state_writes::drop_locals(&mut self.unit);
         self.unit
     }
@@ -294,11 +301,6 @@ fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
         .child_by_field_name("property")
         .and_then(|method| method.utf8_text(src).ok())
         .map(str::to_string)
-}
-
-fn returned_name(node: Node<'_>, src: &[u8]) -> Option<String> {
-    let value = node.named_child(0).filter(|v| v.kind() == "identifier")?;
-    value.utf8_text(src).ok().map(str::to_string)
 }
 
 fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {

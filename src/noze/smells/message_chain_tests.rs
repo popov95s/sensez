@@ -58,3 +58,18 @@ export function list() { return client.admin.billing.invoices.items.list; }
     let handwritten = generated.replace("./generated/client", "./client");
     assert_eq!(chains("ts", &handwritten, &Smells::default()), vec![5]);
 }
+
+#[test]
+fn message_names_the_root_and_the_ignore_roots_knob() {
+    let body =
+        "export function alias(config: C) { return config.vite.config.resolve.alias.root; }\n";
+    let finding = detect_local(&fixture::parsed("chain.ts", body), &Smells::default())
+        .into_iter()
+        .find(|f| f.kind == SmellKind::MessageChain)
+        .expect("deep chain fires");
+    assert!(
+        finding.message.contains("`config`") && finding.message.contains("ignore_roots"),
+        "{}",
+        finding.message
+    );
+}

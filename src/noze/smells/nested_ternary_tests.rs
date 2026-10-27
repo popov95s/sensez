@@ -151,3 +151,24 @@ fn python_argument_ternary_is_a_boundary() {
     let source = "def f(a, b):\n    return g('x' if b else 'y') if a else 'z'\n";
     assert!(nested("py", source).is_none());
 }
+
+#[test]
+fn high_strictness_stops_at_jsx_and_object_boundaries() {
+    let cfg = Smells {
+        nested_ternary_strictness: Strictness::High,
+        ..Smells::default()
+    };
+    for (ext, source) in [
+        ("tsx", "export const A = (p: P) => <div>{p.open ? <Panel title={p.c > 0 ? \"Items\" : \"Empty\"} /> : null}</div>;\n"),
+        ("tsx", "export const B = (p: P) => (p.a ? <Box sx={{ px: p.c ? 0 : 2 }} /> : null);\n"),
+        ("ts", "export const c = (a: boolean, d: boolean) => (a ? { status: d ? \"d\" : \"l\" } : {});\n"),
+    ] {
+        let file = parsed("boundary", ext, source);
+        assert!(
+            detect_local(&file, &cfg)
+                .into_iter()
+                .all(|finding| finding.kind != SmellKind::NestedTernary),
+            "{source}"
+        );
+    }
+}

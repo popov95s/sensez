@@ -110,6 +110,8 @@ pub struct FunctionUnit {
     pub end_line: usize,
     /// Parameter names in order (`len()` is the parameter count).
     pub param_names: Vec<String>,
+    /// Names bound by destructured parameters (`({ items }) => …`).
+    pub destructured_params: Vec<String>,
     /// Deepest block nesting within the body (if/for/while/try/with).
     pub max_nesting: usize,
     pub return_count: usize,
@@ -146,6 +148,8 @@ pub struct FunctionUnit {
     pub own_method_calls: HashSet<String>,
     /// Receiver identifier → distinct string-literal subscript keys (`cfg["host"]`).
     pub str_keys: HashMap<String, HashSet<String>>,
+    /// Receiver identifier → keys destructured from it (`const { a, b } = recv`).
+    pub destructured_keys: HashMap<String, HashSet<String>>,
     /// Receiver identifier → line of its first string-literal subscript.
     pub str_key_lines: HashMap<String, usize>,
     /// Direct helper calls with identifier arguments.
@@ -162,6 +166,8 @@ pub struct FunctionUnit {
     pub attr_mutated_names: HashSet<String>,
     /// Identifiers mutated by a known method call, with the mutator family.
     pub method_mutations: HashSet<(String, MutatorFamily)>,
+    /// Root name and line of every recorded mutation.
+    pub mutation_lines: Vec<(String, usize)>,
     /// Largest arity among bare tuple returns (`return a, b, c`).
     pub max_tuple_return: usize,
     /// `x in ["a", "b", ...]` tests against a literal collection of strings.

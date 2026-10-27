@@ -39,7 +39,7 @@ fn collect_params(params: Node, src: &[u8], func: &FunctionKey, hints: &mut Type
         }
         let pname = p
             .child_by_field_name("name")
-            .or_else(|| first_identifier(p))
+            .or_else(|| param_identifier(p))
             .and_then(|n| n.utf8_text(src).ok());
         let ptype = type_text(p.child_by_field_name("type"), src);
         if let (Some(pname), Some(ptype)) = (pname, ptype) {
@@ -132,10 +132,15 @@ pub(super) fn type_text(node: Option<Node>, src: &[u8]) -> Option<String> {
         .filter(|s| !s.is_empty())
 }
 
-fn first_identifier(node: Node) -> Option<Node> {
+/// The name of a parameter node, looking through `*args` / `**options` patterns.
+pub(super) fn param_identifier(node: Node) -> Option<Node> {
     let mut cursor = node.walk();
     let found = node
         .children(&mut cursor)
-        .find(|c| c.kind() == "identifier");
+        .find_map(|child| match child.kind() {
+            "identifier" => Some(child),
+            "list_splat_pattern" | "dictionary_splat_pattern" => param_identifier(child),
+            _ => None,
+        });
     found
 }

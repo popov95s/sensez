@@ -2,9 +2,11 @@
 //! single body walk in [`super::units`] (no second traversal). Collects raw
 //! structure only — thresholds and severity live in `noze::smells`.
 
+use super::fallback_sink::fallback_sink;
+use super::membership;
 use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
 use crate::profiles::walk::{self, MutationTarget};
-use crate::spine::ir::{FallbackSink, FunctionUnit, LiteralMembership, SchemaCall};
+use crate::spine::ir::{FunctionUnit, SchemaCall};
 use tree_sitter::Node;
 
 const GUARD_SYNTAX: GuardSyntax = GuardSyntax {
@@ -48,6 +50,8 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
             }
         }
         "call" => {
+            record_get_key(unit, node, src);
+            record_get_default(unit, node, src);
             record_schema_call(unit, node, src);
             record_mutating_call(unit, node, src);
         }
@@ -61,8 +65,12 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         }
         "comparison_operator" => unit
             .literal_memberships
-            .extend(literal_membership(node, src)),
-        "boolean_operator" => record_boolean_fallback(unit, node, src),
+            .extend(membership::literal_membership(node, src)),
+        "boolean_operator" => {
+            record_boolean_fallback(unit, node, src);
+            unit.literal_memberships
+                .extend(membership::or_chain(node, src));
+        }
         "conditional_expression" => record_conditional_fallback(unit, node, src),
         _ => {}
     }
@@ -118,9 +126,65 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     walk::record_string_fallback(
         unit,
         string_literal_text(right, src),
-        FallbackSink::Unclassified,
+        fallback_sink(node, src),
         right.start_position().row + 1,
     );
+}
+
+/// `recv.get("key")` — the key counts toward `recv`'s implicit schema.
+fn record_get_key(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let Some(function) = node
+        .child_by_field_name("function")
+        .filter(|function| attribute_name(*function, src) == Some("get"))
+    else {
+        return;
+    };
+    let recv = function
+        .child_by_field_name("object")
+        .filter(|object| object.kind() == "identifier")
+        .and_then(|object| object.utf8_text(src).ok());
+    let key = node
+        .child_by_field_name("arguments")
+        .and_then(|args| args.named_child(0))
+        .filter(|key| key.kind() == "string")
+        .and_then(|key| string_literal_text(key, src));
+    if let (Some(recv), Some(key)) = (recv, key) {
+        unit.str_keys
+            .entry(recv.to_string())
+            .or_default()
+            .insert(key);
+        walk::record_str_key_line(unit, recv, node.start_position().row + 1);
+    }
+}
+
+/// `d.get("k", "")` / `getattr(o, "k", "")` — the string default stands in for a missing value.
+fn record_get_default(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let (Some(function), Some(arguments)) = (
+        node.child_by_field_name("function"),
+        node.child_by_field_name("arguments"),
+    ) else {
+        return;
+    };
+    let default_index = match function.kind() {
+        "attribute" if attribute_name(function, src) == Some("get") => 1,
+        "identifier" if function.utf8_text(src).ok() == Some("getattr") => 2,
+        _ => return,
+    };
+    let Some(default) = arguments.named_child(default_index) else {
+        return;
+    };
+    walk::record_string_fallback(
+        unit,
+        string_literal_text(default, src),
+        fallback_sink(node, src),
+        default.start_position().row + 1,
+    );
+}
+
+fn attribute_name<'a>(attribute: Node, src: &'a [u8]) -> Option<&'a str> {
+    attribute
+        .child_by_field_name("attribute")
+        .and_then(|name| name.utf8_text(src).ok())
 }
 
 /// `value if value else "?"` or `"?" if value is None else value` — Python leaves
@@ -139,7 +203,7 @@ fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) 
     walk::record_string_fallback(
         unit,
         string_literal_text(fallback, src),
-        FallbackSink::Unclassified,
+        fallback_sink(node, src),
         fallback.start_position().row + 1,
     );
 }
@@ -248,38 +312,4 @@ fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
         }
         _ => None,
     }
-}
-
-/// `x in ["a", "b"]` — an `in`/`not in` test against a literal collection
-/// whose elements are all strings.
-fn literal_membership(node: Node, src: &[u8]) -> Option<LiteralMembership> {
-    let has_in = node
-        .children(&mut node.walk())
-        .any(|c| matches!(c.kind(), "in" | "not in"));
-    if !has_in {
-        return None;
-    }
-    let rhs = node.named_child(node.named_child_count().saturating_sub(1))?;
-    if !matches!(rhs.kind(), "list" | "tuple" | "set") || rhs.named_child_count() == 0 {
-        return None;
-    }
-    let mut cursor = rhs.walk();
-    let elements: Vec<Node> = rhs.named_children(&mut cursor).collect();
-    if !elements.iter().all(|e| e.kind() == "string") {
-        return None;
-    }
-    let operand = node
-        .named_child(0)
-        .filter(|lhs| matches!(lhs.kind(), "identifier" | "attribute"))
-        .and_then(|lhs| lhs.utf8_text(src).ok())
-        .map(str::to_string);
-    Some(LiteralMembership {
-        line: node.start_position().row + 1,
-        operand,
-        literals: elements
-            .iter()
-            .filter_map(|e| e.utf8_text(src).ok())
-            .map(|t| t.trim_matches(['"', '\'']).to_string())
-            .collect(),
-    })
 }

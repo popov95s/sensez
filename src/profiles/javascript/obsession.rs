@@ -61,8 +61,12 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         }
         "unary_expression" => record_delete(unit, node, src),
         "call_expression" => record_call(unit, node, src),
-        "binary_expression" => record_binary_fallback(unit, node, src),
+        "binary_expression" => {
+            record_binary_fallback(unit, node, src);
+            membership::record_or_chain(unit, node, src);
+        }
         "ternary_expression" => record_ternary_fallback(unit, node, src),
+        "variable_declarator" => record_destructured_keys(unit, node, src),
         _ => {}
     }
 }
@@ -131,6 +135,32 @@ fn template_string_body(text: &str) -> Option<String> {
     Some(text.strip_prefix('`')?.strip_suffix('`')?.to_string())
 }
 
+/// `const { a, b: c, d = 1 } = recv` — each key read off `recv`.
+fn record_destructured_keys(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let (Some(pattern), Some(recv)) = (
+        node.child_by_field_name("name")
+            .filter(|name| name.kind() == "object_pattern"),
+        node.child_by_field_name("value")
+            .filter(|value| value.kind() == "identifier")
+            .and_then(|value| value.utf8_text(src).ok()),
+    ) else {
+        return;
+    };
+    let mut cursor = pattern.walk();
+    for property in pattern.named_children(&mut cursor) {
+        let key = match property.kind() {
+            "shorthand_property_identifier_pattern" => Some(property),
+            "pair_pattern" => property.child_by_field_name("key"),
+            "object_assignment_pattern" => property.child_by_field_name("left"),
+            _ => None,
+        };
+        if let Some(key) = key.and_then(|key| key.utf8_text(src).ok()) {
+            record_attr(&mut unit.destructured_keys, recv, key);
+            walk::record_str_key_line(unit, recv, node.start_position().row + 1);
+        }
+    }
+}
+
 /// `recv["key"]` — record the distinct string-literal key per receiver.
 fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let recv = node
@@ -170,17 +200,22 @@ fn record_delete(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     if !is_delete {
         return;
     }
-    if let Some(arg) = node
+    let target = node
         .child_by_field_name("argument")
-        .filter(|a| matches!(a.kind(), "subscript_expression" | "member_expression"))
-    {
-        record_root(unit, arg, src);
+        .and_then(|arg| match arg.kind() {
+            "subscript_expression" => Some(arg),
+            "member_expression" => arg.child_by_field_name("object"),
+            _ => None,
+        });
+    if let Some(target) = target {
+        record_root(unit, target, src);
     }
 }
 
 /// `x.push(...)` (mutating call) and `["a","b"].includes(y)` (literal membership).
 fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     record_schema_call(unit, node, src);
+    record_object_assign(unit, node, src);
     let Some(func) = node
         .child_by_field_name("function")
         .filter(|f| f.kind() == "member_expression")
@@ -206,17 +241,34 @@ fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     }
 }
 
+/// `Object.assign(target, …)` mutates `target`.
+fn record_object_assign(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
+    let is_assign = node
+        .child_by_field_name("function")
+        .and_then(|function| function.utf8_text(src).ok())
+        == Some("Object.assign");
+    let target = node
+        .child_by_field_name("arguments")
+        .and_then(|args| args.named_child(0));
+    if let Some(target) = target.filter(|_| is_assign) {
+        record_root(unit, target, src);
+    }
+}
+
 fn record_method_mutation(
     unit: &mut FunctionUnit,
     object: Node,
     src: &[u8],
     family: MutatorFamily,
 ) {
+    let line = object.start_position().row + 1;
     match target_root(object, src) {
         Some(MutationTarget::ViaAttribute(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.attr_mutated_names.insert(root);
         }
         Some(MutationTarget::Direct(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.method_mutations.insert((root, family));
         }
         None => {}

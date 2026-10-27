@@ -31,6 +31,8 @@ pub struct SmellWording {
     /// Test file name affixes around the subject's name (`mocked_subject`).
     pub test_file_prefix: &'static str,
     pub test_file_suffix: &'static str,
+    /// Accessors that read a markup tag name (`literal_membership`).
+    pub markup_names: &'static [&'static str],
     /// Mutators counted as writes on top of the shared list (`name_promise_mismatch`).
     pub write_methods: &'static [&'static str],
     /// Sigils that mark a private name, skipped before a read prefix (`name_promise_mismatch`).

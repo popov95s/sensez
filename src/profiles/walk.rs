@@ -9,7 +9,7 @@ use crate::profiles::comments;
 use crate::profiles::lexeme::BoundNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 use crate::spine::ir::{
-    bump, record_attr, CommentSpan, FallbackSink, FunctionUnit, StringFallback, SymbolKind, Walked,
+    bump, record_attr, CommentSpan, FallbackSite, FunctionUnit, StringFallback, SymbolKind, Walked,
 };
 use std::collections::HashSet;
 use tree_sitter::Node;
@@ -230,11 +230,14 @@ pub(crate) fn record_mutation_root(
     src: &[u8],
     target_root: TargetRootFn,
 ) {
+    let line = node.start_position().row + 1;
     match target_root(node, src) {
         Some(MutationTarget::ViaAttribute(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.attr_mutated_names.insert(root);
         }
         Some(MutationTarget::Direct(root)) => {
+            unit.mutation_lines.push((root.clone(), line));
             unit.mutated_names.insert(root);
         }
         None => {}
@@ -250,14 +253,15 @@ pub(crate) fn record_str_key_line(unit: &mut FunctionUnit, recv: &str, line: usi
 pub(crate) fn record_string_fallback(
     unit: &mut FunctionUnit,
     literal: Option<String>,
-    sink: FallbackSink,
+    site: FallbackSite,
     line: usize,
 ) {
     if let Some(literal) = literal {
         unit.string_fallbacks.push(StringFallback {
             line,
             literal,
-            sink,
+            sink: site.sink,
+            target: site.target,
         });
     }
 }

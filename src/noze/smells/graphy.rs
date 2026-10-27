@@ -177,18 +177,19 @@ fn god_module(
     let hub = ca >= cfg.god_module_min_fan_in
         && ce >= cfg.god_module_min_fan_out
         && fan >= cfg.god_module_fan;
-    let sizeable = size.lines >= cfg.god_module_min_lines || size.units >= cfg.god_module_min_units;
+    let sizeable = size.units >= cfg.god_module_min_units
+        || (size.units > 0 && size.lines >= cfg.god_module_min_lines);
     if !cfg.is_enabled(SmellKind::GodModule) || !hub || !sizeable {
         return None;
     }
     Some(make(
         SmellKind::GodModule,
         format!(
-            "fan-in {ca} + fan-out {ce} = {fan} (threshold {})",
+            "fan-in {ca} + fan-out {ce} = {fan} (threshold {}) — split it by responsibility so each importer depends on the smaller piece it uses",
             cfg.god_module_fan
         ),
         &node.file_path,
-        0,
+        1,
         &node.module_name,
         Severity::Warning,
         fan as u32,

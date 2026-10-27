@@ -195,7 +195,7 @@ max_bool_params = 2 # allowed boolean parameters before flagging
 
 **What it is**
 
-Branching on membership in a literal string list — stringly-typed categories; use a closed type (enum or literal union).
+Branching on membership in a literal string list, or on three or more `===`/`==` string comparisons of one value joined by `||`/`or` — stringly-typed categories; use a closed type (enum or literal union). Punctuation sets and markup tag names are outside vocabularies and stay quiet.
 
 **Why it's bad**
 
@@ -331,7 +331,7 @@ A sentinel string hides the real optionality of the value.
 
     === "Medium"
 
-        Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.
+        Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations, including coercions such as `Number(..)` and lookups such as `map.get(..)`.
 
         **Problem**
 
@@ -411,7 +411,7 @@ A sentinel string hides the real optionality of the value.
 
     === "Medium"
 
-        Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.
+        Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations, including coercions such as `Number(..)` and lookups such as `map.get(..)`.
 
         **Problem**
 
@@ -490,7 +490,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     strictness = "medium"
     ```
 
-    Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.
+    Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations, including coercions such as `Number(..)` and lookups such as `map.get(..)`.
 
 === "High"
 
@@ -1206,7 +1206,7 @@ Nested conditional expressions force readers to mentally match several condition
 
     === "High"
 
-        Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.
+        Also flags conditionals nested inside a call argument or template of another; JSX elements and object literals end the nesting.
 
         **Problem**
 
@@ -1274,7 +1274,7 @@ Nested conditional expressions force readers to mentally match several condition
 
     === "High"
 
-        Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.
+        Also flags conditionals nested inside a call argument or template of another; JSX elements and object literals end the nesting.
 
         **Problem**
 
@@ -1328,7 +1328,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     strictness = "high"
     ```
 
-    Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.
+    Also flags conditionals nested inside a call argument or template of another; JSX elements and object literals end the nesting.
 
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -1539,7 +1539,7 @@ action = "warning"
 
 **What it is**
 
-A sizeable module that many modules depend on and that itself depends on many internal modules at runtime (high centrality) — a coupling and change-risk hotspot; split its responsibilities.
+A sizeable module with its own functions or classes that many modules depend on and that itself depends on many internal modules at runtime (high centrality) — a coupling and change-risk hotspot; split its responsibilities. A composition root of imports and one data object is not one.
 
 **Why it's bad**
 
@@ -3421,7 +3421,7 @@ min_keys = 4 # string keys on one object before implicit-schema risk
 
 **What it is**
 
-A public signature leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract. Casts inside a body belong to `type_escape_cast`.
+A public signature or class field leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract. Casts inside a body belong to `type_escape_cast`.
 
 **Why it's bad**
 
@@ -3433,7 +3433,7 @@ Weak types make invalid states look valid until runtime.
 
     === "Low"
 
-        Flags only direct escape hatches.
+        Flags only direct escape hatches (`any`, `Any`, `as any` casts).
 
         **Problem**
 
@@ -3449,7 +3449,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
+        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. A mapping with a typed value such as `dict[str, int]` is reported only at high strictness. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
 
         ```python
         from dataclasses import dataclass
@@ -3470,7 +3470,7 @@ Weak types make invalid states look valid until runtime.
 
     === "Medium"
 
-        Flags escape hatches plus schema-erasing maps and records.
+        Flags escape hatches plus schema-erasing maps and records: bare `dict`, `dict[str, object]`, `Record<string, unknown>`.
 
         **Problem**
 
@@ -3486,7 +3486,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
+        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. A mapping with a typed value such as `dict[str, int]` is reported only at high strictness. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
 
         ```python
         from dataclasses import dataclass
@@ -3507,7 +3507,7 @@ Weak types make invalid states look valid until runtime.
 
     === "High"
 
-        Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.
+        Flags everything in medium, primitive-only collections and typed-value maps (`dict[str, int]`), bare `unknown` params and returns, and shallow aliases.
 
         **Problem**
 
@@ -3523,7 +3523,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
+        Use a dataclass or another concrete model so callers pass named fields instead of loose keys. A mapping with a typed value such as `dict[str, int]` is reported only at high strictness. Do not fix this by creating a shallow alias such as `UserPayload = dict[str, Any]` or `UserId = str`.
 
         ```python
         from dataclasses import dataclass
@@ -3546,7 +3546,7 @@ Weak types make invalid states look valid until runtime.
 
     === "Low"
 
-        Flags only direct escape hatches.
+        Flags only direct escape hatches (`any`, `Any`, `as any` casts).
 
         **Problem**
 
@@ -3561,7 +3561,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects and predicates are never reported, nor callbacks whose result is `unknown`; bare `unknown` params and returns only at high strictness. This rule reads signatures and class fields only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3580,7 +3580,7 @@ Weak types make invalid states look valid until runtime.
 
     === "Medium"
 
-        Flags escape hatches plus schema-erasing maps and records.
+        Flags escape hatches plus schema-erasing maps and records: bare `dict`, `dict[str, object]`, `Record<string, unknown>`.
 
         **Problem**
 
@@ -3595,7 +3595,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects and predicates are never reported, nor callbacks whose result is `unknown`; bare `unknown` params and returns only at high strictness. This rule reads signatures and class fields only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3614,7 +3614,7 @@ Weak types make invalid states look valid until runtime.
 
     === "High"
 
-        Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.
+        Flags everything in medium, primitive-only collections and typed-value maps (`dict[str, int]`), bare `unknown` params and returns, and shallow aliases.
 
         **Problem**
 
@@ -3631,7 +3631,7 @@ Weak types make invalid states look valid until runtime.
         <details class="sensez-proposed-fix" markdown="1">
         <summary>Proposed fix</summary>
 
-        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
+        Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects and predicates are never reported, nor callbacks whose result is `unknown`; bare `unknown` params and returns only at high strictness. This rule reads signatures and class fields only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.
 
         ```ts
         interface User {
@@ -3662,7 +3662,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     strictness = "low"
     ```
 
-    Flags only direct escape hatches.
+    Flags only direct escape hatches (`any`, `Any`, `as any` casts).
 
 === "Medium"
 
@@ -3673,7 +3673,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     strictness = "medium"
     ```
 
-    Flags escape hatches plus schema-erasing maps and records.
+    Flags escape hatches plus schema-erasing maps and records: bare `dict`, `dict[str, object]`, `Record<string, unknown>`.
 
 === "High"
 
@@ -3684,7 +3684,7 @@ Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
     strictness = "high"
     ```
 
-    Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.
+    Flags everything in medium, primitive-only collections and typed-value maps (`dict[str, int]`), bare `unknown` params and returns, and shallow aliases.
 
 <details class="sensez-proposed-fix" markdown="1">
 <summary>Default enabled state</summary>
@@ -5044,7 +5044,7 @@ await_in_loop = false # also flag awaited per-item calls on outside receivers
 
 **What it is**
 
-The same collection gets several full passes (map/filter/reduce-style) in one scope with nothing forcing them apart — fuse the passes so the data is scanned once.
+The same collection gets three or more passes, two loops, or two passes where one folds it (`reduce`, `sum`, `filter(..).length`), in one scope with nothing forcing them apart — fuse the passes so the data is scanned once. Field projections, rendered lists and `Set`/`Map` indexes built from a pass do not count.
 
 **Why it's bad**
 

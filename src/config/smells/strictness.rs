@@ -20,17 +20,17 @@ pub const LOOSE_TYPING_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "Low",
         value: "low",
-        description: "Flags only direct escape hatches.",
+        description: "Flags only direct escape hatches (`any`, `Any`, `as any` casts).",
     },
     StrictnessLevelDoc {
         title: "Medium",
         value: "medium",
-        description: "Flags escape hatches plus schema-erasing maps and records.",
+        description: "Flags escape hatches plus schema-erasing maps and records: bare `dict`, `dict[str, object]`, `Record<string, unknown>`.",
     },
     StrictnessLevelDoc {
         title: "High",
         value: "high",
-        description: "Flags everything in medium, primitive-only collections, bare `unknown` params, and shallow aliases.",
+        description: "Flags everything in medium, primitive-only collections and typed-value maps (`dict[str, int]`), bare `unknown` params and returns, and shallow aliases.",
     },
 ];
 
@@ -43,7 +43,7 @@ pub const MAGIC_STRING_DEFAULT_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "Medium",
         value: "medium",
-        description: "Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations.",
+        description: "Also flags empty or one-character fallbacks that are returned or kept in a variable; skips rendered text and string operations, including coercions such as `Number(..)` and lookups such as `map.get(..)`.",
     },
     StrictnessLevelDoc {
         title: "High",
@@ -61,7 +61,7 @@ pub const NESTED_TERNARY_LEVELS: &[StrictnessLevelDoc] = &[
     StrictnessLevelDoc {
         title: "High",
         value: "high",
-        description: "Also flags conditionals nested inside a call argument, template, JSX, or object literal of another.",
+        description: "Also flags conditionals nested inside a call argument or template of another; JSX elements and object literals end the nesting.",
     },
 ];
 

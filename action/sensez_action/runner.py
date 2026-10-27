@@ -3,11 +3,12 @@ from __future__ import annotations
 import json
 import subprocess
 from dataclasses import dataclass
-from typing import Any, Optional
+from typing import Optional
 
 from .config import Config
 from .context import pull_request_from_event
 from .diff import ChangedLines, changed_lines_from_git_diff
+from .findings import DuplicationReport
 
 
 class SensezError(Exception):
@@ -16,7 +17,7 @@ class SensezError(Exception):
 
 @dataclass(frozen=True)
 class ScanResult:
-    report: dict[str, Any]
+    report: DuplicationReport
     changed_lines: Optional[ChangedLines]
 
 

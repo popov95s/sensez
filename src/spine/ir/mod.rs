@@ -22,7 +22,7 @@ mod utility;
 #[cfg(feature = "eyez")]
 use crate::eyez::RawDoc;
 pub use echo::{EchoAssertion, EchoShape};
-pub use fallback::{FallbackSink, StringFallback};
+pub use fallback::{FallbackSink, FallbackSite, StringFallback};
 pub use import_context::{ImportContext, ImportPhase};
 pub use lang::Language;
 pub use loop_frame::{LoopBound, LoopFrame, LoopKind};

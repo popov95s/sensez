@@ -26,6 +26,7 @@ const TERNARY_SHAPE: TernaryShape<'static> = TernaryShape {
         "await",
     ],
     function_kinds: &["function_definition", "lambda"],
+    boundary_kinds: &["dictionary"],
 };
 
 pub(crate) fn nested_ternary(node: Node<'_>) -> Option<NestedTernary> {

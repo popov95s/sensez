@@ -74,7 +74,7 @@ fn loose_typing_skips_domain_types_and_unannotated() {
 #[test]
 fn loose_typing_handles_optional_and_union() {
     let cfg = Smells::default();
-    let body = "def f(a: Optional[dict[str, str]], b: list[int] | None):\n    return a\n";
+    let body = "def f(a: Optional[dict[str, object]], b: list[int] | None):\n    return a\n";
     let s = find(&local("lt_opt", body, &cfg), "loose_typing").expect("must flag");
     assert_eq!(s.severity, Severity::Info, "no Any → Info");
     assert_eq!(s.metric, 1, "medium catches schema-erasing dicts only");

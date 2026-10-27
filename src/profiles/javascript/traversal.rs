@@ -216,13 +216,10 @@ fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut Vi
     let lineage = Lineage::new(&ctx.path, node);
     let is_method = ctx.scope.last().is_some_and(|s| s.is_class);
     let mut collector = units::FunctionFacts::start(lineage, src, is_method);
-    let enclosed_by_fn = ctx.scope.last().is_some_and(|s| !s.is_class);
-    if enclosed_by_fn
-        && matches!(
-            kind,
-            "function_declaration" | "generator_function_declaration"
-        )
-    {
+    let parent = ctx.scope.last().filter(|s| !s.is_class);
+    if parent.is_some_and(|parent| {
+        super::local_functions::is_named_local_function(lineage, kind, &parent.name)
+    }) {
         collector.unit.is_nested = true;
         collector.unit.parent = ctx.scope.last().map(|s| s.name.clone()).unwrap_or_default();
         collector.unit.parent_is_test_callback = ctx
