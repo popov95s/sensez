@@ -52,6 +52,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  feature-builds:
+    name: feature build (${{ matrix.features }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The feature sets the npm and PyPI packages ship; see release.yml.
+        features:
+          - lang-typescript,mcp,eyez
+          - lang-python,mcp,eyez
+          - lang-rust,mcp
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Rust
+        uses: dtolnay/rust-toolchain@1.97.0
+
+      - name: Cache cargo artifacts
+        uses: Swatinem/rust-cache@v2
+        with:
+          key: features-${{ matrix.features }}
+
+      - name: Build and scan a project in every language
+        run: scripts/smoke-feature-build.sh ${{ matrix.features }}
+
   rust:
     runs-on: ubuntu-latest
 

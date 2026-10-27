@@ -16,10 +16,11 @@ pub fn default_for(lang: Language) -> Smells {
         Language::Python | Language::Rust => Smells::default(),
     };
     smells.disabled.extend(registry::default_off_smells(lang));
-    let write_methods = registry::smell_wording(lang).write_methods;
-    smells
-        .name_promise_write_methods
-        .extend(write_methods.iter().map(|method| method.to_string()));
+    smells.name_promise_write_methods.extend(
+        registry::default_write_methods(lang)
+            .iter()
+            .map(|method| method.to_string()),
+    );
     smells
 }
 
