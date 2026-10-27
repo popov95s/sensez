@@ -1246,27 +1246,46 @@ only add what is specific to your project:</p>
 <span class="n">test_sources</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/*.e2e.ts"</span><span class="p">]</span><span class="w">               </span><span class="c1"># extra test-runner globs (test roots)</span>
 <span class="n">test_support</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/testing/**"</span><span class="p">]</span><span class="w">             </span><span class="c1"># extra test-helper globs</span>
 <span class="n">orphan_modules</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span><span class="w">                        </span><span class="c1"># report modules no root reaches</span>
+<span class="n">unimported_dir_share</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">50</span><span class="w">                    </span><span class="c1"># % of a directory's modules nothing imports that marks it runtime-loaded (0 = off)</span>
 </code></pre></div>
 <p>Dead code walks the import graph from two kinds of roots:</p>
 <ul>
 <li><strong>Production roots:</strong> <code>entry_points</code> globs, manifest entries (<code>pyproject.toml</code>
   scripts, Cargo binaries and <code>lib.rs</code>, <code>package.json</code> <code>main</code> / <code>module</code> / <code>bin</code>
   / <code>exports</code>, where a <code>dist/</code>, <code>lib/</code>, <code>build/</code> or <code>out/</code> target also names its
-  <code>src/</code> twin), and tool configs such as <code>*.config.ts</code>. An entry-point file is
-  never reported, and its imports count as usage.</li>
+  <code>src/</code> twin, and source files a <code>package.json</code> <code>scripts</code> command or a
+  <code>.github/workflows</code> <code>run:</code> step runs, and JS/TS files with a shebang or a
+  top-level main guard such as <code>import.meta.main</code> or <code>require.main === module</code>), and
+  tool configs such as <code>*.config.ts</code>. An entry-point file is never reported,
+  and its imports count as usage.</li>
+<li><strong>Runtime-loaded directories:</strong> when at least <code>unimported_dir_share</code> percent
+  (default 50) of the modules under a directory, and at least five of them,
+  have no runtime importer (tests and type-only imports do not count), Sensez
+  takes the runtime to load that directory by path, as frameworks, plugin
+  folders and serverless function folders do. Those modules become production
+  roots and are not reported. Set <code>unimported_dir_share = 0</code> to turn this off.</li>
 <li><strong>Test roots:</strong> <code>test_sources</code> globs plus the profile's test files.</li>
 </ul>
 <p>A symbol that only tests import is reported at Medium with <code>reason =
 "test_only"</code>. Files matching <code>test_support</code> (JS/TS default: <code>**/e2e/**</code>,
-<code>**/test-utils/**</code>, <code>**/fixtures/**</code>, <code>**/__fixtures__/**</code>) are test helpers:
-their test importers count as users, so only truly unused helpers are reported.
-A module that nothing imports and no root reaches is reported at Medium with
-<code>reason = "unreachable_module"</code>; add its path to <code>entry_points</code> if a tool runs
-it, or set <code>orphan_modules = false</code>.</p>
+<code>**/test-utils/**</code>, <code>**/testUtils/**</code>, <code>**/fixtures/**</code>, <code>**/__fixtures__/**</code>)
+are test helpers: their test importers count as users, so only truly unused
+helpers are reported.</p>
+<p>Reachability is a property of whole modules, so it is reported once per module
+with kind <code>module</code>, at Medium, anchored at the first unused symbol, with
+<code>symbol</code> listing the unused names. A module that nothing imports and no root
+reaches has <code>reason = "unreachable_module"</code>; add its path to <code>entry_points</code> if
+a tool runs it, or set <code>orphan_modules = false</code>. A module only tests reach has
+<code>reason = "test_only"</code>.</p>
 <p>Names a barrel re-exports (<code>export { x } from "./x"</code>) count as used in their
 defining module only when someone imports them from the barrel (chains and
-<code>export *</code> included). A re-export nobody imports is reported with kind
-<code>reexport</code>.</p>
+<code>export *</code> included). An unused name is reported once, where it is defined;
+the barrel line itself is never reported.</p>
+<p>A whole-namespace type import (<code>import type * as jobs</code>, as generated API
+manifests use) keeps its exports at Medium. When the same initializer callee
+(<code>export const run = task({ ... })</code>, builder chains included) initializes at
+least five exports across the modules such a manifest exposes, Sensez treats
+that callee as a registration and those exports as live.</p>
 <p>Confidence is High unless evidence suggests hidden use, then Medium: a default
 export, an importer that binds the module whole or not at all (<code>import()</code>,
 <code>import mod</code>), a type-only namespace reference, an import from a tool config,
@@ -1285,8 +1304,8 @@ available as opt-ins (your generated config shows their defaults):</p>
 <span class="n">unused_imports</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">unused_methods</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 </code></pre></div>
-<p>Unused module-level variables and constants are reported by default; set
-<code>unused_variables = false</code> to turn them off.</p>
+<p>Unused module-level variables and constants are off by default; set
+<code>unused_variables = true</code> to report them.</p>
 <p>Prefer adding entry points over suppressing individual findings — one line of
 config fixes a whole class of false positives.</p>
 <h2 id="duplication">Duplication</h2>
