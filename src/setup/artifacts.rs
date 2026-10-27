@@ -50,7 +50,7 @@ enabled = true
 # unused_imports = false
 # unused_methods = false
 # unused_properties = false
-# unused_variables = true
+# unused_variables = false
 # registration_decorators = []  # user-added decorator names (JS/TS: `export const x = name(...)` callees); `prefix*` allowed
 # entrypoint_names = []  # user-added dynamic function/class/method names; `prefix*` allowed
 # entrypoint_bases = []  # user-added dynamic base classes

@@ -26,6 +26,12 @@ pub(super) fn scan(sources: &[(&str, &str)], config: &DeadCode) -> Vec<DeadCodeF
     detect(&cg, &files, config)
 }
 
+pub(super) fn with_variables() -> DeadCode {
+    let mut config = Config::default().dead_code;
+    config.unused_variables = true;
+    config
+}
+
 /// Confidence of the finding for `symbol`; `None` when absent or Low.
 pub(super) fn kept_confidence(findings: &[DeadCodeFinding], symbol: &str) -> Option<Confidence> {
     findings
@@ -233,7 +239,7 @@ const MANIFEST_SOURCES: [(&str, &str); 3] = [
 
 #[test]
 fn type_only_namespace_manifest_does_not_silence_modules() {
-    let findings = scan(&MANIFEST_SOURCES, &Config::default().dead_code);
+    let findings = scan(&MANIFEST_SOURCES, &with_variables());
 
     assert_eq!(
         kept_confidence(&findings, "formatAlert"),
@@ -258,7 +264,7 @@ fn configured_registration_callee_keeps_its_export_live() {
 
 #[test]
 fn registration_callees_mark_exports_as_entrypoints() {
-    let mut config = Config::default().dead_code;
+    let mut config = with_variables();
     config.registration_decorators = vec!["register".to_string(), "define*".to_string()];
     let findings = scan(
         &[
@@ -280,7 +286,7 @@ fn registration_callees_mark_exports_as_entrypoints() {
 }
 
 #[test]
-fn unused_constants_are_reported_by_default() {
+fn unused_constants_are_reported_when_variables_are_enabled() {
     let findings = scan(
         &[
             (
@@ -292,7 +298,7 @@ fn unused_constants_are_reported_by_default() {
                 "import { USED_LIMIT } from \"./limits\";\nconsole.log(USED_LIMIT);\n",
             ),
         ],
-        &Config::default().dead_code,
+        &with_variables(),
     );
 
     assert_eq!(

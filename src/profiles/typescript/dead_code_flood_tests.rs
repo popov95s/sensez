@@ -1,4 +1,4 @@
-use super::dead_code_tests::{kept_confidence, scan};
+use super::dead_code_tests::{kept_confidence, scan, with_variables};
 use crate::config::model::Config;
 use crate::report::{Confidence, DeadCodeFinding};
 use crate::spine::parser::SymbolKind;
@@ -63,7 +63,7 @@ fn barrel_names_consumed_through_a_directory_import_are_live() {
                 "import { charge } from \"./billing/service\";\ncharge();\n",
             ),
         ],
-        &Config::default().dead_code,
+        &with_variables(),
     );
 
     assert_eq!(kept_confidence(&findings, "invoiceShape"), None);
@@ -116,7 +116,7 @@ fn unimported_module_is_reported_once() {
             ),
             ("src/lib.ts", "export function used() {}\n"),
         ],
-        &Config::default().dead_code,
+        &with_variables(),
     );
 
     let legacy = in_file(&findings, "legacy.ts");

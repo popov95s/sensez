@@ -167,8 +167,8 @@ unused_imports = true
 unused_methods = true
 ```
 
-Unused module-level variables and constants are reported by default; set
-`unused_variables = false` to turn them off.
+Unused module-level variables and constants are off by default; set
+`unused_variables = true` to report them.
 
 Prefer adding entry points over suppressing individual findings — one line of
 config fixes a whole class of false positives.
