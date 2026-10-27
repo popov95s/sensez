@@ -30,6 +30,7 @@ mod nesting;
 pub(crate) mod obsession;
 mod params;
 pub(crate) mod performance;
+mod programs;
 pub(crate) mod resolve;
 mod returned_names;
 pub(crate) mod risk_facts;

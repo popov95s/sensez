@@ -316,3 +316,35 @@ fn source_used_only_by_a_tests_directory_helper_is_test_only() {
 
     assert_eq!(reason(&findings, "onlyHelped"), Some("test_only"));
 }
+
+#[test]
+fn modules_imported_by_a_main_guarded_script_are_live() {
+    let findings = scan(
+        &[
+            (
+                "tools/export.ts",
+                "import { buildSheet } from \"./sheet\";\nexport function helperForTests() {}\nif (import.meta.main) {\n  buildSheet();\n}\n",
+            ),
+            ("tools/sheet.ts", "export function buildSheet() {}\n"),
+            (
+                "tools/cli.ts",
+                "#!/usr/bin/env node\nimport { render } from \"./render\";\nrender();\n",
+            ),
+            ("tools/render.ts", "export function render() {}\n"),
+            (
+                "tools/library.ts",
+                "import { argvHelper } from \"./argvHelper\";\nexport function flag() {\n  return process.argv[1] + argvHelper();\n}\n",
+            ),
+            ("tools/argvHelper.ts", "export function argvHelper() { return 1; }\n"),
+            ("src/app.ts", "export function main() {}\n"),
+        ],
+        &Config::default().dead_code,
+    );
+
+    assert!(findings.iter().all(|f| !f.file.ends_with("sheet.ts")));
+    assert!(findings.iter().all(|f| !f.file.ends_with("render.ts")));
+    assert!(
+        findings.iter().any(|f| f.file.ends_with("library.ts")),
+        "{findings:?}"
+    );
+}

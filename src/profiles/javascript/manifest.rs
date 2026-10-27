@@ -1,6 +1,6 @@
 //! `package.json` reading: entry targets as dead-code roots, dependencies for utility lookups.
 
-use super::{roots, workflows};
+use super::{programs, roots, workflows};
 use crate::profiles::dependencies::{manifest_dirs, DeclaredPackages, DependencyScope};
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
@@ -16,7 +16,7 @@ const DEPENDENCY_SECTIONS: [(&str, DependencyScope); 4] = [
     ("devDependencies", DependencyScope::Development),
 ];
 
-/// Files named by their package's manifest, directly or through a `src/` twin of a build path.
+/// Files named by their package's manifest (directly or through a `src/` twin of a build path) or run as programs.
 pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
     let mut keys_by_root: HashMap<PathBuf, HashSet<String>> = HashMap::new();
     let mut entries = Vec::new();
@@ -26,7 +26,7 @@ pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
         let keys = keys_by_root
             .entry(root)
             .or_insert_with_key(|root| manifest_keys(root));
-        if keys.contains(&key) {
+        if keys.contains(&key) || programs::is_program(file) {
             entries.push(file.to_path_buf());
         }
     }

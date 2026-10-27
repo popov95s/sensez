@@ -107,7 +107,8 @@ Dead code walks the import graph from two kinds of roots:
   scripts, Cargo binaries and `lib.rs`, `package.json` `main` / `module` / `bin`
   / `exports`, where a `dist/`, `lib/`, `build/` or `out/` target also names its
   `src/` twin, and source files a `package.json` `scripts` command or a
-  `.github/workflows` `run:` step runs), and
+  `.github/workflows` `run:` step runs, and JS/TS files with a shebang or a
+  top-level main guard such as `import.meta.main` or `require.main === module`), and
   tool configs such as `*.config.ts`. An entry-point file is never reported,
   and its imports count as usage.
 - **Runtime-loaded directories:** when at least `unimported_dir_share` percent
