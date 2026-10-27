@@ -1,12 +1,13 @@
 //! Casts and suppressions that silence the TypeScript checker.
 
 use super::runtime_guard;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{TypeEscape, TypeEscapeKind};
 use tree_sitter::Node;
 
 /// The type escape `node` writes, if any.
 pub(super) fn type_escape(node: Node<'_>, src: &[u8]) -> Option<TypeEscape> {
-    let (kind, label, value) = match node.kind() {
+    let (kind, label, value) = match node.kind_name() {
         "as_expression" => cast(node, src)?,
         "type_assertion" => angle_cast(node, src)?,
         "non_null_expression" => non_null_call(node, src)?,
@@ -30,7 +31,7 @@ fn cast<'t>(node: Node<'t>, src: &[u8]) -> Option<Escape<'t>> {
         return Some((TypeEscapeKind::AnyCast, "as any", Some(value)));
     }
     let inner = unwrap_parens(value);
-    let laundered = inner.kind() == "as_expression"
+    let laundered = inner.kind_name() == "as_expression"
         && inner
             .named_child(1)
             .is_some_and(|ty| is_predefined(ty, "unknown", src));
@@ -53,10 +54,11 @@ fn angle_cast<'t>(node: Node<'t>, src: &[u8]) -> Option<Escape<'t>> {
 
 fn non_null_call<'t>(node: Node<'t>, src: &[u8]) -> Option<Escape<'t>> {
     let mut inner = unwrap_parens(node.named_child(0)?);
-    if inner.kind() == "await_expression" {
+    if inner.kind_name() == "await_expression" {
         inner = unwrap_parens(inner.named_child(0)?);
     }
-    let unchecked = inner.kind() == "call_expression" && !runtime_guard::is_checked(inner, src);
+    let unchecked =
+        inner.kind_name() == "call_expression" && !runtime_guard::is_checked(inner, src);
     unchecked.then_some((TypeEscapeKind::NonNullCall, "call()!", None))
 }
 
@@ -84,22 +86,20 @@ fn suppression<'t>(node: Node<'t>, src: &[u8]) -> Option<Escape<'t>> {
 }
 
 fn is_predefined(node: Node<'_>, name: &str, src: &[u8]) -> bool {
-    node.kind() == "predefined_type" && node.utf8_text(src).is_ok_and(|text| text == name)
+    node.kind_name() == "predefined_type" && node.utf8_text(src).is_ok_and(|text| text == name)
 }
 
 fn unwrap_parens(node: Node<'_>) -> Node<'_> {
-    match node.kind() {
+    match node.kind_name() {
         "parenthesized_expression" => node.named_child(0).map_or(node, unwrap_parens),
         _ => node,
     }
 }
 
 fn root_identifier(node: Node<'_>, src: &[u8]) -> Option<String> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" | "this" => node.utf8_text(src).ok().map(str::to_string),
-        "member_expression" | "subscript_expression" => {
-            root_identifier(node.child_by_field_name("object")?, src)
-        }
+        "member_expression" | "subscript_expression" => root_identifier(node.field("object")?, src),
         "parenthesized_expression" | "non_null_expression" => {
             root_identifier(node.named_child(0)?, src)
         }

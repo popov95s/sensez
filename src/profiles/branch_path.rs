@@ -1,6 +1,7 @@
 //! Mutually exclusive branch arms enclosing a node.
 
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::BranchPath;
 use tree_sitter::Node;
 
@@ -28,7 +29,7 @@ pub(crate) fn branch_path(lineage: Lineage, arms: &BranchArms) -> BranchPath {
 
 fn arm_index(parent: Node, child: Node, arms: &BranchArms) -> Option<usize> {
     let mut cursor = parent.walk();
-    if arms.children.contains(&parent.kind()) {
+    if arms.children.contains(&parent.kind_name()) {
         return parent
             .named_children(&mut cursor)
             .position(|arm| arm.id() == child.id());
@@ -36,7 +37,7 @@ fn arm_index(parent: Node, child: Node, arms: &BranchArms) -> Option<usize> {
     let (_, fields) = arms
         .fields
         .iter()
-        .find(|(kind, _)| *kind == parent.kind())?;
+        .find(|(kind, _)| *kind == parent.kind_name())?;
     let arm_ids: Vec<usize> = fields
         .iter()
         .flat_map(|field| {

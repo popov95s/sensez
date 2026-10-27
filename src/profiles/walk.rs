@@ -7,6 +7,7 @@ pub(crate) use super::node_query::{
 use crate::profiles::comment_class::{self, CommentSyntax};
 use crate::profiles::comments;
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 use crate::spine::ir::{
     bump, record_attr, CommentSpan, FallbackSite, FunctionUnit, StringFallback, SymbolKind, Walked,
@@ -131,13 +132,12 @@ pub(crate) fn credit_attr_with_base_path(
 }
 
 fn named_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'a str> {
-    node.child_by_field_name(field)
-        .and_then(|n| n.utf8_text(src).ok())
+    node.field(field).and_then(|n| n.utf8_text(src).ok())
 }
 
 fn ident_child_text<'a>(node: Node<'a>, src: &'a [u8], field: &str) -> Option<&'a str> {
-    let child = node.child_by_field_name(field)?;
-    if child.kind() != "identifier" {
+    let child = node.field(field)?;
+    if child.kind_name() != "identifier" {
         return None;
     }
     child.utf8_text(src).ok()
@@ -159,7 +159,7 @@ pub(crate) fn emit_mapped(
     map_kind: fn(&str) -> Option<StructuralToken>,
     code: LexemeFn,
 ) {
-    if let Some(tok) = map_kind(node.kind()) {
+    if let Some(tok) = map_kind(node.kind_name()) {
         emit(out, file_id, node, tok, code(node, tok, src, fn_bounds));
     }
 }

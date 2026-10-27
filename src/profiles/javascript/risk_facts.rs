@@ -1,6 +1,7 @@
 use crate::profiles::guard_fingerprint::GuardLog;
 use crate::profiles::handler_end;
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::profiles::try_handling::{self, TrySyntax};
 use crate::spine::ir::{FunctionUnit, HandlerEnd, SentinelHandler};
@@ -57,33 +58,33 @@ const GUARD_SCOPES: &[&str] = &[
 pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> Option<String> {
     if func
         .parent()
-        .is_some_and(|parent| parent.kind() == "export_statement")
+        .is_some_and(|parent| parent.kind_name() == "export_statement")
     {
         return None;
     }
-    let body = func.child_by_field_name("body")?;
+    let body = func.field("body")?;
     let mut cursor = body.walk();
     let mut statements = body
         .named_children(&mut cursor)
-        .filter(|n| n.kind() != "comment");
+        .filter(|n| n.kind_name() != "comment");
     let statement = statements.next()?;
-    if statement.kind() != "return_statement" || statements.next().is_some() {
+    if statement.kind_name() != "return_statement" || statements.next().is_some() {
         return None;
     }
     let call = statement.named_child(0)?;
-    if call.kind() != "call_expression" {
+    if call.kind_name() != "call_expression" {
         return None;
     }
-    let callee = call.child_by_field_name("function")?;
-    if callee.kind() != "identifier" {
+    let callee = call.field("function")?;
+    if callee.kind_name() != "identifier" {
         return None;
     }
-    let args = call.child_by_field_name("arguments")?;
+    let args = call.field("arguments")?;
     let mut cursor = args.walk();
     let passed: Option<Vec<_>> = args
         .named_children(&mut cursor)
         .map(|arg| {
-            (arg.kind() == "identifier")
+            (arg.kind_name() == "identifier")
                 .then(|| arg.utf8_text(src).ok())
                 .flatten()
         })
@@ -140,7 +141,7 @@ pub(super) fn scan(
     if let Some(helper) = test_oracle::helper_call(node, src, &TEST_CHECKS) {
         unit.review_risks.helper_calls.push(helper.to_string());
     }
-    match node.kind() {
+    match node.kind_name() {
         "catch_clause" => {
             if swallows(node, src) {
                 unit.review_risks.broad_handlers += 1;
@@ -157,12 +158,12 @@ pub(super) fn scan(
         }
         "await_expression" | "yield_expression" => guards.clear(),
         "assignment_expression" | "augmented_assignment_expression" => {
-            if let Some(left) = node.child_by_field_name("left") {
+            if let Some(left) = node.field("left") {
                 guards.forget_written(left, src);
             }
         }
         "update_expression" => {
-            if let Some(argument) = node.child_by_field_name("argument") {
+            if let Some(argument) = node.field("argument") {
                 guards.forget_written(argument, src);
             }
         }
@@ -187,27 +188,24 @@ pub(super) fn is_test_framework_callback(func: Lineage, src: &[u8]) -> bool {
 fn test_callee<'a>(func: Lineage, src: &'a [u8]) -> Option<&'a str> {
     let args = func
         .parent(func.node())
-        .filter(|parent| parent.kind() == "arguments")?;
+        .filter(|parent| parent.kind_name() == "arguments")?;
     let call = func
         .parent(args)
-        .filter(|parent| parent.kind() == "call_expression")?;
-    base_callee(call.child_by_field_name("function")?, src)
+        .filter(|parent| parent.kind_name() == "call_expression")?;
+    base_callee(call.field("function")?, src)
 }
 
 /// Identifier under `.only` / `.each` / `.concurrent` modifiers and curried calls.
 fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
-    match callee.kind() {
+    match callee.kind_name() {
         "identifier" => callee.utf8_text(src).ok(),
-        "call_expression" => base_callee(callee.child_by_field_name("function")?, src),
+        "call_expression" => base_callee(callee.field("function")?, src),
         "member_expression" => {
-            let modifier = callee
-                .child_by_field_name("property")?
-                .utf8_text(src)
-                .ok()?;
+            let modifier = callee.field("property")?.utf8_text(src).ok()?;
             if !matches!(modifier, "only" | "each" | "concurrent") {
                 return None;
             }
-            base_callee(callee.child_by_field_name("object")?, src)
+            base_callee(callee.field("object")?, src)
         }
         _ => None,
     }
@@ -215,14 +213,14 @@ fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
 
 /// A catch that neither rethrows nor uses its error beyond logging it.
 fn swallows(handler: Node<'_>, src: &[u8]) -> bool {
-    handler.child_by_field_name("body").is_some_and(|body| {
+    handler.field("body").is_some_and(|body| {
         try_handling::swallows(body, error_name(handler, src), src, &TRY_SYNTAX)
     })
 }
 
 fn error_name<'a>(handler: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
     handler
-        .child_by_field_name("parameter")
+        .field("parameter")
         .and_then(|parameter| parameter.utf8_text(src).ok())
 }
 
@@ -231,7 +229,7 @@ fn sentinel_handler(
     src: &[u8],
     frame: Option<usize>,
 ) -> Option<SentinelHandler> {
-    let body = handler.child_by_field_name("body")?;
+    let body = handler.field("body")?;
     handler_end::sentinel_handler(
         handler,
         body,
@@ -243,7 +241,7 @@ fn sentinel_handler(
 }
 
 fn returned_literal(node: Node<'_>, src: &[u8]) -> Option<HandlerEnd> {
-    let empty = match node.kind() {
+    let empty = match node.kind_name() {
         "null" | "undefined" | "false" => true,
         "array" | "object" if node.named_child_count() == 0 => true,
         "string" => node.named_child_count() == 0,
@@ -262,14 +260,11 @@ fn returned_literal(node: Node<'_>, src: &[u8]) -> Option<HandlerEnd> {
 fn is_empty_fallback(node: Node<'_>) -> bool {
     let is_fallback_operator = (0..node.child_count())
         .filter_map(|index| node.child(index))
-        .any(|child| matches!(child.kind(), "||" | "??"));
-    is_fallback_operator
-        && node
-            .child_by_field_name("right")
-            .is_some_and(is_empty_value)
+        .any(|child| matches!(child.kind_name(), "||" | "??"));
+    is_fallback_operator && node.field("right").is_some_and(is_empty_value)
 }
 
 fn is_empty_value(node: Node<'_>) -> bool {
-    matches!(node.kind(), "null" | "array" | "object")
-        && (node.kind() == "null" || node.named_child_count() == 0)
+    matches!(node.kind_name(), "null" | "array" | "object")
+        && (node.kind_name() == "null" || node.named_child_count() == 0)
 }

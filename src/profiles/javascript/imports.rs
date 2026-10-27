@@ -5,6 +5,7 @@
 //! `target_module` is the raw specifier (`./foo`, `react`); resolution to a
 //! module key happens later in `resolve`.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, ImportPhase};
 use tree_sitter::Node;
 
@@ -21,10 +22,7 @@ pub fn extract(
     source_module: &str,
     scope: Option<&str>,
 ) -> Vec<ImportContext> {
-    let source = match node
-        .child_by_field_name("source")
-        .and_then(|n| string_value(n, src))
-    {
+    let source = match node.field("source").and_then(|n| string_value(n, src)) {
         Some(s) => s,
         None => return Vec::new(), // local `export { ... }` / `export const` — no edge
     };
@@ -63,20 +61,20 @@ pub fn require_import(
     source_module: &str,
     scope: Option<&str>,
 ) -> Option<ImportContext> {
-    let callee = node.child_by_field_name("function")?;
+    let callee = node.field("function")?;
     let name = callee.utf8_text(src).ok()?;
-    if name != "require" && callee.kind() != "import" {
+    if name != "require" && callee.kind_name() != "import" {
         return None;
     }
-    let args = node.child_by_field_name("arguments")?;
+    let args = node.field("arguments")?;
     let mut cursor = args.walk();
     let source = args
         .named_children(&mut cursor)
-        .find(|c| c.kind() == "string")
+        .find(|c| c.kind_name() == "string")
         .and_then(|s| string_value(s, src))?;
     let clause = match variable_declarator(node) {
         Some(declarator) => declarator_clause(declarator, src),
-        None if callee.kind() == "import" => ImportClause {
+        None if callee.kind_name() == "import" => ImportClause {
             symbols: vec!["default".to_string()],
             ..ImportClause::default()
         },
@@ -93,10 +91,10 @@ pub fn require_import(
 }
 
 fn declarator_clause(declarator: Node, src: &[u8]) -> ImportClause {
-    let Some(name) = declarator.child_by_field_name("name") else {
+    let Some(name) = declarator.field("name") else {
         return ImportClause::default();
     };
-    match name.kind() {
+    match name.kind_name() {
         "identifier" => ImportClause {
             bindings: vec![node_text(name, src)],
             ..ImportClause::default()
@@ -109,16 +107,16 @@ fn declarator_clause(declarator: Node, src: &[u8]) -> ImportClause {
 fn variable_declarator(node: Node) -> Option<Node> {
     let mut current = node.parent();
     while let Some(parent) = current {
-        if parent.kind() == "variable_declarator" {
+        if parent.kind_name() == "variable_declarator" {
             return parent
-                .child_by_field_name("value")
+                .field("value")
                 .filter(|value| {
                     value.start_byte() <= node.start_byte() && node.end_byte() <= value.end_byte()
                 })
                 .map(|_| parent);
         }
         if matches!(
-            parent.kind(),
+            parent.kind_name(),
             "statement_block" | "program" | "arrow_function"
         ) {
             return None;
@@ -132,7 +130,7 @@ fn object_pattern_clause(pattern: Node, src: &[u8]) -> ImportClause {
     let mut clause = ImportClause::default();
     let mut cursor = pattern.walk();
     for child in pattern.named_children(&mut cursor) {
-        match child.kind() {
+        match child.kind_name() {
             "shorthand_property_identifier_pattern" => {
                 let name = node_text(child, src);
                 clause.symbols.push(name.clone());
@@ -185,7 +183,7 @@ fn context(
         phase,
         is_inline: scope.is_some(),
         is_module_decl: false,
-        is_reexport: node.kind() == "export_statement",
+        is_reexport: node.kind_name() == "export_statement",
         enclosing_scope: scope.map(str::to_string),
     }
 }
@@ -218,7 +216,7 @@ fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
     let mut clause = ImportClause::default();
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        match child.kind() {
+        match child.kind_name() {
             "import_clause" => {
                 let nested = clause_symbols(child, src, phase);
                 clause.symbols.extend(nested.symbols);
@@ -246,7 +244,10 @@ fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
         }
     }
     // `export * from "x"` carries a bare `*` token, not a clause node.
-    if node.kind() == "export_statement" && node.children(&mut node.walk()).any(|c| c.kind() == "*")
+    if node.kind_name() == "export_statement"
+        && node
+            .children(&mut node.walk())
+            .any(|c| c.kind_name() == "*")
     {
         clause.symbols.push("*".to_string());
     }
@@ -261,15 +262,11 @@ fn collect_specifiers(
 ) {
     let mut cursor = clause.walk();
     for spec in clause.named_children(&mut cursor) {
-        if spec.kind() != "import_specifier" && spec.kind() != "export_specifier" {
+        if spec.kind_name() != "import_specifier" && spec.kind_name() != "export_specifier" {
             continue;
         }
-        let name = spec
-            .child_by_field_name("name")
-            .and_then(|n| n.utf8_text(src).ok());
-        let alias = spec
-            .child_by_field_name("alias")
-            .and_then(|n| n.utf8_text(src).ok());
+        let name = spec.field("name").and_then(|n| n.utf8_text(src).ok());
+        let alias = spec.field("alias").and_then(|n| n.utf8_text(src).ok());
         if let Some(name) = name {
             out.symbols.push(name.to_string());
             let binding = match alias {
@@ -299,7 +296,7 @@ fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
     let mut cursor = node.walk();
     let found = node
         .named_children(&mut cursor)
-        .find(|c| c.kind() == "identifier")
+        .find(|c| c.kind_name() == "identifier")
         .and_then(|c| c.utf8_text(src).ok())
         .map(str::to_string);
     found

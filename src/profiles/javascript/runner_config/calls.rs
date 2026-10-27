@@ -1,16 +1,17 @@
 use super::evaluate::{named_children, Evaluator, Scope};
 use super::value::{merge, Value};
 use crate::profiles::javascript::roots::normalize as normalize_path;
+use crate::profiles::node_names::NodeNames;
 use std::path::PathBuf;
 use tree_sitter::Node;
 
 /// Value of a config-helper call such as `defineConfig`, `mergeConfig` or `path.resolve`.
 pub fn evaluate<'t>(evaluator: &Evaluator<'t>, call: Node<'t>, scope: &Scope<'_, 't>) -> Value {
-    let Some(callee) = call.child_by_field_name("function") else {
+    let Some(callee) = call.field("function") else {
         return evaluator.unreadable(call);
     };
     let arguments = call
-        .child_by_field_name("arguments")
+        .field("arguments")
         .map(named_children)
         .unwrap_or_default();
     let argument = |index: usize| {
@@ -65,10 +66,10 @@ fn file_url<'t>(
             evaluator.script.path.to_string_lossy().into_owned(),
         ));
     }
-    if argument.kind() != "new_expression" {
+    if argument.kind_name() != "new_expression" {
         return None;
     }
-    let url_arguments = named_children(argument.child_by_field_name("arguments")?);
+    let url_arguments = named_children(argument.field("arguments")?);
     let [specifier, base] = url_arguments.as_slice() else {
         return None;
     };

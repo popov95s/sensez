@@ -25,6 +25,7 @@ pub(crate) mod lexeme;
 pub(crate) mod lineage;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod magic_number;
+pub(crate) mod node_names;
 pub(crate) mod node_query;
 #[cfg(any(feature = "lang-javascript", feature = "lang-rust"))]
 pub(crate) mod pathroot;

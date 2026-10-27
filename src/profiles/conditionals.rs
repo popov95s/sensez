@@ -4,6 +4,7 @@
 //! but the smell semantics are language-neutral: an outer `if` with no
 //! alternative whose entire then-body is one inner `if` with no alternative.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::NestedTernary;
 use tree_sitter::Node;
 
@@ -16,16 +17,16 @@ pub(crate) struct IfShape<'a> {
 }
 
 pub(crate) fn is_collapsible_nested_if(node: Node<'_>, shape: &IfShape<'_>) -> bool {
-    if node.kind() != shape.if_kind || has_else(node, shape) {
+    if node.kind_name() != shape.if_kind || has_else(node, shape) {
         return false;
     }
     let Some(inner) = node
-        .child_by_field_name(shape.then_field)
+        .field(shape.then_field)
         .and_then(|then| only_statement(then, shape))
     else {
         return false;
     };
-    inner.kind() == shape.if_kind && !has_else(inner, shape)
+    inner.kind_name() == shape.if_kind && !has_else(inner, shape)
 }
 
 pub(crate) struct TernaryShape<'a> {
@@ -42,10 +43,10 @@ pub(crate) fn ternary_nesting(node: Node<'_>, shape: &TernaryShape<'_>) -> Optio
     let mut root = node;
     let mut current = node;
     while let Some(parent) = current.parent() {
-        if parent.kind() == shape.conditional_kind {
+        if parent.kind_name() == shape.conditional_kind {
             depth += 1;
             root = parent;
-        } else if !shape.transparent_kinds.contains(&parent.kind()) {
+        } else if !shape.transparent_kinds.contains(&parent.kind_name()) {
             break;
         }
         current = parent;
@@ -61,11 +62,11 @@ pub(crate) fn ternary_nesting(node: Node<'_>, shape: &TernaryShape<'_>) -> Optio
 fn is_nested_conditional(node: Node<'_>, shape: &TernaryShape<'_>) -> bool {
     let mut parent = node.parent();
     while let Some(current) = parent {
-        if current.kind() == shape.conditional_kind {
+        if current.kind_name() == shape.conditional_kind {
             return true;
         }
-        if shape.function_kinds.contains(&current.kind())
-            || shape.boundary_kinds.contains(&current.kind())
+        if shape.function_kinds.contains(&current.kind_name())
+            || shape.boundary_kinds.contains(&current.kind_name())
         {
             return false;
         }
@@ -75,17 +76,17 @@ fn is_nested_conditional(node: Node<'_>, shape: &TernaryShape<'_>) -> bool {
 }
 
 fn has_else(node: Node<'_>, shape: &IfShape<'_>) -> bool {
-    node.child_by_field_name(shape.else_field).is_some()
+    node.field(shape.else_field).is_some()
 }
 
 fn only_statement<'tree>(node: Node<'tree>, shape: &IfShape<'_>) -> Option<Node<'tree>> {
-    if !shape.block_kinds.contains(&node.kind()) {
+    if !shape.block_kinds.contains(&node.kind_name()) {
         return Some(node);
     }
     let mut cursor = node.walk();
     let mut found = None;
     for child in node.named_children(&mut cursor) {
-        if shape.ignored_kinds.contains(&child.kind()) {
+        if shape.ignored_kinds.contains(&child.kind_name()) {
             continue;
         }
         if found.replace(child).is_some() {

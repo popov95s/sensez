@@ -1,26 +1,21 @@
 //! Rust call facts: callee, receiver path and conditional region.
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::CallFact;
 use tree_sitter::Node;
 
 pub(super) fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
-    let mut func = node.child_by_field_name("function")?;
-    if func.kind() == "generic_function" {
-        func = func
-            .child_by_field_name("function")
-            .or_else(|| func.named_child(0))?;
+    let mut func = node.field("function")?;
+    if func.kind_name() == "generic_function" {
+        func = func.field("function").or_else(|| func.named_child(0))?;
     }
     let line = node.start_position().row + 1;
-    let mut call = match func.kind() {
+    let mut call = match func.kind_name() {
         "identifier" => Some(CallFact::named(walk::node_text(func, src)?, line)),
         "field_expression" => {
-            let base = func
-                .child_by_field_name("value")
-                .and_then(|n| receiver_path(n, src))?;
-            let method = func
-                .child_by_field_name("field")
-                .and_then(|n| walk::node_text(n, src))?;
+            let base = func.field("value").and_then(|n| receiver_path(n, src))?;
+            let method = func.field("field").and_then(|n| walk::node_text(n, src))?;
             Some(CallFact::member(&base, method, line))
         }
         _ => None,
@@ -29,26 +24,26 @@ pub(super) fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
     call.offset = node.start_byte();
     call.awaited = node
         .parent()
-        .is_some_and(|parent| parent.kind() == "await_expression");
+        .is_some_and(|parent| parent.kind_name() == "await_expression");
     Some(call)
 }
 
 fn receiver_path(node: Node, src: &[u8]) -> Option<String> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => walk::node_text(node, src).map(str::to_string),
         "self" => Some("self".to_string()),
         "field_expression" => {
-            let value = receiver_path(node.child_by_field_name("value")?, src)?;
-            let field = walk::node_text(node.child_by_field_name("field")?, src)?;
+            let value = receiver_path(node.field("value")?, src)?;
+            let field = walk::node_text(node.field("field")?, src)?;
             Some(format!("{value}.{field}"))
         }
         "call_expression" => {
-            let mut function = node.child_by_field_name("function")?;
-            if function.kind() == "generic_function" {
+            let mut function = node.field("function")?;
+            if function.kind_name() == "generic_function" {
                 function = function.named_child(0)?;
             }
-            let base = receiver_path(function.child_by_field_name("value")?, src)?;
-            let method = walk::node_text(function.child_by_field_name("field")?, src)?;
+            let base = receiver_path(function.field("value")?, src)?;
+            let method = walk::node_text(function.field("field")?, src)?;
             if is_lazy_adapter(method) {
                 Some(base)
             } else {
@@ -79,10 +74,10 @@ fn is_lazy_adapter(method: &str) -> bool {
 fn control_region(node: Node<'_>) -> usize {
     let mut current = node;
     while let Some(parent) = current.parent() {
-        if matches!(parent.kind(), "if_expression" | "match_arm") {
+        if matches!(parent.kind_name(), "if_expression" | "match_arm") {
             return current.start_position().row + 1;
         }
-        if parent.kind() == "function_item" {
+        if parent.kind_name() == "function_item" {
             break;
         }
         current = parent;
@@ -93,8 +88,8 @@ fn control_region(node: Node<'_>) -> usize {
 /// Method name and receiver of a `receiver.method(..)` call.
 pub(super) fn method_call<'a>(call: Node<'a>, src: &'a [u8]) -> Option<(&'a str, Node<'a>)> {
     let function = call
-        .child_by_field_name("function")
-        .filter(|f| f.kind() == "field_expression")?;
-    let method = function.child_by_field_name("field")?.utf8_text(src).ok()?;
-    Some((method, function.child_by_field_name("value")?))
+        .field("function")
+        .filter(|f| f.kind_name() == "field_expression")?;
+    let method = function.field("field")?.utf8_text(src).ok()?;
+    Some((method, function.field("value")?))
 }

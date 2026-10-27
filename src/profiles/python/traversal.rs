@@ -3,6 +3,7 @@
 
 use super::{imports, lexeme, nested, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr_with_base_path, credit_name, credit_string, declare, emit_mapped,
     register_method, Scope,
@@ -26,7 +27,7 @@ fn visit(
     fn_bounds: &mut Vec<BoundNames>,
     out: &mut Walked,
 ) {
-    let kind = node.kind();
+    let kind = node.kind_name();
 
     // Imports are extracted, never descended into (keeps the token stream clean).
     if token_map::is_import(kind) {
@@ -47,7 +48,7 @@ fn visit(
     if matches!(kind, "string" | "concatenated_string")
         && node
             .parent()
-            .is_some_and(|p| p.kind() == "expression_statement")
+            .is_some_and(|p| p.kind_name() == "expression_statement")
     {
         #[cfg(feature = "eyez")]
         if crate::eyez::capture::python::is_docstring(node) {
@@ -140,7 +141,7 @@ fn visit(
     let opened = token_map::is_scope(kind);
     if opened {
         let name = node
-            .child_by_field_name("name")
+            .field("name")
             .and_then(|n| n.utf8_text(src).ok())
             .unwrap_or(crate::spine::ir::ANONYMOUS)
             .to_string();
@@ -187,20 +188,17 @@ fn record_function_unit(
 }
 
 fn credit_call_result_attr(out: &mut Walked, node: Node, src: &[u8]) {
-    let Some(attr) = node
-        .child_by_field_name("attribute")
-        .and_then(|n| n.utf8_text(src).ok())
-    else {
+    let Some(attr) = node.field("attribute").and_then(|n| n.utf8_text(src).ok()) else {
         return;
     };
     let Some(call) = node
-        .child_by_field_name("object")
-        .filter(|object| object.kind() == "call")
+        .field("object")
+        .filter(|object| object.kind_name() == "call")
     else {
         return;
     };
     let Some(func) = call
-        .child_by_field_name("function")
+        .field("function")
         .and_then(|func| callable_name(func, src))
     else {
         return;
@@ -210,7 +208,7 @@ fn credit_call_result_attr(out: &mut Walked, node: Node, src: &[u8]) {
 
 fn callable_name<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
     let text = node.utf8_text(src).ok()?;
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => Some(text),
         "attribute" => text.rsplit('.').next(),
         _ => None,
@@ -222,7 +220,7 @@ fn callable_name<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
 fn credit_interpolations(node: Node, src: &[u8], out: &mut Walked) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        match child.kind() {
+        match child.kind_name() {
             "identifier" => credit_name(out, child, src),
             "attribute" => {
                 credit_attr_with_base_path(out, child, src, "object", "attribute");
@@ -236,9 +234,9 @@ fn credit_interpolations(node: Node, src: &[u8], out: &mut Walked) {
 fn is_under_type_checking_guard(node: Node, src: &[u8]) -> bool {
     let mut parent = node.parent();
     while let Some(ancestor) = parent {
-        if ancestor.kind() == "if_statement"
+        if ancestor.kind_name() == "if_statement"
             && ancestor
-                .child_by_field_name("condition")
+                .field("condition")
                 .and_then(|n| n.utf8_text(src).ok())
                 .is_some_and(is_type_checking_condition)
         {
@@ -292,7 +290,7 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, scope: &[Scope], out:
             out.symbols.dunder_all = Some(all);
         }
     } else if kind == "decorated_definition" {
-        if let Some(def) = node.child_by_field_name("definition") {
+        if let Some(def) = node.field("definition") {
             if let Some(name) = symbols::def_name(def, src) {
                 out.symbols
                     .decorators

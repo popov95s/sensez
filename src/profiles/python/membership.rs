@@ -1,5 +1,6 @@
 //! Python literal membership: `x in ("a", "b")` and `x == "a" or x == "b" or x == "c"`.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::LiteralMembership;
 use tree_sitter::Node;
 
@@ -12,22 +13,22 @@ const MIN_CHAIN: usize = 3;
 pub(super) fn literal_membership(node: Node, src: &[u8]) -> Option<LiteralMembership> {
     let has_in = node
         .children(&mut node.walk())
-        .any(|c| matches!(c.kind(), "in" | "not in"));
+        .any(|c| matches!(c.kind_name(), "in" | "not in"));
     if !has_in {
         return None;
     }
     let rhs = node.named_child(node.named_child_count().saturating_sub(1))?;
-    if !matches!(rhs.kind(), "list" | "tuple" | "set") || rhs.named_child_count() == 0 {
+    if !matches!(rhs.kind_name(), "list" | "tuple" | "set") || rhs.named_child_count() == 0 {
         return None;
     }
     let mut cursor = rhs.walk();
     let elements: Vec<Node> = rhs.named_children(&mut cursor).collect();
-    if !elements.iter().all(|e| e.kind() == "string") {
+    if !elements.iter().all(|e| e.kind_name() == "string") {
         return None;
     }
     let operand = node
         .named_child(0)
-        .filter(|lhs| OPERAND_KINDS.contains(&lhs.kind()))
+        .filter(|lhs| OPERAND_KINDS.contains(&lhs.kind_name()))
         .and_then(|lhs| lhs.utf8_text(src).ok())
         .map(str::to_string);
     Some(LiteralMembership {
@@ -67,11 +68,8 @@ pub(super) fn or_chain(node: Node, src: &[u8]) -> Option<LiteralMembership> {
 }
 
 fn is_or(node: Node, src: &[u8]) -> bool {
-    node.kind() == "boolean_operator"
-        && node
-            .child_by_field_name("operator")
-            .and_then(|op| op.utf8_text(src).ok())
-            == Some("or")
+    node.kind_name() == "boolean_operator"
+        && node.field("operator").and_then(|op| op.utf8_text(src).ok()) == Some("or")
 }
 
 fn flatten<'t>(node: Node<'t>, src: &[u8], out: &mut Vec<Node<'t>>) {
@@ -80,7 +78,7 @@ fn flatten<'t>(node: Node<'t>, src: &[u8], out: &mut Vec<Node<'t>>) {
         return;
     }
     for side in ["left", "right"] {
-        if let Some(child) = node.child_by_field_name(side) {
+        if let Some(child) = node.field(side) {
             flatten(child, src, out);
         }
     }
@@ -88,19 +86,21 @@ fn flatten<'t>(node: Node<'t>, src: &[u8], out: &mut Vec<Node<'t>>) {
 
 /// `x == "a"` / `"a" == x` → (`x`, `a`).
 fn string_equality<'s>(node: Node, src: &'s [u8]) -> Option<(&'s str, String)> {
-    let is_equality = node.kind() == "comparison_operator"
+    let is_equality = node.kind_name() == "comparison_operator"
         && node.named_child_count() == 2
-        && node.children(&mut node.walk()).any(|c| c.kind() == "==");
+        && node
+            .children(&mut node.walk())
+            .any(|c| c.kind_name() == "==");
     if !is_equality {
         return None;
     }
     let (left, right) = (node.named_child(0)?, node.named_child(1)?);
-    let (subject, literal) = match (left.kind(), right.kind()) {
+    let (subject, literal) = match (left.kind_name(), right.kind_name()) {
         (_, "string") => (left, right),
         ("string", _) => (right, left),
         _ => return None,
     };
-    if !matches!(subject.kind(), "identifier" | "attribute") {
+    if !matches!(subject.kind_name(), "identifier" | "attribute") {
         return None;
     }
     Some((

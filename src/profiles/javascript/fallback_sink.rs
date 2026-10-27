@@ -1,5 +1,6 @@
 //! Where a JS/TS string fallback's value flows.
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{FallbackSink, FallbackSite};
 use tree_sitter::Node;
@@ -44,17 +45,17 @@ const TRANSLATORS: &[&str] = &["t", "translate", "formatMessage"];
 pub(super) fn fallback_sink(node: Node, src: &[u8]) -> FallbackSite {
     let mut child = node;
     while let Some(parent) = child.parent() {
-        if TRANSPARENT.contains(&parent.kind()) || is_ternary_branch(parent, child) {
+        if TRANSPARENT.contains(&parent.kind_name()) || is_ternary_branch(parent, child) {
             child = parent;
             continue;
         }
-        return match parent.kind() {
+        return match parent.kind_name() {
             "template_substitution" | "jsx_expression" => FallbackSink::Rendered.into(),
             "member_expression" => FallbackSink::StringOp.into(),
             "arguments" => arguments_sink(parent, src),
             "binary_expression" => binary_sink(parent, src).into(),
             "pair" => pair_sink(parent, src),
-            "assignment_expression" => stored_in(parent.child_by_field_name("left"), src),
+            "assignment_expression" => stored_in(parent.field("left"), src),
             "return_statement" | "arrow_function" => FallbackSink::Returned.into(),
             _ => FallbackSink::Other.into(),
         };
@@ -63,9 +64,9 @@ pub(super) fn fallback_sink(node: Node, src: &[u8]) -> FallbackSite {
 }
 
 fn is_ternary_branch(parent: Node, child: Node) -> bool {
-    parent.kind() == "ternary_expression"
+    parent.kind_name() == "ternary_expression"
         && parent
-            .child_by_field_name("condition")
+            .field("condition")
             .is_some_and(|condition| condition.id() != child.id())
 }
 
@@ -89,13 +90,13 @@ fn pair_sink(pair: Node, src: &[u8]) -> FallbackSite {
     let translated = pair
         .parent()
         .and_then(|object| object.parent())
-        .filter(|parent| parent.kind() == "arguments")
+        .filter(|parent| parent.kind_name() == "arguments")
         .and_then(|arguments| callee_name(arguments, src))
         .is_some_and(|callee| TRANSLATORS.contains(&callee));
     if translated {
         return FallbackSink::Rendered.into();
     }
-    stored_in(pair.child_by_field_name("key"), src)
+    stored_in(pair.field("key"), src)
 }
 
 fn stored_in(target: Option<Node>, src: &[u8]) -> FallbackSite {
@@ -107,7 +108,7 @@ fn stored_in(target: Option<Node>, src: &[u8]) -> FallbackSite {
 
 fn binary_sink(node: Node, src: &[u8]) -> FallbackSink {
     let operator = node
-        .child_by_field_name("operator")
+        .field("operator")
         .and_then(|op| walk::node_text(op, src));
     match operator {
         Some("+") => FallbackSink::Rendered,
@@ -117,10 +118,10 @@ fn binary_sink(node: Node, src: &[u8]) -> FallbackSink {
 }
 
 fn callee_name<'a>(arguments: Node, src: &'a [u8]) -> Option<&'a str> {
-    let callee = arguments.parent()?.child_by_field_name("function")?;
-    match callee.kind() {
+    let callee = arguments.parent()?.field("function")?;
+    match callee.kind_name() {
         "identifier" => walk::node_text(callee, src),
-        "member_expression" => walk::node_text(callee.child_by_field_name("property")?, src),
+        "member_expression" => walk::node_text(callee.field("property")?, src),
         _ => None,
     }
 }

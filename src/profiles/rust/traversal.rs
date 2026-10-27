@@ -3,6 +3,7 @@
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, units};
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
 };
@@ -47,7 +48,7 @@ fn visit_node(
     state: &mut RustWalkState<'_>,
     out: &mut Walked,
 ) {
-    let kind = node.kind();
+    let kind = node.kind_name();
 
     // `use` declarations (incl. `pub use` re-exports): extracted, not descended
     // into, so import internals never pollute the token stream.
@@ -61,7 +62,7 @@ fn visit_node(
 
     // `mod name;` (no body): an edge to the child module. Inline `mod x { … }`
     // falls through — it opens a scope and its body is traversed.
-    if kind == "mod_item" && node.child_by_field_name("body").is_none() {
+    if kind == "mod_item" && node.field("body").is_none() {
         let mod_enclosing = state.scope.last().map(|s| s.name.as_str());
         if let Some(ctx) = imports::mod_decl(node, src, module_name, mod_enclosing) {
             out.symbols.imports.push(ctx);
@@ -139,7 +140,10 @@ fn visit_node(
         let mut token_cursor = node.walk();
         let children: Vec<Node> = node.children(&mut token_cursor).collect();
         for w in children.windows(3) {
-            if w[0].kind() == "identifier" && w[1].kind() == "::" && w[2].kind() == "identifier" {
+            if w[0].kind_name() == "identifier"
+                && w[1].kind_name() == "::"
+                && w[2].kind_name() == "identifier"
+            {
                 if let (Ok(base), Ok(item)) = (w[0].utf8_text(src), w[2].utf8_text(src)) {
                     record_attr(&mut out.usage.attribute_accesses, base, item);
                 }
@@ -260,7 +264,7 @@ fn has_cfg_test_attr(node: Node, src: &[u8]) -> bool {
     let mut cursor = node.walk();
     let found = node
         .children(&mut cursor)
-        .take_while(|child| matches!(child.kind(), "attribute_item" | "inner_attribute_item"))
+        .take_while(|child| matches!(child.kind_name(), "attribute_item" | "inner_attribute_item"))
         .filter_map(|child| child.utf8_text(src).ok())
         .any(text_is_cfg_test);
     found

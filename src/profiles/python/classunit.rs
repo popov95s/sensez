@@ -1,10 +1,11 @@
 //! Python class-level field extraction.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::ClassProperty;
 use tree_sitter::Node;
 
 pub fn properties(class: Node, src: &[u8]) -> Vec<ClassProperty> {
-    let Some(body) = class.child_by_field_name("body") else {
+    let Some(body) = class.field("body") else {
         return Vec::new();
     };
     let mut out = Vec::new();
@@ -18,21 +19,20 @@ pub fn properties(class: Node, src: &[u8]) -> Vec<ClassProperty> {
 }
 
 fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
-    let assignment = if member.kind() == "assignment" {
+    let assignment = if member.kind_name() == "assignment" {
         member
-    } else if member.kind() == "expression_statement" {
+    } else if member.kind_name() == "expression_statement" {
         first_child_kind(member, "assignment")?
     } else {
         return None;
     };
-    let left = assignment.child_by_field_name("left")?;
+    let left = assignment.field("left")?;
     let name = left
         .utf8_text(src)
         .ok()
         .filter(|name| name.chars().all(|c| c == '_' || c.is_alphanumeric()))?;
-    let initializer_type =
-        super::typehints::instantiated_type(assignment.child_by_field_name("right"), src);
-    let ty = super::typehints::type_text(assignment.child_by_field_name("type"), src)
+    let initializer_type = super::typehints::instantiated_type(assignment.field("right"), src);
+    let ty = super::typehints::type_text(assignment.field("type"), src)
         .or_else(|| initializer_type.clone())?;
     Some(ClassProperty {
         name: name.to_string(),
@@ -46,7 +46,7 @@ fn first_child_kind<'tree>(node: Node<'tree>, kind: &str) -> Option<Node<'tree>>
     let mut cursor = node.walk();
     let found = node
         .named_children(&mut cursor)
-        .find(|child| child.kind() == kind);
+        .find(|child| child.kind_name() == kind);
     found
 }
 

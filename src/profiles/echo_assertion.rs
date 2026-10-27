@@ -1,5 +1,6 @@
 //! Shared matching of assertion sides that cannot differ.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::EchoShape;
 use tree_sitter::Node;
 
@@ -32,7 +33,7 @@ pub(crate) fn echo_shape(
         return None;
     }
     if tokens(actual, src, syntax) == tokens(expected, src, syntax) {
-        let literal = syntax.literal_kinds.contains(&actual.kind());
+        let literal = syntax.literal_kinds.contains(&actual.kind_name());
         return Some(if literal {
             EchoShape::Literals
         } else {
@@ -43,7 +44,7 @@ pub(crate) fn echo_shape(
 }
 
 fn is_volatile(node: Node<'_>, syntax: &EchoSyntax) -> bool {
-    if syntax.volatile_kinds.contains(&node.kind()) {
+    if syntax.volatile_kinds.contains(&node.kind_name()) {
         return true;
     }
     let mut cursor = node.walk();
@@ -60,7 +61,7 @@ fn tokens<'a>(node: Node<'_>, src: &'a [u8], syntax: &EchoSyntax) -> Vec<&'a str
     let mut cursor = node.walk();
     let leaves = node
         .children(&mut cursor)
-        .filter(|child| child.kind() != syntax.comment_kind)
+        .filter(|child| child.kind_name() != syntax.comment_kind)
         .flat_map(|child| tokens(child, src, syntax))
         .collect();
     leaves
@@ -89,19 +90,14 @@ fn member_path<'a>(
     src: &'a [u8],
     syntax: &EchoSyntax,
 ) -> Option<(&'a str, Vec<&'a str>)> {
-    if node.kind() == "identifier" {
+    if node.kind_name() == "identifier" {
         return Some((node.utf8_text(src).ok()?, Vec::new()));
     }
-    if node.kind() != syntax.member_kind {
+    if node.kind_name() != syntax.member_kind {
         return None;
     }
-    let (root, mut path) =
-        member_path(node.child_by_field_name(syntax.object_field)?, src, syntax)?;
-    path.push(
-        node.child_by_field_name(syntax.property_field)?
-            .utf8_text(src)
-            .ok()?,
-    );
+    let (root, mut path) = member_path(node.field(syntax.object_field)?, src, syntax)?;
+    path.push(node.field(syntax.property_field)?.utf8_text(src).ok()?);
     Some((root, path))
 }
 
@@ -110,7 +106,7 @@ fn aliases_before(node: Node<'_>, src: &[u8], syntax: &EchoSyntax) -> Vec<Alias>
     let mut found = Vec::new();
     let mut current = node;
     while let Some(parent) = current.parent() {
-        if syntax.block_kinds.contains(&parent.kind()) {
+        if syntax.block_kinds.contains(&parent.kind_name()) {
             let mut cursor = parent.walk();
             found.extend(
                 parent

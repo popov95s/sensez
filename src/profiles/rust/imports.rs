@@ -7,6 +7,7 @@
 //! the alias (if any) is the local binding. `pub use` re-exports are extracted
 //! identically — the re-export *edge* is what keeps the target alive.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, ImportPhase};
 use tree_sitter::Node;
 
@@ -18,7 +19,7 @@ pub fn extract(
     scope: Option<&str>,
 ) -> Vec<ImportContext> {
     let mut out = Vec::new();
-    if let Some(arg) = node.child_by_field_name("argument") {
+    if let Some(arg) = node.field("argument") {
         flatten(arg, src, &mut Vec::new(), &mut |prefix, leaf| {
             out.push(context(prefix, leaf, node, source_module, scope, false));
         });
@@ -34,9 +35,7 @@ pub fn mod_decl(
     source_module: &str,
     scope: Option<&str>,
 ) -> Option<ImportContext> {
-    let name = node
-        .child_by_field_name("name")
-        .and_then(|n| n.utf8_text(src).ok())?;
+    let name = node.field("name").and_then(|n| n.utf8_text(src).ok())?;
     Some(context(
         &["self".to_string(), name.to_string()],
         Leaf::Module(name.to_string()),
@@ -60,11 +59,9 @@ pub fn qualified_path(
     scope: Option<&str>,
 ) -> Option<ImportContext> {
     let path = node
-        .child_by_field_name("path")
-        .filter(|p| p.kind() == "scoped_identifier")?;
-    let name = node
-        .child_by_field_name("name")
-        .and_then(|n| n.utf8_text(src).ok())?;
+        .field("path")
+        .filter(|p| p.kind_name() == "scoped_identifier")?;
+    let name = node.field("name").and_then(|n| n.utf8_text(src).ok())?;
     let mut prefix = Vec::new();
     push_path(Some(path), src, &mut prefix);
     if !matches!(
@@ -105,7 +102,7 @@ fn flatten(
     prefix: &mut Vec<String>,
     emit: &mut impl FnMut(&[String], Leaf),
 ) {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" | "crate" | "super" | "self" => {
             if let Ok(text) = node.utf8_text(src) {
                 if text == "self" && !prefix.is_empty() {
@@ -123,27 +120,27 @@ fn flatten(
             }
         }
         "scoped_identifier" => {
-            with_path_prefix(prefix, node.child_by_field_name("path"), src, |prefix| {
-                if let Some(name) = node.child_by_field_name("name") {
+            with_path_prefix(prefix, node.field("path"), src, |prefix| {
+                if let Some(name) = node.field("name") {
                     flatten(name, src, prefix, emit);
                 }
             });
         }
         "use_as_clause" => {
             let alias = node
-                .child_by_field_name("alias")
+                .field("alias")
                 .and_then(|a| a.utf8_text(src).ok())
                 .map(str::to_string);
-            if let Some(path) = node.child_by_field_name("path") {
+            if let Some(path) = node.field("path") {
                 let name = leaf_text(path, src);
-                with_path_prefix(prefix, path.child_by_field_name("path"), src, |prefix| {
+                with_path_prefix(prefix, path.field("path"), src, |prefix| {
                     emit(prefix, Leaf::Named { name, alias });
                 });
             }
         }
         "scoped_use_list" => {
-            with_path_prefix(prefix, node.child_by_field_name("path"), src, |prefix| {
-                if let Some(list) = node.child_by_field_name("list") {
+            with_path_prefix(prefix, node.field("path"), src, |prefix| {
+                if let Some(list) = node.field("list") {
                     flatten(list, src, prefix, emit);
                 }
             });
@@ -181,9 +178,9 @@ fn with_path_prefix<R>(
 fn push_path(path: Option<Node>, src: &[u8], prefix: &mut Vec<String>) -> usize {
     let Some(path) = path else { return 0 };
     let before = prefix.len();
-    if path.kind() == "scoped_identifier" {
-        push_path(path.child_by_field_name("path"), src, prefix);
-        if let Some(name) = path.child_by_field_name("name") {
+    if path.kind_name() == "scoped_identifier" {
+        push_path(path.field("path"), src, prefix);
+        if let Some(name) = path.field("name") {
             if let Ok(t) = name.utf8_text(src) {
                 prefix.push(t.to_string());
             }
@@ -196,7 +193,7 @@ fn push_path(path: Option<Node>, src: &[u8], prefix: &mut Vec<String>) -> usize 
 
 /// The final segment of a path node (`a::b::c` → `c`, `c` → `c`).
 fn leaf_text(path: Node, src: &[u8]) -> String {
-    let last = path.child_by_field_name("name").unwrap_or(path);
+    let last = path.field("name").unwrap_or(path);
     last.utf8_text(src).unwrap_or_default().to_string()
 }
 

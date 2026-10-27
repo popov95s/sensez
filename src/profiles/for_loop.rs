@@ -5,6 +5,7 @@
 )]
 
 use super::node_query::{field_identifiers, loop_subject};
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{LoopBound, LoopFrame, LoopKind};
 use tree_sitter::Node;
 
@@ -40,7 +41,7 @@ pub(crate) fn loop_frame(
     shape: &ForLoopShape,
 ) -> LoopFrame {
     let text = |field| loop_subject(node, src, &[field]).unwrap_or_default();
-    if node.kind() != shape.kind {
+    if node.kind_name() != shape.kind {
         return LoopFrame {
             kind: LoopKind::While,
             parent,

@@ -2,6 +2,7 @@
 
 use super::symbols;
 use super::units::{is_abstract_base, is_docstring};
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::node_query::last_segment;
 use crate::profiles::todo_comment::has_todo_comment;
 use crate::spine::ir::StubBody;
@@ -12,17 +13,17 @@ pub(super) fn stub_body(func: Node, src: &[u8], is_method: bool) -> Option<StubB
     if is_declaration(func, src) {
         return None;
     }
-    let body = func.child_by_field_name("body")?;
+    let body = func.field("body")?;
     let mut cursor = body.walk();
     let statements: Vec<Node> = body
         .named_children(&mut cursor)
-        .filter(|statement| statement.kind() != "comment" && !is_docstring(*statement, src))
+        .filter(|statement| statement.kind_name() != "comment" && !is_docstring(*statement, src))
         .collect();
     let [only] = statements.as_slice() else {
         return None;
     };
     let marked = has_todo_comment(func, src, "comment");
-    let stub = match only.kind() {
+    let stub = match only.kind_name() {
         "pass_statement" => StubBody::Placeholder,
         "expression_statement" if is_ellipsis(*only) => StubBody::Placeholder,
         "raise_statement" if raises_not_implemented(*only, src) => StubBody::NotImplemented,
@@ -36,7 +37,7 @@ pub(super) fn stub_body(func: Node, src: &[u8], is_method: bool) -> Option<StubB
 fn is_declaration(func: Node, src: &[u8]) -> bool {
     let decorated = func
         .parent()
-        .filter(|parent| parent.kind() == "decorated_definition");
+        .filter(|parent| parent.kind_name() == "decorated_definition");
     let declared = decorated.is_some_and(|node| {
         symbols::decorator_paths(node, src)
             .iter()
@@ -46,7 +47,7 @@ fn is_declaration(func: Node, src: &[u8]) -> bool {
         .unwrap_or(func)
         .parent()
         .and_then(|block| block.parent())
-        .filter(|parent| parent.kind() == "class_definition");
+        .filter(|parent| parent.kind_name() == "class_definition");
     declared
         || class.is_some_and(|class| {
             symbols::base_classes(class, src)
@@ -58,7 +59,7 @@ fn is_declaration(func: Node, src: &[u8]) -> bool {
 fn is_ellipsis(statement: Node) -> bool {
     statement
         .named_child(0)
-        .is_some_and(|value| value.kind() == "ellipsis")
+        .is_some_and(|value| value.kind_name() == "ellipsis")
 }
 
 fn raises_not_implemented(statement: Node, src: &[u8]) -> bool {
@@ -70,5 +71,5 @@ fn raises_not_implemented(statement: Node, src: &[u8]) -> bool {
 fn returns_nothing(statement: Node) -> bool {
     statement
         .named_child(0)
-        .is_none_or(|value| value.kind() == "none")
+        .is_none_or(|value| value.kind_name() == "none")
 }

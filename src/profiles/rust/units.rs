@@ -4,6 +4,7 @@ use super::control_shapes;
 use crate::profiles::branch_path::branch_path;
 use crate::profiles::guard_clause::is_guard_return;
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{
     CallFact, FallbackSink, FunctionKey, FunctionUnit, LiteralMembership, PerfLine, TypeHints,
@@ -53,14 +54,11 @@ pub fn analyze_function(
         is_method,
         ..Default::default()
     };
-    if let Some(ret) = func
-        .child_by_field_name("return_type")
-        .and_then(|n| type_text(n, src))
-    {
+    if let Some(ret) = func.field("return_type").and_then(|n| type_text(n, src)) {
         hints.record_return(key, ret.clone());
         unit.max_tuple_return = tuple_type_arity(&ret);
     }
-    if let Some(body) = func.child_by_field_name("body") {
+    if let Some(body) = func.field("body") {
         let mut acc = Acc { unit: &mut unit };
         acc.visit(body, src, 0, None);
     }
@@ -73,7 +71,7 @@ struct Acc<'a> {
 
 impl Acc<'_> {
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
-        let kind = node.kind();
+        let kind = node.kind_name();
         if control_shapes::is_function(kind) {
             return;
         }
@@ -106,7 +104,7 @@ impl Acc<'_> {
     }
 
     fn scan(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
-        match node.kind() {
+        match node.kind_name() {
             "return_expression" => {
                 self.unit.return_count += 1;
                 if is_guard_return(Lineage::detached(node), &control_shapes::GUARD_CLAUSE) {
@@ -130,13 +128,13 @@ impl Acc<'_> {
     }
 
     fn record_let(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
-        let Some(pattern) = node.child_by_field_name("pattern") else {
+        let Some(pattern) = node.field("pattern") else {
             return;
         };
         if frame.is_some() {
             let names = walk::identifiers(pattern, src, &["identifier"]);
             self.unit.performance.note_declared(frame, &names);
-            if node.child_by_field_name("value").is_some_and(|value| {
+            if node.field("value").is_some_and(|value| {
                 walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
             }) {
                 self.unit.performance.note_call_results(frame, &names);
@@ -159,12 +157,12 @@ impl Acc<'_> {
     }
 
     fn record_assignment(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
-        let Some(left) = node.child_by_field_name("left") else {
+        let Some(left) = node.field("left") else {
             return;
         };
         if let Some(name) = pattern_name(left, src) {
-            let paging = node.kind() == "assignment_expression"
-                && node.child_by_field_name("right").is_some_and(|value| {
+            let paging = node.kind_name() == "assignment_expression"
+                && node.field("right").is_some_and(|value| {
                     walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
                 });
             if paging {
@@ -182,8 +180,8 @@ impl Acc<'_> {
             .chain_hits
             .extend(walk::chain_hit(node, node.parent(), src, &CHAIN));
         let Some(base) = node
-            .child_by_field_name("value")
-            .filter(|n| matches!(n.kind(), "identifier" | "self"))
+            .field("value")
+            .filter(|n| matches!(n.kind_name(), "identifier" | "self"))
             .and_then(|n| n.utf8_text(src).ok())
         else {
             return;
@@ -194,10 +192,7 @@ impl Acc<'_> {
             .entry(base.to_string())
             .or_insert(0) += 1;
         if base == "self" {
-            if let Some(field) = node
-                .child_by_field_name("field")
-                .and_then(|n| n.utf8_text(src).ok())
-            {
+            if let Some(field) = node.field("field").and_then(|n| n.utf8_text(src).ok()) {
                 self.unit.self_attrs.insert(field.to_string());
             }
         }
@@ -216,8 +211,8 @@ impl Acc<'_> {
             });
         }
         if call.member && MUTATORS.contains(&call.method.as_str()) {
-            if let Some(func) = node.child_by_field_name("function") {
-                if let Some(base) = func.child_by_field_name("value") {
+            if let Some(func) = node.field("function") {
+                if let Some(base) = func.field("value") {
                     walk::record_mutation_root(self.unit, base, src, target_root);
                 }
             }
@@ -241,8 +236,10 @@ impl Acc<'_> {
     }
 
     fn record_string_key(&mut self, node: Node, src: &[u8]) {
-        let recv = node.named_child(0).filter(|n| n.kind() == "identifier");
-        let key = node.named_child(1).filter(|n| is_string(n.kind()));
+        let recv = node
+            .named_child(0)
+            .filter(|n| n.kind_name() == "identifier");
+        let key = node.named_child(1).filter(|n| is_string(n.kind_name()));
         if let (Some(recv), Some(key)) = (recv, key) {
             if let (Ok(recv), Ok(key)) = (recv.utf8_text(src), key.utf8_text(src)) {
                 self.unit
@@ -258,7 +255,7 @@ impl Acc<'_> {
     fn record_index_mutation(&mut self, node: Node, src: &[u8]) {
         if node.parent().is_some_and(|p| {
             matches!(
-                p.kind(),
+                p.kind_name(),
                 "assignment_expression" | "compound_assignment_expr"
             )
         }) {
@@ -269,7 +266,7 @@ impl Acc<'_> {
     fn record_tuple_return(&mut self, node: Node) {
         if let Some(value) = node
             .named_child(0)
-            .filter(|n| n.kind() == "tuple_expression")
+            .filter(|n| n.kind_name() == "tuple_expression")
         {
             self.unit.max_tuple_return = self.unit.max_tuple_return.max(value.named_child_count());
         }
@@ -283,8 +280,7 @@ impl Acc<'_> {
         let (array, operand) = match method {
             "contains" => (
                 receiver,
-                call.child_by_field_name("arguments")
-                    .and_then(|args| args.named_child(0)),
+                call.field("arguments").and_then(|args| args.named_child(0)),
             ),
             "any" => match method_call(receiver, src) {
                 Some(("iter", inner)) => (inner, None),
@@ -292,14 +288,17 @@ impl Acc<'_> {
             },
             _ => return,
         };
-        if array.kind() == "array_expression" {
+        if array.kind_name() == "array_expression" {
             self.push_literal_membership(call, operand, array, src);
         }
     }
 
     fn record_literal_match(&mut self, node: Node, src: &[u8]) {
-        if node.children(&mut node.walk()).any(|c| is_string(c.kind())) {
-            self.push_literal_membership(node, node.child_by_field_name("value"), node, src);
+        if node
+            .children(&mut node.walk())
+            .any(|c| is_string(c.kind_name()))
+        {
+            self.push_literal_membership(node, node.field("value"), node, src);
         }
     }
 
@@ -307,7 +306,7 @@ impl Acc<'_> {
         let mut cursor = list.walk();
         let literals: Vec<String> = list
             .children(&mut cursor)
-            .filter(|c| is_string(c.kind()))
+            .filter(|c| is_string(c.kind_name()))
             .filter_map(|c| c.utf8_text(src).ok())
             .map(unquote)
             .collect();
@@ -324,10 +323,10 @@ impl Acc<'_> {
     }
 
     fn record_short_string_arg(&mut self, node: Node, src: &[u8]) {
-        let Some(args) = node.child_by_field_name("arguments") else {
+        let Some(args) = node.field("arguments") else {
             return;
         };
-        let Some(arg) = args.named_child(0).filter(|n| is_string(n.kind())) else {
+        let Some(arg) = args.named_child(0).filter(|n| is_string(n.kind_name())) else {
             return;
         };
         walk::record_string_fallback(

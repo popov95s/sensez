@@ -1,6 +1,7 @@
 //! How a swallowing error handler ends, for `swallowed_error_sentinel` facts.
 
 use super::try_handling::{logger_callee, matches_callee, swallows, TrySyntax};
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{GuardedBody, HandlerComment, HandlerEnd, SentinelHandler};
 use tree_sitter::Node;
 
@@ -13,7 +14,7 @@ pub(crate) fn sentinel_handler(
     syntax: &TrySyntax,
     frame: Option<usize>,
 ) -> Option<SentinelHandler> {
-    let try_body = handler.parent()?.child_by_field_name("body")?;
+    let try_body = handler.parent()?.field("body")?;
     if inside_cleanup(handler, syntax)
         || calls_any(body, syntax.notifiers, src, syntax)
         || calls_any(try_body, syntax.probes, src, syntax)
@@ -45,7 +46,7 @@ fn handler_end(
     let Some((last, before)) = statements.split_last() else {
         return Some(log_only());
     };
-    let returned = (last.kind() == syntax.return_kind).then(|| last.named_child(0));
+    let returned = (last.kind_name() == syntax.return_kind).then(|| last.named_child(0));
     match returned {
         Some(Some(value)) => (syntax.returned_literal)(value, src)
             .map(|end| (end, value.utf8_text(src).unwrap_or_default().to_string())),
@@ -57,9 +58,10 @@ fn handler_end(
 /// Cleanup code inside another handler or a `finally` block.
 fn inside_cleanup(handler: Node, syntax: &TrySyntax) -> bool {
     std::iter::successors(handler.parent(), Node::parent)
-        .take_while(|node| !(syntax.is_function)(node.kind()))
+        .take_while(|node| !(syntax.is_function)(node.kind_name()))
         .any(|node| {
-            node.kind() == syntax.handler_kind || syntax.cleanup_kinds.contains(&node.kind())
+            node.kind_name() == syntax.handler_kind
+                || syntax.cleanup_kinds.contains(&node.kind_name())
         })
 }
 
@@ -90,7 +92,7 @@ fn comment(body: Node, syntax: &TrySyntax) -> HandlerComment {
     let mut cursor = body.walk();
     let commented = body
         .named_children(&mut cursor)
-        .any(|node| node.kind() == syntax.comment_kind);
+        .any(|node| node.kind_name() == syntax.comment_kind);
     if commented {
         HandlerComment::Present
     } else {
@@ -103,14 +105,15 @@ fn statements<'a>(block: Node<'a>, syntax: &TrySyntax) -> Vec<Node<'a>> {
     block
         .named_children(&mut cursor)
         .filter(|node| {
-            node.kind() != syntax.comment_kind && !syntax.noop_kinds.contains(&node.kind())
+            node.kind_name() != syntax.comment_kind
+                && !syntax.noop_kinds.contains(&node.kind_name())
         })
         .collect()
 }
 
 fn only_logs(statements: &[Node], src: &[u8], syntax: &TrySyntax) -> bool {
     statements.iter().all(|statement| {
-        statement.kind() == "expression_statement"
+        statement.kind_name() == "expression_statement"
             && statement
                 .named_child(0)
                 .is_some_and(|call| logger_callee(call, src, syntax).is_some())
@@ -118,8 +121,8 @@ fn only_logs(statements: &[Node], src: &[u8], syntax: &TrySyntax) -> bool {
 }
 
 fn callee_text<'a>(node: Node, src: &'a [u8], syntax: &TrySyntax) -> Option<&'a str> {
-    (node.kind() == syntax.call_kind)
-        .then(|| node.child_by_field_name("function"))
+    (node.kind_name() == syntax.call_kind)
+        .then(|| node.field("function"))
         .flatten()
         .and_then(|callee| callee.utf8_text(src).ok())
 }

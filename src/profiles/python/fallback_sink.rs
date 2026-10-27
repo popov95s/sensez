@@ -1,5 +1,6 @@
 //! Where a Python string fallback's value flows.
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{FallbackSink, FallbackSite};
 use tree_sitter::Node;
@@ -33,11 +34,12 @@ const RENDERERS: &[&str] = &["print", "format", "echo", "write"];
 pub(super) fn fallback_sink(node: Node, src: &[u8]) -> FallbackSite {
     let mut child = node;
     while let Some(parent) = child.parent() {
-        if parent.kind() == "parenthesized_expression" || is_conditional_branch(parent, child) {
+        if parent.kind_name() == "parenthesized_expression" || is_conditional_branch(parent, child)
+        {
             child = parent;
             continue;
         }
-        return match parent.kind() {
+        return match parent.kind_name() {
             "interpolation" => FallbackSink::Rendered.into(),
             "attribute" => FallbackSink::StringOp.into(),
             "argument_list" => arguments_sink(parent, src),
@@ -46,10 +48,8 @@ pub(super) fn fallback_sink(node: Node, src: &[u8]) -> FallbackSite {
                 .map_or(FallbackSink::Other.into(), |args| arguments_sink(args, src)),
             "binary_operator" => FallbackSink::Rendered.into(),
             "comparison_operator" => FallbackSink::Compared.into(),
-            "pair" => stored_in(parent.child_by_field_name("key"), src),
-            "assignment" | "augmented_assignment" => {
-                stored_in(parent.child_by_field_name("left"), src)
-            }
+            "pair" => stored_in(parent.field("key"), src),
+            "assignment" | "augmented_assignment" => stored_in(parent.field("left"), src),
             "return_statement" | "lambda" => FallbackSink::Returned.into(),
             _ => FallbackSink::Other.into(),
         };
@@ -59,7 +59,7 @@ pub(super) fn fallback_sink(node: Node, src: &[u8]) -> FallbackSite {
 
 /// `then` and `otherwise` of `then if condition else otherwise`.
 fn is_conditional_branch(parent: Node, child: Node) -> bool {
-    parent.kind() == "conditional_expression"
+    parent.kind_name() == "conditional_expression"
         && parent
             .named_child(1)
             .is_some_and(|condition| condition.id() != child.id())
@@ -82,10 +82,10 @@ fn stored_in(target: Option<Node>, src: &[u8]) -> FallbackSite {
 }
 
 fn callee_name<'a>(arguments: Node, src: &'a [u8]) -> Option<&'a str> {
-    let callee = arguments.parent()?.child_by_field_name("function")?;
-    match callee.kind() {
+    let callee = arguments.parent()?.field("function")?;
+    match callee.kind_name() {
         "identifier" => walk::node_text(callee, src),
-        "attribute" => walk::node_text(callee.child_by_field_name("attribute")?, src),
+        "attribute" => walk::node_text(callee.field("attribute")?, src),
         _ => None,
     }
 }

@@ -1,6 +1,7 @@
 //! Assertion operands and mock usage for `fixture_echo_assertion`.
 
 use crate::profiles::echo_assertion::{echo_shape, Alias, EchoSyntax};
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{EchoAssertion, FunctionUnit};
 use tree_sitter::Node;
 
@@ -34,7 +35,7 @@ const MOCK_PROGRAMMING: &[&str] = &[
 ];
 
 pub(super) fn scan(unit: &mut FunctionUnit, node: Node<'_>, src: &[u8]) {
-    match node.kind() {
+    match node.kind_name() {
         "call_expression" => scan_call(unit, node, src),
         "variable_declarator" => {
             if let Some(name) = programmed_mock_declaration(node, src) {
@@ -46,10 +47,10 @@ pub(super) fn scan(unit: &mut FunctionUnit, node: Node<'_>, src: &[u8]) {
 }
 
 fn scan_call(unit: &mut FunctionUnit, call: Node<'_>, src: &[u8]) {
-    let Some(callee) = call.child_by_field_name("function") else {
+    let Some(callee) = call.field("function") else {
         return;
     };
-    if callee.kind() != "member_expression" {
+    if callee.kind_name() != "member_expression" {
         return;
     }
     let text = callee.utf8_text(src).unwrap_or_default();
@@ -58,9 +59,9 @@ fn scan_call(unit: &mut FunctionUnit, call: Node<'_>, src: &[u8]) {
         return;
     }
     let (Some(object), Some(member)) = (
-        callee.child_by_field_name("object"),
+        callee.field("object"),
         callee
-            .child_by_field_name("property")
+            .field("property")
             .and_then(|property| property.utf8_text(src).ok()),
     ) else {
         return;
@@ -111,7 +112,7 @@ fn record_echo(
 /// `x` for `vi.mocked(x)` / `jest.mocked(x)`, else `node`.
 fn unwrap_mocked<'a>(node: Node<'a>, src: &[u8]) -> Node<'a> {
     let is_mocked = node
-        .child_by_field_name("function")
+        .field("function")
         .and_then(|callee| callee.utf8_text(src).ok())
         .is_some_and(|callee| MOCK_WRAPPERS.contains(&callee));
     match arguments(node).first() {
@@ -122,10 +123,10 @@ fn unwrap_mocked<'a>(node: Node<'a>, src: &[u8]) -> Node<'a> {
 
 /// The single argument of a bare `expect(x)` call.
 fn expect_subject<'a>(node: Node<'a>, src: &[u8]) -> Option<Node<'a>> {
-    if node.kind() != "call_expression" {
+    if node.kind_name() != "call_expression" {
         return None;
     }
-    let callee = node.child_by_field_name("function")?;
+    let callee = node.field("function")?;
     if callee.utf8_text(src).ok()? != "expect" {
         return None;
     }
@@ -144,38 +145,35 @@ fn equality_assert_args<'a>(call: Node<'a>, callee: &str) -> Vec<Node<'a>> {
 }
 
 fn arguments(call: Node<'_>) -> Vec<Node<'_>> {
-    let Some(args) = call.child_by_field_name("arguments") else {
+    let Some(args) = call.field("arguments") else {
         return Vec::new();
     };
     let mut cursor = args.walk();
     let nodes = args
         .named_children(&mut cursor)
-        .filter(|arg| arg.kind() != "comment")
+        .filter(|arg| arg.kind_name() != "comment")
         .collect();
     nodes
 }
 
 /// `const fn = vi.fn().mockReturnValue(x)` binds `fn` to a programmed mock.
 fn programmed_mock_declaration<'a>(declarator: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
-    let name = declarator.child_by_field_name("name")?;
-    let value = declarator.child_by_field_name("value")?;
-    let callee = value.child_by_field_name("function").filter(|callee| {
-        value.kind() == "call_expression" && callee.kind() == "member_expression"
+    let name = declarator.field("name")?;
+    let value = declarator.field("value")?;
+    let callee = value.field("function").filter(|callee| {
+        value.kind_name() == "call_expression" && callee.kind_name() == "member_expression"
     })?;
-    let member = callee
-        .child_by_field_name("property")?
-        .utf8_text(src)
-        .ok()?;
+    let member = callee.field("property")?.utf8_text(src).ok()?;
     let factory = callee
-        .child_by_field_name("object")?
-        .child_by_field_name("function")?
+        .field("object")?
+        .field("function")?
         .utf8_text(src)
         .ok()?;
     let programmed = MOCK_FACTORIES.contains(&factory)
         && MOCK_PROGRAMMING
             .iter()
             .any(|prefix| member.starts_with(prefix));
-    (name.kind() == "identifier" && programmed)
+    (name.kind_name() == "identifier" && programmed)
         .then(|| name.utf8_text(src).ok())
         .flatten()
 }
@@ -183,15 +181,15 @@ fn programmed_mock_declaration<'a>(declarator: Node<'_>, src: &'a [u8]) -> Optio
 /// `const result = input;` binds `result` to `input` unchanged.
 fn alias(statement: Node<'_>, src: &[u8]) -> Option<Alias> {
     if !matches!(
-        statement.kind(),
+        statement.kind_name(),
         "lexical_declaration" | "variable_declaration"
     ) {
         return None;
     }
     let declarator = statement.named_child(0)?;
-    let name = declarator.child_by_field_name("name")?;
-    let value = declarator.child_by_field_name("value")?;
-    (name.kind() == "identifier" && value.kind() == "identifier").then(|| Alias {
+    let name = declarator.field("name")?;
+    let value = declarator.field("value")?;
+    (name.kind_name() == "identifier" && value.kind_name() == "identifier").then(|| Alias {
         name: name.utf8_text(src).unwrap_or_default().to_string(),
         source: value.utf8_text(src).unwrap_or_default().to_string(),
     })

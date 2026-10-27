@@ -1,6 +1,7 @@
 //! Doubles installed with `patch`, `mocker.patch`, and `monkeypatch.setattr`.
 
 use super::symbols::string_value;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{MockFidelity, MockHost, MockScope, MockTarget};
 use tree_sitter::Node;
 
@@ -22,26 +23,26 @@ const OBJECT_PATCHES: &[&str] = &[
 /// Record `call` when it patches a dotted path or an attribute of a named object.
 pub(super) fn record(call: Node, src: &[u8], out: &mut Vec<MockTarget>) {
     let Some(callee) = call
-        .child_by_field_name("function")
+        .field("function")
         .and_then(|callee| callee.utf8_text(src).ok())
     else {
         return;
     };
-    let Some(args) = call.child_by_field_name("arguments") else {
+    let Some(args) = call.field("arguments") else {
         return;
     };
     let mut cursor = args.walk();
     let positional: Vec<Node> = args
         .named_children(&mut cursor)
-        .filter(|arg| arg.kind() != "keyword_argument")
+        .filter(|arg| arg.kind_name() != "keyword_argument")
         .collect();
     let target = match positional.as_slice() {
-        [path, ..] if path.kind() == "string" && PATH_PATCHES.contains(&callee) => {
+        [path, ..] if path.kind_name() == "string" && PATH_PATCHES.contains(&callee) => {
             dotted_target(&string_value(*path, src).unwrap_or_default())
         }
         [object, member, ..]
-            if object.kind() == "identifier"
-                && member.kind() == "string"
+            if object.kind_name() == "identifier"
+                && member.kind_name() == "string"
                 && OBJECT_PATCHES.contains(&callee) =>
         {
             object
@@ -80,11 +81,8 @@ fn dotted_target(path: &str) -> Option<(MockHost, MockScope)> {
 fn fidelity(args: Node, src: &[u8]) -> MockFidelity {
     let mut cursor = args.walk();
     let wraps = args.named_children(&mut cursor).any(|arg| {
-        arg.kind() == "keyword_argument"
-            && arg
-                .child_by_field_name("name")
-                .and_then(|name| name.utf8_text(src).ok())
-                == Some("wraps")
+        arg.kind_name() == "keyword_argument"
+            && arg.field("name").and_then(|name| name.utf8_text(src).ok()) == Some("wraps")
     });
     if wraps {
         MockFidelity::KeepsOriginal

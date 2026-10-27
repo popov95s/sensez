@@ -2,6 +2,7 @@
 
 use super::performance::{control_region, stable_receiver};
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{CallFact, IterationPass};
 use tree_sitter::Node;
@@ -33,7 +34,7 @@ pub(super) fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> O
         pass: pass_kind(lineage, src, &call.method)?,
         in_assertion: in_assertion(lineage, src),
         arg_idents: node
-            .child_by_field_name("arguments")
+            .field("arguments")
             .map(|args| super::loops::names(Some(args), src))
             .unwrap_or_default(),
         ..call.clone()
@@ -43,15 +44,15 @@ pub(super) fn iteration_call(lineage: Lineage, src: &[u8], call: &CallFact) -> O
 /// `for (const x of xs)` as one loop pass over `xs`.
 pub(super) fn loop_pass(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     let node = lineage.node();
-    if node.kind() != "for_in_statement" {
+    if node.kind_name() != "for_in_statement" {
         return None;
     }
     let base = node
-        .child_by_field_name("right")
+        .field("right")
         .filter(stable_receiver)
         .and_then(|right| walk::node_text(right, src))?;
     let operator = node
-        .child_by_field_name("operator")
+        .field("operator")
         .and_then(|op| walk::node_text(op, src))
         .unwrap_or("of");
     let mut pass = CallFact::member(
@@ -63,7 +64,7 @@ pub(super) fn loop_pass(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     pass.region = control_region(lineage);
     pass.offset = node.start_byte();
     pass.arg_idents = node
-        .child_by_field_name("body")
+        .field("body")
         .map(|body| read_only_names(body, src))
         .unwrap_or_default();
     Some(pass)
@@ -91,8 +92,8 @@ fn pass_kind(lineage: Lineage, src: &[u8], method: &str) -> Option<IterationPass
 /// `xs.map(x => x.n).reduce(..)`.
 fn is_reduced(call: Lineage, src: &[u8]) -> bool {
     call.parent(call.node())
-        .filter(|parent| parent.kind() == "member_expression")
-        .and_then(|parent| parent.child_by_field_name("property"))
+        .filter(|parent| parent.kind_name() == "member_expression")
+        .and_then(|parent| parent.field("property"))
         .and_then(|property| walk::node_text(property, src))
         .is_some_and(|method| AGGREGATE_METHODS.contains(&method))
 }
@@ -100,15 +101,15 @@ fn is_reduced(call: Lineage, src: &[u8]) -> bool {
 /// `xs.map((x) => <li>{x}</li>)`: rendering a list, not computing over it.
 fn renders_markup(call: Node) -> bool {
     let body = call
-        .child_by_field_name("arguments")
+        .field("arguments")
         .and_then(|args| args.named_child(0))
-        .filter(|arg| arg.kind() == "arrow_function")
-        .and_then(|arrow| arrow.child_by_field_name("body"));
-    let markup = body.map(|body| match body.kind() {
+        .filter(|arg| arg.kind_name() == "arrow_function")
+        .and_then(|arrow| arrow.field("body"));
+    let markup = body.map(|body| match body.kind_name() {
         "parenthesized_expression" => body.named_child(0).unwrap_or(body),
         _ => body,
     });
-    markup.is_some_and(|node| JSX_KINDS.contains(&node.kind()))
+    markup.is_some_and(|node| JSX_KINDS.contains(&node.kind_name()))
 }
 
 /// `xs.filter(..).length`.
@@ -116,8 +117,8 @@ fn is_counted_filter(call: Lineage, src: &[u8], method: &str) -> bool {
     method == "filter"
         && call
             .parent(call.node())
-            .filter(|parent| parent.kind() == "member_expression")
-            .and_then(|parent| parent.child_by_field_name("property"))
+            .filter(|parent| parent.kind_name() == "member_expression")
+            .and_then(|parent| parent.field("property"))
             .and_then(|property| walk::node_text(property, src))
             == Some("length")
 }
@@ -126,14 +127,14 @@ fn is_counted_filter(call: Lineage, src: &[u8], method: &str) -> bool {
 fn builds_index(call: Lineage, src: &[u8]) -> bool {
     let Some(owner) = call
         .parent(call.node())
-        .filter(|parent| parent.kind() == "arguments")
+        .filter(|parent| parent.kind_name() == "arguments")
         .and_then(|args| call.parent(args))
     else {
         return false;
     };
-    let callee = match owner.kind() {
-        "new_expression" => owner.child_by_field_name("constructor"),
-        "call_expression" => owner.child_by_field_name("function"),
+    let callee = match owner.kind_name() {
+        "new_expression" => owner.field("constructor"),
+        "call_expression" => owner.field("function"),
         _ => None,
     }
     .and_then(|callee| walk::node_text(callee, src));
@@ -150,9 +151,9 @@ fn read_only_names(body: Node, src: &[u8]) -> Vec<String> {
 }
 
 fn assigned_names(node: Node, src: &[u8]) -> Vec<String> {
-    let target = match node.kind() {
-        kind if ASSIGNMENT_KINDS.contains(&kind) => node.child_by_field_name("left"),
-        "update_expression" => node.child_by_field_name("argument"),
+    let target = match node.kind_name() {
+        kind if ASSIGNMENT_KINDS.contains(&kind) => node.field("left"),
+        "update_expression" => node.field("argument"),
         _ => None,
     };
     let mut cursor = node.walk();
@@ -161,7 +162,7 @@ fn assigned_names(node: Node, src: &[u8]) -> Vec<String> {
         .flat_map(|child| assigned_names(child, src))
         .collect();
     target
-        .filter(|target| target.kind() == "identifier")
+        .filter(|target| target.kind_name() == "identifier")
         .and_then(|target| walk::node_text(target, src))
         .map(str::to_string)
         .into_iter()
@@ -172,21 +173,21 @@ fn assigned_names(node: Node, src: &[u8]) -> Vec<String> {
 /// `xs.map(x => x.field)`.
 fn is_trivial_projection(call: Node, src: &[u8]) -> bool {
     let Some(arrow) = call
-        .child_by_field_name("arguments")
+        .field("arguments")
         .filter(|args| args.named_child_count() == 1)
         .and_then(|args| args.named_child(0))
-        .filter(|arg| arg.kind() == "arrow_function")
+        .filter(|arg| arg.kind_name() == "arrow_function")
     else {
         return false;
     };
     let param = arrow
-        .child_by_field_name("parameter")
+        .field("parameter")
         .or_else(|| sole_parameter(arrow))
         .and_then(|p| walk::node_text(p, src));
     let object = arrow
-        .child_by_field_name("body")
-        .filter(|body| body.kind() == "member_expression")
-        .and_then(|body| body.child_by_field_name("object"))
+        .field("body")
+        .filter(|body| body.kind_name() == "member_expression")
+        .and_then(|body| body.field("object"))
         .and_then(|object| walk::node_text(object, src));
     param.is_some() && param == object
 }
@@ -194,19 +195,19 @@ fn is_trivial_projection(call: Node, src: &[u8]) -> bool {
 /// `p` in `(p) => …`.
 fn sole_parameter(arrow: Node) -> Option<Node> {
     arrow
-        .child_by_field_name("parameters")
+        .field("parameters")
         .filter(|params| params.named_child_count() == 1)
         .and_then(|params| params.named_child(0))
-        .map(|param| param.child_by_field_name("pattern").unwrap_or(param))
+        .map(|param| param.field("pattern").unwrap_or(param))
 }
 
 fn in_assertion(lineage: Lineage, src: &[u8]) -> bool {
     let mut current = lineage.node();
     while let Some(parent) = lineage.parent(current) {
-        if super::units::is_function(parent.kind()) {
+        if super::units::is_function(parent.kind_name()) {
             return false;
         }
-        if parent.kind() == "call_expression" && is_assertion_call(parent, src) {
+        if parent.kind_name() == "call_expression" && is_assertion_call(parent, src) {
             return true;
         }
         current = parent;
@@ -216,11 +217,11 @@ fn in_assertion(lineage: Lineage, src: &[u8]) -> bool {
 
 /// `expect(..)`, `expect(..).toBe(..)`, `assert(..)`, `assert.equal(..)`.
 fn is_assertion_call(call: Node, src: &[u8]) -> bool {
-    let mut callee = call.child_by_field_name("function");
+    let mut callee = call.field("function");
     while let Some(node) = callee {
-        callee = match node.kind() {
-            "member_expression" => node.child_by_field_name("object"),
-            "call_expression" => node.child_by_field_name("function"),
+        callee = match node.kind_name() {
+            "member_expression" => node.field("object"),
+            "call_expression" => node.field("function"),
             "identifier" => {
                 return walk::node_text(node, src)
                     .is_some_and(|name| ASSERTION_CALLEES.contains(&name))

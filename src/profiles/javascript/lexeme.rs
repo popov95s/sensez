@@ -5,6 +5,7 @@
 
 use crate::profiles::lexeme as shared;
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::StructuralToken;
 use tree_sitter::Node;
 
@@ -18,9 +19,9 @@ pub fn code(
     is_member_property: bool,
 ) -> u64 {
     let code = shared::code_with_api_surface(node, tok, src, fn_bounds, |node| {
-        node.kind() != "identifier" || is_member_property
+        node.kind_name() != "identifier" || is_member_property
     });
-    match node.kind() {
+    match node.kind_name() {
         "shorthand_property_identifier" => shared::shorthand_position(code),
         _ => code,
     }

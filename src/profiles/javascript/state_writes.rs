@@ -3,6 +3,7 @@
 use super::units::is_function;
 use crate::profiles::lazy_init::is_guarded_by;
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{FunctionUnit, StateWrite, StateWriteKind};
 use tree_sitter::Node;
 
@@ -12,12 +13,12 @@ const READ_REQUEST_METHODS: &[&str] = &["GET", "HEAD", "OPTIONS"];
 /// Record the write `node` performs, when it is one.
 pub fn scan(unit: &mut FunctionUnit, lineage: Lineage, src: &[u8]) {
     let node = lineage.node();
-    let write = match node.kind() {
+    let write = match node.kind_name() {
         "assignment_expression" | "augmented_assignment_expression" => node
-            .child_by_field_name("left")
+            .field("left")
             .and_then(|left| assignment(lineage, left, src)),
         "update_expression" => node
-            .child_by_field_name("argument")
+            .field("argument")
             .and_then(|target| assignment(lineage, target, src)),
         "call_expression" => request(node, src),
         _ => None,
@@ -41,15 +42,15 @@ fn assignment(lineage: Lineage, target: Node, src: &[u8]) -> Option<StateWrite> 
     let node = lineage.node();
     let text = target.utf8_text(src).ok()?;
     let root = chain_root(target)?;
-    let own = root.kind() == "this";
+    let own = root.kind_name() == "this";
     let key = match own {
         true => target
-            .child_by_field_name("property")
+            .field("property")
             .and_then(|property| property.utf8_text(src).ok())?,
         false => root.utf8_text(src).ok()?,
     };
     let lazy = node
-        .child_by_field_name("operator")
+        .field("operator")
         .and_then(|operator| operator.utf8_text(src).ok())
         .is_some_and(|operator| LAZY_OPERATORS.contains(&operator))
         || is_guarded_by(
@@ -74,33 +75,27 @@ fn assignment(lineage: Lineage, target: Node, src: &[u8]) -> Option<StateWrite> 
 
 /// `this` or the identifier a member/subscript chain starts from.
 fn chain_root(node: Node) -> Option<Node> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" | "this" => Some(node),
-        "member_expression" | "subscript_expression" => {
-            chain_root(node.child_by_field_name("object")?)
-        }
+        "member_expression" | "subscript_expression" => chain_root(node.field("object")?),
         _ => None,
     }
 }
 
 /// `fetch(url, { method: "POST" })`.
 fn request(call: Node, src: &[u8]) -> Option<StateWrite> {
-    let callee = call.child_by_field_name("function")?;
+    let callee = call.field("function")?;
     if callee.utf8_text(src).ok()? != "fetch" {
         return None;
     }
-    let options = call.child_by_field_name("arguments")?.named_child(1)?;
+    let options = call.field("arguments")?.named_child(1)?;
     let mut cursor = options.walk();
     let method = options
         .named_children(&mut cursor)
-        .filter(|pair| pair.kind() == "pair")
-        .find(|pair| {
-            pair.child_by_field_name("key")
-                .and_then(|key| key.utf8_text(src).ok())
-                == Some("method")
-        })?
-        .child_by_field_name("value")
-        .filter(|value| value.kind() == "string")?
+        .filter(|pair| pair.kind_name() == "pair")
+        .find(|pair| pair.field("key").and_then(|key| key.utf8_text(src).ok()) == Some("method"))?
+        .field("value")
+        .filter(|value| value.kind_name() == "string")?
         .utf8_text(src)
         .ok()?
         .trim_matches(['"', '\'', '`'])

@@ -1,5 +1,6 @@
 //! Read-only queries over tree-sitter nodes shared by the walkers.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ChainHit, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
 
@@ -22,7 +23,7 @@ pub(crate) fn perf_line(node: Node, src: &[u8], subject_fields: &[&str]) -> Perf
 
 /// Texts of every node under `node` (itself included) whose kind is in `kinds`.
 pub(crate) fn identifiers(node: Node, src: &[u8], kinds: &[&str]) -> Vec<String> {
-    if kinds.contains(&node.kind()) {
+    if kinds.contains(&node.kind_name()) {
         return node_text(node, src)
             .map(|name| vec![name.to_string()])
             .unwrap_or_default();
@@ -37,7 +38,7 @@ pub(crate) fn identifiers(node: Node, src: &[u8], kinds: &[&str]) -> Vec<String>
 
 /// `identifier` texts under `node`'s `field` child.
 pub(crate) fn field_identifiers(node: Node, src: &[u8], field: &str) -> Vec<String> {
-    node.child_by_field_name(field)
+    node.field(field)
         .map(|child| identifiers(child, src, &["identifier"]))
         .unwrap_or_default()
 }
@@ -59,7 +60,7 @@ pub(crate) fn fed_by_call(
 
 fn contains_kind(node: Node, kind: &str) -> bool {
     let mut cursor = node.walk();
-    let found = node.kind() == kind
+    let found = node.kind_name() == kind
         || node
             .named_children(&mut cursor)
             .any(|child| contains_kind(child, kind));
@@ -70,7 +71,7 @@ fn contains_kind(node: Node, kind: &str) -> bool {
 pub(crate) fn is_field_child(parent: Node, child: Node, fields: &[&str]) -> bool {
     fields.iter().any(|field| {
         parent
-            .child_by_field_name(field)
+            .field(field)
             .is_some_and(|node| node.id() == child.id())
     })
 }
@@ -81,7 +82,7 @@ const MAX_SUBJECT_BYTES: usize = 120;
 pub(crate) fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<String> {
     subject_fields
         .iter()
-        .find_map(|field| node.child_by_field_name(field))
+        .find_map(|field| node.field(field))
         .and_then(|n| node_text(n, src))
         .filter(|text| text.len() <= MAX_SUBJECT_BYTES)
         .map(str::to_string)
@@ -102,8 +103,8 @@ pub(crate) fn chain_hit(
     shape: &ChainShape,
 ) -> Option<ChainHit> {
     let is_inner = parent.is_some_and(|p| {
-        p.kind() == shape.member_kind
-            && p.child_by_field_name(shape.object_field).map(|o| o.id()) == Some(node.id())
+        p.kind_name() == shape.member_kind
+            && p.field(shape.object_field).map(|o| o.id()) == Some(node.id())
     });
     if is_inner {
         return None;
@@ -116,20 +117,20 @@ pub(crate) fn chain_hit(
 }
 
 fn chain_len(node: Node, shape: &ChainShape) -> usize {
-    match node.child_by_field_name(shape.object_field) {
-        Some(obj) if obj.kind() == shape.member_kind => chain_len(obj, shape) + 1,
+    match node.field(shape.object_field) {
+        Some(obj) if obj.kind_name() == shape.member_kind => chain_len(obj, shape) + 1,
         _ => 1,
     }
 }
 
 fn chain_root(node: Node, src: &[u8], shape: &ChainShape) -> Option<String> {
-    let obj = node.child_by_field_name(shape.object_field)?;
-    if obj.kind() == shape.member_kind {
+    let obj = node.field(shape.object_field)?;
+    if obj.kind_name() == shape.member_kind {
         return chain_root(obj, src, shape);
     }
     shape
         .root_kinds
-        .contains(&obj.kind())
+        .contains(&obj.kind_name())
         .then(|| node_text(obj, src).map(str::to_string))
         .flatten()
 }

@@ -2,6 +2,7 @@
 //! a typed copy matches its JS twin; declared types get their own code space.
 
 use crate::profiles::lexeme as shared;
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 /// Where a node sits relative to TS type syntax.
@@ -15,7 +16,7 @@ pub enum TypeSpace {
 impl TypeSpace {
     /// The space of `child`, entered from `parent` while in `self`.
     pub fn enter(self, parent: Node, child: Node) -> Self {
-        if self == Self::Declaration || is_type_declaration(child.kind()) {
+        if self == Self::Declaration || is_type_declaration(child.kind_name()) {
             Self::Declaration
         } else if self == Self::Annotation || is_inline_annotation(parent, child) {
             Self::Annotation
@@ -47,10 +48,10 @@ fn is_type_declaration(kind: &str) -> bool {
 }
 
 fn is_inline_annotation(parent: Node, child: Node) -> bool {
-    match parent.kind() {
+    match parent.kind_name() {
         "as_expression" | "satisfies_expression" => parent.named_child(0) != Some(child),
         _ => matches!(
-            child.kind(),
+            child.kind_name(),
             "type_annotation"
                 | "opting_type_annotation"
                 | "omitting_type_annotation"

@@ -19,6 +19,7 @@ use crate::profiles::guard_fingerprint::GuardLog;
 use crate::profiles::lexeme::{self, BoundNames};
 use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::{default_values, magic_number};
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{bump, FunctionUnit};
 use rustc_hash::FxHashMap;
@@ -80,7 +81,7 @@ impl FunctionFacts {
             magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
             ..Default::default()
         };
-        if !is_method && func.kind() == "function_declaration" {
+        if !is_method && func.kind_name() == "function_declaration" {
             unit.review_risks.forwards_to =
                 super::risk_facts::forward_target(func, src, &unit.param_names);
         }
@@ -88,7 +89,7 @@ impl FunctionFacts {
         unit.review_risks.stub = super::stub_body::stub_body(func, src);
         unit.is_constructor = is_method && unit.name == "constructor";
         unit.is_accessor = is_method && is_accessor(func);
-        let body = func.child_by_field_name("body");
+        let body = func.field("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
         let frames = loops::iteration_callback_frame(lineage, src)
             .map(|frame| unit.performance.open_frame(frame))
@@ -113,7 +114,7 @@ impl FunctionFacts {
         if range.start < self.body_start || range.end > self.body_end {
             return None;
         }
-        if is_function(node.kind()) {
+        if is_function(node.kind_name()) {
             self.unit.review_risks.test_has_nested_function = true;
             return None;
         }
@@ -133,7 +134,7 @@ impl FunctionFacts {
             .type_escapes
             .extend(super::type_escapes::type_escape(node, src));
 
-        let kind = node.kind();
+        let kind = node.kind_name();
         if is_nesting(kind) && !is_else_if(lineage) {
             self.depth += 1;
             self.unit.max_nesting = self.unit.max_nesting.max(self.depth);
@@ -224,16 +225,13 @@ impl FunctionFacts {
         self.unit
             .chain_hits
             .extend(walk::chain_hit(node, parent, src, &CHAIN));
-        let Some(obj) = node.child_by_field_name("object") else {
+        let Some(obj) = node.field("object") else {
             return;
         };
-        match obj.kind() {
+        match obj.kind_name() {
             "this" => {
                 bump(&mut self.unit.receiver_access, "self");
-                if let Some(attr) = node
-                    .child_by_field_name("property")
-                    .and_then(|a| a.utf8_text(src).ok())
-                {
+                if let Some(attr) = node.field("property").and_then(|a| a.utf8_text(src).ok()) {
                     self.unit.self_attrs.insert(attr.to_string());
                 }
             }
@@ -248,23 +246,25 @@ impl FunctionFacts {
 
     fn record_assignment(&mut self, lineage: Lineage, src: &[u8]) {
         let node = lineage.node();
-        let Some(left) = node.child_by_field_name("left") else {
+        let Some(left) = node.field("left") else {
             return;
         };
         if is_own_member(left) {
             self.unit.self_writes += 1;
         }
         let frame = self.frame();
-        let paging = !matches!(left.kind(), "member_expression" | "subscript_expression")
-            && node.child_by_field_name("right").is_some_and(|value| {
-                walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
-            });
+        let paging = !matches!(
+            left.kind_name(),
+            "member_expression" | "subscript_expression"
+        ) && node.field("right").is_some_and(|value| {
+            walk::fed_by_call(&self.unit.performance, frame, value, src, "call_expression")
+        });
         if paging {
             let names = loops::names(Some(left), src);
             self.unit.performance.note_advanced(frame, &names);
         }
         if let Some(name) = Some(left)
-            .filter(|left| left.kind() == "identifier")
+            .filter(|left| left.kind_name() == "identifier")
             .and_then(|left| left.utf8_text(src).ok())
         {
             self.unit
@@ -286,31 +286,31 @@ impl FunctionFacts {
 }
 
 fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
-    if node.kind() != "call_expression" {
+    if node.kind_name() != "call_expression" {
         return None;
     }
-    let function = node.child_by_field_name("function")?;
-    if function.kind() != "member_expression"
+    let function = node.field("function")?;
+    if function.kind_name() != "member_expression"
         || function
-            .child_by_field_name("object")
-            .is_none_or(|object| object.kind() != "this")
+            .field("object")
+            .is_none_or(|object| object.kind_name() != "this")
     {
         return None;
     }
     function
-        .child_by_field_name("property")
+        .field("property")
         .and_then(|method| method.utf8_text(src).ok())
         .map(str::to_string)
 }
 
 fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
     let value = node.named_child(0)?;
-    let function = match value.kind() {
-        "call_expression" => value.child_by_field_name("function"),
-        "new_expression" => value.child_by_field_name("constructor"),
+    let function = match value.kind_name() {
+        "call_expression" => value.field("function"),
+        "new_expression" => value.field("constructor"),
         _ => None,
     }?;
-    (function.kind() == "identifier")
+    (function.kind_name() == "identifier")
         .then(|| function.utf8_text(src).ok().map(str::to_string))
         .flatten()
 }
@@ -320,13 +320,13 @@ fn is_accessor(func: Node) -> bool {
     let mut cursor = func.walk();
     let accessor = func
         .children(&mut cursor)
-        .any(|child| matches!(child.kind(), "get" | "set"));
+        .any(|child| matches!(child.kind_name(), "get" | "set"));
     accessor
 }
 
 fn is_own_member(node: Node) -> bool {
-    node.kind() == "member_expression"
+    node.kind_name() == "member_expression"
         && node
-            .child_by_field_name("object")
-            .is_some_and(|object| object.kind() == "this")
+            .field("object")
+            .is_some_and(|object| object.kind_name() == "this")
 }

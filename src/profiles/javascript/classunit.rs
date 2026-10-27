@@ -1,6 +1,7 @@
 //! Per-class structural summary (JS/TS) and tuple return annotation helpers.
 
 use super::symbols;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::typevocab::split_top_level;
 use crate::profiles::walk;
 use crate::spine::ir::{ClassProperty, ClassUnit};
@@ -14,10 +15,10 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
         end_line: class.end_position().row + 1,
         bases: base_classes(class, src),
         implements: implemented_interfaces(class, src),
-        is_abstract: class.kind() == "abstract_class_declaration",
+        is_abstract: class.kind_name() == "abstract_class_declaration",
         ..Default::default()
     };
-    let Some(body) = class.child_by_field_name("body") else {
+    let Some(body) = class.field("body") else {
         return unit;
     };
     let mut cursor = body.walk();
@@ -26,14 +27,14 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
             unit.properties.push(prop);
             continue;
         }
-        if member.kind() != "method_definition" {
+        if member.kind_name() != "method_definition" {
             continue;
         }
         let Some(name) = symbols::def_name(member, src) else {
             continue;
         };
         unit.methods.push(name.clone());
-        if let Some(mbody) = member.child_by_field_name("body") {
+        if let Some(mbody) = member.field("body") {
             if is_stub_body(mbody) {
                 unit.overrides_to_stub.push(name);
             }
@@ -44,11 +45,11 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
 }
 
 fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
-    if member.kind().contains("method") {
+    if member.kind_name().contains("method") {
         return None;
     }
     let name = member
-        .child_by_field_name("name")
+        .field("name")
         .and_then(|node| node.utf8_text(src).ok())
         .map(str::trim)
         .filter(|name| {
@@ -57,9 +58,8 @@ fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
                     .chars()
                     .all(|c| c == '_' || c == '$' || c.is_alphanumeric())
         })?;
-    let initializer_type = instantiated_type(member.child_by_field_name("value"), src);
-    let ty =
-        type_text(member.child_by_field_name("type"), src).or_else(|| initializer_type.clone())?;
+    let initializer_type = instantiated_type(member.field("value"), src);
+    let ty = type_text(member.field("type"), src).or_else(|| initializer_type.clone())?;
     Some(ClassProperty {
         name: name.to_string(),
         type_name: normalize_type(&ty),
@@ -69,8 +69,8 @@ fn property_from_member(member: Node, src: &[u8]) -> Option<ClassProperty> {
 }
 
 fn instantiated_type(value: Option<Node>, src: &[u8]) -> Option<String> {
-    let new_expr = value.filter(|node| node.kind() == "new_expression")?;
-    let ctor = new_expr.child_by_field_name("constructor")?;
+    let new_expr = value.filter(|node| node.kind_name() == "new_expression")?;
+    let ctor = new_expr.field("constructor")?;
     let text = ctor.utf8_text(src).ok()?;
     let last = walk::last_segment(text);
     last.chars()
@@ -95,7 +95,7 @@ fn base_classes(class: Node, src: &[u8]) -> Vec<String> {
     let mut out = Vec::new();
     let mut cursor = class.walk();
     for child in class.children(&mut cursor) {
-        if child.kind() == "class_heritage" {
+        if child.kind_name() == "class_heritage" {
             collect_idents(child, src, &mut out);
         }
     }
@@ -108,12 +108,12 @@ fn implemented_interfaces(class: Node, src: &[u8]) -> Vec<String> {
     let mut cursor = class.walk();
     for heritage in class
         .children(&mut cursor)
-        .filter(|child| child.kind() == "class_heritage")
+        .filter(|child| child.kind_name() == "class_heritage")
     {
         let mut inner = heritage.walk();
         for clause in heritage
             .children(&mut inner)
-            .filter(|clause| clause.kind() == "implements_clause")
+            .filter(|clause| clause.kind_name() == "implements_clause")
         {
             collect_idents(clause, src, &mut out);
         }
@@ -122,7 +122,7 @@ fn implemented_interfaces(class: Node, src: &[u8]) -> Vec<String> {
 }
 
 fn collect_idents(node: Node, src: &[u8], out: &mut Vec<String>) {
-    if matches!(node.kind(), "identifier" | "type_identifier") {
+    if matches!(node.kind_name(), "identifier" | "type_identifier") {
         if let Ok(t) = node.utf8_text(src) {
             out.push(t.to_string());
         }
@@ -140,9 +140,9 @@ fn is_stub_body(body: Node) -> bool {
     let mut cursor = body.walk();
     let stmts: Vec<Node> = body
         .named_children(&mut cursor)
-        .filter(|s| s.kind() != "comment")
+        .filter(|s| s.kind_name() != "comment")
         .collect();
-    matches!(stmts.as_slice(), [one] if one.kind() == "throw_statement")
+    matches!(stmts.as_slice(), [one] if one.kind_name() == "throw_statement")
 }
 
 /// Element count of an unlabeled tuple return annotation `(): [A, B, C]`, else 0.
@@ -164,7 +164,7 @@ pub fn is_homogeneous_primitive_tuple(elements: &[&str]) -> bool {
 /// Top-level elements of a tuple return annotation `(): [A, B]`.
 pub fn tuple_return_elements<'a>(func: Node, src: &'a [u8]) -> Vec<&'a str> {
     let Some(text) = func
-        .child_by_field_name("return_type")
+        .field("return_type")
         .and_then(|n| n.utf8_text(src).ok())
     else {
         return Vec::new();

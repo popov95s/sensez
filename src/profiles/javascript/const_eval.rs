@@ -1,3 +1,4 @@
+use crate::profiles::node_names::NodeNames;
 use std::collections::HashMap;
 use tree_sitter::Node;
 
@@ -6,7 +7,7 @@ pub(crate) fn evaluate(
     source: &[u8],
     constants: &HashMap<String, String>,
 ) -> Option<String> {
-    match node.kind() {
+    match node.kind_name() {
         "string" => unquote(text(node, source)?),
         "template_string" => template_pattern(text(node, source)?),
         "identifier" => constants.get(&text(node, source)?).cloned(),
@@ -14,8 +15,8 @@ pub(crate) fn evaluate(
             .named_child(0)
             .and_then(|child| evaluate(child, source, constants)),
         "binary_expression" => {
-            let left = node.child_by_field_name("left")?;
-            let right = node.child_by_field_name("right")?;
+            let left = node.field("left")?;
+            let right = node.field("right")?;
             Some(format!(
                 "{}{}",
                 evaluate(left, source, constants)?,

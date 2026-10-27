@@ -10,6 +10,7 @@ use super::{
 };
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, credit_string, declare, register_method, Scope,
 };
@@ -73,7 +74,7 @@ fn visit<'tree>(
     space: TypeSpace,
     ctx: &mut VisitCtx<'_, 'tree>,
 ) {
-    let kind = node.kind();
+    let kind = node.kind_name();
     let parent = ctx.path.last().copied();
 
     // ES imports / re-exports: extracted, not descended into.
@@ -98,7 +99,7 @@ fn visit<'tree>(
     }
 
     // Directive prologues / bare string statements ("use strict") are not logic.
-    if kind == "string" && parent.is_some_and(|p| p.kind() == "expression_statement") {
+    if kind == "string" && parent.is_some_and(|p| p.kind_name() == "expression_statement") {
         return;
     }
 
@@ -173,7 +174,7 @@ fn visit<'tree>(
     }
 
     let property_id = (kind == "member_expression")
-        .then(|| node.child_by_field_name("property").map(|child| child.id()))
+        .then(|| node.field("property").map(|child| child.id()))
         .flatten();
     ctx.path.push(node);
     let mut comments = CommentRun::default();
@@ -244,16 +245,16 @@ fn start_function<'tree>(node: Node<'tree>, src: &[u8], kind: &str, ctx: &mut Vi
 #[cfg(feature = "eyez")]
 fn leading_function(node: Node, src: &[u8]) -> Option<String> {
     let next = std::iter::successors(node.next_named_sibling(), |n| n.next_named_sibling())
-        .find(|n| n.kind() != "comment")?;
-    let declaration = if next.kind() == "export_statement" {
+        .find(|n| n.kind_name() != "comment")?;
+    let declaration = if next.kind_name() == "export_statement" {
         next.named_child(0)?
     } else {
         next
     };
-    match declaration.kind() {
+    match declaration.kind_name() {
         "function_declaration" | "generator_function_declaration" | "method_definition" => {
             declaration
-                .child_by_field_name("name")?
+                .field("name")?
                 .utf8_text(src)
                 .ok()
                 .map(str::to_owned)
@@ -319,7 +320,7 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
             }
             if node
                 .parent()
-                .is_some_and(|p| p.kind() == "export_statement")
+                .is_some_and(|p| p.kind_name() == "export_statement")
             {
                 for (name, callee) in symbols::initializer_callees(node, src) {
                     ctx.out

@@ -5,6 +5,7 @@
 use super::fallback_sink::fallback_sink;
 use super::membership;
 use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{self, MutationTarget};
 use crate::spine::ir::{FunctionUnit, SchemaCall};
 use tree_sitter::Node;
@@ -36,10 +37,10 @@ const MUTATORS: [&str; 13] = [
 
 /// Record everything this node contributes to the discipline smells.
 pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    match node.kind() {
+    match node.kind_name() {
         "subscript" => record_subscript(unit, node, src),
         "assignment" | "augmented_assignment" => {
-            if let Some(left) = node.child_by_field_name("left") {
+            if let Some(left) = node.field("left") {
                 record_subscript_target(unit, left, src);
             }
         }
@@ -57,7 +58,7 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
         }
         "return_statement" => {
             if let Some(value) = node.named_child(0) {
-                if matches!(value.kind(), "expression_list" | "tuple") {
+                if matches!(value.kind_name(), "expression_list" | "tuple") {
                     let arity = value.named_child_count();
                     unit.max_tuple_return = unit.max_tuple_return.max(arity);
                 }
@@ -77,12 +78,12 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 }
 
 fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let Some(function) = node.child_by_field_name("function") else {
+    let Some(function) = node.field("function") else {
         return;
     };
     let target = function.utf8_text(src).unwrap_or_default();
     let arguments = identifier_arguments(node, src);
-    if function.kind() == "identifier" && !arguments.is_empty() {
+    if function.kind_name() == "identifier" && !arguments.is_empty() {
         unit.schema_calls.push(SchemaCall {
             target: target.to_string(),
             arguments: arguments.clone(),
@@ -100,27 +101,24 @@ fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 }
 
 fn identifier_arguments(node: Node, src: &[u8]) -> Vec<String> {
-    let Some(arguments) = node.child_by_field_name("arguments") else {
+    let Some(arguments) = node.field("arguments") else {
         return Vec::new();
     };
     let mut cursor = arguments.walk();
     arguments
         .named_children(&mut cursor)
-        .filter(|argument| argument.kind() == "identifier")
+        .filter(|argument| argument.kind_name() == "identifier")
         .filter_map(|argument| argument.utf8_text(src).ok().map(str::to_string))
         .collect()
 }
 
 /// `value or ""` / `value or "?"` — the fallback is Python's right operand.
 fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let is_or = node
-        .child_by_field_name("operator")
-        .and_then(|op| op.utf8_text(src).ok())
-        == Some("or");
+    let is_or = node.field("operator").and_then(|op| op.utf8_text(src).ok()) == Some("or");
     if !is_or {
         return;
     }
-    let Some(right) = node.child_by_field_name("right") else {
+    let Some(right) = node.field("right") else {
         return;
     };
     walk::record_string_fallback(
@@ -134,19 +132,19 @@ fn record_boolean_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 /// `recv.get("key")` — the key counts toward `recv`'s implicit schema.
 fn record_get_key(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(function) = node
-        .child_by_field_name("function")
+        .field("function")
         .filter(|function| attribute_name(*function, src) == Some("get"))
     else {
         return;
     };
     let recv = function
-        .child_by_field_name("object")
-        .filter(|object| object.kind() == "identifier")
+        .field("object")
+        .filter(|object| object.kind_name() == "identifier")
         .and_then(|object| object.utf8_text(src).ok());
     let key = node
-        .child_by_field_name("arguments")
+        .field("arguments")
         .and_then(|args| args.named_child(0))
-        .filter(|key| key.kind() == "string")
+        .filter(|key| key.kind_name() == "string")
         .and_then(|key| string_literal_text(key, src));
     if let (Some(recv), Some(key)) = (recv, key) {
         unit.str_keys
@@ -159,13 +157,11 @@ fn record_get_key(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 /// `d.get("k", "")` / `getattr(o, "k", "")` — the string default stands in for a missing value.
 fn record_get_default(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let (Some(function), Some(arguments)) = (
-        node.child_by_field_name("function"),
-        node.child_by_field_name("arguments"),
-    ) else {
+    let (Some(function), Some(arguments)) = (node.field("function"), node.field("arguments"))
+    else {
         return;
     };
-    let default_index = match function.kind() {
+    let default_index = match function.kind_name() {
         "attribute" if attribute_name(function, src) == Some("get") => 1,
         "identifier" if function.utf8_text(src).ok() == Some("getattr") => 2,
         _ => return,
@@ -183,7 +179,7 @@ fn record_get_default(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 fn attribute_name<'a>(attribute: Node, src: &'a [u8]) -> Option<&'a str> {
     attribute
-        .child_by_field_name("attribute")
+        .field("attribute")
         .and_then(|name| name.utf8_text(src).ok())
 }
 
@@ -209,7 +205,7 @@ fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) 
 }
 
 fn string_literal_text(node: Node, src: &[u8]) -> Option<String> {
-    match node.kind() {
+    match node.kind_name() {
         "parenthesized_expression" => node
             .named_child(0)
             .and_then(|child| string_literal_text(child, src)),
@@ -232,17 +228,17 @@ fn python_string_body(text: &str) -> Option<String> {
 /// `recv["key"]` — record the distinct string-literal key per receiver.
 fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let recv = node
-        .child_by_field_name("value")
-        .filter(|v| v.kind() == "identifier")
+        .field("value")
+        .filter(|v| v.kind_name() == "identifier")
         .and_then(|v| v.utf8_text(src).ok());
-    let index = node.child_by_field_name("subscript");
+    let index = node.field("subscript");
     if let (Some(recv), Some(index)) = (recv, index) {
         if is_computed_key(index) {
             unit.dynamic_key_receivers.insert(recv.to_string());
         }
     }
     let key = index
-        .filter(|k| k.kind() == "string")
+        .filter(|k| k.kind_name() == "string")
         .and_then(|k| k.utf8_text(src).ok());
     if let (Some(recv), Some(key)) = (recv, key) {
         unit.str_keys
@@ -255,10 +251,10 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 /// `recv[cat]`, `recv[row.cat]`, `recv[f"{a}"]`: a data-driven key, not a record field.
 fn is_computed_key(index: Node) -> bool {
-    match index.kind() {
+    match index.kind_name() {
         "string" => index
             .named_children(&mut index.walk())
-            .any(|c| c.kind() == "interpolation"),
+            .any(|c| c.kind_name() == "interpolation"),
         "integer" | "float" | "slice" | "unary_operator" | "true" | "false" | "none" => false,
         _ => true,
     }
@@ -267,18 +263,16 @@ fn is_computed_key(index: Node) -> bool {
 /// `x.append(...)` and friends — record `x` as mutated.
 fn record_mutating_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let Some(func) = node
-        .child_by_field_name("function")
-        .filter(|f| f.kind() == "attribute")
+        .field("function")
+        .filter(|f| f.kind_name() == "attribute")
     else {
         return;
     };
-    let method = func
-        .child_by_field_name("attribute")
-        .and_then(|a| a.utf8_text(src).ok());
+    let method = func.field("attribute").and_then(|a| a.utf8_text(src).ok());
     if !method.is_some_and(|m| MUTATORS.contains(&m)) {
         return;
     }
-    if let Some(object) = func.child_by_field_name("object") {
+    if let Some(object) = func.field("object") {
         record_root(unit, object, src);
     }
 }
@@ -288,7 +282,7 @@ fn record_mutating_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 /// mutation). Routes to the direct vs attribute-deep set by whether the path
 /// to the root identifier crossed an attribute.
 fn record_subscript_target(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    if node.kind() == "subscript" {
+    if node.kind_name() == "subscript" {
         record_root(unit, node, src);
     }
 }
@@ -301,15 +295,13 @@ fn record_root(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 /// Root of a subscript/attribute chain: `d["a"]` → `Direct(d)`, `self.cache` → `ViaAttribute(self)`.
 fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => node
             .utf8_text(src)
             .ok()
             .map(|id| MutationTarget::Direct(id.to_string())),
-        "subscript" => target_root(node.child_by_field_name("value")?, src),
-        "attribute" => {
-            target_root(node.child_by_field_name("object")?, src).map(MutationTarget::via_attribute)
-        }
+        "subscript" => target_root(node.field("value")?, src),
+        "attribute" => target_root(node.field("object")?, src).map(MutationTarget::via_attribute),
         _ => None,
     }
 }

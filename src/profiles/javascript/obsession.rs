@@ -6,6 +6,7 @@
 use super::fallback_sink::fallback_sink;
 use super::membership;
 use crate::profiles::fallback_guard::{fallback_branch, GuardSyntax};
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{self, MutationTarget};
 use crate::spine::ir::{record_attr, FunctionUnit, MutatorFamily, SchemaCall};
 use tree_sitter::Node;
@@ -50,11 +51,11 @@ const COLLECTION_MUTATORS: [&str; 5] = ["set", "add", "delete", "clear", "remove
 
 /// Record everything this node contributes to the discipline smells.
 pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    match node.kind() {
+    match node.kind_name() {
         "subscript_expression" => record_subscript(unit, node, src),
         "assignment_expression" | "augmented_assignment_expression" => {
-            if let Some(left) = node.child_by_field_name("left") {
-                if left.kind() == "subscript_expression" {
+            if let Some(left) = node.field("left") {
+                if left.kind_name() == "subscript_expression" {
                     record_root(unit, left, src);
                 }
             }
@@ -74,13 +75,13 @@ pub fn scan(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 /// `value || ""` / `value ?? "?"` — the fallback is JS/TS's right operand.
 fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let is_fallback = node
-        .child_by_field_name("operator")
+        .field("operator")
         .and_then(|op| op.utf8_text(src).ok())
         .is_some_and(|op| matches!(op, "||" | "??"));
     if !is_fallback {
         return;
     }
-    let Some(right) = node.child_by_field_name("right") else {
+    let Some(right) = node.field("right") else {
         return;
     };
     walk::record_string_fallback(
@@ -94,9 +95,9 @@ fn record_binary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 /// `x ? x : "?"` or `!x ? "?" : x` — a ternary is a fallback only when it guards its own value.
 fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let (Some(condition), Some(then), Some(otherwise)) = (
-        node.child_by_field_name("condition"),
-        node.child_by_field_name("consequence"),
-        node.child_by_field_name("alternative"),
+        node.field("condition"),
+        node.field("consequence"),
+        node.field("alternative"),
     ) else {
         return;
     };
@@ -112,7 +113,7 @@ fn record_ternary_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 }
 
 fn string_literal_text(node: Node, src: &[u8]) -> Option<String> {
-    match node.kind() {
+    match node.kind_name() {
         "parenthesized_expression" => node
             .named_child(0)
             .and_then(|child| string_literal_text(child, src)),
@@ -138,20 +139,20 @@ fn template_string_body(text: &str) -> Option<String> {
 /// `const { a, b: c, d = 1 } = recv` — each key read off `recv`.
 fn record_destructured_keys(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let (Some(pattern), Some(recv)) = (
-        node.child_by_field_name("name")
-            .filter(|name| name.kind() == "object_pattern"),
-        node.child_by_field_name("value")
-            .filter(|value| value.kind() == "identifier")
+        node.field("name")
+            .filter(|name| name.kind_name() == "object_pattern"),
+        node.field("value")
+            .filter(|value| value.kind_name() == "identifier")
             .and_then(|value| value.utf8_text(src).ok()),
     ) else {
         return;
     };
     let mut cursor = pattern.walk();
     for property in pattern.named_children(&mut cursor) {
-        let key = match property.kind() {
+        let key = match property.kind_name() {
             "shorthand_property_identifier_pattern" => Some(property),
-            "pair_pattern" => property.child_by_field_name("key"),
-            "object_assignment_pattern" => property.child_by_field_name("left"),
+            "pair_pattern" => property.field("key"),
+            "object_assignment_pattern" => property.field("left"),
             _ => None,
         };
         if let Some(key) = key.and_then(|key| key.utf8_text(src).ok()) {
@@ -164,17 +165,17 @@ fn record_destructured_keys(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 /// `recv["key"]` — record the distinct string-literal key per receiver.
 fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let recv = node
-        .child_by_field_name("object")
-        .filter(|v| v.kind() == "identifier")
+        .field("object")
+        .filter(|v| v.kind_name() == "identifier")
         .and_then(|v| v.utf8_text(src).ok());
-    let index = node.child_by_field_name("index");
+    let index = node.field("index");
     if let (Some(recv), Some(index)) = (recv, index) {
         if is_computed_key(index, src) {
             unit.dynamic_key_receivers.insert(recv.to_string());
         }
     }
     let key = index
-        .filter(|k| k.kind() == "string")
+        .filter(|k| k.kind_name() == "string")
         .and_then(|k| k.utf8_text(src).ok());
     if let (Some(recv), Some(key)) = (recv, key) {
         record_attr(&mut unit.str_keys, recv, key.trim_matches(['"', '\'', '`']));
@@ -184,7 +185,7 @@ fn record_subscript(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 /// `recv[cat]`, `recv[r.cat]`, `` recv[`${a}`] `` — a data-driven key, not a record field.
 fn is_computed_key(index: Node, src: &[u8]) -> bool {
-    match index.kind() {
+    match index.kind_name() {
         "string" | "number" => false,
         "template_string" => index.utf8_text(src).is_ok_and(|text| text.contains("${")),
         _ => true,
@@ -193,18 +194,15 @@ fn is_computed_key(index: Node, src: &[u8]) -> bool {
 
 /// `delete obj[k]` / `delete obj.x` — record the mutated root.
 fn record_delete(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let is_delete = node
-        .child_by_field_name("operator")
-        .and_then(|o| o.utf8_text(src).ok())
-        == Some("delete");
+    let is_delete = node.field("operator").and_then(|o| o.utf8_text(src).ok()) == Some("delete");
     if !is_delete {
         return;
     }
     let target = node
-        .child_by_field_name("argument")
-        .and_then(|arg| match arg.kind() {
+        .field("argument")
+        .and_then(|arg| match arg.kind_name() {
             "subscript_expression" => Some(arg),
-            "member_expression" => arg.child_by_field_name("object"),
+            "member_expression" => arg.field("object"),
             _ => None,
         });
     if let Some(target) = target {
@@ -217,15 +215,13 @@ fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     record_schema_call(unit, node, src);
     record_object_assign(unit, node, src);
     let Some(func) = node
-        .child_by_field_name("function")
-        .filter(|f| f.kind() == "member_expression")
+        .field("function")
+        .filter(|f| f.kind_name() == "member_expression")
     else {
         return;
     };
-    let method = func
-        .child_by_field_name("property")
-        .and_then(|a| a.utf8_text(src).ok());
-    let Some(object) = func.child_by_field_name("object") else {
+    let method = func.field("property").and_then(|a| a.utf8_text(src).ok());
+    let Some(object) = func.field("object") else {
         return;
     };
     match method {
@@ -244,12 +240,10 @@ fn record_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 /// `Object.assign(target, …)` mutates `target`.
 fn record_object_assign(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let is_assign = node
-        .child_by_field_name("function")
+        .field("function")
         .and_then(|function| function.utf8_text(src).ok())
         == Some("Object.assign");
-    let target = node
-        .child_by_field_name("arguments")
-        .and_then(|args| args.named_child(0));
+    let target = node.field("arguments").and_then(|args| args.named_child(0));
     if let Some(target) = target.filter(|_| is_assign) {
         record_root(unit, target, src);
     }
@@ -276,12 +270,12 @@ fn record_method_mutation(
 }
 
 fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
-    let Some(function) = node.child_by_field_name("function") else {
+    let Some(function) = node.field("function") else {
         return;
     };
-    let is_schema_call = function.kind() == "identifier";
+    let is_schema_call = function.kind_name() == "identifier";
     let is_validator = function
-        .child_by_field_name("property")
+        .field("property")
         .and_then(|property| property.utf8_text(src).ok())
         .is_some_and(|method| matches!(method, "parse" | "safeParse" | "decode"));
     if !is_schema_call && !is_validator {
@@ -301,13 +295,13 @@ fn record_schema_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 }
 
 fn identifier_arguments(node: Node, src: &[u8]) -> Vec<String> {
-    let Some(arguments) = node.child_by_field_name("arguments") else {
+    let Some(arguments) = node.field("arguments") else {
         return Vec::new();
     };
     let mut cursor = arguments.walk();
     arguments
         .named_children(&mut cursor)
-        .filter(|argument| argument.kind() == "identifier")
+        .filter(|argument| argument.kind_name() == "identifier")
         .filter_map(|argument| argument.utf8_text(src).ok().map(str::to_string))
         .collect()
 }
@@ -320,15 +314,15 @@ fn record_root(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
 
 /// Root of a subscript/member chain: `d["a"]` → `Direct(d)`, `this.x` → `ViaAttribute(self)`.
 fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => node
             .utf8_text(src)
             .ok()
             .map(|id| MutationTarget::Direct(id.to_string())),
         "this" => Some(MutationTarget::Direct("self".to_string())),
-        "subscript_expression" => target_root(node.child_by_field_name("object")?, src),
+        "subscript_expression" => target_root(node.field("object")?, src),
         "member_expression" => {
-            target_root(node.child_by_field_name("object")?, src).map(MutationTarget::via_attribute)
+            target_root(node.field("object")?, src).map(MutationTarget::via_attribute)
         }
         _ => None,
     }

@@ -2,6 +2,7 @@
 
 use super::scope;
 use crate::profiles::lexeme::{self, BoundNames};
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::node_query::is_field_child;
 use crate::spine::ir::FunctionUnit;
 use tree_sitter::Node;
@@ -17,7 +18,7 @@ pub(super) fn record(
     unit.is_nested = true;
     unit.parent = enclosing.to_string();
     unit.parent_is_test_callback = enclosing.starts_with("test_");
-    if let (Some(parent), Some(body)) = (enclosing_names, func.child_by_field_name("body")) {
+    if let (Some(parent), Some(body)) = (enclosing_names, func.field("body")) {
         let own = scope::bound_names(func, src);
         let outer: BoundNames = parent.difference(&own).copied().collect();
         unit.captures_parent = reads_any(body, src, &outer);
@@ -26,7 +27,7 @@ pub(super) fn record(
 
 /// `node` reads one of `names` outside nested functions, attribute names and keyword names.
 fn reads_any(node: Node, src: &[u8], names: &BoundNames) -> bool {
-    match node.kind() {
+    match node.kind_name() {
         "function_definition" | "lambda" => return false,
         "identifier" => {
             return node
@@ -35,7 +36,7 @@ fn reads_any(node: Node, src: &[u8], names: &BoundNames) -> bool {
         }
         _ => {}
     }
-    let label_field: &[&str] = match node.kind() {
+    let label_field: &[&str] = match node.kind_name() {
         "attribute" => &["attribute"],
         "keyword_argument" => &["name"],
         _ => &[],

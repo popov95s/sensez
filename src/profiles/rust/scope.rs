@@ -6,6 +6,7 @@
 //! free names, types, and literals are kept verbatim.
 
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 /// Names bound within `func` (parameters + body bindings), not descending into
@@ -14,12 +15,12 @@ pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
     let mut set = BoundNames::default();
     // `function_item` has a `parameters` list; `closure_expression` has
     // `closure_parameters` (patterns directly as children).
-    if let Some(params) = func.child_by_field_name("parameters") {
+    if let Some(params) = func.field("parameters") {
         let mut cursor = params.walk();
         for p in params.named_children(&mut cursor) {
-            match p.kind() {
+            match p.kind_name() {
                 "parameter" => {
-                    if let Some(pat) = p.child_by_field_name("pattern") {
+                    if let Some(pat) = p.field("pattern") {
                         collect_pattern(pat, src, &mut set);
                     }
                 }
@@ -28,7 +29,7 @@ pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
             }
         }
     }
-    if let Some(body) = func.child_by_field_name("body") {
+    if let Some(body) = func.field("body") {
         collect_targets(body, src, &mut set);
     }
     set
@@ -38,16 +39,16 @@ pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
 fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        match child.kind() {
+        match child.kind_name() {
             "function_item" | "closure_expression" => {} // separate scope
             "let_declaration" | "let_condition" => {
-                if let Some(pat) = child.child_by_field_name("pattern") {
+                if let Some(pat) = child.field("pattern") {
                     collect_pattern(pat, src, set);
                 }
                 collect_targets(child, src, set);
             }
             "for_expression" => {
-                if let Some(pat) = child.child_by_field_name("pattern") {
+                if let Some(pat) = child.field("pattern") {
                     collect_pattern(pat, src, set);
                 }
                 collect_targets(child, src, set);
@@ -61,14 +62,14 @@ fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
 /// constructor path of `Some(x)` / `Point { x, y }` is a *type*, not a binding,
 /// so the `type` field child is skipped.
 fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" | "shorthand_field_identifier" => {
             if let Ok(t) = node.utf8_text(src) {
                 set.insert(crate::profiles::lexeme::hash(t));
             }
         }
         "tuple_struct_pattern" | "struct_pattern" => {
-            let type_id = node.child_by_field_name("type").map(|t| t.id());
+            let type_id = node.field("type").map(|t| t.id());
             let mut cursor = node.walk();
             for child in node.named_children(&mut cursor) {
                 if Some(child.id()) != type_id {
