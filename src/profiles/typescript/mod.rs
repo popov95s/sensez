@@ -6,13 +6,13 @@
 
 use crate::profiles::dependencies::{DeclaredPackages, KnownUtility};
 use crate::profiles::javascript::{
-    deadcode, declaration, generated, manifest, performance, resolve, roots, test_support,
-    traversal, typevocab, utilities, wording,
+    deadcode, declaration, generated, manifest, performance, programs, resolve, roots,
+    test_support, traversal, typevocab, utilities, wording,
 };
 use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
-    DeadCodeProfile, DependencyProfile, ImportResolver, Language, LanguageInfo, ModuleProfile,
-    ParseProfile, PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, DependencyProfile, EntryCandidate, ImportResolver, Language, LanguageInfo,
+    ModuleProfile, ParseProfile, PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -122,6 +122,10 @@ impl ParseProfile for TsProfile {
         generated::is_generated(path, src)
     }
 
+    fn runs_as_program(&self, src: &[u8]) -> bool {
+        programs::is_program(src)
+    }
+
     fn clone_family(&self) -> Language {
         Language::JavaScript
     }
@@ -145,6 +149,10 @@ impl ParseProfile for TsxProfile {
 
     fn is_generated(&self, path: &Path, src: &[u8]) -> bool {
         generated::is_generated(path, src)
+    }
+
+    fn runs_as_program(&self, src: &[u8]) -> bool {
+        programs::is_program(src)
     }
 
     fn clone_family(&self) -> Language {
@@ -226,7 +234,7 @@ macro_rules! impl_ts_traits {
                 deadcode::typescript_defaults()
             }
 
-            fn manifest_entry_files(&self, files: &[&Path]) -> Vec<PathBuf> {
+            fn manifest_entry_files(&self, files: &[EntryCandidate]) -> Vec<PathBuf> {
                 manifest::entry_files(files)
             }
         }

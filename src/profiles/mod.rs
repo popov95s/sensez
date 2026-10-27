@@ -161,6 +161,12 @@ impl DecoratorClass {
     }
 }
 
+/// A file offered to a manifest's entry-point lookup.
+pub struct EntryCandidate<'a> {
+    pub path: &'a Path,
+    pub runs_as_program: bool,
+}
+
 pub trait ParseProfile: Send + Sync {
     fn info(&self) -> &'static LanguageInfo;
     fn ts_language(&self) -> tree_sitter::Language;
@@ -173,6 +179,10 @@ pub trait ParseProfile: Send + Sync {
     }
     /// Parsed but machine-written: kept in the graph, skipped by smells and duplication.
     fn is_generated(&self, _path: &Path, _src: &[u8]) -> bool {
+        false
+    }
+    /// Source that runs as a program on its own (shebang, main guard), so no importer is needed.
+    fn runs_as_program(&self, _src: &[u8]) -> bool {
         false
     }
     /// Languages sharing a clone family are compared as one duplication cohort.
@@ -275,7 +285,7 @@ pub trait DeadCodeProfile: Send + Sync {
         Vec::new()
     }
     /// Files a package manifest names as entry points.
-    fn manifest_entry_files(&self, _files: &[&Path]) -> Vec<PathBuf> {
+    fn manifest_entry_files(&self, _files: &[EntryCandidate]) -> Vec<PathBuf> {
         Vec::new()
     }
 }

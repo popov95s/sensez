@@ -1,7 +1,8 @@
 //! `package.json` reading: entry targets as dead-code roots, dependencies for utility lookups.
 
-use super::{programs, roots, workflows};
+use super::{roots, workflows};
 use crate::profiles::dependencies::{manifest_dirs, DeclaredPackages, DependencyScope};
+use crate::profiles::EntryCandidate;
 use serde_json::Value;
 use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
@@ -17,17 +18,17 @@ const DEPENDENCY_SECTIONS: [(&str, DependencyScope); 4] = [
 ];
 
 /// Files named by their package's manifest (directly or through a `src/` twin of a build path) or run as programs.
-pub fn entry_files(files: &[&Path]) -> Vec<PathBuf> {
+pub fn entry_files(files: &[EntryCandidate]) -> Vec<PathBuf> {
     let mut keys_by_root: HashMap<PathBuf, HashSet<String>> = HashMap::new();
     let mut entries = Vec::new();
     for file in files {
-        let root = roots::root_for(file);
-        let key = roots::module_name(file, &root);
+        let root = roots::root_for(file.path);
+        let key = roots::module_name(file.path, &root);
         let keys = keys_by_root
             .entry(root)
             .or_insert_with_key(|root| manifest_keys(root));
-        if keys.contains(&key) || programs::is_program(file) {
-            entries.push(file.to_path_buf());
+        if keys.contains(&key) || file.runs_as_program {
+            entries.push(file.path.to_path_buf());
         }
     }
     entries
@@ -146,7 +147,13 @@ mod tests {
             fs::create_dir_all(path.parent().unwrap()).unwrap();
             fs::write(path, "").unwrap();
         }
-        let files: Vec<&Path> = paths.iter().map(PathBuf::as_path).collect();
+        let files: Vec<EntryCandidate> = paths
+            .iter()
+            .map(|path| EntryCandidate {
+                path,
+                runs_as_program: false,
+            })
+            .collect();
 
         let entries = entry_files(&files);
 
@@ -168,7 +175,13 @@ mod tests {
             .iter()
             .map(|name| root.join(name))
             .collect();
-        let files: Vec<&Path> = paths.iter().map(PathBuf::as_path).collect();
+        let files: Vec<EntryCandidate> = paths
+            .iter()
+            .map(|path| EntryCandidate {
+                path,
+                runs_as_program: false,
+            })
+            .collect();
 
         assert_eq!(entry_files(&files), paths[..1].to_vec());
     }

@@ -25,7 +25,7 @@ mod roots;
 
 use crate::config::model::DeadCode;
 use crate::globs::{compile_validated, matches_any};
-use crate::profiles::registry;
+use crate::profiles::{registry, EntryCandidate};
 use crate::report::DeadCodeFinding;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::Language;
@@ -187,10 +187,13 @@ impl RuleSets {
 }
 
 fn manifest_entries(files: &[ParsedFile], language: Language) -> HashSet<PathBuf> {
-    let paths: Vec<&Path> = files
+    let paths: Vec<EntryCandidate> = files
         .iter()
         .filter(|file| file.language == language)
-        .map(|file| file.path.as_path())
+        .map(|file| EntryCandidate {
+            path: &file.path,
+            runs_as_program: file.runs_as_program,
+        })
         .collect();
     registry::dead_code_profile(language)
         .manifest_entry_files(&paths)

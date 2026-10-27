@@ -30,7 +30,7 @@ mod nesting;
 pub(crate) mod obsession;
 mod params;
 pub(crate) mod performance;
-mod programs;
+pub(crate) mod programs;
 pub(crate) mod resolve;
 mod returned_names;
 pub(crate) mod risk_facts;
@@ -61,8 +61,8 @@ mod tests;
 use crate::profiles::dependencies::{DeclaredPackages, KnownUtility};
 use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
-    DeadCodeProfile, DependencyProfile, ImportResolver, Language, LanguageInfo, ModuleProfile,
-    ParseProfile, PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, DependencyProfile, EntryCandidate, ImportResolver, Language, LanguageInfo,
+    ModuleProfile, ParseProfile, PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -98,6 +98,10 @@ impl ParseProfile for JsProfile {
 
     fn is_generated(&self, path: &Path, src: &[u8]) -> bool {
         generated::is_generated(path, src)
+    }
+
+    fn runs_as_program(&self, src: &[u8]) -> bool {
+        programs::is_program(src)
     }
 }
 
@@ -179,7 +183,7 @@ impl DeadCodeProfile for JsProfile {
         deadcode::defaults()
     }
 
-    fn manifest_entry_files(&self, files: &[&Path]) -> Vec<PathBuf> {
+    fn manifest_entry_files(&self, files: &[EntryCandidate]) -> Vec<PathBuf> {
         manifest::entry_files(files)
     }
 }
