@@ -118,7 +118,7 @@ fn mutated_params(
     let mutated: Vec<&str> = m
         .param_names
         .iter()
-        .chain(&m.destructured_params)
+        .chain(m.destructured_params.iter())
         .filter(|p| !matches!(p.as_str(), "self" | "cls"))
         .filter(|p| {
             m.mutated_names.contains(*p)

@@ -61,7 +61,7 @@ fn with_destructured_keys(
     schemas: &FxHashMap<String, FxHashSet<String>>,
 ) -> FxHashMap<String, FxHashSet<String>> {
     let mut merged = schemas.clone();
-    for (recv, keys) in &m.destructured_keys {
+    for (recv, keys) in m.destructured_keys.iter() {
         let loose = ctx.type_hints.param_type(m, recv).is_some_and(|ty| {
             !ty.trim_start().starts_with('{') && ctx.type_vocabulary.loose_kind(ty).is_some()
         });
@@ -85,7 +85,7 @@ pub(super) fn propagated_schemas(
         .collect();
     let mut schemas: Vec<_> = metrics
         .iter()
-        .map(|metric| metric.str_keys.clone())
+        .map(|metric| (*metric.str_keys).clone())
         .collect();
     for _ in 0..metrics.len().min(4) {
         let snapshot = schemas.clone();
