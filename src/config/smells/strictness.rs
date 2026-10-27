@@ -83,6 +83,19 @@ pub const SWALLOWED_ERROR_LEVELS: &[StrictnessLevelDoc] = &[
     },
 ];
 
+pub const MOCKED_SUBJECT_LEVELS: &[StrictnessLevelDoc] = &[
+    StrictnessLevelDoc {
+        title: "Medium",
+        value: "medium",
+        description: "Flags a mock whose module resolves to the import a test calls its subject through.",
+    },
+    StrictnessLevelDoc {
+        title: "High",
+        value: "high",
+        description: "Also flags a mocked module named like the test file, and patches of an attribute on an imported object the test calls.",
+    },
+];
+
 pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
     StrictnessRuleDoc {
         kind: SmellKind::LooseTyping,
@@ -103,6 +116,11 @@ pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
         kind: SmellKind::SwallowedErrorSentinel,
         knob: "strictness",
         levels: SWALLOWED_ERROR_LEVELS,
+    },
+    StrictnessRuleDoc {
+        kind: SmellKind::MockedSubject,
+        knob: "strictness",
+        levels: MOCKED_SUBJECT_LEVELS,
     },
 ];
 

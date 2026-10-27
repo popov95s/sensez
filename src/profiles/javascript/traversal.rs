@@ -94,6 +94,7 @@ fn visit<'tree>(
         if let Some(ictx) = imports::require_import(node, src, module_name, enclosing) {
             ctx.out.symbols.imports.push(ictx);
         }
+        super::mock_targets::record(node, src, &mut ctx.out.units.mock_targets);
     }
 
     // Directive prologues / bare string statements ("use strict") are not logic.

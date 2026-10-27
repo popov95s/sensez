@@ -26,6 +26,11 @@ pub struct SmellWording {
     pub swallowed_error_advice: &'static str,
     /// Function names a framework calls by spelling, so copies are not helpers (`sibling_helper_redefinition`).
     pub framework_names: &'static [&'static str],
+    /// Member-name prefixes of a test double's own API (`mocked_subject`).
+    pub double_api_prefixes: &'static [&'static str],
+    /// Test file name affixes around the subject's name (`mocked_subject`).
+    pub test_file_prefix: &'static str,
+    pub test_file_suffix: &'static str,
 }
 
 /// Missing-value placeholders shared by languages without `null`/`undefined` literals.

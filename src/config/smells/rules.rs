@@ -62,6 +62,7 @@ fn set_strictness_knob(
         SmellKind::MagicStringDefault => &mut smells.magic_string_default_strictness,
         SmellKind::NestedTernary => &mut smells.nested_ternary_strictness,
         SmellKind::SwallowedErrorSentinel => &mut smells.swallowed_error_strictness,
+        SmellKind::MockedSubject => &mut smells.mocked_subject_strictness,
         _ => return Err(format!("[smells.rules.{kind}] has no strictness storage")),
     };
     *slot = value;

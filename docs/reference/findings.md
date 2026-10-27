@@ -4746,6 +4746,195 @@ providers = [] # in-house packages whose same-named functions count as providers
 </table>
 </details>
 
+### Mocked Subject (`mocked_subject`)
+
+**What it is**
+
+A test file mocks the module its subject under test is imported from, so the test exercises the double instead of the code — mock collaborators, keep the subject real.
+
+**Why it's bad**
+
+A test that replaces the module it claims to test checks the double's canned answer; it stays green when the real code breaks.
+
+**Example**
+
+=== "Python"
+
+    === "Medium"
+
+        Flags a mock whose module resolves to the import a test calls its subject through.
+
+        **Problem**
+
+        ```python
+        from unittest.mock import patch
+
+        from shop import pricing
+
+
+        @patch("shop.pricing.quote", return_value=42)
+        def test_quote(mocked):
+            assert pricing.quote(2) == 42
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Patch the collaborators the subject calls, or patch with `wraps=` to keep the real function.
+
+        ```python
+        from shop import pricing
+
+
+        def test_quote(mocker):
+            mocker.patch("shop.pricing.fetch_rate", return_value=2)
+            assert pricing.quote(2) == 4
+        ```
+
+        </details>
+
+    === "High"
+
+        Also flags a mocked module named like the test file, and patches of an attribute on an imported object the test calls.
+
+        **Problem**
+
+        ```python
+        from unittest.mock import patch
+
+        from shop.pricing import Pricing
+
+
+        def test_quote():
+            with patch.object(Pricing, "rate", return_value=2):
+                assert Pricing().quote(2) == 4
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Patch the collaborators the subject calls, or patch with `wraps=` to keep the real function.
+
+        ```python
+        from shop import pricing
+
+
+        def test_quote(mocker):
+            mocker.patch("shop.pricing.fetch_rate", return_value=2)
+            assert pricing.quote(2) == 4
+        ```
+
+        </details>
+
+=== "JS / TS"
+
+    === "Medium"
+
+        Flags a mock whose module resolves to the import a test calls its subject through.
+
+        **Problem**
+
+        ```ts
+        import { quote } from "./pricing";
+
+        vi.mock("./pricing", () => ({ quote: vi.fn(() => 42) }));
+
+        it("quotes", () => {
+          expect(quote({ qty: 2 })).toBe(42);
+        });
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Mock the collaborators the subject imports, or keep the real module with `importActual` / `importOriginal`.
+
+        ```ts
+        import { quote } from "./pricing";
+
+        vi.mock("./rates", () => ({ fetchRate: vi.fn(() => 1.5) }));
+
+        it("quotes", () => {
+          expect(quote({ qty: 2 })).toBe(3);
+        });
+        ```
+
+        </details>
+
+    === "High"
+
+        Also flags a mocked module named like the test file, and patches of an attribute on an imported object the test calls.
+
+        **Problem**
+
+        ```ts
+        // pricing.example.test.ts: the mocked module shares the test file's name.
+        import { render } from "./receipt";
+
+        vi.mock("./pricing");
+
+        it("renders the receipt", () => {
+          expect(render({ qty: 2 })).toContain("4");
+        });
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Mock the collaborators the subject imports, or keep the real module with `importActual` / `importOriginal`.
+
+        ```ts
+        import { quote } from "./pricing";
+
+        vi.mock("./rates", () => ({ fetchRate: vi.fn(() => 1.5) }));
+
+        it("quotes", () => {
+          expect(quote({ qty: 2 })).toBe(3);
+        });
+        ```
+
+        </details>
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+=== "Medium"
+
+    ```toml
+    [smells.<lang>.rules.mocked_subject]
+    enabled = true
+    action = "warning"
+    strictness = "medium"
+    ```
+
+    Flags a mock whose module resolves to the import a test calls its subject through.
+
+=== "High"
+
+    ```toml
+    [smells.<lang>.rules.mocked_subject]
+    enabled = true
+    action = "warning"
+    strictness = "high"
+    ```
+
+    Also flags a mocked module named like the test file, and patches of an attribute on an imported object the test calls.
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ### Redundant Wrapper Chain (`redundant_wrapper_chain`)
 
 **What it is**

@@ -119,6 +119,7 @@ fn visit(
 
     // Type hints are collected inline; pruned subtrees contain no annotations.
     match kind {
+        "call" => super::mock_targets::record(node, src, &mut out.units.mock_targets),
         "function_definition" => typehints::record_function(node, src, &mut out.units.type_hints),
         "assignment" if !scope.last().is_some_and(|s| s.is_class) => {
             if scope.is_empty() {

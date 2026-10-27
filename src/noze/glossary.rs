@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 41] = {
+pub const ALL_SMELLS: [SmellKind; 42] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -46,6 +46,7 @@ pub const ALL_SMELLS: [SmellKind; 41] = {
         MagicStringDefault,
         MagicNumbers,
         MessageChain,
+        MockedSubject,
         MutatedParameter,
         NarratingCode,
         NestedLoop,
@@ -68,7 +69,7 @@ pub const ALL_SMELLS: [SmellKind; 41] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 41] = {
+pub const SMELLS: [SmellDoc; 42] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -93,6 +94,7 @@ pub const SMELLS: [SmellDoc; 41] = {
         SmellDoc { kind: MagicStringDefault, title: "Magic String Default", explanation: "A fallback empty, one-character, or placeholder string (`?? \"\"`, `or \"n/a\"`) is stored, compared, or returned in place of a missing value — the contract is hiding in a sentinel; prefer a nullable/optional string or a dedicated sum type." },
         SmellDoc { kind: MagicNumbers, title: "Magic Numbers", explanation: "Unexplained numeric literals in logic — name them as constants so their intent is clear." },
         SmellDoc { kind: MessageChain, title: "Message Chain", explanation: "A long `a.b.c.d` access chain couples the caller to a deep object graph (Law of Demeter) — ask the immediate collaborator instead." },
+        SmellDoc { kind: MockedSubject, title: "Mocked Subject", explanation: "A test file mocks the module its subject under test is imported from, so the test exercises the double instead of the code — mock collaborators, keep the subject real." },
         SmellDoc { kind: MutatedParameter, title: "Mutated Parameter", explanation: "The function mutates a caller's argument in place — a hidden side effect; return a new value instead." },
         SmellDoc { kind: NarratingCode, title: "Narrating Code", explanation: "A function is packed with step-by-step narration or commented-out code — prefer clearer names or extracted helpers, delete dead code, and keep comments for why." },
         SmellDoc { kind: NestedLoop, title: "Nested Loop", explanation: "A loop is nested directly or through a helper called inside a loop — work grows multiplicatively; combine passes or pre-index the data." },

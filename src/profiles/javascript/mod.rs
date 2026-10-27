@@ -20,6 +20,7 @@ mod magic_numbers;
 pub(crate) mod manifest;
 mod member_visibility;
 mod membership;
+mod mock_targets;
 mod namespaces;
 mod nesting;
 pub(crate) mod obsession;

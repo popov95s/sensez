@@ -40,6 +40,7 @@ class SmellTerm(StrEnum):
     MAGIC_NUMBERS = "magic_numbers"
     MAGIC_STRING_DEFAULT = "magic_string_default"
     MESSAGE_CHAIN = "message_chain"
+    MOCKED_SUBJECT = "mocked_subject"
     MUTATED_PARAMETER = "mutated_parameter"
     NARRATING_CODE = "narrating_code"
     N_PLUS_ONE_CALL = "n_plus_one_call"

@@ -202,3 +202,25 @@ fn test_cycles_are_reported_unless_explicitly_excluded() {
     let (report, _) = analyze_path(dir, None).unwrap();
     assert_eq!(cycle_count(&report, "/tests/"), 0);
 }
+
+#[test]
+fn skipped_test_files_still_report_a_mocked_subject() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    write(
+        dir,
+        "src/pricing.ts",
+        "export function quote(qty: number) {\n  return qty * 2;\n}\n",
+    );
+    write(
+        dir,
+        "src/pricing.test.ts",
+        "import { quote } from \"./pricing\";\nvi.mock(\"./pricing\");\nit(\"quotes\", () => {\n  expect(quote(2)).toBe(4);\n});\n",
+    );
+
+    let (report, _) = analyze_path(dir, None).unwrap();
+    assert_eq!(
+        smells_in(&report, "pricing.test.ts"),
+        vec![SmellKind::MockedSubject]
+    );
+}
