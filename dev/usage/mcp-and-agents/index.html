@@ -907,7 +907,13 @@ supported — and the agent launches it automatically at startup. See
   changes, computed over the full graph); pass <code>diff=false</code> for a full audit
   and <code>limit</code> to cap findings per pillar.</li>
 <li><code>noze_gate</code> — experimental end-of-turn diff gate, intended for hook
-  integration rather than direct calls. May be noisy on short or Q&amp;A turns.</li>
+  integration rather than direct calls. May be noisy on short or Q&amp;A turns.
+  The Stop hook from <code>sensez init --gate</code> passes <code>stop_hook_active</code>, so the
+  gate blocks at most once per stop chain, and waits up to 600 s, the
+  server's own request limit, so a slow scan is not cut off into a silent
+  allow. The gate blocks a finding once per session unless it is fixed and
+  then reintroduced, which is reported as a regression. Its memory lives in
+  <code>.sensez/gate/</code>, separate from metrics, and expires after seven idle days.</li>
 <li><code>noze_explain</code> — explain a finding category in plain English.</li>
 <li><code>get_configuration_summary</code> — summarize the effective configuration and the
   noisiest rules, as a starting point for tuning.</li>

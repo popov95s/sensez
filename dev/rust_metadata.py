@@ -16,8 +16,10 @@ SMELL_KIND_RS = ROOT / "src/report/smell_kind.rs"
 SMELL_KNOBS_RS = ROOT / "src/config/smells/knobs.rs"
 SMELL_DEFAULTS_RS = ROOT / "src/config/smells/defaults.rs"
 SMELL_RESOLVE_RS = ROOT / "src/config/smells/resolve.rs"
-SMELL_RULES_RS = ROOT / "src/config/smells/rules.rs"
+SMELL_KNOB_TABLE_RS = ROOT / "src/config/smells/knob_table.rs"
+SMELL_TOGGLES_RS = ROOT / "src/config/smells/toggles.rs"
 SMELL_STRICTNESS_RS = ROOT / "src/config/smells/strictness.rs"
+SMELL_RULES_RS = ROOT / "src/config/smells/rules.rs"
 
 LANGUAGE_ROWS = (
     (("python",), "Python"),
@@ -51,18 +53,10 @@ def smell_kinds() -> set[SmellTerm]:
 
 
 def parse_rule_knobs() -> dict[SmellTerm, list[str]]:
-    source = SMELL_RULES_RS.read_text()
-    body = source.split("fn rule_knob_names", 1)[1].split("fn bool_rule_knobs", 1)[0]
-    out = dict(integer_rule_knob_entries(body))
+    out: dict[SmellTerm, list[str]] = {}
+    for kind, key, _ in _rule_knob_fields():
+        out.setdefault(kind, []).append(key)
     return with_string_rule_knobs(out, strictness_rule_knob_entries())
-
-
-def integer_rule_knob_entries(body: str) -> list[tuple[SmellTerm, list[str]]]:
-    return [
-        (SmellTerm(camel_to_snake(kind)), re.findall(r'"([^"]+)"', keys))
-        for arm, keys in re.findall(r"(?s)(.*?)=>\s*&\[(.*?)\],", body)
-        for kind in re.findall(r"SmellKind::(\w+)", arm)
-    ]
 
 
 def strictness_rule_knob_entries() -> list[tuple[SmellTerm, str]]:
@@ -118,8 +112,26 @@ def default_knob_values() -> dict[str, str]:
     knobs = {}
     for kind, key, field in _rule_knob_fields():
         value = fields.get(field, "10")
-        knobs[f"{kind}.{key}"] = "[]" if value == "Vec::new()" else value
+        knobs[f"{kind}.{key}"] = "[]" if value == "Vec::new()" else _const_list(value)
     return knobs
+
+
+def _const_list(value: str) -> str:
+    """Inline a `NAME.map(String::from).to_vec()` default from its `const NAME` list."""
+    match = re.fullmatch(r"(\w+)\.map\(String::from\)\.to_vec\(\)", value)
+    if not match:
+        return value
+    source = SMELL_KNOBS_RS.read_text()
+    body = re.search(rf"const {match.group(1)}: \[&str; \d+\] = \[(.*?)\];", source, re.DOTALL)
+    if not body:
+        return value
+    items = re.findall(r'"[^"]*"', body.group(1))
+    return f"[{', '.join(items)}]"
+
+
+def default_strictness(smell_term: SmellTerm) -> str:
+    value = _default_smell_fields()[_strictness_fields()[smell_term]]
+    return value.rsplit("::", 1)[1].lower()
 
 
 def default_enabled(smell_term: SmellTerm, language: str) -> bool:
@@ -155,6 +167,14 @@ def _default_disabled() -> set[SmellTerm]:
     }
 
 
+def _strictness_fields() -> dict[SmellTerm, str]:
+    body = SMELL_RULES_RS.read_text().split("fn set_strictness_knob", 1)[1].split("};", 1)[0]
+    return {
+        SmellTerm(camel_to_snake(kind)): field
+        for kind, field in re.findall(r"SmellKind::(\w+)\s*=>\s*&mut smells\.(\w+)", body)
+    }
+
+
 def _default_smell_fields() -> dict[str, str]:
     source = SMELL_KNOBS_RS.read_text()
     default_impl = source.split("impl Default for Smells", 1)[1]
@@ -163,44 +183,22 @@ def _default_smell_fields() -> dict[str, str]:
 
 
 def _enabled_fields() -> dict[SmellTerm, str]:
-    source = SMELL_RULES_RS.read_text()
-    body = source.split("fn set_rule_enabled", 1)[1]
+    body = SMELL_TOGGLES_RS.read_text().split("toggles! {", 1)[1].split("}", 1)[0]
     return {
         SmellTerm(camel_to_snake(kind)): field
-        for kind, field in re.findall(
-            r"SmellKind::(\w+)\s*=>\s*smells\.(\w+)\s*=",
-            body,
-        )
+        for kind, field in re.findall(r"(\w+)\s*=>\s*(\w+),", body)
     }
 
 
 def _rule_knob_fields() -> list[tuple[SmellTerm, str, str]]:
-    source = SMELL_RULES_RS.read_text()
-    integer_body = source.split("fn apply_integer_knob", 1)[1].split("fn set", 1)[0]
-    bool_body = source.split("fn apply_rule_knob", 1)[1].split("if bool_rule_knobs", 1)[0]
-    integer_knobs = [
+    body = SMELL_KNOB_TABLE_RS.read_text().split("RULE_KNOBS", 1)[1].split("];", 1)[0]
+    return [
         (SmellTerm(camel_to_snake(kind)), key, field)
         for kind, key, field in re.findall(
-            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*(?:\{\s*)?set\(&mut smells\.(\w+),',
-            integer_body,
+            r'K::(\w+),\s*"([^"]+)",\s*\w+\(\|s\|\s*&mut s\.(\w+)\)',
+            body,
         )
     ]
-    bool_knobs = [
-        (SmellTerm(camel_to_snake(kind)), key, field)
-        for kind, key, field in re.findall(
-            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*\{\s*smells\.(\w+)\s*=',
-            bool_body,
-        )
-    ]
-    list_body = source.split("fn apply_list_knob", 1)[1].split("fn apply_string_knob", 1)[0]
-    list_knobs = [
-        (SmellTerm(camel_to_snake(kind)), key, field)
-        for kind, key, field in re.findall(
-            r'\(SmellKind::(\w+),\s*"([^"]+)"\)\s*=>\s*\{?\s*smells\.(\w+)\s*=',
-            list_body,
-        )
-    ]
-    return integer_knobs + bool_knobs + list_knobs
 
 
 def _js_ts_overrides() -> dict[str, set[SmellTerm]]:

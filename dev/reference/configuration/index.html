@@ -1179,14 +1179,18 @@ is a heavily commented real-world example.</p>
 <p>Sensez checks the whole file before it scans. Every problem is printed as
 <code>sensez.toml:LINE:COL: message</code>, with a "did you mean" hint where one fits.</p>
 <ul>
-<li><strong>Errors</strong> stop the run (exit <code>2</code>, nothing is scanned): TOML syntax errors,
-  wrong value types, invalid values such as <code>cycles = "critical"</code>, and unknown
-  keys inside <code>[smells]</code> (including <code>[smells.rules.*]</code> and the language
-  tables) and <code>[action]</code>.</li>
-<li><strong>Warnings</strong> are printed once and the scan continues: unknown keys in other
-  tables (<code>[duplication]</code>, <code>[dead_code]</code>, <code>[cycles]</code>, …) and unknown top-level
-  tables.</li>
+<li><strong>Errors</strong> make Sensez ignore the whole file and scan with the default
+  configuration: TOML syntax errors, wrong value types, invalid values such as
+  <code>cycles = "critical"</code>, and unknown keys inside <code>[smells]</code> (including
+  <code>[smells.rules.*]</code> and the language tables) and <code>[action]</code>.</li>
+<li><strong>Warnings</strong> ignore only the offending key and the scan continues: unknown
+  keys in other tables (<code>[duplication]</code>, <code>[dead_code]</code>, <code>[cycles]</code>, …) and
+  unknown top-level tables.</li>
 </ul>
+<p>Neither changes the exit code: a <code>--fail-on</code> / <code>--fail-on-new</code> run is still
+decided by its findings, and prints a <code>gate:</code> line on stderr noting that
+configuration issues were reported. Check the printed problems (or
+<code>meta.issues</code>, see below) in CI to catch a broken file.</p>
 <p>MCP scan tools return the same problems as an error result. The end-of-turn
 gate and the language server keep working on defaults instead.</p>
 <h2 id="action-levels">Action levels</h2>
@@ -1214,7 +1218,8 @@ severity of their detector. Override per pillar or per smell:</p>
 <code>typescript</code>, or <code>rust</code> — overrides the base for that language only. (The Rust
 profile is dogfooding-only and not shipped in the published packages.)</p>
 <p>Setting any knob, including <code>action</code>, enables the rule; use <code>enabled = false</code>
-for explicit suppression. A flat threshold under <code>[smells]</code> or
+for explicit suppression. A rule's own <code>action</code> wins over the
+<code>[action.smells]</code> entry for the same smell. A flat threshold under <code>[smells]</code> or
 <code>[smells.&lt;lang&gt;]</code> (<code>max_function_lines</code>, <code>max_cyclomatic</code>, <code>max_nesting</code>, …)
 also enables its rule, unless the same table sets the rule's toggle (for
 example <code>long_function = false</code>) or lists it in <code>disabled</code>.</p>
@@ -1300,8 +1305,8 @@ config fixes a whole class of false positives.</p>
   <code>tests/</code>, <code>test/</code> and pytest file names. The Python profile also counts
   <code>examples/</code> and <code>docs_src/</code>, and the Rust profile <code>benches/</code>, so those are
   skipped too. Set <code>include_tests = true</code> under
-  <code>[duplication]</code> or <code>[smells]</code> to analyse them. <code>weak_test_oracle</code> always
-  inspects test files.</li>
+  <code>[duplication]</code> or <code>[smells]</code> to analyse them. <code>weak_test_oracle</code> and
+  <code>fixture_echo_assertion</code> always inspect test files.</li>
 <li><strong>Generated files</strong> (JS/TS): paths under <code>_generated/</code> or <code>__generated__/</code>,
   <code>*.gen.*</code> and <code>*.generated.*</code>, or a first-1 KB header containing
   <code>@generated</code>, <code>do not edit</code>, <code>auto-generated</code>, <code>automatically generated</code> or
@@ -1314,13 +1319,18 @@ config fixes a whole class of false positives.</p>
 <p><code>sensez noze . --summary</code> lists the effective excludes and skip counts under
 <code>scope</code>, and the human report prints one dimmed line under Duplication when
 files were skipped.</p>
-<p>Opt-in detectors for harder clones: <code>near_miss</code> (consistent renames),
-<code>class_name_duplicates</code>, <code>class_property_overlap_min</code>, and
-<code>[duplication.semantic]</code> (only in builds with the <code>eyez</code> feature). If the
-semantic pass is enabled but its embedding model cannot load (for example
-offline with no cached model), the scan records an <code>analyze</code> issue in
-<code>meta.issues</code>, and <code>--fail-on</code> / <code>--fail-on-new</code> exit <code>2</code> with "incomplete
-scan" rather than passing.</p>
+<p>Structural matching keeps member, property and type names, so a copy that
+renames only locals is still a clone. Whole functions at least twice the
+<code>threshold</code> are also compared after a consistent rename of every name and
+literal, so a copy that renames its members is found too. <code>near_miss = true</code>
+extends that rename pass to functions down to <code>threshold</code>.</p>
+<p>Opt-in detectors for harder clones: <code>class_name_duplicates</code>,
+<code>class_property_overlap_min</code>, and <code>[duplication.semantic]</code> (only in builds with
+the <code>eyez</code> feature). If the semantic pass is enabled but its embedding model
+cannot load (for example offline with no cached model), the scan prints an
+<code>analyze</code> issue on stderr, and <code>--fail-on</code> / <code>--fail-on-new</code> exit <code>2</code> with
+"incomplete scan" rather than passing. JSON output lists the issue under
+<code>meta.issues</code> only when <code>SENSEZ_SCAN_DIAGNOSTICS</code> or <code>SENSEZ_TIMING</code> is set.</p>
 <div class="highlight"><pre><span></span><code><span class="k">[duplication.semantic]</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">true</span>
 <span class="n">min_shape_score</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">30</span><span class="w">       </span><span class="c1"># token 4-gram overlap (0-100) separating edited copies from rewrites; above 100 is an error</span>
@@ -1347,7 +1357,9 @@ words or doc words; words and shapes used by most functions in the codebase
 never pair two functions on their own.</p>
 <p>When several detectors report the same code, the widest group is kept, its
 line ranges grow to cover the others, and the folded groups are listed under
-<code>absorbed</code> in JSON output. Each group's source is in <code>detector</code>.</p>
+<code>absorbed</code> in JSON output. Each group's source is in <code>detector</code>. The <code>hint</code>
+says the token count (a range when a folded group is wider), the number of
+copies, what to do, and how many overlapping groups were folded in.</p>
 <h2 id="cycles">Cycles</h2>
 <div class="highlight"><pre><span></span><code><span class="k">[cycles]</span>
 <span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/vendor/**"</span><span class="p">]</span><span class="w">   </span><span class="c1"># import edges here never report a cycle</span>
@@ -1372,8 +1384,9 @@ the alphabetically first module), so following it returns to its start.</p>
 </code></pre></div>
 <p>Matching, per endpoint:</p>
 <ul>
-<li>A plain name is a dotted prefix — <code>app.domain</code> matches <code>app.domain</code> and
-  <code>app.domain.*</code>.</li>
+<li>A plain name is a module-name prefix — <code>app.domain</code> matches <code>app.domain</code>
+  and <code>app.domain.*</code>; for JavaScript and TypeScript modules, which are named by
+  path, <code>src/domain</code> matches <code>src/domain</code> and <code>src/domain/*</code>.</li>
 <li>A glob (<code>* ? [</code>) is matched against <strong>both</strong> the module name and the file
   path, so <code>from = "**/domain/**"</code> works even for namespace packages without
   <code>__init__.py</code>.</li>

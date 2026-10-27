@@ -33,6 +33,7 @@ KNOB_COMMENTS = {
     "ignore_default_values": "skip literals in parameter default values",
     "ignore_roots": "chain roots never reported, e.g. a generated API client",
     "include_attributes": "also flag mutation of fields on parameters",
+    "include_mock_only": "also flag tests whose only checks are was-called checks on mocks they programmed",
     "include_tests": "also flag test code and assertion arguments",
     "max_bool_params": "allowed boolean parameters before flagging",
     "max_chain_depth": "allowed property/call chain depth",
@@ -45,6 +46,7 @@ KNOB_COMMENTS = {
     "max_nesting": "allowed nested block depth",
     "max_params": "allowed parameters before flagging",
     "max_returns": "allowed return statements before flagging",
+    "markers": "thrown-error messages that mark a stub, matched as whole words",
     "max_tuple_return": "allowed positional tuple items in a return",
     "min_assigns": "assignments to one local before flagging",
     "min_blast": "dependent modules before shotgun-surgery risk",
@@ -53,12 +55,17 @@ KNOB_COMMENTS = {
     "min_fan_out": "internal runtime imports required for a god module",
     "min_fields": "shared fields required for a data clump",
     "min_function_lines": "shorter functions are flagged only for commented-out code",
+    "min_lexemes": "lexeme codes a helper body needs before it is compared",
     "min_keys": "string keys on one object before implicit-schema risk",
     "min_lines": "module lines required for a god module (or min_units)",
     "min_occurrences": "functions sharing the clump before flagging",
+    "min_similarity": "percent of matching body lexemes required between copies",
     "min_units": "top-level functions and classes required (or min_lines)",
+    "providers": "in-house packages whose same-named functions count as providers",
+    "read_prefixes": "name prefixes that promise a read",
     "skip_capturing": "drop nested functions that read parent locals",
     "skip_external_vocab": "ignore extension, MIME, path, and error-code lists",
+    "write_methods": "method names that count as writes on outside receivers (each language adds its own mutators)",
 }
 
 
@@ -85,7 +92,7 @@ def example_knob_value(smell_term: SmellTerm, key: str) -> str:
 def render_tuning(smell_term: SmellTerm, knobs: list[str]) -> str:
     strictness_rule = strictness_rules().get(smell_term)
     if strictness_rule:
-        return render_ranked_tuning(smell_term, strictness_rule)
+        return render_ranked_tuning(smell_term, strictness_rule, knobs)
     lines = [
         "**Tune It**\n\n",
         "Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.\n\n",
@@ -116,15 +123,24 @@ def render_ranked_examples(smell_term: SmellTerm, fixes) -> str:
     return "".join(lines)
 
 
-def render_ranked_tuning(smell_term: SmellTerm, rule: StrictnessRule) -> str:
-    return render_tabbed_tuning(smell_term, ranked_tuning_tabs(rule))
+def render_ranked_tuning(smell_term: SmellTerm, rule: StrictnessRule, knobs: list[str]) -> str:
+    return render_tabbed_tuning(smell_term, ranked_tuning_tabs(smell_term, rule, knobs))
 
 
-def ranked_tuning_tabs(rule: StrictnessRule) -> list[TuningTab]:
+def ranked_tuning_tabs(
+    smell_term: SmellTerm,
+    rule: StrictnessRule,
+    knobs: list[str],
+) -> list[TuningTab]:
+    extra = tuple(
+        (key, f"{example_knob_value(smell_term, key)} # {KNOB_COMMENTS.get(key, 'detector-specific threshold')}")
+        for key in knobs
+        if key != rule.knob
+    )
     return [
         TuningTab(
             title=level.title,
-            knobs=((rule.knob, f'"{level.value}"'),),
+            knobs=((rule.knob, f'"{level.value}"'), *extra),
             description=level.description,
         )
         for level in rule.levels
@@ -132,7 +148,7 @@ def ranked_tuning_tabs(rule: StrictnessRule) -> list[TuningTab]:
 
 
 def read_ranked_example(smell_term: SmellTerm, level: str, ext: str) -> str:
-    return (EXAMPLES / smell_term / level / f"example.{ext}").read_text().rstrip()
+    return next((EXAMPLES / smell_term / level).glob(f"*example*.{ext}")).read_text().rstrip()
 
 
 def render_tabbed_tuning(smell_term: SmellTerm, tabs: list[TuningTab]) -> str:
@@ -188,7 +204,7 @@ def render_example_tab(fence: str, tab: ExampleTab) -> list[str]:
 
 
 def read_fixed_example(smell_term: SmellTerm, ext: str) -> str:
-    return (EXAMPLES / smell_term / f"fixed.{ext}").read_text().rstrip()
+    return next((EXAMPLES / smell_term).glob(f"fixed*.{ext}")).read_text().rstrip()
 
 
 def language_key(ext: str) -> str:

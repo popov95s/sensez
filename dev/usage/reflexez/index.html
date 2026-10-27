@@ -915,7 +915,8 @@ explainable JSON plans, and conservative full-suite fallbacks. No test config,
 plugin, fixture, or runner command needs replacing.</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.
 </code></pre></div>
-<p>By default the change scope includes staged, unstaged, and untracked files. For
+<p>By default the change scope includes staged, unstaged, and untracked files; in
+a repository without commits every file counts as changed. For
 a branch or CI job, select an explicit base:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--base<span class="w"> </span>origin/main
 </code></pre></div>
@@ -927,7 +928,10 @@ sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> 
 </code></pre></div>
 <p>Every selected file includes a reason (<code>changed_test</code>, <code>direct_dependency</code>,
 <code>transitive_dependency</code>, <code>dynamic_import</code>, <code>full_requested</code>, <code>safety_fallback</code>)
-and a dependency distance. The JSON plan also lists:</p>
+and a dependency distance: the number of import hops from a changed file. A
+<code>dynamic_import</code> selection reached through a file whose computed import could
+not be resolved counts that file as one hop, since the import may load any
+module. The JSON plan also lists:</p>
 <ul>
 <li><code>config_warnings</code>: runner-config keys that could not be read statically, with
   the file, key, reason, and the fallback used for that key;</li>
@@ -936,9 +940,20 @@ and a dependency distance. The JSON plan also lists:</p>
   (for example an asset nothing imports), so "0 tests" is never silent.</li>
 </ul>
 <h2 id="runner-integration">Runner integration</h2>
-<p>Reflexez detects local Vitest and Jest installations from <code>package.json</code> and
-detects pytest tests by its standard file conventions. Force a runner only when
-auto-detection is ambiguous:</p>
+<p>Reflexez detects Vitest and Jest from each <code>package.json</code>: a script that runs
+<code>vitest</code> or <code>jest</code> selects that runner (both, when scripts run both); otherwise
+a <code>vitest</code> or <code>jest</code> dependency does, Vitest first. Without either in any
+<code>package.json</code>, a <code>vitest.config.*</code>, <code>vitest.workspace.*</code>, <code>vite.config.*</code> with
+a <code>test</code> key, or <code>jest.config.*</code> at the root selects the runner. A
+<code>package.json</code> that is not valid JSON is skipped with a config warning, and a
+runner project with no discovered tests is not run.</p>
+<p>pytest tests follow the repository's <code>pytest.ini</code>, <code>pyproject.toml</code> with
+<code>[tool.pytest.ini_options]</code>, <code>tox.ini</code> or <code>setup.cfg</code>: its <code>testpaths</code> and
+<code>python_files</code> decide what is collected. When the repository root has none, the
+nearest such file above each test applies instead and pytest runs from its
+directory (for example <code>backend/pyproject.toml</code>). Without any, the default
+<code>test_*.py</code> / <code>*_test.py</code> patterns apply from the repository root. Force a runner only when auto-detection is
+ambiguous:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--runner<span class="w"> </span>pytest
 sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--runner<span class="w"> </span>vitest
 </code></pre></div>
@@ -977,6 +992,8 @@ run.</p>
 <p>Use explicit paths in editor and staged-file integrations:</p>
 <div class="highlight"><pre><span></span><code>sensez<span class="w"> </span>reflexez<span class="w"> </span>.<span class="w"> </span>--changed-file<span class="w"> </span>src/service.ts
 </code></pre></div>
+<p>A relative <code>--changed-file</code> is resolved against the current directory, or
+against the repository root when no such file exists there (a deleted file).</p>
 <h2 id="safety-model">Safety model</h2>
 <p>Reflexez runs the full suite when a narrow plan cannot be proven safe. Current
 global triggers include:</p>
@@ -989,7 +1006,11 @@ global triggers include:</p>
 <li>the configured <code>setupFiles</code>, <code>setupFilesAfterEnv</code>, and <code>globalSetup</code> modules,
   or anything they import;</li>
 <li>TypeScript module-resolution configuration;</li>
-<li>deleted source files or incomplete parsing.</li>
+<li>deleted or renamed source files (a rename counts as a deletion of the old
+  path, including case-only renames); deleting other files, such as a README,
+  does not trigger it;</li>
+<li>incomplete parsing of a file that may import something (a file whose text
+  has no <code>import</code>, <code>require</code> or <code>from</code> only triggers it when it changed).</li>
 </ul>
 <p>Literal <code>import()</code>, CommonJS <code>require()</code>, <code>importlib.import_module()</code>, and
 <code>__import__()</code> targets use the normal import graph. Reflexez additionally resolves

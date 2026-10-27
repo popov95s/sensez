@@ -60,11 +60,24 @@ def build_variant_root(folder, config, rule, level, suffix):
         + f'{rule.knob} = "{level.value}"\n'
     )
     (tmp / "sensez.toml").write_text(text)
-    src = folder / level.value / f"example{suffix}"
-    dst = tmp / folder.name / level.value / f"example{suffix}"
+    src = level_example(folder / level.value, suffix)
+    dst = tmp / folder.name / level.value / src.name
     dst.parent.mkdir(parents=True, exist_ok=True)
     shutil.copyfile(src, dst)
     return tmp
+
+
+def level_example(level_dir, suffix):
+    """The one example of a language in a level folder (`example.ts`, `example.test.ts`)."""
+    return next(level_dir.glob(f"*example*{suffix}"))
+
+
+def is_level_example(path, box, variant, suffix):
+    return f"/{box}/{variant}/" in path and path.endswith(suffix)
+
+
+def is_fixed_example(path, box, suffix):
+    return f"/{box}/fixed" in path and path.endswith(suffix)
 
 
 def lang_for_suffix(suffix):
@@ -80,20 +93,18 @@ def fixed_report(folder, suffix, run_noze, build_scan_root):
 
 
 def finding_seen(report, box, variant, suffix, expected_kind):
-    wanted = f"/{box}/{variant}/example{suffix}"
     return any(
-        norm(finding.get("file", "")).endswith(wanted)
+        is_level_example(norm(finding.get("file", "")), box, variant, suffix)
         and finding.get("kind") == expected_kind
         for finding in report.get("smells", [])
     )
 
 
 def missing_message(report, box, variant, suffix, expected_kind):
-    wanted = f"/{box}/{variant}/example{suffix}"
     seen = sorted(
         finding.get("kind")
         for finding in report.get("smells", [])
-        if norm(finding.get("file", "")).endswith(wanted)
+        if is_level_example(norm(finding.get("file", "")), box, variant, suffix)
     )
     return f"{box}/{variant}/example{suffix}: expected {expected_kind}, saw {seen or 'no smells'}"
 
@@ -103,11 +114,10 @@ def fixed_failures(report, box, suffix):
 
 
 def fixed_smell_failures(report, box, suffix):
-    wanted = f"/{box}/fixed{suffix}"
     kinds = sorted(
         finding.get("kind")
         for finding in report.get("smells", [])
-        if norm(finding.get("file", "")).endswith(wanted)
+        if is_fixed_example(norm(finding.get("file", "")), box, suffix)
     )
     return [] if not kinds else [f"{box}/fixed{suffix}: must emit no smell, saw {kinds}"]
 
@@ -121,8 +131,7 @@ def fixed_pillar_failures(report, box, suffix):
 
 
 def fixed_pillar_count(report, block, box, suffix):
-    wanted = f"/{box}/fixed{suffix}"
-    return sum(path.endswith(wanted) for path in block_files(report, block))
+    return sum(is_fixed_example(path, box, suffix) for path in block_files(report, block))
 
 
 def block_files(report, block):
