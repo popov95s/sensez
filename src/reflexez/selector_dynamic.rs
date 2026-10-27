@@ -1,6 +1,6 @@
 use super::dynamic::DynamicFacts;
 use super::module_root::module_root;
-use crate::profiles::ResolutionCache;
+use crate::profiles::registry;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::ImportPhase;
 use petgraph::graph::NodeIndex;
@@ -41,7 +41,7 @@ pub(super) fn reverse_edges(
             .or_default()
             .push((importer, is_computed));
     }
-    let mut aliases = ResolutionCache::default();
+    let mut resolvers = registry::import_resolvers();
     for (importer_path, facts) in &dynamic.by_file {
         let Some(&importer) = nodes.get(importer_path) else {
             continue;
@@ -51,7 +51,11 @@ pub(super) fn reverse_edges(
             graph.graph[importer].language,
             configured_roots,
         );
-        let mut resolve_alias = |specifier: &str| aliases.alias_path(&alias_root, specifier);
+        let mut resolve_alias = |specifier: &str| {
+            resolvers
+                .values_mut()
+                .find_map(|resolver| resolver.alias_path(&alias_root, specifier))
+        };
         for patterns in &facts.patterns {
             let targets = super::patterns::matching_nodes(
                 importer_path,

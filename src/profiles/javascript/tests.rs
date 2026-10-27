@@ -2,12 +2,9 @@
 //! resolution, cycles, duplication, cross-language isolation).
 
 use super::JsProfile;
+use crate::profiles::test_fixtures::tokens;
 use crate::spine::parser::{parse_file, parse_source, StructuralToken};
 use std::fs;
-
-pub(super) fn tokens(src: &[u8]) -> Vec<StructuralToken> {
-    parse_source(src, 0, "m", &JsProfile).unwrap().syntax.tokens
-}
 
 #[cfg(feature = "eyez")]
 #[test]
@@ -29,10 +26,10 @@ fn jsdoc_before_declaration_belongs_to_function() {
 fn rename_invariance_yields_identical_tokens() {
     let a = b"function compute(items) {\n  let total = 0;\n  for (const item of items) {\n    if (item > 10) { total = total + item; }\n  }\n  return total;\n}\n";
     let b = b"function process(values) {\n  let acc = 99;\n  for (const value of values) {\n    if (value > 500) { acc = acc + value; }\n  }\n  return acc;\n}\n";
-    let ta = tokens(a);
+    let ta = tokens(a, &JsProfile);
     assert_eq!(
         ta,
-        tokens(b),
+        tokens(b, &JsProfile),
         "renamed-but-identical JS functions must match"
     );
     assert!(ta.contains(&StructuralToken::FunctionDef));

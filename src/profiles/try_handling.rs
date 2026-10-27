@@ -1,5 +1,6 @@
 //! Shared try/handler shapes behind defensive-fallback facts.
 
+use crate::spine::ir::HandlerEnd;
 use tree_sitter::Node;
 
 /// Per-language try/handler syntax and logger callees.
@@ -8,9 +9,23 @@ pub(crate) struct TrySyntax {
     pub(crate) handler_kind: &'static str,
     pub(crate) throw_kinds: &'static [&'static str],
     pub(crate) call_kind: &'static str,
-    /// Callee texts; a leading or trailing `*` matches any prefix or suffix.
+    /// Callee texts; `*` matches any run of characters.
     pub(crate) loggers: &'static [&'static str],
+    /// Callees that show the failure to a user (`toast.error`, `setError`).
+    pub(crate) notifiers: &'static [&'static str],
     pub(crate) is_function: fn(&str) -> bool,
+    pub(crate) return_kind: &'static str,
+    /// Statements that do nothing (`pass`, comments).
+    pub(crate) noop_kinds: &'static [&'static str],
+    pub(crate) comment_kind: &'static str,
+    /// Blocks that run as cleanup after the try (`finally`).
+    pub(crate) cleanup_kinds: &'static [&'static str],
+    /// Callee texts that parse JSON.
+    pub(crate) parse_calls: &'static [&'static str],
+    /// Callees expected to throw as an answer (storage access, file-existence checks).
+    pub(crate) probes: &'static [&'static str],
+    /// Classifies a returned literal; `None` for anything else.
+    pub(crate) returned_literal: fn(Node, &[u8]) -> Option<HandlerEnd>,
 }
 
 /// `node` runs inside a try body or its handler within the same function.
@@ -57,7 +72,11 @@ pub(crate) fn swallows(body: Node, error: Option<&str>, src: &[u8], syntax: &Try
     true
 }
 
-fn logger_callee<'a>(node: Node<'a>, src: &[u8], syntax: &TrySyntax) -> Option<Node<'a>> {
+pub(crate) fn logger_callee<'a>(
+    node: Node<'a>,
+    src: &[u8],
+    syntax: &TrySyntax,
+) -> Option<Node<'a>> {
     (node.kind() == syntax.call_kind)
         .then(|| node.child_by_field_name("function"))
         .flatten()
@@ -67,10 +86,22 @@ fn logger_callee<'a>(node: Node<'a>, src: &[u8], syntax: &TrySyntax) -> Option<N
         })
 }
 
-fn matches_callee(pattern: &str, text: &str) -> bool {
-    match (pattern.strip_prefix('*'), pattern.strip_suffix('*')) {
-        (Some(suffix), _) => text.ends_with(suffix),
-        (_, Some(prefix)) => text.starts_with(prefix),
-        _ => text == pattern,
+/// `text` matches `pattern`, where `*` stands for any run of characters.
+pub(crate) fn matches_callee(pattern: &str, text: &str) -> bool {
+    let mut parts = pattern.split('*');
+    let first = parts.next().unwrap_or_default();
+    let Some(mut rest) = text.strip_prefix(first) else {
+        return false;
+    };
+    let mut parts: Vec<&str> = parts.collect();
+    let Some(last) = parts.pop() else {
+        return rest.is_empty();
+    };
+    for part in parts {
+        let Some(at) = rest.find(part) else {
+            return false;
+        };
+        rest = &rest[at + part.len()..];
     }
+    rest.ends_with(last)
 }

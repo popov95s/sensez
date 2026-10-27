@@ -13,151 +13,186 @@ use loop_context::{nested_loop_reason, owned_by_loop, repeats_per_item, walks_ou
 use std::collections::BTreeMap;
 
 pub fn detect(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], cfg: &Smells) -> Vec<SmellFinding> {
-    // Performance smells need to look up callees by name to attribute
-    // helper-in-loop work to the caller; same-named units stay ambiguous.
     let mut functions: BTreeMap<&str, Vec<&FunctionUnit>> = BTreeMap::new();
     for m in metrics {
         functions.entry(m.name.as_str()).or_default().push(m);
     }
-    let profile = registry::performance_profile(ctx.language);
-    let rules = LoopCallRules::new(cfg);
+    let scan = PerfScan {
+        ctx,
+        cfg,
+        functions: &functions,
+        profile: registry::performance_profile(ctx.language),
+        rules: LoopCallRules::new(cfg),
+    };
     metrics
         .iter()
         .flat_map(|m| {
-            let mut findings = direct_findings(ctx, m, cfg, &functions, profile, &rules);
-            findings.extend(helper_findings(ctx, m, cfg, &functions, profile, &rules));
+            let mut findings: Vec<SmellFinding> = scan
+                .nested_loop(m)
+                .into_iter()
+                .chain(scan.sort_in_loop(m))
+                .collect();
+            findings.extend(scan.repeated_iterations(m));
+            findings.extend(scan.n_plus_one(m));
+            findings.extend(scan.helper_findings(m));
             findings
         })
         .collect()
 }
 
-fn direct_findings(
-    ctx: &SmellContext<'_>,
-    m: &FunctionUnit,
-    cfg: &Smells,
-    functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
-    profile: &dyn PerformanceProfile,
-    rules: &LoopCallRules,
-) -> Vec<SmellFinding> {
-    let mut out = Vec::new();
-    let facts = &m.performance;
-    let nested_loops: Vec<&PerfLine> = significant_loops(profile, &facts.nested_loops)
-        .into_iter()
-        .filter(|inner| {
-            !walks_outer_item(facts, inner, registry::identifier_extra_chars(ctx.language))
-        })
-        .collect();
-    if let Some(first) = nested_loops.first() {
-        out.push(finding(
+/// What every performance check of one file reads; same-named units stay ambiguous in `functions`.
+struct PerfScan<'a> {
+    ctx: &'a SmellContext<'a>,
+    cfg: &'a Smells,
+    functions: &'a BTreeMap<&'a str, Vec<&'a FunctionUnit>>,
+    profile: &'static dyn PerformanceProfile,
+    rules: LoopCallRules,
+}
+
+impl PerfScan<'_> {
+    fn identifier_chars(&self) -> &'static [char] {
+        registry::identifier_extra_chars(self.ctx.language)
+    }
+
+    fn nested_loop(&self, m: &FunctionUnit) -> Option<SmellFinding> {
+        let facts = &m.performance;
+        let nested_loops: Vec<&PerfLine> = significant_loops(self.profile, &facts.nested_loops)
+            .into_iter()
+            .filter(|inner| !walks_outer_item(facts, inner, self.identifier_chars()))
+            .collect();
+        let first = nested_loops.first()?;
+        Some(finding(
             SmellKind::NestedLoop,
-            ctx,
+            self.ctx,
             m,
             first.line,
             nested_loops.len(),
             &nested_loop_reason(facts, first),
             Severity::Warning,
-        ));
+        ))
     }
-    let sorts: Vec<&PerfLine> = facts
-        .sorts_in_loops
-        .iter()
-        .filter(|sort| !owned_by_loop(facts, sort.frame, profile.receiver_root(&sort.subject)))
-        .collect();
-    if let Some(first) = sorts.first() {
-        out.push(finding(
+
+    fn sort_in_loop(&self, m: &FunctionUnit) -> Option<SmellFinding> {
+        let facts = &m.performance;
+        let sorts: Vec<&PerfLine> = facts
+            .sorts_in_loops
+            .iter()
+            .filter(|sort| {
+                !owned_by_loop(facts, sort.frame, self.profile.receiver_root(&sort.subject))
+            })
+            .collect();
+        let first = sorts.first()?;
+        Some(finding(
             SmellKind::SortInLoop,
-            ctx,
+            self.ctx,
             m,
             first.line,
             sorts.len(),
             "sort inside a loop repeats O(n log n) work",
             Severity::Warning,
-        ));
+        ))
     }
-    let in_tests = ctx.test_source || m.review_risks.is_test_case;
-    if cfg.repeated_iteration_include_tests || !in_tests {
-        for calls in repeated_iterations(m, cfg, profile) {
-            out.push(finding(
-                SmellKind::RepeatedIteration,
-                ctx,
-                m,
-                calls[0].line,
-                calls.len(),
-                &repeated_iteration_reason(&calls),
-                Severity::Warning,
-            ));
-        }
-    }
-    let per_item = facts
-        .loop_calls
-        .iter()
-        .filter(|call| repeats_per_item(facts, call.frame, cfg.n_plus_one_max_constant_bound));
-    for call in external_calls(ctx, m, per_item, functions, profile, rules).values() {
-        out.push(finding(
-            SmellKind::NPlusOneCall,
-            ctx,
-            m,
-            call.line,
-            1,
-            "external-looking call runs once per loop iteration",
-            Severity::Info,
-        ));
-    }
-    out
-}
 
-fn helper_findings(
-    ctx: &SmellContext<'_>,
-    m: &FunctionUnit,
-    cfg: &Smells,
-    functions: &BTreeMap<&str, Vec<&FunctionUnit>>,
-    profile: &dyn PerformanceProfile,
-    rules: &LoopCallRules,
-) -> Vec<SmellFinding> {
-    let mut out = Vec::new();
-    let facts = &m.performance;
-    for call in &facts.loop_calls {
-        if call.target == m.name {
-            continue;
+    fn repeated_iterations(&self, m: &FunctionUnit) -> Vec<SmellFinding> {
+        let in_tests = self.ctx.test_source || m.review_risks.is_test_case;
+        if in_tests && !self.cfg.repeated_iteration_include_tests {
+            return Vec::new();
         }
-        let Some(&[callee]) = functions.get(call.target.as_str()).map(Vec::as_slice) else {
-            continue;
-        };
-        let callee_loops = significant_loops(profile, &callee.performance.loops);
-        if !callee_loops.is_empty() && facts.in_loop_statement(call.frame) {
-            out.push(finding(
-                SmellKind::NestedLoop,
-                ctx,
-                m,
-                call.line,
-                callee_loops.len() + 1,
-                "helper called in a loop also iterates",
-                Severity::Warning,
-            ));
-        }
-        if repeats_per_item(facts, call.frame, cfg.n_plus_one_max_constant_bound)
-            && !external_calls(
-                ctx,
-                callee,
-                &callee.performance.calls,
-                functions,
-                profile,
-                rules,
-            )
-            .is_empty()
-        {
-            out.push(finding(
-                SmellKind::NPlusOneCall,
-                ctx,
-                m,
-                call.line,
-                1,
-                "helper called in a loop performs external-looking calls",
-                Severity::Info,
-            ));
-        }
+        repeated_iterations(m, self.cfg, self.profile)
+            .into_iter()
+            .map(|calls| {
+                finding(
+                    SmellKind::RepeatedIteration,
+                    self.ctx,
+                    m,
+                    calls[0].line,
+                    calls.len(),
+                    &repeated_iteration_reason(&calls),
+                    Severity::Warning,
+                )
+            })
+            .collect()
     }
-    out
+
+    fn n_plus_one(&self, m: &FunctionUnit) -> Vec<SmellFinding> {
+        let facts = &m.performance;
+        let bound = self.cfg.n_plus_one_max_constant_bound;
+        let per_item = facts
+            .loop_calls
+            .iter()
+            .filter(|call| repeats_per_item(facts, call.frame, bound));
+        self.external_calls(m, per_item)
+            .values()
+            .map(|call| {
+                finding(
+                    SmellKind::NPlusOneCall,
+                    self.ctx,
+                    m,
+                    call.line,
+                    1,
+                    "external-looking call runs once per loop iteration",
+                    Severity::Info,
+                )
+            })
+            .collect()
+    }
+
+    fn helper_findings(&self, m: &FunctionUnit) -> Vec<SmellFinding> {
+        let mut out = Vec::new();
+        let facts = &m.performance;
+        for call in &facts.loop_calls {
+            if call.target == m.name {
+                continue;
+            }
+            let Some(&[callee]) = self.functions.get(call.target.as_str()).map(Vec::as_slice)
+            else {
+                continue;
+            };
+            let callee_loops = significant_loops(self.profile, &callee.performance.loops);
+            if !callee_loops.is_empty() && facts.in_loop_statement(call.frame) {
+                out.push(finding(
+                    SmellKind::NestedLoop,
+                    self.ctx,
+                    m,
+                    call.line,
+                    callee_loops.len() + 1,
+                    "helper called in a loop also iterates",
+                    Severity::Warning,
+                ));
+            }
+            if repeats_per_item(facts, call.frame, self.cfg.n_plus_one_max_constant_bound)
+                && !self
+                    .external_calls(callee, &callee.performance.calls)
+                    .is_empty()
+            {
+                out.push(finding(
+                    SmellKind::NPlusOneCall,
+                    self.ctx,
+                    m,
+                    call.line,
+                    1,
+                    "helper called in a loop performs external-looking calls",
+                    Severity::Info,
+                ));
+            }
+        }
+        out
+    }
+
+    fn external_calls<'c>(
+        &self,
+        owner: &FunctionUnit,
+        calls: impl IntoIterator<Item = &'c CallFact>,
+    ) -> BTreeMap<&'c str, &'c CallFact> {
+        external_calls(
+            self.ctx,
+            owner,
+            calls,
+            self.functions,
+            self.profile,
+            &self.rules,
+        )
+    }
 }
 
 fn repeated_iterations<'a>(

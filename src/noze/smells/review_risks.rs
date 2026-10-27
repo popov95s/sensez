@@ -2,7 +2,6 @@
 
 use super::{make, SmellContext};
 use crate::config::smells::Smells;
-use crate::globs::build_globset;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use globset::GlobSet;
@@ -18,6 +17,7 @@ pub fn detect(
     for metric in metrics {
         defensive_fallback(ctx, metric, out);
         redundant_validation(ctx, metric, out);
+        super::swallowed_error::detect(ctx, metric, config, out);
     }
     weak_test_oracles(ctx, metrics, config, out);
     wrapper_chains(ctx, metrics, config.max_wrapper_depth, out);
@@ -142,12 +142,11 @@ fn weak_test_oracles(
     if !ctx.test_source {
         return;
     }
-    let assertion_functions =
-        build_globset(&config.assertion_functions).unwrap_or_else(|_| GlobSet::empty());
-    let checked = checked_helpers(metrics, &assertion_functions);
+    let assertion_functions = config.assertion_globs();
+    let checked = checked_helpers(metrics, assertion_functions);
     for metric in metrics
         .iter()
-        .filter(|metric| !calls_check(metric, &checked, &assertion_functions))
+        .filter(|metric| !calls_check(metric, &checked, assertion_functions))
     {
         weak_test_oracle(ctx, metric, out);
     }

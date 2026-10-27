@@ -1,24 +1,6 @@
 use serde::Serialize;
 use std::path::PathBuf;
 
-#[derive(Clone, Copy, Debug, Eq, Hash, Ord, PartialEq, PartialOrd, Serialize)]
-#[serde(rename_all = "snake_case")]
-pub enum RunnerKind {
-    Pytest,
-    Vitest,
-    Jest,
-}
-
-impl RunnerKind {
-    pub fn label(self) -> &'static str {
-        match self {
-            Self::Pytest => "pytest",
-            Self::Vitest => "vitest",
-            Self::Jest => "jest",
-        }
-    }
-}
-
 #[derive(Clone, Copy, Debug, Eq, PartialEq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum PlanReason {
@@ -68,7 +50,7 @@ pub struct RunnerPlan {
     pub tests: Vec<PathBuf>,
 }
 
-pub use crate::profiles::runner_config::ConfigWarning;
+pub use crate::profiles::runner_config::{ConfigWarning, RunnerKind};
 
 #[derive(Clone, Debug, Serialize)]
 pub struct ImpactPlan {

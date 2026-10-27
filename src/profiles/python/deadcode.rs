@@ -12,6 +12,7 @@
 //!   `@my_wrapper`). ⇒ downgrade.
 
 use crate::globs::matches_any;
+use crate::profiles::walk;
 use crate::profiles::{DeadCodeDefaults, DecoratorClass};
 use crate::spine::ir::{ClassProperty, ClassUnit};
 use std::collections::HashSet;
@@ -44,10 +45,10 @@ const NEUTRAL_NAMES: &[&str] = &[
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entrypoints: &["route", "fixture", "task", "command", "app", "cli"],
+        registration_decorators: &["route", "fixture", "task", "command", "app", "cli"],
         entrypoint_names: &["register", "main", "setup"],
         entrypoint_bases: &["AppConfig"],
-        entry_points: &["**/alembic/**", "**/migrations/**"],
+        entry_globs: &["**/alembic/**", "**/migrations/**"],
         test_sources: &[
             "**/docs/**",
             "**/docs_src/**",
@@ -71,7 +72,7 @@ pub fn classify(paths: Option<&Vec<String>>, user_entrypoints: &HashSet<String>)
     };
     let mut unknown = false;
     for path in decorator_paths {
-        let trailing = path.rsplit('.').next().unwrap_or(path);
+        let trailing = walk::last_segment(path);
         let head = path.split('.').next().unwrap_or(path);
         let is_attr = path.contains('.');
 
@@ -125,7 +126,7 @@ pub fn manages_property(property: &ClassProperty) -> bool {
 pub fn requires_property_usage_evidence(class: &ClassUnit) -> bool {
     class.bases.iter().any(|base| {
         matches!(
-            short_name(base),
+            walk::last_segment(base),
             "BaseModel" | "GenericModel" | "BaseModelWithConfig"
         )
     })
@@ -133,7 +134,7 @@ pub fn requires_property_usage_evidence(class: &ClassUnit) -> bool {
 
 fn is_external_field_container(base: &str) -> bool {
     matches!(
-        short_name(base),
+        walk::last_segment(base),
         "BaseConfig"
             | "BaseSettings"
             | "Model"
@@ -147,7 +148,7 @@ fn is_external_field_container(base: &str) -> bool {
 
 fn is_data_class_decorator(path: &str) -> bool {
     matches!(
-        short_name(path),
+        walk::last_segment(path),
         "dataclass" | "define" | "frozen" | "s" | "mutable" | "immutable"
     )
 }
@@ -161,10 +162,6 @@ fn is_schema_field_type(part: &str) -> bool {
         part.trim(),
         "Column" | "Mapped" | "Relationship" | "relationship"
     )
-}
-
-fn short_name(name: &str) -> &str {
-    name.rsplit('.').next().unwrap_or(name)
 }
 
 #[cfg(test)]

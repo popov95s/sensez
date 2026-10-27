@@ -18,8 +18,10 @@ mod magic_string;
 mod mutation;
 mod performance;
 mod review_risks;
+mod sibling_helpers;
 mod size;
 mod structural;
+mod swallowed_error;
 mod typing;
 mod union_find;
 
@@ -38,14 +40,16 @@ mod review_risks_tests;
 #[cfg(test)]
 mod schema_tests;
 #[cfg(test)]
+mod sibling_helpers_tests;
+#[cfg(test)]
 mod structural_tests;
 #[cfg(test)]
 mod test_oracle_tests;
 #[cfg(test)]
-mod test_support;
+pub(crate) mod test_support;
 
 use crate::config::smells::{SmellConfig, Smells};
-use crate::globs::build_globset;
+use crate::globs::compile_validated;
 use crate::noze::source_scope::SourceScope;
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{registry, TypeVocabularyProfile};
@@ -54,7 +58,6 @@ use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::Language;
 use crate::spine::ir::{FunctionUnit, TypeHints};
 use crate::spine::parser::ParsedFile;
-use globset::GlobSet;
 use rayon::prelude::*;
 use rustc_hash::FxHashSet;
 use std::collections::{HashMap, HashSet};
@@ -101,51 +104,52 @@ impl<'a> SmellContext<'a> {
 
 /// Detect every enabled smell across the corpus. Each file is analyzed with the
 /// knob set resolved for its language ([`SmellConfig::for_language`]).
-pub fn detect(files: &[ParsedFile], graph: &CodebaseGraph, cfg: &SmellConfig) -> Vec<SmellFinding> {
+pub fn detect(
+    files: &[ParsedFile],
+    graph: &CodebaseGraph,
+    cfg: &SmellConfig,
+    scope: &SourceScope,
+) -> Vec<SmellFinding> {
     if !cfg.enabled {
         return Vec::new();
     }
-    let scope = SourceScope::for_smells(cfg);
     let kept: Vec<&ParsedFile> = files.iter().filter(|f| scope.includes(f)).collect();
 
     let mut out: Vec<SmellFinding> = kept
         .par_iter()
         .flat_map(|f| detect_local(f, cfg.for_language(f.language)))
         .collect();
-
-    // Test files are excluded from ordinary smell analysis by the baseline.
-    // Let the opt-in test rule inspect them while honoring user exclusions.
-    let explicit = build_globset(&cfg.explicit_exclude).unwrap_or_else(|_| GlobSet::empty());
-    out.extend(
+    let explicit = compile_validated(&cfg.explicit_exclude);
+    out.par_extend(
         files
-            .iter()
+            .par_iter()
             .filter(|file| !scope.includes(file) && !explicit.is_match(&file.path))
-            .flat_map(|file| {
-                let settings = cfg.for_language(file.language);
-                if settings.disabled.contains(&SmellKind::WeakTestOracle) {
-                    return Vec::new();
-                }
-                let ctx = SmellContext::from_file(file);
-                let mut findings =
-                    review_risks::detect_test_oracles(&ctx, &file.walked.units.functions, settings);
-                for finding in &mut findings {
-                    if let Some(action) = settings.actions.get(&finding.kind) {
-                        finding.action = *action;
-                    }
-                }
-                fill_spans(file, &mut findings);
-                findings
-            }),
+            .flat_map(|file| test_oracles(file, cfg.for_language(file.language))),
     );
 
-    out.extend(clumps::detect(&kept, cfg));
-    out.extend(graphy::detect(graph, files, cfg, &|node: &ModuleNode| {
+    let mut cross_file = clumps::detect(&kept, cfg);
+    cross_file.extend(sibling_helpers::detect(&kept, graph, cfg));
+    cross_file.extend(graphy::detect(graph, files, cfg, &|node: &ModuleNode| {
         node.source_index
             .and_then(|index| files.get(index))
             .is_some_and(|file| scope.includes(file))
     }));
-    apply_rule_actions(&mut out, &kept, cfg);
+    apply_rule_actions(&mut cross_file, &kept, cfg);
+    out.extend(cross_file);
     out
+}
+
+/// The opt-in test rule on a file the ordinary smell scope skips.
+fn test_oracles(file: &ParsedFile, settings: &Smells) -> Vec<SmellFinding> {
+    if !settings.is_enabled(SmellKind::WeakTestOracle) {
+        return Vec::new();
+    }
+    let ctx = SmellContext::from_file(file);
+    let mut findings =
+        review_risks::detect_test_oracles(&ctx, &file.walked.units.functions, settings);
+    apply_actions(&mut findings, settings);
+    fill_spans(file, &mut findings);
+    findings
 }
 
 /// All smells computable from a single file (no graph, no cross-file data),
@@ -171,17 +175,18 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     typing::detect(&ctx, metrics, cfg, &mut out);
     mutation::detect(&ctx, metrics, cfg, &mut out);
     out.extend(performance::detect(&ctx, metrics, cfg));
-    // Uniform per-smell on/off: drop any kind disabled for this language.
-    if !cfg.disabled.is_empty() {
-        out.retain(|f| !cfg.disabled.contains(&f.kind));
-    }
-    for finding in &mut out {
+    out.retain(|f| cfg.is_enabled(f.kind));
+    apply_actions(&mut out, cfg);
+    fill_spans(file, &mut out);
+    out
+}
+
+fn apply_actions(findings: &mut [SmellFinding], cfg: &Smells) {
+    for finding in findings {
         if let Some(action) = cfg.actions.get(&finding.kind) {
             finding.action = *action;
         }
     }
-    fill_spans(file, &mut out);
-    out
 }
 
 fn apply_rule_actions(findings: &mut [SmellFinding], files: &[&ParsedFile], cfg: &SmellConfig) {
@@ -190,11 +195,8 @@ fn apply_rule_actions(findings: &mut [SmellFinding], files: &[&ParsedFile], cfg:
         .map(|file| (file.path.as_path(), file.language))
         .collect();
     for finding in findings {
-        let Some(language) = by_path.get(finding.file.as_path()) else {
-            continue;
-        };
-        if let Some(action) = cfg.for_language(*language).actions.get(&finding.kind) {
-            finding.action = *action;
+        if let Some(language) = by_path.get(finding.file.as_path()) {
+            apply_actions(std::slice::from_mut(finding), cfg.for_language(*language));
         }
     }
 }
@@ -266,5 +268,7 @@ mod nested_if_tests;
 mod nested_ternary_tests;
 #[cfg(test)]
 mod performance_tests;
+#[cfg(test)]
+mod swallowed_error_tests;
 #[cfg(test)]
 mod tests;

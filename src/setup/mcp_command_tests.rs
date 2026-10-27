@@ -10,7 +10,7 @@ fn npm_install(root: &Path) -> PathBuf {
     fs::create_dir_all(exe.parent().unwrap()).unwrap();
     fs::create_dir_all(root.join("node_modules/.bin")).unwrap();
     fs::write(&exe, "").unwrap();
-    fs::write(root.join("node_modules/.bin/sensez"), "").unwrap();
+    fs::write(root.join(command::PROJECT_SHIM), "").unwrap();
     exe
 }
 
@@ -24,7 +24,7 @@ fn mcp_command_prefers_project_shim() {
         agents::McpLaunchDir::WorkspaceRoot,
         &exe,
     );
-    assert_eq!(command, "node_modules/.bin/sensez");
+    assert_eq!(command, command::McpCommand::ProjectShim);
 }
 
 #[test]
@@ -37,7 +37,7 @@ fn mcp_command_skips_shim_when_client_launch_dir_is_unknown() {
         agents::McpLaunchDir::Unknown,
         &exe,
     );
-    assert_eq!(command, exe.display().to_string());
+    assert_eq!(command, command::McpCommand::Absolute(exe));
 }
 
 #[test]
@@ -50,7 +50,7 @@ fn mcp_command_uses_absolute_for_global_scope() {
         agents::McpLaunchDir::WorkspaceRoot,
         &exe,
     );
-    assert_eq!(command, exe.display().to_string());
+    assert_eq!(command, command::McpCommand::Absolute(exe));
 }
 
 #[cfg(unix)]
@@ -73,6 +73,24 @@ fn global_npm_wrapper_on_path_launches_platform_binary() {
 
     assert!(command::launches(&on_path, &exe));
     assert!(!command::launches(&on_path, &foreign));
+}
+
+#[test]
+fn global_npm_cmd_shim_launches_platform_binary() {
+    let tmp = tempfile::tempdir().unwrap();
+    let prefix = tmp.path().canonicalize().unwrap();
+    let modules = prefix.join("node_modules");
+    let exe = modules.join("sensez-x/bin/sensez.exe");
+    for file in [
+        &modules.join("sensez/bin/sensez.js"),
+        &exe,
+        &prefix.join("sensez.cmd"),
+    ] {
+        fs::create_dir_all(file.parent().unwrap()).unwrap();
+        fs::write(file, "").unwrap();
+    }
+
+    assert!(command::launches(&prefix.join("sensez.cmd"), &exe));
 }
 
 #[test]

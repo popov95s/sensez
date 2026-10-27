@@ -1,14 +1,10 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn magic(ext: &str, source: &str, cfg: &Smells) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("sample.{ext}"));
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed(&format!("sample.{ext}"), source);
     detect_local(&file, cfg)
         .into_iter()
         .filter(|finding| finding.kind == SmellKind::MagicStringDefault)

@@ -1,16 +1,12 @@
 //! `message_chain` roots: namespace imports, ignored roots, and real navigation.
 
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::SmellKind;
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn chains(ext: &str, body: &str, cfg: &Smells) -> Vec<usize> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("chain.{ext}"));
-    fs::write(&path, body).unwrap();
-    detect_local(&parse_file(&path, 0).unwrap(), cfg)
+    detect_local(&fixture::parsed(&format!("chain.{ext}"), body), cfg)
         .into_iter()
         .filter(|f| f.kind == SmellKind::MessageChain)
         .map(|f| f.metric as usize)

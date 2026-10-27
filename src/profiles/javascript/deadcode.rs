@@ -2,8 +2,8 @@
 //! naming conventions don't apply; exported initializer callees stand in for
 //! registration decorators.
 
-use super::symbols;
 use crate::globs::matches_any;
+use crate::profiles::walk;
 use crate::profiles::{DeadCodeDefaults, DecoratorClass, ExternalBases};
 use std::collections::HashSet;
 
@@ -50,12 +50,12 @@ const RUNNER_CONFIGS: &[&str] = &["**/*.config.{js,cjs,mjs,ts,cts,mts}"];
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entrypoints: &[],
+        registration_decorators: &[],
         entrypoint_names: &[],
         method_entrypoint_names: CALLBACK_NAMES,
         external_bases: ExternalBases::ImplyContract,
         entrypoint_bases: &[],
-        entry_points: RUNNER_LOADED,
+        entry_globs: RUNNER_LOADED,
         test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
@@ -64,6 +64,10 @@ pub fn defaults() -> DeadCodeDefaults {
             "**/*.spec.js",
             "**/*.test.jsx",
             "**/*.spec.jsx",
+            "**/*.test.mjs",
+            "**/*.spec.mjs",
+            "**/*.test.cjs",
+            "**/*.spec.cjs",
         ],
         test_support: TEST_SUPPORT,
         runner_configs: RUNNER_CONFIGS,
@@ -72,12 +76,12 @@ pub fn defaults() -> DeadCodeDefaults {
 
 pub fn typescript_defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entrypoints: &[],
+        registration_decorators: &[],
         entrypoint_names: &[],
         method_entrypoint_names: CALLBACK_NAMES,
         external_bases: ExternalBases::ImplyContract,
         entrypoint_bases: &[],
-        entry_points: RUNNER_LOADED,
+        entry_globs: RUNNER_LOADED,
         test_sources: &[
             "**/__tests__/**",
             "**/tests/**",
@@ -102,7 +106,7 @@ pub fn classify(paths: Option<&Vec<String>>, user: &HashSet<String>) -> Decorato
     let registered = paths.is_some_and(|paths| {
         paths
             .iter()
-            .any(|path| matches_any(user, symbols::last_segment(path)))
+            .any(|path| matches_any(user, walk::last_segment(path)))
     });
     if registered {
         DecoratorClass::Registration

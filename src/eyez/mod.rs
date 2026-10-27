@@ -15,6 +15,9 @@ pub(crate) mod semantic_cache;
 pub use docs::{DocKind, RawDoc};
 pub use search::SearchHit;
 
+/// Results returned when a caller does not ask for a count.
+pub const DEFAULT_TOP_K: std::num::NonZeroUsize = std::num::NonZeroUsize::new(10).unwrap();
+
 use anyhow::{Context, Result};
 use std::path::Path;
 
@@ -69,7 +72,7 @@ impl Index {
     }
 
     /// The `top_k` indexed docs most semantically similar to `query`.
-    pub fn search(&self, query: &str, top_k: usize) -> Vec<SearchHit> {
+    pub fn search(&self, query: &str, top_k: std::num::NonZeroUsize) -> Vec<SearchHit> {
         let q = self.embedder.embed_one(query);
         search::top_k(&self.cache.vectors, &self.cache.docs, &q, top_k)
     }

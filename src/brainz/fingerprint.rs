@@ -52,11 +52,12 @@ pub type Aged = BTreeMap<Pillar, BTreeMap<String, AgedEntry>>;
 
 /// Fingerprint every pillar of a JSON-serialized `AnalysisReport`.
 pub fn fingerprints(report: &Value) -> Prints {
-    PILLARS
-        .iter()
-        .map(|(namespace, json_key, key_fn)| {
+    Pillar::ALL
+        .into_iter()
+        .map(|namespace| {
+            let key_fn = key_fn(namespace);
             let prints = report
-                .get(*json_key)
+                .get(namespace.as_str())
                 .and_then(Value::as_array)
                 .map(|findings| {
                     findings
@@ -68,7 +69,7 @@ pub fn fingerprints(report: &Value) -> Prints {
                         .collect()
                 })
                 .unwrap_or_default();
-            (*namespace, prints)
+            (namespace, prints)
         })
         .collect()
 }
@@ -135,13 +136,15 @@ struct FingerprintKey {
 
 type KeyFn = fn(&Value) -> FingerprintKey;
 
-const PILLARS: [(Pillar, &str, KeyFn); 5] = [
-    (Pillar::Cycles, "cycles", cycle_key),
-    (Pillar::DeadCode, "dead_code", dead_code_key),
-    (Pillar::Boundaries, "boundaries", boundary_key),
-    (Pillar::Duplication, "duplication", clone_key),
-    (Pillar::Smells, "smells", smell_key),
-];
+fn key_fn(pillar: Pillar) -> KeyFn {
+    match pillar {
+        Pillar::Cycles => cycle_key,
+        Pillar::DeadCode => dead_code_key,
+        Pillar::Boundaries => boundary_key,
+        Pillar::Duplication => clone_key,
+        Pillar::Smells => smell_key,
+    }
+}
 
 fn hash_parts(parts: &[&str]) -> u64 {
     fingerprints::hash_parts(parts)

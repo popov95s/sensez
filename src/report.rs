@@ -32,8 +32,8 @@ pub struct CycleEdge {
     pub line: usize,
 }
 
-/// How likely a dead-code candidate is a true positive.
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+/// How likely a dead-code candidate is a true positive, most likely first.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Confidence {
     /// Reached from a root, and no importer asks for this symbol.
     High,
@@ -55,7 +55,7 @@ pub struct DeadCodeFinding {
     /// 1-indexed source line; 0 is an internal "unknown/not applicable" sentinel.
     #[serde(skip_serializing_if = "line_is_unknown", default)]
     pub line: usize,
-    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance ("added_unreferenced").
+    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance ("added_unreferenced", "reference_removed").
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub reason: String,
 }
@@ -131,8 +131,8 @@ pub struct AbsorbedClone {
     pub copies: usize,
 }
 
-/// How serious a smell finding is (drives ordering and rendering).
-#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+/// How serious a smell finding is (drives ordering and rendering), most serious first.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 pub enum Severity {
     Critical,
     #[default]
@@ -268,7 +268,7 @@ pub struct ReportMeta {
     pub boundaries_configured: bool,
     pub internal_edges: usize,
     pub external_edges: usize,
-    #[serde(skip_serializing_if = "hide_scan_diagnostic_count", default)]
+    #[serde(skip_serializing_if = "is_zero", default)]
     pub files_skipped: usize,
     pub analyzed_files: usize,
     pub source_lines: usize,
@@ -288,7 +288,7 @@ pub struct ReportMeta {
     /// Pillars this run left out on request; their totals are 0 by filter, not by a clean scan.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub filtered_pillars: Vec<Pillar>,
-    #[serde(skip_serializing_if = "hide_scan_diagnostics", default)]
+    #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub issues: Vec<ScanIssue>,
     #[serde(skip)]
     pub glossary: Vec<GlossaryEntry>,
@@ -303,24 +303,17 @@ pub struct GlossaryEntry {
 }
 
 mod analysis;
+mod limit;
 mod pillar;
 mod skip_counts;
 pub use analysis::AnalysisReport;
+pub use limit::{limit, LimitPolicy, SmellCap};
 pub use pillar::Pillar;
 pub use skip_counts::SkipCounts;
 fn line_is_unknown(value: &usize) -> bool {
     *value == 0
 }
 
-fn hide_scan_diagnostic_count(value: &usize) -> bool {
-    *value == 0 || !scan_diagnostics_enabled()
-}
-
-fn hide_scan_diagnostics(value: &[ScanIssue]) -> bool {
-    value.is_empty() || !scan_diagnostics_enabled()
-}
-
-pub fn scan_diagnostics_enabled() -> bool {
-    std::env::var_os("SENSEZ_SCAN_DIAGNOSTICS").is_some()
-        || std::env::var_os("SENSEZ_TIMING").is_some()
+fn is_zero(value: &usize) -> bool {
+    *value == 0
 }

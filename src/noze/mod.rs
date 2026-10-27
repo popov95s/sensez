@@ -9,13 +9,13 @@ pub mod smells;
 mod source_scope;
 
 use crate::report::{
-    ActionLevel, AnalysisReport, Confidence, ReportMeta, ReportMode, Severity, SmellFinding,
+    ActionLevel, AnalysisReport, Confidence, LimitPolicy, ReportMeta, ReportMode, SmellFinding,
 };
 
 use crate::config::model::{ActionPolicy, Config};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
-use source_scope::SourceScope;
+use source_scope::PillarScopes;
 use std::path::Path;
 
 /// Run every analyzer pillar without project-root context. Test seam for
@@ -34,6 +34,7 @@ pub fn run_with_root(
     config: &Config,
     root: Option<&Path>,
 ) -> AnalysisReport {
+    let scopes = PillarScopes::new(config);
     let parallel::AnalyzerFindings {
         mut cycles,
         mut dead_code,
@@ -41,20 +42,20 @@ pub fn run_with_root(
         mut duplication,
         mut smells,
         issues,
-    } = parallel::detect(files, graph, config, root);
+    } = parallel::detect(files, graph, config, root, &scopes);
 
     for cycle in &mut cycles {
         if cycle.action != ActionLevel::Info {
             cycle.action = config.action.cycles;
         }
     }
-    cycles.sort_by_key(|c| (action_rank(c.action), std::cmp::Reverse(c.modules.len())));
+    cycles.sort_by_key(|c| (c.action, std::cmp::Reverse(c.modules.len())));
 
     dead_code.retain(|finding| finding.confidence != Confidence::Low);
     for finding in &mut dead_code {
         finding.action = config.action.dead_code;
     }
-    dead_code.sort_by_key(|f| confidence_rank(f.confidence));
+    dead_code.sort_by_key(|f| f.confidence);
 
     for violation in &mut boundary_audit.violations {
         violation.action = config.action.boundaries;
@@ -67,9 +68,9 @@ pub fn run_with_root(
 
     apply_smell_actions(&mut smells, &config.action);
     smells.sort_by(|a, b| {
-        action_rank(a.action)
-            .cmp(&action_rank(b.action))
-            .then(severity_rank(a.severity).cmp(&severity_rank(b.severity)))
+        a.action
+            .cmp(&b.action)
+            .then(a.severity.cmp(&b.severity))
             .then(b.metric.cmp(&a.metric))
     });
 
@@ -83,9 +84,8 @@ pub fn run_with_root(
             files_skipped: 0,
             analyzed_files: files.len(),
             source_lines: files.iter().map(|f| f.lines as usize).sum(),
-            duplication_skipped: SourceScope::for_duplication(&config.duplication)
-                .skip_counts(files),
-            smells_skipped: SourceScope::for_smells(&config.smells).skip_counts(files),
+            duplication_skipped: scopes.duplication.skip_counts(files),
+            smells_skipped: scopes.smells.skip_counts(files),
             unmatched_boundary_rules: boundary_audit.unmatched_rules,
             issues,
             ..ReportMeta::default()
@@ -110,42 +110,13 @@ fn apply_smell_actions(smells: &mut [SmellFinding], policy: &ActionPolicy) {
     }
 }
 
-/// Truncate each pillar to the top `max` ranked findings (0 = unlimited).
+/// Cap every pillar, smells included, to the top `max` ranked findings (0 = unlimited).
 pub fn limit(report: &mut AnalysisReport, max: usize) {
     if max == 0 {
         return;
     }
-    report.cycles.truncate(max);
-    report.dead_code.truncate(max);
-    report.boundaries.truncate(max);
-    report.duplication.truncate(max);
-    report.smells.truncate(max);
+    crate::report::limit(report, LimitPolicy::flat(max));
     report.meta.glossary = crate::noze::glossary::for_report(report);
-}
-
-fn severity_rank(s: Severity) -> u8 {
-    match s {
-        Severity::Critical => 0,
-        Severity::Warning => 1,
-        Severity::Info => 2,
-    }
-}
-
-pub(super) fn action_rank(level: ActionLevel) -> u8 {
-    match level {
-        ActionLevel::MustFix => 0,
-        ActionLevel::Warning => 1,
-        ActionLevel::Advisory => 2,
-        ActionLevel::Info => 3,
-    }
-}
-
-fn confidence_rank(c: Confidence) -> u8 {
-    match c {
-        Confidence::High => 0,
-        Confidence::Medium => 1,
-        Confidence::Low => 2,
-    }
 }
 
 fn edge_stats(graph: &CodebaseGraph) -> (usize, usize) {

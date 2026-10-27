@@ -2,7 +2,7 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
-use super::{MagicNumber, PerformanceFacts, StringFallback};
+use super::{MagicNumber, PerformanceFacts, SentinelHandler, StringFallback};
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
@@ -20,6 +20,8 @@ pub struct ReviewRiskFacts {
     pub test_has_nested_function: bool,
     /// Whether the language profile identified this unit as a test case.
     pub is_test_case: bool,
+    /// Handlers that swallow the error and return a placeholder or only log.
+    pub sentinel_handlers: Vec<SentinelHandler>,
 }
 
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -113,22 +115,17 @@ pub struct FunctionUnit {
     pub is_method: bool,
     /// Local name → branch path of each plain (non-augmented) assignment to it.
     pub local_reassigns: HashMap<String, Vec<BranchPath>>,
-    /// Receiver identifier → number of member accesses on it (feature envy).
-    /// Includes `self` so callers can compare external vs. own access.
+    /// Receiver identifier (including `self`) → number of member accesses on it.
     pub receiver_access: HashMap<String, usize>,
-    /// Set of `self.<attr>` names this function's own body reads/writes (nested
-    /// functions excluded). Collected here during the single body walk so the
-    /// owning class can assemble its LCOM map without re-walking each method.
+    /// `self.<attr>` names this function's own body reads or writes.
     pub self_attrs: HashSet<String>,
     /// Calls to methods on the language's own-instance receiver.
     pub own_method_calls: HashSet<String>,
-    /// Receiver identifier → distinct string-literal subscript keys
-    /// (`cfg["host"]`, reads and writes alike) — implicit-schema detection.
+    /// Receiver identifier → distinct string-literal subscript keys (`cfg["host"]`).
     pub str_keys: HashMap<String, HashSet<String>>,
     /// Receiver identifier → line of its first string-literal subscript.
     pub str_key_lines: HashMap<String, usize>,
-    /// Direct helper calls with identifier arguments, used to propagate
-    /// dictionary shapes across small helper boundaries.
+    /// Direct helper calls with identifier arguments.
     pub schema_calls: Vec<SchemaCall>,
     /// Loose inputs passed through a recognized typed/schema decoder.
     pub validated_names: HashSet<String>,
@@ -136,22 +133,15 @@ pub struct FunctionUnit {
     pub returned_constructors: HashSet<String>,
     /// Identifiers directly returned by this function (`return x`).
     pub returned_names: HashSet<String>,
-    /// Identifiers whose *object* is mutated in this body: subscript-assign,
-    /// `del x[k]`, or a known mutating method call (`x.append(...)`).
+    /// Identifiers mutated in place: `x[k] = v`, `del x[k]`, `x.append(...)`.
     pub mutated_names: HashSet<String>,
-    /// Root identifiers mutated *through an attribute* — `m.kwargs[k]=v`,
-    /// `m.items.append(...)` record `m`. Kept separate from direct mutation so
-    /// the stricter opt-in `param_attr_mutation` smell can use it without
-    /// disturbing the default (`self.cache.update()` lands here as `self`,
-    /// then is filtered out by the self/cls guard).
+    /// Root identifiers mutated through an attribute (`m.items.append(...)` records `m`).
     pub attr_mutated_names: HashSet<String>,
-    /// Identifiers mutated by a known method call, kept apart from
-    /// `mutated_names` so detectors can check the receiver's declared type.
+    /// Identifiers mutated by a known method call, with the mutator family.
     pub method_mutations: HashSet<(String, MutatorFamily)>,
     /// Largest arity among bare tuple returns (`return a, b, c`).
     pub max_tuple_return: usize,
-    /// `x in ["a", "b", ...]` membership tests against a literal collection of
-    /// strings (stringly-typed category logic).
+    /// `x in ["a", "b", ...]` tests against a literal collection of strings.
     pub literal_memberships: Vec<LiteralMembership>,
     /// String literals used as fallbacks (`or ""`, `?? "n/a"`, `x ? x : "?"`).
     pub string_fallbacks: Vec<StringFallback>,
@@ -159,8 +149,7 @@ pub struct FunctionUnit {
     pub performance: PerformanceFacts,
     /// Conservative evidence for AI-generated-code patterns.
     pub review_risks: ReviewRiskFacts,
-    /// True if this function is defined inside another function's body
-    /// (methods directly on a class are NOT nested).
+    /// Defined inside another function's body (class methods are not nested).
     pub is_nested: bool,
     /// Name of the enclosing function when `is_nested` (empty otherwise).
     pub parent: String,
@@ -180,8 +169,7 @@ pub struct FunctionUnit {
     pub homogeneous_tuple_return: bool,
 }
 
-/// Source span for a comment node. Language profiles record these during the
-/// normal syntax walk; the shared walk post-pass attaches them to functions.
+/// Source span and class of one comment node.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct CommentSpan {
     pub start_line: usize,
@@ -217,16 +205,14 @@ pub struct ClassUnit {
     pub bases: Vec<String>,
     /// Interfaces the class declares it implements.
     pub implements: Vec<String>,
-    /// True if the class is itself abstract (inherits `ABC`/`Protocol`/`ABCMeta`
-    /// or declares any `@abstractmethod`) — abstract stubs are not a smell.
+    /// Inherits `ABC`/`Protocol`/`ABCMeta` or declares an `@abstractmethod`.
     pub is_abstract: bool,
     pub methods: Vec<String>,
     /// Method name → set of `self.<attr>` it reads or writes (LCOM, temp field).
     pub method_attr_use: HashMap<String, HashSet<String>>,
     /// Method name → sibling methods invoked through `self` / `this`.
     pub method_calls: HashMap<String, HashSet<String>>,
-    /// Concrete methods whose body is only `pass` / `raise NotImplementedError`
-    /// (excludes `@abstractmethod`-decorated declarations).
+    /// Non-abstract methods whose body is only `pass` / `raise NotImplementedError`.
     pub overrides_to_stub: Vec<String>,
     /// Class-level declared properties with known types.
     pub properties: Vec<ClassProperty>,
@@ -263,8 +249,7 @@ impl FunctionKey {
     }
 }
 
-/// Best-effort, annotation-driven type information (no full inference). Absent
-/// entries mean "unknown" — type-assisted smells skip rather than guess.
+/// Annotation-driven type information; an absent entry means unknown.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeHints {
     /// Function → param name → annotated type text.
@@ -300,9 +285,7 @@ impl TypeHints {
     }
 }
 
-/// Increment `map[key]`, allocating the key only when absent. On the hot
-/// identifier path most occurrences hit an existing entry, so this skips the
-/// per-token `String` allocation the `entry(key.to_string())` idiom forces.
+/// Increment `map[key]`, allocating the key only when absent.
 pub(crate) fn bump(map: &mut HashMap<String, usize>, key: &str) {
     if let Some(count) = map.get_mut(key) {
         *count += 1;
@@ -311,8 +294,7 @@ pub(crate) fn bump(map: &mut HashMap<String, usize>, key: &str) {
     }
 }
 
-/// Record that `attr` was accessed on `base`, allocating either string only on
-/// first sight (repeat `obj.attr` accesses neither allocate nor re-insert).
+/// Record that `attr` was accessed on `base`, allocating only on first sight.
 pub(crate) fn record_attr(map: &mut HashMap<String, HashSet<String>>, base: &str, attr: &str) {
     match map.get_mut(base) {
         Some(attrs) => {

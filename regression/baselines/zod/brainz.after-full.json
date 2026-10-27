@@ -24,6 +24,8 @@
       "smells/nested_loop": 26,
       "smells/nested_ternary": 8,
       "smells/shotgun_surgery_hazard": 3,
+      "smells/sibling_helper_redefinition": 94,
+      "smells/swallowed_error_sentinel": 1,
       "smells/unnecessary_nested_if": 13
     },
     "resolved_by_detector": {},
@@ -37,6 +39,7 @@
     "searches_zero_hit": 0
   },
   "calibration": [],
+  "config_issues": [],
   "config_pressure": {
     "changes": 0,
     "scope": {

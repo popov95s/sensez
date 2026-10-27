@@ -1,9 +1,5 @@
 use super::RustProfile;
-use crate::spine::parser::parse_source;
-
-fn walked(src: &str) -> crate::spine::ir::Walked {
-    parse_source(src.as_bytes(), 0, "m", &RustProfile).unwrap()
-}
+use crate::profiles::test_fixtures::walked;
 
 #[test]
 fn extracts_function_units_and_type_hints() {
@@ -13,6 +9,7 @@ fn decide(active: bool, dry_run: bool, tags: Vec<String>) -> (usize, String, boo
     (tags.len(), String::new(), active && dry_run)
 }
 "#,
+        &RustProfile,
     );
     let f = &w.units.functions[0];
     assert_eq!(f.name, "decide");
@@ -45,6 +42,7 @@ fn normalize(input: &mut Vec<String>, row: HashMap<String, String>) {
     let _d = row["d"];
 }
 "#,
+        &RustProfile,
     );
     let f = &w.units.functions[0];
     assert!(f.local_reassigns.contains_key("status"));
@@ -72,6 +70,7 @@ fn pick(kind: u8, ready: bool) -> Option<u8> {
     }
 }
 "#,
+        &RustProfile,
     );
     let f = &w.units.functions[0];
     let paths = &f.local_reassigns["label"];
@@ -92,6 +91,7 @@ fn scan(items: &[String], code: &str) {
     let _two = items.iter().map(|x| x.len()).sum::<usize>();
 }
 "#,
+        &RustProfile,
     );
     let f = &w.units.functions[0];
     assert_eq!(f.literal_memberships.len(), 1);
@@ -113,6 +113,7 @@ fn keys(code: &str) -> Vec<String> {
     ["e", "f"].into_iter().map(String::from).collect()
 }
 "#,
+        &RustProfile,
     );
     let lines: Vec<(usize, Option<&str>)> = w.units.functions[0]
         .literal_memberships
@@ -135,6 +136,7 @@ fn sort_pairs(groups: &mut [Vec<i32>]) {
     }
 }
 "#,
+        &RustProfile,
     );
     let f = &w.units.functions[0];
     assert_eq!(f.performance.nested_loops.len(), 1);
@@ -161,6 +163,7 @@ fn helper_only_for_tests(value: usize) -> (usize, usize, usize) {
     (value, value, value)
 }
 "#,
+        &RustProfile,
     );
     let names: Vec<_> = w.units.functions.iter().map(|f| f.name.as_str()).collect();
     assert_eq!(names, vec!["production"]);

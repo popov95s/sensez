@@ -1,6 +1,6 @@
 //! Narrow `import * as ns` to the members read through `ns.member`.
 
-use crate::spine::ir::ImportContext;
+use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
 
@@ -73,4 +73,29 @@ fn is_member_base(node: Node, parent: Node) -> bool {
     parent
         .child_by_field_name(field)
         .is_some_and(|base| base.id() == node.id())
+}
+
+/// A hop through an `import * as ns` binding is a module path, not navigation.
+pub fn discount_namespace_hops(out: &mut Walked) {
+    let namespaces: HashSet<&str> = out
+        .symbols
+        .imports
+        .iter()
+        .flat_map(|import| import.imported_symbols.iter().zip(&import.bindings))
+        .filter(|(symbol, _)| *symbol == "*")
+        .map(|(_, binding)| binding.as_str())
+        .collect();
+    if namespaces.is_empty() {
+        return;
+    }
+    for hit in out
+        .units
+        .functions
+        .iter_mut()
+        .flat_map(|f| f.chain_hits.iter_mut())
+    {
+        if hit.root.as_deref().is_some_and(|r| namespaces.contains(r)) {
+            hit.depth = hit.depth.saturating_sub(1);
+        }
+    }
 }

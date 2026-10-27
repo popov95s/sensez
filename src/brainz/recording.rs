@@ -1,7 +1,9 @@
 //! Event recording entry points for scans, searches, gates, and human verdicts.
 
 use super::events::{Event, Origin};
+use super::fingerprint::{Detector, Pillar};
 use super::hub::{self, Baseline};
+use super::verdict::TriageVerdict;
 use super::{aging, fingerprint, store, triage};
 use serde_json::Value;
 use std::collections::BTreeMap;
@@ -76,24 +78,24 @@ pub fn record_scan(
 
 pub fn triage_finding(
     root: &Path,
-    pillar: &str,
+    pillar: Pillar,
     pattern: &str,
-    verdict: &str,
+    verdict: TriageVerdict,
     note: Option<String>,
 ) -> anyhow::Result<Vec<String>> {
     let branch = hub::branch_key(root)
         .ok_or_else(|| anyhow::anyhow!("triage requires a named git branch"))?;
     let marked = triage::mark(root, &branch, pillar, pattern, verdict, note.clone())?;
-    if verdict != "clear" {
-        let mut by_detector: BTreeMap<String, u64> = BTreeMap::new();
-        for (_, detector) in &marked {
-            *by_detector.entry(detector.clone()).or_default() += 1;
+    if verdict != TriageVerdict::Clear {
+        let mut by_detector: BTreeMap<&Detector, u64> = BTreeMap::new();
+        for found in &marked {
+            *by_detector.entry(&found.detector).or_default() += 1;
         }
         for (detector, count) in by_detector {
-            record_outcome(root, &detector, verdict, count, note.clone());
+            record_outcome(root, detector, verdict, count, note.clone());
         }
     }
-    Ok(marked.into_iter().map(|(label, _)| label).collect())
+    Ok(marked.into_iter().map(|found| found.label).collect())
 }
 
 #[cfg(feature = "eyez")]
@@ -136,13 +138,19 @@ pub fn record_gate_block(root: &Path, scope: Option<&str>, report: &Value) {
     });
 }
 
-fn record_outcome(root: &Path, pillar: &str, action: &str, count: u64, detail: Option<String>) {
+fn record_outcome(
+    root: &Path,
+    detector: &Detector,
+    verdict: TriageVerdict,
+    count: u64,
+    detail: Option<String>,
+) {
     hub::push(root, |session, branch| Event::Outcome {
         ts: hub::now(),
         session,
         branch,
-        pillar: pillar.to_string(),
-        action: action.to_string(),
+        detector: detector.to_string(),
+        verdict,
         count,
         detail,
     });

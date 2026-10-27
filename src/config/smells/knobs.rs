@@ -33,6 +33,8 @@ pub struct Smells {
     pub max_wrapper_depth: usize,
     pub data_clump_min_fields: usize,
     pub data_clump_min_occurrences: usize,
+    pub sibling_helper_min_similarity: usize,
+    pub sibling_helper_min_lexemes: usize,
     pub shotgun_blast_threshold: usize,
     pub god_module_fan: usize,
     pub god_module_min_fan_in: usize,
@@ -60,6 +62,7 @@ pub struct Smells {
     pub magic_string_default: bool,
     pub magic_string_default_strictness: Strictness,
     pub nested_ternary_strictness: Strictness,
+    pub swallowed_error_strictness: Strictness,
     pub repeated_iteration_include_tests: bool,
     pub max_bool_params: usize,
     pub tuple_packing: bool,
@@ -77,6 +80,8 @@ pub struct Smells {
     pub n_plus_one_callees: Vec<String>,
     pub n_plus_one_max_constant_bound: usize,
     pub n_plus_one_await_in_loop: bool,
+    #[serde(skip)]
+    pub compiled: super::compiled::Compiled,
 }
 
 impl Default for Smells {
@@ -105,6 +110,8 @@ impl Default for Smells {
             max_wrapper_depth: 0,
             data_clump_min_fields: 4,
             data_clump_min_occurrences: 3,
+            sibling_helper_min_similarity: 80,
+            sibling_helper_min_lexemes: 8,
             shotgun_blast_threshold: 4,
             god_module_fan: 25,
             god_module_min_fan_in: 5,
@@ -132,6 +139,7 @@ impl Default for Smells {
             magic_string_default: true,
             magic_string_default_strictness: Strictness::Medium,
             nested_ternary_strictness: Strictness::Medium,
+            swallowed_error_strictness: Strictness::Medium,
             repeated_iteration_include_tests: false,
             max_bool_params: 2,
             tuple_packing: true,
@@ -149,6 +157,7 @@ impl Default for Smells {
             n_plus_one_callees: Vec::new(),
             n_plus_one_max_constant_bound: 10,
             n_plus_one_await_in_loop: false,
+            compiled: Default::default(),
         }
     }
 }

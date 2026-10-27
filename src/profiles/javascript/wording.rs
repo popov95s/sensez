@@ -22,4 +22,10 @@ pub(crate) const WORDING: SmellWording = SmellWording {
         "?",
         "??",
     ],
+    handler_clause: "catch",
+    swallowed_error_advice:
+        "rethrow it or return a typed failure (`{ ok: false, error }`) the caller must handle",
+    framework_names: &[
+        "loader", "action", "handler", "main", "default", "setup", "render",
+    ],
 };

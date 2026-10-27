@@ -57,7 +57,7 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
         &mut ctx,
     );
     let free_reads = ctx.free_reads;
-    units::discount_namespace_hops(&mut out);
+    namespaces::discount_namespace_hops(&mut out);
     namespaces::narrow(&free_reads, &mut out.symbols.imports);
     crate::profiles::comments::attach(&mut out);
     walk::attach_method_attrs(&mut out);

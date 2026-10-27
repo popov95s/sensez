@@ -242,6 +242,7 @@
       "n_plus_one_call": 1,
       "nested_loop": 6,
       "shotgun_surgery_hazard": 1,
+      "sibling_helper_redefinition": 2,
       "tuple_packing": 3
     },
     "smells_skipped": {
@@ -249,7 +250,7 @@
       "generated": 0,
       "tests": 58
     },
-    "smells_total": 138,
+    "smells_total": 140,
     "source_lines": 18315
   },
   "smells": [
@@ -265,6 +266,16 @@
       "metric": 1,
       "symbol": "open_resource",
       "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/app.py",
+      "kind": "sibling_helper_redefinition",
+      "line": 73,
+      "message": "`_make_timedelta` (1 params) is defined again with a near-identical body in sansio/app.py:L52 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "_make_timedelta",
+      "threshold": 2
     },
     {
       "action": "advisory",
@@ -288,6 +299,16 @@
       "metric": 1,
       "symbol": "_load_plugin_commands",
       "threshold": 1
+    },
+    {
+      "action": "advisory",
+      "file": "<flask>/src/flask/ctx.py",
+      "kind": "sibling_helper_redefinition",
+      "line": 528,
+      "message": "`__getattr__` (1 params) is defined again with a near-identical body in globals.py:L65 \u2014 keep one and import it",
+      "metric": 2,
+      "symbol": "__getattr__",
+      "threshold": 2
     },
     {
       "action": "advisory",

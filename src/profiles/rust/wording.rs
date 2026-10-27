@@ -10,4 +10,7 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     fallback_example: r#"`unwrap_or("")`"#,
     fallback_advice: wording::FALLBACK_ADVICE,
     sentinel_words: wording::SENTINEL_WORDS,
+    handler_clause: "error arm",
+    swallowed_error_advice: "propagate it with `?` or return the `Err` to the caller",
+    framework_names: &["main"],
 };

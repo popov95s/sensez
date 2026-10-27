@@ -12,6 +12,7 @@ mod lexeme;
 mod loops;
 mod magic_numbers;
 mod nested;
+mod nesting;
 mod obsession;
 mod performance;
 mod resolve;
@@ -27,9 +28,10 @@ pub(crate) mod typevocab;
 mod units;
 mod wording;
 
+use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -42,6 +44,9 @@ static PYTHON_INFO: LanguageInfo = LanguageInfo {
     language: Language::Python,
     extensions: &["py", "pyi"],
     test_support: &[],
+    migration_layouts: &["**/alembic/**/*.py", "**/versions/**/*.py"],
+    test_runners: &[RunnerKind::Pytest],
+    default_off_smells: &[],
     wording: &wording::WORDING,
 };
 impl ParseProfile for PythonProfile {
@@ -79,16 +84,8 @@ impl ModuleProfile for PythonProfile {
         resolve::containing_package(module_name, is_index)
     }
 
-    fn resolve_target(
-        &self,
-        import: &ImportContext,
-        importer_package: &str,
-        importer_file: &Path,
-        _root: &Path,
-        _resolution_cache: &mut crate::profiles::ResolutionCache,
-    ) -> String {
-        script_imports::sibling_module(&import.target_module, importer_package, importer_file)
-            .unwrap_or_else(|| resolve::resolve_target(import, importer_package))
+    fn import_resolver(&self) -> Box<dyn ImportResolver> {
+        Box::new(PythonProfile)
     }
 
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String> {
@@ -99,6 +96,19 @@ impl ModuleProfile for PythonProfile {
     fn is_containment(&self, _importer: &str, _target: &str) -> bool {
         // `__init__` ↔ submodule mutual imports are real load-time hazards.
         false
+    }
+}
+
+impl ImportResolver for PythonProfile {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        importer_package: &str,
+        importer_file: &Path,
+        _root: &Path,
+    ) -> String {
+        script_imports::sibling_module(&import.target_module, importer_package, importer_file)
+            .unwrap_or_else(|| resolve::resolve_target(import, importer_package))
     }
 }
 
@@ -195,6 +205,10 @@ impl TypeVocabularyProfile for PythonProfile {
 
     fn is_literal_union(&self, annotation: &str) -> bool {
         typevocab::is_literal_union(annotation)
+    }
+
+    fn admits_missing(&self, annotation: &str) -> bool {
+        typevocab::admits_missing(annotation)
     }
 
     fn is_mutable_collection(&self, annotation: &str, family: MutatorFamily) -> bool {

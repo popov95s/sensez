@@ -1,3 +1,5 @@
+use crate::profiles::registry;
+use crate::spine::ir::Language;
 use anyhow::Result;
 use std::path::{Path, PathBuf};
 
@@ -101,11 +103,16 @@ pub(super) fn global_trigger(path: &Path) -> Option<&'static str> {
     None
 }
 
+/// Language of a source file whose tests reflexez can select: its profile names a test runner.
+pub(super) fn source_language(path: &Path) -> Option<Language> {
+    registry::parse_for_path(path)
+        .map(|profile| profile.info())
+        .filter(|info| !info.test_runners.is_empty())
+        .map(|info| info.language)
+}
+
 pub(super) fn is_source(path: &Path) -> bool {
-    matches!(
-        path.extension().and_then(|ext| ext.to_str()),
-        Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts")
-    )
+    source_language(path).is_some()
 }
 
 #[cfg(test)]
@@ -124,5 +131,15 @@ mod tests {
             assert!(global_trigger(Path::new(path)).is_some(), "{path}");
         }
         assert!(global_trigger(Path::new("src/setup.ts")).is_none());
+    }
+
+    #[test]
+    fn sources_are_python_javascript_and_typescript_files() {
+        for path in ["app/views.py", "web/a.mjs", "web/b.tsx", "web/c.cts"] {
+            assert!(is_source(Path::new(path)), "{path}");
+        }
+        for path in ["src/lib.rs", "README.md", "data.json"] {
+            assert!(!is_source(Path::new(path)), "{path}");
+        }
     }
 }

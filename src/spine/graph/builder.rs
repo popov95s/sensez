@@ -1,22 +1,22 @@
 //! Assemble a [`CodebaseGraph`] from parsed files.
 
 use super::identity;
-use crate::profiles::{registry, ResolutionCache};
+use crate::profiles::registry;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
 use crate::spine::ir::{ImportContext, Language};
 use crate::spine::parser::ParsedFile;
 use petgraph::graph::NodeIndex;
 use std::borrow::Cow;
 use std::collections::{HashMap, HashSet};
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
 /// Build the directed module graph. `configured_roots` overrides auto-detection.
 pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGraph {
     let mut cg = CodebaseGraph::default();
     let identities = identity::for_files(files, configured_roots);
     let mut module_of: Vec<Option<String>> = Vec::with_capacity(files.len());
-    let mut by_scope: HashMap<(Language, PathBuf), HashMap<String, String>> = HashMap::new();
-    let mut resolution_cache = ResolutionCache::default();
+    let mut by_scope: HashMap<(Language, &Path), HashMap<String, String>> = HashMap::new();
+    let mut resolvers = registry::import_resolvers();
 
     // Pass 1: create a node per file. Re-exports are NOT folded into declared
     // symbols — a re-exported name is kept alive in its defining module by the
@@ -38,7 +38,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         });
         cg.name_to_index.insert(identity.name.clone(), idx);
         by_scope
-            .entry((file.language, identity.root.clone()))
+            .entry((file.language, identity.root.as_path()))
             .or_default()
             .insert(identity.logical_name.clone(), identity.name.clone());
         module_of.push(Some(identity.name.clone()));
@@ -56,23 +56,20 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         let is_index = profile.is_package_index(&file.path);
         let pkg = profile.containing_package(module_name, is_index);
         let scoped_names = by_scope
-            .get(&(file.language, identities[i].root.clone()))
+            .get(&(file.language, identities[i].root.as_path()))
             .unwrap_or(&empty_scope);
+        let resolver = resolvers
+            .get_mut(&file.language)
+            .expect("every parsed language has a compiled-in profile");
         for import in &file.walked.symbols.imports {
-            let import = match profile.edge_phase(import, &file.path, &mut resolution_cache) {
+            let import = match resolver.edge_phase(import, &file.path) {
                 phase if phase == import.phase => Cow::Borrowed(import),
                 phase => Cow::Owned(ImportContext {
                     phase,
                     ..import.clone()
                 }),
             };
-            let resolved = profile.resolve_target(
-                &import,
-                &pkg,
-                &file.path,
-                &identities[i].root,
-                &mut resolution_cache,
-            );
+            let resolved = resolver.resolve_target(&import, &pkg, &file.path, &identities[i].root);
             // Zero-allocation probe: borrow the canonical name when the
             // logical module exists, else fall back to the raw resolution.
             let target: &str = scoped_names

@@ -1,94 +1,7 @@
 //! Small Rust AST helpers for unit extraction.
 
 use crate::profiles::walk::{self, MutationTarget};
-use crate::spine::ir::CallFact;
 use tree_sitter::Node;
-
-pub(super) fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
-    let mut func = node.child_by_field_name("function")?;
-    if func.kind() == "generic_function" {
-        func = func
-            .child_by_field_name("function")
-            .or_else(|| func.named_child(0))?;
-    }
-    let line = node.start_position().row + 1;
-    let mut call = match func.kind() {
-        "identifier" => Some(CallFact::named(walk::node_text(func, src)?, line)),
-        "field_expression" => {
-            let base = func
-                .child_by_field_name("value")
-                .and_then(|n| receiver_path(n, src))?;
-            let method = func
-                .child_by_field_name("field")
-                .and_then(|n| walk::node_text(n, src))?;
-            Some(CallFact::member(&base, method, line))
-        }
-        _ => None,
-    }?;
-    call.region = control_region(node);
-    call.offset = node.start_byte();
-    call.awaited = node
-        .parent()
-        .is_some_and(|parent| parent.kind() == "await_expression");
-    Some(call)
-}
-
-fn receiver_path(node: Node, src: &[u8]) -> Option<String> {
-    match node.kind() {
-        "identifier" => walk::node_text(node, src).map(str::to_string),
-        "self" => Some("self".to_string()),
-        "field_expression" => {
-            let value = receiver_path(node.child_by_field_name("value")?, src)?;
-            let field = walk::node_text(node.child_by_field_name("field")?, src)?;
-            Some(format!("{value}.{field}"))
-        }
-        "call_expression" => {
-            let mut function = node.child_by_field_name("function")?;
-            if function.kind() == "generic_function" {
-                function = function.named_child(0)?;
-            }
-            let base = receiver_path(function.child_by_field_name("value")?, src)?;
-            let method = walk::node_text(function.child_by_field_name("field")?, src)?;
-            if is_lazy_adapter(method) {
-                Some(base)
-            } else {
-                Some(format!("{base}.{method}"))
-            }
-        }
-        _ => None,
-    }
-}
-
-fn is_lazy_adapter(method: &str) -> bool {
-    matches!(
-        method,
-        "enumerate"
-            | "filter"
-            | "filter_map"
-            | "flat_map"
-            | "into_iter"
-            | "iter"
-            | "iter_mut"
-            | "map"
-            | "skip"
-            | "take"
-            | "zip"
-    )
-}
-
-fn control_region(node: Node<'_>) -> usize {
-    let mut current = node;
-    while let Some(parent) = current.parent() {
-        if matches!(parent.kind(), "if_expression" | "match_arm") {
-            return current.start_position().row + 1;
-        }
-        if parent.kind() == "function_item" {
-            break;
-        }
-        current = parent;
-    }
-    0
-}
 
 pub(super) fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
     match node.kind() {
@@ -151,63 +64,10 @@ impl ArityScan {
     }
 }
 
-pub(super) const CHAIN: walk::ChainShape = walk::ChainShape {
-    member_kind: "field_expression",
-    object_field: "value",
-    root_kinds: &["identifier", "self"],
-};
-
-pub(super) fn is_loop(kind: &str) -> bool {
-    matches!(
-        kind,
-        "for_expression" | "while_expression" | "loop_expression"
-    )
-}
-
-pub(super) fn is_nesting(kind: &str) -> bool {
-    matches!(
-        kind,
-        "if_expression"
-            | "match_expression"
-            | "for_expression"
-            | "while_expression"
-            | "loop_expression"
-    )
-}
-
-pub(super) fn is_branch(kind: &str, node: Node, src: &[u8]) -> bool {
-    match kind {
-        "if_expression" | "match_expression" | "for_expression" | "while_expression" => true,
-        "binary_expression" => node
-            .child_by_field_name("operator")
-            .and_then(|n| walk::node_text(n, src))
-            .is_some_and(|op| matches!(op, "&&" | "||")),
-        _ => false,
-    }
-}
-
-pub(super) fn cognitive_weight(kind: &str, depth: usize) -> Option<usize> {
-    match kind {
-        "if_expression" | "match_expression" | "for_expression" | "while_expression" => {
-            Some(1 + depth)
-        }
-        _ => None,
-    }
-}
-
 pub(super) fn is_string(kind: &str) -> bool {
     matches!(kind, "string_literal" | "raw_string_literal")
 }
 
 pub(super) fn unquote(text: &str) -> String {
     text.trim_matches('"').trim_matches('\'').to_string()
-}
-
-/// Method name and receiver of a `receiver.method(..)` call.
-pub(super) fn method_call<'a>(call: Node<'a>, src: &'a [u8]) -> Option<(&'a str, Node<'a>)> {
-    let function = call
-        .child_by_field_name("function")
-        .filter(|f| f.kind() == "field_expression")?;
-    let method = function.child_by_field_name("field")?.utf8_text(src).ok()?;
-    Some((method, function.child_by_field_name("value")?))
 }

@@ -7,7 +7,8 @@
 use super::tsconfig::read_tsconfig;
 use super::type_imports::{self, TypeOnlyImports};
 use crate::profiles::javascript::{resolve, roots};
-use crate::spine::ir::ImportContext;
+use crate::profiles::ImportResolver;
+use crate::spine::ir::{ImportContext, ImportPhase};
 use serde_json::Value;
 use std::collections::hash_map::Entry as CacheEntry;
 use std::collections::HashMap;
@@ -19,7 +20,7 @@ use std::path::{Path, PathBuf};
 /// Both valid and empty tables are retained so a missing or malformed config is
 /// attempted once per root, rather than once per import.
 #[derive(Default)]
-pub(crate) struct ResolutionCache {
+pub(super) struct ResolutionCache {
     aliases_by_root: HashMap<PathBuf, Paths>,
     type_only_imports_by_dir: HashMap<PathBuf, TypeOnlyImports>,
     #[cfg(test)]
@@ -38,11 +39,6 @@ impl ResolutionCache {
                 entry.insert(load_aliases(root))
             }
         }
-    }
-
-    /// Filesystem path a `tsconfig` alias maps `specifier` to, for modules under `root`.
-    pub(crate) fn alias_path(&mut self, root: &Path, specifier: &str) -> Option<PathBuf> {
-        self.aliases(root).resolve_path(specifier)
     }
 
     /// Emit mode of inline type-only imports under the nearest `tsconfig.json` above `dir`.
@@ -69,16 +65,26 @@ impl ResolutionCache {
     }
 }
 
-pub(super) fn resolve_target(
-    cache: &mut ResolutionCache,
-    import: &ImportContext,
-    file: &Path,
-    root: &Path,
-) -> String {
-    cache
-        .aliases(root)
-        .resolve(&import.target_module)
-        .unwrap_or_else(|| resolve::resolve_target(import, file, root))
+impl ImportResolver for ResolutionCache {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        _importer_package: &str,
+        file: &Path,
+        root: &Path,
+    ) -> String {
+        self.aliases(root)
+            .resolve(&import.target_module)
+            .unwrap_or_else(|| resolve::resolve_target(import, file, root))
+    }
+
+    fn edge_phase(&mut self, import: &ImportContext, importer_file: &Path) -> ImportPhase {
+        super::edge_phase::edge_phase(self, import, importer_file)
+    }
+
+    fn alias_path(&mut self, root: &Path, specifier: &str) -> Option<PathBuf> {
+        self.aliases(root).resolve_path(specifier)
+    }
 }
 
 pub(super) struct Paths {

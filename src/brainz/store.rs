@@ -5,6 +5,7 @@
 use super::events::{Event, Totals};
 use super::file_lock;
 use super::fingerprint::{Aged, ResolvedHistory};
+use super::json_file;
 use anyhow::{Context, Result};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
@@ -22,10 +23,7 @@ pub(super) fn dir(root: &Path) -> PathBuf {
 /// Load the repo's all-time aggregates (default-empty when missing/corrupt —
 /// metrics must never fail the server).
 pub fn load_totals(root: &Path) -> Totals {
-    fs::read(dir(root).join("totals.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+    json_file::load_or_default(&dir(root).join("totals.json"))
 }
 
 /// Atomically replace the repo's all-time aggregates.
@@ -140,12 +138,7 @@ struct BranchBaselines {
 }
 
 fn load_baselines(root: &Path) -> BranchBaselines {
-    // A pre-branch (flat `Aged`) file no longer parses here and degrades to an
-    // empty set — the next scan simply rebuilds that branch's baseline.
-    fs::read(dir(root).join("last-scan.json"))
-        .ok()
-        .and_then(|bytes| serde_json::from_slice(&bytes).ok())
-        .unwrap_or_default()
+    json_file::load_or_default(&dir(root).join("last-scan.json"))
 }
 
 /// Last persisted update time for `branch`, if a baseline exists.
@@ -187,6 +180,14 @@ pub fn load_resolved_history(root: &Path, branch: &str) -> ResolvedHistory {
         .unwrap_or_default()
 }
 
+/// One branch's new baseline, stamped `now`.
+pub struct BranchWrite<'a> {
+    pub branch: &'a str,
+    pub prints: Aged,
+    pub history: ResolvedHistory,
+    pub now: u64,
+}
+
 /// Persist this scan's fingerprints and resolved-history under `branch`,
 /// stamping `now` and pruning to the most-recently-updated [`MAX_BRANCHES`].
 #[cfg(test)]
@@ -200,16 +201,14 @@ pub fn save_fingerprints(
     update_fingerprints(root, branch, now, |_, _| (prints.clone(), history.clone()))
 }
 
+/// Write `write` only when the branch was last updated at `expected_updated`.
 pub fn save_fingerprints_if_current(
     root: &Path,
-    branch: &str,
+    write: BranchWrite,
     expected_updated: u64,
-    prints: &Aged,
-    history: &ResolvedHistory,
-    now: u64,
 ) -> Result<bool> {
     let _lock = file_lock::acquire(root, "last-scan.lock")?;
-    save_fingerprints_locked(root, branch, prints, history, now, Some(expected_updated))
+    commit_baselines(root, write, Some(expected_updated))
 }
 
 pub fn update_fingerprints(
@@ -225,7 +224,13 @@ pub fn update_fingerprints(
         None => (Aged::default(), ResolvedHistory::default()),
     };
     let (prints, history) = update(prints, history);
-    commit_baselines(root, branch, prints, history, now, None).map(|_| ())
+    let write = BranchWrite {
+        branch,
+        prints,
+        history,
+        now,
+    };
+    commit_baselines(root, write, None).map(|_| ())
 }
 
 /// Drop branches beyond [`MAX_BRANCHES`], keeping the most recently updated.
@@ -249,48 +254,27 @@ fn prune_branches(all: &mut BranchBaselines) {
 
 fn commit_baselines(
     root: &Path,
-    branch: &str,
-    prints: Aged,
-    history: ResolvedHistory,
-    now: u64,
+    write: BranchWrite,
     expected_updated: Option<u64>,
 ) -> Result<bool> {
     let d = crate::dotdir::ensure(root, Some("local-metrics"))?;
     let mut all = load_baselines(root);
     if let Some(expected) = expected_updated {
-        let current = all.branches.get(branch).map(|entry| entry.updated);
+        let current = all.branches.get(write.branch).map(|entry| entry.updated);
         if current != Some(expected) {
             return Ok(false);
         }
     }
     all.branches.insert(
-        branch.to_string(),
+        write.branch.to_string(),
         BranchEntry {
-            updated: now,
-            prints,
-            history,
+            updated: write.now,
+            prints: write.prints,
+            history: write.history,
         },
     );
     prune_branches(&mut all);
     let json = serde_json::to_vec(&all).context("serializing fingerprints")?;
     write_durable(&d.join("last-scan.json"), &json)?;
     Ok(true)
-}
-
-fn save_fingerprints_locked(
-    root: &Path,
-    branch: &str,
-    prints: &Aged,
-    history: &ResolvedHistory,
-    now: u64,
-    expected_updated: Option<u64>,
-) -> Result<bool> {
-    commit_baselines(
-        root,
-        branch,
-        prints.clone(),
-        history.clone(),
-        now,
-        expected_updated,
-    )
 }

@@ -19,8 +19,9 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
             "diff mode: only findings touching changed lines".dimmed()
         );
     }
-    let shown = |pillar| !report.meta.filtered_pillars.contains(&pillar);
-    if report.meta.files_skipped > 0 && crate::report::scan_diagnostics_enabled() {
+    if report.meta.files_skipped > 0
+        && super::ScanDiagnostics::from_env() == super::ScanDiagnostics::Show
+    {
         let _ = writeln!(
             out,
             "{}",
@@ -48,14 +49,14 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
     }
 
-    if shown(Pillar::Cycles) {
-        section(
-            &mut out,
-            "Circular imports",
-            report.cycles.len(),
-            report.meta.cycles_total,
-        );
-    }
+    section(
+        &mut out,
+        report,
+        Pillar::Cycles,
+        "Circular imports",
+        report.cycles.len(),
+        report.meta.cycles_total,
+    );
     for cycle in &report.cycles {
         let _ = writeln!(
             out,
@@ -79,19 +80,19 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
     }
 
-    if shown(Pillar::Duplication) {
-        section(
+    if section(
+        &mut out,
+        report,
+        Pillar::Duplication,
+        "Duplication",
+        report.duplication.len(),
+        report.meta.duplication_total,
+    ) {
+        write_skipped(
             &mut out,
-            "Duplication",
-            report.duplication.len(),
-            report.meta.duplication_total,
-        );
-        if let Some(line) = skipped_line(
             &report.meta.duplication_skipped,
             "duplication.include_tests / include_generated / exclude",
-        ) {
-            let _ = writeln!(out, "    {}", line.dimmed());
-        }
+        );
     }
     for class in &report.duplication {
         let detail = class.hint.as_deref().unwrap_or("structural clone");
@@ -117,42 +118,44 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         }
     }
 
-    if shown(Pillar::DeadCode) {
-        section(
-            &mut out,
-            "Dead code candidates",
-            report.dead_code.len(),
-            report.meta.dead_code_total,
-        );
-    }
+    section(
+        &mut out,
+        report,
+        Pillar::DeadCode,
+        "Dead code candidates",
+        report.dead_code.len(),
+        report.meta.dead_code_total,
+    );
     for finding in &report.dead_code {
-        let dead_loc = location(&finding.file, finding.line);
-        let line = format!(
-            "    [{}] {}  {}::{} ({}) [{}] {}",
+        let _ = write!(
+            out,
+            "    [{}] {}  {}::{} ({}) [{}]",
             action_label(finding.action),
-            dead_loc,
+            location(&finding.file, finding.line),
             finding.module,
             finding.symbol,
             finding.kind,
             confidence_label(finding.confidence),
-            finding.reason
         );
-        let _ = writeln!(out, "{}", line.trim_end());
+        if !finding.reason.is_empty() {
+            let _ = write!(out, " {}", finding.reason);
+        }
+        out.push('\n');
     }
 
-    if shown(Pillar::Smells) {
-        section(
+    if section(
+        &mut out,
+        report,
+        Pillar::Smells,
+        "Code smells",
+        report.smells.len(),
+        report.meta.smells_total,
+    ) {
+        write_skipped(
             &mut out,
-            "Code smells",
-            report.smells.len(),
-            report.meta.smells_total,
-        );
-        if let Some(line) = skipped_line(
             &report.meta.smells_skipped,
             "smells.include_tests / exclude",
-        ) {
-            let _ = writeln!(out, "    {}", line.dimmed());
-        }
+        );
     }
     let mut seen_suggestions: HashSet<String> = HashSet::new();
     let shown_by_kind: HashMap<&str, usize> = {
@@ -198,9 +201,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         );
     }
 
-    if shown(Pillar::Boundaries) {
-        boundaries_header(&mut out, report);
-    }
+    boundaries_header(&mut out, report);
     for violation in &report.boundaries {
         let _ = writeln!(
             out,
@@ -231,7 +232,18 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
     out
 }
 
-fn section(out: &mut String, title: &str, shown: usize, total: usize) {
+/// The pillar's heading with its count; false when the run filtered the pillar out.
+fn section(
+    out: &mut String,
+    report: &AnalysisReport,
+    pillar: Pillar,
+    title: &str,
+    shown: usize,
+    total: usize,
+) -> bool {
+    if report.meta.filtered_pillars.contains(&pillar) {
+        return false;
+    }
     let count_str = total.to_string();
     let colored = if total == 0 {
         count_str.green()
@@ -244,12 +256,18 @@ fn section(out: &mut String, title: &str, shown: usize, total: usize) {
         String::new()
     };
     let _ = writeln!(out, "\n{} ({}){}", title.bold().cyan(), colored, suffix);
+    true
 }
 
 fn boundaries_header(out: &mut String, report: &AnalysisReport) {
+    if report.meta.filtered_pillars.contains(&Pillar::Boundaries) {
+        return;
+    }
     if report.meta.boundaries_configured {
         section(
             out,
+            report,
+            Pillar::Boundaries,
             "Boundary violations",
             report.boundaries.len(),
             report.meta.boundaries_total,
@@ -265,14 +283,15 @@ fn boundaries_header(out: &mut String, report: &AnalysisReport) {
 }
 
 /// One dimmed line naming how many files a pillar skipped and the knobs that control it.
-fn skipped_line(skipped: &SkipCounts, knobs: &str) -> Option<String> {
+fn write_skipped(out: &mut String, skipped: &SkipCounts, knobs: &str) {
     if skipped.is_empty() {
-        return None;
+        return;
     }
-    Some(format!(
+    let line = format!(
         "skipped {} test, {} generated and {} excluded file(s) ({knobs})",
         skipped.tests, skipped.generated, skipped.config_exclude
-    ))
+    );
+    let _ = writeln!(out, "    {}", line.dimmed());
 }
 
 fn confidence_label(confidence: Confidence) -> colored::ColoredString {

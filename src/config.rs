@@ -1,6 +1,7 @@
 //! `sensez.toml` facade: public config API plus load/normalization plumbing.
 
 mod brainz;
+mod field_names;
 pub mod model;
 mod parse;
 mod problem;
@@ -38,21 +39,8 @@ pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 13] = [
     "**/*.min.css",
 ];
 
-/// Test layouts outside profile test globs; skipped by duplication/smells unless `include_tests`.
-pub(crate) const BASELINE_TEST_EXCLUDE: [&str; 5] = [
-    "**/tests/**",
-    "**/test/**",
-    "**/conftest.py",
-    "**/test_*.py",
-    "**/*_test.py",
-];
-
-/// Generated, often cyclic migration scripts; `alembic`/`versions` globs are Python-only.
-pub(crate) const BASELINE_MIGRATION_EXCLUDE: [&str; 3] = [
-    "**/alembic/**/*.py",
-    "**/migrations/**",
-    "**/versions/**/*.py",
-];
+/// Generated, often cyclic migration scripts in any language; profiles add their own layouts.
+const BASELINE_MIGRATION_EXCLUDE: [&str; 1] = ["**/migrations/**"];
 
 impl Config {
     /// Load configuration: `sensez.toml`, else `[tool.sensez]` from
@@ -101,10 +89,14 @@ impl Config {
 
     /// Merge the built-in global and migration globs into the pillar excludes (idempotent).
     fn apply_baseline_excludes(&mut self) {
+        let migrations: Vec<&str> = BASELINE_MIGRATION_EXCLUDE
+            .into_iter()
+            .chain(crate::profiles::registry::migration_layouts())
+            .collect();
         push_unique(&mut self.exclude, &GLOBAL_BASELINE_EXCLUDE);
-        push_unique(&mut self.duplication.exclude, &BASELINE_MIGRATION_EXCLUDE);
-        push_unique(&mut self.smells.exclude, &BASELINE_MIGRATION_EXCLUDE);
-        push_unique(&mut self.cycles.exclude, &BASELINE_MIGRATION_EXCLUDE);
+        push_unique(&mut self.duplication.exclude, &migrations);
+        push_unique(&mut self.smells.exclude, &migrations);
+        push_unique(&mut self.cycles.exclude, &migrations);
     }
 
     fn validate_semantic(&self) -> Result<()> {
@@ -127,12 +119,22 @@ impl Config {
     fn validate_globs(&self) -> Result<()> {
         crate::globs::validate_patterns("exclude", &self.exclude)?;
         crate::globs::validate_patterns("duplication.exclude", &self.duplication.exclude)?;
-        crate::globs::validate_patterns("dead_code.entry_points", &self.dead_code.entry_points)?;
-        crate::globs::validate_patterns("dead_code.entrypoints", &self.dead_code.entrypoints)?;
+        crate::globs::validate_patterns("dead_code.entry_globs", &self.dead_code.entry_globs)?;
+        crate::globs::validate_patterns(
+            "dead_code.registration_decorators",
+            &self.dead_code.registration_decorators,
+        )?;
         crate::globs::validate_patterns("dead_code.test_sources", &self.dead_code.test_sources)?;
         crate::globs::validate_patterns("dead_code.test_support", &self.dead_code.test_support)?;
         crate::globs::validate_patterns("cycles.exclude", &self.cycles.exclude)?;
         crate::globs::validate_patterns("smells.exclude", &self.smells.exclude)?;
+        let boundary_patterns: Vec<String> = self
+            .boundaries
+            .forbidden
+            .iter()
+            .flat_map(|rule| [rule.from.clone(), rule.to.clone()])
+            .collect();
+        crate::globs::validate_patterns("boundaries.forbidden", &boundary_patterns)?;
         Ok(())
     }
 }

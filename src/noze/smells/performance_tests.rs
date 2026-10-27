@@ -1,14 +1,10 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn local(ext: &str, body: &str) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("sample.{ext}"));
-    fs::write(&path, body).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed(&format!("sample.{ext}"), body);
     let mut cfg = Smells::default();
     cfg.disabled
         .retain(|kind| !matches!(kind, SmellKind::NestedLoop | SmellKind::NPlusOneCall));
@@ -27,10 +23,7 @@ def f(db, ids, xs):
         for x in xs:
             db.fetch(x)
 ";
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join("sample.py");
-    fs::write(&path, src).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("sample.py", src);
     let findings = detect_local(&file, &Smells::default());
     assert!(!has(&findings, SmellKind::NestedLoop), "{findings:?}");
     assert!(!has(&findings, SmellKind::NPlusOneCall), "{findings:?}");
@@ -286,10 +279,7 @@ fn repeated_iteration_message_lists_lines_and_methods() {
 #[test]
 fn include_tests_restores_assertion_passes() {
     let src = "it(\"splits\", () => { expect(xs.filter(x => x.ok)).toHaveLength(3); expect(xs.filter(x => !x.ok)).toHaveLength(1); });\n";
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join("rows.test.ts");
-    fs::write(&path, src).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("rows.test.ts", src);
     let cfg = Smells {
         repeated_iteration_include_tests: true,
         ..Smells::default()

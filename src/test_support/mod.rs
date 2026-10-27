@@ -57,6 +57,11 @@ impl GitTestRepo {
     pub(crate) fn git(&self, args: &[&str]) -> bool {
         run_git(&self.root, args)
     }
+
+    /// Stage and commit everything in the work tree.
+    pub(crate) fn commit_all(&self) -> bool {
+        run_git(&self.root, &["add", "."]) && commit(&self.root)
+    }
 }
 
 fn commit(root: &Path) -> bool {

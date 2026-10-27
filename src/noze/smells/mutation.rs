@@ -22,16 +22,16 @@ pub fn detect(
 ) {
     let schemas = propagated_schemas(metrics);
     for (index, m) in metrics.iter().enumerate() {
-        if cfg.param_mutation {
+        if cfg.is_enabled(SmellKind::MutatedParameter) {
             mutated_params(ctx, m, cfg, out);
         }
-        if cfg.param_reassignment {
+        if cfg.is_enabled(SmellKind::ReassignedParameter) {
             reassigned_params(ctx, m, out);
         }
         if cfg.implicit_schema_min_keys > 0 {
             implicit_schema(ctx, m, &schemas[index], cfg, out);
         }
-        if cfg.literal_membership {
+        if cfg.is_enabled(SmellKind::LiteralMembership) {
             literal_membership(ctx, m, cfg, out);
         }
     }

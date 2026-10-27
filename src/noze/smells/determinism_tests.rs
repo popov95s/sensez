@@ -2,7 +2,8 @@
 //! content must not depend on scheduling. Findings are compared across
 //! repeated runs of the same corpus.
 
-use crate::config::smells::Smells;
+use crate::config::smells::{SmellConfig, Smells};
+use crate::noze::source_scope::SourceScope;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -40,7 +41,12 @@ fn parallel_detection_is_deterministic() {
     let cfg = Smells::default();
 
     let runs: Vec<String> = (0..5)
-        .map(|_| format!("{:?}", super::detect(&files, &graph, &cfg.clone().into())))
+        .map(|_| {
+            format!("{:?}", {
+                let cfg: SmellConfig = cfg.clone().into();
+                super::detect(&files, &graph, &cfg, &SourceScope::for_smells(&cfg))
+            })
+        })
         .collect();
     assert!(
         !runs[0].is_empty() && runs[0].contains("SmellFinding"),

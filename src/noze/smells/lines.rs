@@ -3,7 +3,7 @@
 use std::collections::BTreeSet;
 
 /// Lines shown in a message before the rest collapse into "+N more".
-const SHOWN_LINES: usize = 3;
+pub(super) const SHOWN_LINES: usize = 3;
 
 /// Sorted, de-duplicated hit lines.
 pub(super) fn hit_lines(lines: impl Iterator<Item = usize>) -> Vec<usize> {

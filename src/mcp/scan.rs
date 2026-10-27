@@ -15,49 +15,39 @@ use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use std::time::{Duration, Instant};
 
-pub(super) fn full(
-    path: &Path,
-    threshold: Option<usize>,
-    max: usize,
-) -> Result<(AnalysisReport, Value, Duration)> {
-    let start = Instant::now();
-    let (mut report, _module_files) = crate::analyze_path_in_service(path, threshold)
-        .with_context(|| format!("scanning {}", path.display()))?;
-    let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
-    suppress_scan_issues(&mut report);
-    report.refresh_totals();
-    crate::noze::limit(&mut report, max);
-    Ok((report, snapshot, start.elapsed()))
+/// Which lines of the working tree a scan reports on.
+pub(super) enum Scope {
+    Full,
+    DiffVsHead,
+    Changed(crate::diff::ChangedLines),
 }
 
-pub(super) fn diff(
+pub(super) fn run(
     path: &Path,
     threshold: Option<usize>,
     max: usize,
+    scope: Scope,
 ) -> Result<(AnalysisReport, Value, Duration)> {
     let start = Instant::now();
-    let changed = crate::diff::git::changed_vs_head(path)
-        .with_context(|| format!("resolving working-tree diff for {}", path.display()))?;
+    let changed = match scope {
+        Scope::Full => None,
+        Scope::DiffVsHead => Some(
+            crate::diff::git::changed_vs_head(path)
+                .with_context(|| format!("resolving working-tree diff for {}", path.display()))?,
+        ),
+        Scope::Changed(changed) => Some(changed),
+    };
     let (mut report, module_files) = crate::analyze_path_in_service(path, threshold)
         .with_context(|| format!("scanning {}", path.display()))?;
     let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
     suppress_scan_issues(&mut report);
-    finish_diff(&mut report, &changed, &module_files, max);
-    Ok((report, snapshot, start.elapsed()))
-}
-
-pub(super) fn diff_changed(
-    path: &Path,
-    threshold: Option<usize>,
-    max: usize,
-    changed: crate::diff::ChangedLines,
-) -> Result<(AnalysisReport, Value, Duration)> {
-    let start = Instant::now();
-    let (mut report, module_files) = crate::analyze_path_in_service(path, threshold)
-        .with_context(|| format!("scanning {}", path.display()))?;
-    let snapshot = serde_json::to_value(&report).unwrap_or(Value::Null);
-    suppress_scan_issues(&mut report);
-    finish_diff(&mut report, &changed, &module_files, max);
+    match changed {
+        Some(changed) => finish_diff(&mut report, &changed, &module_files, max),
+        None => {
+            report.refresh_totals();
+            crate::noze::limit(&mut report, max);
+        }
+    }
     Ok((report, snapshot, start.elapsed()))
 }
 
@@ -87,7 +77,7 @@ mod tests {
     #[test]
     fn diff_reports_git_errors_instead_of_returning_a_full_scan() {
         let tmp = tempfile::tempdir().unwrap();
-        let err = diff(tmp.path(), None, 0).unwrap_err();
+        let err = run(tmp.path(), None, 0, Scope::DiffVsHead).unwrap_err();
         assert!(err.to_string().contains("resolving working-tree diff"));
     }
 

@@ -98,19 +98,27 @@
       "name": "noze_explain"
     },
     {
-      "description": "End-of-turn quality gate (intended for a Claude Code Stop hook, not for direct calls): diff-scoped scan of uncommitted changes; returns hook-decision JSON that blocks at most twice per turn-chain. Findings reported more than [gate].repeat_limit times on the same source lines are auto-deferred for the current coding loop; the first auto-defer expires after three days, while a second auto-defer for the same lines stays deferred.",
+      "description": "End-of-turn quality gate (intended for a Claude Code Stop hook, not for direct calls): diff-scoped scan of uncommitted changes; returns hook-decision JSON. It allows whenever stop_hook_active is true, so it blocks at most once per stop chain, and it blocks a finding only once per session unless the finding is fixed and then reintroduced (reported as a regression). Findings reintroduced more than [gate].repeat_limit times on the same source lines are auto-deferred; the first auto-defer expires after three days, a second one stays. Gate state lives in .sensez/gate/ and expires after seven idle days.",
       "inputSchema": {
         "properties": {
           "path": {
             "description": "Repository root",
             "type": "string"
           },
+          "session_id": {
+            "description": "Claude Code session id; scopes the gate's memory",
+            "type": "string"
+          },
           "stop_hook_active": {
-            "description": "Ignored; accepted so older hooks still validate",
+            "description": "true when this Stop follows a gate block; the gate then allows",
             "type": [
               "boolean",
               "string"
             ]
+          },
+          "transcript_path": {
+            "description": "Claude Code transcript; scopes the scan to this session's edits",
+            "type": "string"
           }
         },
         "required": [
@@ -121,7 +129,7 @@
       "name": "noze_gate"
     },
     {
-      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. By default, results are diff-focused to show only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong. Pass diff=false for an explicit full-repository audit. The returned JSON is compact: meta.totals counts each pillar before `limit`, and meta.truncated says whether `limit` cut anything.",
+      "description": "Analyze a codebase for duplication, dead code, import cycles, boundary violations, and design smells. Run it after writing or modifying code. ALWAYS pass the repository root as path \u2014 dead-code and cycle analysis are only correct over the full import graph; scanning a subdirectory yields false positives. It is fast (<1s on 300k lines), so never scope it down for speed. Fixes you apply to reported findings are detected automatically on later rescans. By default, results are diff-focused to show only the findings YOUR uncommitted changes touch \u2014 analysis still covers the whole repo, so diff results are focused but never wrong. Pass diff=false for an explicit full-repository audit, and outside a git repository, where the diff default returns an error. The returned JSON is compact: meta.totals counts each pillar before `limit`, and meta.truncated says whether `limit` cut anything.",
       "inputSchema": {
         "properties": {
           "diff": {
@@ -131,7 +139,7 @@
           },
           "limit": {
             "default": 0,
-            "description": "Cap each pillar to top-N ranked findings (0 = unlimited)",
+            "description": "Cap each pillar to top-N ranked findings (0 = unlimited); the same knob as CLI `--max`, except smells are capped in total rather than per kind",
             "minimum": 0,
             "type": "integer"
           },

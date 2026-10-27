@@ -1,3 +1,4 @@
+use super::test_support as fixture;
 use super::*;
 use crate::config::smells::Smells;
 use crate::spine::parser::parse_file;
@@ -5,17 +6,11 @@ use std::fs;
 use std::path::{Path, PathBuf};
 
 fn parsed(name: &str, body: &str) -> crate::spine::parser::ParsedFile {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("{name}.py"));
-    fs::write(&path, body).unwrap();
-    parse_file(&path, 0).unwrap()
+    fixture::parsed(&format!("{name}.py"), body)
 }
 
 fn local(name: &str, body: &str, cfg: &Smells) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("{name}.py"));
-    fs::write(&path, body).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed(&format!("{name}.py"), body);
     detect_local(&file, cfg)
 }
 
@@ -256,7 +251,9 @@ fn disabled_pillar_is_silent() {
         ..Smells::default()
     };
     let pf = parsed("disabled", "def f(a,b,c,d,e,f,g):\n    return 1\n");
-    assert!(detect(&[pf], &CodebaseGraph::default(), &cfg.clone().into()).is_empty());
+    let cfg: SmellConfig = cfg.clone().into();
+    let scope = SourceScope::for_smells(&cfg);
+    assert!(detect(&[pf], &CodebaseGraph::default(), &cfg, &scope).is_empty());
 }
 
 use crate::spine::graph::CodebaseGraph;

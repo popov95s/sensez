@@ -95,11 +95,11 @@ pub fn declared_names(node: Node, src: &[u8]) -> Vec<String> {
         return names(node.child_by_field_name("name"), src);
     }
     let mut cursor = node.walk();
-    let children: Vec<Node> = node.named_children(&mut cursor).collect();
-    children
-        .into_iter()
+    let found = node
+        .named_children(&mut cursor)
         .flat_map(|child| declared_names(child, src))
-        .collect()
+        .collect();
+    found
 }
 
 /// Literal start of `let i = N`, else 0.

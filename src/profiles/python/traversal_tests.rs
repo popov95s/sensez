@@ -1,14 +1,9 @@
 //! Tests for the Python traversal/import extraction (kept out of `traversal.rs`
 //! to respect the per-file line limit).
 
+use super::super::PythonProfile;
+use crate::profiles::test_fixtures::{tokens, walked};
 use crate::spine::parser::{parse_source, StructuralToken};
-
-fn tokens(src: &[u8]) -> Vec<StructuralToken> {
-    parse_source(src, 0, "m", &super::super::PythonProfile)
-        .unwrap()
-        .syntax
-        .tokens
-}
 
 fn imports(src: &[u8]) -> Vec<crate::spine::parser::ImportContext> {
     parse_source(src, 0, "m", &super::super::PythonProfile)
@@ -24,8 +19,8 @@ fn rename_invariance_yields_identical_tokens() {
     let a = b"def compute(items):\n    total = 0\n    for item in items:\n        if item > 10:\n            total = total + item\n    return total\n";
     let b = b"def process(values):\n    acc = 99\n    for value in values:\n        if value > 500:\n            acc = acc + value\n    return acc\n";
 
-    let ta = tokens(a);
-    let tb = tokens(b);
+    let ta = tokens(a, &PythonProfile);
+    let tb = tokens(b, &PythonProfile);
     assert_eq!(
         ta, tb,
         "renamed-but-structurally-identical functions must match"
@@ -88,10 +83,6 @@ fn nested_inline_import_uses_nearest_scope() {
     assert_eq!(json.line, 3);
 }
 
-fn walked(src: &[u8]) -> crate::spine::parser::Walked {
-    parse_source(src, 0, "m", &super::super::PythonProfile).unwrap()
-}
-
 /// REGRESSION GUARD for the duplication pillar: docstrings and comments must
 /// never enter the structural token/lexeme stream (clone detection ignores
 /// them). The same function with vs without a docstring + comment must yield
@@ -103,8 +94,8 @@ fn docstrings_and_comments_never_enter_token_or_lexeme_stream() {
         b"def f(x):\n    \"\"\"Add one to x.\"\"\"\n    # increment it\n    return x + 1\n";
     let without = b"def f(x):\n    return x + 1\n";
 
-    let a = walked(with_docs);
-    let b = walked(without);
+    let a = walked(with_docs, &PythonProfile);
+    let b = walked(without, &PythonProfile);
     assert_eq!(
         a.syntax.tokens, b.syntax.tokens,
         "docstring/comment must add no tokens"
@@ -127,7 +118,7 @@ fn docstrings_and_comments_never_enter_token_or_lexeme_stream() {
 fn captures_docs_with_qualified_symbol_paths() {
     use crate::eyez::DocKind;
     let src = b"\"\"\"Module doc.\"\"\"\n# top comment\nclass Billing:\n    \"\"\"Bills things.\"\"\"\n    def verify(self):\n        \"\"\"Verify sig.\"\"\"\n        return 1\n";
-    let docs = walked(src).docs;
+    let docs = walked(src, &PythonProfile).docs;
 
     let has = |path: &str, kind: DocKind, text: &str| {
         docs.iter()
@@ -151,9 +142,12 @@ fn captures_docs_with_qualified_symbol_paths() {
 #[test]
 fn inverted_self_guard_is_a_string_fallback() {
     let fallbacks = |body: &str| {
-        walked(format!("def f(x):\n    return {body}\n").as_bytes())
-            .units
-            .functions[0]
+        walked(
+            format!("def f(x):\n    return {body}\n").as_bytes(),
+            &PythonProfile,
+        )
+        .units
+        .functions[0]
             .string_fallbacks
             .len()
     };

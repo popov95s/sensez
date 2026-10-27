@@ -7,13 +7,11 @@ use ignore::{Error as IgnoreError, WalkBuilder, WalkState};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 
-/// Result of a discovery walk: the source files found, plus how many entries
-/// could not be read. A non-zero `skipped` means the scan is incomplete — it
-/// is surfaced in the report metadata so it is never mistaken for "clean".
+/// Result of a discovery walk: the source files found, plus one issue per entry
+/// that could not be read, surfaced in the report so an incomplete scan is never mistaken for "clean".
 #[derive(Debug, Default)]
 pub struct Discovery {
     pub files: Vec<PathBuf>,
-    pub skipped: usize,
     pub issues: Vec<ScanIssue>,
 }
 
@@ -79,11 +77,7 @@ where
     files.sort();
     let mut issues: Vec<ScanIssue> = issue_rx.into_iter().collect();
     issues.sort_by(|a, b| a.file.cmp(&b.file).then_with(|| a.message.cmp(&b.message)));
-    Ok(Discovery {
-        files,
-        skipped: issues.len(),
-        issues,
-    })
+    Ok(Discovery { files, issues })
 }
 
 fn scan_issue_from_walk_error(err: &IgnoreError) -> ScanIssue {
@@ -130,7 +124,7 @@ mod tests {
         fs::write(dir.join("notes.txt"), "ignore me\n").unwrap();
 
         let found = collect_source_files(&dir, &[], &is_python).unwrap();
-        assert_eq!(found.skipped, 0, "readable tree skips nothing");
+        assert!(found.issues.is_empty(), "readable tree skips nothing");
         let names: Vec<_> = found
             .files
             .iter()

@@ -14,6 +14,7 @@ mod clones;
 mod consolidate;
 mod flatten;
 mod gapped;
+mod lexeme_similarity;
 mod near_miss;
 mod open_tail;
 #[cfg(test)]
@@ -22,6 +23,8 @@ mod range_tests;
 mod semantic;
 #[cfg(test)]
 pub(crate) mod test_support;
+
+pub(crate) use lexeme_similarity::{function_lexemes, length_ceiling_percent, similarity_percent};
 
 use crate::config::model::Duplication;
 use crate::noze::source_scope::SourceScope;
@@ -56,7 +59,7 @@ pub(super) fn span_index_range(
 
 #[cfg(test)]
 pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
-    detect_with_root(files, config, None).0
+    detect_with_root(files, config, &SourceScope::for_duplication(config), None).0
 }
 
 /// Detect duplication per the config (path excludes, threshold, gap stitching).
@@ -69,13 +72,12 @@ pub fn detect(files: &[ParsedFile], config: &Duplication) -> Vec<CloneClass> {
 pub fn detect_with_root(
     files: &[ParsedFile],
     config: &Duplication,
+    scope: &SourceScope,
     root: Option<&Path>,
 ) -> (Vec<CloneClass>, Vec<ScanIssue>) {
     if files.is_empty() || config.threshold == 0 {
         return (Vec::new(), Vec::new());
     }
-    // Exclude tests/migrations/generated files from the corpus (kept in the graph elsewhere).
-    let scope = SourceScope::for_duplication(config);
     let kept: Vec<&ParsedFile> = files.iter().filter(|f| scope.includes(f)).collect();
 
     let mut by_family: BTreeMap<crate::spine::ir::Language, Vec<&ParsedFile>> = BTreeMap::new();
@@ -113,7 +115,7 @@ pub fn detect_with_root(
     // Rank by impact: long clones with many occurrences first.
     out.sort_by_key(|c| {
         (
-            super::action_rank(c.action),
+            c.action,
             std::cmp::Reverse(c.token_length * c.occurrences.len()),
         )
     });

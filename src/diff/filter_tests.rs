@@ -196,3 +196,32 @@ fn listed_hit_lines_scope_a_smell_to_those_lines() {
         "a touched header alone does not surface a hit elsewhere in the body"
     );
 }
+
+#[test]
+fn dead_symbol_named_on_a_removed_line_counts_as_new() {
+    let mut changed = ChangedLines::default();
+    changed.add_removed_text("    return f()", &[]);
+    let mut report = AnalysisReport {
+        dead_code: vec![dead("a.py", 3)],
+        ..Default::default()
+    };
+
+    apply(&mut report, &changed, &std::collections::HashMap::new());
+
+    assert_eq!(report.dead_code.len(), 1);
+    assert_eq!(report.dead_code[0].reason, "reference_removed");
+}
+
+#[test]
+fn removed_text_naming_another_symbol_keeps_the_dead_symbol_out() {
+    let mut changed = ChangedLines::default();
+    changed.add_removed_text("    return other()", &[]);
+    let mut report = AnalysisReport {
+        dead_code: vec![dead("a.py", 3)],
+        ..Default::default()
+    };
+
+    apply(&mut report, &changed, &std::collections::HashMap::new());
+
+    assert!(report.dead_code.is_empty());
+}

@@ -1,14 +1,10 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn findings(ext: &str, source: &str, config: &Smells, kind: SmellKind) -> Vec<SmellFinding> {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join(format!("sample.{ext}"));
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed(&format!("sample.{ext}"), source);
     detect_local(&file, config)
         .into_iter()
         .filter(|finding| finding.kind == kind)
@@ -39,7 +35,8 @@ export function split(a, b) {
   return label;
 }
 "#;
-    assert!(split("ts", chain).is_empty());
+    let found = split("ts", chain);
+    assert!(found.is_empty(), "{found:?}");
 
     let switch = r#"
 export function pick(kind) {
@@ -57,7 +54,8 @@ export function pick(kind) {
   return label;
 }
 "#;
-    assert!(split("ts", switch).is_empty());
+    let found = split("ts", switch);
+    assert!(found.is_empty(), "{found:?}");
 
     let python = r#"
 def split(a, b):
@@ -69,7 +67,8 @@ def split(a, b):
         label = "z"
     return label
 "#;
-    assert!(split("py", python).is_empty());
+    let found = split("py", python);
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]
@@ -125,7 +124,8 @@ export function guards(a, b, c, d) {
   return 5;
 }
 "#;
-    assert!(returns(guards, &opt_in()).is_empty());
+    let found = returns(guards, &opt_in());
+    assert!(found.is_empty(), "{found:?}");
 
     let counted = Smells {
         count_guard_clauses: true,
@@ -134,7 +134,8 @@ export function guards(a, b, c, d) {
     assert_eq!(returns(guards, &counted).len(), 1);
 
     let python = "def guards(a, b, c, d):\n    if not a:\n        return 1\n    if not b:\n        return 2\n    if not c:\n        return 3\n    if not d:\n        return 4\n    return 5\n";
-    assert!(findings("py", python, &opt_in(), SmellKind::TooManyReturns).is_empty());
+    let found = findings("py", python, &opt_in(), SmellKind::TooManyReturns);
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]
@@ -182,7 +183,8 @@ export function magic(res, n, list, retries = 5) {
 
 #[test]
 fn magic_numbers_skip_named_and_conventional_contexts() {
-    assert!(magic("ts", CONTEXTS, &opt_in()).is_empty());
+    let found = magic("ts", CONTEXTS, &opt_in());
+    assert!(found.is_empty(), "{found:?}");
 
     let python = r#"
 def magic(res, items, retries=5):
@@ -193,7 +195,8 @@ def magic(res, items, retries=5):
     day = 24 * 60 * 60
     return items[3], day, TIMEOUT_S
 "#;
-    assert!(magic("py", python, &opt_in()).is_empty());
+    let found = magic("py", python, &opt_in());
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]
@@ -234,7 +237,8 @@ export function price(retries, total) {
         magic_number_ignore: vec!["7".to_string(), "1.19".to_string()],
         ..opt_in()
     };
-    assert!(magic("ts", source, &ignoring).is_empty());
+    let found = magic("ts", source, &ignoring);
+    assert!(found.is_empty(), "{found:?}");
 }
 
 #[test]

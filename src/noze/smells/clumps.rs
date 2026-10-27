@@ -34,7 +34,7 @@ pub fn detect(files: &[&ParsedFile], cfg: &SmellConfig) -> Vec<SmellFinding> {
 }
 
 fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
-    if cfg.disabled.contains(&SmellKind::DataClump) {
+    if !cfg.is_enabled(SmellKind::DataClump) {
         return Vec::new();
     }
     let size = cfg.data_clump_min_fields.max(2);

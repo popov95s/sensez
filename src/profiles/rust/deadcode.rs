@@ -9,7 +9,7 @@ use std::path::Path;
 
 pub fn defaults() -> DeadCodeDefaults {
     DeadCodeDefaults {
-        entry_points: &["**/examples/**"],
+        entry_globs: &["**/examples/**"],
         test_sources: &["tests/**", "benches/**", "**/*_test.rs"],
         ..DeadCodeDefaults::EMPTY
     }
@@ -35,7 +35,7 @@ pub fn is_entry_file_stem(stem: &str) -> bool {
 /// missing/invalid manifest contributes none.
 pub fn entry_modules(root: &Path) -> Vec<String> {
     let mut keys = Vec::new();
-    if let Some(manifest) = read_manifest(root) {
+    if let Some(manifest) = super::manifest::manifest(root) {
         for bin in manifest
             .get("bin")
             .and_then(toml::Value::as_array)
@@ -58,9 +58,4 @@ pub fn entry_modules(root: &Path) -> Vec<String> {
         }
     }
     keys
-}
-
-fn read_manifest(root: &Path) -> Option<toml::Value> {
-    let text = std::fs::read_to_string(root.join("Cargo.toml")).ok()?;
-    text.parse().ok()
 }

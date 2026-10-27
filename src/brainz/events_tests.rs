@@ -44,15 +44,18 @@ fn absorb_aggregates_each_event_kind() {
         ts: 30,
         session: "s".into(),
         branch: "main".into(),
-        pillar: "duplication".into(),
-        action: "fixed".into(),
+        detector: "duplication".into(),
+        verdict: TriageVerdict::Debt,
         count: 2,
         detail: None,
     });
 
     assert_eq!((t.first_used, t.last_used), (10, 30));
     assert_eq!((t.scans, t.searches, t.first_searches), (1, 1, 1));
-    assert_eq!(t.outcomes[&OutcomeKey::new("fixed", "duplication")], 2);
+    assert_eq!(
+        t.outcomes[&OutcomeKey::new(TriageVerdict::Debt, "duplication")],
+        2
+    );
     assert_eq!(t.est_context_bytes_saved, 4900);
     assert_eq!(t.scans_by_origin["gate"], 1);
     assert_eq!(t.reported_by_detector["dead_code/function"], 3);
@@ -65,4 +68,36 @@ fn absorb_aggregates_each_event_kind() {
     );
     // One scan → a config hash is anchored but no change is counted yet.
     assert_eq!((t.config_changes, t.last_config_hash), (0, Some(42)));
+}
+
+#[test]
+fn outcome_event_keeps_its_on_disk_field_names() {
+    let event = Event::Outcome {
+        ts: 1,
+        session: "s".into(),
+        branch: "main".into(),
+        detector: "dead_code/function".into(),
+        verdict: TriageVerdict::FalsePositive,
+        count: 1,
+        detail: None,
+    };
+
+    let json = serde_json::to_string(&event).unwrap();
+
+    assert!(json.contains(r#""pillar":"dead_code/function""#), "{json}");
+    assert!(json.contains(r#""action":"false_positive""#), "{json}");
+}
+
+#[test]
+fn outcome_tally_keys_round_trip_as_verdict_colon_detector() {
+    let mut totals = Totals::default();
+    totals
+        .outcomes
+        .insert(OutcomeKey::new(TriageVerdict::Debt, "smells/god_module"), 2);
+
+    let json = serde_json::to_string(&totals).unwrap();
+    let back: Totals = serde_json::from_str(&json).unwrap();
+
+    assert!(json.contains(r#""debt:smells/god_module":2"#), "{json}");
+    assert_eq!(back.outcomes, totals.outcomes);
 }

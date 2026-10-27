@@ -65,6 +65,24 @@ pub const NESTED_TERNARY_LEVELS: &[StrictnessLevelDoc] = &[
     },
 ];
 
+pub const SWALLOWED_ERROR_LEVELS: &[StrictnessLevelDoc] = &[
+    StrictnessLevelDoc {
+        title: "Low",
+        value: "low",
+        description: "Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.",
+    },
+    StrictnessLevelDoc {
+        title: "Medium",
+        value: "medium",
+        description: "Also flags empty-value returns around a single JSON parse.",
+    },
+    StrictnessLevelDoc {
+        title: "High",
+        value: "high",
+        description: "Also flags handlers that only log or ignore the error, and handlers that return another literal default such as `\"unknown\"`.",
+    },
+];
+
 pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
     StrictnessRuleDoc {
         kind: SmellKind::LooseTyping,
@@ -80,6 +98,11 @@ pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
         kind: SmellKind::NestedTernary,
         knob: "strictness",
         levels: NESTED_TERNARY_LEVELS,
+    },
+    StrictnessRuleDoc {
+        kind: SmellKind::SwallowedErrorSentinel,
+        knob: "strictness",
+        levels: SWALLOWED_ERROR_LEVELS,
     },
 ];
 

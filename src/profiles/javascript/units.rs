@@ -18,9 +18,8 @@ use crate::profiles::lexeme::{self, BoundNames};
 use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::{default_values, magic_number};
 use crate::profiles::walk;
-use crate::spine::ir::{bump, FunctionUnit, Walked};
+use crate::spine::ir::{bump, FunctionUnit};
 use rustc_hash::FxHashMap;
-use std::collections::HashSet;
 use tree_sitter::Node;
 
 /// Every JS/TS node kind that opens its own function scope.
@@ -35,6 +34,12 @@ pub fn is_function(kind: &str) -> bool {
             | "generator_function_declaration"
             | "method_definition"
     )
+}
+
+/// What one `enter` pushed, for the matching `leave` to undo.
+pub struct Entered {
+    depth: usize,
+    frames: usize,
 }
 
 pub struct FunctionFacts {
@@ -95,7 +100,7 @@ impl FunctionFacts {
         }
     }
 
-    pub fn enter(&mut self, lineage: Lineage, src: &[u8]) -> Option<(usize, usize)> {
+    pub fn enter(&mut self, lineage: Lineage, src: &[u8]) -> Option<Entered> {
         let node = lineage.node();
         let range = node.byte_range();
         if range.start < self.body_start || range.end > self.body_end {
@@ -106,7 +111,7 @@ impl FunctionFacts {
             return None;
         }
         let prev_depth = self.depth;
-        let entered_frame = self.enter_loop_part(node);
+        let frames = self.enter_loop_part(node);
 
         obsession::scan(&mut self.unit, node, src);
         let frame = self.frame();
@@ -114,7 +119,7 @@ impl FunctionFacts {
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
-        super::risk_facts::scan(&mut self.unit, &mut self.guards, lineage, src);
+        super::risk_facts::scan(&mut self.unit, &mut self.guards, lineage, src, frame);
 
         let kind = node.kind();
         if is_nesting(kind) && !is_else_if(lineage) {
@@ -169,12 +174,15 @@ impl FunctionFacts {
             "identifier" | "shorthand_property_identifier" => self.record_capture(node, src),
             _ => {}
         }
-        Some((self.depth - prev_depth, usize::from(entered_frame)))
+        Some(Entered {
+            depth: self.depth - prev_depth,
+            frames,
+        })
     }
 
-    pub fn leave(&mut self, frame: (usize, usize)) {
-        self.depth -= frame.0;
-        self.frames.truncate(self.frames.len() - frame.1);
+    pub fn leave(&mut self, entered: Entered) {
+        self.depth -= entered.depth;
+        self.frames.truncate(self.frames.len() - entered.frames);
     }
 
     pub fn finish(self) -> FunctionUnit {
@@ -188,12 +196,13 @@ impl FunctionFacts {
     }
 
     /// Open the enclosing loop's frame when `node` runs once per iteration.
-    fn enter_loop_part(&mut self, node: Node) -> bool {
+    /// Push the frame of a loop part `node` starts; returns how many frames were pushed.
+    fn enter_loop_part(&mut self, node: Node) -> usize {
         let Some(&id) = self.loop_parts.get(&node.id()) else {
-            return false;
+            return 0;
         };
         self.frames.push(id);
-        true
+        1
     }
 
     fn record_member(&mut self, node: Node, parent: Option<Node>, src: &[u8]) {
@@ -239,9 +248,9 @@ impl FunctionFacts {
             let names = loops::names(Some(left), src);
             self.unit.performance.note_advanced(frame, &names);
         }
-        if let Some(name) = (left.kind() == "identifier")
-            .then(|| left.utf8_text(src).ok())
-            .flatten()
+        if let Some(name) = Some(left)
+            .filter(|left| left.kind() == "identifier")
+            .and_then(|left| left.utf8_text(src).ok())
         {
             self.unit
                 .local_reassigns
@@ -257,31 +266,6 @@ impl FunctionFacts {
             .is_ok_and(|name| self.outer_names.contains(&lexeme::hash(name)))
         {
             self.unit.captures_parent = true;
-        }
-    }
-}
-
-/// A hop through an `import * as ns` binding is a module path, not navigation.
-pub fn discount_namespace_hops(out: &mut Walked) {
-    let namespaces: HashSet<&str> = out
-        .symbols
-        .imports
-        .iter()
-        .flat_map(|import| import.imported_symbols.iter().zip(&import.bindings))
-        .filter(|(symbol, _)| *symbol == "*")
-        .map(|(_, binding)| binding.as_str())
-        .collect();
-    if namespaces.is_empty() {
-        return;
-    }
-    for hit in out
-        .units
-        .functions
-        .iter_mut()
-        .flat_map(|f| f.chain_hits.iter_mut())
-    {
-        if hit.root.as_deref().is_some_and(|r| namespaces.contains(r)) {
-            hit.depth = hit.depth.saturating_sub(1);
         }
     }
 }

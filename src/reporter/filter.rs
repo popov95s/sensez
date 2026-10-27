@@ -6,9 +6,10 @@
 //! a view over [`crate::report::AnalysisReport`] and the filter is just
 //! another one — same data, narrower slice.
 
+use crate::globs::build_globset;
 use crate::report::AnalysisReport;
 use anyhow::Result;
-use globset::{Glob, GlobSet};
+use globset::GlobSet;
 use std::path::{Path, PathBuf};
 
 /// Drop findings from `report` whose source paths do not match the
@@ -95,17 +96,13 @@ struct PatternSet {
 
 impl PatternSet {
     fn new(patterns: &[&str]) -> Result<Self> {
-        let mut builder = GlobSet::builder();
-        let mut component_patterns = Vec::new();
-        for pattern in patterns {
-            builder.add(Glob::new(pattern)?);
-            if is_single_literal_component(pattern) {
-                component_patterns.push(pattern.to_string());
-            }
-        }
         Ok(Self {
-            globs: builder.build()?,
-            component_patterns,
+            globs: build_globset(patterns)?,
+            component_patterns: patterns
+                .iter()
+                .filter(|pattern| is_single_literal_component(pattern))
+                .map(|pattern| pattern.to_string())
+                .collect(),
         })
     }
 
@@ -225,6 +222,18 @@ mod tests {
         );
         assert_eq!(report.dead_code.len(), 1);
         assert_eq!(report.meta.dead_code_total, 1);
+    }
+
+    #[test]
+    fn single_star_stays_within_one_directory() {
+        let mut report = AnalysisReport {
+            dead_code: vec![dead("/repo/pkg/a.py"), dead("/repo/pkg/sub/b.py")],
+            ..Default::default()
+        };
+
+        apply(&mut report, Path::new("/repo"), &["pkg/*.py".to_string()]).unwrap();
+
+        assert_eq!(report.dead_code.len(), 1, "{:?}", report.dead_code);
     }
 
     #[test]

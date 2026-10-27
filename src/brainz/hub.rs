@@ -120,10 +120,10 @@ pub(super) fn baselines() -> Vec<(PathBuf, Baseline)> {
         .collect()
 }
 
-pub(super) fn mark_rescanned(root: &Path) {
+pub(super) fn mark_rescanned(root: &Path, ts: u64) {
     if let Some(state) = hub().repos.get_mut(root) {
         if let Some(baseline) = state.baseline.as_mut() {
-            baseline.ts = now();
+            baseline.ts = ts;
             baseline.source_state = state.observed_source_state.clone();
         }
     }

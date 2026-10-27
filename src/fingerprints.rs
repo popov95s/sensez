@@ -6,7 +6,7 @@
 
 use std::collections::BTreeMap;
 use std::fmt::Display;
-use std::hash::{Hash, Hasher};
+use std::hash::Hasher;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub struct Fingerprint<N, L, C = N> {
@@ -53,17 +53,19 @@ impl<N, L, C> Fingerprint<N, L, C> {
 
 pub type Groups<N, L, C = N> = BTreeMap<N, Vec<Fingerprint<N, L, C>>>;
 
+/// Stable identity hash of `parts`; each part ends with `0xff`, which never occurs in UTF-8.
 pub fn hash_parts(parts: &[&str]) -> u64 {
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    let mut bytes = Vec::new();
     for part in parts {
-        part.hash(&mut hasher);
+        bytes.extend_from_slice(part.as_bytes());
+        bytes.push(0xff);
     }
-    hasher.finish()
+    hash_bytes(&bytes)
 }
 
 /// Hash raw bytes for content identity (cache keys and change detection).
 pub fn hash_bytes(bytes: &[u8]) -> u64 {
-    let mut hasher = std::collections::hash_map::DefaultHasher::new();
+    let mut hasher = siphasher::sip::SipHasher13::new_with_keys(0, 0);
     hasher.write(bytes);
     hasher.finish()
 }
@@ -108,5 +110,19 @@ mod tests {
         assert_ne!(first, hash_parts(&["b", "a"]));
         assert_ne!(first, hash_parts(&["ab"]));
         assert_ne!(hash_bytes(b"x = 1\n"), hash_bytes(b"x = 2\n"));
+    }
+
+    #[test]
+    fn persisted_hashes_match_pinned_values() {
+        assert_eq!(
+            hash_parts(&["app", "orphan", "function"]),
+            0x5fad_aa35_75b4_44cc
+        );
+        assert_eq!(hash_bytes(b"x = 1\n"), 0x5e2c_7e9d_0099_3a31);
+        assert_eq!(hash_bytes(b""), 0xd1fb_a762_150c_532c);
+        assert_eq!(
+            hash_bytes(b"a much longer input that spans several sip words"),
+            0x6cf6_e552_073f_95e1
+        );
     }
 }

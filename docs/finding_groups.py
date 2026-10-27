@@ -51,6 +51,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.MESSAGE_CHAIN,
             SmellTerm.REFUSED_BEQUEST,
             SmellTerm.SHOTGUN_SURGERY_HAZARD,
+            SmellTerm.SIBLING_HELPER_REDEFINITION,
         ),
     ),
     (
@@ -60,6 +61,7 @@ GROUPS: tuple[FindingGroup, ...] = (
             SmellTerm.LOOSE_TYPING,
             SmellTerm.TUPLE_PACKING,
             SmellTerm.DEFENSIVE_FALLBACK,
+            SmellTerm.SWALLOWED_ERROR_SENTINEL,
         ),
     ),
     (

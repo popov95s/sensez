@@ -40,75 +40,68 @@ fn brainz_records_fix_and_reintroduction() {
     );
 }
 
-/// When a past-limit finding defers and a fresh one stays, the gate's
-/// block reason names the deferred count.
+/// A finding fixed and reintroduced more than `repeat_limit` times defers,
+/// and a fresh finding next to it still blocks with the deferral named.
 #[test]
 fn gate_block_message_mentions_deferred_repeats() {
     let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
+    let orphan_a = "def a():\n    return 1\n\nprint('x')\n";
+    let fixed = "print('x')\n";
 
-    // Turn 1: one orphan, fresh — block, no deferral.
-    std::fs::write(&repo.file, "def a():\n    return 1\n\nprint('x')\n").unwrap();
-    let first_decision = block_decision(&gate(&json!({"path": repo.path})).unwrap());
-    assert_eq!(first_decision["decision"], "block");
-    assert!(
-        !first_decision["reason"]
-            .as_str()
-            .unwrap()
-            .contains("Auto-deferred"),
-        "first turn: nothing deferred yet"
-    );
+    for turn in 0..2 {
+        std::fs::write(&repo.file, orphan_a).unwrap();
+        let decision = block_decision(&gate(&json!({"path": repo.path})).unwrap());
+        assert_eq!(decision["decision"], "block", "turn {turn}");
+        assert!(
+            !decision["reason"]
+                .as_str()
+                .unwrap()
+                .contains("Auto-deferred"),
+            "turn {turn}: nothing deferred yet"
+        );
+        std::fs::write(&repo.file, fixed).unwrap();
+        assert_eq!(
+            gate(&json!({"path": repo.path})).unwrap()["content"][0]["text"],
+            "{}"
+        );
+    }
 
-    // Turn 2: same content — signature dedup, allow.
-    let second = gate(&json!({"path": repo.path})).unwrap();
-    assert_eq!(second["content"][0]["text"], "{}");
-
-    // Turn 3: `a` is past repeat_limit and defers; `b` is fresh and
-    // stays. Report signature differs from the last blocked — block
-    // with the deferred count named in the reason.
     std::fs::write(
         &repo.file,
         "def a():\n    return 1\n\ndef b():\n    return 2\n\nprint('x')\n",
     )
     .unwrap();
-    let third_decision = block_decision(&gate(&json!({"path": repo.path})).unwrap());
-    assert_eq!(third_decision["decision"], "block");
-    assert!(
-        third_decision["reason"]
-            .as_str()
-            .unwrap()
-            .contains("Auto-deferred 1 finding"),
-        "deferred count is named in the block reason: {}",
-        third_decision["reason"]
-    );
+    let third = block_decision(&gate(&json!({"path": repo.path})).unwrap());
+    assert_eq!(third["decision"], "block");
+    let reason = third["reason"].as_str().unwrap();
+    assert!(reason.contains("Auto-deferred 1 finding"), "{reason}");
+    assert!(reason.contains("1 diff finding(s)"), "{reason}");
 }
 
 /// Auto-defer is bounded: the first defer expires after three days
 /// and the finding resurfaces; a second defer is permanent.
 #[test]
 fn gate_deferred_finding_resurfaces_after_expiry() {
-    let _metrics = crate::test_support::metrics_guard();
-    use super::repeats::{suppress_repeated_at, DEFER_EXPIRY_SECS};
-    let tmp = tempfile::tempdir().unwrap();
-    let root = tmp.path();
-    let file = root.join("a.py");
-    std::fs::write(&file, "def f():\n    pass\n").unwrap();
+    use super::repeats::{suppress_repeated, RepeatState, DEFER_EXPIRY_SECS};
+    let file = Path::new("a.py");
+    let mut state = RepeatState::default();
 
-    let mut first = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, None, &mut first, 1, 10);
+    let mut first = smell_report(file, 1);
+    let outcome = suppress_repeated(&mut state, &mut first, 1, 10);
     assert_eq!(outcome.deferred, 0);
     assert_eq!(first.smells.len(), 1);
 
-    let mut deferred = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, None, &mut deferred, 1, 11);
+    let mut deferred = smell_report(file, 1);
+    let outcome = suppress_repeated(&mut state, &mut deferred, 1, 11);
     assert_eq!(outcome.deferred, 1);
     assert!(deferred.smells.is_empty());
 
     let expiry = 11 + DEFER_EXPIRY_SECS;
-    let mut resurface = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, None, &mut resurface, 1, expiry);
+    let mut resurface = smell_report(file, 1);
+    let outcome = suppress_repeated(&mut state, &mut resurface, 1, expiry);
     assert_eq!(
         outcome.deferred, 0,
         "expired defer does not count as deferred"
@@ -119,14 +112,13 @@ fn gate_deferred_finding_resurfaces_after_expiry() {
         "finding resurfaces for re-evaluation"
     );
 
-    let mut second_defer = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(root, None, &mut second_defer, 1, expiry + 1);
+    let mut second_defer = smell_report(file, 1);
+    let outcome = suppress_repeated(&mut state, &mut second_defer, 1, expiry + 1);
     assert_eq!(outcome.deferred, 1);
 
-    let mut much_later = smell_report(&file, 1);
-    let outcome = suppress_repeated_at(
-        root,
-        None,
+    let mut much_later = smell_report(file, 1);
+    let outcome = suppress_repeated(
+        &mut state,
         &mut much_later,
         1,
         expiry + DEFER_EXPIRY_SECS * 10,

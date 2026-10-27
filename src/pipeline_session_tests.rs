@@ -1,5 +1,18 @@
-use super::{analyze_path_in_session, session::AnalysisSession};
+use super::{analyze_with_config, session::AnalysisSession};
+use crate::config::Config;
+use crate::report::AnalysisReport;
 use std::fs;
+use std::path::{Path, PathBuf};
+
+type Analysis = anyhow::Result<(AnalysisReport, std::collections::HashMap<String, PathBuf>)>;
+
+fn analyze_path_in_session(
+    session: &AnalysisSession,
+    path: &Path,
+    threshold: Option<usize>,
+) -> Analysis {
+    analyze_with_config(path, threshold, Some(session), Config::load_for_scan(path))
+}
 
 #[test]
 fn changed_file_can_create_and_remove_cross_file_duplication() {
@@ -137,4 +150,25 @@ fn changed_consumer_updates_provider_dead_code() {
         .dead_code
         .iter()
         .any(|finding| finding.symbol == "live"));
+}
+
+#[cfg(unix)]
+#[test]
+fn unreadable_source_reports_why_the_analysis_cache_was_skipped() {
+    use std::os::unix::fs::PermissionsExt;
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
+    fs::write(dir.join("locked.py"), "x = 1\n").unwrap();
+    fs::set_permissions(dir.join("locked.py"), fs::Permissions::from_mode(0o000)).unwrap();
+
+    let report = super::analyze_in_session(&AnalysisSession::default(), dir, None)
+        .unwrap()
+        .0;
+
+    fs::set_permissions(dir.join("locked.py"), fs::Permissions::from_mode(0o644)).unwrap();
+    assert!(report.meta.issues.iter().any(|issue| {
+        issue.stage == crate::report::ScanStage::Discover
+            && issue.message.starts_with("analysis cache skipped")
+    }));
 }

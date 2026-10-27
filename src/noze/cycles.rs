@@ -1,7 +1,7 @@
 //! Pillar 3: circular-import detection via Tarjan's SCC algorithm.
 
 use crate::config::Cycles;
-use crate::globs::build_globset;
+use crate::globs::compile_validated;
 use crate::report::{ActionLevel, CycleEdge, CycleFinding};
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::{ImportContext, ImportPhase};
@@ -17,7 +17,7 @@ const TYPE_LEVEL: &[ImportPhase] = &[ImportPhase::Runtime, ImportPhase::TypeOnly
 
 /// Find strongly connected module components; each finding lists every member and one closed loop.
 pub fn detect(cg: &CodebaseGraph, config: &Cycles) -> Vec<CycleFinding> {
-    let excluded = build_globset(&config.exclude).unwrap_or_else(|_| globset::GlobSet::empty());
+    let excluded = compile_validated(&config.exclude);
     let runtime = EdgeFiltered::from_fn(&cg.graph, |edge| is_cycle_edge(edge, RUNTIME));
     let runtime_sccs: Vec<Vec<NodeIndex>> = filter_reportable_sccs(
         cg,
