@@ -3,7 +3,8 @@
 //! scope are known); languages that don't populate a field leave its default.
 
 use super::{
-    EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StringFallback, TypeEscape,
+    EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StateWrite, StringFallback,
+    TypeEscape,
 };
 use std::collections::{HashMap, HashSet};
 
@@ -185,6 +186,10 @@ pub struct FunctionUnit {
     pub is_constructor: bool,
     /// Plain assignments to own-instance members (`this.x = …`).
     pub self_writes: usize,
+    /// Member, outer-name and request writes (method-call writes live in `performance.calls`).
+    pub state_writes: Vec<StateWrite>,
+    /// A property accessor (`get x()`) rather than a named function.
+    pub is_accessor: bool,
     /// Receivers also subscripted with a computed (non-literal) key.
     pub dynamic_key_receivers: HashSet<String>,
     /// The tuple return annotation repeats one primitive type.

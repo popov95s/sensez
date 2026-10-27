@@ -4,6 +4,11 @@ use crate::report::{ActionLevel, SmellKind};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
+const READ_PREFIXES: [&str; 7] = ["get", "is", "has", "find", "list", "validate", "check"];
+const WRITE_METHODS: [&str; 10] = [
+    "insert", "patch", "upsert", "delete", "update", "set", "save", "commit", "post", "put",
+];
+
 #[derive(Debug, Clone, Copy, Hash, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum Strictness {
@@ -85,6 +90,9 @@ pub struct Smells {
     pub n_plus_one_await_in_loop: bool,
     pub dependency_reimplementation_providers: Vec<String>,
     pub stub_markers: Vec<String>,
+    pub name_promise_read_prefixes: Vec<String>,
+    pub name_promise_write_methods: Vec<String>,
+    pub name_promise_strictness: Strictness,
     #[serde(skip)]
     pub compiled: super::compiled::Compiled,
 }
@@ -169,6 +177,9 @@ impl Default for Smells {
             stub_markers: ["not implemented", "todo", "unimplemented", "placeholder"]
                 .map(String::from)
                 .to_vec(),
+            name_promise_read_prefixes: READ_PREFIXES.map(String::from).to_vec(),
+            name_promise_write_methods: WRITE_METHODS.map(String::from).to_vec(),
+            name_promise_strictness: Strictness::Medium,
             compiled: Default::default(),
         }
     }

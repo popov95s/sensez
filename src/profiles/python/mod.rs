@@ -24,6 +24,7 @@ mod risk_facts;
 mod roots;
 mod scope;
 mod script_imports;
+mod state_writes;
 mod stub_body;
 mod symbols;
 mod tokens;

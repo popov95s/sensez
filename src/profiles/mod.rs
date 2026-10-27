@@ -20,6 +20,7 @@ pub(crate) mod guard_clause;
 pub(crate) mod guard_fingerprint;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod handler_end;
+pub(crate) mod lazy_init;
 pub(crate) mod lexeme;
 pub(crate) mod lineage;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
@@ -56,8 +57,7 @@ use crate::spine::ir::{
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
-/// Compile built-in profile globs once at their call site rather than
-/// duplicating filename conventions in consumers.
+/// Compile built-in profile globs once, where the conventions are declared.
 pub(crate) fn compile_profile_globs(patterns: &[&str]) -> globset::GlobSet {
     let compiled: Vec<String> = patterns
         .iter()

@@ -111,8 +111,21 @@ def default_knob_values() -> dict[str, str]:
     knobs = {}
     for kind, key, field in _rule_knob_fields():
         value = fields.get(field, "10")
-        knobs[f"{kind}.{key}"] = "[]" if value == "Vec::new()" else value
+        knobs[f"{kind}.{key}"] = "[]" if value == "Vec::new()" else _const_list(value)
     return knobs
+
+
+def _const_list(value: str) -> str:
+    """Inline a `NAME.map(String::from).to_vec()` default from its `const NAME` list."""
+    match = re.fullmatch(r"(\w+)\.map\(String::from\)\.to_vec\(\)", value)
+    if not match:
+        return value
+    source = SMELL_KNOBS_RS.read_text()
+    body = re.search(rf"const {match.group(1)}: \[&str; \d+\] = \[(.*?)\];", source, re.DOTALL)
+    if not body:
+        return value
+    items = re.findall(r'"[^"]*"', body.group(1))
+    return f"[{', '.join(items)}]"
 
 
 def default_enabled(smell_term: SmellTerm, language: str) -> bool:

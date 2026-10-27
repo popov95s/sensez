@@ -16,4 +16,6 @@ pub(crate) const WORDING: SmellWording = SmellWording {
     double_api_prefixes: &[],
     test_file_prefix: "",
     test_file_suffix: "",
+    write_methods: &["push", "remove", "clear"],
+    private_name_prefixes: &[],
 };

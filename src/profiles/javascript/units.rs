@@ -9,7 +9,8 @@ use super::member_visibility::{callback_position, function_visibility, method_vi
 use super::nesting::{cognitive_weight, is_branch, is_else_if, is_nesting};
 use super::params::param_names;
 use super::{
-    classunit, conditionals, control_shapes, loops, magic_numbers, obsession, performance, symbols,
+    classunit, conditionals, control_shapes, loops, magic_numbers, obsession, performance,
+    state_writes, symbols,
 };
 use crate::profiles::branch_path::branch_path;
 use crate::profiles::guard_clause::is_guard_return;
@@ -83,6 +84,7 @@ impl FunctionFacts {
         unit.review_risks.is_test_case = super::risk_facts::is_test_callback(lineage, src);
         unit.review_risks.stub = super::stub_body::stub_body(func, src);
         unit.is_constructor = is_method && unit.name == "constructor";
+        unit.is_accessor = is_method && is_accessor(func);
         let body = func.child_by_field_name("body");
         let range = body.map(|b| b.byte_range()).unwrap_or(0..0);
         let frames = loops::iteration_callback_frame(lineage, src)
@@ -117,6 +119,7 @@ impl FunctionFacts {
         obsession::scan(&mut self.unit, node, src);
         let frame = self.frame();
         performance::scan(&mut self.unit.performance, lineage, src, frame);
+        state_writes::scan(&mut self.unit, lineage, src);
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
@@ -189,7 +192,8 @@ impl FunctionFacts {
         self.frames.truncate(self.frames.len() - entered.frames);
     }
 
-    pub fn finish(self) -> FunctionUnit {
+    pub fn finish(mut self) -> FunctionUnit {
+        state_writes::drop_locals(&mut self.unit);
         self.unit
     }
 }
@@ -307,6 +311,15 @@ fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
     (function.kind() == "identifier")
         .then(|| function.utf8_text(src).ok().map(str::to_string))
         .flatten()
+}
+
+/// `get x()` / `set x(v)`.
+fn is_accessor(func: Node) -> bool {
+    let mut cursor = func.walk();
+    let accessor = func
+        .children(&mut cursor)
+        .any(|child| matches!(child.kind(), "get" | "set"));
+    accessor
 }
 
 fn is_own_member(node: Node) -> bool {

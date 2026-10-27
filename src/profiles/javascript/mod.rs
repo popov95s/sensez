@@ -33,6 +33,7 @@ pub(crate) mod roots;
 pub(crate) mod runner_config;
 mod runtime_guard;
 pub(crate) mod scope;
+mod state_writes;
 mod stub_body;
 pub(crate) mod symbols;
 pub(crate) mod test_support;

@@ -71,6 +71,7 @@ impl<'u> Acc<'u> {
         });
         super::obsession::scan(self.unit, node, src);
         performance::scan(&mut self.unit.performance, node, src, frame);
+        super::state_writes::scan(self.unit, node, src);
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }

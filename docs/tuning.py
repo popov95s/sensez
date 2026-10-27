@@ -62,8 +62,10 @@ KNOB_COMMENTS = {
     "min_similarity": "percent of matching body lexemes required between copies",
     "min_units": "top-level functions and classes required (or min_lines)",
     "providers": "in-house packages whose same-named functions count as providers",
+    "read_prefixes": "name prefixes that promise a read",
     "skip_capturing": "drop nested functions that read parent locals",
     "skip_external_vocab": "ignore extension, MIME, path, and error-code lists",
+    "write_methods": "method names that count as writes on outside receivers (each language adds its own mutators)",
 }
 
 
@@ -90,7 +92,7 @@ def example_knob_value(smell_term: SmellTerm, key: str) -> str:
 def render_tuning(smell_term: SmellTerm, knobs: list[str]) -> str:
     strictness_rule = strictness_rules().get(smell_term)
     if strictness_rule:
-        return render_ranked_tuning(smell_term, strictness_rule)
+        return render_ranked_tuning(smell_term, strictness_rule, knobs)
     lines = [
         "**Tune It**\n\n",
         "Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.\n\n",
@@ -121,15 +123,24 @@ def render_ranked_examples(smell_term: SmellTerm, fixes) -> str:
     return "".join(lines)
 
 
-def render_ranked_tuning(smell_term: SmellTerm, rule: StrictnessRule) -> str:
-    return render_tabbed_tuning(smell_term, ranked_tuning_tabs(rule))
+def render_ranked_tuning(smell_term: SmellTerm, rule: StrictnessRule, knobs: list[str]) -> str:
+    return render_tabbed_tuning(smell_term, ranked_tuning_tabs(smell_term, rule, knobs))
 
 
-def ranked_tuning_tabs(rule: StrictnessRule) -> list[TuningTab]:
+def ranked_tuning_tabs(
+    smell_term: SmellTerm,
+    rule: StrictnessRule,
+    knobs: list[str],
+) -> list[TuningTab]:
+    extra = tuple(
+        (key, f"{example_knob_value(smell_term, key)} # {KNOB_COMMENTS.get(key, 'detector-specific threshold')}")
+        for key in knobs
+        if key != rule.knob
+    )
     return [
         TuningTab(
             title=level.title,
-            knobs=((rule.knob, f'"{level.value}"'),),
+            knobs=((rule.knob, f'"{level.value}"'), *extra),
             description=level.description,
         )
         for level in rule.levels
