@@ -133,6 +133,7 @@ pub(super) fn scan(
     frame: Option<usize>,
 ) {
     let node = lineage.node();
+    super::echo_facts::scan(unit, node, src);
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
     }

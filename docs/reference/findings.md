@@ -4746,6 +4746,108 @@ providers = [] # in-house packages whose same-named functions count as providers
 </table>
 </details>
 
+### Fixture Echo Assertion (`fixture_echo_assertion`)
+
+**What it is**
+
+A test assertion cannot fail: both sides are the same expression, equal literals, or a field read from a fixture and its unchanged alias; or, with `include_mock_only`, the test only checks that a mock it programmed was called — assert on what the code under test produced.
+
+**Why it's bad**
+
+An assertion that compares a value with itself passes whatever the code under test does, so the test reports coverage it does not have.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def rename(label: str) -> str:
+        return label.strip()
+
+
+    def test_keeps_label() -> None:
+        label = rename(" box ")
+        assert label == label
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Compare the result of the call under test with an independently written expected value.
+
+    ```python
+    def rename(label: str) -> str:
+        return label.strip()
+
+
+    def test_keeps_label() -> None:
+        assert rename(" box ") == "box"
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    import assert from "node:assert/strict";
+    import test from "node:test";
+
+    function rename(label: string): string {
+      return label.trim();
+    }
+
+    test("keeps the label", () => {
+      const label = rename(" box ");
+      assert.equal(label, label);
+    });
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Pass the result of the call under test to `expect` and an independently written value to the matcher; for mocks, also assert on the value the subject returned.
+
+    ```ts
+    import assert from "node:assert/strict";
+    import test from "node:test";
+
+    function rename(label: string): string {
+      return label.trim();
+    }
+
+    test("keeps the label", () => {
+      assert.equal(rename(" box "), "box");
+    });
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.fixture_echo_assertion]
+enabled = true
+action = "warning"
+include_mock_only = false # also flag tests whose only checks are was-called checks on mocks they programmed
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ### Mocked Subject (`mocked_subject`)
 
 **What it is**

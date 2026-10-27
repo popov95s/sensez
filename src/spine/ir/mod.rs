@@ -4,6 +4,7 @@
 //! `crate::spine::parser` (dispatch) depend on this module — neither on the other's
 //! internals — which keeps the profile seam acyclic.
 
+mod echo;
 mod fallback;
 mod import_context;
 mod lang;
@@ -18,6 +19,7 @@ mod utility;
 
 #[cfg(feature = "eyez")]
 use crate::eyez::RawDoc;
+pub use echo::{EchoAssertion, EchoShape};
 pub use fallback::{FallbackSink, StringFallback};
 pub use import_context::{ImportContext, ImportPhase};
 pub use lang::Language;

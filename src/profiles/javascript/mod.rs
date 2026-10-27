@@ -10,6 +10,7 @@ pub(crate) mod const_eval;
 mod control_shapes;
 pub(crate) mod deadcode;
 pub(crate) mod declaration;
+pub(crate) mod echo_facts;
 pub(crate) mod fallback_sink;
 pub(crate) mod generated;
 pub(crate) mod grammar;

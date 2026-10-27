@@ -12,6 +12,8 @@ pub(crate) mod comments;
 pub(crate) mod conditionals;
 pub mod dependencies;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
+pub(crate) mod echo_assertion;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod fallback_guard;
 pub(crate) mod for_loop;
 pub(crate) mod guard_clause;

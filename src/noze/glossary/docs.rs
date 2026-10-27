@@ -757,6 +757,13 @@ FindingDocs {
         fixes: &[LanguageBlock { language: "python", body: "Implement the function, delete it with its callers, or declare it with `@abstractmethod` on an `ABC`/`Protocol`." }, LanguageBlock { language: "typescript", body: "Implement the function, delete it with its callers, or declare it `abstract` or as an interface member. Tune the thrown messages with `markers`." }],
     },
     FindingDocs {
+        kind: FixtureEchoAssertion,
+        why_bad: "An assertion that compares a value with itself passes whatever the code under test does, so the test reports coverage it does not have.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Compare the result of the call under test with an independently written expected value." }, LanguageBlock { language: "typescript", body: "Pass the result of the call under test to `expect` and an independently written value to the matcher; for mocks, also assert on the value the subject returned." }],
+    },
+    FindingDocs {
         kind: WeakTestOracle,
         why_bad: "A test that only executes code can pass when behavior is wrong.",
         external_lints: &[],

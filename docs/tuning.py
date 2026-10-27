@@ -33,6 +33,7 @@ KNOB_COMMENTS = {
     "ignore_default_values": "skip literals in parameter default values",
     "ignore_roots": "chain roots never reported, e.g. a generated API client",
     "include_attributes": "also flag mutation of fields on parameters",
+    "include_mock_only": "also flag tests whose only checks are was-called checks on mocks they programmed",
     "include_tests": "also flag test code and assertion arguments",
     "max_bool_params": "allowed boolean parameters before flagging",
     "max_chain_depth": "allowed property/call chain depth",

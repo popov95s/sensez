@@ -6,6 +6,7 @@ mod comment_syntax;
 mod conditionals;
 mod control_shapes;
 mod deadcode;
+mod echo_facts;
 mod generated;
 mod imports;
 mod lexeme;

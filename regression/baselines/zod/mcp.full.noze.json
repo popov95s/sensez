@@ -624,7 +624,7 @@
       "cycles": 2,
       "dead_code": 5,
       "duplication": 20,
-      "smells": 257
+      "smells": 264
     },
     "truncated": false
   },
@@ -2592,6 +2592,46 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/coalesce.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 4,
+      "message": "assertion cannot fail: both sides are the same literal; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"coalesce\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/json.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 4,
+      "message": "assertion cannot fail: both sides are the same literal; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"placeholder test\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/tuple.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 62,
+      "message": "assertion cannot fail: both sides are the same expression; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"async validation\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/tuple.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 9,
+      "message": "assertion cannot fail: both sides are the same expression; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"successful validation\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/checks.ts",
       "kind": "shotgun_surgery_hazard",
       "message": "depended on by 56 distinct modules \u2014 a change here scatters edits widely",
@@ -2923,6 +2963,26 @@
     },
     {
       "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/tests/index.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 29,
+      "message": "assertion cannot fail: both sides are the same expression; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"async validation\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/tests/index.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 5,
+      "message": "assertion cannot fail: both sides are the same literal; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"test\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
       "file": "<zod>/packages/zod/src/v4/core/to-json-schema.ts",
       "kind": "nested_loop",
       "line": 321,
@@ -3228,6 +3288,16 @@
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/mini/tests/functions.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 4,
+      "message": "assertion cannot fail: both sides are the same literal; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"z.function\") callback",
       "threshold": 0
     },
     {

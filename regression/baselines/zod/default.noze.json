@@ -318,6 +318,7 @@
       "data_clump": 3,
       "divergent_change": 7,
       "feature_envy": 5,
+      "fixture_echo_assertion": 7,
       "heavy_nested_function": 3,
       "large_class": 2,
       "loose_typing": 81,
@@ -337,7 +338,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 257,
+    "smells_total": 264,
     "source_lines": 72099
   },
   "smells": [
@@ -650,6 +651,36 @@
       "message": "mutates input parameter(s) [reg] \u2014 caller-visible side effect; return a new value instead",
       "metric": 1,
       "symbol": "register",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/coalesce.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 4,
+      "message": "assertion cannot fail: both sides are the same literal; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"coalesce\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/json.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 4,
+      "message": "assertion cannot fail: both sides are the same literal; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"placeholder test\") callback",
+      "threshold": 0
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/classic/tests/tuple.test.ts",
+      "kind": "fixture_echo_assertion",
+      "line": 9,
+      "message": "assertion cannot fail: both sides are the same expression; compare the result under test with an independent expected value",
+      "metric": 1,
+      "symbol": "test(\"successful validation\") callback",
       "threshold": 0
     },
     {

@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 43] = {
+pub const ALL_SMELLS: [SmellKind; 44] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -32,6 +32,7 @@ pub const ALL_SMELLS: [SmellKind; 43] = {
         DivergentAbstraction,
         DivergentChange,
         FeatureEnvy,
+        FixtureEchoAssertion,
         GodModule,
         HeavyNestedFunction,
         HighCognitiveComplexity,
@@ -70,7 +71,7 @@ pub const ALL_SMELLS: [SmellKind; 43] = {
     ]
 };
 
-pub const SMELLS: [SmellDoc; 43] = {
+pub const SMELLS: [SmellDoc; 44] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -81,6 +82,7 @@ pub const SMELLS: [SmellDoc; 43] = {
         SmellDoc { kind: DivergentAbstraction, title: "Divergent Abstraction", explanation: "An abstraction has only two implementations that grow in different directions — remove the forced common type or narrow it to genuine shared behavior." },
         SmellDoc { kind: DivergentChange, title: "Divergent Change", explanation: "One module gets edited for many unrelated reasons — it has too many responsibilities; split it along those axes." },
         SmellDoc { kind: FeatureEnvy, title: "Feature Envy", explanation: "A method uses another object's data more than its own — move it onto the class that owns that data." },
+        SmellDoc { kind: FixtureEchoAssertion, title: "Fixture Echo Assertion", explanation: "A test assertion cannot fail: both sides are the same expression, equal literals, or a field read from a fixture and its unchanged alias; or, with `include_mock_only`, the test only checks that a mock it programmed was called — assert on what the code under test produced." },
         SmellDoc { kind: GodModule, title: "God Module", explanation: "A sizeable module that many modules depend on and that itself depends on many internal modules at runtime (high centrality) — a coupling and change-risk hotspot; split its responsibilities." },
         SmellDoc { kind: HeavyNestedFunction, title: "Heavy Nested Function", explanation: "An inner/nested function that grew large and logic-heavy — promote it to a top-level, testable function." },
         SmellDoc { kind: HighCognitiveComplexity, title: "High Cognitive Complexity", explanation: "Hard for a human to follow — nested branches and loops weighted by depth; simplify or break it up." },

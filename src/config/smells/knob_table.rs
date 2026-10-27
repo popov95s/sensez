@@ -209,6 +209,11 @@ pub(super) const RULE_KNOBS: &[(SmellKind, &str, Knob)] = &[
         Globs(|s| &mut s.assertion_functions),
     ),
     (
+        K::FixtureEchoAssertion,
+        "include_mock_only",
+        Bool(|s| &mut s.fixture_echo_include_mock_only),
+    ),
+    (
         K::NPlusOneCall,
         "callees",
         Globs(|s| &mut s.n_plus_one_callees),

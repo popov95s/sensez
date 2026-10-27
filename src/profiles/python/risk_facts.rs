@@ -101,6 +101,7 @@ pub(super) fn scan(
     src: &[u8],
     frame: Option<usize>,
 ) {
+    super::echo_facts::scan(unit, node, src);
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
     }

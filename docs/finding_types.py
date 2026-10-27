@@ -26,6 +26,7 @@ class SmellTerm(StrEnum):
     DIVERGENT_ABSTRACTION = "divergent_abstraction"
     DIVERGENT_CHANGE = "divergent_change"
     FEATURE_ENVY = "feature_envy"
+    FIXTURE_ECHO_ASSERTION = "fixture_echo_assertion"
     GOD_MODULE = "god_module"
     HEAVY_NESTED_FUNCTION = "heavy_nested_function"
     HIGH_COGNITIVE_COMPLEXITY = "high_cognitive_complexity"

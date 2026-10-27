@@ -12,6 +12,7 @@ mod coupling;
 mod dependency_reimplementation;
 mod exclusive_paths;
 mod external_vocab;
+mod fixture_echo;
 mod graphy;
 mod inherit;
 mod lines;
@@ -37,6 +38,8 @@ mod coupling_tests;
 mod defensive_code_tests;
 #[cfg(test)]
 mod dependency_reimplementation_tests;
+#[cfg(test)]
+mod fixture_echo_tests;
 #[cfg(test)]
 mod god_module_tests;
 #[cfg(test)]
@@ -161,6 +164,7 @@ fn test_rules(file: &ParsedFile, settings: &Smells) -> Vec<SmellFinding> {
             settings,
         ));
     }
+    fixture_echo::detect(&ctx, &file.walked.units.functions, settings, &mut findings);
     findings.retain(|finding| settings.is_enabled(finding.kind));
     apply_actions(&mut findings, settings);
     fill_spans(file, &mut findings);
@@ -190,6 +194,7 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     stub_shipped::detect(&ctx, metrics, &cfg.stub_markers, &mut out);
     typing::detect(&ctx, metrics, cfg, &mut out);
     mutation::detect(&ctx, metrics, cfg, &mut out);
+    fixture_echo::detect(&ctx, metrics, cfg, &mut out);
     out.extend(performance::detect(&ctx, metrics, cfg));
     out.extend(mocked_subject::detect(file, &ctx, cfg));
     out.retain(|f| cfg.is_enabled(f.kind));

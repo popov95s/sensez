@@ -153,7 +153,7 @@ fn weak_test_oracles(
 }
 
 /// Same-file non-test helpers that check directly or through another checked helper.
-fn checked_helpers<'a>(
+pub(super) fn checked_helpers<'a>(
     metrics: &'a [FunctionUnit],
     assertion_functions: &GlobSet,
 ) -> HashSet<&'a str> {
@@ -179,7 +179,7 @@ fn checked_helpers<'a>(
     }
 }
 
-fn calls_check(
+pub(super) fn calls_check(
     unit: &FunctionUnit,
     checked: &HashSet<&str>,
     assertion_functions: &GlobSet,
