@@ -328,6 +328,8 @@
       "nested_loop": 26,
       "nested_ternary": 8,
       "shotgun_surgery_hazard": 3,
+      "sibling_helper_redefinition": 94,
+      "swallowed_error_sentinel": 1,
       "unnecessary_nested_if": 13
     },
     "smells_skipped": {
@@ -335,7 +337,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 162,
+    "smells_total": 257,
     "source_lines": 72099
   },
   "smells": [
@@ -428,6 +430,46 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 10,
+      "message": "`number` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1128, mini/coerce.ts:L10, mini/schemas.ts:L557 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "number",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 15,
+      "message": "`boolean` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1183, mini/coerce.ts:L15, mini/schemas.ts:L619 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "boolean",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 20,
+      "message": "`bigint` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1234, mini/coerce.ts:L20, mini/schemas.ts:L636 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "bigint",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/coerce.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 25,
+      "message": "`date` (1 params) is defined again with a near-identical body in classic/schemas.ts:L1376, mini/coerce.ts:L25, mini/schemas.ts:L801 \u2014 keep one and import it",
+      "metric": 4,
+      "symbol": "date",
+      "threshold": 2
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/classic/errors.ts",
       "kind": "narrating_code",
       "line": 31,
@@ -485,6 +527,16 @@
       "metric": 6,
       "symbol": "_ctx+_params+_schema+json+schema",
       "threshold": 3
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/locales/ar.ts",
+      "kind": "sibling_helper_redefinition",
+      "line": 5,
+      "message": "`error` (0 params) is defined again with a near-identical body in az.ts:L5, ca.ts:L5, cs.ts:L5, da.ts:L5, de.ts:L5, el.ts:L5, eo.ts:L5, fa.ts:L5, fr-CA.ts:L5, fr.ts:L5, hu.ts:L5, id.ts:L5, is.ts:L5, it.ts:L5, ja.ts:L5, ka.ts:L5, km.ts:L5, mk.ts:L5, ms.ts:L5, no.ts:L5, ota.ts:L5, pl.ts:L5, ps.ts:L5, pt.ts:L5, sl.ts:L5, sv.ts:L5, ta.ts:L5, th.ts:L5, tr.ts:L5, uk.ts:L5, ur.ts:L5, uz.ts:L5, vi.ts:L5, yo.ts:L5, zh-CN.ts:L5, zh-TW.ts:L5 \u2014 keep one and import it",
+      "metric": 37,
+      "symbol": "error",
+      "threshold": 2
     },
     {
       "action": "advisory",
@@ -835,6 +887,16 @@
       "metric": 63,
       "symbol": "src/v4/core/util",
       "threshold": 54
+    },
+    {
+      "action": "warning",
+      "file": "<zod>/packages/zod/src/v4/core/util.ts",
+      "kind": "swallowed_error_sentinel",
+      "line": 380,
+      "message": "catch at line 380 returns `false` and drops the error, so callers get a plausible value instead of a failure; rethrow it or return a typed failure (`{ ok: false, error }`) the caller must handle",
+      "metric": 1,
+      "symbol": "cached callback",
+      "threshold": 0
     },
     {
       "action": "warning",

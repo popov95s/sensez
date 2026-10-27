@@ -11,13 +11,16 @@ const ITERATION_CALLBACK_METHODS: &[&str] = &[
     "map", "flatMap", "forEach", "filter", "reduce", "some", "every",
 ];
 
-/// Fields of `loop_node` that run once per iteration.
-pub fn is_iterated_part(loop_node: Node, child: Node) -> bool {
+/// Children of `loop_node` that run once per iteration.
+pub fn iterated_parts(loop_node: Node) -> Vec<Node> {
     let fields: &[&str] = match loop_node.kind() {
         "for_statement" => &["condition", "increment", "body"],
         _ => &["body"],
     };
-    walk::is_field_child(loop_node, child, fields)
+    fields
+        .iter()
+        .filter_map(|field| loop_node.child_by_field_name(field))
+        .collect()
 }
 
 pub fn loop_frame(node: Node, src: &[u8], parent: Option<usize>) -> LoopFrame {
@@ -92,11 +95,11 @@ pub fn declared_names(node: Node, src: &[u8]) -> Vec<String> {
         return names(node.child_by_field_name("name"), src);
     }
     let mut cursor = node.walk();
-    let children: Vec<Node> = node.named_children(&mut cursor).collect();
-    children
-        .into_iter()
+    let found = node
+        .named_children(&mut cursor)
         .flat_map(|child| declared_names(child, src))
-        .collect()
+        .collect();
+    found
 }
 
 /// Literal start of `let i = N`, else 0.

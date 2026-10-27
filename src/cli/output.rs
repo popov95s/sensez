@@ -1,8 +1,7 @@
 //! CLI-only report shaping: pillar selection plus concise default output.
 
 use super::spec::ScanOptions;
-use crate::report::{AnalysisReport, Confidence, Pillar, SmellFinding};
-use std::collections::BTreeMap;
+use crate::report::{self, AnalysisReport, Confidence, LimitPolicy, Pillar, SmellCap};
 use std::io::{self, Write};
 
 const DEFAULT_PILLAR_TOP: usize = 5;
@@ -38,10 +37,12 @@ pub fn select(report: &mut AnalysisReport, options: &ScanOptions) {
 /// Truncates selected findings for display and attaches the glossary.
 pub fn shape(report: &mut AnalysisReport, options: &ScanOptions) {
     if !options.all {
-        limit_top(
+        report::limit(
             report,
-            options.max.unwrap_or(DEFAULT_PILLAR_TOP),
-            options.max.unwrap_or(DEFAULT_SMELL_KIND_TOP),
+            LimitPolicy {
+                pillar_max: options.max.unwrap_or(DEFAULT_PILLAR_TOP),
+                smells: SmellCap::PerKind(options.max.unwrap_or(DEFAULT_SMELL_KIND_TOP)),
+            },
         );
     }
     report.meta.glossary = crate::noze::glossary::for_report(report);
@@ -76,36 +77,4 @@ fn apply_pillar_filter(report: &mut AnalysisReport, options: &ScanOptions) {
         report.smells.clear();
         report.meta.filtered_pillars.push(Pillar::Smells);
     }
-}
-
-fn limit_top(report: &mut AnalysisReport, pillar_max: usize, smell_kind_max: usize) {
-    if pillar_max == 0 && smell_kind_max == 0 {
-        return;
-    }
-    if pillar_max > 0 {
-        report.cycles.truncate(pillar_max);
-        report.dead_code.truncate(pillar_max);
-        report.boundaries.truncate(pillar_max);
-        report.duplication.truncate(pillar_max);
-    }
-    if smell_kind_max > 0 {
-        limit_smells_by_kind(&mut report.smells, smell_kind_max);
-    }
-}
-
-fn limit_smells_by_kind(smells: &mut Vec<SmellFinding>, max: usize) {
-    let mut seen: BTreeMap<&'static str, usize> = BTreeMap::new();
-    smells.retain(|finding| {
-        let count = seen.entry(finding.kind.as_str()).or_default();
-        let keep = *count < max;
-        *count += 1;
-        keep
-    });
-    smells.sort_by(|a, b| {
-        a.kind
-            .as_str()
-            .cmp(b.kind.as_str())
-            .then(a.action.cmp(&b.action))
-            .then(b.metric.cmp(&a.metric))
-    });
 }

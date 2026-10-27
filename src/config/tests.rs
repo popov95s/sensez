@@ -24,7 +24,7 @@ fn defaults_when_missing() {
         "semantic duplication compares undocumented functions by default"
     );
     assert!(
-        cfg.dead_code.entrypoints.is_empty(),
+        cfg.dead_code.registration_decorators.is_empty(),
         "language-specific dead-code defaults are profile-scoped, not global config"
     );
 }
@@ -50,7 +50,7 @@ fn baseline_excludes_survive_empty_config() {
     .unwrap();
 
     let cfg = Config::load(&dir).unwrap();
-    assert!(cfg.dead_code.entry_points.is_empty());
+    assert!(cfg.dead_code.entry_globs.is_empty());
     assert!(!cfg.duplication.exclude.contains(&"**/tests/**".to_string()));
     assert!(!cfg.smells.exclude.contains(&"**/tests/**".to_string()));
     assert!(!cfg.cycles.exclude.contains(&"**/tests/**".to_string()));
@@ -74,6 +74,18 @@ fn invalid_globs_fail_loudly() {
     let err = Config::load(&dir).unwrap_err();
     assert!(
         err.to_string().contains("invalid glob in exclude"),
+        "{err:#}"
+    );
+}
+
+#[test]
+fn invalid_boundary_glob_is_a_config_error() {
+    let tmp = write_config("[[boundaries.forbidden]]\nfrom = \"core.[x\"\nto = \"web\"\n");
+
+    let err = Config::load(tmp.path()).unwrap_err();
+    assert!(
+        err.to_string()
+            .contains("invalid glob in boundaries.forbidden"),
         "{err:#}"
     );
 }
@@ -302,4 +314,14 @@ fn pyproject_without_tool_sensez_uses_defaults() {
     let (cfg, warnings) = Config::load_with_warnings(tmp.path()).unwrap();
     assert_eq!(cfg.duplication.threshold, 50);
     assert!(warnings.is_empty());
+}
+
+#[test]
+fn old_dead_code_key_names_load_into_the_renamed_fields() {
+    let tmp = write_config(
+        "[dead_code]\nentrypoints = [\"route\"]\nentry_points = [\"**/scripts/**\"]\n",
+    );
+    let cfg = Config::load(tmp.path()).unwrap();
+    assert_eq!(cfg.dead_code.registration_decorators, ["route"]);
+    assert_eq!(cfg.dead_code.entry_globs, ["**/scripts/**"]);
 }

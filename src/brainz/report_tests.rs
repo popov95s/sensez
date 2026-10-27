@@ -10,8 +10,10 @@ fn totals() -> Totals {
             secs_total: 3 * 86_400,
         },
     );
-    t.outcomes
-        .insert(OutcomeKey::new("debt", "dead_code/function"), 1);
+    t.outcomes.insert(
+        OutcomeKey::new(TriageVerdict::Debt, "dead_code/function"),
+        1,
+    );
     // smells/god_module: 1 fixed, 3 false positives → precision 0.25.
     t.resolved_by_detector.insert(
         "smells/god_module".into(),
@@ -20,8 +22,10 @@ fn totals() -> Totals {
             secs_total: 86_400,
         },
     );
-    t.outcomes
-        .insert(OutcomeKey::new("false_positive", "smells/god_module"), 3);
+    t.outcomes.insert(
+        OutcomeKey::new(TriageVerdict::FalsePositive, "smells/god_module"),
+        3,
+    );
     t.scans_by_origin.insert("gate".into(), 3);
     t.scans_by_origin.insert("tool".into(), 1);
     t.searches = 4;
@@ -97,7 +101,7 @@ fn low_precision_detectors_need_evidence_and_a_floor() {
     // One stray false positive is not enough evidence to brand a detector.
     let mut t = Totals::default();
     t.outcomes
-        .insert(OutcomeKey::new("false_positive", "smells/x"), 1);
+        .insert(OutcomeKey::new(TriageVerdict::FalsePositive, "smells/x"), 1);
     assert!(low_precision_detectors(&t).is_empty());
 }
 

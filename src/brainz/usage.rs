@@ -53,7 +53,7 @@ pub fn usage_report(root: &Path) -> Value {
     let triaged = triage::load(root);
     let branch = hub::branch_label(root);
     let totals = store::load_totals(root);
-    let config = crate::config::model::Config::load(root).unwrap_or_default();
+    let (config, config_issues) = crate::config::model::Config::load_for_scan(root);
     let events = store::load_events(root);
     let (recent_since, recent) = recent_window(&events);
     let (baseline, has_baseline) = hub::branch_key(root)
@@ -63,6 +63,7 @@ pub fn usage_report(root: &Path) -> Value {
     let session = hub::session_snapshot(root);
     json!({
         "privacy": "local-only metrics from .sensez/local-metrics/ — never exported",
+        "config_issues": config_issues,
         "session": {
             "id": session.session_id,
             "started_unix": session.started,
@@ -95,4 +96,23 @@ pub fn usage_report(root: &Path) -> Value {
             .collect::<Vec<_>>(),
         "triaged": triaged.values().collect::<Vec<_>>(),
     })
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn invalid_config_is_listed_in_usage_report() {
+        let tmp = tempfile::tempdir().unwrap();
+        std::fs::write(tmp.path().join("sensez.toml"), "exclude = [\"[bad\"]\n").unwrap();
+
+        let report = usage_report(tmp.path());
+
+        let issues = report["config_issues"].as_array().unwrap();
+        assert!(issues[0]["message"]
+            .as_str()
+            .unwrap()
+            .contains("invalid glob in exclude"));
+    }
 }

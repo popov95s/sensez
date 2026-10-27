@@ -1,8 +1,9 @@
 use crate::profiles::guard_fingerprint::GuardLog;
+use crate::profiles::handler_end;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::profiles::try_handling::{self, TrySyntax};
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{FunctionUnit, HandlerEnd, SentinelHandler};
 use tree_sitter::Node;
 
 const TRY_SYNTAX: TrySyntax = TrySyntax {
@@ -19,7 +20,29 @@ const TRY_SYNTAX: TrySyntax = TrySyntax {
         "*.info",
         "*.debug",
     ],
+    notifiers: &[
+        "*toast*",
+        "*Toast*",
+        "notify*",
+        "*.notify*",
+        "alert",
+        "set*Error*",
+    ],
     is_function: super::units::is_function,
+    return_kind: "return_statement",
+    noop_kinds: &["empty_statement"],
+    comment_kind: "comment",
+    cleanup_kinds: &["finally_clause"],
+    parse_calls: &["JSON.parse"],
+    probes: &[
+        "*localStorage.*",
+        "*sessionStorage.*",
+        "stat",
+        "access",
+        "*.stat",
+        "*.access",
+    ],
+    returned_literal,
 };
 
 /// Nodes a repeated guard is scoped to: its block or loop.
@@ -102,7 +125,13 @@ const TEST_CHECKS: TestChecks = TestChecks {
     framework_calls: &["expect", "expectTypeOf"],
 };
 
-pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, lineage: Lineage, src: &[u8]) {
+pub(super) fn scan(
+    unit: &mut FunctionUnit,
+    guards: &mut GuardLog,
+    lineage: Lineage,
+    src: &[u8],
+    frame: Option<usize>,
+) {
     let node = lineage.node();
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
@@ -111,7 +140,14 @@ pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, lineage: Line
         unit.review_risks.helper_calls.push(helper.to_string());
     }
     match node.kind() {
-        "catch_clause" if swallows(node, src) => unit.review_risks.broad_handlers += 1,
+        "catch_clause" => {
+            if swallows(node, src) {
+                unit.review_risks.broad_handlers += 1;
+            }
+            unit.review_risks
+                .sentinel_handlers
+                .extend(sentinel_handler(node, src, frame));
+        }
         "if_statement" => guards.record(unit, lineage, GUARD_SCOPES, src),
         "binary_expression"
             if is_empty_fallback(node) && try_handling::inside_try(node, &TRY_SYNTAX) =>
@@ -178,12 +214,48 @@ fn base_callee<'a>(callee: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
 
 /// A catch that neither rethrows nor uses its error beyond logging it.
 fn swallows(handler: Node<'_>, src: &[u8]) -> bool {
-    let error = handler
-        .child_by_field_name("parameter")
-        .and_then(|parameter| parameter.utf8_text(src).ok());
+    handler.child_by_field_name("body").is_some_and(|body| {
+        try_handling::swallows(body, error_name(handler, src), src, &TRY_SYNTAX)
+    })
+}
+
+fn error_name<'a>(handler: Node<'_>, src: &'a [u8]) -> Option<&'a str> {
     handler
-        .child_by_field_name("body")
-        .is_some_and(|body| try_handling::swallows(body, error, src, &TRY_SYNTAX))
+        .child_by_field_name("parameter")
+        .and_then(|parameter| parameter.utf8_text(src).ok())
+}
+
+fn sentinel_handler(
+    handler: Node<'_>,
+    src: &[u8],
+    frame: Option<usize>,
+) -> Option<SentinelHandler> {
+    let body = handler.child_by_field_name("body")?;
+    handler_end::sentinel_handler(
+        handler,
+        body,
+        error_name(handler, src),
+        src,
+        &TRY_SYNTAX,
+        frame,
+    )
+}
+
+fn returned_literal(node: Node<'_>, src: &[u8]) -> Option<HandlerEnd> {
+    let empty = match node.kind() {
+        "null" | "undefined" | "false" => true,
+        "array" | "object" if node.named_child_count() == 0 => true,
+        "string" => node.named_child_count() == 0,
+        "template_string" if node.named_child_count() == 0 => true,
+        "number" => node.utf8_text(src) == Ok("0"),
+        "true" => false,
+        _ => return None,
+    };
+    Some(if empty {
+        HandlerEnd::EmptyValue
+    } else {
+        HandlerEnd::DefaultLiteral
+    })
 }
 
 fn is_empty_fallback(node: Node<'_>) -> bool {

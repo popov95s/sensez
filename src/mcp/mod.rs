@@ -4,10 +4,12 @@
 mod agent_scope;
 mod compact;
 mod gate;
+mod gate_input;
 #[cfg(test)]
 mod gate_lifecycle_tests;
 #[cfg(test)]
 mod gate_regression_tests;
+mod gate_state;
 #[cfg(test)]
 mod gate_tests;
 mod handlers;

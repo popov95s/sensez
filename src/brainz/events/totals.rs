@@ -102,14 +102,14 @@ impl Totals {
             } => self.absorb_diff(resolved, reintroduced),
             Event::GateBlock { .. } => self.gate_blocks += 1,
             Event::Outcome {
-                pillar,
-                action,
+                detector,
+                verdict,
                 count,
                 ..
             } => {
                 *self
                     .outcomes
-                    .entry(OutcomeKey::new(action, pillar))
+                    .entry(OutcomeKey::new(*verdict, detector))
                     .or_default() += count;
             }
         }

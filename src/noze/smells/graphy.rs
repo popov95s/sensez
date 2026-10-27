@@ -122,7 +122,7 @@ fn shotgun(
     floor: usize,
     cfg: &Smells,
 ) -> Option<SmellFinding> {
-    if cfg.disabled.contains(&SmellKind::ShotgunSurgeryHazard) || blast < floor {
+    if !cfg.is_enabled(SmellKind::ShotgunSurgeryHazard) || blast < floor {
         return None; // disabled for this language, or not a hazard
     }
     let sev = if blast >= floor * 2 {
@@ -178,7 +178,7 @@ fn god_module(
         && ce >= cfg.god_module_min_fan_out
         && fan >= cfg.god_module_fan;
     let sizeable = size.lines >= cfg.god_module_min_lines || size.units >= cfg.god_module_min_units;
-    if cfg.disabled.contains(&SmellKind::GodModule) || !hub || !sizeable {
+    if !cfg.is_enabled(SmellKind::GodModule) || !hub || !sizeable {
         return None;
     }
     Some(make(

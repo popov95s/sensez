@@ -2,15 +2,11 @@
 
 use crate::config::smells::{Smells, Strictness};
 use crate::noze::smells::detect_local;
+use crate::noze::smells::test_support as fixture;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn loose(body: &str, cfg: &Smells) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join("types.ts");
-    fs::write(&path, body).unwrap();
-    detect_local(&parse_file(&path, 0).unwrap(), cfg)
+    detect_local(&fixture::parsed("types.ts", body), cfg)
         .into_iter()
         .filter(|f| f.kind == SmellKind::LooseTyping)
         .collect()

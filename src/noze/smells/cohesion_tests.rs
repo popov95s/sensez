@@ -1,8 +1,7 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::SmellKind;
-use crate::spine::parser::parse_file;
-use std::fs;
 
 #[test]
 fn wrapper_calls_connect_cohesion_clusters() {
@@ -17,10 +16,7 @@ class Cache:
     def _read(self, key):
         return self.storage.get(key)
 "#;
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("sample.py");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("sample.py", source);
     let findings = detect_local(&file, &Smells::default());
     assert!(
         !findings
@@ -31,10 +27,7 @@ class Cache:
 }
 
 fn divergent_ts(source: &str) -> bool {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("sample.ts");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("sample.ts", source);
     detect_local(&file, &Smells::default())
         .iter()
         .any(|finding| finding.kind == SmellKind::DivergentChange)

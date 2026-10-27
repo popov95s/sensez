@@ -28,11 +28,11 @@ pub(crate) fn identifiers(node: Node, src: &[u8], kinds: &[&str]) -> Vec<String>
             .unwrap_or_default();
     }
     let mut cursor = node.walk();
-    let children: Vec<Node> = node.named_children(&mut cursor).collect();
-    children
-        .into_iter()
+    let found = node
+        .named_children(&mut cursor)
         .flat_map(|child| identifiers(child, src, kinds))
-        .collect()
+        .collect();
+    found
 }
 
 /// `identifier` texts under `node`'s `field` child.
@@ -42,7 +42,7 @@ pub(crate) fn field_identifiers(node: Node, src: &[u8], field: &str) -> Vec<Stri
         .unwrap_or_default()
 }
 
-/// `value` contains a `call_kind` node or reads a loop local holding a call result.
+/// Inside a loop, `value` contains a `call_kind` node or reads a loop local holding a call result.
 pub(crate) fn fed_by_call(
     facts: &PerformanceFacts,
     frame: Option<usize>,
@@ -50,10 +50,11 @@ pub(crate) fn fed_by_call(
     src: &[u8],
     call_kind: &str,
 ) -> bool {
-    contains_kind(value, call_kind)
-        || identifiers(value, src, &["identifier"])
-            .iter()
-            .any(|name| facts.is_call_result(frame, name))
+    frame.is_some()
+        && (contains_kind(value, call_kind)
+            || identifiers(value, src, &["identifier"])
+                .iter()
+                .any(|name| facts.is_call_result(frame, name)))
 }
 
 fn contains_kind(node: Node, kind: &str) -> bool {
@@ -74,12 +75,15 @@ pub(crate) fn is_field_child(parent: Node, child: Node, fields: &[&str]) -> bool
     })
 }
 
+/// Longest loop subject text kept for display.
+const MAX_SUBJECT_BYTES: usize = 120;
+
 pub(crate) fn loop_subject(node: Node, src: &[u8], subject_fields: &[&str]) -> Option<String> {
     subject_fields
         .iter()
         .find_map(|field| node.child_by_field_name(field))
         .and_then(|n| node_text(n, src))
-        .filter(|text| text.len() <= 120)
+        .filter(|text| text.len() <= MAX_SUBJECT_BYTES)
         .map(str::to_string)
 }
 

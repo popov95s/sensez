@@ -1,14 +1,11 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellKind};
-use crate::spine::parser::{parse_file, ParsedFile};
-use std::fs;
+use crate::spine::parser::ParsedFile;
 
 fn parsed(name: &str, ext: &str, source: &str) -> ParsedFile {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join(format!("{name}.{ext}"));
-    fs::write(&path, source).unwrap();
-    parse_file(&path, 0).unwrap()
+    fixture::parsed(&format!("{name}.{ext}"), source)
 }
 
 fn nested(ext: &str, source: &str) -> Option<crate::report::SmellFinding> {

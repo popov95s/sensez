@@ -1,6 +1,7 @@
 //! Local-only usage metric types. Everything here serializes to plain JSON on
 //! the user's own disk under `.sensez/local-metrics/` — nothing is ever exported.
 
+use super::verdict::TriageVerdict;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
@@ -46,17 +47,17 @@ impl Resolved {
     }
 }
 
+/// Outcome tally key; stored in `totals.json` as the string `"verdict:detector"`.
 #[derive(Debug, Clone, PartialEq, Eq, PartialOrd, Ord)]
 pub struct OutcomeKey {
-    pub verdict: String,
+    pub verdict: TriageVerdict,
     pub detector: String,
 }
 
 impl OutcomeKey {
-    /// Create a new outcome key.
-    pub fn new(verdict: impl Into<String>, detector: impl Into<String>) -> Self {
+    pub fn new(verdict: TriageVerdict, detector: impl Into<String>) -> Self {
         Self {
-            verdict: verdict.into(),
+            verdict,
             detector: detector.into(),
         }
     }
@@ -67,7 +68,6 @@ impl Serialize for OutcomeKey {
     where
         S: serde::Serializer,
     {
-        // Serialize as "verdict:detector" for JSON compatibility
         serializer.serialize_str(&format!("{}:{}", self.verdict, self.detector))
     }
 }
@@ -77,11 +77,12 @@ impl<'de> Deserialize<'de> for OutcomeKey {
     where
         D: serde::Deserializer<'de>,
     {
-        let s = String::deserialize(deserializer)?;
-        let (verdict, detector) = s
-            .split_once(':')
-            .ok_or_else(|| serde::de::Error::custom(format!("invalid outcome key format: {s}")))?;
-        Ok(OutcomeKey::new(verdict, detector))
+        let text = String::deserialize(deserializer)?;
+        text.split_once(':')
+            .and_then(|(verdict, detector)| {
+                TriageVerdict::from_name(verdict).map(|verdict| OutcomeKey::new(verdict, detector))
+            })
+            .ok_or_else(|| serde::de::Error::custom(format!("invalid outcome key: {text}")))
     }
 }
 
@@ -156,14 +157,16 @@ pub enum Event {
         fingerprints: Vec<String>,
     },
     /// A user-triage outcome: the user adjudicated a finding (debt /
-    /// false_positive) via `brainz_triage`. `pillar` carries the detector id
-    /// so per-detector precision is derivable. Never produced by the model.
+    /// false_positive) via `brainz_triage`, per detector so per-detector
+    /// precision is derivable. Never produced by the model.
     Outcome {
         ts: u64,
         session: String,
         branch: String,
-        pillar: String,
-        action: String,
+        #[serde(rename = "pillar")]
+        detector: String,
+        #[serde(rename = "action")]
+        verdict: TriageVerdict,
         count: u64,
         #[serde(skip_serializing_if = "Option::is_none", default)]
         detail: Option<String>,

@@ -1,8 +1,9 @@
 use crate::profiles::guard_fingerprint::GuardLog;
+use crate::profiles::handler_end;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::test_oracle::{self, CallPattern, TestChecks};
 use crate::profiles::try_handling::{self, TrySyntax};
-use crate::spine::ir::FunctionUnit;
+use crate::spine::ir::{FunctionUnit, HandlerEnd, SentinelHandler};
 use tree_sitter::Node;
 
 const TRY_SYNTAX: TrySyntax = TrySyntax {
@@ -18,8 +19,24 @@ const TRY_SYNTAX: TrySyntax = TrySyntax {
         "*.error",
         "*.warning",
     ],
+    notifiers: &["flash", "messages.error", "messages.warning"],
     is_function: super::control_shapes::is_function,
+    return_kind: "return_statement",
+    noop_kinds: &["pass_statement"],
+    comment_kind: "comment",
+    cleanup_kinds: &["finally_clause"],
+    parse_calls: &["json.loads", "json.load"],
+    probes: &[
+        "os.stat",
+        "*.stat",
+        "os.access",
+        "importlib.import_module",
+        "__import__",
+    ],
+    returned_literal,
 };
+
+const BROAD_TYPES: &[&str] = &["Exception", "BaseException"];
 
 pub(super) fn forward_target(func: Node<'_>, src: &[u8], params: &[String]) -> Option<String> {
     if func
@@ -77,7 +94,13 @@ const TEST_CHECKS: TestChecks = TestChecks {
     framework_calls: &[],
 };
 
-pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, node: Node, src: &[u8]) {
+pub(super) fn scan(
+    unit: &mut FunctionUnit,
+    guards: &mut GuardLog,
+    node: Node,
+    src: &[u8],
+    frame: Option<usize>,
+) {
     if test_oracle::is_check(node, src, &TEST_CHECKS) {
         unit.review_risks.test_checks += 1;
     }
@@ -85,7 +108,12 @@ pub(super) fn scan(unit: &mut FunctionUnit, guards: &mut GuardLog, node: Node, s
         unit.review_risks.helper_calls.push(helper.to_string());
     }
     match node.kind() {
-        "except_clause" => handler(unit, node, src),
+        "except_clause" => {
+            handler(unit, node, src);
+            unit.review_risks
+                .sentinel_handlers
+                .extend(sentinel_handler(node, src, frame));
+        }
         "if_statement" => guards.record(unit, Lineage::detached(node), &["block"], src),
         "boolean_operator"
             if is_empty_fallback(node) && try_handling::inside_try(node, &TRY_SYNTAX) =>
@@ -110,6 +138,65 @@ fn handler(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     if bare_body.is_some_and(|body| try_handling::swallows(body, None, src, &TRY_SYNTAX)) {
         unit.review_risks.broad_handlers += 1;
     }
+}
+
+/// A bare or `Exception`-wide handler that swallows its error.
+fn sentinel_handler(
+    handler: Node<'_>,
+    src: &[u8],
+    frame: Option<usize>,
+) -> Option<SentinelHandler> {
+    let (caught, error) = caught_and_alias(handler, src);
+    if caught.is_some_and(|caught| !BROAD_TYPES.contains(&caught)) {
+        return None;
+    }
+    let mut cursor = handler.walk();
+    let body = handler
+        .named_children(&mut cursor)
+        .find(|child| child.kind() == "block")?;
+    handler_end::sentinel_handler(handler, body, error, src, &TRY_SYNTAX, frame)
+}
+
+/// Caught type text and bound name: `except ValueError as error` → (`ValueError`, `error`).
+fn caught_and_alias<'a>(handler: Node<'_>, src: &'a [u8]) -> (Option<&'a str>, Option<&'a str>) {
+    let text = |node: Node<'_>| node.utf8_text(src).ok();
+    let Some(value) = handler.child_by_field_name("value") else {
+        return (None, None);
+    };
+    if value.kind() != "as_pattern" {
+        let alias = handler.child_by_field_name("alias").and_then(text);
+        return (text(value), alias);
+    }
+    let alias = value
+        .child_by_field_name("alias")
+        .and_then(|target| target.named_child(0).or(Some(target)))
+        .and_then(text);
+    (value.named_child(0).and_then(text), alias)
+}
+
+fn returned_literal(node: Node<'_>, src: &[u8]) -> Option<HandlerEnd> {
+    let empty = match node.kind() {
+        "none" | "false" => true,
+        "list" | "dictionary" | "tuple" if node.named_child_count() == 0 => true,
+        "string" if has_child(node, "interpolation") => return None,
+        "string" => !has_child(node, "string_content"),
+        "integer" => node.utf8_text(src) == Ok("0"),
+        "true" | "float" => false,
+        _ => return None,
+    };
+    Some(if empty {
+        HandlerEnd::EmptyValue
+    } else {
+        HandlerEnd::DefaultLiteral
+    })
+}
+
+fn has_child(node: Node<'_>, kind: &str) -> bool {
+    let mut cursor = node.walk();
+    let found = node
+        .named_children(&mut cursor)
+        .any(|child| child.kind() == kind);
+    found
 }
 
 fn is_empty_fallback(node: Node<'_>) -> bool {

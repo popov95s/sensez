@@ -585,6 +585,22 @@ FindingDocs {
         ],
     },
     FindingDocs {
+        kind: SiblingHelperRedefinition,
+        why_bad: "A fix lands in one copy and the others drift; a reviewer reading one file cannot know the helper already exists.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock {
+                language: "python",
+                body: "Keep one definition in a shared module and import it where the copies were.",
+            },
+            LanguageBlock {
+                language: "typescript",
+                body: "Export one definition from a shared module and import it where the copies were.",
+            },
+        ],
+    },
+    FindingDocs {
         kind: SplitVariable,
         why_bad: "A variable with multiple meanings is a trap for both readers and debuggers.",
         external_lints: &[],
@@ -613,6 +629,22 @@ FindingDocs {
             LanguageBlock {
                 language: "typescript",
                 body: "Hoist sorting out of the loop or maintain an ordered structure.",
+            },
+        ],
+    },
+    FindingDocs {
+        kind: SwallowedErrorSentinel,
+        why_bad: "A handler that turns any failure into `null`, an empty list or a log line hands callers a plausible value; the broken contract surfaces far from its cause, or never.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[
+            LanguageBlock {
+                language: "python",
+                body: "Catch the specific exception you can handle, re-raise the rest with `raise ... from error`, or return a typed failure the caller must check.",
+            },
+            LanguageBlock {
+                language: "typescript",
+                body: "Rethrow, or return a typed failure (`{ ok: false, error }` or a `Result`) so the caller must handle it; keep a `tryX(): T | null` helper only where missing is the documented contract.",
             },
         ],
     },

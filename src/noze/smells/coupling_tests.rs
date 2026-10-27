@@ -1,18 +1,14 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn envy_ts(source: &str) -> Vec<SmellFinding> {
     envy("sample.ts", source)
 }
 
 fn envy(name: &str, source: &str) -> Vec<SmellFinding> {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join(name);
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed(name, source);
     detect_local(&file, &Smells::default())
         .into_iter()
         .filter(|finding| finding.kind == SmellKind::FeatureEnvy)

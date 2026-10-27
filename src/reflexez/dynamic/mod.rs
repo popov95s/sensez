@@ -5,7 +5,7 @@ pub(super) mod javascript;
 #[cfg(feature = "lang-python")]
 mod python;
 
-use crate::spine::ir::ImportContext;
+use crate::spine::ir::{ImportContext, Language};
 use rayon::prelude::*;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -41,11 +41,11 @@ fn scan_file(path: &Path) -> Option<FileFacts> {
     if !might_contain_dynamic_import(&source) {
         return None;
     }
-    match path.extension().and_then(|ext| ext.to_str()) {
+    match super::changes::source_language(path)? {
         #[cfg(feature = "lang-python")]
-        Some("py") => python::scan(&source, module_name(path)),
+        Language::Python => python::scan(&source, module_name(path)),
         #[cfg(feature = "lang-javascript")]
-        Some("js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts") => {
+        Language::JavaScript | Language::TypeScript => {
             javascript::scan(path, &source, module_name(path))
         }
         _ => None,

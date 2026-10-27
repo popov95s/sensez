@@ -1,12 +1,8 @@
 //! Shared traversal building blocks used by every language walker.
-//!
-//! Each language owns its whole pre-order walk (traversal logic is coupled to
-//! one grammar's node kinds), but the bookkeeping that targets the shared
-//! [`Walked`] output is identical everywhere and lives here once.
 
 pub(crate) use super::node_query::{
-    chain_hit, fed_by_call, identifiers, is_field_child, loop_subject, node_text, perf_line,
-    ChainShape,
+    chain_hit, fed_by_call, identifiers, is_field_child, last_segment, loop_subject, node_text,
+    perf_line, ChainShape,
 };
 use crate::profiles::comment_class::{self, CommentSyntax};
 use crate::profiles::comments;
@@ -52,8 +48,7 @@ impl MutationTarget {
 /// A language's mutation-target resolver (node kinds and field names are per-grammar).
 pub(crate) type TargetRootFn = fn(Node, &[u8]) -> Option<MutationTarget>;
 
-/// Drive one file's walk: set up the scope/bound-name stacks, run the
-/// language's `visit` from the root, and return the populated [`Walked`].
+/// Run the language's `visit` over one file and return the populated [`Walked`].
 pub(crate) fn run(
     root: Node,
     src: &[u8],
@@ -77,8 +72,7 @@ pub(crate) fn run(
     out
 }
 
-/// [`run`] followed by the [`attach_method_attrs`] post-pass — the exact walk
-/// entry the Python and JS/TS profiles share (Rust has no method-attr pass).
+/// [`run`] followed by the [`attach_method_attrs`] post-pass.
 pub(crate) fn run_with_method_attrs(
     root: Node,
     src: &[u8],
@@ -91,20 +85,14 @@ pub(crate) fn run_with_method_attrs(
     out
 }
 
-/// Count one identifier occurrence (intra-module usage analysis). Allocates a
-/// key only on first sight — repeat occurrences just bump the counter.
+/// Count one identifier occurrence for intra-module usage.
 pub(crate) fn credit_name(out: &mut Walked, node: Node, src: &[u8]) {
     if let Ok(text) = node.utf8_text(src) {
         bump(&mut out.usage.name_counts, text);
     }
 }
 
-/// Record member access (`obj.attr`, `mod::item`, `a.b.c`). When the base is
-/// a plain identifier the access is credited directly for typed-receiver
-/// tracking; otherwise the leaf attribute name is captured for heuristics
-/// (e.g. `x.inner.a` credits `inner → x` and records the leaf `a`).
-/// The field names are per-grammar (`object`/`attribute`, `object`/`property`,
-/// `value`/`field`, `path`/`name`).
+/// Record member access `base.attr` by identifier base, else the leaf attribute name.
 pub(crate) fn credit_attr(
     out: &mut Walked,
     node: Node,
@@ -124,8 +112,7 @@ pub(crate) fn credit_attr(
     }
 }
 
-/// Record member access and preserve non-identifier base paths for languages
-/// whose type hints can attach to attribute paths (Python: `self.model: T`).
+/// [`credit_attr`] that also records non-identifier base paths (`self.model.x`).
 pub(crate) fn credit_attr_with_base_path(
     out: &mut Walked,
     node: Node,
@@ -162,8 +149,7 @@ pub(crate) fn credit_string(out: &mut Walked, value: &str) {
     }
 }
 
-/// Map a node to its structural token (per-grammar `map_kind`) and, when it
-/// is significant, emit it with its lexeme code (per-language `code`).
+/// Emit `node` with its lexeme code when `map_kind` gives it a structural token.
 pub(crate) fn emit_mapped(
     out: &mut Walked,
     file_id: u32,
@@ -204,12 +190,7 @@ pub(crate) fn register_method(out: &mut Walked, name: String, line: usize) {
     out.symbols.methods.push((name, line));
 }
 
-/// Post-pass (Python/JS/TS): fill each class's `method_attr_use` (method name →
-/// `self`/`this` attr set) from the `self_attrs` each method collected during
-/// its own body walk — avoiding a second per-method walk. A method is
-/// attributed to the innermost class enclosing its def line, and only when the
-/// class lists it as a direct method (so a function defined inside an `if` in a
-/// class body is correctly excluded).
+/// Fill each class's `method_attr_use` and `method_calls` from its direct methods' units.
 pub(crate) fn attach_method_attrs(out: &mut Walked) {
     let assignments: Vec<(usize, String, HashSet<String>, HashSet<String>)> = out
         .units
@@ -242,10 +223,7 @@ pub(crate) fn attach_method_attrs(out: &mut Walked) {
     }
 }
 
-/// Route a mutation target to the right set: `attr_mutated_names` when the path
-/// to the root identifier crossed a member/attribute access, else
-/// `mutated_names`. `target_root` is the per-grammar resolver (it knows the
-/// language's subscript/member node kinds and field names).
+/// Record the root of a mutated chain in `attr_mutated_names` or `mutated_names`.
 pub(crate) fn record_mutation_root(
     unit: &mut FunctionUnit,
     node: Node,

@@ -1,18 +1,15 @@
 use super::detect_local;
+use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
 use crate::spine::parser::parse_file;
-use std::fs;
 
 pub(super) fn local(ext: &str, source: &str) -> Vec<SmellFinding> {
     local_with_config(ext, source, &review_risk_config())
 }
 
 pub(super) fn local_with_config(ext: &str, source: &str, config: &Smells) -> Vec<SmellFinding> {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join(format!("sample.{ext}"));
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed(&format!("sample.{ext}"), source);
     detect_local(&file, config)
 }
 
@@ -167,10 +164,7 @@ fn tests_without_behavioral_checks_are_reported() {
             "test('saves', () => {\n  store.save(42);\n  store.flush();\n});\n",
         ),
     ] {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join(name);
-        fs::write(&path, source).unwrap();
-        let file = parse_file(&path, 0).unwrap();
+        let file = fixture::parsed(name, source);
         let findings = detect_local(&file, &config);
         assert_eq!(
             findings
@@ -186,10 +180,7 @@ fn tests_without_behavioral_checks_are_reported() {
 #[test]
 fn documented_python_test_example_is_a_test_case() {
     let source = include_str!("../../../docs/examples/smells/weak_test_oracle/test_example.py");
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("test_example.py");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("test_example.py", source);
     let test = file
         .walked
         .units
@@ -208,35 +199,37 @@ fn documented_python_test_example_is_a_test_case() {
         .any(|finding| finding.kind == SmellKind::WeakTestOracle));
 }
 
-#[test]
-fn opt_in_test_rule_bypasses_only_baseline_exclusions() {
-    use super::detect;
+fn opt_in_oracle_findings(toml: &str) -> Vec<SmellFinding> {
     use crate::config::Config;
+    use crate::noze::source_scope::SourceScope;
     use crate::spine::graph::CodebaseGraph;
 
     let temp = tempfile::tempdir().unwrap();
     let source = include_str!("../../../docs/examples/smells/weak_test_oracle/test_example.py");
-    let path = temp.path().join("test_example.py");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
-    fs::write(
-        temp.path().join("sensez.toml"),
-        "[smells.python]\ndisabled = []\n",
-    )
-    .unwrap();
+    let path = crate::test_support::write(temp.path(), "test_example.py", source);
+    crate::test_support::write(temp.path(), "sensez.toml", toml);
     let config = Config::load(temp.path()).unwrap();
-    let findings = detect(&[file], &CodebaseGraph::default(), &config.smells);
-    assert_eq!(findings.len(), 1);
-    assert_eq!(findings[0].kind, SmellKind::WeakTestOracle);
+    super::detect(
+        &[parse_file(&path, 0).unwrap()],
+        &CodebaseGraph::default(),
+        &config.smells,
+        &SourceScope::for_smells(&config.smells),
+    )
+}
 
-    fs::write(
-        temp.path().join("sensez.toml"),
+#[test]
+fn opt_in_test_rule_inspects_baseline_excluded_tests() {
+    let findings = opt_in_oracle_findings("[smells.python]\ndisabled = []\n");
+    assert_eq!(findings.len(), 1, "{findings:?}");
+    assert_eq!(findings[0].kind, SmellKind::WeakTestOracle);
+}
+
+#[test]
+fn opt_in_test_rule_honors_user_exclusions() {
+    let findings = opt_in_oracle_findings(
         "[smells]\nexclude = [\"**/test_example.py\"]\n[smells.python]\ndisabled = []\n",
-    )
-    .unwrap();
-    let config = Config::load(temp.path()).unwrap();
-    let file = parse_file(&path, 0).unwrap();
-    assert!(detect(&[file], &CodebaseGraph::default(), &config.smells).is_empty());
+    );
+    assert!(findings.is_empty(), "{findings:?}");
 }
 
 #[test]
@@ -271,10 +264,7 @@ fn assertions_and_expected_exceptions_are_oracles() {
             "def test_not_a_python_test_file():\n    store.save(42)\n",
         ),
     ] {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join(name);
-        fs::write(&path, source).unwrap();
-        let file = parse_file(&path, 0).unwrap();
+        let file = fixture::parsed(name, source);
         assert!(
             !detect_local(&file, &config)
                 .iter()
@@ -304,10 +294,7 @@ fn profile_assertion_calls_are_recognized_by_the_shared_matcher() {
             "test('snapshot', () => {\n  expect(save(1)).matchSnapshot();\n});\n",
         ),
     ] {
-        let temp = tempfile::tempdir().unwrap();
-        let path = temp.path().join(name);
-        fs::write(&path, source).unwrap();
-        let file = parse_file(&path, 0).unwrap();
+        let file = fixture::parsed(name, source);
         assert!(
             !detect_local(&file, &config)
                 .iter()

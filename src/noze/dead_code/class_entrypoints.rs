@@ -91,7 +91,7 @@ fn add_dynamic_classes(
 }
 
 fn is_dynamic_base(base: &str, live: &HashSet<String>, root_bases: &HashSet<&str>) -> bool {
-    let short = base.rsplit('.').next().unwrap_or(base);
+    let short = crate::profiles::walk::last_segment(base);
     live.contains(short) || root_bases.contains(short) || root_bases.contains(base)
 }
 

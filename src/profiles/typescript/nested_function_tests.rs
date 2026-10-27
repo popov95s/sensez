@@ -1,14 +1,10 @@
 use crate::config::smells::Smells;
 use crate::noze::smells::detect_local;
+use crate::noze::smells::test_support as fixture;
 use crate::report::{Severity, SmellFinding, SmellKind};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 fn local_ts(source: &str, config: &Smells) -> Vec<SmellFinding> {
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("sample.ts");
-    fs::write(&path, source).unwrap();
-    let file = parse_file(&path, 0).unwrap();
+    let file = fixture::parsed("sample.ts", source);
     detect_local(&file, config)
 }
 
@@ -50,21 +46,32 @@ fn self_contained_nested_function_stays_a_warning() {
     assert!(found[0].message.contains("`outer`"), "{}", found[0].message);
 }
 
-#[test]
-fn capturing_closure_is_info_or_skipped_by_knob() {
-    let source = format!(
+fn capturing_closure() -> String {
+    format!(
         "function Comp(props: Props) {{\n  function onSave() {{\n    let total = 0;\n{}    return total;\n  }}\n  return onSave;\n}}\n",
         body("props.id + ")
-    );
-    let findings = local_ts(&source, &Smells::default());
+    )
+}
+
+#[test]
+fn capturing_closure_is_info() {
+    let findings = local_ts(&capturing_closure(), &Smells::default());
     let found = heavy_nested(&findings);
     assert_eq!(found.len(), 1, "{findings:?}");
     assert_eq!(found[0].severity, Severity::Info);
-    assert!(found[0].message.contains("explicit parameters"));
+    assert!(
+        found[0].message.contains("explicit parameters"),
+        "{}",
+        found[0].message
+    );
+}
 
+#[test]
+fn skip_capturing_knob_silences_capturing_closure() {
     let skip = Smells {
         nested_function_skip_capturing: true,
         ..Smells::default()
     };
-    assert!(heavy_nested(&local_ts(&source, &skip)).is_empty());
+    let findings = local_ts(&capturing_closure(), &skip);
+    assert!(heavy_nested(&findings).is_empty(), "{findings:?}");
 }

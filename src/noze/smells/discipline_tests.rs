@@ -1,16 +1,12 @@
 //! Tests for the type/mutation-discipline detectors (`typing.rs`, `mutation.rs`).
 
+use super::test_support as fixture;
 use super::*;
 use crate::config::smells::{Smells, Strictness};
-use crate::spine::parser::parse_file;
-use std::fs;
 
 /// Write `body` to a temp `.py` file, parse it, and run the local detectors.
 fn local(name: &str, body: &str, cfg: &Smells) -> Vec<SmellFinding> {
-    let tmp = tempfile::tempdir().unwrap();
-    let path = tmp.path().join(format!("{name}.py"));
-    fs::write(&path, body).unwrap();
-    let pf = parse_file(&path, 0).unwrap();
+    let pf = fixture::parsed(&format!("{name}.py"), body);
     detect_local(&pf, cfg)
 }
 

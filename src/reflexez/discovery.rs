@@ -70,7 +70,7 @@ pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
     let pytest_roots = pytest::test_roots(root)?;
     let mut tests = Vec::new();
     for file in &sources {
-        if is_python_test(file)
+        if pytest::is_test_file(file)
             && pytest::is_collected(file, &pytest_roots)
             && matches!(forced, RunnerChoice::Auto | RunnerChoice::Pytest)
         {
@@ -210,21 +210,10 @@ fn has_config(root: &Path, runner: &str) -> bool {
 }
 
 fn is_supported_source(path: &Path) -> bool {
-    matches!(
-        path.extension().and_then(|value| value.to_str()),
-        Some("py" | "js" | "jsx" | "mjs" | "cjs" | "ts" | "tsx" | "mts" | "cts")
-    ) && crate::profiles::registry::should_parse_path(path)
+    super::changes::is_source(path) && crate::profiles::registry::should_parse_path(path)
 }
 
 fn is_project_file(path: &Path) -> bool {
     is_supported_source(path)
         || path.file_name().and_then(|name| name.to_str()) == Some("package.json")
-}
-
-fn is_python_test(path: &Path) -> bool {
-    let Some(name) = path.file_name().and_then(|name| name.to_str()) else {
-        return false;
-    };
-    path.extension().is_some_and(|ext| ext == "py")
-        && (name.starts_with("test_") || name.ends_with("_test.py"))
 }

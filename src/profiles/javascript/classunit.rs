@@ -2,6 +2,7 @@
 
 use super::symbols;
 use crate::profiles::typevocab::split_top_level;
+use crate::profiles::walk;
 use crate::spine::ir::{ClassProperty, ClassUnit};
 use tree_sitter::Node;
 
@@ -71,7 +72,7 @@ fn instantiated_type(value: Option<Node>, src: &[u8]) -> Option<String> {
     let new_expr = value.filter(|node| node.kind() == "new_expression")?;
     let ctor = new_expr.child_by_field_name("constructor")?;
     let text = ctor.utf8_text(src).ok()?;
-    let last = text.rsplit('.').next().unwrap_or(text);
+    let last = walk::last_segment(text);
     last.chars()
         .next()
         .is_some_and(char::is_uppercase)

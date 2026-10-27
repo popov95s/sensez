@@ -2,7 +2,7 @@
 //! magic numbers, message chains (Law of Demeter), and split variables.
 
 use super::exclusive_paths::max_on_one_path;
-use super::lines::{hit_lines, line_list};
+use super::lines::{hit_lines, line_list, SHOWN_LINES};
 use super::{make, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -32,13 +32,13 @@ impl StructuralDetector<'_, '_> {
         self.deep_nesting(m);
         self.long_params(m);
         self.too_many_returns(m);
-        if self.cfg.magic_numbers {
+        if self.cfg.is_enabled(SmellKind::MagicNumbers) {
             self.magic_numbers(m);
         }
         self.message_chains(m);
         self.unnecessary_nested_if(m);
         self.nested_ternary(m);
-        if self.cfg.split_variable {
+        if self.cfg.is_enabled(SmellKind::SplitVariable) {
             self.split_variables(m);
         }
     }
@@ -64,7 +64,7 @@ impl StructuralDetector<'_, '_> {
 
     fn long_params(&mut self, m: &FunctionUnit) {
         let params = effective_params(m);
-        if !self.cfg.long_parameter_list || params <= self.cfg.max_params {
+        if !self.cfg.is_enabled(SmellKind::LongParameterList) || params <= self.cfg.max_params {
             return;
         }
         self.out.push(make(
@@ -85,8 +85,8 @@ impl StructuralDetector<'_, '_> {
         } else {
             m.guard_returns
         };
-        let counted = m.return_count - excluded;
-        if !self.cfg.too_many_returns || counted <= self.cfg.max_returns {
+        let counted = m.return_count.saturating_sub(excluded);
+        if !self.cfg.is_enabled(SmellKind::TooManyReturns) || counted <= self.cfg.max_returns {
             return;
         }
         let guards = if excluded > 0 {
@@ -120,10 +120,10 @@ impl StructuralDetector<'_, '_> {
         };
         let shown: Vec<String> = sites
             .iter()
-            .take(3)
+            .take(SHOWN_LINES)
             .map(|site| format!("{}@L{}", site.text, site.line))
             .collect();
-        let more = match sites.len().saturating_sub(3) {
+        let more = match sites.len().saturating_sub(SHOWN_LINES) {
             0 => String::new(),
             rest => format!(" (+{rest} more)"),
         };
@@ -154,12 +154,10 @@ impl StructuralDetector<'_, '_> {
             MagicContext::DefaultValue => self.cfg.magic_number_ignore_default_values,
             MagicContext::HttpStatus => self.cfg.magic_number_allow_http_status,
         };
-        let value = site.text.parse::<f64>().ok();
-        let ignored = self
-            .cfg
-            .magic_number_ignore
-            .iter()
-            .any(|ignore| ignore.parse::<f64>().ok() == value && value.is_some());
+        let ignored = site
+            .text
+            .parse::<f64>()
+            .is_ok_and(|value| self.cfg.ignored_magic_numbers().contains(&value));
         !waived && !ignored
     }
 

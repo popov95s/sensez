@@ -19,6 +19,9 @@ fn new_noise_rule_knobs_parse() {
 
             [rules.nested_ternary]
             strictness = "high"
+
+            [rules.swallowed_error_sentinel]
+            strictness = "low"
         "#,
     )
     .unwrap();
@@ -28,6 +31,7 @@ fn new_noise_rule_knobs_parse() {
     assert!(py.repeated_iteration_include_tests);
     assert_eq!(py.magic_string_default_strictness, Strictness::Low);
     assert_eq!(py.nested_ternary_strictness, Strictness::High);
+    assert_eq!(py.swallowed_error_strictness, Strictness::Low);
 }
 
 #[test]

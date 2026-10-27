@@ -31,6 +31,7 @@
       "smells/n_plus_one_call": 1,
       "smells/nested_loop": 6,
       "smells/shotgun_surgery_hazard": 1,
+      "smells/sibling_helper_redefinition": 2,
       "smells/tuple_packing": 3
     },
     "resolved_by_detector": {
@@ -38,17 +39,18 @@
         "count": 1
       }
     },
-    "scan_files_total": 922,
-    "scan_loc_total": 201534,
-    "scans": 11,
+    "scan_files_total": 838,
+    "scan_loc_total": 183212,
+    "scans": 10,
     "scans_by_origin": {
-      "gate": 4,
+      "gate": 3,
       "tool": 7
     },
     "searches": 0,
     "searches_zero_hit": 0
   },
   "calibration": [],
+  "config_issues": [],
   "config_pressure": {
     "changes": 0,
     "scope": {
@@ -71,10 +73,10 @@
   },
   "gate_funnel": {
     "by_origin": {
-      "gate": 4,
+      "gate": 3,
       "tool": 7
     },
-    "gate_share": 0.36
+    "gate_share": 0.3
   },
   "mean_resolution_days": {
     "_overall": 0.0,
@@ -110,7 +112,7 @@
         "resolved": 1
       }
     },
-    "scans": 11
+    "scans": 10
   },
   "search_health": {
     "searches": 0,
@@ -118,8 +120,8 @@
     "zero_hit_rate": 0.0
   },
   "self_health": {
-    "mean_files": 83.82,
-    "scans": 11
+    "mean_files": 83.8,
+    "scans": 10
   },
   "stale_findings": [],
   "triaged": [

@@ -11,6 +11,7 @@ use crate::config::smells::{Smells, Strictness};
 use crate::profiles::typevocab::{base_type, split_top_level, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionUnit;
+use std::borrow::Cow;
 
 /// Widest same-primitive tuple still read as a vector, colour or range.
 const MAX_HOMOGENEOUS_TUPLE: usize = 4;
@@ -24,17 +25,17 @@ pub fn detect(
     for m in metrics {
         boolean_blindness(ctx, m, cfg, out);
 
-        if cfg.loose_typing {
+        if cfg.is_enabled(SmellKind::LooseTyping) {
             loose_typing(ctx, m, cfg, out);
         }
-        if cfg.magic_string_default {
+        if cfg.is_enabled(SmellKind::MagicStringDefault) {
             magic_string::detect(ctx, m, cfg, out);
         }
-        if cfg.tuple_packing {
+        if cfg.is_enabled(SmellKind::TuplePacking) {
             tuple_packing(ctx, m, cfg, out);
         }
     }
-    if cfg.loose_typing && cfg.loose_typing_strictness == Strictness::High {
+    if cfg.is_enabled(SmellKind::LooseTyping) && cfg.loose_typing_strictness == Strictness::High {
         type_hiding_aliases(ctx, out);
     }
 }
@@ -73,23 +74,23 @@ fn loose_typing(
     if let Some((ty, _)) = ret {
         parts.push(format!("returns {ty}"));
     }
-    let mut kinds = offenders
+    let kinds: Vec<LooseTypeKind> = offenders
         .iter()
         .map(|(_, kind)| *kind)
-        .chain(ret.map(|(_, kind)| kind));
-    let any = kinds.clone().any(|kind| kind == LooseTypeKind::EscapeHatch);
-    let severity = if any {
+        .chain(ret.map(|(_, kind)| kind))
+        .collect();
+    let severity = if kinds.contains(&LooseTypeKind::EscapeHatch) {
         Severity::Warning
     } else {
         Severity::Info
     };
-    let advice = if kinds.all(|kind| kind == LooseTypeKind::SafeTop) {
-        ctx.wording.safe_top_advice.to_string()
+    let advice = if kinds.iter().all(|kind| *kind == LooseTypeKind::SafeTop) {
+        Cow::Borrowed(ctx.wording.safe_top_advice)
     } else {
-        format!(
+        Cow::Owned(format!(
             "replace loose types with {}; do not silence this with a shallow type alias",
             ctx.wording.structure
-        )
+        ))
     };
     out.push(make(
         SmellKind::LooseTyping,

@@ -6,6 +6,7 @@
 use super::symbols;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::typevocab::has_token;
+use crate::profiles::walk;
 use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
 use tree_sitter::Node;
 
@@ -153,7 +154,7 @@ fn instantiated_type(value: Option<Node>, src: &[u8]) -> Option<String> {
     let new_expr = value.filter(|v| v.kind() == "new_expression")?;
     let ctor = new_expr.child_by_field_name("constructor")?;
     let text = ctor.utf8_text(src).ok()?;
-    let last = text.rsplit('.').next().unwrap_or(text);
+    let last = walk::last_segment(text);
     match last.chars().next() {
         Some(c) if c.is_uppercase() => Some(last.to_string()),
         _ => None,

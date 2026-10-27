@@ -6,11 +6,11 @@
 
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageProfile, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageProfile, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
 use globset::GlobSet;
-use std::collections::HashMap;
+use std::collections::{BTreeMap, HashMap};
 use std::path::Path;
 use std::sync::OnceLock;
 
@@ -73,6 +73,15 @@ pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {
     profile(language) as &dyn ModuleProfile
 }
 
+/// Fresh import resolver state for every compiled-in language, for one graph build.
+pub fn import_resolvers() -> BTreeMap<Language, Box<dyn ImportResolver>> {
+    PROFILES
+        .iter()
+        .map(|p| ParseProfile::info(*p).language)
+        .map(|language| (language, module_profile(language).import_resolver()))
+        .collect()
+}
+
 pub fn dead_code_profile(language: Language) -> &'static dyn DeadCodeProfile {
     profile(language) as &dyn DeadCodeProfile
 }
@@ -93,8 +102,37 @@ pub fn identifier_extra_chars(language: Language) -> &'static [char] {
     smell_wording(language).identifier_extra_chars
 }
 
+/// Extra identifier characters of `path`'s language; every compiled-in language's when it has none.
+pub fn identifier_extra_chars_for_path(path: Option<&Path>) -> Vec<char> {
+    match path.and_then(parse_for_path) {
+        Some(profile) => profile.info().wording.identifier_extra_chars.to_vec(),
+        None => PROFILES
+            .iter()
+            .flat_map(|profile| ParseProfile::info(*profile).wording.identifier_extra_chars)
+            .copied()
+            .collect(),
+    }
+}
+
 pub fn smell_wording(language: Language) -> &'static SmellWording {
     profile(language).info().wording
+}
+
+/// Smells `language`'s profile switches off by default; none when it is not compiled in.
+pub fn default_off_smells(language: Language) -> &'static [crate::report::SmellKind] {
+    PROFILES
+        .iter()
+        .map(|profile| ParseProfile::info(*profile))
+        .find(|info| info.language == language)
+        .map_or(&[], |info| info.default_off_smells)
+}
+
+/// Migration-script globs of every compiled-in language.
+pub fn migration_layouts() -> impl Iterator<Item = &'static str> {
+    PROFILES
+        .iter()
+        .flat_map(|profile| ParseProfile::info(*profile).migration_layouts)
+        .copied()
 }
 
 /// Match file conventions from the owning language profile, compiled once.

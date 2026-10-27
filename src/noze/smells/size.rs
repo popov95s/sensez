@@ -15,7 +15,7 @@ pub fn detect(
 ) {
     for m in metrics {
         let lines = m.end_line.saturating_sub(m.start_line) + 1;
-        if cfg.long_function && lines > cfg.max_function_lines {
+        if cfg.is_enabled(SmellKind::LongFunction) && lines > cfg.max_function_lines {
             out.push(make(
                 SmellKind::LongFunction,
                 format!("{lines} lines (threshold {})", cfg.max_function_lines),
@@ -27,22 +27,16 @@ pub fn detect(
                 cfg.max_function_lines as u32,
             ));
         }
-        if cfg.narrating_code {
+        if cfg.is_enabled(SmellKind::NarratingCode) {
             narrating_code(ctx, cfg, out, m, lines);
         }
-        // A nested def carrying real logic is hidden inside its parent.
-        if cfg.max_nested_function_lines > 0
-            && m.is_nested
-            && lines > cfg.max_nested_function_lines
-            && !m.parent_is_test_callback
-            && !(m.captures_parent && cfg.nested_function_skip_capturing)
-        {
+        if is_reportable_nested(m, cfg, lines) {
             out.push(heavy_nested_function(ctx, cfg, m, lines));
         }
     }
     for class in classes {
         let methods = class.methods.len();
-        if cfg.large_class && methods > cfg.max_class_methods {
+        if cfg.is_enabled(SmellKind::LargeClass) && methods > cfg.max_class_methods {
             out.push(make(
                 SmellKind::LargeClass,
                 format!("{methods} methods (threshold {})", cfg.max_class_methods),
@@ -55,6 +49,16 @@ pub fn detect(
             ));
         }
     }
+}
+
+/// A nested function carrying real logic outside a test callback.
+fn is_reportable_nested(m: &FunctionUnit, cfg: &Smells, lines: usize) -> bool {
+    let skipped_capture = m.captures_parent && cfg.nested_function_skip_capturing;
+    cfg.max_nested_function_lines > 0
+        && m.is_nested
+        && lines > cfg.max_nested_function_lines
+        && !m.parent_is_test_callback
+        && !skipped_capture
 }
 
 fn heavy_nested_function(

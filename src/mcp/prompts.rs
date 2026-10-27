@@ -18,13 +18,21 @@ pub fn prompts_list() -> Value {
 }
 
 pub fn prompts_get(params: Option<&Value>) -> Result<Value, (i64, String)> {
-    let request = params.ok_or((-32602, "missing params".to_string()))?;
+    let request = params.ok_or_else(|| {
+        (
+            super::handlers::INVALID_PARAMS,
+            "missing params".to_string(),
+        )
+    })?;
     let name = request
         .get("name")
         .and_then(Value::as_str)
         .unwrap_or_default();
     if name != "report" {
-        return Err((-32602, format!("unknown prompt: {name}")));
+        return Err((
+            super::handlers::INVALID_PARAMS,
+            format!("unknown prompt: {name}"),
+        ));
     }
     let path = request
         .get("arguments")

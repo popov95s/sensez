@@ -3157,6 +3157,92 @@ min_blast = 4 # dependent modules before shotgun-surgery risk
 </table>
 </details>
 
+### Sibling Helper Redefinition (`sibling_helper_redefinition`)
+
+**What it is**
+
+The same small helper — same name, same parameter count, near-identical body — is written again in another module instead of imported.
+
+**Why it's bad**
+
+A fix lands in one copy and the others drift; a reviewer reading one file cannot know the helper already exists.
+
+**Example**
+
+=== "Python"
+
+    **Problem**
+
+    ```python
+    def message_of(error):
+        return str(error.args[0]) if error.args else repr(error)
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Keep one definition in a shared module and import it where the copies were.
+
+    ```python
+    import logging
+
+    from example import message_of
+
+
+    def log_failure(failure):
+        logging.error(message_of(failure))
+    ```
+    </details>
+
+=== "JS / TS"
+
+    **Problem**
+
+    ```ts
+    export function messageOf(error: unknown): string {
+      return error instanceof Error ? error.message : String(error);
+    }
+    ```
+
+    <details class="sensez-proposed-fix" markdown="1">
+    <summary>Proposed fix</summary>
+
+    Export one definition from a shared module and import it where the copies were.
+
+    ```ts
+    import { messageOf } from "./example";
+
+    export function logFailure(failure: unknown): void {
+      console.error(messageOf(failure));
+    }
+    ```
+    </details>
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+```toml
+[smells.<lang>.rules.sibling_helper_redefinition]
+enabled = true
+action = "warning"
+min_similarity = 80 # percent of matching body lexemes required between copies
+min_lexemes = 8 # lexeme codes a helper body needs before it is compared
+```
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
+</tbody>
+</table>
+</details>
+
 ## Type and Data Modeling
 
 ### Implicit Schema (`implicit_schema`)
@@ -3724,6 +3810,191 @@ action = "warning"
 <tr><td>Python</td><td>No</td></tr>
 <tr><td>JS / TS</td><td>No</td></tr>
 <tr><td>Rust</td><td>No</td></tr>
+</tbody>
+</table>
+</details>
+
+### Swallowed Error Sentinel (`swallowed_error_sentinel`)
+
+**What it is**
+
+An error handler drops the error and returns a placeholder (`null`, `[]`, `false`) or only logs — callers get a plausible value instead of a failure; rethrow or return a typed failure.
+
+**Why it's bad**
+
+A handler that turns any failure into `null`, an empty list or a log line hands callers a plausible value; the broken contract surfaces far from its cause, or never.
+
+**Example**
+
+=== "Python"
+
+    === "Low"
+
+        Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.
+
+        **Problem**
+
+        ```python
+        def load_profile(profile_id):
+            try:
+                return client.profiles.get(profile_id)
+            except Exception as error:
+                log.warning("profile load failed: %s", error)
+                return None
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Catch the specific exception you can handle, re-raise the rest with `raise ... from error`, or return a typed failure the caller must check.
+
+        ```python
+        def load_profile(profile_id):
+            try:
+                return client.profiles.get(profile_id)
+            except ClientError as error:
+                raise ProfileUnavailable(profile_id) from error
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags empty-value returns around a single JSON parse.
+
+        **Problem**
+
+        ```python
+        import json
+
+
+        def read_settings(text):
+            try:
+                return json.loads(text)
+            except Exception:
+                return None
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Catch the specific exception you can handle, re-raise the rest with `raise ... from error`, or return a typed failure the caller must check.
+
+        ```python
+        def load_profile(profile_id):
+            try:
+                return client.profiles.get(profile_id)
+            except ClientError as error:
+                raise ProfileUnavailable(profile_id) from error
+        ```
+
+        </details>
+
+=== "JS / TS"
+
+    === "Low"
+
+        Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.
+
+        **Problem**
+
+        ```ts
+        async function loadProfile(id: string): Promise<Profile | null> {
+          try {
+            return await client.profiles.get(id);
+          } catch (error) {
+            console.warn("profile load failed", error);
+            return null;
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rethrow, or return a typed failure (`{ ok: false, error }` or a `Result`) so the caller must handle it; keep a `tryX(): T | null` helper only where missing is the documented contract.
+
+        ```ts
+        async function loadProfile(id: string): Promise<Result<Profile, LoadError>> {
+          try {
+            return ok(await client.profiles.get(id));
+          } catch (error) {
+            return err(toLoadError(error));
+          }
+        }
+        ```
+
+        </details>
+
+    === "Medium"
+
+        Also flags empty-value returns around a single JSON parse.
+
+        **Problem**
+
+        ```ts
+        function readSettings(text: string) {
+          try {
+            return JSON.parse(text);
+          } catch {
+            return undefined;
+          }
+        }
+        ```
+
+        <details class="sensez-proposed-fix" markdown="1">
+        <summary>Proposed fix</summary>
+
+        Rethrow, or return a typed failure (`{ ok: false, error }` or a `Result`) so the caller must handle it; keep a `tryX(): T | null` helper only where missing is the documented contract.
+
+        ```ts
+        async function loadProfile(id: string): Promise<Result<Profile, LoadError>> {
+          try {
+            return ok(await client.profiles.get(id));
+          } catch (error) {
+            return err(toLoadError(error));
+          }
+        }
+        ```
+
+        </details>
+
+
+**Tune It**
+
+Replace `<lang>` with `python`, `javascript`, `typescript`, or `rust`.
+
+=== "Low"
+
+    ```toml
+    [smells.<lang>.rules.swallowed_error_sentinel]
+    enabled = true
+    action = "warning"
+    strictness = "low"
+    ```
+
+    Flags handlers that return an empty value (`null`, `None`, `[]`, `false`), except around a single JSON parse.
+
+=== "Medium"
+
+    ```toml
+    [smells.<lang>.rules.swallowed_error_sentinel]
+    enabled = true
+    action = "warning"
+    strictness = "medium"
+    ```
+
+    Also flags empty-value returns around a single JSON parse.
+
+<details class="sensez-proposed-fix" markdown="1">
+<summary>Default enabled state</summary>
+
+<table>
+<thead><tr><th>Language</th><th>Enabled by default</th></tr></thead>
+<tbody>
+<tr><td>Python</td><td>Yes</td></tr>
+<tr><td>JS / TS</td><td>Yes</td></tr>
+<tr><td>Rust</td><td>Yes</td></tr>
 </tbody>
 </table>
 </details>

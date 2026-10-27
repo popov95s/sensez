@@ -84,15 +84,56 @@ fn gate_reblocks_when_agent_fixes_then_introduces_again() {
     let first = gate(&json!({"path": repo.path})).unwrap();
     assert_block(&first);
 
-    // Fix: the finding disappears, the next call allows.
     std::fs::write(&repo.file, "print('fixed')\n").unwrap();
     let after_fix = gate(&json!({"path": repo.path})).unwrap();
     assert_eq!(after_fix["content"][0]["text"], "{}");
 
-    // Reintroduce: same identity as the first call, so the gate allows it.
     std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
-    let again = gate(&json!({"path": repo.path})).unwrap();
-    assert_eq!(again["content"][0]["text"], "{}");
+    let again = block_decision(&gate(&json!({"path": repo.path})).unwrap());
+    assert_eq!(again["decision"], "block");
+    let reason = again["reason"].as_str().unwrap();
+    assert!(reason.contains("REGRESSION"), "{reason}");
+}
+
+#[test]
+fn gate_without_metrics_blocks_an_unchanged_finding_once() {
+    let _metrics = crate::test_support::metrics_guard();
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
+    std::fs::write(
+        repo.root.join("sensez.toml"),
+        "[self_improvement]\nenabled = false\n",
+    )
+    .unwrap();
+    std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
+
+    assert_block(&gate(&json!({"path": repo.path})).unwrap());
+    let second = gate(&json!({"path": repo.path})).unwrap();
+    assert_eq!(second["content"][0]["text"], "{}");
+    assert!(!repo.root.join(".sensez/local-metrics").exists());
+}
+
+#[test]
+fn gate_allows_when_stop_hook_is_already_active() {
+    let _metrics = crate::test_support::metrics_guard();
+    let Some(repo) = fresh_repo("added.py") else {
+        return;
+    };
+    std::fs::write(&repo.file, "def orphan():\n    return 1\n").unwrap();
+
+    let resp = gate(&json!({"path": repo.path, "stop_hook_active": true})).unwrap();
+    assert_eq!(resp["content"][0]["text"], "{}");
+}
+
+#[test]
+fn gate_reports_an_unsubstituted_path_as_an_error() {
+    let resp = gate(&json!({"path": "${cwd}"})).unwrap();
+    assert_eq!(resp["isError"], true);
+    assert!(resp["content"][0]["text"]
+        .as_str()
+        .unwrap()
+        .contains("${cwd}"));
 }
 
 /// Dedup is over the finding identity, not line position. A content edit that
@@ -135,7 +176,7 @@ fn gate_block_count_tracks_new_identities() {
     };
 
     // Sequence: intro → same → trailing comment → fix → reintro → line-move → same.
-    // Blocks fire only on the first unseen identity.
+    // Blocks fire on the first unseen identity and again when it comes back after a fix.
     assert_eq!(blocks("def orphan():\n    return 1\n"), 1);
     assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
     assert_eq!(
@@ -143,7 +184,7 @@ fn gate_block_count_tracks_new_identities() {
         0
     );
     assert_eq!(blocks("print('fixed')\n"), 0);
-    assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
+    assert_eq!(blocks("def orphan():\n    return 1\n"), 1);
     assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 0);
     assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 0);
 }

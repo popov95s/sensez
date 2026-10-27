@@ -1,6 +1,7 @@
 use super::events::{Event, OutcomeKey, Totals};
 use super::fingerprint::{Aged, AgedEntry, Detector, Label, Pillar, ResolvedHistory};
 use super::store::*;
+use super::verdict::TriageVerdict;
 use std::collections::BTreeMap;
 use std::fs;
 
@@ -17,8 +18,8 @@ fn totals_and_events_roundtrip() {
         ts: 1,
         session: "s".into(),
         branch: "main".into(),
-        pillar: "smells".into(),
-        action: "fixed".into(),
+        detector: "smells".into(),
+        verdict: TriageVerdict::Debt,
         count: 1,
         detail: Some("renamed god module".into()),
     };
@@ -28,7 +29,7 @@ fn totals_and_events_roundtrip() {
     append_events(&root, &[event]).unwrap();
 
     assert_eq!(
-        load_totals(&root).outcomes[&OutcomeKey::new("fixed", "smells")],
+        load_totals(&root).outcomes[&OutcomeKey::new(TriageVerdict::Debt, "smells")],
         1
     );
     let log = fs::read_to_string(root.join(".sensez/local-metrics/events.jsonl")).unwrap();

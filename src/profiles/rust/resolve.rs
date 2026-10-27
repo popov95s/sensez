@@ -10,9 +10,7 @@
 
 use super::roots;
 use crate::spine::ir::ImportContext;
-use std::collections::HashMap;
-use std::path::{Path, PathBuf};
-use std::sync::{Mutex, OnceLock};
+use std::path::Path;
 
 /// The package (directory key) containing `module_name`. An index module
 /// (`mod.rs`/`lib.rs`) is its own package; otherwise drop the last segment.
@@ -138,25 +136,9 @@ fn rel_key(dir: &Path, root: &Path) -> String {
         .join("/")
 }
 
-/// The package name from `root/Cargo.toml` (hyphens → underscores, matching
-/// the crate name `use` paths carry), memoized per root — graph building calls
-/// this once per import, and the manifest never changes mid-scan.
+/// The package name from `root/Cargo.toml`, hyphens → underscores as `use` paths carry it.
 fn package_name(root: &Path) -> Option<String> {
-    static CACHE: OnceLock<Mutex<HashMap<PathBuf, Option<String>>>> = OnceLock::new();
-    let cache = CACHE.get_or_init(Mutex::default);
-    let mut cache = match cache.lock() {
-        Ok(guard) => guard,
-        Err(poisoned) => poisoned.into_inner(),
-    };
-    cache
-        .entry(root.to_path_buf())
-        .or_insert_with(|| read_package_name(root))
-        .clone()
-}
-
-fn read_package_name(root: &Path) -> Option<String> {
-    let text = std::fs::read_to_string(root.join("Cargo.toml")).ok()?;
-    let manifest: toml::Value = text.parse().ok()?;
+    let manifest = super::manifest::manifest(root)?;
     let name = manifest.get("package")?.get("name")?.as_str()?;
     Some(name.replace('-', "_"))
 }

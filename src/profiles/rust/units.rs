@@ -10,10 +10,12 @@ use crate::spine::ir::{
 };
 use tree_sitter::Node;
 
+use super::calls::{call_fact, method_call};
+use super::chains::CHAIN;
+use super::nesting::{cognitive_weight, is_branch, is_loop, is_nesting};
 use super::params::param_names;
 use super::unit_helpers::{
-    call_fact, cognitive_weight, is_branch, is_loop, is_nesting, is_string, method_call,
-    pattern_name, target_root, tuple_type_arity, type_text, unquote, CHAIN,
+    is_string, pattern_name, target_root, tuple_type_arity, type_text, unquote,
 };
 
 const ITER_METHODS: &[&str] = &["fold", "any", "all", "count", "sum", "position"];
@@ -72,12 +74,12 @@ struct Acc<'a> {
 impl Acc<'_> {
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind();
-        if matches!(kind, "function_item" | "closure_expression") {
+        if control_shapes::is_function(kind) {
             return;
         }
         let loop_frame = is_loop(kind).then(|| {
             let opened = super::loops::loop_frame(node, src, frame);
-            let line = walk::perf_line(node, src, &["value", "condition"]);
+            let line = super::performance::loop_line(node, src);
             self.unit.performance.open_loop(line, opened)
         });
         self.scan(node, src, frame);
@@ -128,7 +130,10 @@ impl Acc<'_> {
     }
 
     fn record_let(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
-        if let Some(pattern) = node.child_by_field_name("pattern") {
+        let Some(pattern) = node.child_by_field_name("pattern") else {
+            return;
+        };
+        if frame.is_some() {
             let names = walk::identifiers(pattern, src, &["identifier"]);
             self.unit.performance.note_declared(frame, &names);
             if node.child_by_field_name("value").is_some_and(|value| {
@@ -137,11 +142,8 @@ impl Acc<'_> {
                 self.unit.performance.note_call_results(frame, &names);
             }
         }
-        if let Some(pat) = node
-            .child_by_field_name("pattern")
-            .and_then(|p| pattern_name(p, src))
-        {
-            self.record_local(pat, node);
+        if let Some(name) = pattern_name(pattern, src) {
+            self.record_local(name, node);
         }
     }
 

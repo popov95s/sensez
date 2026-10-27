@@ -132,10 +132,13 @@ impl RuleSets {
             .into_iter()
             .map(|language| {
                 let defaults = registry::dead_code_profile(language).dead_code_defaults();
-                let entrypoints = merged(&config.entrypoints, defaults.entrypoints);
+                let entrypoints = merged(
+                    &config.registration_decorators,
+                    defaults.registration_decorators,
+                );
                 let entrypoint_names = merged(&config.entrypoint_names, defaults.entrypoint_names);
                 let method_entrypoint_names = merged(&[], defaults.method_entrypoint_names);
-                let entry_globs = merged_globset(&config.entry_points, defaults.entry_points);
+                let entry_globs = merged_globset(&config.entry_globs, defaults.entry_globs);
                 let config_globs = merged_globset(&[], defaults.runner_configs);
                 let test_source_globs = merged_globset(&config.test_sources, defaults.test_sources);
                 let test_support_globs =

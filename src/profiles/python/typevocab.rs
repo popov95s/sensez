@@ -78,6 +78,11 @@ pub(crate) fn is_void(annotation: &str) -> bool {
     annotation.trim() == "None"
 }
 
+/// `Optional[T]` or `T | None`.
+pub(crate) fn admits_missing(annotation: &str) -> bool {
+    has_token(annotation, "Optional") || has_token(annotation, "None")
+}
+
 pub(crate) fn is_bool(annotation: &str) -> bool {
     base_type(annotation) == "bool"
 }

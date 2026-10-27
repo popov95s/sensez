@@ -81,7 +81,8 @@ The collected data changes presentation, never the rules:
 - **Ranking** — findings from detectors below 0.5 precision (with ≥ 4
   adjudications) sink to the back of scan and gate output, so trusted findings
   lead. The rule still fires; only order changes.
-- **Gate escalation** — a blocked finding that was previously fixed (in the
-  resolved-history) is flagged as a regression in the gate message.
+- **Gate escalation** — a finding that was previously fixed (in the
+  resolved-history, or blocked and then fixed within the gate's session) is
+  flagged as a regression in the gate message.
 - **Calibration** — noisy detectors, hotspots, and never-fired boundary rules
   are surfaced as suggestions; the human edits `sensez.toml`.

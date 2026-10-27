@@ -5,10 +5,10 @@ use std::fs;
 
 fn cfg() -> DeadCode {
     DeadCode {
-        entrypoints: vec![],
+        registration_decorators: vec![],
         entrypoint_names: vec![],
         entrypoint_bases: vec![],
-        entry_points: vec![],
+        entry_globs: vec![],
         test_sources: vec![],
         test_support: vec![],
         entry_modules: vec![],
@@ -295,6 +295,6 @@ fn decorated_handlers_live_unimported_module_is_medium() {
         .iter()
         .find(|f| f.symbol == "plain")
         .expect("plain is unused");
-    assert_eq!(plain.confidence, Confidence::Medium);
-    assert_eq!(plain.reason, "unreachable_module");
+    assert_eq!(plain.confidence, Confidence::Medium, "{plain:?}");
+    assert_eq!(plain.reason, "unreachable_module", "{plain:?}");
 }

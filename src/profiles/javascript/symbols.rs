@@ -1,6 +1,7 @@
 //! Top-level declaration extraction for JavaScript/TypeScript.
 
 use crate::profiles::lineage::Lineage;
+use crate::profiles::walk::last_segment;
 use crate::spine::ir::SymbolKind;
 use tree_sitter::Node;
 
@@ -69,10 +70,6 @@ fn callback_name(lineage: Lineage, args: Node, src: &[u8]) -> Option<String> {
         Some(title) => format!("{callee}({title}) callback"),
         None => format!("{callee} callback"),
     })
-}
-
-pub(super) fn last_segment(path: &str) -> &str {
-    path.rsplit('.').next().unwrap_or(path)
 }
 
 /// Names declared by a `lexical_declaration` / `variable_declaration`, each with

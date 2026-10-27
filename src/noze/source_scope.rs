@@ -1,8 +1,7 @@
 //! Which parsed files the source-level pillars (smells, duplication) analyse.
 
-use crate::config::model::Duplication;
+use crate::config::model::{Config, Duplication};
 use crate::config::smells::SmellConfig;
-use crate::config::BASELINE_TEST_EXCLUDE;
 use crate::globs::compile_validated;
 use crate::profiles::registry;
 use crate::report::SkipCounts;
@@ -10,8 +9,9 @@ use crate::spine::parser::ParsedFile;
 use globset::GlobSet;
 use std::sync::LazyLock;
 
+/// Test directories in any language; per-language test files come from the profiles.
 static TEST_LAYOUTS: LazyLock<GlobSet> =
-    LazyLock::new(|| compile_validated(&BASELINE_TEST_EXCLUDE));
+    LazyLock::new(|| compile_validated(&["**/tests/**", "**/test/**"]));
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 pub(crate) enum Inclusion {
@@ -40,6 +40,21 @@ pub(crate) struct SourceScope {
     excluded: GlobSet,
     tests: Inclusion,
     generated: Inclusion,
+}
+
+/// The file scopes of the source-level pillars, compiled once per scan.
+pub(crate) struct PillarScopes {
+    pub(crate) duplication: SourceScope,
+    pub(crate) smells: SourceScope,
+}
+
+impl PillarScopes {
+    pub(crate) fn new(config: &Config) -> Self {
+        Self {
+            duplication: SourceScope::for_duplication(&config.duplication),
+            smells: SourceScope::for_smells(&config.smells),
+        }
+    }
 }
 
 impl SourceScope {

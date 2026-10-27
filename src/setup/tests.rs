@@ -42,8 +42,8 @@ fn flag_driven_init_writes_all_artifacts() {
         "gate runs via the warm MCP server"
     );
     assert!(
-        !stop.contains("stop_hook_active"),
-        "unused hook input dropped"
+        stop.contains("${stop_hook_active}"),
+        "the stop chain flag is forwarded so the gate can stop a loop"
     );
     assert!(
         stop.contains("transcript_path"),

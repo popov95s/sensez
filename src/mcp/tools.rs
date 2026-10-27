@@ -46,7 +46,8 @@ fn scan() -> Value {
                         uncommitted changes touch — analysis still covers the \
                         whole repo, so diff results are focused but never \
                         wrong. Pass diff=false for an explicit full-repository \
-                        audit. The returned JSON is compact: meta.totals \
+                        audit, and outside a git repository, where the diff \
+                        default returns an error. The returned JSON is compact: meta.totals \
                         counts each pillar before `limit`, and meta.truncated \
                         says whether `limit` cut anything.",
         "inputSchema": {
@@ -54,7 +55,7 @@ fn scan() -> Value {
             "properties": {
                 "path": {"type": "string", "description": "Absolute path to the REPOSITORY ROOT (not a subdirectory)"},
                 "threshold": {"type": "integer", "minimum": 0, "description": "Duplication token threshold (0 = off)"},
-                "limit": {"type": "integer", "minimum": 0, "default": 0, "description": "Cap each pillar to top-N ranked findings (0 = unlimited)"},
+                "limit": {"type": "integer", "minimum": 0, "default": 0, "description": "Cap each pillar to top-N ranked findings (0 = unlimited); the same knob as CLI `--max`, except smells are capped in total rather than per kind"},
                 "diff": {"type": "boolean", "default": true, "description": "Filter findings to uncommitted working-tree changes vs HEAD (needs git). Defaults to true; pass false for a full-repository report. Full-graph analysis either way."}
             },
             "required": ["path"]
@@ -108,7 +109,7 @@ fn search_docs() -> Value {
             "properties": {
                 "path": {"type": "string", "description": "Project root to index/search"},
                 "query": {"type": "string", "description": "Natural-language intent query"},
-                "top_k": {"type": "integer", "minimum": 1, "default": 10, "description": "Number of results (default 10)"}
+                "top_k": {"type": "integer", "minimum": 1, "default": crate::eyez::DEFAULT_TOP_K.get(), "description": format!("Number of results (default {})", crate::eyez::DEFAULT_TOP_K)}
             },
             "required": ["path", "query"]
         }
@@ -143,17 +144,23 @@ fn gate() -> Value {
         "name": "noze_gate",
         "description": "End-of-turn quality gate (intended for a Claude Code \
                         Stop hook, not for direct calls): diff-scoped scan of \
-                        uncommitted changes; returns hook-decision JSON that \
-                        blocks at most twice per turn-chain. Findings reported \
-                        more than [gate].repeat_limit times on the same source \
-                        lines are auto-deferred for the current coding loop; \
-                        the first auto-defer expires after three days, while a \
-                        second auto-defer for the same lines stays deferred.",
+                        uncommitted changes; returns hook-decision JSON. It \
+                        allows whenever stop_hook_active is true, so it blocks \
+                        at most once per stop chain, and it blocks a finding \
+                        only once per session unless the finding is fixed and \
+                        then reintroduced (reported as a regression). Findings \
+                        reintroduced more than [gate].repeat_limit times on the \
+                        same source lines are auto-deferred; the first \
+                        auto-defer expires after three days, a second one stays. \
+                        Gate state lives in .sensez/gate/ and expires after \
+                        seven idle days.",
         "inputSchema": {
             "type": "object",
             "properties": {
                 "path": {"type": "string", "description": "Repository root"},
-                "stop_hook_active": {"type": ["boolean", "string"], "description": "Ignored; accepted so older hooks still validate"}
+                "session_id": {"type": "string", "description": "Claude Code session id; scopes the gate's memory"},
+                "transcript_path": {"type": "string", "description": "Claude Code transcript; scopes the scan to this session's edits"},
+                "stop_hook_active": {"type": ["boolean", "string"], "description": "true when this Stop follows a gate block; the gate then allows"}
             },
             "required": ["path"]
         }

@@ -20,6 +20,12 @@ pub struct SmellWording {
     pub fallback_advice: &'static str,
     /// Placeholder words treated as missing-value sentinels (`magic_string_default`).
     pub sentinel_words: &'static [&'static str],
+    /// Error handler clause name (`swallowed_error_sentinel`).
+    pub handler_clause: &'static str,
+    /// Advice for a handler that swallows its error (`swallowed_error_sentinel`).
+    pub swallowed_error_advice: &'static str,
+    /// Function names a framework calls by spelling, so copies are not helpers (`sibling_helper_redefinition`).
+    pub framework_names: &'static [&'static str],
 }
 
 /// Missing-value placeholders shared by languages without `null`/`undefined` literals.

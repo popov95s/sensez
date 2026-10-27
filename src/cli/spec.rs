@@ -205,8 +205,8 @@ pub enum EyezAction {
         #[arg(num_args = 1..=2, required = true, value_names = ["PATH", "QUERY"])]
         args: Vec<String>,
         /// Number of results to return (at least 1).
-        #[arg(long, default_value_t = 10, value_parser = clap::value_parser!(u16).range(1..))]
-        top_k: u16,
+        #[arg(long, default_value_t = crate::eyez::DEFAULT_TOP_K)]
+        top_k: std::num::NonZeroUsize,
         /// Emit machine-readable JSON instead of a human-readable list.
         #[arg(long)]
         json: bool,

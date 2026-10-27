@@ -3,6 +3,7 @@
 //! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
 use super::chains::CHAIN;
+use super::nesting::{cognitive_weight, is_branch, is_nesting};
 use super::{classunit, conditionals, control_shapes, loops, magic_numbers, performance, symbols};
 use crate::profiles::branch_path::branch_path;
 use crate::profiles::guard_clause::is_guard_return;
@@ -58,7 +59,7 @@ impl<'u> Acc<'u> {
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind();
         // Nested functions/lambdas get their own unit — do not descend.
-        if matches!(kind, "function_definition" | "lambda") {
+        if control_shapes::is_function(kind) {
             self.unit.review_risks.test_has_nested_function = true;
             return;
         }
@@ -72,7 +73,7 @@ impl<'u> Acc<'u> {
         if let Some(method) = own_method_call(node, src) {
             self.unit.own_method_calls.insert(method);
         }
-        super::risk_facts::scan(self.unit, &mut self.guards, node, src);
+        super::risk_facts::scan(self.unit, &mut self.guards, node, src, frame);
 
         let mut child_depth = depth;
         if is_nesting(kind) {
@@ -165,11 +166,9 @@ impl<'u> Acc<'u> {
             .cloned()
             .collect();
         self.unit.performance.note_declared(frame, &declared);
-        if frame.is_some()
-            && node.child_by_field_name("right").is_some_and(|value| {
-                walk::fed_by_call(&self.unit.performance, frame, value, src, "call")
-            })
-        {
+        if node.child_by_field_name("right").is_some_and(|value| {
+            walk::fed_by_call(&self.unit.performance, frame, value, src, "call")
+        }) {
             self.unit.performance.note_call_results(frame, &targets);
             self.unit.performance.note_advanced(frame, &targets);
         }
@@ -300,42 +299,6 @@ fn is_docstring(node: Node, src: &[u8]) -> bool {
             .map(|c| matches!(c.kind(), "string" | "concatenated_string"))
             .unwrap_or(false)
         && node.utf8_text(src).is_ok()
-}
-
-/// Kinds that increase block-nesting depth.
-fn is_nesting(kind: &str) -> bool {
-    matches!(
-        kind,
-        "if_statement" | "for_statement" | "while_statement" | "try_statement" | "with_statement"
-    )
-}
-
-/// Kinds counted as cyclomatic decision points.
-fn is_branch(kind: &str) -> bool {
-    matches!(
-        kind,
-        "if_statement"
-            | "elif_clause"
-            | "for_statement"
-            | "while_statement"
-            | "except_clause"
-            | "boolean_operator"
-            | "conditional_expression"
-            | "if_clause"
-    )
-}
-
-/// Cognitive-complexity increment (Sonar-style): control structures cost
-/// `1 + nesting`; boolean operators and `elif` cost a flat `1`.
-fn cognitive_weight(kind: &str, depth: usize) -> Option<usize> {
-    match kind {
-        "if_statement" | "for_statement" | "while_statement" | "conditional_expression" => {
-            Some(1 + depth)
-        }
-        "except_clause" => Some(1 + depth),
-        "elif_clause" | "boolean_operator" => Some(1),
-        _ => None,
-    }
 }
 
 #[cfg(test)]

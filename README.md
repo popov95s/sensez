@@ -119,6 +119,7 @@ Some examples of the included smells:
 | `split_variable` | Multiple reassignments of a variable in one scope add hidden state. |
 | `nested_loop` | **Beta, opt-in:** nested iteration may have unintended complexity. |
 | `nested_ternary` | Nested conditional expressions make agent-generated decisions hard to follow. |
+| `swallowed_error_sentinel` | `catch { return null }` hides a failure behind a plausible value; `strictness` tunes which handlers count. |
 | `n_plus_one_call` | **Beta, opt-in:** one-by-one external calls may need batching. |
 
 The default report is intentionally fixable in one screen: each pillar shows its

@@ -3,12 +3,16 @@
 //! already owns private ones), and Rust-native unit extraction for smells that
 //! complement Clippy instead of re-reporting its local style lints.
 
+mod calls;
+mod chains;
 pub(crate) mod comment_syntax;
 mod control_shapes;
 pub(crate) mod deadcode;
 pub(crate) mod imports;
 pub(crate) mod lexeme;
 mod loops;
+mod manifest;
+mod nesting;
 mod params;
 pub(crate) mod performance;
 pub(crate) mod resolve;
@@ -28,9 +32,10 @@ mod tests;
 mod units_tests;
 
 use crate::profiles::{
-    DeadCodeProfile, Language, LanguageInfo, ModuleProfile, ParseProfile, PerformanceProfile,
-    TypeVocabularyProfile,
+    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
 };
+use crate::report::SmellKind;
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -42,6 +47,10 @@ static RUST_INFO: LanguageInfo = LanguageInfo {
     language: Language::Rust,
     extensions: &["rs"],
     test_support: &[],
+    migration_layouts: &[],
+    test_runners: &[],
+    // The same-name gate cannot tell a copied helper from sibling modules' parallel free functions.
+    default_off_smells: &[SmellKind::SiblingHelperRedefinition],
     wording: &wording::WORDING,
 };
 impl ParseProfile for RustProfile {
@@ -75,16 +84,8 @@ impl ModuleProfile for RustProfile {
         resolve::containing_package(module_name, is_index)
     }
 
-    fn resolve_target(
-        &self,
-        import: &ImportContext,
-        _importer_package: &str,
-        file: &Path,
-        root: &Path,
-        _resolution_cache: &mut crate::profiles::ResolutionCache,
-    ) -> String {
-        // `crate::`/`self::`/`super::`/package-name paths resolve on disk.
-        resolve::resolve_target(import, file, root)
+    fn import_resolver(&self) -> Box<dyn ImportResolver> {
+        Box::new(RustProfile)
     }
 
     fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String> {
@@ -98,6 +99,19 @@ impl ModuleProfile for RustProfile {
         target
             .strip_prefix(importer)
             .is_some_and(|rest| rest.starts_with('/'))
+    }
+}
+
+impl ImportResolver for RustProfile {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        _importer_package: &str,
+        file: &Path,
+        root: &Path,
+    ) -> String {
+        // `crate::`/`self::`/`super::`/package-name paths resolve on disk.
+        resolve::resolve_target(import, file, root)
     }
 }
 

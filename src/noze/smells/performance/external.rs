@@ -1,7 +1,7 @@
 use super::super::SmellContext;
 use super::loop_context::owned_by_loop;
 use crate::config::smells::Smells;
-use crate::globs::build_globset;
+use crate::globs::compile_validated;
 use crate::profiles::PerformanceProfile;
 use crate::spine::ir::{CallFact, FunctionUnit, LoopKind};
 use globset::GlobSet;
@@ -16,7 +16,7 @@ pub(super) struct LoopCallRules {
 impl LoopCallRules {
     pub(super) fn new(cfg: &Smells) -> Self {
         LoopCallRules {
-            callees: build_globset(&cfg.n_plus_one_callees).unwrap_or_else(|_| GlobSet::empty()),
+            callees: compile_validated(&cfg.n_plus_one_callees),
             await_in_loop: cfg.n_plus_one_await_in_loop,
         }
     }

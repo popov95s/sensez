@@ -26,7 +26,8 @@ pub(super) fn scan(sources: &[(&str, &str)], config: &DeadCode) -> Vec<DeadCodeF
     detect(&cg, &files, config)
 }
 
-pub(super) fn reported(findings: &[DeadCodeFinding], symbol: &str) -> Option<Confidence> {
+/// Confidence of the finding for `symbol`; `None` when absent or Low.
+pub(super) fn kept_confidence(findings: &[DeadCodeFinding], symbol: &str) -> Option<Confidence> {
     findings
         .iter()
         .find(|finding| finding.symbol == symbol && finding.confidence != Confidence::Low)
@@ -64,11 +65,10 @@ fn consumed_reexports_are_not_unused_imports() {
     assert_eq!(imports, vec!["b"]);
 }
 
-#[test]
-fn methods_that_may_satisfy_external_contracts_are_not_reported() {
+fn method_findings() -> Vec<DeadCodeFinding> {
     let mut config = Config::default().dead_code;
     config.unused_methods = true;
-    let findings = scan(
+    scan(
         &[
             (
                 "src/boundary.tsx",
@@ -88,19 +88,43 @@ fn methods_that_may_satisfy_external_contracts_are_not_reported() {
             ),
         ],
         &config,
-    );
+    )
+}
 
-    for symbol in [
-        "getDerivedStateFromError",
-        "componentDidCatch",
-        "neverCalled",
-        "onTestEnd",
-        "finish",
-    ] {
-        assert_eq!(reported(&findings, symbol), None, "{symbol}");
+#[test]
+fn react_lifecycle_methods_are_not_reported() {
+    let findings = method_findings();
+    for symbol in ["getDerivedStateFromError", "componentDidCatch"] {
+        assert_eq!(kept_confidence(&findings, symbol), None, "{symbol}");
     }
-    assert_eq!(reported(&findings, "orphan"), Some(Confidence::High));
-    assert_eq!(reported(&findings, "helperUnused"), Some(Confidence::High));
+}
+
+#[test]
+fn methods_of_classes_outside_the_scan_are_not_reported() {
+    let findings = method_findings();
+    assert_eq!(kept_confidence(&findings, "neverCalled"), None);
+}
+
+#[test]
+fn runner_callback_names_are_not_reported() {
+    let findings = method_findings();
+    assert_eq!(kept_confidence(&findings, "onTestEnd"), None);
+}
+
+#[test]
+fn methods_of_implemented_interfaces_are_not_reported() {
+    let findings = method_findings();
+    assert_eq!(kept_confidence(&findings, "finish"), None);
+}
+
+#[test]
+fn unused_plain_methods_are_reported() {
+    let findings = method_findings();
+    assert_eq!(kept_confidence(&findings, "orphan"), Some(Confidence::High));
+    assert_eq!(
+        kept_confidence(&findings, "helperUnused"),
+        Some(Confidence::High)
+    );
 }
 
 #[test]
@@ -116,8 +140,11 @@ fn callback_names_do_not_silence_top_level_functions() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "render"), Some(Confidence::High));
-    assert_eq!(reported(&findings, "onError"), Some(Confidence::High));
+    assert_eq!(kept_confidence(&findings, "render"), Some(Confidence::High));
+    assert_eq!(
+        kept_confidence(&findings, "onError"),
+        Some(Confidence::High)
+    );
 }
 
 #[test]
@@ -134,10 +161,10 @@ fn entrypoint_names_accept_prefix_patterns_for_methods() {
     ];
     let mut config = Config::default().dead_code;
     config.unused_methods = true;
-    assert!(reported(&scan(&sources, &config), "onCustom").is_some());
+    assert!(kept_confidence(&scan(&sources, &config), "onCustom").is_some());
 
     config.entrypoint_names = vec!["on*".to_string()];
-    assert_eq!(reported(&scan(&sources, &config), "onCustom"), None);
+    assert_eq!(kept_confidence(&scan(&sources, &config), "onCustom"), None);
 }
 
 #[test]
@@ -153,8 +180,8 @@ fn namespace_imports_credit_member_access() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "used"), None);
-    assert!(reported(&findings, "other").is_some());
+    assert_eq!(kept_confidence(&findings, "used"), None);
+    assert!(kept_confidence(&findings, "other").is_some());
 }
 
 #[test]
@@ -186,40 +213,53 @@ fn namespace_reexports_stay_star() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "libDead"), None);
+    assert_eq!(kept_confidence(&findings, "libDead"), None);
 }
+
+const MANIFEST_SOURCES: [(&str, &str); 3] = [
+    (
+        "backend/alerts.ts",
+        "import { register } from \"./lib\";\nexport const send = register({ handler: () => 1 });\nexport function formatAlert(e: Error) { return e.message; }\n",
+    ),
+    (
+        "backend/lib.ts",
+        "export function register(x: unknown) { return x; }\nexport function libDead() { return 1; }\n",
+    ),
+    (
+        "backend/_gen/api.d.ts",
+        "import type * as alerts from \"../alerts.js\";\nimport type * as lib from \"../lib.js\";\nexport declare const api: { alerts: typeof alerts; lib: typeof lib };\n",
+    ),
+];
 
 #[test]
 fn type_only_namespace_manifest_does_not_silence_modules() {
-    let sources = [
-        (
-            "backend/alerts.ts",
-            "import { register } from \"./lib\";\nexport const send = register({ handler: () => 1 });\nexport function formatAlert(e: Error) { return e.message; }\n",
-        ),
-        (
-            "backend/lib.ts",
-            "export function register(x: unknown) { return x; }\nexport function libDead() { return 1; }\n",
-        ),
-        (
-            "backend/_gen/api.d.ts",
-            "import type * as alerts from \"../alerts.js\";\nimport type * as lib from \"../lib.js\";\nexport declare const api: { alerts: typeof alerts; lib: typeof lib };\n",
-        ),
-    ];
+    let findings = scan(&MANIFEST_SOURCES, &Config::default().dead_code);
+
+    assert_eq!(
+        kept_confidence(&findings, "formatAlert"),
+        Some(Confidence::Medium)
+    );
+    assert_eq!(
+        kept_confidence(&findings, "libDead"),
+        Some(Confidence::Medium)
+    );
+    assert_eq!(kept_confidence(&findings, "send"), Some(Confidence::Medium));
+}
+
+#[test]
+fn configured_registration_callee_keeps_its_export_live() {
     let mut config = Config::default().dead_code;
-    let findings = scan(&sources, &config);
-
-    assert_eq!(reported(&findings, "formatAlert"), Some(Confidence::Medium));
-    assert_eq!(reported(&findings, "libDead"), Some(Confidence::Medium));
-    assert_eq!(reported(&findings, "send"), Some(Confidence::Medium));
-
-    config.entrypoints = vec!["register".to_string()];
-    assert_eq!(reported(&scan(&sources, &config), "send"), None);
+    config.registration_decorators = vec!["register".to_string()];
+    assert_eq!(
+        kept_confidence(&scan(&MANIFEST_SOURCES, &config), "send"),
+        None
+    );
 }
 
 #[test]
 fn registration_callees_mark_exports_as_entrypoints() {
     let mut config = Config::default().dead_code;
-    config.entrypoints = vec!["register".to_string(), "define*".to_string()];
+    config.registration_decorators = vec!["register".to_string(), "define*".to_string()];
     let findings = scan(
         &[
             (
@@ -234,9 +274,9 @@ fn registration_callees_mark_exports_as_entrypoints() {
         &config,
     );
 
-    assert_eq!(reported(&findings, "send"), None);
-    assert_eq!(reported(&findings, "widget"), None);
-    assert_eq!(reported(&findings, "plain"), Some(Confidence::High));
+    assert_eq!(kept_confidence(&findings, "send"), None);
+    assert_eq!(kept_confidence(&findings, "widget"), None);
+    assert_eq!(kept_confidence(&findings, "plain"), Some(Confidence::High));
 }
 
 #[test]
@@ -255,8 +295,11 @@ fn unused_constants_are_reported_by_default() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "UNUSED_LIMIT"), Some(Confidence::High));
-    assert_eq!(reported(&findings, "USED_LIMIT"), None);
+    assert_eq!(
+        kept_confidence(&findings, "UNUSED_LIMIT"),
+        Some(Confidence::High)
+    );
+    assert_eq!(kept_confidence(&findings, "USED_LIMIT"), None);
 }
 
 #[test]
@@ -280,8 +323,14 @@ fn module_typescript_extensions_are_analysed() {
         &Config::default().dead_code,
     );
 
-    assert_eq!(reported(&findings, "deadMts"), Some(Confidence::High));
-    assert_eq!(reported(&findings, "deadCts"), Some(Confidence::High));
-    assert_eq!(reported(&findings, "usedMts"), None);
-    assert_eq!(reported(&findings, "testHelperDead"), None);
+    assert_eq!(
+        kept_confidence(&findings, "deadMts"),
+        Some(Confidence::High)
+    );
+    assert_eq!(
+        kept_confidence(&findings, "deadCts"),
+        Some(Confidence::High)
+    );
+    assert_eq!(kept_confidence(&findings, "usedMts"), None);
+    assert_eq!(kept_confidence(&findings, "testHelperDead"), None);
 }

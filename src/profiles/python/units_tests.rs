@@ -1,12 +1,8 @@
-use crate::spine::ir::Walked;
-use crate::spine::parser::parse_source;
-
-fn walked(src: &str) -> Walked {
-    parse_source(src.as_bytes(), 0, "m", &super::super::PythonProfile).unwrap()
-}
+use super::super::PythonProfile;
+use crate::profiles::test_fixtures::walked;
 
 fn loop_declared(src: &str) -> Vec<String> {
-    let w = walked(src);
+    let w = walked(src, &PythonProfile);
     let frame = &w.units.functions[0].performance.loop_frames[0];
     frame.declared.iter().cloned().collect()
 }
@@ -31,7 +27,7 @@ fn first_binding_in_a_loop_is_a_declaration() {
 }
 
 fn function(src: &str, name: &str) -> crate::spine::ir::FunctionUnit {
-    walked(src)
+    walked(src, &PythonProfile)
         .units
         .functions
         .into_iter()

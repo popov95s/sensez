@@ -20,7 +20,7 @@ const WARN_AFTER: Duration = Duration::from_secs(1);
 /// strictly better than blocking forever behind a stuck peer.
 const GIVE_UP_AFTER: Duration = Duration::from_secs(10);
 
-pub(super) struct FileLock {
+pub(crate) struct FileLock {
     file: fs::File,
 }
 
@@ -33,12 +33,12 @@ impl Drop for FileLock {
 }
 
 /// Acquire an exclusive advisory lock on `name` within the local-metrics dir.
-///
-/// Waits at most [`GIVE_UP_AFTER`] for the holder, warning once after
-/// [`WARN_AFTER`]. Callers treat an error here as "skip this metrics write",
-/// never as a scan failure.
 pub(super) fn acquire(root: &Path, name: &str) -> Result<FileLock> {
-    let dir = crate::dotdir::ensure(root, Some("local-metrics"))?;
+    acquire_in(&crate::dotdir::ensure(root, Some("local-metrics"))?, name)
+}
+
+/// Acquire an exclusive advisory lock on `dir/name`, waiting at most [`GIVE_UP_AFTER`].
+pub(crate) fn acquire_in(dir: &Path, name: &str) -> Result<FileLock> {
     let path = dir.join(name);
 
     let file = OpenOptions::new()
@@ -64,7 +64,7 @@ pub(super) fn acquire(root: &Path, name: &str) -> Result<FileLock> {
         if !warned && waited >= WARN_AFTER {
             warned = true;
             eprintln!(
-                "[sensez metrics] waiting for {}: held by another sensez process?",
+                "[sensez] waiting for {}: held by another sensez process?",
                 path.display()
             );
         }
