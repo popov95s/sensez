@@ -99,22 +99,13 @@
     },
     {
       "action": "advisory",
-      "confidence": "High",
-      "file": "<flask>/src/flask/views.py",
-      "kind": "variable",
-      "line": 9,
-      "module": "flask.views",
-      "symbol": "F"
-    },
-    {
-      "action": "advisory",
       "confidence": "Medium",
       "file": "<flask>/src/flask/views.py",
-      "kind": "class",
-      "line": 138,
+      "kind": "module",
+      "line": 9,
       "module": "flask.views",
       "reason": "test_only",
-      "symbol": "MethodView"
+      "symbol": "F, MethodView"
     }
   ],
   "duplication": [
@@ -204,7 +195,7 @@
     "boundaries_configured": false,
     "boundaries_total": 0,
     "cycles_total": 2,
-    "dead_code_total": 6,
+    "dead_code_total": 5,
     "duplication_skipped": {
       "config_exclude": 0,
       "generated": 0,
