@@ -14,6 +14,7 @@ mod magic_number;
 mod mock_target;
 mod performance;
 mod sentinel_handler;
+mod shrink;
 mod state_write;
 pub mod tokens;
 mod type_escape;
@@ -138,14 +139,4 @@ pub struct Walked {
     /// `eyez` feature; never feeds the structural token stream.
     #[cfg(feature = "eyez")]
     pub docs: Vec<RawDoc>,
-}
-
-impl Walked {
-    /// Drops the spare capacity of the per-token and per-function vectors held for the whole scan.
-    pub fn shrink_to_fit(&mut self) {
-        self.syntax.tokens.shrink_to_fit();
-        self.syntax.spans.shrink_to_fit();
-        self.syntax.lexemes.shrink_to_fit();
-        self.units.functions.shrink_to_fit();
-    }
 }
