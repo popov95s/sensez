@@ -138,3 +138,13 @@ pub struct Walked {
     #[cfg(feature = "eyez")]
     pub docs: Vec<RawDoc>,
 }
+
+impl Walked {
+    /// Drops the spare capacity of the per-token and per-function vectors held for the whole scan.
+    pub fn shrink_to_fit(&mut self) {
+        self.syntax.tokens.shrink_to_fit();
+        self.syntax.spans.shrink_to_fit();
+        self.syntax.lexemes.shrink_to_fit();
+        self.units.functions.shrink_to_fit();
+    }
+}

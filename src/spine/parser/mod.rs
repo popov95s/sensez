@@ -248,7 +248,8 @@ fn parse_source_with_parser(
         timing::record_depth(started.elapsed());
     }
     let walk_started = timing::enabled().then(std::time::Instant::now);
-    let walked = profile.walk(tree.root_node(), src, file_id, module_name);
+    let mut walked = profile.walk(tree.root_node(), src, file_id, module_name);
+    walked.shrink_to_fit();
     if let Some(started) = walk_started {
         timing::record_walk(started.elapsed());
     }
