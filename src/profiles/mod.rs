@@ -10,6 +10,8 @@ pub(crate) mod branch_path;
 pub(crate) mod comment_class;
 pub(crate) mod comments;
 pub(crate) mod conditionals;
+mod decorator_class;
+pub use decorator_class::DecoratorClass;
 pub mod dependencies;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod echo_assertion;
@@ -136,29 +138,6 @@ pub enum ExternalBases {
     Ignored,
     /// Any out-of-scan base or interface may call methods.
     ImplyContract,
-}
-
-/// Result of classifying a symbol's decorator set for dead-code liveness.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DecoratorClass {
-    /// No decorators (or the language has none).
-    None,
-    /// Structural/stdlib decorators only — no effect on liveness.
-    Neutral,
-    /// Framework-registration decorator present — treat the symbol as live.
-    Registration,
-    /// A bare unrecognized decorator — uncertain, downgrade confidence.
-    Unknown,
-}
-
-impl DecoratorClass {
-    pub(crate) fn is_registration(self) -> bool {
-        matches!(self, Self::Registration)
-    }
-
-    pub(crate) fn is_unknown(self) -> bool {
-        matches!(self, Self::Unknown)
-    }
 }
 
 /// A file offered to a manifest's entry-point lookup.
