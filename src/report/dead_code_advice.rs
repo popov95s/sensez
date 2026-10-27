@@ -14,9 +14,6 @@ impl DeadCodeFinding {
                 "nothing imports this module: delete it, or add it to dead_code.entry_globs if a tool runs it"
             }
             (_, "test_only") => "only tests use it: delete it with its tests, or stop exporting it",
-            (SymbolKind::ReExport, _) => {
-                "nothing imports it through this barrel or uses it elsewhere: remove the re-export and its definition"
-            }
             _ => "nothing uses it: delete it, or add it to dead_code.entrypoint_names if it is called dynamically",
         }
     }

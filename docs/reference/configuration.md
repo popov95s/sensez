@@ -133,12 +133,8 @@ a tool runs it, or set `orphan_modules = false`. A module only tests reach has
 
 Names a barrel re-exports (`export { x } from "./x"`) count as used in their
 defining module only when someone imports them from the barrel (chains and
-`export *` included). An unused name is reported once, where it is defined; a
-re-export (kind `reexport`) is reported only when the name is used nowhere and
-its definition is not itself a reported symbol. Re-exported types (interfaces
-and type aliases) are never reported: they vanish at runtime. A
-barrel entry that importers bypass by importing the definition directly is not
-reported.
+`export *` included). An unused name is reported once, where it is defined;
+the barrel line itself is never reported.
 
 A whole-namespace type import (`import type * as jobs`, as generated API
 manifests use) keeps its exports at Medium. When the same initializer callee

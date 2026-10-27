@@ -55,8 +55,6 @@ pub enum SymbolKind {
     Method,
     Import,
     Property,
-    #[serde(rename = "reexport")]
-    ReExport,
     /// A whole module, for findings about modules rather than one symbol.
     Module,
 }
@@ -71,7 +69,6 @@ impl SymbolKind {
             SymbolKind::Method => "method",
             SymbolKind::Import => "import",
             SymbolKind::Property => "property",
-            SymbolKind::ReExport => "reexport",
             SymbolKind::Module => "module",
         }
     }
@@ -98,9 +95,6 @@ pub struct SymbolFacts {
     pub imports: Vec<ImportContext>,
     pub declared: Vec<String>,
     pub declared_kinds: HashMap<String, SymbolKind>,
-    /// Top-level names that exist only at type level and vanish at runtime.
-    #[serde(default)]
-    pub type_names: HashSet<String>,
     pub declared_lines: HashMap<String, usize>,
     pub methods: Vec<(String, usize)>,
     pub dunder_all: Option<Vec<String>>,

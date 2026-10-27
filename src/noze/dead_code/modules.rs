@@ -6,7 +6,6 @@ use super::demand::{self, Demand, Importers, Inbound, TestImporters};
 use super::manifest_callees::ManifestCallees;
 use super::reach::{self, Reach};
 use super::reachability::{is_asked, skip_symbol};
-use super::reexports::{self, Barrel};
 use super::roots::{self, Role};
 use super::{loaded_dirs, RuleSet, RuleSets};
 use crate::config::model::DeadCode;
@@ -102,7 +101,7 @@ impl<'a> ModuleScan<'a> {
             reached,
         };
         let mut seen = HashSet::new();
-        let mut findings: Vec<DeadCodeFinding> = file
+        let findings: Vec<DeadCodeFinding> = file
             .walked
             .symbols
             .declared
@@ -110,16 +109,6 @@ impl<'a> ModuleScan<'a> {
             .filter(|symbol| seen.insert(symbol.as_str()))
             .filter_map(|symbol| self.symbol_finding(&module, symbol))
             .collect();
-        let barrel = Barrel {
-            idx,
-            inbound,
-            counted: &counted,
-            reached,
-            rules,
-        };
-        findings.extend(reexports::unconsumed(self.cg, &barrel, |origin, name| {
-            self.origin_accounts(origin, name)
-        }));
         match reached {
             Reached::FromRoot => findings,
             Reached::Orphan | Reached::TestsOnly => whole_module(node, findings),
@@ -136,32 +125,6 @@ impl<'a> ModuleScan<'a> {
         } else {
             Reached::FromRoot
         }
-    }
-
-    /// The defining module reports, uses, re-exports or types `name` itself, so its barrel need not.
-    fn origin_accounts(&self, origin: NodeIndex, name: &str) -> bool {
-        let Some(file) = self.cg.graph[origin]
-            .source_index
-            .and_then(|index| self.files.get(index))
-        else {
-            return false;
-        };
-        let asked = self
-            .inbound
-            .get(&origin)
-            .is_some_and(|inbound| inbound.prod.contains(name) || inbound.test.contains(name));
-        asked
-            || file.walked.symbols.type_names.contains(name)
-            || file.walked.symbols.declared_kinds.contains_key(name)
-            || file
-                .walked
-                .usage
-                .name_counts
-                .get(name)
-                .copied()
-                .unwrap_or(0)
-                > 1
-            || reexports::takes_from_elsewhere(self.cg, origin, name)
     }
 
     fn symbol_finding(&self, module: &Module, symbol: &String) -> Option<DeadCodeFinding> {

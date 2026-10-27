@@ -21,7 +21,6 @@ mod manifest_callees;
 mod modules;
 mod reach;
 mod reachability;
-mod reexports;
 mod roots;
 
 use crate::config::model::DeadCode;
