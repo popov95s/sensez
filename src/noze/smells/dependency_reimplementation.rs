@@ -4,7 +4,7 @@ use super::make;
 use crate::config::smells::SmellConfig;
 use crate::profiles::dependencies::{DeclaredPackages, DependencyScope};
 use crate::profiles::registry;
-use crate::profiles::utility_lookalikes::{lookalikes, FileDependencies};
+use crate::profiles::utility_lookalikes::{has_candidates, lookalikes, FileDependencies};
 use crate::report::{ActionLevel, Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{Language, ProviderOrigin, UtilityLookalike, UtilityProvider};
 use crate::spine::parser::ParsedFile;
@@ -48,6 +48,11 @@ fn copies_in(
         return Vec::new();
     }
     let profile = registry::dependency_profile(file.language);
+    let units = &file.walked.units.functions;
+    let symbols = &file.walked.symbols;
+    if !has_candidates(profile.known_utilities(), units, symbols) {
+        return Vec::new();
+    }
     let dir = file.path.parent().unwrap_or(Path::new("."));
     let declared = manifests
         .entry((file.language, dir.to_path_buf()))
@@ -57,8 +62,6 @@ fn copies_in(
         scope: scope_of(file),
         configured: &settings.dependency_reimplementation_providers,
     };
-    let units = &file.walked.units.functions;
-    let symbols = &file.walked.symbols;
     lookalikes(profile.known_utilities(), units, symbols, &dependencies)
         .into_iter()
         .filter(fits_shape)
