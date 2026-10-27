@@ -82,6 +82,7 @@ pub struct Smells {
     pub n_plus_one_max_constant_bound: usize,
     pub n_plus_one_await_in_loop: bool,
     pub dependency_reimplementation_providers: Vec<String>,
+    pub stub_markers: Vec<String>,
     #[serde(skip)]
     pub compiled: super::compiled::Compiled,
 }
@@ -161,6 +162,9 @@ impl Default for Smells {
             dependency_reimplementation_providers: Vec::new(),
             n_plus_one_max_constant_bound: 10,
             n_plus_one_await_in_loop: false,
+            stub_markers: ["not implemented", "todo", "unimplemented", "placeholder"]
+                .map(String::from)
+                .to_vec(),
             compiled: Default::default(),
         }
     }

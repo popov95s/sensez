@@ -750,6 +750,13 @@ FindingDocs {
         fixes: &[LanguageBlock { language: "python", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }, LanguageBlock { language: "typescript", body: "Remove pass-through functions, or raise `max_depth` when a deliberate boundary is worth keeping." }],
     },
     FindingDocs {
+        kind: StubShipped,
+        why_bad: "Scaffolding written for later ships as a function that only fails, and the first user on that path hits the error at runtime. Unreferenced stubs are also reported as dead code. Keep deliberate scaffolding folders out with `[smells] exclude`.",
+        external_lints: &[],
+        references: &[],
+        fixes: &[LanguageBlock { language: "python", body: "Implement the function, delete it with its callers, or declare it with `@abstractmethod` on an `ABC`/`Protocol`." }, LanguageBlock { language: "typescript", body: "Implement the function, delete it with its callers, or declare it `abstract` or as an interface member. Tune the thrown messages with `markers`." }],
+    },
+    FindingDocs {
         kind: WeakTestOracle,
         why_bad: "A test that only executes code can pass when behavior is wrong.",
         external_lints: &[],

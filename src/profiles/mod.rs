@@ -30,6 +30,9 @@ pub(crate) mod runner_config;
 #[cfg(test)]
 pub(crate) mod test_fixtures;
 pub(crate) mod test_oracle;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
+pub(crate) mod todo_comment;
+#[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod try_handling;
 pub mod typevocab;
 pub mod utility_lookalikes;

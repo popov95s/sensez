@@ -31,6 +31,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         unit.review_risks.forwards_to =
             super::risk_facts::forward_target(func, src, &unit.param_names);
     }
+    unit.review_risks.stub = super::stub_body::stub_body(func, src, is_method);
     if let Some(body) = func.child_by_field_name("body") {
         let mut acc = Acc::new(&mut unit);
         let mut cursor = body.walk();
@@ -266,7 +267,7 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
 }
 
 /// Base-class names that mark a class as abstract / interface-like.
-fn is_abstract_base(base: &str) -> bool {
+pub(super) fn is_abstract_base(base: &str) -> bool {
     matches!(
         base.rsplit('.').next(),
         Some("ABC") | Some("ABCMeta") | Some("Protocol")
@@ -292,7 +293,7 @@ fn is_stub_body(body: Node, src: &[u8]) -> bool {
     }
 }
 
-fn is_docstring(node: Node, src: &[u8]) -> bool {
+pub(super) fn is_docstring(node: Node, src: &[u8]) -> bool {
     node.kind() == "expression_statement"
         && node
             .named_child(0)

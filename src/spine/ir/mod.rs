@@ -31,7 +31,7 @@ pub(crate) use units::{bump, record_attr};
 pub use units::{
     BranchPath, CallbackPosition, ChainHit, ClassProperty, ClassUnit, CommentClass, CommentSpan,
     FunctionKey, FunctionUnit, LiteralMembership, MutatorFamily, NestedTernary, SchemaCall,
-    TypeAlias, TypeHints, Visibility, ANONYMOUS,
+    StubBody, TypeAlias, TypeHints, Visibility, ANONYMOUS,
 };
 pub use utility::{ProviderOrigin, UtilityLookalike, UtilityProvider, UtilityShape};
 

@@ -31,6 +31,7 @@ pub(crate) mod risk_facts;
 pub(crate) mod roots;
 pub(crate) mod runner_config;
 pub(crate) mod scope;
+mod stub_body;
 pub(crate) mod symbols;
 pub(crate) mod test_support;
 pub(crate) mod tokens;

@@ -56,6 +56,7 @@ class SmellTerm(StrEnum):
     SORT_IN_LOOP = "sort_in_loop"
     SPLIT_VARIABLE = "split_variable"
     SWALLOWED_ERROR_SENTINEL = "swallowed_error_sentinel"
+    STUB_SHIPPED = "stub_shipped"
     TOO_MANY_RETURNS = "too_many_returns"
     TUPLE_PACKING = "tuple_packing"
     UNNECESSARY_NESTED_IF = "unnecessary_nested_if"

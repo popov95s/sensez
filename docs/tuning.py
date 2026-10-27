@@ -45,6 +45,7 @@ KNOB_COMMENTS = {
     "max_nesting": "allowed nested block depth",
     "max_params": "allowed parameters before flagging",
     "max_returns": "allowed return statements before flagging",
+    "markers": "thrown-error messages that mark a stub, matched as whole words",
     "max_tuple_return": "allowed positional tuple items in a return",
     "min_assigns": "assignments to one local before flagging",
     "min_blast": "dependent modules before shotgun-surgery risk",
