@@ -81,6 +81,10 @@ pub struct LanguageInfo {
     pub test_runners: &'static [runner_config::RunnerKind],
     /// Smells this language switches off by default, before any `sensez.toml` overlay.
     pub default_off_smells: &'static [crate::report::SmellKind],
+    /// File-name globs of project and compiler config files whose edits change findings.
+    #[cfg(feature = "lsp")]
+    pub project_files: &'static [&'static str],
+    pub import_words: &'static [&'static str],
     pub wording: &'static wording::SmellWording,
 }
 
@@ -193,6 +197,10 @@ pub trait ModuleProfile: Send + Sync {
         let _ = (file, workspace_root);
         base.to_string()
     }
+    /// Path key matched against [`ImportResolver::target_path_keys`]; `None` for dotted namespaces.
+    fn path_key(&self, _file: &Path) -> Option<PathBuf> {
+        None
+    }
     /// Workspace above `common` whose layout disambiguates colliding module names.
     fn workspace_root(&self, _common: &Path) -> Option<PathBuf> {
         None
@@ -216,8 +224,12 @@ pub trait ImportResolver {
     fn edge_phase(&mut self, import: &ImportContext, _importer_file: &Path) -> ImportPhase {
         import.phase
     }
-    /// Filesystem path an aliased import specifier maps to, for modules under `root`.
-    fn alias_path(&mut self, _root: &Path, _specifier: &str) -> Option<PathBuf> {
+    /// Candidate module path keys of `import`, tried in order before [`Self::resolve_target`].
+    fn target_path_keys(&mut self, _import: &ImportContext, _importer_file: &Path) -> Vec<PathBuf> {
+        Vec::new()
+    }
+    /// Filesystem path an aliased import specifier of `importer_file` maps to.
+    fn alias_path(&mut self, _importer_file: &Path, _specifier: &str) -> Option<PathBuf> {
         None
     }
 }

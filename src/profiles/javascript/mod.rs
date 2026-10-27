@@ -71,6 +71,9 @@ static JS_INFO: LanguageInfo = LanguageInfo {
     migration_layouts: &[],
     test_runners: &[RunnerKind::Vitest, RunnerKind::Jest],
     default_off_smells: &[],
+    #[cfg(feature = "lsp")]
+    project_files: &["package.json"],
+    import_words: &["import", "require", "from"],
     wording: &wording::WORDING,
 };
 impl ParseProfile for JsProfile {
@@ -116,6 +119,10 @@ impl ModuleProfile for JsProfile {
         roots::workspace_root(common)
     }
 
+    fn path_key(&self, file: &Path) -> Option<PathBuf> {
+        Some(roots::path_key(file))
+    }
+
     fn submodule_candidate(&self, _target: &str, _symbol: &str) -> Option<String> {
         // JS named imports are symbols, never submodules.
         None
@@ -134,8 +141,13 @@ impl ImportResolver for JsProfile {
         file: &Path,
         root: &Path,
     ) -> String {
-        // `./foo` resolves against the importing file's directory on disk.
         resolve::resolve_target(import, file, root)
+    }
+
+    fn target_path_keys(&mut self, import: &ImportContext, importer_file: &Path) -> Vec<PathBuf> {
+        resolve::relative_path_key(import, importer_file)
+            .into_iter()
+            .collect()
     }
 }
 

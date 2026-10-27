@@ -17,16 +17,10 @@ pub fn resolve(
 ) -> Result<ChangeScope> {
     if !explicit.is_empty() {
         let repository = crate::diff::git::repository_root(root)?;
+        let cwd = std::env::current_dir().unwrap_or_else(|_| repository.clone());
         let files: Vec<_> = explicit
             .iter()
-            .map(|path| {
-                let candidate = if path.is_absolute() {
-                    path.clone()
-                } else {
-                    repository.join(path)
-                };
-                std::fs::canonicalize(&candidate).unwrap_or(candidate)
-            })
+            .map(|path| explicit_file(path, &cwd, &repository))
             .collect();
         return Ok(ChangeScope {
             fallback_reasons: fallback_reasons(&files, &[]),
@@ -42,10 +36,23 @@ pub fn resolve(
     })
 }
 
+/// A `--changed-file` path: relative to `cwd` when it exists there, else to the repository.
+fn explicit_file(path: &Path, cwd: &Path, repository: &Path) -> PathBuf {
+    let from_cwd = cwd.join(path);
+    let candidate = if from_cwd.exists() {
+        from_cwd
+    } else {
+        repository.join(path)
+    };
+    std::fs::canonicalize(&candidate).unwrap_or(candidate)
+}
+
 fn fallback_reasons(files: &[PathBuf], deleted: &[PathBuf]) -> Vec<String> {
     let mut reasons = Vec::new();
-    if !deleted.is_empty() {
-        reasons.push("a tracked file was deleted; prior dependency edges are unavailable".into());
+    if deleted.iter().any(|path| is_source(path)) {
+        reasons.push(
+            "a tracked source file was deleted; prior dependency edges are unavailable".into(),
+        );
     }
     reasons.extend(
         files
@@ -131,6 +138,51 @@ mod tests {
             assert!(global_trigger(Path::new(path)).is_some(), "{path}");
         }
         assert!(global_trigger(Path::new("src/setup.ts")).is_none());
+    }
+
+    #[test]
+    fn deleted_non_source_file_is_not_a_fallback() {
+        let deleted = [PathBuf::from("README.md"), PathBuf::from("assets/note.txt")];
+
+        assert!(fallback_reasons(&deleted, &deleted).is_empty());
+    }
+
+    #[test]
+    fn deleted_source_file_is_a_fallback() {
+        let deleted = [PathBuf::from("src/math.ts")];
+
+        assert_eq!(fallback_reasons(&deleted, &deleted).len(), 1);
+    }
+
+    #[test]
+    fn changed_file_is_relative_to_the_working_directory() {
+        let repository = tempfile::tempdir().unwrap();
+        let repository = std::fs::canonicalize(repository.path()).unwrap();
+        std::fs::create_dir_all(repository.join("backend/app")).unwrap();
+        std::fs::write(repository.join("backend/app/math.py"), "").unwrap();
+
+        let file = explicit_file(
+            Path::new("app/math.py"),
+            &repository.join("backend"),
+            &repository,
+        );
+
+        assert_eq!(file, repository.join("backend/app/math.py"));
+    }
+
+    #[test]
+    fn changed_file_missing_under_cwd_is_relative_to_the_repository() {
+        let repository = tempfile::tempdir().unwrap();
+        let repository = std::fs::canonicalize(repository.path()).unwrap();
+        std::fs::create_dir_all(repository.join("backend")).unwrap();
+
+        let file = explicit_file(
+            Path::new("src/gone.ts"),
+            &repository.join("backend"),
+            &repository,
+        );
+
+        assert_eq!(file, repository.join("src/gone.ts"));
     }
 
     #[test]

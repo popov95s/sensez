@@ -8,7 +8,7 @@
 
 use super::roots;
 use crate::spine::ir::ImportContext;
-use std::path::Path;
+use std::path::{Path, PathBuf};
 
 /// The package (directory key) containing `module_name`. An index module is its
 /// own package; otherwise drop the last path segment.
@@ -20,6 +20,15 @@ pub fn containing_package(module_name: &str, is_index: bool) -> String {
         Some((pkg, _)) => pkg.to_string(),
         None => String::new(),
     }
+}
+
+/// Path key a relative specifier names, matched against parsed files before string keys.
+pub fn relative_path_key(import: &ImportContext, importer_file: &Path) -> Option<PathBuf> {
+    let target = &import.target_module;
+    target.starts_with('.').then(|| {
+        let base = importer_file.parent().unwrap_or(Path::new("."));
+        roots::path_key(&base.join(target))
+    })
 }
 
 /// Resolve `import.target_module` to a module key in the JS namespace.
@@ -43,7 +52,6 @@ pub fn resolve_target(import: &ImportContext, importer_file: &Path, root: &Path)
 #[cfg(test)]
 mod tests {
     use super::*;
-    use std::path::PathBuf;
 
     fn ctx(target: &str) -> ImportContext {
         ImportContext {

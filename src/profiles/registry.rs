@@ -131,6 +131,21 @@ pub fn default_off_smells(language: Language) -> &'static [crate::report::SmellK
         .map_or(&[], |info| info.default_off_smells)
 }
 
+/// Whether `path` names a project or compiler config file of a compiled-in language.
+#[cfg(feature = "lsp")]
+pub fn is_project_file(path: &Path) -> bool {
+    static PROJECT_FILES: OnceLock<GlobSet> = OnceLock::new();
+    let patterns = PROJECT_FILES.get_or_init(|| {
+        let patterns: Vec<&str> = PROFILES
+            .iter()
+            .flat_map(|profile| ParseProfile::info(*profile).project_files)
+            .copied()
+            .collect();
+        super::compile_profile_globs(&patterns)
+    });
+    path.file_name().is_some_and(|name| patterns.is_match(name))
+}
+
 /// Migration-script globs of every compiled-in language.
 pub fn migration_layouts() -> impl Iterator<Item = &'static str> {
     PROFILES

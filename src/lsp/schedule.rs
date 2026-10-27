@@ -18,8 +18,8 @@ pub(super) struct Workspace {
 pub(super) fn mark_dirty(
     workspaces: &mut BTreeMap<PathBuf, Workspace>,
     root: &Path,
-    in_flight: usize,
 ) -> Option<u64> {
+    let in_flight = running(workspaces);
     let workspace = workspaces
         .entry(root.to_path_buf())
         .or_insert_with(|| Workspace {
@@ -41,9 +41,8 @@ pub(super) fn mark_dirty(
 /// The next pending workspace to start while scan capacity remains, marked running.
 pub(super) fn take_pending(
     workspaces: &mut BTreeMap<PathBuf, Workspace>,
-    in_flight: usize,
 ) -> Option<(PathBuf, u64)> {
-    if in_flight >= MAX_CONCURRENT_SCANS {
+    if running(workspaces) >= MAX_CONCURRENT_SCANS {
         return None;
     }
     let workspace = workspaces
@@ -52,6 +51,13 @@ pub(super) fn take_pending(
     workspace.pending = false;
     workspace.running = true;
     Some((workspace.path.clone(), workspace.generation))
+}
+
+fn running(workspaces: &BTreeMap<PathBuf, Workspace>) -> usize {
+    workspaces
+        .values()
+        .filter(|workspace| workspace.running)
+        .count()
 }
 
 #[cfg(test)]
@@ -65,32 +71,31 @@ mod tests {
     #[test]
     fn idle_workspace_with_capacity_starts_a_scan() {
         let mut workspaces = BTreeMap::new();
-        assert_eq!(mark_dirty(&mut workspaces, &root("a"), 0), Some(1));
+        assert_eq!(mark_dirty(&mut workspaces, &root("a")), Some(1));
         assert!(workspaces[&root("a")].running);
     }
 
     #[test]
     fn running_workspace_is_marked_pending_with_a_new_generation() {
         let mut workspaces = BTreeMap::new();
-        mark_dirty(&mut workspaces, &root("a"), 0);
-        assert_eq!(mark_dirty(&mut workspaces, &root("a"), 1), None);
+        mark_dirty(&mut workspaces, &root("a"));
+        assert_eq!(mark_dirty(&mut workspaces, &root("a")), None);
         let workspace = &workspaces[&root("a")];
         assert!(workspace.pending);
         assert_eq!(workspace.generation, 2);
     }
 
     #[test]
-    fn pending_workspace_starts_once_capacity_frees() {
+    fn pending_workspace_starts_as_soon_as_a_running_scan_finishes() {
         let mut workspaces = BTreeMap::new();
-        assert_eq!(
-            mark_dirty(&mut workspaces, &root("a"), MAX_CONCURRENT_SCANS),
-            None
-        );
-        assert_eq!(take_pending(&mut workspaces, MAX_CONCURRENT_SCANS), None);
-        assert_eq!(
-            take_pending(&mut workspaces, MAX_CONCURRENT_SCANS - 1),
-            Some((root("a"), 1))
-        );
-        assert!(!workspaces[&root("a")].pending);
+        mark_dirty(&mut workspaces, &root("a"));
+        mark_dirty(&mut workspaces, &root("b"));
+        assert_eq!(mark_dirty(&mut workspaces, &root("c")), None);
+        assert_eq!(take_pending(&mut workspaces), None);
+
+        workspaces.get_mut(&root("a")).unwrap().running = false;
+
+        assert_eq!(take_pending(&mut workspaces), Some((root("c"), 1)));
+        assert!(!workspaces[&root("c")].pending);
     }
 }

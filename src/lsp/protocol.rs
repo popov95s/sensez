@@ -43,6 +43,14 @@ pub fn log(sender: &Sender<Message>, message: String) -> Result<()> {
     )
 }
 
+pub fn info(sender: &Sender<Message>, message: String) -> Result<()> {
+    send(
+        sender,
+        "window/logMessage",
+        &json!({ "type": 3, "message": message }),
+    )
+}
+
 pub fn capabilities() -> Value {
     json!({ "capabilities": { "textDocumentSync": { "openClose": true, "change": 0, "save": { "includeText": false } }, "executeCommandProvider": { "commands": [RESCAN] } } })
 }

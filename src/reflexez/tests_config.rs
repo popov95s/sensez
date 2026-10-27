@@ -202,7 +202,29 @@ fn terminal_output_uses_snake_case_reasons() {
     ]);
     project.change("src/feature.ts", "export const value = 2;\n");
 
-    let output = super::render::terminal(&project.plan(), project.root.path());
+    let output = super::render::terminal(&project.plan());
 
     assert!(output.contains("direct_dependency"), "{output}");
+}
+
+#[test]
+fn terminal_output_is_relative_to_the_repository_when_run_from_a_subdirectory() {
+    let project = Project::with_files(&[
+        ("web/feature.ts", "export const value = 1;\n"),
+        (
+            "web/feature.test.ts",
+            "import './feature'; test('f', () => 1);\n",
+        ),
+    ]);
+    let args = ReflexezArgs {
+        path: Some(project.root.path().join("web")),
+        full: true,
+        ..args()
+    };
+
+    let plan = super::selector::plan(&project.root.path().join("web"), &args).unwrap();
+    let output = super::render::terminal(&plan);
+
+    assert!(!output.contains(".//"), "{output}");
+    assert!(output.contains("    web/feature.test.ts"), "{output}");
 }

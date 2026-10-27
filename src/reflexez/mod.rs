@@ -28,7 +28,7 @@ pub(crate) fn run(args: ReflexezArgs) -> Result<ExitCode> {
         crate::cli::output::print_line(&serde_json::to_string_pretty(&plan)?)?;
         return Ok(ExitCode::SUCCESS);
     }
-    crate::cli::output::print_line(&render::terminal(&plan, &root))?;
+    crate::cli::output::print_line(&render::terminal(&plan))?;
     if args.plan {
         return Ok(ExitCode::SUCCESS);
     }
@@ -38,9 +38,13 @@ pub(crate) fn run(args: ReflexezArgs) -> Result<ExitCode> {
 #[cfg(test)]
 mod tests;
 #[cfg(test)]
+mod tests_changes;
+#[cfg(test)]
 mod tests_config;
 #[cfg(test)]
 mod tests_declaration;
+#[cfg(test)]
+mod tests_discovery;
 #[cfg(test)]
 mod tests_graph;
 #[cfg(test)]

@@ -76,7 +76,7 @@
           ],
           "default": "changed",
           "scope": "window",
-          "description": "Analyze only uncommitted changed code, or show findings from the entire workspace."
+          "description": "Analyze only uncommitted changed code, or show findings from the entire workspace. Outside a git work tree, changed falls back to the workspace."
         },
         "sensez.repositoryHealth.enabled": {
           "type": "boolean",

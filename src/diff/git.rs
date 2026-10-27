@@ -6,6 +6,7 @@
 
 use super::ChangedLines;
 use anyhow::{anyhow, Context, Result};
+use std::collections::BTreeSet;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::Duration;
@@ -32,60 +33,65 @@ pub fn repository_root(scan_path: &Path) -> Result<PathBuf> {
 /// Resolve all changed paths for test-impact analysis, including non-source
 /// manifests and configuration files that may require a full-suite fallback.
 pub fn changed_paths(scan_path: &Path, base: Option<&str>, staged: bool) -> Result<ChangedFiles> {
-    use std::collections::BTreeSet;
-
     let root = repository_root(scan_path)?;
-    let mut relative = BTreeSet::new();
-    let mut deleted = BTreeSet::new();
+    let mut names = ChangedNames::default();
     if staged {
-        extend_names(
-            &mut relative,
-            &run(&["diff", "--cached", "--name-only", "-z"], &root)?,
-        );
-        extend_names(
-            &mut deleted,
-            &run(
-                &["diff", "--cached", "--name-only", "--diff-filter=D", "-z"],
-                &root,
-            )?,
-        );
-    } else {
+        names.add_diff(&root, "--cached")?;
+    } else if has_commits(&root) {
         if let Some(base) = base {
             validate_revision(base)?;
-            let range = format!("{base}...HEAD");
-            extend_names(
-                &mut relative,
-                &run(&["diff", "--name-only", "-z", &range], &root)?,
-            );
-            extend_names(
-                &mut deleted,
-                &run(
-                    &["diff", "--name-only", "--diff-filter=D", "-z", &range],
-                    &root,
-                )?,
-            );
+            names.add_diff(&root, &format!("{base}...HEAD"))?;
         }
-        extend_names(
-            &mut relative,
-            &run(&["diff", "--name-only", "-z", "HEAD"], &root)?,
-        );
-        extend_names(
-            &mut deleted,
-            &run(
-                &["diff", "--name-only", "--diff-filter=D", "-z", "HEAD"],
-                &root,
-            )?,
-        );
-        relative.extend(untracked_relative(&root)?);
+        names.add_diff(&root, "HEAD")?;
+        names.changed.extend(untracked_relative(&root)?);
+    } else {
+        extend_names(&mut names.changed, &run(&["ls-files", "-z"], &root)?);
+        names.changed.extend(untracked_relative(&root)?);
     }
     Ok(ChangedFiles {
-        paths: relative.into_iter().map(|path| root.join(path)).collect(),
-        deleted: deleted.into_iter().map(|path| root.join(path)).collect(),
+        paths: names
+            .changed
+            .into_iter()
+            .map(|path| root.join(path))
+            .collect(),
+        deleted: names
+            .deleted
+            .into_iter()
+            .map(|path| root.join(path))
+            .collect(),
         root,
     })
 }
 
-fn extend_names(paths: &mut std::collections::BTreeSet<PathBuf>, output: &str) {
+#[derive(Default)]
+struct ChangedNames {
+    changed: BTreeSet<PathBuf>,
+    deleted: BTreeSet<PathBuf>,
+}
+
+impl ChangedNames {
+    /// Adds one `git diff` side; renames count as a deletion plus an addition.
+    fn add_diff(&mut self, root: &Path, target: &str) -> Result<()> {
+        let names = ["diff", "--no-renames", "--name-only", "-z", target];
+        extend_names(&mut self.changed, &run(&names, root)?);
+        let deletions = [
+            "diff",
+            "--no-renames",
+            "--name-only",
+            "--diff-filter=D",
+            "-z",
+            target,
+        ];
+        extend_names(&mut self.deleted, &run(&deletions, root)?);
+        Ok(())
+    }
+}
+
+fn has_commits(root: &Path) -> bool {
+    run(&["rev-parse", "--verify", "--quiet", "HEAD"], root).is_ok()
+}
+
+fn extend_names(paths: &mut BTreeSet<PathBuf>, output: &str) {
     paths.extend(
         output
             .split('\0')
@@ -119,7 +125,7 @@ pub fn changed_vs_head(scan_path: &Path) -> Result<ChangedLines> {
     let root = run(&["rev-parse", "--show-toplevel"], scan_path)?;
     let root = Path::new(root.trim());
 
-    let mut changed = if run(&["rev-parse", "--verify", "--quiet", "HEAD"], root).is_ok() {
+    let mut changed = if has_commits(root) {
         ChangedLines::from_unified(&run(&["diff", "--unified=0", "HEAD"], root)?, root)
     } else {
         staged_before_first_commit(root)?

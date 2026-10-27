@@ -180,6 +180,9 @@ fn run_scan(path: &Path, options: &ScanOptions) -> Result<ExitCode> {
     output::print_line(&rendered)?;
 
     ensure_complete_for_gate(&report, options)?;
+    if let Some(note) = gate_config_note(&report, options) {
+        eprintln!("{note}");
+    }
     if gate_fails {
         return Ok(ExitCode::FAILURE);
     }
@@ -252,6 +255,27 @@ fn ensure_complete_for_gate(
         Some(issue) => anyhow::bail!("incomplete scan: {}", issue.message),
         None => Ok(()),
     }
+}
+
+/// Gate summary when configuration problems fell back to defaults; the gate still decides.
+fn gate_config_note(
+    report: &crate::report::AnalysisReport,
+    options: &ScanOptions,
+) -> Option<String> {
+    if options.fail_on.is_none() && options.fail_on_new.is_none() {
+        return None;
+    }
+    let config_issues = report
+        .meta
+        .issues
+        .iter()
+        .filter(|issue| issue.stage == crate::report::ScanStage::Config)
+        .count();
+    (config_issues > 0).then(|| {
+        format!(
+            "[sensez] gate: result computed despite {config_issues} configuration issue(s) reported above"
+        )
+    })
 }
 
 fn gate_fails(report: &crate::report::AnalysisReport, options: &ScanOptions) -> bool {

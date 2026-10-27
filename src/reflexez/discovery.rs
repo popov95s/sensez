@@ -1,7 +1,7 @@
 use super::model::{ConfigWarning, RunnerKind};
 use super::runner_config::{self, RunnerConfig, SetupFile};
 use crate::cli::spec::RunnerChoice;
-use anyhow::{Context, Result};
+use anyhow::Result;
 use serde_json::Value;
 use std::path::{Path, PathBuf};
 
@@ -66,39 +66,43 @@ pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
         .filter(|path| is_supported_source(path))
         .cloned()
         .collect();
-    let node_projects = node_projects(root, &files, forced)?;
-    let pytest_roots = pytest::test_roots(root)?;
+    let (node_projects, manifest_warnings) = node_projects(root, &files, forced);
+    let mut pytest_configs = pytest::PytestConfigs::new(root);
+    let runs_pytest = matches!(forced, RunnerChoice::Auto | RunnerChoice::Pytest);
     let mut tests = Vec::new();
     for file in &sources {
-        if pytest::is_test_file(file)
-            && pytest::is_collected(file, &pytest_roots)
-            && matches!(forced, RunnerChoice::Auto | RunnerChoice::Pytest)
-        {
+        let pytest = pytest_configs.for_file(file);
+        if runs_pytest && pytest.collects(file) {
             tests.push(TestFile {
                 file: file.clone(),
                 runner: RunnerKind::Pytest,
-                runner_root: root.to_path_buf(),
+                runner_root: pytest.dir.clone(),
             });
         }
-        if let Some(project) =
-            nearest_project(file, &node_projects).filter(|project| project.config.is_test(file))
-        {
-            tests.push(TestFile {
-                file: file.clone(),
-                runner: project.runner,
-                runner_root: project.root.clone(),
-            });
+        for project in nearest_projects(file, &node_projects) {
+            if project.config.is_test(file) {
+                tests.push(TestFile {
+                    file: file.clone(),
+                    runner: project.runner,
+                    runner_root: project.root.clone(),
+                });
+            }
         }
     }
     tests.sort_by(|left, right| left.file.cmp(&right.file));
     tests.dedup_by(|left, right| left.file == right.file && left.runner == right.runner);
-    let mut runners = runner_roots(&node_projects);
-    if tests.iter().any(|test| test.runner == RunnerKind::Pytest) {
-        runners.push(RunnerRoot {
-            kind: RunnerKind::Pytest,
-            root: root.to_path_buf(),
-        });
-    }
+    let mut runners = runner_roots(&node_projects, &tests);
+    let mut pytest_roots: Vec<_> = tests
+        .iter()
+        .filter(|test| test.runner == RunnerKind::Pytest)
+        .map(|test| test.runner_root.clone())
+        .collect();
+    pytest_roots.sort();
+    pytest_roots.dedup();
+    runners.extend(pytest_roots.into_iter().map(|root| RunnerRoot {
+        kind: RunnerKind::Pytest,
+        root,
+    }));
     Ok(ProjectFiles {
         sources,
         tests,
@@ -107,17 +111,22 @@ pub fn discover(root: &Path, forced: RunnerChoice) -> Result<ProjectFiles> {
             .iter()
             .flat_map(|project| project.config.setup_files.iter().cloned())
             .collect(),
-        config_warnings: node_projects
-            .iter()
-            .flat_map(|project| project.config.warnings.iter().cloned())
+        config_warnings: manifest_warnings
+            .into_iter()
+            .chain(
+                node_projects
+                    .iter()
+                    .flat_map(|project| project.config.warnings.iter().cloned()),
+            )
             .collect(),
     })
 }
 
-/// Node runner roots, minus nested roots an enclosing workspace config already runs.
-fn runner_roots(projects: &[NodeProject]) -> Vec<RunnerRoot> {
+/// Node runner roots with discovered tests, minus nested roots an enclosing workspace config already runs.
+fn runner_roots(projects: &[NodeProject], tests: &[TestFile]) -> Vec<RunnerRoot> {
     projects
         .iter()
+        .filter(|project| runs_tests(project, tests))
         .filter(|project| {
             !projects.iter().any(|outer| {
                 outer.root != project.root
@@ -132,81 +141,92 @@ fn runner_roots(projects: &[NodeProject]) -> Vec<RunnerRoot> {
         .collect()
 }
 
-fn node_projects(root: &Path, files: &[PathBuf], forced: RunnerChoice) -> Result<Vec<NodeProject>> {
-    if matches!(forced, RunnerChoice::Vitest | RunnerChoice::Jest) {
-        return Ok(vec![node_project(
-            root.to_path_buf(),
-            if forced == RunnerChoice::Vitest {
-                RunnerKind::Vitest
-            } else {
-                RunnerKind::Jest
-            },
-        )]);
-    }
-    if forced == RunnerChoice::Pytest {
-        return Ok(Vec::new());
+/// Whether a discovered test runs from `project`'s root or a project directory it configures.
+fn runs_tests(project: &NodeProject, tests: &[TestFile]) -> bool {
+    tests.iter().any(|test| {
+        test.runner == project.runner
+            && (test.runner_root == project.root
+                || project
+                    .config
+                    .project_dirs()
+                    .any(|dir| dir == test.runner_root))
+    })
+}
+
+fn node_projects(
+    root: &Path,
+    files: &[PathBuf],
+    forced: RunnerChoice,
+) -> (Vec<NodeProject>, Vec<ConfigWarning>) {
+    match forced {
+        RunnerChoice::Vitest => {
+            return (
+                vec![node_project(root.to_path_buf(), RunnerKind::Vitest)],
+                Vec::new(),
+            )
+        }
+        RunnerChoice::Jest => {
+            return (
+                vec![node_project(root.to_path_buf(), RunnerKind::Jest)],
+                Vec::new(),
+            )
+        }
+        RunnerChoice::Pytest => return (Vec::new(), Vec::new()),
+        RunnerChoice::Auto => {}
     }
     let mut projects = Vec::new();
+    let mut warnings = Vec::new();
     for manifest in files.iter().filter(|path| path.ends_with("package.json")) {
-        let text = std::fs::read_to_string(manifest)
-            .with_context(|| format!("reading {}", manifest.display()))?;
-        let value: Value = serde_json::from_str(&text)
-            .with_context(|| format!("parsing {}", manifest.display()))?;
-        let Some(runner) = manifest_runner(&value) else {
-            continue;
+        let value = match read_manifest(manifest) {
+            Ok(value) => value,
+            Err(reason) => {
+                warnings.push(ConfigWarning {
+                    file: manifest.clone(),
+                    key: manifest
+                        .file_name()
+                        .unwrap_or_default()
+                        .to_string_lossy()
+                        .into_owned(),
+                    reason,
+                    fallback: "no Node runner for this directory".into(),
+                });
+                continue;
+            }
         };
         if let Some(parent) = manifest.parent() {
-            projects.push(node_project(parent.to_path_buf(), runner));
+            for runner in runner_config::manifest_runners(&value) {
+                projects.push(node_project(parent.to_path_buf(), runner));
+            }
         }
     }
     if projects.is_empty() {
-        if has_config(root, "vitest") {
-            projects.push(node_project(root.to_path_buf(), RunnerKind::Vitest));
-        } else if has_config(root, "jest") {
-            projects.push(node_project(root.to_path_buf(), RunnerKind::Jest));
-        }
+        projects.extend(
+            runner_config::config_runner(root)
+                .map(|runner| node_project(root.to_path_buf(), runner)),
+        );
     }
-    Ok(projects)
+    (projects, warnings)
 }
 
-fn manifest_runner(value: &Value) -> Option<RunnerKind> {
-    let sections = ["dependencies", "devDependencies", "peerDependencies"];
-    let has = |name: &str| {
-        sections
-            .iter()
-            .any(|section| value.get(section).and_then(|v| v.get(name)).is_some())
-            || value
-                .get("scripts")
-                .and_then(Value::as_object)
-                .is_some_and(|scripts| {
-                    scripts
-                        .values()
-                        .any(|v| v.as_str().is_some_and(|s| s.contains(name)))
-                })
-    };
-    if has("vitest") {
-        Some(RunnerKind::Vitest)
-    } else if has("jest") {
-        Some(RunnerKind::Jest)
-    } else {
-        None
-    }
+fn read_manifest(manifest: &Path) -> std::result::Result<Value, String> {
+    let text = std::fs::read_to_string(manifest).map_err(|error| error.to_string())?;
+    serde_json::from_str(&text).map_err(|error| error.to_string())
 }
 
-fn nearest_project<'a>(file: &Path, projects: &'a [NodeProject]) -> Option<&'a NodeProject> {
-    projects
+/// Projects rooted in the deepest directory above `file`; one per runner.
+fn nearest_projects<'a>(file: &Path, projects: &'a [NodeProject]) -> Vec<&'a NodeProject> {
+    let enclosing: Vec<_> = projects
         .iter()
         .filter(|project| file.starts_with(&project.root))
-        .max_by_key(|project| project.root.components().count())
-}
-
-fn has_config(root: &Path, runner: &str) -> bool {
-    root.join(format!("{runner}.config.js")).is_file()
-        || root.join(format!("{runner}.config.mjs")).is_file()
-        || root.join(format!("{runner}.config.cjs")).is_file()
-        || root.join(format!("{runner}.config.ts")).is_file()
-        || root.join(format!("{runner}.config.mts")).is_file()
-        || root.join(format!("{runner}.config.cts")).is_file()
+        .collect();
+    let deepest = enclosing
+        .iter()
+        .map(|project| project.root.components().count())
+        .max();
+    enclosing
+        .into_iter()
+        .filter(|project| Some(project.root.components().count()) == deepest)
+        .collect()
 }
 
 fn is_supported_source(path: &Path) -> bool {

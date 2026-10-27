@@ -16,6 +16,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     let identities = identity::for_files(files, configured_roots);
     let mut module_of: Vec<Option<String>> = Vec::with_capacity(files.len());
     let mut by_scope: HashMap<(Language, &Path), HashMap<String, String>> = HashMap::new();
+    let mut by_path_key: HashMap<PathBuf, String> = HashMap::new();
     let mut resolvers = registry::import_resolvers();
 
     // Pass 1: create a node per file. Re-exports are NOT folded into declared
@@ -37,6 +38,9 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
             is_external: false,
         });
         cg.name_to_index.insert(identity.name.clone(), idx);
+        if let Some(key) = registry::module_profile(file.language).path_key(&file.path) {
+            by_path_key.insert(key, identity.name.clone());
+        }
         by_scope
             .entry((file.language, identity.root.as_path()))
             .or_default()
@@ -69,19 +73,24 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
                     ..import.clone()
                 }),
             };
-            let resolved = resolver.resolve_target(&import, &pkg, &file.path, &identities[i].root);
-            // Zero-allocation probe: borrow the canonical name when the
-            // logical module exists, else fall back to the raw resolution.
-            let target: &str = scoped_names
-                .get(resolved.as_str())
-                .map(String::as_str)
-                .unwrap_or(&resolved);
+            let target = match resolver
+                .target_path_keys(&import, &file.path)
+                .iter()
+                .find_map(|key| by_path_key.get(key))
+            {
+                Some(name) => name.clone(),
+                None => {
+                    let resolved =
+                        resolver.resolve_target(&import, &pkg, &file.path, &identities[i].root);
+                    scoped_names.get(&resolved).cloned().unwrap_or(resolved)
+                }
+            };
             add_import_edges(
                 &mut cg,
                 src_idx,
                 &src_module,
                 file.language,
-                target,
+                &target,
                 &import,
                 &file.walked.usage.attribute_accesses,
             );

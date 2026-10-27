@@ -15,13 +15,18 @@ is a heavily commented real-world example.
 Sensez checks the whole file before it scans. Every problem is printed as
 `sensez.toml:LINE:COL: message`, with a "did you mean" hint where one fits.
 
-- **Errors** stop the run (exit `2`, nothing is scanned): TOML syntax errors,
-  wrong value types, invalid values such as `cycles = "critical"`, and unknown
-  keys inside `[smells]` (including `[smells.rules.*]` and the language
-  tables) and `[action]`.
-- **Warnings** are printed once and the scan continues: unknown keys in other
-  tables (`[duplication]`, `[dead_code]`, `[cycles]`, …) and unknown top-level
-  tables.
+- **Errors** make Sensez ignore the whole file and scan with the default
+  configuration: TOML syntax errors, wrong value types, invalid values such as
+  `cycles = "critical"`, and unknown keys inside `[smells]` (including
+  `[smells.rules.*]` and the language tables) and `[action]`.
+- **Warnings** ignore only the offending key and the scan continues: unknown
+  keys in other tables (`[duplication]`, `[dead_code]`, `[cycles]`, …) and
+  unknown top-level tables.
+
+Neither changes the exit code: a `--fail-on` / `--fail-on-new` run is still
+decided by its findings, and prints a `gate:` line on stderr noting that
+configuration issues were reported. Check the printed problems (or
+`meta.issues`, see below) in CI to catch a broken file.
 
 MCP scan tools return the same problems as an error result. The end-of-turn
 gate and the language server keep working on defaults instead.
@@ -58,7 +63,8 @@ action = "must_fix"
 profile is dogfooding-only and not shipped in the published packages.)
 
 Setting any knob, including `action`, enables the rule; use `enabled = false`
-for explicit suppression. A flat threshold under `[smells]` or
+for explicit suppression. A rule's own `action` wins over the
+`[action.smells]` entry for the same smell. A flat threshold under `[smells]` or
 `[smells.<lang>]` (`max_function_lines`, `max_cyclomatic`, `max_nesting`, …)
 also enables its rule, unless the same table sets the rule's toggle (for
 example `long_function = false`) or lists it in `disabled`.
@@ -184,7 +190,8 @@ Opt-in detectors for harder clones: `near_miss` (consistent renames),
 `[duplication.semantic]` (only in builds with the `eyez` feature). If the
 semantic pass is enabled but its embedding model cannot load (for example
 offline with no cached model), the scan records an `analyze` issue in
-`meta.issues`, and `--fail-on` / `--fail-on-new` exit `2` with "incomplete
+`meta.issues` (present in `--json` output when `SENSEZ_SCAN_DIAGNOSTICS` or
+`SENSEZ_TIMING` is set), and `--fail-on` / `--fail-on-new` exit `2` with "incomplete
 scan" rather than passing.
 
 ```toml
@@ -252,8 +259,9 @@ to = "app.api"
 
 Matching, per endpoint:
 
-- A plain name is a dotted prefix — `app.domain` matches `app.domain` and
-  `app.domain.*`.
+- A plain name is a module-name prefix — `app.domain` matches `app.domain`
+  and `app.domain.*`; for JavaScript and TypeScript modules, which are named by
+  path, `src/domain` matches `src/domain` and `src/domain/*`.
 - A glob (`* ? [`) is matched against **both** the module name and the file
   path, so `from = "**/domain/**"` works even for namespace packages without
   `__init__.py`.

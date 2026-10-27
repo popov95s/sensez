@@ -73,8 +73,15 @@ fn after_code_char(
         (',', _) => {
             let keep_before_comma = output.len();
             output.push(ch);
-            while let Some(next) = chars.next_if(|next| next.is_whitespace()) {
-                output.push(next);
+            loop {
+                if let Some(next) = chars.next_if(|next| next.is_whitespace()) {
+                    output.push(next);
+                } else if comment_follows(chars) {
+                    let slash = chars.next().unwrap_or('/');
+                    after_code_char(slash, chars, output);
+                } else {
+                    break;
+                }
             }
             if matches!(chars.peek(), Some('}' | ']')) {
                 output.truncate(keep_before_comma);
@@ -83,6 +90,11 @@ fn after_code_char(
         _ => output.push(ch),
     }
     Jsonc::Code
+}
+
+fn comment_follows(chars: &std::iter::Peekable<std::str::Chars<'_>>) -> bool {
+    let mut ahead = chars.clone();
+    ahead.next() == Some('/') && matches!(ahead.next(), Some('/' | '*'))
 }
 
 #[cfg(test)]
@@ -108,5 +120,14 @@ mod normalize_tests {
         assert_eq!(value["a"], serde_json::json!([1, 2]));
         assert_eq!(value["b"]["c"], 1);
         assert!(!normalized.contains("//"), "line comments must be stripped");
+    }
+
+    #[test]
+    fn drops_trailing_comma_followed_by_a_comment() {
+        let input = "{ \"a\": { \"b\": 1 },  // note\n /* more */ }";
+        let normalized = normalize_jsonc(input);
+        let value: serde_json::Value =
+            serde_json::from_str(&normalized).unwrap_or_else(|err| panic!("{err}\n{normalized}"));
+        assert_eq!(value["a"]["b"], 1);
     }
 }

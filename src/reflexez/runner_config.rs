@@ -38,3 +38,16 @@ pub fn load(root: &Path, runner: RunnerKind) -> RunnerConfig {
 pub fn load(_root: &Path, _runner: RunnerKind) -> RunnerConfig {
     RunnerConfig::default()
 }
+
+#[cfg(feature = "lang-javascript")]
+pub use crate::profiles::javascript::runner_config::detect::{config_runner, manifest_runners};
+
+#[cfg(not(feature = "lang-javascript"))]
+pub fn manifest_runners(_manifest: &serde_json::Value) -> Vec<RunnerKind> {
+    Vec::new()
+}
+
+#[cfg(not(feature = "lang-javascript"))]
+pub fn config_runner(_root: &Path) -> Option<RunnerKind> {
+    None
+}

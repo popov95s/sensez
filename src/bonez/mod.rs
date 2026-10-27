@@ -108,7 +108,7 @@ fn node_matches(matcher: &Matcher, node: &ModuleNode) -> bool {
     matches!(matcher, Matcher::Glob(set) if set.is_match(&node.file_path))
 }
 
-/// Match a dotted name: prefix (equal or submodule) or glob. For globs the
+/// Match a module name: prefix (equal, or a `.`/`/` submodule) or glob. For globs the
 /// name is tried both as-is (so `*.db.*` matches `app.db.session`) and with
 /// dots rewritten to slashes (so a *path* glob like `**/db/**` matches the same
 /// dotted module/import target even when it didn't resolve to a file on disk).
@@ -116,7 +116,7 @@ fn matches_name(matcher: &Matcher, name: &str) -> bool {
     match matcher {
         Matcher::Prefix(prefix) => name
             .strip_prefix(prefix.as_str())
-            .is_some_and(|rest| rest.is_empty() || rest.starts_with('.')),
+            .is_some_and(|rest| rest.is_empty() || rest.starts_with(['.', '/'])),
         Matcher::Glob(set) => {
             set.is_match(Path::new(name)) || set.is_match(Path::new(&name.replace('.', "/")))
         }
@@ -223,13 +223,10 @@ mod tests {
         let tmp = tempfile::tempdir().unwrap();
         let parsed: Vec<_> = files
             .iter()
+            .map(|(name, text)| crate::test_support::write(tmp.path(), name, text))
+            .filter(|path| path.extension().is_some_and(|ext| ext != "json"))
             .enumerate()
-            .map(|(i, (name, text))| {
-                let path = tmp.path().join(name);
-                fs::create_dir_all(path.parent().unwrap()).unwrap();
-                fs::write(&path, text).unwrap();
-                parse_file(&path, i as u32).unwrap()
-            })
+            .map(|(i, path)| parse_file(&path, i as u32).unwrap())
             .collect();
         let cg = crate::spine::graph::build(&parsed, &[]);
         (tmp, cg)
@@ -264,6 +261,24 @@ mod tests {
 
         let audit = audit(&cg, &[rule("**/api/*.py", "app.db")]);
 
+        assert!(audit.unmatched_rules.is_empty());
+    }
+
+    #[cfg(feature = "lang-typescript")]
+    #[test]
+    fn plain_rule_matches_slash_keyed_modules() {
+        let (_tmp, cg) = graph_of(&[
+            ("package.json", "{}"),
+            (
+                "src/domain/core.ts",
+                "import { send } from '../api/client';\nexport const x = send;\n",
+            ),
+            ("src/api/client.ts", "export const send = 1;\n"),
+        ]);
+
+        let audit = audit(&cg, &[rule("src/domain", "src/api")]);
+
+        assert_eq!(audit.violations.len(), 1);
         assert!(audit.unmatched_rules.is_empty());
     }
 }

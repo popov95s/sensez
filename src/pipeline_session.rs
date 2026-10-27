@@ -40,9 +40,7 @@ impl AnalysisSession {
         };
         let (parsed, stats) =
             crate::spine::parser::parse_sources_incremental(&project.sources, &mut state);
-        if parsed.issues.is_empty() {
-            state.replace(&project.sources, &parsed.files);
-        }
+        state.replace(&project.sources, &parsed.files);
         (parsed, stats)
     }
 
@@ -98,6 +96,26 @@ mod tests {
         let changed = crate::spine::cache::load_project(&[file]).unwrap();
         let stats = session.parse(root.path(), &changed).1;
         assert_eq!((stats.modified, stats.reusable), (1, 0));
+    }
+
+    #[test]
+    fn a_parse_issue_in_one_file_keeps_the_others_cached() {
+        let root = tempfile::tempdir().unwrap();
+        let good = root.path().join("good.py");
+        let deep = root.path().join("deep.py");
+        std::fs::write(&good, "def ok():\n    return 1\n").unwrap();
+        std::fs::write(
+            &deep,
+            format!("x = {}1{}\n", "[".repeat(600), "]".repeat(600)),
+        )
+        .unwrap();
+        let session = AnalysisSession::default();
+        let project = crate::spine::cache::load_project(&[good, deep]).unwrap();
+
+        let (parsed, _) = session.parse(root.path(), &project);
+        assert_eq!(parsed.issues.len(), 1);
+
+        assert_eq!(session.parse(root.path(), &project).1.reusable, 1);
     }
 
     #[test]
