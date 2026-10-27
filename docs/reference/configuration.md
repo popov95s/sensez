@@ -98,6 +98,7 @@ entry_points = ["**/scripts/**"]             # file globs reached outside the im
 test_sources = ["**/*.e2e.ts"]               # extra test-runner globs (test roots)
 test_support = ["**/testing/**"]             # extra test-helper globs
 orphan_modules = true                        # report modules no root reaches
+unimported_dir_share = 50                    # % of a directory's modules nothing imports that marks it runtime-loaded (0 = off)
 ```
 
 Dead code walks the import graph from two kinds of roots:
@@ -105,22 +106,43 @@ Dead code walks the import graph from two kinds of roots:
 - **Production roots:** `entry_points` globs, manifest entries (`pyproject.toml`
   scripts, Cargo binaries and `lib.rs`, `package.json` `main` / `module` / `bin`
   / `exports`, where a `dist/`, `lib/`, `build/` or `out/` target also names its
-  `src/` twin), and tool configs such as `*.config.ts`. An entry-point file is
-  never reported, and its imports count as usage.
+  `src/` twin, and source files a `package.json` `scripts` command runs), and
+  tool configs such as `*.config.ts`. An entry-point file is never reported,
+  and its imports count as usage.
+- **Runtime-loaded directories:** when at least `unimported_dir_share` percent
+  (default 50) of the modules under a directory, and at least five of them,
+  have no runtime importer (tests and type-only imports do not count), Sensez
+  takes the runtime to load that directory by path, as frameworks, plugin
+  folders and serverless function folders do. Those modules become production
+  roots and are not reported. Set `unimported_dir_share = 0` to turn this off.
 - **Test roots:** `test_sources` globs plus the profile's test files.
 
 A symbol that only tests import is reported at Medium with `reason =
 "test_only"`. Files matching `test_support` (JS/TS default: `**/e2e/**`,
-`**/test-utils/**`, `**/fixtures/**`, `**/__fixtures__/**`) are test helpers:
-their test importers count as users, so only truly unused helpers are reported.
-A module that nothing imports and no root reaches is reported at Medium with
-`reason = "unreachable_module"`; add its path to `entry_points` if a tool runs
-it, or set `orphan_modules = false`.
+`**/test-utils/**`, `**/testUtils/**`, `**/fixtures/**`, `**/__fixtures__/**`)
+are test helpers: their test importers count as users, so only truly unused
+helpers are reported.
+
+Reachability is a property of whole modules, so it is reported once per module
+with kind `module`, at Medium, anchored at the first unused symbol, with
+`symbol` listing the unused names. A module that nothing imports and no root
+reaches has `reason = "unreachable_module"`; add its path to `entry_points` if
+a tool runs it, or set `orphan_modules = false`. A module only tests reach has
+`reason = "test_only"`.
 
 Names a barrel re-exports (`export { x } from "./x"`) count as used in their
 defining module only when someone imports them from the barrel (chains and
-`export *` included). A re-export nobody imports is reported with kind
-`reexport`.
+`export *` included). An unused name is reported once, where it is defined; a
+re-export (kind `reexport`) is reported only when the name is used nowhere and
+its definition is not itself a reported symbol (for example a type alias). A
+barrel entry that importers bypass by importing the definition directly is not
+reported.
+
+A whole-namespace type import (`import type * as jobs`, as generated API
+manifests use) keeps its exports at Medium. When the same initializer callee
+(`export const run = task({ ... })`, builder chains included) initializes at
+least five exports across the modules such a manifest exposes, Sensez treats
+that callee as a registration and those exports as live.
 
 Confidence is High unless evidence suggests hidden use, then Medium: a default
 export, an importer that binds the module whole or not at all (`import()`,
