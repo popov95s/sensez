@@ -43,3 +43,33 @@ pub(super) fn project(
     let graph = crate::spine::graph::build(&parsed, &[tmp.path().to_path_buf()]);
     (parsed, graph)
 }
+
+/// A throwaway repository holding `files`; source files among them are parsed.
+pub(super) struct Project {
+    _root: tempfile::TempDir,
+    pub files: Vec<ParsedFile>,
+}
+
+impl Project {
+    pub(super) fn new(sources: &[(&str, &str)]) -> Self {
+        let root = tempfile::tempdir().unwrap();
+        std::fs::create_dir(root.path().join(".git")).unwrap();
+        let paths: Vec<_> = sources
+            .iter()
+            .map(|(name, body)| crate::test_support::write(root.path(), name, body))
+            .collect();
+        let parsed = paths
+            .iter()
+            .filter(|path| crate::profiles::registry::should_parse_path(path))
+            .map(|path| parse_file(path, 0).unwrap())
+            .collect();
+        Project {
+            _root: root,
+            files: parsed,
+        }
+    }
+
+    pub(super) fn parsed(&self) -> Vec<&ParsedFile> {
+        self.files.iter().collect()
+    }
+}

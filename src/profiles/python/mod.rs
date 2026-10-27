@@ -11,6 +11,7 @@ mod imports;
 mod lexeme;
 mod loops;
 mod magic_numbers;
+mod manifest;
 mod nested;
 mod nesting;
 mod obsession;
@@ -26,6 +27,7 @@ mod traversal;
 mod typehints;
 pub(crate) mod typevocab;
 mod units;
+mod utilities;
 mod wording;
 
 use crate::profiles::runner_config::RunnerKind;
@@ -175,6 +177,16 @@ impl PerformanceProfile for PythonProfile {
         loops: &[crate::spine::ir::PerfLine],
     ) -> bool {
         performance::is_external_loop_call(method, receiver, receiver_type, loops)
+    }
+}
+
+impl crate::profiles::DependencyProfile for PythonProfile {
+    fn known_utilities(&self) -> &'static [crate::profiles::dependencies::KnownUtility] {
+        utilities::UTILITIES
+    }
+
+    fn declared_packages(&self, dir: &Path) -> crate::profiles::dependencies::DeclaredPackages {
+        manifest::declared_packages(dir)
     }
 }
 

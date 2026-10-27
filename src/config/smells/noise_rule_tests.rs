@@ -88,3 +88,20 @@ fn precision_rule_knobs_parse() {
         (150, 12)
     );
 }
+
+#[test]
+fn dependency_reimplementation_providers_parse() {
+    let cfg: SmellConfig = toml::from_str(
+        r#"
+            [rules.dependency_reimplementation]
+            providers = ["@acme/kit"]
+        "#,
+    )
+    .unwrap();
+
+    let ts = cfg.for_language(Language::TypeScript);
+    assert_eq!(
+        ts.dependency_reimplementation_providers,
+        vec!["@acme/kit".to_string()]
+    );
+}

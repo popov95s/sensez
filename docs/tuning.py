@@ -59,6 +59,7 @@ KNOB_COMMENTS = {
     "min_occurrences": "functions sharing the clump before flagging",
     "min_similarity": "percent of matching body lexemes required between copies",
     "min_units": "top-level functions and classes required (or min_lines)",
+    "providers": "in-house packages whose same-named functions count as providers",
     "skip_capturing": "drop nested functions that read parent locals",
     "skip_external_vocab": "ignore extension, MIME, path, and error-code lists",
 }

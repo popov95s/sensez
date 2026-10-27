@@ -38,6 +38,7 @@ pub(crate) mod typehints;
 pub(crate) mod typespace;
 pub(crate) mod typevocab;
 pub(crate) mod units;
+pub(crate) mod utilities;
 pub(crate) mod wording;
 
 #[cfg(test)]
@@ -45,10 +46,11 @@ mod fused_collector_tests;
 #[cfg(test)]
 mod tests;
 
+use crate::profiles::dependencies::{DeclaredPackages, KnownUtility};
 use crate::profiles::runner_config::RunnerKind;
 use crate::profiles::{
-    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
-    PerformanceProfile, TypeVocabularyProfile,
+    DeadCodeProfile, DependencyProfile, ImportResolver, Language, LanguageInfo, ModuleProfile,
+    ParseProfile, PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
@@ -155,6 +157,16 @@ impl DeadCodeProfile for JsProfile {
 
     fn manifest_entry_files(&self, files: &[&Path]) -> Vec<PathBuf> {
         manifest::entry_files(files)
+    }
+}
+
+impl DependencyProfile for JsProfile {
+    fn known_utilities(&self) -> &'static [KnownUtility] {
+        utilities::UTILITIES
+    }
+
+    fn declared_packages(&self, dir: &Path) -> DeclaredPackages {
+        manifest::declared_packages(dir)
     }
 }
 

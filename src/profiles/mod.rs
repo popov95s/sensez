@@ -10,6 +10,7 @@ pub(crate) mod branch_path;
 pub(crate) mod comment_class;
 pub(crate) mod comments;
 pub(crate) mod conditionals;
+pub mod dependencies;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod fallback_guard;
 pub(crate) mod for_loop;
@@ -31,6 +32,7 @@ pub(crate) mod test_fixtures;
 pub(crate) mod test_oracle;
 pub(crate) mod try_handling;
 pub mod typevocab;
+pub mod utility_lookalikes;
 pub(crate) mod walk;
 pub mod wording;
 
@@ -305,12 +307,24 @@ pub trait TypeVocabularyProfile: Send + Sync {
     }
 }
 
+pub use dependencies::DependencyProfile;
+
 pub trait LanguageProfile:
-    ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
+    ParseProfile
+    + ModuleProfile
+    + DeadCodeProfile
+    + PerformanceProfile
+    + TypeVocabularyProfile
+    + DependencyProfile
 {
 }
 
 impl<T> LanguageProfile for T where
-    T: ParseProfile + ModuleProfile + DeadCodeProfile + PerformanceProfile + TypeVocabularyProfile
+    T: ParseProfile
+        + ModuleProfile
+        + DeadCodeProfile
+        + PerformanceProfile
+        + TypeVocabularyProfile
+        + DependencyProfile
 {
 }

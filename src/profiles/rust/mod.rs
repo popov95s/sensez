@@ -165,6 +165,8 @@ impl PerformanceProfile for RustProfile {
     }
 }
 
+impl crate::profiles::DependencyProfile for RustProfile {}
+
 impl TypeVocabularyProfile for RustProfile {
     fn loose_kind(&self, annotation: &str) -> Option<crate::profiles::typevocab::LooseTypeKind> {
         typevocab::loose_kind(annotation)

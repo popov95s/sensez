@@ -13,6 +13,7 @@ mod performance;
 mod sentinel_handler;
 pub mod tokens;
 mod units;
+mod utility;
 
 #[cfg(feature = "eyez")]
 use crate::eyez::RawDoc;
@@ -30,6 +31,7 @@ pub use units::{
     FunctionKey, FunctionUnit, LiteralMembership, MutatorFamily, NestedTernary, SchemaCall,
     TypeAlias, TypeHints, Visibility, ANONYMOUS,
 };
+pub use utility::{ProviderOrigin, UtilityLookalike, UtilityProvider, UtilityShape};
 
 use std::collections::{HashMap, HashSet};
 

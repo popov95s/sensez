@@ -38,6 +38,7 @@ CONFIG = EXAMPLES / "sensez.toml"
 DEFAULT_BIN = ROOT / "target/debug/sensez"
 BIN = Path(os.environ.get("SENSEZ_BIN", DEFAULT_BIN))
 SUFFIXES = (".py", ".ts")
+MANIFESTS = {".py": ("pyproject.toml",), ".ts": ("package.json",)}
 JsonReport = dict[str, object]
 FileList = list[str]
 KindSet = set[str]
@@ -77,6 +78,8 @@ def stage_files(src_folder: Path, stage: str, dst: Path, suffix: str) -> None:
     """Copy one language's files under ``dst/<box>/`` per the stage rules.
 
     bad   : everything not prefixed ``fixed`` (and not a per-folder sensez.toml).
+    Both stages also get the language's manifests (``package.json``), which
+    dependency-aware smells read.
     fixed : only files whose first path component starts ``fixed``.
 
     Files are nested under ``dst/<box>/`` so sensez file paths keep the folder
@@ -87,7 +90,8 @@ def stage_files(src_folder: Path, stage: str, dst: Path, suffix: str) -> None:
     box = src_folder.name
     base = dst / box
     for path in src_folder.rglob("*"):
-        if path.is_dir() or path.suffix != suffix:
+        is_manifest = path.name in MANIFESTS[suffix]
+        if path.is_dir() or (path.suffix != suffix and not is_manifest):
             continue
         rel = path.relative_to(src_folder)
         first = rel.parts[0]
@@ -95,7 +99,7 @@ def stage_files(src_folder: Path, stage: str, dst: Path, suffix: str) -> None:
             continue
         if stage == "bad" and first.startswith("fixed"):
             continue
-        if stage == "fixed" and not first.startswith("fixed"):
+        if stage == "fixed" and not first.startswith("fixed") and not is_manifest:
             continue
         target = base / rel
         target.parent.mkdir(parents=True, exist_ok=True)
