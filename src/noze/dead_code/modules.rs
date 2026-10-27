@@ -138,7 +138,7 @@ impl<'a> ModuleScan<'a> {
         }
     }
 
-    /// The defining module reports, uses or re-exports `name` itself, so its barrel need not.
+    /// The defining module reports, uses, re-exports or types `name` itself, so its barrel need not.
     fn origin_accounts(&self, origin: NodeIndex, name: &str) -> bool {
         let Some(file) = self.cg.graph[origin]
             .source_index
@@ -151,6 +151,7 @@ impl<'a> ModuleScan<'a> {
             .get(&origin)
             .is_some_and(|inbound| inbound.prod.contains(name) || inbound.test.contains(name));
         asked
+            || file.walked.symbols.type_names.contains(name)
             || file.walked.symbols.declared_kinds.contains_key(name)
             || file
                 .walked

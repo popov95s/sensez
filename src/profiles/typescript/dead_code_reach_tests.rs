@@ -299,3 +299,20 @@ fn config_importer_keeps_default_live_and_lowers_the_rest() {
         Some(Confidence::Medium)
     );
 }
+
+#[test]
+fn source_used_only_by_a_tests_directory_helper_is_test_only() {
+    let findings = scan(
+        &[
+            ("src/math.ts", "export function addUsed() {}\nexport function onlyHelped() {}\n"),
+            ("src/app.ts", "import { addUsed } from \"./math\";\naddUsed();\n"),
+            (
+                "tests/billing/helper.ts",
+                "import { onlyHelped } from \"../../src/math\";\nexport function runHelper() { onlyHelped(); }\n",
+            ),
+        ],
+        &Config::default().dead_code,
+    );
+
+    assert_eq!(reason(&findings, "onlyHelped"), Some("test_only"));
+}

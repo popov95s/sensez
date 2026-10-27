@@ -135,7 +135,8 @@ Names a barrel re-exports (`export { x } from "./x"`) count as used in their
 defining module only when someone imports them from the barrel (chains and
 `export *` included). An unused name is reported once, where it is defined; a
 re-export (kind `reexport`) is reported only when the name is used nowhere and
-its definition is not itself a reported symbol (for example a type alias). A
+its definition is not itself a reported symbol. Re-exported types (interfaces
+and type aliases) are never reported: they vanish at runtime. A
 barrel entry that importers bypass by importing the definition directly is not
 reported.
 

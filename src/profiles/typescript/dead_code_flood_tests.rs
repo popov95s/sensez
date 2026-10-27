@@ -95,11 +95,7 @@ fn barrel_entries_bypassed_by_direct_importers_are_not_reported() {
 
     assert_eq!(kept_confidence(&findings, "currencyCode"), None);
     assert_eq!(kept_confidence(&findings, "Cents"), None);
-    assert_eq!(kinds_of(&findings, "Unpriced"), vec![SymbolKind::ReExport]);
-    assert_eq!(
-        kept_confidence(&findings, "Unpriced"),
-        Some(Confidence::High)
-    );
+    assert!(kinds_of(&findings, "Unpriced").is_empty());
 }
 
 #[test]
@@ -272,4 +268,28 @@ fn barrel_entries_relayed_from_a_live_definition_are_not_reported() {
     );
 
     assert!(findings.is_empty(), "{findings:?}");
+}
+
+#[test]
+fn type_only_reexports_are_not_reported() {
+    let findings = scan(
+        &[
+            (
+                "src/billing/validators.ts",
+                "export type Invoice = { total: number };\nexport interface Refund { amount: number }\nexport function chargeAll() {}\n",
+            ),
+            (
+                "src/billing/types.ts",
+                "export { Invoice, Refund, chargeAll } from \"./validators\";\n",
+            ),
+            (
+                "src/app.ts",
+                "import { chargeAll } from \"./billing/types\";\nchargeAll();\n",
+            ),
+        ],
+        &Config::default().dead_code,
+    );
+
+    assert!(kinds_of(&findings, "Invoice").is_empty());
+    assert!(kinds_of(&findings, "Refund").is_empty());
 }

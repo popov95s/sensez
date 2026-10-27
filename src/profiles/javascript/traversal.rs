@@ -303,6 +303,11 @@ fn record_declarations(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
                 declare(ctx.out, name, SymbolKind::Class, line);
             }
         }
+        "interface_declaration" | "type_alias_declaration" => {
+            if let Some(name) = symbols::def_name(node, src) {
+                ctx.out.symbols.type_names.insert(name);
+            }
+        }
         "lexical_declaration" | "variable_declaration" => {
             for (name, vkind) in symbols::declared_vars(node, src) {
                 ctx.out
