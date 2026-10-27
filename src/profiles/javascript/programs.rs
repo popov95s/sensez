@@ -15,12 +15,30 @@ pub fn is_program(path: &Path) -> bool {
     let Ok(text) = std::fs::read_to_string(path) else {
         return false;
     };
-    text.starts_with("#!") || text.lines().any(is_main_guard)
+    text.starts_with("#!") || has_main_guard(&text)
 }
 
-fn is_main_guard(line: &str) -> bool {
+fn has_main_guard(text: &str) -> bool {
+    let mut lines = text.lines().peekable();
+    while let Some(line) = lines.next() {
+        if !starts_statement(line) {
+            continue;
+        }
+        let continuation = lines
+            .next_if(|next| !line.ends_with(['{', ';']) && next.starts_with(char::is_whitespace))
+            .unwrap_or("");
+        if MAIN_GUARDS
+            .iter()
+            .any(|guard| line.contains(guard) || continuation.contains(guard))
+        {
+            return true;
+        }
+    }
+    false
+}
+
+fn starts_statement(line: &str) -> bool {
     line.starts_with(|c: char| !c.is_whitespace() && c != '/' && c != '*')
-        && MAIN_GUARDS.iter().any(|guard| line.contains(guard))
 }
 
 #[cfg(test)]
@@ -48,6 +66,13 @@ mod tests {
         ));
         assert!(program(
             "const isMain = process.argv[1] === fileURLToPath(import.meta.url);\n"
+        ));
+    }
+
+    #[test]
+    fn guard_split_over_two_lines_marks_a_program() {
+        assert!(program(
+            "const isEntry =\n  import.meta.url === pathToFileURL(process.argv[1]).href;\nif (isEntry) run();\n"
         ));
     }
 
