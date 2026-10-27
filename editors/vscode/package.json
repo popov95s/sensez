@@ -2,7 +2,7 @@
   "name": "sensez-vscode",
   "displayName": "sensez",
   "description": "Structural maintainability diagnostics for Python, JavaScript, TypeScript, TSX, and Rust.",
-  "version": "0.5.0",
+  "version": "0.5.1",
   "publisher": "sensez",
   "license": "MIT",
   "repository": {
