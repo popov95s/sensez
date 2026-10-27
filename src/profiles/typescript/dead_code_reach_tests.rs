@@ -119,11 +119,11 @@ fn test_only_usage_is_its_own_reason() {
         Some(Confidence::High)
     );
     assert_eq!(reason(&findings, "zeroRefs"), Some(""));
-    assert_eq!(reason(&findings, "helperA"), Some("test_only"));
     assert_eq!(
-        kept_confidence(&findings, "helperDead"),
-        Some(Confidence::High)
+        kind_of(&findings, "helperA, helperDead"),
+        vec![SymbolKind::Module]
     );
+    assert_eq!(reason(&findings, "helperA, helperDead"), Some("test_only"));
 }
 
 #[test]
@@ -188,7 +188,7 @@ fn entry_point_imports_count_as_usage() {
 }
 
 #[test]
-fn unconsumed_reexports_are_reported_and_not_forwarded() {
+fn unconsumed_reexports_are_reported_once_at_their_origin() {
     let mut config = Config::default().dead_code;
     config.unused_imports = true;
     let findings = scan(
@@ -211,10 +211,7 @@ fn unconsumed_reexports_are_reported_and_not_forwarded() {
     );
 
     assert_eq!(kind_of(&findings, "helper"), vec![]);
-    assert_eq!(
-        kind_of(&findings, "orphan"),
-        vec![SymbolKind::Function, SymbolKind::ReExport]
-    );
+    assert_eq!(kind_of(&findings, "orphan"), vec![SymbolKind::Function]);
     assert_eq!(kind_of(&findings, "unusedThing"), vec![SymbolKind::Import]);
 }
 
@@ -239,14 +236,7 @@ fn reexport_chains_and_stars_forward_to_a_fixed_point() {
 
     assert_eq!(kept_confidence(&findings, "viaChain"), None);
     assert_eq!(kept_confidence(&findings, "viaStar"), None);
-    assert_eq!(
-        kind_of(&findings, "chainDead"),
-        vec![
-            SymbolKind::Function,
-            SymbolKind::ReExport,
-            SymbolKind::ReExport
-        ]
-    );
+    assert_eq!(kind_of(&findings, "chainDead"), vec![SymbolKind::Function]);
 }
 
 fn hidden_use_findings() -> Vec<DeadCodeFinding> {

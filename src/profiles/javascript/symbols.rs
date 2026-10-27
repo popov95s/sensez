@@ -104,7 +104,10 @@ pub fn initializer_callees(node: Node, src: &[u8]) -> Vec<(String, String)> {
             if name.kind() != "identifier" || value.kind() != "call_expression" {
                 return None;
             }
-            let callee = value.child_by_field_name("function")?;
+            let mut callee = value.child_by_field_name("function")?;
+            while callee.kind() == "call_expression" {
+                callee = callee.child_by_field_name("function")?;
+            }
             if !matches!(callee.kind(), "identifier" | "member_expression") {
                 return None;
             }

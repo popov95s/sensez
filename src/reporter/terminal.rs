@@ -133,7 +133,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         if !finding.reason.is_empty() {
             let _ = write!(out, " {}", finding.reason);
         }
-        out.push('\n');
+        let _ = write!(out, "\n      {}\n", finding.advice().dimmed());
     }
 
     if section(

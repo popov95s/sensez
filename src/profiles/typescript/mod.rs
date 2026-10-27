@@ -20,6 +20,9 @@ use std::path::{Path, PathBuf};
 
 mod compiler_options;
 #[cfg(test)]
+#[path = "dead_code_flood_tests.rs"]
+mod dead_code_flood_tests;
+#[cfg(test)]
 #[path = "dead_code_reach_tests.rs"]
 mod dead_code_reach_tests;
 #[cfg(test)]

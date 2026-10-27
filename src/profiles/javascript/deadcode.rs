@@ -42,6 +42,7 @@ const RUNNER_LOADED: &[&str] = &["**/__mocks__/**", "**/*.stories.{js,jsx,ts,tsx
 const TEST_SUPPORT: &[&str] = &[
     "**/e2e/**",
     "**/test-utils/**",
+    "**/testUtils/**",
     "**/fixtures/**",
     "**/__fixtures__/**",
 ];

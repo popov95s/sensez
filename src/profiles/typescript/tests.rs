@@ -294,7 +294,8 @@ fn python_class_base_defaults_do_not_leak_to_typescript() {
     .collect();
 
     assert!(
-        dead.contains(&"AdminConfig".to_string()),
+        dead.iter()
+            .any(|names| names.split(", ").any(|name| name == "AdminConfig")),
         "TypeScript must not inherit Python's AppConfig entrypoint base"
     );
 }

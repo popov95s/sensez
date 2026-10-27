@@ -7,6 +7,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::PathBuf;
 
+mod dead_code_advice;
 mod smell_kind;
 pub use smell_kind::SmellKind;
 
