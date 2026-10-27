@@ -131,6 +131,15 @@ pub fn default_off_smells(language: Language) -> &'static [crate::report::SmellK
         .map_or(&[], |info| info.default_off_smells)
 }
 
+/// Mutating method names `language` adds to the name-promise write list; none when it is not compiled in.
+pub fn default_write_methods(language: Language) -> &'static [&'static str] {
+    PROFILES
+        .iter()
+        .map(|profile| ParseProfile::info(*profile))
+        .find(|info| info.language == language)
+        .map_or(&[], |info| info.wording.write_methods)
+}
+
 /// Whether `path` names a project or compiler config file of a compiled-in language.
 #[cfg(feature = "lsp")]
 pub fn is_project_file(path: &Path) -> bool {
