@@ -31,6 +31,7 @@ pub struct ParsedFile {
     pub walked: Arc<Walked>,
     /// Machine-written source (profile path/header rules); kept for the graph, skipped by smells and duplication.
     pub is_generated: bool,
+    pub runs_as_program: bool,
 }
 
 #[derive(Debug, Default)]
@@ -205,6 +206,7 @@ fn parse_loaded_source(
         fingerprint,
         walked: Arc::new(walked),
         is_generated,
+        runs_as_program: profile.runs_as_program(src),
     })
 }
 

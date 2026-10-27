@@ -10,6 +10,8 @@ pub(crate) mod branch_path;
 pub(crate) mod comment_class;
 pub(crate) mod comments;
 pub(crate) mod conditionals;
+mod decorator_class;
+pub use decorator_class::DecoratorClass;
 pub mod dependencies;
 #[cfg(any(feature = "lang-javascript", feature = "lang-python"))]
 pub(crate) mod echo_assertion;
@@ -138,27 +140,10 @@ pub enum ExternalBases {
     ImplyContract,
 }
 
-/// Result of classifying a symbol's decorator set for dead-code liveness.
-#[derive(Debug, Clone, Copy, PartialEq, Eq)]
-pub enum DecoratorClass {
-    /// No decorators (or the language has none).
-    None,
-    /// Structural/stdlib decorators only — no effect on liveness.
-    Neutral,
-    /// Framework-registration decorator present — treat the symbol as live.
-    Registration,
-    /// A bare unrecognized decorator — uncertain, downgrade confidence.
-    Unknown,
-}
-
-impl DecoratorClass {
-    pub(crate) fn is_registration(self) -> bool {
-        matches!(self, Self::Registration)
-    }
-
-    pub(crate) fn is_unknown(self) -> bool {
-        matches!(self, Self::Unknown)
-    }
+/// A file offered to a manifest's entry-point lookup.
+pub struct EntryCandidate<'a> {
+    pub path: &'a Path,
+    pub runs_as_program: bool,
 }
 
 pub trait ParseProfile: Send + Sync {
@@ -173,6 +158,10 @@ pub trait ParseProfile: Send + Sync {
     }
     /// Parsed but machine-written: kept in the graph, skipped by smells and duplication.
     fn is_generated(&self, _path: &Path, _src: &[u8]) -> bool {
+        false
+    }
+    /// Source that runs as a program on its own (shebang, main guard), so no importer is needed.
+    fn runs_as_program(&self, _src: &[u8]) -> bool {
         false
     }
     /// Languages sharing a clone family are compared as one duplication cohort.
@@ -275,7 +264,7 @@ pub trait DeadCodeProfile: Send + Sync {
         Vec::new()
     }
     /// Files a package manifest names as entry points.
-    fn manifest_entry_files(&self, _files: &[&Path]) -> Vec<PathBuf> {
+    fn manifest_entry_files(&self, _files: &[EntryCandidate]) -> Vec<PathBuf> {
         Vec::new()
     }
 }

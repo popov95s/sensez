@@ -23,7 +23,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
         end_line: func.end_position().row + 1,
         param_names: symbols::param_names(func, src),
         is_method,
-        magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
+        magic_numbers: default_values(func, src, &magic_numbers::SYNTAX).into(),
         homogeneous_tuple_return: super::typevocab::is_homogeneous_primitive_tuple(func, src),
         ..Default::default()
     };

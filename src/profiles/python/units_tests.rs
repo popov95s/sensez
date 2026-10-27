@@ -71,7 +71,10 @@ fn helper_inside_a_pytest_test_has_a_test_callback_parent() {
 fn subscript_with_a_variable_key_is_a_dynamic_key_receiver() {
     let src = "def pick(row, key):\n    a = row[key]\n    b = row[\"name\"]\n    c = row[0]\n";
     let receivers = function(src, "pick").dynamic_key_receivers;
-    assert_eq!(receivers.into_iter().collect::<Vec<_>>(), vec!["row"]);
+    assert_eq!(
+        receivers.iter().map(String::as_str).collect::<Vec<_>>(),
+        vec!["row"]
+    );
 }
 
 #[test]
@@ -94,8 +97,8 @@ fn status_sibling_waives_only_compared_or_assigned_literals() {
         "def check(res, status):\n    if res.status_code == 404:\n        retry(status, 503)\n";
     let contexts: Vec<_> = function(src, "check")
         .magic_numbers
-        .into_iter()
-        .map(|magic| (magic.text, magic.context))
+        .iter()
+        .map(|magic| (magic.text.clone(), magic.context))
         .collect();
     assert_eq!(
         contexts,

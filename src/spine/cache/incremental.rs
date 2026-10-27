@@ -26,6 +26,7 @@ struct CachedFile {
     walked: Arc<Walked>,
     uniform_file_id: Option<u32>,
     is_generated: bool,
+    runs_as_program: bool,
 }
 
 impl CachedFile {
@@ -53,6 +54,7 @@ impl CachedFile {
             ),
             walked,
             is_generated: self.is_generated,
+            runs_as_program: self.runs_as_program,
         }
     }
 
@@ -77,6 +79,7 @@ impl CachedFile {
             walked: Arc::clone(&file.walked),
             uniform_file_id: uniform,
             is_generated: file.is_generated,
+            runs_as_program: file.runs_as_program,
         }
     }
 }

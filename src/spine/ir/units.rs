@@ -2,9 +2,10 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
+use super::rare::sparse;
 use super::{
-    EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StateWrite, StringFallback,
-    TypeEscape,
+    EchoAssertion, MagicNumber, PerformanceFacts, Rare, SentinelHandler, StateWrite,
+    StringFallback, TypeEscape,
 };
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::HashMap;
@@ -112,7 +113,7 @@ pub struct FunctionUnit {
     /// Parameter names in order (`len()` is the parameter count).
     pub param_names: Vec<String>,
     /// Names bound by destructured parameters (`({ items }) => …`).
-    pub destructured_params: Vec<String>,
+    pub destructured_params: Rare<Vec<String>>,
     /// Deepest block nesting within the body (if/for/while/try/with).
     pub max_nesting: usize,
     pub return_count: usize,
@@ -121,13 +122,13 @@ pub struct FunctionUnit {
     /// Decision points (cyclomatic basis): cyclomatic complexity = 1 + this.
     pub branch_count: usize,
     /// Outer-`if` lines of `if x { if y { ... } }` shapes with no else/default path.
-    pub collapsible_nested_if_lines: Vec<usize>,
+    pub collapsible_nested_if_lines: Rare<Vec<usize>>,
     /// Conditional expressions nested inside another conditional expression.
-    pub nested_ternaries: Vec<NestedTernary>,
+    pub nested_ternaries: Rare<Vec<NestedTernary>>,
     /// Nesting-weighted cognitive-complexity accumulator (Sonar-style).
     pub cognitive: usize,
     /// "Magic" numeric literals (not 0/1/2) outside always-named contexts.
-    pub magic_numbers: Vec<MagicNumber>,
+    pub magic_numbers: Rare<Vec<MagicNumber>>,
     /// Number of source lines occupied by comments inside this function body.
     pub comment_lines: usize,
     /// Comment lines classed as step-by-step narration.
@@ -140,41 +141,41 @@ pub struct FunctionUnit {
     pub chain_hits: Vec<ChainHit>,
     pub is_method: bool,
     /// Local name → branch path of each plain (non-augmented) assignment to it.
-    pub local_reassigns: FxHashMap<String, Vec<BranchPath>>,
+    pub local_reassigns: Rare<FxHashMap<String, Vec<BranchPath>>>,
     /// Receiver identifier (including `self`) → number of member accesses on it.
     pub receiver_access: FxHashMap<String, usize>,
     /// `self.<attr>` names this function's own body reads or writes.
-    pub self_attrs: FxHashSet<String>,
+    pub self_attrs: Rare<FxHashSet<String>>,
     /// Calls to methods on the language's own-instance receiver.
-    pub own_method_calls: FxHashSet<String>,
+    pub own_method_calls: Rare<FxHashSet<String>>,
     /// Receiver identifier → distinct string-literal subscript keys (`cfg["host"]`).
-    pub str_keys: FxHashMap<String, FxHashSet<String>>,
+    pub str_keys: Rare<FxHashMap<String, FxHashSet<String>>>,
     /// Receiver identifier → keys destructured from it (`const { a, b } = recv`).
-    pub destructured_keys: FxHashMap<String, FxHashSet<String>>,
+    pub destructured_keys: Rare<FxHashMap<String, FxHashSet<String>>>,
     /// Receiver identifier → line of its first string-literal subscript.
-    pub str_key_lines: FxHashMap<String, usize>,
+    pub str_key_lines: Rare<FxHashMap<String, usize>>,
     /// Direct helper calls with identifier arguments.
     pub schema_calls: Vec<SchemaCall>,
     /// Loose inputs passed through a recognized typed/schema decoder.
-    pub validated_names: FxHashSet<String>,
+    pub validated_names: Rare<FxHashSet<String>>,
     /// Domain constructors directly returned by this function.
-    pub returned_constructors: FxHashSet<String>,
+    pub returned_constructors: Rare<FxHashSet<String>>,
     /// Identifiers directly returned by this function (`return x`).
-    pub returned_names: FxHashSet<String>,
+    pub returned_names: Rare<FxHashSet<String>>,
     /// Identifiers mutated in place: `x[k] = v`, `del x[k]`, `x.append(...)`.
-    pub mutated_names: FxHashSet<String>,
+    pub mutated_names: Rare<FxHashSet<String>>,
     /// Root identifiers mutated through an attribute (`m.items.append(...)` records `m`).
-    pub attr_mutated_names: FxHashSet<String>,
+    pub attr_mutated_names: Rare<FxHashSet<String>>,
     /// Identifiers mutated by a known method call, with the mutator family.
-    pub method_mutations: FxHashSet<(String, MutatorFamily)>,
+    pub method_mutations: Rare<FxHashSet<(String, MutatorFamily)>>,
     /// Root name and line of every recorded mutation.
-    pub mutation_lines: Vec<(String, usize)>,
+    pub mutation_lines: Rare<Vec<(String, usize)>>,
     /// Largest arity among bare tuple returns (`return a, b, c`).
     pub max_tuple_return: usize,
     /// `x in ["a", "b", ...]` tests against a literal collection of strings.
-    pub literal_memberships: Vec<LiteralMembership>,
+    pub literal_memberships: Rare<Vec<LiteralMembership>>,
     /// String literals used as fallbacks (`or ""`, `?? "n/a"`, `x ? x : "?"`).
-    pub string_fallbacks: Vec<StringFallback>,
+    pub string_fallbacks: Rare<Vec<StringFallback>>,
     /// Compact call/loop facts consumed by performance smell detectors.
     pub performance: PerformanceFacts,
     /// Conservative evidence for AI-generated-code patterns.
@@ -194,15 +195,15 @@ pub struct FunctionUnit {
     /// Plain assignments to own-instance members (`this.x = …`).
     pub self_writes: usize,
     /// Member, outer-name and request writes (method-call writes live in `performance.calls`).
-    pub state_writes: Vec<StateWrite>,
+    pub state_writes: Rare<Vec<StateWrite>>,
     /// A property accessor (`get x()`) rather than a named function.
     pub is_accessor: bool,
     /// Receivers also subscripted with a computed (non-literal) key.
-    pub dynamic_key_receivers: FxHashSet<String>,
+    pub dynamic_key_receivers: Rare<FxHashSet<String>>,
     /// The tuple return annotation repeats one primitive type.
     pub homogeneous_tuple_return: bool,
     /// Casts and suppressions that silence the type checker in this body.
-    pub type_escapes: Vec<TypeEscape>,
+    pub type_escapes: Rare<Vec<TypeEscape>>,
 }
 
 /// Source span and class of one comment node.
@@ -320,3 +321,20 @@ impl TypeHints {
         self.return_types.get(&FunctionKey::of(func))
     }
 }
+
+sparse!(
+    FxHashSet<String>,
+    Vec<usize>,
+    FxHashMap<String, FxHashSet<String>>,
+    Vec<String>,
+    Vec<LiteralMembership>,
+    FxHashMap<String, Vec<BranchPath>>,
+    Vec<MagicNumber>,
+    FxHashSet<(String, MutatorFamily)>,
+    Vec<(String, usize)>,
+    Vec<NestedTernary>,
+    Vec<StateWrite>,
+    FxHashMap<String, usize>,
+    Vec<StringFallback>,
+    Vec<TypeEscape>,
+);

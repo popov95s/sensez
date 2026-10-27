@@ -68,7 +68,7 @@ impl FunctionFacts {
             start_line: func.start_position().row + 1,
             end_line: func.end_position().row + 1,
             param_names: param_names(func, src),
-            destructured_params: super::params::destructured_params(func, src),
+            destructured_params: super::params::destructured_params(func, src).into(),
             is_method,
             max_tuple_return: classunit::tuple_return_arity(&tuple_return),
             callback_position: callback_position(lineage),
@@ -78,7 +78,7 @@ impl FunctionFacts {
                 function_visibility(lineage)
             },
             homogeneous_tuple_return: classunit::is_homogeneous_primitive_tuple(&tuple_return),
-            magic_numbers: default_values(func, src, &magic_numbers::SYNTAX),
+            magic_numbers: default_values(func, src, &magic_numbers::SYNTAX).into(),
             ..Default::default()
         };
         if !is_method && func.kind_name() == "function_declaration" {

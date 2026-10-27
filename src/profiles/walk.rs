@@ -209,8 +209,8 @@ pub(crate) fn attach_method_attrs(out: &mut Walked) {
                     (
                         i,
                         f.name.clone(),
-                        f.self_attrs.clone(),
-                        f.own_method_calls.clone(),
+                        (*f.self_attrs).clone(),
+                        (*f.own_method_calls).clone(),
                     )
                 })
         })

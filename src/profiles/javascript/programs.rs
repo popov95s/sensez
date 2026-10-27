@@ -1,7 +1,5 @@
 //! Files that run as programs: a shebang line or a top-level main guard.
 
-use std::path::Path;
-
 const MAIN_GUARDS: [&str; 5] = [
     "import.meta.main",
     "require.main ===",
@@ -10,12 +8,12 @@ const MAIN_GUARDS: [&str; 5] = [
     "process.argv[1]",
 ];
 
-/// Whether `path` starts with a shebang or has an unindented line holding a main guard.
-pub fn is_program(path: &Path) -> bool {
-    let Ok(text) = std::fs::read_to_string(path) else {
+/// Whether `src` starts with a shebang or has an unindented line holding a main guard.
+pub fn is_program(src: &[u8]) -> bool {
+    let Ok(text) = std::str::from_utf8(src) else {
         return false;
     };
-    text.starts_with("#!") || has_main_guard(&text)
+    text.starts_with("#!") || has_main_guard(text)
 }
 
 fn has_main_guard(text: &str) -> bool {
@@ -46,10 +44,7 @@ mod tests {
     use super::*;
 
     fn program(source: &str) -> bool {
-        let tmp = tempfile::tempdir().unwrap();
-        let path = tmp.path().join("tool.mjs");
-        std::fs::write(&path, source).unwrap();
-        is_program(&path)
+        is_program(source.as_bytes())
     }
 
     #[test]
