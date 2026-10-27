@@ -96,6 +96,24 @@ pub const MOCKED_SUBJECT_LEVELS: &[StrictnessLevelDoc] = &[
     },
 ];
 
+pub const TYPE_ESCAPE_CAST_LEVELS: &[StrictnessLevelDoc] = &[
+    StrictnessLevelDoc {
+        title: "Low",
+        value: "low",
+        description: "Flags casts to the escape type (`as any`, `cast(Any, …)`) and bare `@ts-ignore`.",
+    },
+    StrictnessLevelDoc {
+        title: "Medium",
+        value: "medium",
+        description: "Also flags `as unknown as T`, bare `@ts-expect-error`, and `# type: ignore` without an error code.",
+    },
+    StrictnessLevelDoc {
+        title: "High",
+        value: "high",
+        description: "Also flags non-null assertions on call results (`find()!`).",
+    },
+];
+
 pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
     StrictnessRuleDoc {
         kind: SmellKind::LooseTyping,
@@ -121,6 +139,11 @@ pub const STRICTNESS_RULES: &[StrictnessRuleDoc] = &[
         kind: SmellKind::MockedSubject,
         knob: "strictness",
         levels: MOCKED_SUBJECT_LEVELS,
+    },
+    StrictnessRuleDoc {
+        kind: SmellKind::TypeEscapeCast,
+        knob: "strictness",
+        levels: TYPE_ESCAPE_CAST_LEVELS,
     },
 ];
 

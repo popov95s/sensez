@@ -27,6 +27,7 @@
       "smells/shotgun_surgery_hazard": 3,
       "smells/sibling_helper_redefinition": 94,
       "smells/swallowed_error_sentinel": 1,
+      "smells/type_escape_cast": 294,
       "smells/unnecessary_nested_if": 13
     },
     "resolved_by_detector": {

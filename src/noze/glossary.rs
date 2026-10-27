@@ -21,7 +21,7 @@ pub const PILLARS: [GlossaryDoc; 5] = [
     GlossaryDoc { term: "smells", title: "Design Smell", explanation: "A structural maintainability issue in a function or class (complexity, coupling, cohesion, typing) that makes the code harder to change safely." },
 ];
 
-pub const ALL_SMELLS: [SmellKind; 44] = {
+pub const ALL_SMELLS: [SmellKind; 45] = {
     use SmellKind::*;
     [
         BooleanBlindness,
@@ -66,12 +66,13 @@ pub const ALL_SMELLS: [SmellKind; 44] = {
         SwallowedErrorSentinel,
         TooManyReturns,
         TuplePacking,
+        TypeEscapeCast,
         UnnecessaryNestedIf,
         WeakTestOracle,
     ]
 };
 
-pub const SMELLS: [SmellDoc; 44] = {
+pub const SMELLS: [SmellDoc; 45] = {
     use SmellKind::*;
     [
         SmellDoc { kind: BooleanBlindness, title: "Boolean Blindness", explanation: "Bare booleans whose meaning is invisible at the call site (`f(true, false)`) — use a closed type (enum or literal union) or named options so calls read clearly." },
@@ -93,7 +94,7 @@ pub const SMELLS: [SmellDoc; 44] = {
         SmellDoc { kind: LiteralMembership, title: "Literal Membership", explanation: "Branching on membership in a literal string list — stringly-typed categories; use a closed type (enum or literal union)." },
         SmellDoc { kind: LongFunction, title: "Long Function", explanation: "Too many lines to grasp at once — extract cohesive pieces." },
         SmellDoc { kind: LongParameterList, title: "Long Parameter List", explanation: "Too many parameters — group related ones into an object, or the function is doing too much." },
-        SmellDoc { kind: LooseTyping, title: "Loose Typing", explanation: "A public signature leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract." },
+        SmellDoc { kind: LooseTyping, title: "Loose Typing", explanation: "A public signature leans on vague types (`Any`/untyped/overly broad) — tighten annotations so callers and tools know the contract. Casts inside a body belong to `type_escape_cast`." },
         SmellDoc { kind: MagicStringDefault, title: "Magic String Default", explanation: "A fallback empty, one-character, or placeholder string (`?? \"\"`, `or \"n/a\"`) is stored, compared, or returned in place of a missing value — the contract is hiding in a sentinel; prefer a nullable/optional string or a dedicated sum type." },
         SmellDoc { kind: MagicNumbers, title: "Magic Numbers", explanation: "Unexplained numeric literals in logic — name them as constants so their intent is clear." },
         SmellDoc { kind: MessageChain, title: "Message Chain", explanation: "A long `a.b.c.d` access chain couples the caller to a deep object graph (Law of Demeter) — ask the immediate collaborator instead." },
@@ -116,6 +117,7 @@ pub const SMELLS: [SmellDoc; 44] = {
         SmellDoc { kind: SwallowedErrorSentinel, title: "Swallowed Error Sentinel", explanation: "An error handler drops the error and returns a placeholder (`null`, `[]`, `false`) or only logs — callers get a plausible value instead of a failure; rethrow or return a typed failure." },
         SmellDoc { kind: TooManyReturns, title: "Too Many Returns", explanation: "Many exit points make the function's flow hard to follow — consolidate, or it's doing too much." },
         SmellDoc { kind: TuplePacking, title: "Tuple Packing", explanation: "Data passed as positional tuples whose fields aren't named — use a named structure so meaning is explicit." },
+        SmellDoc { kind: TypeEscapeCast, title: "Type Escape Cast", explanation: "A function body silences the type checker (`as any`, `as unknown as T`, a bare `@ts-ignore` or `# type: ignore`, `cast(Any, …)`) instead of giving the value a type — the types and the code disagree and nobody looked. Body casts belong to this rule; signatures belong to `loose_typing`." },
         SmellDoc { kind: UnnecessaryNestedIf, title: "Unnecessary Nested If", explanation: "An `if` whose only body is another `if`, with no else path — combine the conditions with `and`/`&&` to flatten the control flow." },
         SmellDoc { kind: WeakTestOracle, title: "Weak Test Oracle", explanation: "A test has no direct assertion, matcher, or expected exception — check whether it verifies behavior or only executes code." },
     ]

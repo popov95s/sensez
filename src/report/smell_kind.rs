@@ -46,6 +46,7 @@ pub enum SmellKind {
     SwallowedErrorSentinel,
     TooManyReturns,
     TuplePacking,
+    TypeEscapeCast,
     UnnecessaryNestedIf,
     WeakTestOracle,
 }
@@ -95,6 +96,7 @@ impl SmellKind {
             SmellKind::SwallowedErrorSentinel => "swallowed_error_sentinel",
             SmellKind::TooManyReturns => "too_many_returns",
             SmellKind::TuplePacking => "tuple_packing",
+            SmellKind::TypeEscapeCast => "type_escape_cast",
             SmellKind::UnnecessaryNestedIf => "unnecessary_nested_if",
             SmellKind::WeakTestOracle => "weak_test_oracle",
         }

@@ -75,6 +75,9 @@ impl<'u> Acc<'u> {
             self.unit.own_method_calls.insert(method);
         }
         super::risk_facts::scan(self.unit, &mut self.guards, node, src, frame);
+        self.unit
+            .type_escapes
+            .extend(super::type_escapes::type_escape(node, src));
 
         let mut child_depth = depth;
         if is_nesting(kind) {

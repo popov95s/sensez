@@ -14,6 +14,7 @@ mod mock_target;
 mod performance;
 mod sentinel_handler;
 pub mod tokens;
+mod type_escape;
 mod units;
 mod utility;
 
@@ -29,6 +30,7 @@ pub use mock_target::{MockFidelity, MockHost, MockScope, MockTarget};
 pub use performance::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 pub use sentinel_handler::{GuardedBody, HandlerComment, HandlerEnd, SentinelHandler};
 pub use tokens::{StructuralToken, TokenSpan};
+pub use type_escape::{TypeEscape, TypeEscapeKind};
 pub(crate) use units::{bump, record_attr};
 pub use units::{
     BranchPath, CallbackPosition, ChainHit, ClassProperty, ClassUnit, CommentClass, CommentSpan,

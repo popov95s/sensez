@@ -369,7 +369,7 @@ FindingDocs {
                 },
                 LanguageBlock {
                     language: "typescript",
-                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
+                    body: "Replace any with an interface, unknown plus narrowing, or a schema-derived type. Type-guard subjects are never reported and bare `unknown` params only at high strictness. This rule reads signatures only: `as any` and other casts inside a body are `type_escape_cast` findings. Do not fix this by creating a shallow alias such as `type UserPayload = Record<string, any>` or `type UserId = string`.",
                 },
             ],
         },
@@ -680,6 +680,26 @@ FindingDocs {
             LanguageBlock {
                 language: "typescript",
                 body: "Use an interface/object instead of anonymous positional tuple data.",
+            },
+        ],
+    },
+    FindingDocs {
+        kind: TypeEscapeCast,
+        why_bad: "A cast or suppression in a body turns a type error into a runtime surprise: the checker complained, the code was silenced, and no reviewer saw why.",
+        external_lints: &[
+            ExternalLint { tool: "eslint", rule: "@typescript-eslint/no-explicit-any" },
+            ExternalLint { tool: "eslint", rule: "@typescript-eslint/ban-ts-comment" },
+            ExternalLint { tool: "ruff", rule: "PGH003" },
+        ],
+        references: &[],
+        fixes: &[
+            LanguageBlock {
+                language: "python",
+                body: "Give the value a real type (a dataclass, TypedDict or validated model) or narrow it with `isinstance`. A `# type: ignore` that must stay names its error code, as in `# type: ignore[attr-defined]`. Casts in a `TypeGuard` function on its own subject are not reported. Signatures belong to `loose_typing`; this rule owns casts inside bodies.",
+            },
+            LanguageBlock {
+                language: "typescript",
+                body: "Parse the value with a schema or narrow it with a type guard instead of `as any` or `as unknown as T`. A suppression that must stay is `@ts-expect-error` with a reason after it. `as const` and `satisfies` are never reported, nor are casts of the guarded subject inside a type-predicate function, casts with a rationale comment on their line or the line above, and (at `high`) non-null calls already checked by an enclosing condition, a `has` test or a `length` loop. The `type_escape_strictness` knob (`strictness` under `[smells.rules.type_escape_cast]`) adds non-null assertions on call results at `high`. Signatures belong to `loose_typing`; this rule owns casts inside bodies.",
             },
         ],
     },

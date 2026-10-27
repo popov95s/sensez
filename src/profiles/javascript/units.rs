@@ -121,6 +121,9 @@ impl FunctionFacts {
             self.unit.own_method_calls.insert(method);
         }
         super::risk_facts::scan(&mut self.unit, &mut self.guards, lineage, src, frame);
+        self.unit
+            .type_escapes
+            .extend(super::type_escapes::type_escape(node, src));
 
         let kind = node.kind();
         if is_nesting(kind) && !is_else_if(lineage) {

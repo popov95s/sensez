@@ -2,7 +2,9 @@
 //! pillar. Populated during the language walk (the only place AST nesting and
 //! scope are known); languages that don't populate a field leave its default.
 
-use super::{EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StringFallback};
+use super::{
+    EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StringFallback, TypeEscape,
+};
 use std::collections::{HashMap, HashSet};
 
 /// Syntax facts used by the high-precision generated-code detectors.
@@ -187,6 +189,8 @@ pub struct FunctionUnit {
     pub dynamic_key_receivers: HashSet<String>,
     /// The tuple return annotation repeats one primitive type.
     pub homogeneous_tuple_return: bool,
+    /// Casts and suppressions that silence the type checker in this body.
+    pub type_escapes: Vec<TypeEscape>,
 }
 
 /// Source span and class of one comment node.

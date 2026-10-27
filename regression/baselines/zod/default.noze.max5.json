@@ -331,6 +331,7 @@
       "shotgun_surgery_hazard": 3,
       "sibling_helper_redefinition": 94,
       "swallowed_error_sentinel": 1,
+      "type_escape_cast": 294,
       "unnecessary_nested_if": 13
     },
     "smells_skipped": {
@@ -338,7 +339,7 @@
       "generated": 0,
       "tests": 171
     },
-    "smells_total": 264,
+    "smells_total": 558,
     "source_lines": 72099
   },
   "smells": [
@@ -481,6 +482,57 @@
     },
     {
       "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 1799,
+      "lines": [
+        1799,
+        1801,
+        1802,
+        1806,
+        1809
+      ],
+      "message": "5 type escapes in 21 lines: `as any` at L1799, L1801, L1802 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "record",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2411,
+      "lines": [
+        2411,
+        2413,
+        2414,
+        2415,
+        2416
+      ],
+      "message": "5 type escapes in 16 lines: `as any` at L2411, L2413, L2414 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "codec",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/classic/schemas.ts",
+      "kind": "type_escape_cast",
+      "line": 2422,
+      "lines": [
+        2422,
+        2424,
+        2425,
+        2426,
+        2427
+      ],
+      "message": "5 type escapes in 10 lines: `as any` at L2422, L2424, L2425 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "invertCodec",
+      "threshold": 0
+    },
+    {
+      "action": "advisory",
       "file": "<zod>/packages/zod/src/v4/core/api.ts",
       "kind": "narrating_code",
       "line": 1357,
@@ -488,6 +540,23 @@
       "metric": 123,
       "symbol": "_enum",
       "threshold": 30
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/api.ts",
+      "kind": "type_escape_cast",
+      "line": 1765,
+      "lines": [
+        1765,
+        1767,
+        1768,
+        1769,
+        1788
+      ],
+      "message": "5 type escapes in 62 lines: `as any` at L1765, L1767, L1768 (+2 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 5,
+      "symbol": "_stringbool",
+      "threshold": 0
     },
     {
       "action": "advisory",
@@ -528,6 +597,24 @@
       "metric": 6,
       "symbol": "_ctx+_params+_schema+json+schema",
       "threshold": 3
+    },
+    {
+      "action": "advisory",
+      "file": "<zod>/packages/zod/src/v4/core/json-schema-processors.ts",
+      "kind": "type_escape_cast",
+      "line": 634,
+      "lines": [
+        634,
+        650,
+        651,
+        666,
+        667,
+        668
+      ],
+      "message": "6 type escapes in 49 lines: `as any` at L634, L650, L651 (+3 more) \u2014 give the value a type or narrow it; a suppression that stays names its reason",
+      "metric": 6,
+      "symbol": "toJSONSchema",
+      "threshold": 0
     },
     {
       "action": "advisory",

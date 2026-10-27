@@ -27,6 +27,7 @@ mod size;
 mod structural;
 mod stub_shipped;
 mod swallowed_error;
+mod type_escape;
 mod typing;
 mod union_find;
 
@@ -60,6 +61,8 @@ mod stub_shipped_tests;
 mod test_oracle_tests;
 #[cfg(test)]
 pub(crate) mod test_support;
+#[cfg(test)]
+mod type_escape_tests;
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::globs::compile_validated;
@@ -193,6 +196,13 @@ pub fn detect_local(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
     inherit::detect(&ctx, classes, cfg, &mut out);
     stub_shipped::detect(&ctx, metrics, &cfg.stub_markers, &mut out);
     typing::detect(&ctx, metrics, cfg, &mut out);
+    type_escape::detect(
+        &ctx,
+        metrics,
+        &file.walked.units.comment_spans,
+        cfg,
+        &mut out,
+    );
     mutation::detect(&ctx, metrics, cfg, &mut out);
     fixture_echo::detect(&ctx, metrics, cfg, &mut out);
     out.extend(performance::detect(&ctx, metrics, cfg));
