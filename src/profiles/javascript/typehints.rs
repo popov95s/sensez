@@ -5,6 +5,7 @@
 
 use super::symbols;
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::typevocab::has_token;
 use crate::profiles::walk;
 use crate::spine::ir::{FunctionKey, TypeAlias, TypeHints};
@@ -28,28 +29,26 @@ pub fn record_function(lineage: Lineage, src: &[u8], hints: &mut TypeHints) {
         return; // the overload signatures carry the contract
     }
     let any_allowed = follows_any_directive(earlier.first().copied(), src);
-    let ret = type_text(node.child_by_field_name("return_type"), src)
+    let ret = type_text(node.field("return_type"), src)
         .filter(|ty| !(any_allowed && has_token(ty, "any")));
     if let Some(ret) = ret {
         hints.record_return(key.clone(), ret);
     }
-    if let Some(params) = node.child_by_field_name("parameters") {
+    if let Some(params) = node.field("parameters") {
         let mut cursor = params.walk();
         let mut previous = None;
         for p in params.named_children(&mut cursor) {
             let before = previous.replace(p);
-            if !matches!(p.kind(), "required_parameter" | "optional_parameter") {
+            if !matches!(p.kind_name(), "required_parameter" | "optional_parameter") {
                 continue;
             }
-            let pname = p
-                .child_by_field_name("pattern")
-                .and_then(|n| match n.kind() {
-                    "identifier" => n.utf8_text(src).ok(),
-                    "object_pattern" | "array_pattern" => Some(DESTRUCTURED),
-                    _ => None,
-                });
+            let pname = p.field("pattern").and_then(|n| match n.kind_name() {
+                "identifier" => n.utf8_text(src).ok(),
+                "object_pattern" | "array_pattern" => Some(DESTRUCTURED),
+                _ => None,
+            });
             let param_any_allowed = any_allowed || follows_any_directive(before, src);
-            let ptype = type_text(p.child_by_field_name("type"), src)
+            let ptype = type_text(p.field("type"), src)
                 .filter(|ty| !(param_any_allowed && has_token(ty, "any")));
             if let (Some(pname), Some(ptype)) = (pname, ptype) {
                 hints.record_param(&key, pname, ptype);
@@ -62,7 +61,7 @@ pub fn record_function(lineage: Lineage, src: &[u8], hints: &mut TypeHints) {
 fn declaration<'tree>(lineage: Lineage<'_, 'tree>) -> Node<'tree> {
     lineage
         .parent(lineage.node())
-        .filter(|p| p.kind() == "export_statement")
+        .filter(|p| p.kind_name() == "export_statement")
         .unwrap_or(lineage.node())
 }
 
@@ -82,9 +81,12 @@ fn earlier_siblings<'tree>(lineage: Lineage<'_, 'tree>, node: Node<'tree>) -> Ve
 
 /// Nearest earlier sibling that is not a comment, unwrapping `export`.
 fn previous_declaration<'tree>(earlier: &[Node<'tree>]) -> Option<Node<'tree>> {
-    let prev = earlier.iter().copied().find(|n| n.kind() != "comment")?;
-    if prev.kind() == "export_statement" {
-        return prev.child_by_field_name("declaration");
+    let prev = earlier
+        .iter()
+        .copied()
+        .find(|n| n.kind_name() != "comment")?;
+    if prev.kind_name() == "export_statement" {
+        return prev.field("declaration");
     }
     Some(prev)
 }
@@ -93,7 +95,7 @@ fn previous_declaration<'tree>(earlier: &[Node<'tree>]) -> Option<Node<'tree>> {
 fn is_overload_implementation(earlier: &[Node], name: &str, src: &[u8]) -> bool {
     previous_declaration(earlier).is_some_and(|prev| {
         matches!(
-            prev.kind(),
+            prev.kind_name(),
             "function_signature" | "method_signature" | "abstract_method_signature"
         ) && symbols::def_name(prev, src).as_deref() == Some(name)
     })
@@ -102,7 +104,7 @@ fn is_overload_implementation(earlier: &[Node], name: &str, src: &[u8]) -> bool 
 /// `// eslint-disable-next-line @typescript-eslint/no-explicit-any` as the sibling right above.
 fn follows_any_directive(previous: Option<Node>, src: &[u8]) -> bool {
     previous
-        .filter(|prev| prev.kind() == "comment")
+        .filter(|prev| prev.kind_name() == "comment")
         .and_then(|prev| prev.utf8_text(src).ok())
         .is_some_and(|text| text.contains("eslint-disable") && text.contains("no-explicit-any"))
 }
@@ -110,14 +112,14 @@ fn follows_any_directive(previous: Option<Node>, src: &[u8]) -> bool {
 /// Record `const x: T = …` / `const x = new T()` from a `variable_declarator`.
 pub fn record_declaration(node: Node, src: &[u8], hints: &mut TypeHints) {
     let Some(name) = node
-        .child_by_field_name("name")
-        .filter(|n| n.kind() == "identifier")
+        .field("name")
+        .filter(|n| n.kind_name() == "identifier")
         .and_then(|n| n.utf8_text(src).ok())
     else {
         return;
     };
-    let ty = type_text(node.child_by_field_name("type"), src)
-        .or_else(|| instantiated_type(node.child_by_field_name("value"), src));
+    let ty =
+        type_text(node.field("type"), src).or_else(|| instantiated_type(node.field("value"), src));
     if let Some(ty) = ty {
         hints.var_types.insert(name.to_string(), ty);
     }
@@ -135,14 +137,12 @@ pub fn record_type_alias(node: Node, src: &[u8], hints: &mut TypeHints) {
 }
 
 fn parse_type_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
-    if node.kind() != "type_alias_declaration" {
+    if node.kind_name() != "type_alias_declaration" {
         return None;
     }
     if let (Some(name), Some(value)) = (
-        node.child_by_field_name("name")
-            .and_then(|n| n.utf8_text(src).ok()),
-        node.child_by_field_name("value")
-            .and_then(|n| n.utf8_text(src).ok()),
+        node.field("name").and_then(|n| n.utf8_text(src).ok()),
+        node.field("value").and_then(|n| n.utf8_text(src).ok()),
     ) {
         return Some((name.trim().to_string(), value.trim().to_string()));
     }
@@ -157,8 +157,8 @@ fn parse_type_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
 
 /// If `value` is `new Name(...)` / `new mod.Name(...)`, return that type name.
 fn instantiated_type(value: Option<Node>, src: &[u8]) -> Option<String> {
-    let new_expr = value.filter(|v| v.kind() == "new_expression")?;
-    let ctor = new_expr.child_by_field_name("constructor")?;
+    let new_expr = value.filter(|v| v.kind_name() == "new_expression")?;
+    let ctor = new_expr.field("constructor")?;
     let text = ctor.utf8_text(src).ok()?;
     let last = walk::last_segment(text);
     match last.chars().next() {

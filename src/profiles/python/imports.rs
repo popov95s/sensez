@@ -1,5 +1,6 @@
 //! Python import-statement extraction into the shared [`ImportContext`].
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, ImportPhase};
 use tree_sitter::Node;
 
@@ -32,7 +33,7 @@ pub fn extract(
         }
     };
 
-    match node.kind() {
+    match node.kind_name() {
         "import_statement" => import_targets(node, src)
             .into_iter()
             .map(|(target, bound)| base(target, Vec::new(), vec![bound]))
@@ -61,18 +62,16 @@ impl FromImport {
 fn import_targets(node: Node, src: &[u8]) -> Vec<(String, String)> {
     let mut cursor = node.walk();
     node.named_children(&mut cursor)
-        .filter_map(|child| match child.kind() {
+        .filter_map(|child| match child.kind_name() {
             "dotted_name" => {
                 let module = text(child, src)?;
                 let bound = top_component(&module);
                 Some((module, bound))
             }
             "aliased_import" => {
-                let module = child
-                    .child_by_field_name("name")
-                    .and_then(|n| text(n, src))?;
+                let module = child.field("name").and_then(|n| text(n, src))?;
                 let bound = child
-                    .child_by_field_name("alias")
+                    .field("alias")
                     .and_then(|n| text(n, src))
                     .unwrap_or_else(|| top_component(&module));
                 Some((module, bound))
@@ -85,10 +84,10 @@ fn import_targets(node: Node, src: &[u8]) -> Vec<(String, String)> {
 /// `from mod import a, b as c` → ("mod", ["a","b"], ["a","c"]). `*` → symbol "*".
 fn from_import(node: Node, src: &[u8]) -> FromImport {
     let target = node
-        .child_by_field_name("module_name")
+        .field("module_name")
         .and_then(|n| text(n, src))
         .unwrap_or_default();
-    let module_name_id = node.child_by_field_name("module_name").map(|n| n.id());
+    let module_name_id = node.field("module_name").map(|n| n.id());
 
     let mut cursor = node.walk();
     let (mut symbols, mut bindings) = (Vec::new(), Vec::new());
@@ -96,7 +95,7 @@ fn from_import(node: Node, src: &[u8]) -> FromImport {
         if Some(c.id()) == module_name_id {
             continue;
         }
-        match c.kind() {
+        match c.kind_name() {
             "dotted_name" | "identifier" => {
                 if let Some(name) = text(c, src) {
                     symbols.push(name.clone());
@@ -104,8 +103,8 @@ fn from_import(node: Node, src: &[u8]) -> FromImport {
                 }
             }
             "aliased_import" => {
-                if let Some(name) = c.child_by_field_name("name").and_then(|n| text(n, src)) {
-                    let alias = c.child_by_field_name("alias").and_then(|n| text(n, src));
+                if let Some(name) = c.field("name").and_then(|n| text(n, src)) {
+                    let alias = c.field("alias").and_then(|n| text(n, src));
                     bindings.push(alias.unwrap_or_else(|| name.clone()));
                     symbols.push(name);
                 }

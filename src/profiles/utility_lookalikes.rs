@@ -25,9 +25,7 @@ pub fn lookalikes(
         .iter()
         .filter(|function| is_module_level(function, symbols))
         .filter_map(|function| {
-            let utility = table
-                .iter()
-                .find(|utility| utility.names.contains(&function.name.as_str()))?;
+            let utility = utility_named(table, function)?;
             let providers = present_providers(utility, &function.name, dependencies);
             let wraps_provider = providers.iter().any(|provider| {
                 symbols
@@ -46,6 +44,26 @@ pub fn lookalikes(
             })
         })
         .collect()
+}
+
+/// Whether any module-level function is named like a table utility.
+pub fn has_candidates(
+    table: &[KnownUtility],
+    functions: &[FunctionUnit],
+    symbols: &SymbolFacts,
+) -> bool {
+    functions.iter().any(|function| {
+        is_module_level(function, symbols) && utility_named(table, function).is_some()
+    })
+}
+
+fn utility_named<'t>(
+    table: &'t [KnownUtility],
+    function: &FunctionUnit,
+) -> Option<&'t KnownUtility> {
+    table
+        .iter()
+        .find(|utility| utility.names.contains(&function.name.as_str()))
 }
 
 /// A top-level declaration of the file, not a method, local helper or callback.

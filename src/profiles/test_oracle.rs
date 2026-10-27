@@ -1,5 +1,6 @@
 //! Shared matching of profile-owned test-check syntax.
 
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 pub(crate) enum CallPattern {
@@ -32,23 +33,23 @@ pub(crate) fn helper_call<'a>(
     source: &'a [u8],
     checks: &TestChecks,
 ) -> Option<&'a str> {
-    if node.kind() != checks.call_kind {
+    if node.kind_name() != checks.call_kind {
         return None;
     }
-    node.child_by_field_name(checks.callee_field)
-        .filter(|callee| callee.kind() == "identifier")
+    node.field(checks.callee_field)
+        .filter(|callee| callee.kind_name() == "identifier")
         .and_then(|callee| callee.utf8_text(source).ok())
         .filter(|name| !checks.framework_calls.contains(name))
 }
 
 pub(crate) fn is_check(node: Node<'_>, source: &[u8], checks: &TestChecks) -> bool {
-    if checks.statement_kinds.contains(&node.kind()) {
+    if checks.statement_kinds.contains(&node.kind_name()) {
         return true;
     }
-    if node.kind() != checks.call_kind {
+    if node.kind_name() != checks.call_kind {
         return false;
     }
-    let Some(callee) = node.child_by_field_name(checks.callee_field) else {
+    let Some(callee) = node.field(checks.callee_field) else {
         return false;
     };
     let Ok(name) = callee.utf8_text(source) else {
@@ -56,9 +57,9 @@ pub(crate) fn is_check(node: Node<'_>, source: &[u8], checks: &TestChecks) -> bo
     };
     let member = checks
         .member_kind
-        .filter(|kind| *kind == callee.kind())
+        .filter(|kind| *kind == callee.kind_name())
         .and(checks.member_field)
-        .and_then(|field| callee.child_by_field_name(field))
+        .and_then(|field| callee.field(field))
         .and_then(|property| property.utf8_text(source).ok());
     checks.calls.iter().any(|pattern| match pattern {
         CallPattern::Exact(exact) => name == *exact,

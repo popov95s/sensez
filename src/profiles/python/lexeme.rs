@@ -5,6 +5,7 @@
 
 use crate::profiles::lexeme as shared;
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::StructuralToken;
 use tree_sitter::Node;
 
@@ -18,14 +19,12 @@ pub fn code(node: Node, tok: StructuralToken, src: &[u8], fn_bounds: &[BoundName
 
 fn is_attribute_name(node: Node) -> bool {
     node.parent().is_some_and(|p| {
-        p.kind() == "attribute"
-            && p.child_by_field_name("attribute").map(|a| a.id()) == Some(node.id())
+        p.kind_name() == "attribute" && p.field("attribute").map(|a| a.id()) == Some(node.id())
     })
 }
 
 fn is_keyword_arg_name(node: Node) -> bool {
     node.parent().is_some_and(|p| {
-        p.kind() == "keyword_argument"
-            && p.child_by_field_name("name").map(|a| a.id()) == Some(node.id())
+        p.kind_name() == "keyword_argument" && p.field("name").map(|a| a.id()) == Some(node.id())
     })
 }

@@ -2,6 +2,7 @@
 
 use crate::profiles::for_loop::{self, RangeEnd};
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{LoopBound, LoopFrame, LoopKind};
 use tree_sitter::Node;
@@ -13,24 +14,24 @@ const ITERATION_CALLBACK_METHODS: &[&str] = &[
 
 /// Children of `loop_node` that run once per iteration.
 pub fn iterated_parts(loop_node: Node) -> Vec<Node> {
-    let fields: &[&str] = match loop_node.kind() {
+    let fields: &[&str] = match loop_node.kind_name() {
         "for_statement" => &["condition", "increment", "body"],
         _ => &["body"],
     };
     fields
         .iter()
-        .filter_map(|field| loop_node.child_by_field_name(field))
+        .filter_map(|field| loop_node.field(field))
         .collect()
 }
 
 pub fn loop_frame(node: Node, src: &[u8], parent: Option<usize>) -> LoopFrame {
-    let field = |name| node.child_by_field_name(name);
+    let field = |name| node.field(name);
     let text = |name| walk::loop_subject(node, src, &[name]).unwrap_or_default();
     let mut frame = LoopFrame {
         parent,
         ..LoopFrame::default()
     };
-    match node.kind() {
+    match node.kind_name() {
         "for_in_statement" => {
             frame.kind = LoopKind::ForOf;
             frame.bindings = names(field("left"), src);
@@ -60,22 +61,22 @@ pub fn loop_frame(node: Node, src: &[u8], parent: Option<usize>) -> LoopFrame {
 /// Synthetic frame for a callback passed to `xs.map(...)` and friends.
 pub fn iteration_callback_frame(lineage: Lineage, src: &[u8]) -> Option<LoopFrame> {
     let func = lineage.node();
-    let args = lineage.parent(func).filter(|p| p.kind() == "arguments")?;
+    let args = lineage
+        .parent(func)
+        .filter(|p| p.kind_name() == "arguments")?;
     let call = lineage
         .parent(args)
-        .filter(|p| p.kind() == "call_expression")?;
+        .filter(|p| p.kind_name() == "call_expression")?;
     let callee = call
-        .child_by_field_name("function")
-        .filter(|f| f.kind() == "member_expression")?;
+        .field("function")
+        .filter(|f| f.kind_name() == "member_expression")?;
     let method = callee
-        .child_by_field_name("property")
+        .field("property")
         .and_then(|p| walk::node_text(p, src))?;
     if !ITERATION_CALLBACK_METHODS.contains(&method) {
         return None;
     }
-    let params = func
-        .child_by_field_name("parameters")
-        .or_else(|| func.child_by_field_name("parameter"));
+    let params = func.field("parameters").or_else(|| func.field("parameter"));
     Some(LoopFrame {
         kind: LoopKind::IterCallback,
         bindings: names(params, src),
@@ -91,8 +92,8 @@ pub fn names(node: Option<Node>, src: &[u8]) -> Vec<String> {
 
 /// Names bound by the `variable_declarator`s under `node`.
 pub fn declared_names(node: Node, src: &[u8]) -> Vec<String> {
-    if node.kind() == "variable_declarator" {
-        return names(node.child_by_field_name("name"), src);
+    if node.kind_name() == "variable_declarator" {
+        return names(node.field("name"), src);
     }
     let mut cursor = node.walk();
     let found = node

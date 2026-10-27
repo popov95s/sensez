@@ -142,6 +142,7 @@ fn analyze_keeping_config(
     report.meta.issues.extend(config_issues);
     report.meta.issues.extend(discovery.issues);
     report.meta.issues.extend(parsed.issues);
+    drop_in_background(parsed.files);
     report.meta.issues.extend(cache_issues);
     report.meta.files_skipped = report
         .meta
@@ -166,6 +167,11 @@ fn analyze_keeping_config(
     crate::brainz::rank_by_precision(path, &mut report);
 
     Ok((report, module_files, config))
+}
+
+/// Frees `value` on a detached thread so the caller can move on.
+fn drop_in_background<T: Send + 'static>(value: T) {
+    std::thread::spawn(move || drop(value));
 }
 
 fn observe_source_state(

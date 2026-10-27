@@ -3,6 +3,7 @@ use super::defaults;
 use super::locate::MODULE_EXTENSIONS;
 use super::script::{Import, Script};
 use super::value::{Object, Value};
+use crate::profiles::node_names::NodeNames;
 use std::cell::Cell;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
@@ -107,14 +108,12 @@ impl<'t> Evaluator<'t> {
     }
 
     fn eval_node(&self, node: Node<'t>, scope: &Scope<'_, 't>) -> Value {
-        match node.kind() {
+        match node.kind_name() {
             "string" => self.script.string(node).map_or(Value::Other, Value::Str),
             "template_string" => self.template(node, scope),
-            "regex" => node
-                .child_by_field_name("pattern")
-                .map_or(Value::Other, |pattern| {
-                    Value::Regex(self.script.text(pattern))
-                }),
+            "regex" => node.field("pattern").map_or(Value::Other, |pattern| {
+                Value::Regex(self.script.text(pattern))
+            }),
             "true" => Value::Bool(true),
             "false" => Value::Bool(false),
             "number" | "null" | "undefined" => Value::Other,
@@ -182,10 +181,7 @@ impl<'t> Evaluator<'t> {
         if text.starts_with("process.env") {
             return Value::Opaque(format!("`{text}` depends on the environment"));
         }
-        let (Some(object), Some(property)) = (
-            node.child_by_field_name("object"),
-            node.child_by_field_name("property"),
-        ) else {
+        let (Some(object), Some(property)) = (node.field("object"), node.field("property")) else {
             return self.unreadable(node);
         };
         self.eval(object, scope)
@@ -196,7 +192,7 @@ impl<'t> Evaluator<'t> {
     fn array(&self, node: Node<'t>, scope: &Scope<'_, 't>) -> Value {
         let mut items = Vec::new();
         for child in named_children(node) {
-            if child.kind() != "spread_element" {
+            if child.kind_name() != "spread_element" {
                 items.push(self.eval(child, scope));
                 continue;
             }
@@ -212,10 +208,10 @@ impl<'t> Evaluator<'t> {
     fn object(&self, node: Node<'t>, scope: &Scope<'_, 't>) -> Value {
         let mut object = Object::default();
         for child in named_children(node) {
-            match child.kind() {
+            match child.kind_name() {
                 "pair" => {
-                    let key = child.child_by_field_name("key");
-                    let value = child.child_by_field_name("value");
+                    let key = child.field("key");
+                    let value = child.field("value");
                     let name = key.and_then(|key| self.property_name(key));
                     match (name, value) {
                         (Some(name), Some(value)) => {
@@ -238,7 +234,7 @@ impl<'t> Evaluator<'t> {
                     }
                 }
                 "method_definition" => {
-                    if let Some(name) = child.child_by_field_name("name") {
+                    if let Some(name) = child.field("name") {
                         object.entries.push((self.script.text(name), Value::Other));
                     }
                 }
@@ -249,7 +245,7 @@ impl<'t> Evaluator<'t> {
     }
 
     fn property_name(&self, key: Node) -> Option<String> {
-        match key.kind() {
+        match key.kind_name() {
             "property_identifier" | "number" => Some(self.script.text(key)),
             "string" => self.script.string(key),
             _ => None,
@@ -257,10 +253,10 @@ impl<'t> Evaluator<'t> {
     }
 
     fn function_result(&self, node: Node<'t>, scope: &Scope<'_, 't>) -> Value {
-        let Some(body) = node.child_by_field_name("body") else {
+        let Some(body) = node.field("body") else {
             return self.unreadable(node);
         };
-        if body.kind() != "statement_block" {
+        if body.kind_name() != "statement_block" {
             return self.eval(body, scope);
         }
         let statements = named_children(body);
@@ -274,7 +270,7 @@ impl<'t> Evaluator<'t> {
         statements
             .iter()
             .rev()
-            .find(|statement| statement.kind() == "return_statement")
+            .find(|statement| statement.kind_name() == "return_statement")
             .and_then(|statement| statement.named_child(0))
             .map_or_else(
                 || Value::Opaque("config function has no top-level return".into()),
@@ -285,7 +281,7 @@ impl<'t> Evaluator<'t> {
     fn template(&self, node: Node<'t>, scope: &Scope<'_, 't>) -> Value {
         let mut text = String::new();
         for part in named_children(node) {
-            match part.kind() {
+            match part.kind_name() {
                 "template_substitution" => {
                     match part.named_child(0).map(|inner| self.eval(inner, scope)) {
                         Some(Value::Str(value)) => text.push_str(&value),
@@ -300,9 +296,9 @@ impl<'t> Evaluator<'t> {
 
     fn concatenation(&self, node: Node<'t>, scope: &Scope<'_, 't>) -> Value {
         let operands = (
-            node.child_by_field_name("left"),
-            node.child_by_field_name("operator"),
-            node.child_by_field_name("right"),
+            node.field("left"),
+            node.field("operator"),
+            node.field("right"),
         );
         let (Some(left), Some(operator), Some(right)) = operands else {
             return self.unreadable(node);
@@ -321,7 +317,7 @@ impl<'t> Evaluator<'t> {
 pub fn named_children(node: Node) -> Vec<Node> {
     let mut cursor = node.walk();
     node.named_children(&mut cursor)
-        .filter(|child| child.kind() != "comment")
+        .filter(|child| child.kind_name() != "comment")
         .collect()
 }
 

@@ -1,6 +1,7 @@
 //! Top-level guard-clause returns (`if (!x) return;` directly in a function body).
 
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 /// Per-language `if` and block shapes around a guard return.
@@ -15,25 +16,28 @@ pub(crate) struct GuardClauseSyntax {
 /// `ret` is the only statement of an else-less `if` that sits directly in a function body.
 pub(crate) fn is_guard_return(lineage: Lineage, syntax: &GuardClauseSyntax) -> bool {
     let arm = sole_statement_arm(lineage, unwrap(lineage, lineage.node(), syntax), syntax);
-    let Some(branch) = lineage.parent(arm).filter(|p| p.kind() == syntax.if_kind) else {
+    let Some(branch) = lineage
+        .parent(arm)
+        .filter(|p| p.kind_name() == syntax.if_kind)
+    else {
         return false;
     };
     let is_consequence = branch
-        .child_by_field_name("consequence")
+        .field("consequence")
         .is_some_and(|consequence| consequence.id() == arm.id());
     is_consequence
-        && branch.child_by_field_name("alternative").is_none()
+        && branch.field("alternative").is_none()
         && lineage
             .parent(unwrap(lineage, branch, syntax))
-            .filter(|block| syntax.block_kinds.contains(&block.kind()))
+            .filter(|block| syntax.block_kinds.contains(&block.kind_name()))
             .and_then(|block| lineage.parent(block))
-            .is_some_and(|func| (syntax.is_function)(func.kind()))
+            .is_some_and(|func| (syntax.is_function)(func.kind_name()))
 }
 
 fn unwrap<'a>(lineage: Lineage<'_, 'a>, node: Node<'a>, syntax: &GuardClauseSyntax) -> Node<'a> {
     lineage
         .parent(node)
-        .filter(|parent| syntax.wrapper_kinds.contains(&parent.kind()))
+        .filter(|parent| syntax.wrapper_kinds.contains(&parent.kind_name()))
         .unwrap_or(node)
 }
 
@@ -44,7 +48,9 @@ fn sole_statement_arm<'a>(
 ) -> Node<'a> {
     lineage
         .parent(statement)
-        .filter(|block| syntax.block_kinds.contains(&block.kind()) && named_statements(*block) == 1)
+        .filter(|block| {
+            syntax.block_kinds.contains(&block.kind_name()) && named_statements(*block) == 1
+        })
         .unwrap_or(statement)
 }
 
@@ -52,6 +58,6 @@ fn named_statements(block: Node) -> usize {
     let mut cursor = block.walk();
     block
         .named_children(&mut cursor)
-        .filter(|child| !child.kind().contains("comment"))
+        .filter(|child| !child.kind_name().contains("comment"))
         .count()
 }

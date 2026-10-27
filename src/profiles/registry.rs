@@ -290,3 +290,8 @@ mod tests {
         ));
     }
 }
+
+/// Grammars of every compiled-in profile.
+pub(crate) fn grammars() -> impl Iterator<Item = tree_sitter::Language> {
+    PROFILES.iter().map(|profile| profile.ts_language())
+}

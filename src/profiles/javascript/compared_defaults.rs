@@ -1,6 +1,7 @@
 //! String defaults (`{ s = "" }`, `name = ""`) that the same function compares to that literal.
 
 use super::units::is_function;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{FallbackSink, StringFallback};
 use tree_sitter::Node;
@@ -18,7 +19,7 @@ impl ComparedDefaults {
     /// Defaults outside `func`'s body; the walk feeds the body through [`Self::scan`].
     pub(super) fn start(func: Node, src: &[u8]) -> Self {
         let mut found = Self::default();
-        let body = func.child_by_field_name("body").map(|body| body.id());
+        let body = func.field("body").map(|body| body.id());
         let mut cursor = func.walk();
         for child in func.named_children(&mut cursor) {
             if Some(child.id()) != body {
@@ -49,7 +50,7 @@ impl ComparedDefaults {
     }
 
     fn collect(&mut self, node: Node, src: &[u8]) {
-        if is_function(node.kind()) {
+        if is_function(node.kind_name()) {
             return;
         }
         self.scan(node, src);
@@ -64,15 +65,13 @@ type Default = (String, String, usize);
 type Comparison = (String, String);
 
 fn string_default(node: Node, src: &[u8]) -> Option<Default> {
-    let (name, value) = match node.kind() {
-        "object_assignment_pattern" | "assignment_pattern" => (
-            node.child_by_field_name("left")?,
-            node.child_by_field_name("right")?,
-        ),
-        "required_parameter" | "optional_parameter" => (
-            node.child_by_field_name("pattern")?,
-            node.child_by_field_name("value")?,
-        ),
+    let (name, value) = match node.kind_name() {
+        "object_assignment_pattern" | "assignment_pattern" => {
+            (node.field("left")?, node.field("right")?)
+        }
+        "required_parameter" | "optional_parameter" => {
+            (node.field("pattern")?, node.field("value")?)
+        }
         _ => return None,
     };
     let name = walk::node_text(name, src)?;
@@ -82,16 +81,16 @@ fn string_default(node: Node, src: &[u8]) -> Option<Default> {
 
 /// `name === "literal"` in either order.
 fn literal_comparison(node: Node, src: &[u8]) -> Option<Comparison> {
-    if node.kind() != "binary_expression" {
+    if node.kind_name() != "binary_expression" {
         return None;
     }
-    let operator = walk::node_text(node.child_by_field_name("operator")?, src)?;
+    let operator = walk::node_text(node.field("operator")?, src)?;
     if !EQUALITY.contains(&operator) {
         return None;
     }
-    let left = node.child_by_field_name("left")?;
-    let right = node.child_by_field_name("right")?;
-    let (name, literal) = match (left.kind(), right.kind()) {
+    let left = node.field("left")?;
+    let right = node.field("right")?;
+    let (name, literal) = match (left.kind_name(), right.kind_name()) {
         ("identifier", "string") => (left, right),
         ("string", "identifier") => (right, left),
         _ => return None,
@@ -103,7 +102,7 @@ fn literal_comparison(node: Node, src: &[u8]) -> Option<Comparison> {
 }
 
 fn string_body(node: Node, src: &[u8]) -> Option<String> {
-    if node.kind() != "string" {
+    if node.kind_name() != "string" {
         return None;
     }
     let text = walk::node_text(node, src)?;

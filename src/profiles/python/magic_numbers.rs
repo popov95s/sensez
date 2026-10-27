@@ -2,6 +2,7 @@
 
 use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::MagicSyntax;
+use crate::profiles::node_names::NodeNames;
 
 pub(super) const SYNTAX: MagicSyntax = MagicSyntax {
     number_kinds: &["integer", "float"],
@@ -19,7 +20,7 @@ pub(super) const SYNTAX: MagicSyntax = MagicSyntax {
         "keyword_argument",
     ],
     is_named_constant,
-    default_value: |param| param.child_by_field_name("value"),
+    default_value: |param| param.field("value"),
 };
 
 /// `TTL_SECONDS = 300`.
@@ -27,13 +28,13 @@ fn is_named_constant(lineage: Lineage, src: &[u8]) -> bool {
     let node = lineage.node();
     lineage
         .parent(node)
-        .filter(|assignment| assignment.kind() == "assignment")
+        .filter(|assignment| assignment.kind_name() == "assignment")
         .filter(|assignment| {
             assignment
-                .child_by_field_name("right")
+                .field("right")
                 .is_some_and(|right| right.id() == node.id())
         })
-        .and_then(|assignment| assignment.child_by_field_name("left"))
+        .and_then(|assignment| assignment.field("left"))
         .and_then(|left| left.utf8_text(src).ok())
         .is_some_and(|name| {
             name.chars()

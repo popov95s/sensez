@@ -7,6 +7,7 @@
 //! only its identifier rule (which names are API surface vs. renameable
 //! locals) via the `identifier_code` closure.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::StructuralToken;
 use rustc_hash::FxHashSet;
 use tree_sitter::Node;
@@ -83,13 +84,13 @@ pub(crate) fn code_with_api_surface(
 /// the grammar names one (JS, Rust, most Python operators), else the first
 /// anonymous child (Python `comparison_operator` chains).
 fn operator(node: Node) -> &'static str {
-    if let Some(op) = node.child_by_field_name("operator") {
-        return op.kind();
+    if let Some(op) = node.field("operator") {
+        return op.kind_name();
     }
     let mut cursor = node.walk();
     for child in node.children(&mut cursor) {
         if !child.is_named() {
-            return child.kind();
+            return child.kind_name();
         }
     }
     "op"

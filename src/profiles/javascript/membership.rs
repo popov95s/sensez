@@ -2,6 +2,7 @@
 
 use super::typevocab::guarded_param;
 use super::units::is_function;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{FunctionUnit, LiteralMembership};
 use tree_sitter::Node;
@@ -23,9 +24,9 @@ pub(super) fn record(unit: &mut FunctionUnit, call: Node, list: Option<Node>, sr
         .map(|t| t.trim_matches(['"', '\'']).to_string())
         .collect();
     let operand = call
-        .child_by_field_name("arguments")
+        .field("arguments")
         .and_then(|args| args.named_child(0))
-        .filter(|a| OPERAND_KINDS.contains(&a.kind()))
+        .filter(|a| OPERAND_KINDS.contains(&a.kind_name()))
         .and_then(|a| a.utf8_text(src).ok())
         .map(str::to_string);
     if operand
@@ -44,7 +45,7 @@ pub(super) fn record(unit: &mut FunctionUnit, call: Node, list: Option<Node>, sr
 /// The string array behind `[...]` or `([...] as const)`.
 pub(super) fn literal_array(node: Node) -> Option<Node> {
     let inner = unparenthesized(node)?;
-    let array = match inner.kind() {
+    let array = match inner.kind_name() {
         "as_expression" => inner.named_child(0)?,
         _ => inner,
     };
@@ -54,29 +55,29 @@ pub(super) fn literal_array(node: Node) -> Option<Node> {
 /// The string array behind an inline `new Set([...])`.
 pub(super) fn literal_set<'t>(node: Node<'t>, src: &[u8]) -> Option<Node<'t>> {
     let inner = unparenthesized(node)?;
-    let is_set = inner.kind() == "new_expression"
+    let is_set = inner.kind_name() == "new_expression"
         && inner
-            .child_by_field_name("constructor")
+            .field("constructor")
             .and_then(|c| c.utf8_text(src).ok())
             == Some("Set");
-    let array = inner.child_by_field_name("arguments")?.named_child(0)?;
+    let array = inner.field("arguments")?.named_child(0)?;
     (is_set && is_string_array(array)).then_some(array)
 }
 
 /// True for `["a", "b", ...]` — a non-empty array literal of only strings.
 fn is_string_array(node: Node) -> bool {
-    if node.kind() != "array" || node.named_child_count() == 0 {
+    if node.kind_name() != "array" || node.named_child_count() == 0 {
         return false;
     }
     let mut cursor = node.walk();
     let all_strings = node
         .named_children(&mut cursor)
-        .all(|e| e.kind() == "string");
+        .all(|e| e.kind_name() == "string");
     all_strings
 }
 
 fn unparenthesized(node: Node) -> Option<Node> {
-    match node.kind() {
+    match node.kind_name() {
         "parenthesized_expression" => node.named_child(0),
         _ => Some(node),
     }
@@ -85,9 +86,9 @@ fn unparenthesized(node: Node) -> Option<Node> {
 /// `(v): v is Grade => [...].includes(v)`: the list defines the guarded type.
 fn guarded_by_predicate(call: Node, operand: &str, src: &[u8]) -> bool {
     let function = std::iter::successors(call.parent(), |node| node.parent())
-        .find(|node| is_function(node.kind()));
+        .find(|node| is_function(node.kind_name()));
     function
-        .and_then(|function| function.child_by_field_name("return_type"))
+        .and_then(|function| function.field("return_type"))
         .and_then(|annotation| walk::node_text(annotation, src))
         .and_then(|text| guarded_param(text.trim_start_matches(':').trim()))
         == Some(operand)
@@ -96,9 +97,9 @@ fn guarded_by_predicate(call: Node, operand: &str, src: &[u8]) -> bool {
 /// `s === "a" || s === "b" || s === "c"`, recorded once at the top of the chain.
 pub(super) fn record_or_chain(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let is_or = |node: Node| {
-        node.kind() == "binary_expression"
+        node.kind_name() == "binary_expression"
             && node
-                .child_by_field_name("operator")
+                .field("operator")
                 .and_then(|op| walk::node_text(op, src))
                 == Some("||")
     };
@@ -134,7 +135,7 @@ fn flatten<'t>(node: Node<'t>, is_or: &dyn Fn(Node) -> bool, out: &mut Vec<Node<
         return;
     }
     for side in ["left", "right"] {
-        if let Some(child) = node.child_by_field_name(side) {
+        if let Some(child) = node.field(side) {
             flatten(child, is_or, out);
         }
     }
@@ -142,18 +143,18 @@ fn flatten<'t>(node: Node<'t>, is_or: &dyn Fn(Node) -> bool, out: &mut Vec<Node<
 
 /// `x === "a"` / `"a" === x` → (`x`, `a`).
 fn string_equality<'s>(node: Node, src: &'s [u8]) -> Option<(&'s str, String)> {
-    let operator = walk::node_text(node.child_by_field_name("operator")?, src)?;
-    if node.kind() != "binary_expression" || !EQUALITY.contains(&operator) {
+    let operator = walk::node_text(node.field("operator")?, src)?;
+    if node.kind_name() != "binary_expression" || !EQUALITY.contains(&operator) {
         return None;
     }
-    let left = node.child_by_field_name("left")?;
-    let right = node.child_by_field_name("right")?;
-    let (subject, literal) = match (left.kind(), right.kind()) {
+    let left = node.field("left")?;
+    let right = node.field("right")?;
+    let (subject, literal) = match (left.kind_name(), right.kind_name()) {
         (_, "string") => (left, right),
         ("string", _) => (right, left),
         _ => return None,
     };
-    if !matches!(subject.kind(), "identifier" | "member_expression") {
+    if !matches!(subject.kind_name(), "identifier" | "member_expression") {
         return None;
     }
     let text = walk::node_text(literal, src)?;

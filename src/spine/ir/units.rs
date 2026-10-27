@@ -6,7 +6,8 @@ use super::{
     EchoAssertion, MagicNumber, PerformanceFacts, SentinelHandler, StateWrite, StringFallback,
     TypeEscape,
 };
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::HashMap;
 
 /// Syntax facts used by the high-precision generated-code detectors.
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
@@ -139,33 +140,33 @@ pub struct FunctionUnit {
     pub chain_hits: Vec<ChainHit>,
     pub is_method: bool,
     /// Local name → branch path of each plain (non-augmented) assignment to it.
-    pub local_reassigns: HashMap<String, Vec<BranchPath>>,
+    pub local_reassigns: FxHashMap<String, Vec<BranchPath>>,
     /// Receiver identifier (including `self`) → number of member accesses on it.
-    pub receiver_access: HashMap<String, usize>,
+    pub receiver_access: FxHashMap<String, usize>,
     /// `self.<attr>` names this function's own body reads or writes.
-    pub self_attrs: HashSet<String>,
+    pub self_attrs: FxHashSet<String>,
     /// Calls to methods on the language's own-instance receiver.
-    pub own_method_calls: HashSet<String>,
+    pub own_method_calls: FxHashSet<String>,
     /// Receiver identifier → distinct string-literal subscript keys (`cfg["host"]`).
-    pub str_keys: HashMap<String, HashSet<String>>,
+    pub str_keys: FxHashMap<String, FxHashSet<String>>,
     /// Receiver identifier → keys destructured from it (`const { a, b } = recv`).
-    pub destructured_keys: HashMap<String, HashSet<String>>,
+    pub destructured_keys: FxHashMap<String, FxHashSet<String>>,
     /// Receiver identifier → line of its first string-literal subscript.
-    pub str_key_lines: HashMap<String, usize>,
+    pub str_key_lines: FxHashMap<String, usize>,
     /// Direct helper calls with identifier arguments.
     pub schema_calls: Vec<SchemaCall>,
     /// Loose inputs passed through a recognized typed/schema decoder.
-    pub validated_names: HashSet<String>,
+    pub validated_names: FxHashSet<String>,
     /// Domain constructors directly returned by this function.
-    pub returned_constructors: HashSet<String>,
+    pub returned_constructors: FxHashSet<String>,
     /// Identifiers directly returned by this function (`return x`).
-    pub returned_names: HashSet<String>,
+    pub returned_names: FxHashSet<String>,
     /// Identifiers mutated in place: `x[k] = v`, `del x[k]`, `x.append(...)`.
-    pub mutated_names: HashSet<String>,
+    pub mutated_names: FxHashSet<String>,
     /// Root identifiers mutated through an attribute (`m.items.append(...)` records `m`).
-    pub attr_mutated_names: HashSet<String>,
+    pub attr_mutated_names: FxHashSet<String>,
     /// Identifiers mutated by a known method call, with the mutator family.
-    pub method_mutations: HashSet<(String, MutatorFamily)>,
+    pub method_mutations: FxHashSet<(String, MutatorFamily)>,
     /// Root name and line of every recorded mutation.
     pub mutation_lines: Vec<(String, usize)>,
     /// Largest arity among bare tuple returns (`return a, b, c`).
@@ -197,7 +198,7 @@ pub struct FunctionUnit {
     /// A property accessor (`get x()`) rather than a named function.
     pub is_accessor: bool,
     /// Receivers also subscripted with a computed (non-literal) key.
-    pub dynamic_key_receivers: HashSet<String>,
+    pub dynamic_key_receivers: FxHashSet<String>,
     /// The tuple return annotation repeats one primitive type.
     pub homogeneous_tuple_return: bool,
     /// Casts and suppressions that silence the type checker in this body.
@@ -244,9 +245,9 @@ pub struct ClassUnit {
     pub is_abstract: bool,
     pub methods: Vec<String>,
     /// Method name → set of `self.<attr>` it reads or writes (LCOM, temp field).
-    pub method_attr_use: HashMap<String, HashSet<String>>,
+    pub method_attr_use: FxHashMap<String, FxHashSet<String>>,
     /// Method name → sibling methods invoked through `self` / `this`.
-    pub method_calls: HashMap<String, HashSet<String>>,
+    pub method_calls: FxHashMap<String, FxHashSet<String>>,
     /// Non-abstract methods whose body is only `pass` / `raise NotImplementedError`.
     pub overrides_to_stub: Vec<String>,
     /// Class-level declared properties with known types.
@@ -317,30 +318,5 @@ impl TypeHints {
 
     pub fn return_type(&self, func: &FunctionUnit) -> Option<&String> {
         self.return_types.get(&FunctionKey::of(func))
-    }
-}
-
-/// Increment `map[key]`, allocating the key only when absent.
-pub(crate) fn bump(map: &mut HashMap<String, usize>, key: &str) {
-    if let Some(count) = map.get_mut(key) {
-        *count += 1;
-    } else {
-        map.insert(key.to_string(), 1);
-    }
-}
-
-/// Record that `attr` was accessed on `base`, allocating only on first sight.
-pub(crate) fn record_attr(map: &mut HashMap<String, HashSet<String>>, base: &str, attr: &str) {
-    match map.get_mut(base) {
-        Some(attrs) => {
-            if !attrs.contains(attr) {
-                attrs.insert(attr.to_string());
-            }
-        }
-        None => {
-            let mut attrs = HashSet::new();
-            attrs.insert(attr.to_string());
-            map.insert(base.to_string(), attrs);
-        }
     }
 }

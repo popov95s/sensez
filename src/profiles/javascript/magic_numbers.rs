@@ -2,6 +2,7 @@
 
 use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::MagicSyntax;
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 pub(super) const SYNTAX: MagicSyntax = MagicSyntax {
@@ -34,9 +35,9 @@ pub(super) const SYNTAX: MagicSyntax = MagicSyntax {
 };
 
 fn default_value(param: Node) -> Option<Node> {
-    match param.kind() {
-        "assignment_pattern" => param.child_by_field_name("right"),
-        _ => param.child_by_field_name("value"),
+    match param.kind_name() {
+        "assignment_pattern" => param.field("right"),
+        _ => param.field("value"),
     }
 }
 
@@ -45,13 +46,13 @@ fn is_named_constant(lineage: Lineage, src: &[u8]) -> bool {
     let node = lineage.node();
     lineage
         .parent(node)
-        .filter(|declarator| declarator.kind() == "variable_declarator")
+        .filter(|declarator| declarator.kind_name() == "variable_declarator")
         .filter(|declarator| {
             declarator
-                .child_by_field_name("value")
+                .field("value")
                 .is_some_and(|value| value.id() == node.id())
         })
         .and_then(|declarator| lineage.parent(declarator))
-        .and_then(|declaration| declaration.child_by_field_name("kind"))
+        .and_then(|declaration| declaration.field("kind"))
         .is_some_and(|kind| kind.utf8_text(src) == Ok("const"))
 }

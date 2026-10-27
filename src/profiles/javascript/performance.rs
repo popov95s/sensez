@@ -2,6 +2,7 @@
 
 use super::iteration::{iteration_call, loop_pass};
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{CallFact, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
@@ -40,7 +41,7 @@ const EXTERNAL_TYPE_PARTS: &[&str] = &[
 ];
 pub fn scan(facts: &mut PerformanceFacts, lineage: Lineage, src: &[u8], frame: Option<usize>) {
     let node = lineage.node();
-    let kind = node.kind();
+    let kind = node.kind_name();
     match kind {
         "return_statement" | "throw_statement" => facts.exits.push(node.end_byte()),
         "variable_declarator" => {
@@ -94,17 +95,17 @@ pub fn is_loop(kind: &str) -> bool {
 
 fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     let node = lineage.node();
-    let func = node.child_by_field_name("function")?;
+    let func = node.field("function")?;
     let line = node.start_position().row + 1;
-    let mut call = match func.kind() {
+    let mut call = match func.kind_name() {
         "identifier" => Some(CallFact::named(walk::node_text(func, src)?, line)),
         "member_expression" => {
             let base = func
-                .child_by_field_name("object")
+                .field("object")
                 .filter(stable_receiver)
                 .and_then(|n| walk::node_text(n, src))?;
             let method = func
-                .child_by_field_name("property")
+                .field("property")
                 .and_then(|n| walk::node_text(n, src))?;
             Some(CallFact::member(base, method, line))
         }
@@ -114,7 +115,7 @@ fn call_fact(lineage: Lineage, src: &[u8]) -> Option<CallFact> {
     call.offset = node.start_byte();
     call.awaited = lineage
         .parent(node)
-        .is_some_and(|parent| parent.kind() == "await_expression");
+        .is_some_and(|parent| parent.kind_name() == "await_expression");
     Some(call)
 }
 
@@ -128,7 +129,7 @@ fn record_loop_declaration(
 ) {
     facts.note_declared(frame, names);
     if declarator
-        .child_by_field_name("value")
+        .field("value")
         .is_some_and(|value| walk::fed_by_call(facts, frame, value, src, "call_expression"))
     {
         facts.note_call_results(frame, names);
@@ -136,10 +137,10 @@ fn record_loop_declaration(
 }
 
 pub(super) fn stable_receiver(node: &Node<'_>) -> bool {
-    matches!(node.kind(), "identifier" | "this")
-        || (node.kind() == "member_expression"
+    matches!(node.kind_name(), "identifier" | "this")
+        || (node.kind_name() == "member_expression"
             && node
-                .child_by_field_name("object")
+                .field("object")
                 .is_some_and(|base| stable_receiver(&base)))
 }
 
@@ -147,11 +148,11 @@ pub(super) fn control_region(lineage: Lineage) -> usize {
     let mut current = lineage.node();
     while let Some(parent) = lineage.parent(current) {
         if matches!(
-            parent.kind(),
+            parent.kind_name(),
             "if_statement" | "switch_case" | "ternary_expression"
         ) {
             let alternative = parent
-                .child_by_field_name("alternative")
+                .field("alternative")
                 .is_some_and(|branch| branch.id() == current.id());
             return if alternative {
                 current.start_position().row + 1
@@ -159,7 +160,7 @@ pub(super) fn control_region(lineage: Lineage) -> usize {
                 parent.start_position().row + 1
             };
         }
-        if super::units::is_function(parent.kind()) {
+        if super::units::is_function(parent.kind_name()) {
             break;
         }
         current = parent;

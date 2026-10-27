@@ -1,22 +1,23 @@
 //! Small Rust AST helpers for unit extraction.
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{self, MutationTarget};
 use tree_sitter::Node;
 
 pub(super) fn target_root(node: Node, src: &[u8]) -> Option<MutationTarget> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => walk::node_text(node, src).map(|id| MutationTarget::Direct(id.to_string())),
         "self" => Some(MutationTarget::Direct("self".to_string())),
         "index_expression" => target_root(node.named_child(0)?, src),
         "field_expression" => {
-            target_root(node.child_by_field_name("value")?, src).map(MutationTarget::via_attribute)
+            target_root(node.field("value")?, src).map(MutationTarget::via_attribute)
         }
         _ => None,
     }
 }
 
 pub(super) fn pattern_name(node: Node, src: &[u8]) -> Option<String> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => walk::node_text(node, src).map(str::to_string),
         "mut_pattern" | "ref_pattern" | "reference_pattern" => {
             node.named_child(0).and_then(|n| pattern_name(n, src))

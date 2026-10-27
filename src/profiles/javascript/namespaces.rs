@@ -1,5 +1,6 @@
 //! Narrow `import * as ns` to the members read through `ns.member`.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, Walked};
 use std::collections::HashSet;
 use tree_sitter::Node;
@@ -13,10 +14,12 @@ pub struct FreeReads {
 impl FreeReads {
     /// Record `node` when it is a free read under `ancestors`, root first.
     pub fn record(&mut self, node: Node, ancestors: &[Node], src: &[u8]) {
-        if !matches!(node.kind(), "identifier" | "shorthand_property_identifier")
-            || ancestors
-                .last()
-                .is_some_and(|parent| is_member_base(node, *parent))
+        if !matches!(
+            node.kind_name(),
+            "identifier" | "shorthand_property_identifier"
+        ) || ancestors
+            .last()
+            .is_some_and(|parent| is_member_base(node, *parent))
         {
             return;
         }
@@ -24,7 +27,7 @@ impl FreeReads {
         if !self.names.contains(text)
             && !ancestors
                 .iter()
-                .any(|ancestor| ancestor.kind() == "import_statement")
+                .any(|ancestor| ancestor.kind_name() == "import_statement")
         {
             self.names.insert(text.to_string());
         }
@@ -32,12 +35,12 @@ impl FreeReads {
 
     /// A re-export the walk does not descend into still reads its names.
     pub fn skipped(&mut self, node: Node, src: &[u8]) {
-        if node.kind() != "export_statement" {
+        if node.kind_name() != "export_statement" {
             return;
         }
         let mut stack = vec![(node, None)];
         while let Some((current, parent)) = stack.pop() {
-            if current.kind() == "import_statement" {
+            if current.kind_name() == "import_statement" {
                 continue;
             }
             self.record(current, parent.as_slice(), src);
@@ -65,13 +68,13 @@ fn is_namespace(import: &ImportContext) -> bool {
 }
 
 fn is_member_base(node: Node, parent: Node) -> bool {
-    let field = match parent.kind() {
+    let field = match parent.kind_name() {
         "member_expression" => "object",
         "nested_type_identifier" => "module",
         _ => return false,
     };
     parent
-        .child_by_field_name(field)
+        .field(field)
         .is_some_and(|base| base.id() == node.id())
 }
 

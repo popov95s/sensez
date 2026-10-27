@@ -1,6 +1,7 @@
 //! Runs of comment children on adjacent lines, classified together once the run ends.
 
 use super::comment_syntax::COMMENT_SYNTAX;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::Walked;
 use tree_sitter::Node;
@@ -14,7 +15,7 @@ pub struct CommentRun<'t> {
 impl<'t> CommentRun<'t> {
     /// Take `child`, the next named child of `parent`, recording the run it ends.
     pub fn push(&mut self, out: &mut Walked, child: Node<'t>, parent: Node<'t>, src: &[u8]) {
-        let is_comment = child.kind() == "comment";
+        let is_comment = child.kind_name() == "comment";
         let joins = is_comment
             && self
                 .comments

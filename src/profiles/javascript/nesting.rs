@@ -1,6 +1,7 @@
 //! Nesting depth and cognitive weight of syntax nodes.
 
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 /// Kinds that increase block-nesting depth.
@@ -19,7 +20,7 @@ pub(super) fn is_nesting(kind: &str) -> bool {
 
 /// `&&` / `||` / `??` short-circuit operators add a decision point.
 pub(super) fn is_logical(node: Node, src: &[u8]) -> bool {
-    node.child_by_field_name("operator")
+    node.field("operator")
         .and_then(|o| o.utf8_text(src).ok())
         .is_some_and(|op| matches!(op, "&&" | "||" | "??"))
 }
@@ -57,7 +58,7 @@ pub(super) fn cognitive_weight(
 /// `else if`: an `if` that is the `alternative` of another `if`.
 pub(super) fn is_else_if(node: Lineage) -> bool {
     node.parent(node.node())
-        .filter(|parent| parent.kind() == "else_clause")
+        .filter(|parent| parent.kind_name() == "else_clause")
         .and_then(|clause| node.parent(clause))
-        .is_some_and(|grand| grand.kind() == "if_statement")
+        .is_some_and(|grand| grand.kind_name() == "if_statement")
 }

@@ -1,6 +1,7 @@
 //! Language-neutral structural fingerprints for repeated guard detection.
 
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::typevocab::is_ident_char;
 use crate::spine::ir::FunctionUnit;
 use std::collections::hash_map::DefaultHasher;
@@ -40,16 +41,16 @@ impl GuardLog {
         src: &[u8],
     ) {
         let branch = lineage.node();
-        let Some(condition) = branch.child_by_field_name("condition") else {
+        let Some(condition) = branch.field("condition") else {
             return;
         };
         let mut ancestors = lineage.ancestors(branch);
         let scope = ancestors
             .clone()
-            .find(|ancestor| scope_kinds.contains(&ancestor.kind()));
+            .find(|ancestor| scope_kinds.contains(&ancestor.kind_name()));
         let ancestor = ancestors
-            .find(|ancestor| ancestor.kind() == branch.kind())
-            .and_then(|parent| parent.child_by_field_name("condition"));
+            .find(|ancestor| ancestor.kind_name() == branch.kind_name())
+            .and_then(|parent| parent.field("condition"));
         let line = condition.start_position().row + 1;
         let context = ancestor.map(|node| fingerprint(node, src)).unwrap_or(0);
         let key = combine(
@@ -107,7 +108,7 @@ fn is_name(text: &str, extra: &[char]) -> bool {
 
 fn fingerprint(node: Node<'_>, src: &[u8]) -> u64 {
     fn hash_node(node: Node<'_>, src: &[u8], state: &mut DefaultHasher) {
-        node.kind().hash(state);
+        node.kind_name().hash(state);
         if node.child_count() == 0 {
             node.utf8_text(src).unwrap_or_default().hash(state);
             return;

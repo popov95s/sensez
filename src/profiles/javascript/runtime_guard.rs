@@ -1,5 +1,6 @@
 //! Whether a non-null call result was already checked at runtime.
 
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 const CONDITIONALS: &[&str] = &[
@@ -17,10 +18,11 @@ pub(super) fn is_checked(call: Node<'_>, src: &[u8]) -> bool {
     let witnesses = witnesses(text);
     let mut node = call;
     while let Some(parent) = node.parent() {
-        if super::units::is_function(parent.kind()) {
+        if super::units::is_function(parent.kind_name()) {
             return false;
         }
-        if CONDITIONALS.contains(&parent.kind()) && condition_mentions(parent, node, text, src) {
+        if CONDITIONALS.contains(&parent.kind_name()) && condition_mentions(parent, node, text, src)
+        {
             return true;
         }
         let earlier = std::iter::successors(node.prev_named_sibling(), |n| n.prev_named_sibling());
@@ -53,9 +55,9 @@ fn witnesses(call: &str) -> Vec<String> {
 
 /// The condition part of `parent` (not the branch holding `child`) names `call`.
 fn condition_mentions(parent: Node<'_>, child: Node<'_>, call: &str, src: &[u8]) -> bool {
-    let condition = match parent.kind() {
-        "binary_expression" => parent.child_by_field_name("left"),
-        _ => parent.child_by_field_name("condition"),
+    let condition = match parent.kind_name() {
+        "binary_expression" => parent.field("left"),
+        _ => parent.field("condition"),
     };
     condition
         .filter(|condition| condition.id() != child.id())

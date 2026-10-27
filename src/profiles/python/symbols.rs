@@ -1,11 +1,12 @@
 //! Top-level declaration extraction (function/class/assignment names, `__all__`).
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::Visibility;
 use tree_sitter::Node;
 
 /// Name of a `function_definition` / `class_definition`.
 pub fn def_name(node: Node, src: &[u8]) -> Option<String> {
-    node.child_by_field_name("name")
+    node.field("name")
         .and_then(|n| n.utf8_text(src).ok())
         .map(str::to_string)
 }
@@ -18,7 +19,7 @@ pub fn def_name(node: Node, src: &[u8]) -> Option<String> {
 pub fn decorator_paths(node: Node, src: &[u8]) -> Vec<String> {
     let mut cursor = node.walk();
     node.named_children(&mut cursor)
-        .filter(|c| c.kind() == "decorator")
+        .filter(|c| c.kind_name() == "decorator")
         .filter_map(|c| dotted_path(c, src))
         .collect()
 }
@@ -38,14 +39,14 @@ fn dotted_path(decorator: Node, src: &[u8]) -> Option<String> {
 /// kept (callers that want to ignore them can filter). `*args`/`**kwargs`/
 /// typed/default parameters all resolve to their leading identifier.
 pub fn param_names(func: Node, src: &[u8]) -> Vec<String> {
-    let Some(params) = func.child_by_field_name("parameters") else {
+    let Some(params) = func.field("parameters") else {
         return Vec::new();
     };
     let mut cursor = params.walk();
     params
         .named_children(&mut cursor)
         .filter_map(|p| {
-            if p.kind() == "identifier" {
+            if p.kind_name() == "identifier" {
                 p.utf8_text(src).ok().map(str::to_string)
             } else {
                 first_identifier(p, src)
@@ -57,12 +58,12 @@ pub fn param_names(func: Node, src: &[u8]) -> Vec<String> {
 /// Base-class names of a `class_definition` (`superclasses` argument list).
 /// `class A(B, c.D)` → `["B", "c.D"]`; keyword args (`metaclass=`) are skipped.
 pub fn base_classes(node: Node, src: &[u8]) -> Vec<String> {
-    let Some(args) = node.child_by_field_name("superclasses") else {
+    let Some(args) = node.field("superclasses") else {
         return Vec::new();
     };
     let mut cursor = args.walk();
     args.named_children(&mut cursor)
-        .filter(|c| matches!(c.kind(), "identifier" | "attribute"))
+        .filter(|c| matches!(c.kind_name(), "identifier" | "attribute"))
         .filter_map(|c| c.utf8_text(src).ok().map(str::to_string))
         .collect()
 }
@@ -76,22 +77,22 @@ fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
 /// Assignment target names: handles `x = ...` and `a, b = ...`.
 /// `self.<attr>`.
 pub fn is_self_attribute(node: Node, src: &[u8]) -> bool {
-    node.kind() == "attribute"
+    node.kind_name() == "attribute"
         && node
-            .child_by_field_name("object")
+            .field("object")
             .and_then(|object| object.utf8_text(src).ok())
             == Some("self")
 }
 
 pub fn assignment_targets(node: Node, src: &[u8]) -> Vec<String> {
-    match node.child_by_field_name("left") {
+    match node.field("left") {
         Some(left) => collect_target_names(left, src),
         None => Vec::new(),
     }
 }
 
 fn collect_target_names(node: Node, src: &[u8]) -> Vec<String> {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" => node
             .utf8_text(src)
             .ok()
@@ -109,15 +110,15 @@ fn collect_target_names(node: Node, src: &[u8]) -> Vec<String> {
 
 /// If `node` is `__all__ = [...]`, return the listed string entries.
 pub fn dunder_all(node: Node, src: &[u8]) -> Option<Vec<String>> {
-    let left = node.child_by_field_name("left")?;
+    let left = node.field("left")?;
     if left.utf8_text(src).ok()? != "__all__" {
         return None;
     }
-    let right = node.child_by_field_name("right")?;
+    let right = node.field("right")?;
     let mut cursor = right.walk();
     let entries = right
         .named_children(&mut cursor)
-        .filter(|c| c.kind() == "string")
+        .filter(|c| c.kind_name() == "string")
         .filter_map(|c| string_value(c, src))
         .collect();
     Some(entries)
@@ -128,10 +129,10 @@ pub fn string_value(node: Node, src: &[u8]) -> Option<String> {
     let mut cursor = node.walk();
     let value = node
         .named_children(&mut cursor)
-        .find(|c| c.kind() == "string_content")
+        .find(|c| c.kind_name() == "string_content")
         .and_then(|c| c.utf8_text(src).ok())
         .map(str::to_string);
-    value.or_else(|| (node.kind() == "string").then(String::new))
+    value.or_else(|| (node.kind_name() == "string").then(String::new))
 }
 
 /// `_helper` is module-private; dunder and plain names are public.

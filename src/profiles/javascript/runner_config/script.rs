@@ -1,3 +1,4 @@
+use crate::profiles::node_names::NodeNames;
 use std::collections::HashMap;
 use std::path::{Path, PathBuf};
 use tree_sitter::{Node, Tree};
@@ -57,29 +58,29 @@ impl Script {
 
     pub fn string(&self, node: Node) -> Option<String> {
         crate::profiles::javascript::const_eval::evaluate(node, &self.source, &HashMap::new())
-            .filter(|_| node.kind() == "string")
+            .filter(|_| node.kind_name() == "string")
     }
 
     fn index_statement<'t>(&'t self, statement: Node<'t>, index: &mut ModuleIndex<'t>) {
-        match statement.kind() {
+        match statement.kind_name() {
             "import_statement" => self.index_import(statement, index),
             "export_statement" => {
-                if let Some(value) = statement.child_by_field_name("value") {
+                if let Some(value) = statement.field("value") {
                     index.default_export = Some(value);
-                } else if let Some(declaration) = statement.child_by_field_name("declaration") {
+                } else if let Some(declaration) = statement.field("declaration") {
                     self.index_statement(declaration, index);
                 }
             }
             "expression_statement" => {
                 let Some(assignment) = statement
                     .named_child(0)
-                    .filter(|node| node.kind() == "assignment_expression")
+                    .filter(|node| node.kind_name() == "assignment_expression")
                 else {
                     return;
                 };
-                let left = assignment.child_by_field_name("left");
+                let left = assignment.field("left");
                 if left.is_some_and(|left| self.text(left) == "module.exports") {
-                    index.default_export = assignment.child_by_field_name("right");
+                    index.default_export = assignment.field("right");
                 }
             }
             _ => index.bindings.extend(self.declarations(statement)),
@@ -88,21 +89,21 @@ impl Script {
 
     /// Names declared by a `const`/`let`/`var`/`function` statement.
     pub fn declarations<'t>(&'t self, statement: Node<'t>) -> Vec<(String, Node<'t>)> {
-        match statement.kind() {
+        match statement.kind_name() {
             "lexical_declaration" | "variable_declaration" => {
                 let mut cursor = statement.walk();
                 statement
                     .named_children(&mut cursor)
-                    .filter(|child| child.kind() == "variable_declarator")
+                    .filter(|child| child.kind_name() == "variable_declarator")
                     .filter_map(|declarator| {
-                        let name = declarator.child_by_field_name("name")?;
-                        let value = declarator.child_by_field_name("value")?;
-                        (name.kind() == "identifier").then(|| (self.text(name), value))
+                        let name = declarator.field("name")?;
+                        let value = declarator.field("value")?;
+                        (name.kind_name() == "identifier").then(|| (self.text(name), value))
                     })
                     .collect()
             }
             "function_declaration" => statement
-                .child_by_field_name("name")
+                .field("name")
                 .map(|name| vec![(self.text(name), statement)])
                 .unwrap_or_default(),
             _ => Vec::new(),
@@ -110,21 +111,18 @@ impl Script {
     }
 
     fn index_import(&self, statement: Node, index: &mut ModuleIndex) {
-        let Some(source) = statement
-            .child_by_field_name("source")
-            .and_then(|node| self.string(node))
-        else {
+        let Some(source) = statement.field("source").and_then(|node| self.string(node)) else {
             return;
         };
         let mut cursor = statement.walk();
         let clauses: Vec<_> = statement
             .named_children(&mut cursor)
-            .filter(|child| child.kind() == "import_clause")
+            .filter(|child| child.kind_name() == "import_clause")
             .collect();
         for clause in clauses {
             let mut clause_cursor = clause.walk();
             for part in clause.named_children(&mut clause_cursor) {
-                match part.kind() {
+                match part.kind_name() {
                     "identifier" => {
                         index.imports.insert(
                             self.text(part),
@@ -137,10 +135,10 @@ impl Script {
                     "named_imports" => {
                         let mut named_cursor = part.walk();
                         for specifier in part.named_children(&mut named_cursor) {
-                            let Some(name) = specifier.child_by_field_name("name") else {
+                            let Some(name) = specifier.field("name") else {
                                 continue;
                             };
-                            let local = specifier.child_by_field_name("alias").unwrap_or(name);
+                            let local = specifier.field("alias").unwrap_or(name);
                             index.imports.insert(
                                 self.text(local),
                                 Import {

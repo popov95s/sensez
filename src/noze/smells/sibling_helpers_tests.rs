@@ -103,6 +103,13 @@ fn python_copies_fire_too() {
 }
 
 #[test]
+fn a_module_importing_the_whole_sibling_is_a_wrapper() {
+    let body = "def reason_of(failure):\n    return str(failure.args[0]) if failure.args else repr(failure)\n";
+    let wrapper = "from a.format import *\n\ndef reason_of(err):\n    return str(err.args[0]) if err.args else repr(err)\n";
+    assert!(findings(&[("a/format.py", body), ("b/log.py", wrapper)]).is_empty());
+}
+
+#[test]
 fn a_forked_module_copy_is_left_to_the_clone_pillar() {
     assert!(findings(&[
         ("v1/shared/format.ts", REASON_OF),

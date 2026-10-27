@@ -1,6 +1,7 @@
 //! Assertion operands for `fixture_echo_assertion`.
 
 use crate::profiles::echo_assertion::{echo_shape, Alias, EchoSyntax};
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{EchoAssertion, EchoShape, FunctionUnit};
 use tree_sitter::Node;
 
@@ -30,7 +31,7 @@ const EQUALITY_ASSERTS: &[&str] = &[
 const TRUTH_ASSERTS: &[&str] = &["self.assertTrue"];
 
 pub(super) fn scan(unit: &mut FunctionUnit, node: Node<'_>, src: &[u8]) {
-    let shape = match node.kind() {
+    let shape = match node.kind_name() {
         "assert_statement" => node.named_child(0).and_then(|test| asserted(test, src)),
         "call" => unittest_assert(node, src),
         _ => None,
@@ -45,13 +46,13 @@ pub(super) fn scan(unit: &mut FunctionUnit, node: Node<'_>, src: &[u8]) {
 
 /// `assert True`, or `assert a == a`.
 fn asserted(test: Node<'_>, src: &[u8]) -> Option<EchoShape> {
-    if test.kind() == "true" {
+    if test.kind_name() == "true" {
         return Some(EchoShape::Literals);
     }
-    if test.kind() != "comparison_operator" || test.child_count() != 3 {
+    if test.kind_name() != "comparison_operator" || test.child_count() != 3 {
         return None;
     }
-    let operator = test.child(1)?.kind();
+    let operator = test.child(1)?.kind_name();
     EQUALITY_OPERATORS
         .contains(&operator)
         .then(|| echo_shape(test.named_child(0)?, test.named_child(1)?, src, &SYNTAX))
@@ -60,12 +61,12 @@ fn asserted(test: Node<'_>, src: &[u8]) -> Option<EchoShape> {
 
 /// `self.assertEqual(a, a)` or `self.assertTrue(True)`.
 fn unittest_assert(call: Node<'_>, src: &[u8]) -> Option<EchoShape> {
-    let callee = call.child_by_field_name("function")?.utf8_text(src).ok()?;
+    let callee = call.field("function")?.utf8_text(src).ok()?;
     let args = positional(call);
     if TRUTH_ASSERTS.contains(&callee) {
         return args
             .first()
-            .filter(|arg| arg.kind() == "true")
+            .filter(|arg| arg.kind_name() == "true")
             .map(|_| EchoShape::Literals);
     }
     let is_equality = EQUALITY_ASSERTS.contains(&callee);
@@ -76,13 +77,13 @@ fn unittest_assert(call: Node<'_>, src: &[u8]) -> Option<EchoShape> {
 }
 
 fn positional(call: Node<'_>) -> Vec<Node<'_>> {
-    let Some(args) = call.child_by_field_name("arguments") else {
+    let Some(args) = call.field("arguments") else {
         return Vec::new();
     };
     let mut cursor = args.walk();
     let nodes = args
         .named_children(&mut cursor)
-        .filter(|arg| !matches!(arg.kind(), "keyword_argument" | "comment"))
+        .filter(|arg| !matches!(arg.kind_name(), "keyword_argument" | "comment"))
         .collect();
     nodes
 }
@@ -91,12 +92,12 @@ fn positional(call: Node<'_>) -> Vec<Node<'_>> {
 fn alias(statement: Node<'_>, src: &[u8]) -> Option<Alias> {
     let assignment = statement
         .named_child(0)
-        .filter(|_| statement.kind() == "expression_statement")?;
-    let name = assignment.child_by_field_name("left")?;
-    let value = assignment.child_by_field_name("right")?;
-    (assignment.kind() == "assignment"
-        && name.kind() == "identifier"
-        && value.kind() == "identifier")
+        .filter(|_| statement.kind_name() == "expression_statement")?;
+    let name = assignment.field("left")?;
+    let value = assignment.field("right")?;
+    (assignment.kind_name() == "assignment"
+        && name.kind_name() == "identifier"
+        && value.kind_name() == "identifier")
         .then(|| Alias {
             name: name.utf8_text(src).unwrap_or_default().to_string(),
             source: value.utf8_text(src).unwrap_or_default().to_string(),

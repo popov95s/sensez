@@ -24,6 +24,9 @@ struct Definition<'a> {
     lexemes: &'a [u64],
 }
 
+/// Imported-symbol name of a whole-module import.
+const WHOLE_MODULE: &str = "*";
+
 type GroupKey<'a> = (Language, &'a str, usize);
 type ImportLink<'a> = (&'a Path, &'a Path, &'a str);
 
@@ -33,7 +36,12 @@ pub fn detect(
     cfg: &SmellConfig,
 ) -> Vec<SmellFinding> {
     let groups = definition_groups(files, cfg);
-    let links = import_links(graph);
+    let names: FxHashSet<&str> = groups
+        .keys()
+        .map(|&(_, name, _)| name)
+        .chain([WHOLE_MODULE])
+        .collect();
+    let links = import_links(graph, &names);
     groups
         .into_values()
         .flat_map(|group| similar_clusters(without_wrappers(group, &links), cfg))
@@ -105,8 +113,11 @@ fn is_module_declaration(file: &ParsedFile, func: &FunctionUnit) -> bool {
         )
 }
 
-/// `(importer, imported module, name)` for every named import between project files.
-fn import_links(graph: &CodebaseGraph) -> FxHashSet<ImportLink<'_>> {
+/// `(importer, imported module, name)` for every import of one of `names` between project files.
+fn import_links<'a>(
+    graph: &'a CodebaseGraph,
+    names: &FxHashSet<&str>,
+) -> FxHashSet<ImportLink<'a>> {
     graph
         .graph
         .edge_references()
@@ -116,6 +127,7 @@ fn import_links(graph: &CodebaseGraph) -> FxHashSet<ImportLink<'_>> {
             edge.weight()
                 .imported_symbols
                 .iter()
+                .filter(|name| names.contains(name.as_str()))
                 .map(move |name| (from, to, name.as_str()))
         })
         .collect()
@@ -133,7 +145,7 @@ fn without_wrappers<'a>(
             let own = definition.file.path.as_path();
             !paths.iter().filter(|&&other| other != own).any(|&other| {
                 links.contains(&(own, other, definition.func.name.as_str()))
-                    || links.contains(&(own, other, "*"))
+                    || links.contains(&(own, other, WHOLE_MODULE))
             })
         })
         .collect()

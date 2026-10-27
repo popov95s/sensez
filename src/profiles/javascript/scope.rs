@@ -6,6 +6,7 @@
 //! Member/property names, free names, and literals are kept verbatim.
 
 use crate::profiles::lexeme::BoundNames;
+use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
 /// Names bound within `func` (parameters + body declarations), not descending
@@ -13,16 +14,16 @@ use tree_sitter::Node;
 pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
     let mut set = BoundNames::default();
     // arrow_function may have a single `parameter` or a `parameters` list.
-    if let Some(param) = func.child_by_field_name("parameter") {
+    if let Some(param) = func.field("parameter") {
         collect_pattern(param, src, &mut set);
     }
-    if let Some(params) = func.child_by_field_name("parameters") {
+    if let Some(params) = func.field("parameters") {
         let mut cursor = params.walk();
         for p in params.named_children(&mut cursor) {
             collect_pattern(p, src, &mut set);
         }
     }
-    if let Some(body) = func.child_by_field_name("body") {
+    if let Some(body) = func.field("body") {
         collect_targets(body, src, &mut set);
     }
     set
@@ -32,7 +33,7 @@ pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
 fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
-        match child.kind() {
+        match child.kind_name() {
             "function_declaration"
             | "function_expression"
             | "function"
@@ -43,20 +44,20 @@ fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
             "lexical_declaration" | "variable_declaration" => {
                 let mut c = child.walk();
                 for d in child.named_children(&mut c) {
-                    if let Some(name) = d.child_by_field_name("name") {
+                    if let Some(name) = d.field("name") {
                         collect_pattern(name, src, set);
                     }
                 }
                 collect_targets(child, src, set);
             }
             "for_in_statement" | "for_statement" => {
-                if let Some(left) = child.child_by_field_name("left") {
+                if let Some(left) = child.field("left") {
                     collect_pattern(left, src, set);
                 }
                 collect_targets(child, src, set);
             }
             "catch_clause" => {
-                if let Some(param) = child.child_by_field_name("parameter") {
+                if let Some(param) = child.field("parameter") {
                     collect_pattern(param, src, set);
                 }
                 collect_targets(child, src, set);
@@ -68,7 +69,7 @@ fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
 
 /// Names introduced by a binding pattern (identifier or destructuring).
 fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
-    match node.kind() {
+    match node.kind_name() {
         "identifier" | "shorthand_property_identifier_pattern" => {
             if let Ok(t) = node.utf8_text(src) {
                 set.insert(crate::profiles::lexeme::hash(t));
@@ -76,7 +77,7 @@ fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
         }
         "required_parameter" | "optional_parameter" => {
             // TS parameter wrappers: the binding is the `pattern` field.
-            if let Some(pat) = node.child_by_field_name("pattern") {
+            if let Some(pat) = node.field("pattern") {
                 collect_pattern(pat, src, set);
             }
         }

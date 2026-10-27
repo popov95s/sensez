@@ -2,6 +2,7 @@
 //! lexical helpers live in [`crate::profiles::typevocab`]; this module owns only
 //! Python's conventions (`dict[str, Any]`, `Optional[...]`, `Literal`, ...).
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::typevocab::{
     base_type, has_domain_type, has_token, is_nominal_ignoring, split_top_level, LooseTypeKind,
 };
@@ -133,7 +134,7 @@ pub(crate) fn is_mutable_collection(annotation: &str, family: MutatorFamily) -> 
 /// `-> tuple[int, int]` / `-> Tuple[str, str, str]`: one primitive repeated.
 pub(crate) fn is_homogeneous_primitive_tuple(func: Node, src: &[u8]) -> bool {
     let Some(annotation) = func
-        .child_by_field_name("return_type")
+        .field("return_type")
         .and_then(|n| n.utf8_text(src).ok())
     else {
         return false;

@@ -5,7 +5,8 @@ use crate::config::smells::Smells;
 use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionUnit;
-use std::collections::{HashMap, HashSet};
+use rustc_hash::{FxHashMap, FxHashSet};
+use std::collections::HashMap;
 
 /// A receiver subscripted with ≥ N distinct string-literal keys — an implicit
 /// schema that wants a dataclass. Receivers annotated as a non-dict type
@@ -13,7 +14,7 @@ use std::collections::{HashMap, HashSet};
 pub(super) fn detect(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
-    schemas: &HashMap<String, HashSet<String>>,
+    schemas: &FxHashMap<String, FxHashSet<String>>,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
@@ -57,8 +58,8 @@ pub(super) fn detect(
 fn with_destructured_keys(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
-    schemas: &HashMap<String, HashSet<String>>,
-) -> HashMap<String, HashSet<String>> {
+    schemas: &FxHashMap<String, FxHashSet<String>>,
+) -> FxHashMap<String, FxHashSet<String>> {
     let mut merged = schemas.clone();
     for (recv, keys) in &m.destructured_keys {
         let loose = ctx.type_hints.param_type(m, recv).is_some_and(|ty| {
@@ -76,7 +77,7 @@ fn with_destructured_keys(
 
 pub(super) fn propagated_schemas(
     metrics: &[FunctionUnit],
-) -> Vec<HashMap<String, HashSet<String>>> {
+) -> Vec<FxHashMap<String, FxHashSet<String>>> {
     let by_name: HashMap<&str, usize> = metrics
         .iter()
         .enumerate()

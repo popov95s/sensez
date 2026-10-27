@@ -1,5 +1,6 @@
 //! Python AST facts for performance-oriented smells.
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{CallFact, IterationPass, PerfLine, PerformanceFacts};
 use tree_sitter::Node;
@@ -42,7 +43,7 @@ pub fn scan(facts: &mut PerformanceFacts, node: Node, src: &[u8], frame: Option<
     if let Some(pass) = comprehension_pass(node, src) {
         facts.iteration_calls.push(pass);
     }
-    if node.kind() != "call" {
+    if node.kind_name() != "call" {
         return;
     }
     let Some(mut call) = call_fact(node, src) else {
@@ -72,17 +73,17 @@ pub fn is_loop(kind: &str) -> bool {
 }
 
 fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
-    let func = node.child_by_field_name("function")?;
+    let func = node.field("function")?;
     let line = node.start_position().row + 1;
-    let mut call = match func.kind() {
+    let mut call = match func.kind_name() {
         "identifier" => Some(CallFact::named(walk::node_text(func, src)?, line)),
         "attribute" => {
             let base = func
-                .child_by_field_name("object")
+                .field("object")
                 .filter(|n| stable_receiver(n))
                 .and_then(|n| walk::node_text(n, src))?;
             let method = func
-                .child_by_field_name("attribute")
+                .field("attribute")
                 .and_then(|n| walk::node_text(n, src))?;
             Some(CallFact::member(base, method, line))
         }
@@ -90,7 +91,9 @@ fn call_fact(node: Node, src: &[u8]) -> Option<CallFact> {
     }?;
     call.region = control_region(node);
     call.offset = node.start_byte();
-    call.awaited = node.parent().is_some_and(|parent| parent.kind() == "await");
+    call.awaited = node
+        .parent()
+        .is_some_and(|parent| parent.kind_name() == "await");
     Some(call)
 }
 
@@ -123,7 +126,7 @@ fn pass_kind(method: &str) -> IterationPass {
 
 /// A comprehension that is not already the argument of a counted builtin.
 fn comprehension_pass(node: Node, src: &[u8]) -> Option<CallFact> {
-    if !COMPREHENSIONS.contains(&node.kind()) || builtin_argument(node, src).is_some() {
+    if !COMPREHENSIONS.contains(&node.kind_name()) || builtin_argument(node, src).is_some() {
         return None;
     }
     let base = comprehension_source(node, src)?;
@@ -143,25 +146,25 @@ fn builtin_argument<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
 
 fn enclosing_call_name<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
     let parent = node.parent()?;
-    let call = match parent.kind() {
+    let call = match parent.kind_name() {
         "call" => parent,
         "argument_list" => parent.parent()?,
         _ => return None,
     };
-    call.child_by_field_name("function")
-        .filter(|func| func.kind() == "identifier")
+    call.field("function")
+        .filter(|func| func.kind_name() == "identifier")
         .and_then(|func| walk::node_text(func, src))
 }
 
 /// `xs` in `sum(xs)`, `sum(x.n for x in xs)` and `len([x for x in xs])`.
 fn iterated_argument<'a>(call: Node, src: &'a [u8]) -> Option<&'a str> {
-    let args = call.child_by_field_name("arguments")?;
-    if COMPREHENSIONS.contains(&args.kind()) {
+    let args = call.field("arguments")?;
+    if COMPREHENSIONS.contains(&args.kind_name()) {
         return comprehension_source(args, src);
     }
     let mut cursor = args.walk();
     let first = args.named_children(&mut cursor).next()?;
-    match first.kind() {
+    match first.kind_name() {
         kind if COMPREHENSIONS.contains(&kind) => comprehension_source(first, src),
         _ if stable_receiver(&first) => walk::node_text(first, src),
         _ => None,
@@ -173,19 +176,19 @@ fn comprehension_source<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
     let mut cursor = node.walk();
     let clause = node
         .named_children(&mut cursor)
-        .find(|child| child.kind() == "for_in_clause")?;
+        .find(|child| child.kind_name() == "for_in_clause")?;
     clause
-        .child_by_field_name("right")
+        .field("right")
         .filter(|right| stable_receiver(right))
         .and_then(|right| walk::node_text(right, src))
 }
 
 fn stable_receiver(node: &Node<'_>) -> bool {
-    matches!(node.kind(), "identifier" | "attribute")
+    matches!(node.kind_name(), "identifier" | "attribute")
         && node.named_child_count() <= 2
-        && (node.kind() == "identifier"
+        && (node.kind_name() == "identifier"
             || node
-                .child_by_field_name("object")
+                .field("object")
                 .is_some_and(|base| stable_receiver(&base)))
 }
 
@@ -193,11 +196,11 @@ fn control_region(node: Node<'_>) -> usize {
     let mut current = node;
     while let Some(parent) = current.parent() {
         if matches!(
-            parent.kind(),
+            parent.kind_name(),
             "if_statement" | "elif_clause" | "conditional_expression"
         ) {
             let alternative = parent
-                .child_by_field_name("alternative")
+                .field("alternative")
                 .is_some_and(|branch| branch.id() == current.id());
             return if alternative {
                 current.start_position().row + 1
@@ -205,7 +208,7 @@ fn control_region(node: Node<'_>) -> usize {
                 parent.start_position().row + 1
             };
         }
-        if parent.kind() == "function_definition" {
+        if parent.kind_name() == "function_definition" {
             break;
         }
         current = parent;

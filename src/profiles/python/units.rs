@@ -10,6 +10,7 @@ use crate::profiles::guard_clause::is_guard_return;
 use crate::profiles::guard_fingerprint::GuardLog;
 use crate::profiles::lineage::Lineage;
 use crate::profiles::magic_number::{default_values, magic_number};
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use tree_sitter::Node;
@@ -33,7 +34,7 @@ pub fn analyze_function(func: Node, src: &[u8], is_method: bool) -> FunctionUnit
             super::risk_facts::forward_target(func, src, &unit.param_names);
     }
     unit.review_risks.stub = super::stub_body::stub_body(func, src, is_method);
-    if let Some(body) = func.child_by_field_name("body") {
+    if let Some(body) = func.field("body") {
         let mut acc = Acc::new(&mut unit);
         let mut cursor = body.walk();
         for child in body.named_children(&mut cursor) {
@@ -59,7 +60,7 @@ impl<'u> Acc<'u> {
 
     /// Recurse a body node at block-nesting `depth`, accumulating metrics.
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
-        let kind = node.kind();
+        let kind = node.kind_name();
         // Nested functions/lambdas get their own unit — do not descend.
         if control_shapes::is_function(kind) {
             self.unit.review_risks.test_has_nested_function = true;
@@ -122,8 +123,8 @@ impl<'u> Acc<'u> {
                     .chain_hits
                     .extend(walk::chain_hit(node, node.parent(), src, &CHAIN));
                 if let Some(base) = node
-                    .child_by_field_name("object")
-                    .filter(|o| o.kind() == "identifier")
+                    .field("object")
+                    .filter(|o| o.kind_name() == "identifier")
                     .and_then(|o| o.utf8_text(src).ok())
                 {
                     *self
@@ -134,9 +135,8 @@ impl<'u> Acc<'u> {
                     // Feed LCOM from this body walk instead of traversing each
                     // method again later.
                     if base == "self" {
-                        if let Some(attr) = node
-                            .child_by_field_name("attribute")
-                            .and_then(|a| a.utf8_text(src).ok())
+                        if let Some(attr) =
+                            node.field("attribute").and_then(|a| a.utf8_text(src).ok())
                         {
                             self.unit.self_attrs.insert(attr.to_string());
                         }
@@ -160,7 +160,7 @@ impl<'u> Acc<'u> {
     /// Count a plain (non-augmented) assignment to each simple-identifier target.
     fn record_assignment(&mut self, node: Node, src: &[u8], frame: Option<usize>) {
         if node
-            .child_by_field_name("left")
+            .field("left")
             .is_some_and(|left| symbols::is_self_attribute(left, src))
         {
             self.unit.self_writes += 1;
@@ -172,7 +172,7 @@ impl<'u> Acc<'u> {
             .cloned()
             .collect();
         self.unit.performance.note_declared(frame, &declared);
-        if node.child_by_field_name("right").is_some_and(|value| {
+        if node.field("right").is_some_and(|value| {
             walk::fed_by_call(&self.unit.performance, frame, value, src, "call")
         }) {
             self.unit.performance.note_call_results(frame, &targets);
@@ -198,25 +198,25 @@ impl<'u> Acc<'u> {
 }
 
 fn own_method_call(node: Node<'_>, src: &[u8]) -> Option<String> {
-    if node.kind() != "call" {
+    if node.kind_name() != "call" {
         return None;
     }
     let function = node
-        .child_by_field_name("function")
+        .field("function")
         .filter(|function| symbols::is_self_attribute(*function, src))?;
     function
-        .child_by_field_name("attribute")
+        .field("attribute")
         .and_then(|method| method.utf8_text(src).ok())
         .map(str::to_string)
 }
 
 fn returned_constructor(node: Node<'_>, src: &[u8]) -> Option<String> {
     let value = node.named_child(0)?;
-    if value.kind() != "call" {
+    if value.kind_name() != "call" {
         return None;
     }
-    let function = value.child_by_field_name("function")?;
-    (function.kind() == "identifier")
+    let function = value.field("function")?;
+    (function.kind_name() == "identifier")
         .then(|| function.utf8_text(src).ok().map(str::to_string))
         .flatten()
 }
@@ -234,15 +234,15 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
     // An ABC/Protocol base makes the class itself abstract.
     unit.is_abstract = unit.bases.iter().any(|b| is_abstract_base(b));
 
-    let Some(body) = class.child_by_field_name("body") else {
+    let Some(body) = class.field("body") else {
         return unit;
     };
     let mut cursor = body.walk();
     for member in body.named_children(&mut cursor) {
-        let (method, decorators) = match member.kind() {
+        let (method, decorators) = match member.kind_name() {
             "function_definition" => (member, Vec::new()),
-            "decorated_definition" => match member.child_by_field_name("definition") {
-                Some(d) if d.kind() == "function_definition" => {
+            "decorated_definition" => match member.field("definition") {
+                Some(d) if d.kind_name() == "function_definition" => {
                     (d, symbols::decorator_paths(member, src))
                 }
                 _ => continue,
@@ -259,7 +259,7 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
             unit.is_abstract = true; // declaring an abstract method makes the class abstract
         }
         unit.methods.push(name.clone());
-        if let Some(mbody) = method.child_by_field_name("body") {
+        if let Some(mbody) = method.field("body") {
             // A `@abstractmethod` stub is a correct declaration, not a refused bequest.
             if !is_abstract_method && is_stub_body(mbody, src) {
                 unit.overrides_to_stub.push(name.clone());
@@ -286,7 +286,7 @@ fn is_stub_body(body: Node, src: &[u8]) -> bool {
     let mut stmts: Vec<Node> = body.named_children(&mut cursor).collect();
     stmts.retain(|s| !is_docstring(*s, src));
     match stmts.as_slice() {
-        [one] => match one.kind() {
+        [one] => match one.kind_name() {
             "pass_statement" => true,
             "raise_statement" => one
                 .utf8_text(src)
@@ -299,10 +299,10 @@ fn is_stub_body(body: Node, src: &[u8]) -> bool {
 }
 
 pub(super) fn is_docstring(node: Node, src: &[u8]) -> bool {
-    node.kind() == "expression_statement"
+    node.kind_name() == "expression_statement"
         && node
             .named_child(0)
-            .map(|c| matches!(c.kind(), "string" | "concatenated_string"))
+            .map(|c| matches!(c.kind_name(), "string" | "concatenated_string"))
             .unwrap_or(false)
         && node.utf8_text(src).is_ok()
 }

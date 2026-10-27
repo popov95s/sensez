@@ -1,5 +1,6 @@
 //! Shared try/handler shapes behind defensive-fallback facts.
 
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::HandlerEnd;
 use tree_sitter::Node;
 
@@ -32,14 +33,14 @@ pub(crate) struct TrySyntax {
 pub(crate) fn inside_try(node: Node, syntax: &TrySyntax) -> bool {
     let mut child = node;
     while let Some(parent) = child.parent() {
-        if (syntax.is_function)(parent.kind()) {
+        if (syntax.is_function)(parent.kind_name()) {
             return false;
         }
-        let protected = child.kind() == syntax.handler_kind
+        let protected = child.kind_name() == syntax.handler_kind
             || parent
-                .child_by_field_name("body")
+                .field("body")
                 .is_some_and(|body| body.id() == child.id());
-        if parent.kind() == syntax.try_kind && protected {
+        if parent.kind_name() == syntax.try_kind && protected {
             return true;
         }
         child = parent;
@@ -51,10 +52,10 @@ pub(crate) fn inside_try(node: Node, syntax: &TrySyntax) -> bool {
 pub(crate) fn swallows(body: Node, error: Option<&str>, src: &[u8], syntax: &TrySyntax) -> bool {
     let mut stack = vec![(body, false)];
     while let Some((node, logged)) = stack.pop() {
-        if syntax.throw_kinds.contains(&node.kind()) {
+        if syntax.throw_kinds.contains(&node.kind_name()) {
             return false;
         }
-        if (syntax.is_function)(node.kind()) {
+        if (syntax.is_function)(node.kind_name()) {
             continue;
         }
         let reads_error =
@@ -77,8 +78,8 @@ pub(crate) fn logger_callee<'a>(
     src: &[u8],
     syntax: &TrySyntax,
 ) -> Option<Node<'a>> {
-    (node.kind() == syntax.call_kind)
-        .then(|| node.child_by_field_name("function"))
+    (node.kind_name() == syntax.call_kind)
+        .then(|| node.field("function"))
         .flatten()
         .filter(|callee| {
             let text = callee.utf8_text(src).unwrap_or_default();

@@ -1,6 +1,7 @@
 //! Shared context rules deciding whether a numeric literal needs a name.
 
 use crate::profiles::lineage::Lineage;
+use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{MagicContext, MagicNumber};
 use tree_sitter::Node;
 
@@ -39,7 +40,7 @@ pub(crate) fn magic_number(
 
 /// Magic literals in parameter default values (`(retries = 3) => …`).
 pub(crate) fn default_values(func: Node, src: &[u8], syntax: &MagicSyntax) -> Vec<MagicNumber> {
-    let Some(params) = func.child_by_field_name("parameters") else {
+    let Some(params) = func.field("parameters") else {
         return Vec::new();
     };
     let mut cursor = params.walk();
@@ -49,7 +50,7 @@ pub(crate) fn default_values(func: Node, src: &[u8], syntax: &MagicSyntax) -> Ve
         .collect();
     let mut out = Vec::new();
     while let Some(node) = stack.pop() {
-        if syntax.number_kinds.contains(&node.kind()) {
+        if syntax.number_kinds.contains(&node.kind_name()) {
             out.extend(site(node, src, MagicContext::DefaultValue));
         }
         let mut cursor = node.walk();
@@ -76,9 +77,9 @@ fn context(lineage: Lineage, src: &[u8], syntax: &MagicSyntax) -> Option<MagicCo
     {
         return None;
     }
-    if parent.kind() == syntax.subscript_kind
+    if parent.kind_name() == syntax.subscript_kind
         && parent
-            .child_by_field_name(syntax.index_field)
+            .field(syntax.index_field)
             .is_some_and(|index| index.id() == node.id())
     {
         return Some(MagicContext::ArrayIndex);
@@ -95,7 +96,7 @@ fn is_time_product(lineage: Lineage, src: &[u8], syntax: &MagicSyntax) -> bool {
     let mut top = node;
     while let Some(parent) = lineage
         .parent(top)
-        .filter(|p| p.kind() == "parenthesized_expression" || is_product(*p, src, syntax))
+        .filter(|p| p.kind_name() == "parenthesized_expression" || is_product(*p, src, syntax))
     {
         top = parent;
     }
@@ -109,9 +110,11 @@ fn literal_factors<'a>(node: Node<'_>, src: &'a [u8], syntax: &MagicSyntax) -> V
     let mut out = Vec::new();
     let mut stack = vec![node];
     while let Some(current) = stack.pop() {
-        if syntax.number_kinds.contains(&current.kind()) {
+        if syntax.number_kinds.contains(&current.kind_name()) {
             out.push(current.utf8_text(src).unwrap_or_default());
-        } else if current.kind() == "parenthesized_expression" || is_product(current, src, syntax) {
+        } else if current.kind_name() == "parenthesized_expression"
+            || is_product(current, src, syntax)
+        {
             let mut cursor = current.walk();
             stack.extend(current.named_children(&mut cursor));
         }
@@ -120,9 +123,9 @@ fn literal_factors<'a>(node: Node<'_>, src: &'a [u8], syntax: &MagicSyntax) -> V
 }
 
 fn is_product(node: Node, src: &[u8], syntax: &MagicSyntax) -> bool {
-    node.kind() == syntax.product_kind
+    node.kind_name() == syntax.product_kind
         && node
-            .child_by_field_name("operator")
+            .field("operator")
             .is_some_and(|op| op.utf8_text(src) == Ok("*"))
 }
 
@@ -139,7 +142,7 @@ fn is_http_status(lineage: Lineage, parent: Node, src: &[u8], syntax: &MagicSynt
     if callee_matches(lineage, parent, src, syntax, syntax.status_names) {
         return true;
     }
-    if !syntax.status_parents.contains(&parent.kind()) {
+    if !syntax.status_parents.contains(&parent.kind_name()) {
         return false;
     }
     let mut cursor = parent.walk();
@@ -156,11 +159,11 @@ fn callee_matches(
     syntax: &MagicSyntax,
     names: &[&str],
 ) -> bool {
-    arguments.kind() == syntax.arguments_kind
+    arguments.kind_name() == syntax.arguments_kind
         && lineage
             .parent(arguments)
-            .filter(|call| call.kind() == syntax.call_kind)
-            .and_then(|call| call.child_by_field_name("function"))
+            .filter(|call| call.kind_name() == syntax.call_kind)
+            .and_then(|call| call.field("function"))
             .is_some_and(|callee| ends_with_name(callee, src, names))
 }
 

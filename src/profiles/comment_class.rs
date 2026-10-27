@@ -1,5 +1,6 @@
 //! Classify a source comment as directive, markup, code, narration, or rationale.
 
+use crate::profiles::node_names::NodeNames;
 use crate::profiles::node_query::node_text;
 use crate::spine::ir::CommentClass;
 use tree_sitter::Node;
@@ -72,7 +73,7 @@ pub(crate) fn classify_in(
     if lines.first().is_some_and(|line| is_directive(line, syntax)) {
         return CommentClass::Exempt;
     }
-    if parent.is_some_and(|p| syntax.markup_parents.contains(&p.kind())) {
+    if parent.is_some_and(|p| syntax.markup_parents.contains(&p.kind_name())) {
         return CommentClass::Exempt;
     }
     let block_lines: Vec<&str> = block
@@ -98,7 +99,8 @@ fn block_nodes<'t>(node: Node<'t>, parent: Option<Node<'t>>) -> Vec<Node<'t>> {
         return vec![node];
     };
     let adjacent = |upper: &Node, lower: &Node| {
-        upper.kind() == lower.kind() && upper.end_position().row + 1 >= lower.start_position().row
+        upper.kind_name() == lower.kind_name()
+            && upper.end_position().row + 1 >= lower.start_position().row
     };
     let mut cursor = parent.walk();
     let mut block: Vec<Node> = Vec::new();
