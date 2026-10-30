@@ -29,8 +29,8 @@ mod spine;
 mod test_support;
 
 pub use cli::run as run_cli;
-pub(crate) use pipeline::analyze_path_in_service;
 pub use pipeline::{analyze_path, scan};
+pub(crate) use pipeline::{analyze_path_in_service, isolate_service_scans, write_service_scan};
 pub use report::{
     AbsorbedClone, ActionLevel, AnalysisReport, BoundaryViolation, CloneClass, CloneDetector,
     CloneOccurrence, Confidence, CycleEdge, CycleFinding, DeadCodeFinding, GlossaryEntry, Pillar,
