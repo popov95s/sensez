@@ -290,13 +290,13 @@ impl FunctionKey {
 #[derive(Debug, Clone, Default, serde::Serialize, serde::Deserialize)]
 pub struct TypeHints {
     /// Function → param name → annotated type text.
-    pub param_types: HashMap<FunctionKey, HashMap<String, String>>,
+    pub param_types: FxHashMap<FunctionKey, HashMap<String, String>>,
     /// local/global variable name → type (annotation or `x = T(...)`).
     pub var_types: HashMap<String, String>,
     /// attribute path → type (for example, `self.model: ApiModel`).
     pub attr_types: HashMap<String, String>,
     /// Function → annotated return type.
-    pub return_types: HashMap<FunctionKey, String>,
+    pub return_types: FxHashMap<FunctionKey, String>,
     /// Top-level type aliases (`Payload = dict[...]`, `type Payload = ...`).
     pub type_aliases: Vec<TypeAlias>,
 }
