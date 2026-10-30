@@ -8,7 +8,8 @@
 
 use super::clones::{Nesting, RawGroup};
 use crate::spine::parser::tokens::TokenSpan;
-use std::collections::HashMap;
+use rayon::prelude::*;
+use rustc_hash::FxHashMap as HashMap;
 
 /// A clone cluster: `matched` identical tokens across `occ` source ranges.
 pub struct Cluster {
@@ -78,19 +79,24 @@ pub fn stitch(groups: Vec<RawGroup>, spans: &[TokenSpan], max_gap: usize) -> Vec
 type Starts = HashMap<usize, Vec<(usize, usize)>>;
 
 fn merge_pass(clusters: &mut Vec<Cluster>, spans: &[TokenSpan], max_gap: usize) -> bool {
-    let mut starts: Starts = HashMap::new();
+    let mut starts: Starts = HashMap::default();
     for (ci, c) in clusters.iter().enumerate() {
         for &(s, e) in &c.occ {
             starts.entry(s).or_default().push((ci, e));
         }
     }
+    // Candidates do not depend on `consumed`, so they are found in parallel and applied in order.
+    let found: Vec<Option<(usize, Cluster)>> = (0..clusters.len())
+        .into_par_iter()
+        .map(|i| stitched(clusters, i, &starts, spans, max_gap))
+        .collect();
     let mut consumed = vec![false; clusters.len()];
     let mut merged: Vec<Cluster> = Vec::new();
-    for i in 0..clusters.len() {
+    for (i, found) in found.into_iter().enumerate() {
         if consumed[i] {
             continue;
         }
-        if let Some((j, candidate)) = stitched(clusters, i, &starts, spans, max_gap) {
+        if let Some((j, candidate)) = found {
             if !consumed[j] && is_dense(&candidate) {
                 merged.push(candidate);
                 consumed[i] = true;
@@ -173,6 +179,10 @@ fn same_file(spans: &[TokenSpan], a: usize, b: usize) -> bool {
         _ => false,
     }
 }
+
+#[cfg(test)]
+#[path = "gapped_order_tests.rs"]
+mod order_tests;
 
 #[cfg(test)]
 mod tests {
