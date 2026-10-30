@@ -7,30 +7,20 @@
 
 use anyhow::{anyhow, Result};
 use model2vec_rs::model::StaticModel;
-use std::sync::{Arc, OnceLock};
+use std::sync::Arc;
 
 /// HuggingFace repo id for the default static code embedding model.
 pub(crate) const MODEL_ID: &str = "minishlab/potion-code-16M-v2";
 
-/// Loaded embedding model. Cheap to call; load once and reuse.
+/// Loaded embedding model, dropped with its last handle.
 pub struct Embedder {
     model: StaticModel,
 }
 
-static CACHED: OnceLock<Arc<Embedder>> = OnceLock::new();
-
 impl Embedder {
-    /// The shared process-wide embedder (downloading on first use).
+    /// Load the model from disk (downloading it on first use).
     pub fn load() -> Result<Arc<Self>> {
-        if let Some(cached) = CACHED.get() {
-            return Ok(Arc::clone(cached));
-        }
-        let built = Arc::new(Embedder { model: build()? });
-        let _ = CACHED.set(Arc::clone(&built));
-        Ok(match CACHED.get() {
-            Some(cached) => Arc::clone(cached),
-            None => built,
-        })
+        Ok(Arc::new(Embedder { model: build()? }))
     }
 
     pub fn model_id(&self) -> &'static str {
