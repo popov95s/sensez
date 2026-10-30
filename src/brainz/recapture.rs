@@ -13,6 +13,11 @@ use std::time::UNIX_EPOCH;
 /// shutdown must stay fast (MCP clients SIGKILL slow servers).
 const MAX_RESCAN_MS: u64 = 3_000;
 
+/// Repos whose scan takes at least this long are rescanned at most once per
+/// [`SLOW_RESCAN_INTERVAL_SECS`], since each rescan repeats the whole scan.
+const SLOW_SCAN_MS: u64 = 1_000;
+const SLOW_RESCAN_INTERVAL_SECS: u64 = 300;
+
 /// Re-derive resolved findings for every changed, cheap-to-scan repo.
 pub(super) fn run() {
     static RECAPTURE_LOCK: OnceLock<Mutex<()>> = OnceLock::new();
@@ -26,6 +31,7 @@ pub(super) fn run() {
             continue;
         }
         if base.ms > MAX_RESCAN_MS
+            || !rescan_due(&base, hub::now())
             || !changed_since(&root, base.ts)
             || !super::recapture_state::changed(&root, &base)
         {
@@ -41,6 +47,11 @@ pub(super) fn run() {
         }
         recapture(&root, &base.branch, base.threshold, base.ts);
     }
+}
+
+/// Whether the last scan or rescan of a repo is old enough for another rescan.
+fn rescan_due(base: &hub::Baseline, now: u64) -> bool {
+    base.ms < SLOW_SCAN_MS || now.saturating_sub(base.ts) >= SLOW_RESCAN_INTERVAL_SECS
 }
 
 fn branch_changed_since_baseline(root: &Path, branch: &str, baseline_ts: u64) -> bool {
@@ -133,6 +144,23 @@ mod tests {
     use std::fs;
     use std::path::Path;
     use std::process::Command;
+
+    #[test]
+    fn slow_repos_wait_for_the_rescan_interval_and_fast_ones_do_not() {
+        let base = |ms| super::hub::Baseline {
+            ts: 1_000,
+            ms,
+            threshold: None,
+            branch: "main".to_string(),
+            source_state: None,
+        };
+        let soon = 1_000 + super::SLOW_RESCAN_INTERVAL_SECS - 1;
+        let later = 1_000 + super::SLOW_RESCAN_INTERVAL_SECS;
+
+        assert!(super::rescan_due(&base(super::SLOW_SCAN_MS - 1), soon));
+        assert!(!super::rescan_due(&base(super::SLOW_SCAN_MS), soon));
+        assert!(super::rescan_due(&base(super::SLOW_SCAN_MS), later));
+    }
 
     /// Scan → fix → auto-recapture (no second scan call, no agent report):
     /// the vanished finding must be banked as resolved.
