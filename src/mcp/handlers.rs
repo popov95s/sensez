@@ -105,6 +105,7 @@ fn run_scan(path: &Path, args: &ScanArgs) -> anyhow::Result<(String, Value)> {
     if args.record {
         crate::brainz::record_scan(
             path,
+            crate::diff::git::current_branch(path).as_deref(),
             &snapshot,
             elapsed,
             args.threshold,

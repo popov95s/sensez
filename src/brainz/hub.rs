@@ -81,12 +81,23 @@ pub(super) fn branch_label(root: &Path) -> String {
 }
 
 pub(super) fn push(root: &Path, build: impl FnOnce(String, String) -> Event) {
+    if enabled(root) {
+        push_on(root, branch_key(root).as_deref(), build);
+    }
+}
+
+/// [`push`] with the branch the caller already resolved.
+pub(super) fn push_on(
+    root: &Path,
+    branch: Option<&str>,
+    build: impl FnOnce(String, String) -> Event,
+) {
     if !enabled(root) {
         return;
     }
-    let branch = branch_label(root);
+    let label = branch.unwrap_or("unbranched").to_string();
     let session = hub().session_id.clone();
-    let event = build(session, branch);
+    let event = build(session, label);
     let mut hub = hub();
     let state = hub.repos.entry(root.to_path_buf()).or_default();
     state.session.absorb(&event);

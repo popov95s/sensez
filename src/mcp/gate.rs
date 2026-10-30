@@ -36,12 +36,24 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
                 return Ok(allow());
             }
         };
-    crate::brainz::record_scan(root, &snapshot, elapsed, None, crate::brainz::Origin::Gate);
-
-    let branch = crate::diff::git::current_branch(root).unwrap_or_else(|| "unbranched".into());
+    let branch = crate::diff::git::current_branch(root);
+    crate::brainz::record_scan(
+        root,
+        branch.as_deref(),
+        &snapshot,
+        elapsed,
+        None,
+        crate::brainz::Origin::Gate,
+    );
     let now = super::gate_state::now_secs();
     let outcome = super::gate_state::update(root, scope.as_deref(), now, |state| {
-        triage(state, &mut report, &branch, gate_config.repeat_limit, now)
+        triage(
+            state,
+            &mut report,
+            branch.as_deref().unwrap_or("unbranched"),
+            gate_config.repeat_limit,
+            now,
+        )
     });
     let n = report.finding_count();
     if n == 0 {
@@ -49,9 +61,15 @@ pub(super) fn gate(args: &Value) -> super::handlers::ToolResult {
     }
 
     let diff_report = serde_json::to_value(&report).unwrap_or(Value::Null);
-    crate::brainz::record_gate_block(root, scope.as_deref(), &diff_report);
+    crate::brainz::record_gate_block(root, branch.as_deref(), scope.as_deref(), &diff_report);
     crate::brainz::flush();
-    let regressed = regression_labels(root, &report, &diff_report, &outcome.reintroduced);
+    let regressed = regression_labels(
+        root,
+        branch.as_deref(),
+        &report,
+        &diff_report,
+        &outcome.reintroduced,
+    );
     let escalation = if regressed.is_empty() {
         String::new()
     } else {
@@ -109,6 +127,7 @@ fn triage(
 
 fn regression_labels(
     root: &Path,
+    branch: Option<&str>,
     report: &AnalysisReport,
     diff_report: &Value,
     reintroduced: &BTreeSet<String>,
@@ -118,7 +137,7 @@ fn regression_labels(
         .filter(|(key, _)| reintroduced.contains(key))
         .map(|(_, label)| label);
     from_gate
-        .chain(crate::brainz::regressions(root, diff_report))
+        .chain(crate::brainz::regressions(root, branch, diff_report))
         .collect()
 }
 

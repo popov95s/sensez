@@ -184,6 +184,7 @@ mod tests {
         let report: Value = serde_json::from_str(&text).unwrap();
         crate::brainz::record_scan(
             &root,
+            crate::diff::git::current_branch(&root).as_deref(),
             &report,
             std::time::Duration::from_millis(1),
             None,
@@ -224,6 +225,7 @@ mod tests {
         let report: Value = serde_json::from_str(&text).unwrap();
         crate::brainz::record_scan(
             &root,
+            crate::diff::git::current_branch(&root).as_deref(),
             &report,
             std::time::Duration::from_millis(1),
             None,
