@@ -39,6 +39,9 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
         #[cfg(feature = "mcp")]
         Some(Command::Mcp(args)) => match args.action {
             spec::McpAction::Serve => serve_mcp(),
+            spec::McpAction::Analyze { path, threshold } => {
+                crate::write_service_scan(&path, threshold).map(|()| ExitCode::SUCCESS)
+            }
         },
         #[cfg(feature = "lsp")]
         Some(Command::Server(args)) => match args.action {
@@ -94,6 +97,9 @@ fn run_noze(args: NozeArgs) -> Result<ExitCode> {
 #[cfg(feature = "mcp")]
 fn serve_mcp() -> Result<ExitCode> {
     eprintln!("sensez MCP server running on stdio");
+    if let Ok(exe) = std::env::current_exe() {
+        crate::isolate_service_scans(exe);
+    }
     tokio::runtime::Runtime::new()
         .context("starting tokio runtime")?
         .block_on(crate::mcp::serve())

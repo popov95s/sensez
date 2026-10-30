@@ -12,8 +12,11 @@ use std::collections::{HashMap, HashSet};
 use std::path::{Path, PathBuf};
 use std::sync::OnceLock;
 
+#[path = "pipeline_child.rs"]
+mod child;
 #[path = "pipeline_session.rs"]
 mod session;
+pub(crate) use child::{isolate_service_scans, write_service_scan};
 use session::AnalysisSession;
 
 static SERVICE_SESSION: OnceLock<AnalysisSession> = OnceLock::new();
@@ -37,18 +40,23 @@ pub(crate) fn analyze_path_with_config(
     analyze_keeping_config(path, threshold, None, Config::load_for_scan(path))
 }
 
-/// [`analyze_path`] for the long-lived MCP/LSP service, reusing parses when `[cache]` is enabled.
+/// [`analyze_path`] for the long-lived MCP/LSP service: reuses parses when `[cache]` is enabled,
+/// otherwise scans in a child process once the server opted in.
 pub(crate) fn analyze_path_in_service(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    analyze_in_session(
-        SERVICE_SESSION.get_or_init(AnalysisSession::default),
-        path,
-        threshold,
-    )
+    let loaded = Config::load_for_scan(path);
+    if let Some(exe) = child::exe().filter(|_| !loaded.0.cache_enabled()) {
+        if let Some(scan) = child::analyze(exe, path, threshold)? {
+            return Ok(scan);
+        }
+    }
+    let session = SERVICE_SESSION.get_or_init(AnalysisSession::default);
+    analyze_loaded_in_service(session, path, threshold, loaded)
 }
 
+#[cfg(test)]
 fn analyze_in_session(
     session: &AnalysisSession,
     path: &Path,

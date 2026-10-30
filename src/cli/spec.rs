@@ -164,6 +164,13 @@ pub struct McpArgs {
 pub enum McpAction {
     /// Run the MCP (Model Context Protocol) server over stdio.
     Serve,
+    /// Scan for a running MCP server and print the result as JSON.
+    #[command(hide = true)]
+    Analyze {
+        path: PathBuf,
+        #[arg(long)]
+        threshold: Option<usize>,
+    },
 }
 
 #[cfg(feature = "mcp")]
