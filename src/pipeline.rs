@@ -17,7 +17,7 @@ mod child;
 #[path = "pipeline_session.rs"]
 mod session;
 pub(crate) use child::{isolate_service_scans, write_service_scan};
-use session::AnalysisSession;
+use session::{AnalysisSession, ParseCache};
 
 static SERVICE_SESSION: OnceLock<AnalysisSession> = OnceLock::new();
 
@@ -37,7 +37,25 @@ pub(crate) fn analyze_path_with_config(
     path: &Path,
     threshold: Option<usize>,
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>, Config)> {
-    analyze_keeping_config(path, threshold, None, Config::load_for_scan(path))
+    analyze_keeping_config(
+        path,
+        threshold,
+        ParseCache::Off,
+        Config::load_for_scan(path),
+    )
+}
+
+/// [`analyze_path`] for the scan child: reuses `.sensez/parse-cache/` unless `SENSEZ_PARSE_CACHE=0`.
+pub(crate) fn analyze_path_for_child(
+    path: &Path,
+    threshold: Option<usize>,
+) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
+    let cache = match crate::spine::cache::disk::enabled() {
+        true => ParseCache::Disk,
+        false => ParseCache::Off,
+    };
+    analyze_keeping_config(path, threshold, cache, Config::load_for_scan(path))
+        .map(|(report, module_files, _)| (report, module_files))
 }
 
 /// [`analyze_path`] for the long-lived MCP/LSP service: reuses parses when `[cache]` is enabled,
@@ -81,16 +99,18 @@ fn analyze_with_config(
     session: Option<&AnalysisSession>,
     loaded: (Config, Vec<ScanIssue>),
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>)> {
-    analyze_keeping_config(path, threshold, session, loaded)
+    let cache = session.map_or(ParseCache::Off, ParseCache::Session);
+    analyze_keeping_config(path, threshold, cache, loaded)
         .map(|(report, module_files, _)| (report, module_files))
 }
 
 fn analyze_keeping_config(
     path: &Path,
     threshold: Option<usize>,
-    session: Option<&AnalysisSession>,
+    cache: ParseCache,
     (mut config, config_issues): (Config, Vec<ScanIssue>),
 ) -> Result<(AnalysisReport, HashMap<String, PathBuf>, Config)> {
+    let config_signature = config.signature();
     if let Some(value) = threshold {
         config.duplication.threshold = value;
     }
@@ -102,8 +122,10 @@ fn analyze_keeping_config(
     .with_context(|| format!("crawling {}", path.display()))?;
     timer.lap("crawl");
     let mut cache_issues = Vec::new();
-    let project = if session.is_some() {
-        match crate::spine::cache::load_project(&discovery.files) {
+    let project = match cache {
+        ParseCache::Off => None,
+        ParseCache::Disk => crate::spine::cache::load_project(&discovery.files).ok(),
+        ParseCache::Session(_) => match crate::spine::cache::load_project(&discovery.files) {
             Ok(project) => Some(project),
             Err(err) => {
                 cache_issues.push(ScanIssue {
@@ -113,21 +135,26 @@ fn analyze_keeping_config(
                 });
                 None
             }
-        }
-    } else {
-        None
+        },
     };
-    observe_source_state(path, config.signature(), project.as_ref());
+    if let ParseCache::Session(_) = cache {
+        observe_source_state(path, config.signature(), project.as_ref());
+    }
     if project.is_some() {
         timer.lap("fingerprint");
     } else {
         timer.cache_disabled();
     }
     let mut changed_paths = Vec::new();
-    let parsed = match (session, project.as_ref()) {
-        (Some(session), Some(project)) => {
+    let parsed = match (cache, project.as_ref()) {
+        (ParseCache::Session(session), Some(project)) => {
             let (parsed, stats) = session.parse(path, project);
             changed_paths = stats.changed_paths.clone();
+            timer.incremental_cache(stats, project.sources.len());
+            parsed
+        }
+        (ParseCache::Disk, Some(project)) => {
+            let (parsed, stats) = crate::spine::cache::disk::parse(path, project, config_signature);
             timer.incremental_cache(stats, project.sources.len());
             parsed
         }

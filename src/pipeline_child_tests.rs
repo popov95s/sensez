@@ -44,3 +44,27 @@ fn a_child_that_cannot_start_falls_back_to_an_in_process_scan() {
 
     assert!(scan.is_none());
 }
+
+#[test]
+fn child_scans_through_the_parse_cache_match_a_fresh_scan() {
+    let tmp = tempfile::tempdir().unwrap();
+    let dir = tmp.path();
+    fs::write(dir.join("a.py"), "def unused():\n    return 1\n").unwrap();
+    fs::write(
+        dir.join("b.ts"),
+        "export const used = 1;\nfunction orphan() {}\n",
+    )
+    .unwrap();
+    let fresh = serde_json::to_value(crate::analyze_path(dir, None).unwrap().0).unwrap();
+
+    let cold = crate::pipeline::analyze_path_for_child(dir, None)
+        .unwrap()
+        .0;
+    let warm = crate::pipeline::analyze_path_for_child(dir, None)
+        .unwrap()
+        .0;
+
+    assert!(dir.join(".sensez/parse-cache").is_dir());
+    assert_eq!(serde_json::to_value(cold).unwrap(), fresh);
+    assert_eq!(serde_json::to_value(warm).unwrap(), fresh);
+}

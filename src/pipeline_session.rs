@@ -9,6 +9,14 @@ use std::time::Instant;
 
 const MAX_WORKSPACES: usize = 4;
 
+/// Where a scan may reuse parse facts instead of parsing every file.
+#[derive(Clone, Copy)]
+pub(super) enum ParseCache<'a> {
+    Off,
+    Session(&'a AnalysisSession),
+    Disk,
+}
+
 #[derive(Default)]
 pub(super) struct AnalysisSession {
     states: Mutex<HashMap<PathBuf, WorkspaceEntry>>,

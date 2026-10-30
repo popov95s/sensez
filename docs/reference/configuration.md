@@ -337,8 +337,12 @@ exclude = ["**/generated/**"]       # excluded from every pillar
 
 ## Gate and local metrics
 
-CLI scans are stateless and never persist parsed source facts. Long-lived MCP
-and LSP processes reuse analysis state in memory for their own lifetime:
+CLI scans are stateless and never persist parsed source facts. MCP scans run in
+a short-lived child process that reuses parsed source facts from
+`.sensez/parse-cache/`, keyed by the sensez build, the configuration and each
+file's content and capped at 1 GiB; `SENSEZ_PARSE_CACHE=0` turns it off. With
+`[cache] enabled = true`, MCP and LSP processes instead keep analysis state in
+memory for their own lifetime:
 
 ```toml
 [cache]
