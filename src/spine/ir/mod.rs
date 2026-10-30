@@ -99,7 +99,7 @@ pub struct SymbolFacts {
     pub imports: Vec<ImportContext>,
     pub declared: Vec<String>,
     pub declared_kinds: HashMap<String, SymbolKind>,
-    pub declared_lines: HashMap<String, usize>,
+    pub declared_lines: rustc_hash::FxHashMap<String, usize>,
     pub methods: Vec<(String, usize)>,
     pub dunder_all: Option<Vec<String>>,
     pub decorators: HashMap<String, Vec<String>>,

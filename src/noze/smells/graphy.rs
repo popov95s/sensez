@@ -29,6 +29,10 @@ pub fn detect(
     in_scope: &(impl Fn(&ModuleNode) -> bool + Sync),
 ) -> Vec<SmellFinding> {
     let nodes: Vec<_> = graph.graph.node_indices().collect();
+    let scoped: Vec<bool> = nodes
+        .par_iter()
+        .map(|&idx| in_scope(&graph.graph[idx]))
+        .collect();
     let internal = nodes
         .iter()
         .filter(|&&i| !graph.graph[i].is_external)
@@ -37,7 +41,7 @@ pub fn detect(
         .par_iter()
         .filter_map(|&idx| {
             let node = &graph.graph[idx];
-            if !is_graph_hotspot_candidate(node) || !in_scope(node) {
+            if !is_graph_hotspot_candidate(node) || !scoped[idx.index()] {
                 return None;
             }
             // Thresholds are per-language (a node's `language` selects the set).
@@ -45,11 +49,11 @@ pub fn detect(
             let blast_floor = lcfg
                 .shotgun_blast_threshold
                 .max(internal * BLAST_FLOOR_REPO_PERCENT / 100);
-            let blast = afferent(graph, idx, &node.module_name, in_scope, Edges::Any);
+            let blast = afferent(graph, idx, &node.module_name, &scoped, Edges::Any);
             shotgun(node, blast, blast_floor, lcfg).or_else(|| {
                 let size = module_size(files.get(node.source_index?)?);
                 let runtime_fan_in =
-                    afferent(graph, idx, &node.module_name, in_scope, Edges::Runtime);
+                    afferent(graph, idx, &node.module_name, &scoped, Edges::Runtime);
                 god_module(node, runtime_fan_in, efferent(graph, idx), size, lcfg)
             })
         })
@@ -83,7 +87,7 @@ fn afferent(
     graph: &CodebaseGraph,
     idx: petgraph::graph::NodeIndex,
     own: &str,
-    in_scope: &impl Fn(&ModuleNode) -> bool,
+    scoped: &[bool],
     edges: Edges,
 ) -> usize {
     let mut sources: Vec<&str> = graph
@@ -91,9 +95,8 @@ fn afferent(
         .edges_directed(idx, Direction::Incoming)
         .filter(|e| !e.weight().is_module_decl)
         .filter(|e| edges.admits(e.weight().phase))
-        .map(|e| &graph.graph[e.source()])
-        .filter(|source| in_scope(source))
-        .map(|source| source.module_name.as_str())
+        .filter(|e| scoped[e.source().index()])
+        .map(|e| graph.graph[e.source()].module_name.as_str())
         .filter(|m| *m != own)
         .collect();
     sources.sort_unstable();
