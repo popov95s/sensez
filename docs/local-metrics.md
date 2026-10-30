@@ -20,7 +20,7 @@ false-positive verdict).
 | --- | --- | --- |
 | `events.jsonl` | Append-only event log (one JSON object per line). The source of truth; everything else is derived. | Compacted on flush once it passes **4 MB**, keeping a **45-day** window. |
 | `totals.json` | Aggregates rebuilt by folding events. Most fields are all-time; `reported_by_detector` is the latest scan's current finding set. | Bounded — keys are a finite `pillar/<detector>` space. |
-| `last-scan.json` | Per-branch fingerprint baseline + resolved-history (for reintroduction detection). | Capped at **32 branches** (LRU); resolved-history entries expire after **30 days**. |
+| `baselines.json`, `baselines/` | Per-branch fingerprint baseline + resolved-history (for reintroduction detection): an index of branches by last update, and one file per branch, rewritten only when it changes. Replaces the single `last-scan.json` of earlier releases on the first write. | Capped at **12 branches** (LRU); resolved-history entries expire after **30 days**. |
 | `triage.json` | The user's debt / false-positive verdicts, keyed by finding fingerprint. | Grows only on explicit user verdicts. |
 
 A finding's **fingerprint** is its structural identity (symbols, modules, rules,

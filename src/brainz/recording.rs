@@ -179,7 +179,7 @@ mod tests {
         let totals = store::load_totals(root);
         assert!(totals.resolved_by_detector.is_empty());
         assert!(totals.reintroduced_by_detector.is_empty());
-        assert!(!store::dir(root).join("last-scan.json").exists());
+        assert!(!store::dir(root).join("baselines.json").exists());
     }
 
     #[test]
@@ -196,7 +196,7 @@ mod tests {
 
         record_scan(root, &seen, Duration::from_millis(1), None, Origin::Tool);
         crate::brainz::flush();
-        assert!(store::dir(root).join("last-scan.json").exists());
+        assert!(store::dir(root).join("baselines.json").exists());
 
         assert!(repo.git(&["checkout", "--detach"]));
         record_scan(root, &gone, Duration::from_millis(1), None, Origin::Tool);
