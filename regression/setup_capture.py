@@ -79,7 +79,10 @@ def run_pty(
     os.close(slave)
     try:
         transcript = _read_pty(master, proc, answer)
-        if proc.poll() is None:
+        try:
+            # The pty closes before the child can be reaped, so poll() may still be None here.
+            proc.wait(timeout=5)
+        except subprocess.TimeoutExpired:
             proc.kill()
             raise RuntimeError("interactive init scenario timed out")
     finally:
@@ -188,9 +191,12 @@ def _read_pty(master: int, proc: subprocess.Popen[bytes], answer: str) -> bytear
         ready, _, _ = select.select([master], [], [], 0.1)
         if ready:
             try:
-                transcript.extend(os.read(master, 4096))
+                chunk = os.read(master, 4096)
             except OSError:
                 break
+            if not chunk:
+                break
+            transcript.extend(chunk)
         if not answered and b"Install Sensez globally" in transcript:
             os.write(master, answer.encode())
             answered = True
