@@ -59,7 +59,7 @@ pub(super) fn analyze(exe: &Path, path: &Path, threshold: Option<usize>) -> Resu
 
 /// The `mcp analyze` side: scan in-process and write the result to stdout.
 pub(crate) fn write_service_scan(path: &Path, threshold: Option<usize>) -> Result<()> {
-    let (report, module_files) = super::analyze_path(path, threshold)?;
+    let (report, module_files) = super::analyze_path_for_child(path, threshold)?;
     let payload = Payload::from_scan(report, module_files);
     let mut stdout = std::io::stdout().lock();
     serde_json::to_writer(&mut stdout, &payload).context("writing scan result")?;

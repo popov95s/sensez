@@ -129,6 +129,17 @@ impl ParseCacheState {
             .map(|cached| cached.restore(source, file_id))
     }
 
+    /// Add one restored file, keyed by its path and content hash.
+    pub fn insert(&mut self, file: &ParsedFile) {
+        let cached = CachedFile::from_parsed(file);
+        self.files
+            .insert((cached.path.clone(), cached.content_hash), cached);
+    }
+
+    pub fn contains(&self, path: &std::path::Path, content_hash: u64) -> bool {
+        self.files.contains_key(&(path.to_path_buf(), content_hash))
+    }
+
     pub fn replace(&mut self, sources: &[SourceFile], parsed: &[ParsedFile]) {
         self.manifest = SourceManifest::from_hashes(
             sources

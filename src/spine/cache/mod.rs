@@ -3,6 +3,7 @@
 //! The cache stores only the language-neutral `Walked` projection. Graphs and
 //! Noze findings remain derived values with wider invalidation scopes.
 
+pub mod disk;
 mod fingerprint;
 mod incremental;
 mod source;
