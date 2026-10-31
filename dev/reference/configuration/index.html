@@ -1466,8 +1466,12 @@ elsewhere. A pattern containing <code>" + "</code> matches the group label
 <span class="n">exclude</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="p">[</span><span class="s2">"**/generated/**"</span><span class="p">]</span><span class="w">       </span><span class="c1"># excluded from every pillar</span>
 </code></pre></div>
 <h2 id="gate-and-local-metrics">Gate and local metrics</h2>
-<p>CLI scans are stateless and never persist parsed source facts. Long-lived MCP
-and LSP processes reuse analysis state in memory for their own lifetime:</p>
+<p>CLI scans are stateless and never persist parsed source facts. MCP scans run in
+a short-lived child process that reuses parsed source facts from
+<code>.sensez/parse-cache/</code>, keyed by the sensez build, the configuration and each
+file's content and capped at 1 GiB; <code>SENSEZ_PARSE_CACHE=0</code> turns it off. With
+<code>[cache] enabled = true</code>, MCP and LSP processes instead keep analysis state in
+memory for their own lifetime:</p>
 <div class="highlight"><pre><span></span><code><span class="k">[cache]</span>
 <span class="c1"># Enables process-local reuse in MCP/LSP only; CLI scans always remain stateless.</span>
 <span class="n">enabled</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="kc">false</span>
