@@ -134,6 +134,7 @@ mod tests {
         let baseline: Value = serde_json::from_str(&text).unwrap();
         record_scan(
             root,
+            crate::diff::git::current_branch(root).as_deref(),
             &baseline,
             std::time::Duration::from_millis(1),
             None,

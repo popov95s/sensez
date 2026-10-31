@@ -6,11 +6,11 @@ use serde_json::Value;
 use std::collections::BTreeSet;
 use std::path::Path;
 
-pub fn regressions(root: &Path, report: &Value) -> Vec<String> {
-    let Some(branch) = hub::branch_key(root) else {
+pub fn regressions(root: &Path, branch: Option<&str>, report: &Value) -> Vec<String> {
+    let Some(branch) = branch else {
         return Vec::new();
     };
-    let history = store::load_resolved_history(root, &branch);
+    let history = store::load_resolved_history(root, branch);
     if history.is_empty() {
         return Vec::new();
     }
