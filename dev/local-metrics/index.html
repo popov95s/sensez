@@ -922,9 +922,9 @@ false-positive verdict).</p>
 <td>Bounded — keys are a finite <code>pillar/&lt;detector&gt;</code> space.</td>
 </tr>
 <tr>
-<td><code>last-scan.json</code></td>
-<td>Per-branch fingerprint baseline + resolved-history (for reintroduction detection).</td>
-<td>Capped at <strong>32 branches</strong> (LRU); resolved-history entries expire after <strong>30 days</strong>.</td>
+<td><code>baselines.json</code>, <code>baselines/</code></td>
+<td>Per-branch fingerprint baseline + resolved-history (for reintroduction detection): an index of branches by last update, and one file per branch, rewritten only when it changes. Replaces the single <code>last-scan.json</code> of earlier releases on the first write.</td>
+<td>Capped at <strong>12 branches</strong> (LRU); resolved-history entries expire after <strong>30 days</strong>.</td>
 </tr>
 <tr>
 <td><code>triage.json</code></td>
