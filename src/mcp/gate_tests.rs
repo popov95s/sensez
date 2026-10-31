@@ -45,7 +45,7 @@ fn gate_baseline_feeds_resolved_recapture() {
     assert_eq!(resp["isError"], false);
     assert!(repo
         .root
-        .join(".sensez/local-metrics/last-scan.json")
+        .join(".sensez/local-metrics/baselines.json")
         .exists());
 
     std::fs::write(&repo.file, "print('fixed')\n").unwrap();

@@ -47,7 +47,7 @@ pub struct ResolvedRecord {
 }
 
 /// Pillar → fingerprint (hex string; JSON keys must be strings) → entry.
-/// Persisted as `last-scan.json`.
+/// Persisted per branch under `baselines/`.
 pub type Aged = BTreeMap<Pillar, BTreeMap<String, AgedEntry>>;
 
 /// Fingerprint every pillar of a JSON-serialized `AnalysisReport`.

@@ -211,7 +211,7 @@ fn diff_scan_refreshes_metrics_baseline() {
 
     assert_eq!(resp["result"]["isError"], false);
     assert!(std::path::Path::new(&repo.path)
-        .join(".sensez/local-metrics/last-scan.json")
+        .join(".sensez/local-metrics/baselines.json")
         .exists());
 }
 

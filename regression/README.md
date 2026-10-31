@@ -313,7 +313,7 @@ Expected:
 - `.sensez/local-metrics/events.jsonl` contains a `scan` event with
   `origin == "gate"`.
 - A `gate_block` event is recorded with at least one fingerprint.
-- `last-scan.json` exists.
+- `baselines.json` exists.
 
 ### Gate Allows Repeated Stop
 
@@ -351,7 +351,7 @@ Files expected under target `.sensez/local-metrics/`:
 
 - `events.jsonl`
 - `totals.json`
-- `last-scan.json`
+- `baselines.json`
 - `triage.json` only after explicit triage
 
 Event log assertions:
