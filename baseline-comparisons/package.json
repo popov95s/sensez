@@ -7,6 +7,6 @@
     "fallow": "fallow"
   },
   "devDependencies": {
-    "fallow": "2.96.0"
+    "fallow": "3.34.0"
   }
 }
