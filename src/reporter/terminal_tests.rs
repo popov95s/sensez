@@ -3,7 +3,7 @@ use crate::report::{ActionLevel, Severity};
 
 #[test]
 fn renders_section_headers() {
-    let text = render(&AnalysisReport::default(), false);
+    let text = render(&AnalysisReport::default(), Glossary::Hidden);
     assert!(text.contains("Circular imports"));
     assert!(text.contains("Duplication"));
     assert!(text.contains("Dead code candidates"));
@@ -18,8 +18,8 @@ fn legend_is_opt_in() {
         title: "Import Cycle".into(),
         explanation: "modules import each other".into(),
     }];
-    assert!(!render(&report, false).contains("What these mean"));
-    assert!(render(&report, true).contains("What these mean"));
+    assert!(!render(&report, Glossary::Hidden).contains("What these mean"));
+    assert!(render(&report, Glossary::Shown).contains("What these mean"));
 }
 
 #[test]
@@ -32,7 +32,7 @@ fn scan_diagnostics_are_hidden_by_default() {
         message: "parser detail".into(),
     });
 
-    let text = render(&report, false);
+    let text = render(&report, Glossary::Hidden);
 
     assert!(!text.contains("scan issue"));
     assert!(!text.contains("parser detail"));
@@ -70,7 +70,7 @@ fn smell_output_shows_only_action_label() {
         reason: String::new(),
     });
 
-    let text = render(&report, false);
+    let text = render(&report, Glossary::Hidden);
     assert!(text.contains("[warning] x.tsx:12"));
     assert!(text.contains("[must_fix] y.tsx:20"));
     assert!(!text.contains("[warning] [warning]"));
@@ -110,7 +110,7 @@ fn smell_output_shows_repeated_suggestion_once_per_smell_kind() {
         reason: String::new(),
     });
 
-    let text = render(&report, false);
+    let text = render(&report, Glossary::Hidden);
     assert_eq!(
         text.matches("replace loose collections with a typed object or interface")
             .count(),
@@ -138,7 +138,7 @@ fn smell_output_names_empty_symbol_anonymous() {
         lines: Vec::new(),
     });
 
-    let text = render(&report, false);
+    let text = render(&report, Glossary::Hidden);
     assert!(text.contains("z.ts:3  <anonymous> — threshold"));
 }
 
@@ -150,7 +150,7 @@ fn filtered_pillar_is_not_rendered_as_zero() {
         crate::report::Pillar::Boundaries,
     ];
 
-    let text = render(&report, false);
+    let text = render(&report, Glossary::Hidden);
 
     assert!(!text.contains("Circular imports"), "{text}");
     assert!(!text.contains("Boundary violations"), "{text}");
@@ -160,9 +160,10 @@ fn filtered_pillar_is_not_rendered_as_zero() {
 #[test]
 fn diff_mode_is_announced_in_header() {
     let mut report = AnalysisReport::default();
-    assert!(!render(&report, false).contains("diff mode"));
+    assert!(!render(&report, Glossary::Hidden).contains("diff mode"));
     report.meta.mode = crate::report::ReportMode::Diff;
-    assert!(render(&report, false).contains("diff mode: only findings touching changed lines"));
+    assert!(render(&report, Glossary::Hidden)
+        .contains("diff mode: only findings touching changed lines"));
 }
 
 #[test]
@@ -171,7 +172,7 @@ fn each_pillar_names_the_files_it_skipped() {
     report.meta.smells_skipped.tests = 2;
     report.meta.duplication_skipped.generated = 1;
 
-    let text = render(&report, false);
+    let text = render(&report, Glossary::Hidden);
 
     assert!(
         text.contains(

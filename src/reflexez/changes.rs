@@ -1,3 +1,4 @@
+use crate::diff::git::DiffSource;
 use crate::profiles::registry;
 use crate::spine::ir::Language;
 use anyhow::Result;
@@ -12,7 +13,7 @@ pub struct ChangeScope {
 pub fn resolve(
     root: &Path,
     base: Option<&str>,
-    staged: bool,
+    source: DiffSource,
     explicit: &[PathBuf],
 ) -> Result<ChangeScope> {
     if !explicit.is_empty() {
@@ -28,7 +29,7 @@ pub fn resolve(
             files,
         });
     }
-    let changed = crate::diff::git::changed_paths(root, base, staged)?;
+    let changed = crate::diff::git::changed_paths(root, base, source)?;
     Ok(ChangeScope {
         repository: changed.root,
         fallback_reasons: fallback_reasons(&changed.paths, &changed.deleted),

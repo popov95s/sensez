@@ -7,6 +7,7 @@ use super::reach::ChangeReach;
 use super::selector_dynamic::{self, Reach};
 use super::setup_trigger::setup_fallback;
 use crate::cli::spec::ReflexezArgs;
+use crate::diff::git::DiffSource;
 use crate::report::ScanIssue;
 use crate::spine::graph::CodebaseGraph;
 use crate::spine::parser::ParsedFile;
@@ -18,7 +19,12 @@ use std::sync::Arc;
 
 pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
     let started = std::time::Instant::now();
-    let scope = changes::resolve(root, args.base.as_deref(), args.staged, &args.changed_files)?;
+    let source = if args.staged {
+        DiffSource::Index
+    } else {
+        DiffSource::WorkingTree
+    };
+    let scope = changes::resolve(root, args.base.as_deref(), source, &args.changed_files)?;
     let project = discovery::discover(&scope.repository, args.runner)?;
     if project.tests.is_empty() {
         bail!("no pytest, Vitest, or Jest test files were discovered");
@@ -97,7 +103,12 @@ pub fn plan(root: &Path, args: &ReflexezArgs) -> Result<ImpactPlan> {
         RunMode::Narrowed
     };
     let selected_paths: HashSet<_> = selected.keys().cloned().collect();
-    let selections = selections(selected, &tests_by_path, full_suite, args.full);
+    let full_reason = match (full_suite, args.full) {
+        (false, _) => None,
+        (true, true) => Some(PlanReason::FullRequested),
+        (true, false) => Some(PlanReason::SafetyFallback),
+    };
+    let selections = selections(selected, &tests_by_path, full_reason);
     let runners = super::runners::plans(
         &scope.repository,
         &project.runners,
@@ -193,36 +204,33 @@ fn nodes_by_path(graph: &CodebaseGraph) -> HashMap<PathBuf, NodeIndex> {
 fn selections(
     reached: HashMap<PathBuf, Reach>,
     tests: &HashMap<PathBuf, &TestFile>,
-    full_suite: bool,
-    requested: bool,
+    full_suite: Option<PlanReason>,
 ) -> Vec<Selection> {
     let mut selected: Vec<_> = reached
         .into_iter()
         .filter_map(|(file, reach)| {
             let test = tests.get(&file)?;
-            let reason = if full_suite {
-                if requested {
-                    PlanReason::FullRequested
-                } else {
-                    PlanReason::SafetyFallback
-                }
-            } else if reach.distance == 0 {
-                PlanReason::ChangedTest
-            } else if reach.dynamic {
-                PlanReason::DynamicImport
-            } else if reach.distance == 1 {
-                PlanReason::DirectDependency
-            } else {
-                PlanReason::TransitiveDependency
-            };
             Some(Selection {
                 file,
                 runner: test.runner,
-                reason,
+                reason: full_suite.unwrap_or_else(|| reach_reason(&reach)),
                 distance: reach.distance,
             })
         })
         .collect();
     selected.sort_by(|left, right| left.file.cmp(&right.file));
     selected
+}
+
+fn reach_reason(reach: &Reach) -> PlanReason {
+    if reach.distance == 0 {
+        return PlanReason::ChangedTest;
+    }
+    if reach.dynamic {
+        return PlanReason::DynamicImport;
+    }
+    if reach.distance == 1 {
+        return PlanReason::DirectDependency;
+    }
+    PlanReason::TransitiveDependency
 }

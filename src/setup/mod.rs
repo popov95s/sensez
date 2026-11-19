@@ -193,7 +193,7 @@ fn run_with_home(opts: InitOptions, home_override: Option<PathBuf>) -> Result<()
             "no MCP config path is known for this agent yet; use `sensez mcp serve` from your agent's MCP settings".to_string(),
         );
     }
-    if let Some(msg) = skills::install(&root, &agent, install_scope == InstallScope::Global)? {
+    if let Some(msg) = skills::install(&root, &agent, install_scope)? {
         done.push(msg);
     }
     if gate {

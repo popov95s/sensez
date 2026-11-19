@@ -18,6 +18,13 @@ use wait_timeout::ChildExt;
 /// or a misbehaving hook does not stall the scan.
 const GIT_TIMEOUT: Duration = Duration::from_secs(30);
 
+/// Which edits a change scan reads.
+#[derive(Debug, Clone, Copy)]
+pub enum DiffSource {
+    WorkingTree,
+    Index,
+}
+
 #[derive(Debug)]
 pub struct ChangedFiles {
     pub root: PathBuf,
@@ -32,10 +39,14 @@ pub fn repository_root(scan_path: &Path) -> Result<PathBuf> {
 
 /// Resolve all changed paths for test-impact analysis, including non-source
 /// manifests and configuration files that may require a full-suite fallback.
-pub fn changed_paths(scan_path: &Path, base: Option<&str>, staged: bool) -> Result<ChangedFiles> {
+pub fn changed_paths(
+    scan_path: &Path,
+    base: Option<&str>,
+    source: DiffSource,
+) -> Result<ChangedFiles> {
     let root = repository_root(scan_path)?;
     let mut names = ChangedNames::default();
-    if staged {
+    if matches!(source, DiffSource::Index) {
         names.add_diff(&root, "--cached")?;
     } else if has_commits(&root) {
         if let Some(base) = base {

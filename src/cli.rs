@@ -6,6 +6,9 @@ pub(crate) mod output;
 pub(crate) mod spec;
 
 use crate::diff::ChangedLines;
+#[cfg(feature = "eyez")]
+use crate::eyez::{Rebuild, Warmup};
+use crate::reporter::{Format, Glossary};
 use anyhow::{Context, Result};
 use clap::Parser;
 use spec::{Cli, Command, FailOnNewLevel, NozeAction, NozeArgs, ScanOptions};
@@ -49,10 +52,11 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
         },
         #[cfg(feature = "mcp")]
         Some(Command::Brainz(args)) => match args.action {
-            spec::BrainzAction::Report { path, json } => {
-                brainz::run_report(&path.unwrap_or_else(|| PathBuf::from(".")), json)
-                    .map(|()| ExitCode::SUCCESS)
-            }
+            spec::BrainzAction::Report { path, json } => brainz::run_report(
+                &path.unwrap_or_else(|| PathBuf::from(".")),
+                format_for(json),
+            )
+            .map(|()| ExitCode::SUCCESS),
         },
         #[cfg(feature = "eyez")]
         Some(Command::Eyez(args)) => match args.action {
@@ -62,14 +66,26 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
                     [query] => (PathBuf::from("."), query.as_str()),
                     _ => anyhow::bail!("eyez search takes [PATH] QUERY"),
                 };
-                run_search(&path, query, top_k, json).map(|()| ExitCode::SUCCESS)
+                run_search(&path, query, top_k, format_for(json)).map(|()| ExitCode::SUCCESS)
             }
             spec::EyezAction::Reindex {
                 path,
                 force,
                 semantic,
-            } => run_reindex(&path.unwrap_or_else(|| PathBuf::from(".")), force, semantic)
-                .map(|()| ExitCode::SUCCESS),
+            } => {
+                let rebuild = if force {
+                    Rebuild::Full
+                } else {
+                    Rebuild::Incremental
+                };
+                let warmup = if semantic {
+                    Warmup::SemanticDuplication
+                } else {
+                    Warmup::Skip
+                };
+                run_reindex(&path.unwrap_or_else(|| PathBuf::from(".")), rebuild, warmup)
+                    .map(|()| ExitCode::SUCCESS)
+            }
         },
         None => {
             let path = cli.path.unwrap_or_else(|| PathBuf::from("."));
@@ -107,8 +123,8 @@ fn serve_mcp() -> Result<ExitCode> {
 }
 
 #[cfg(feature = "eyez")]
-fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
-    let report = crate::eyez::reindex(path, force, semantic)?;
+fn run_reindex(path: &Path, rebuild: Rebuild, warmup: Warmup) -> Result<()> {
+    let report = crate::eyez::reindex(path, rebuild, warmup)?;
     output::print_line(&format!(
         "Indexed {} doc/comment item(s).{}",
         report.docs,
@@ -121,12 +137,25 @@ fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
     Ok(())
 }
 
+fn format_for(json: bool) -> Format {
+    if json {
+        Format::Json
+    } else {
+        Format::Terminal
+    }
+}
+
 /// Build/refresh the eyez index for `path` and print the top hits for `query`.
 #[cfg(feature = "eyez")]
-fn run_search(path: &Path, query: &str, top_k: std::num::NonZeroUsize, json: bool) -> Result<()> {
+fn run_search(
+    path: &Path,
+    query: &str,
+    top_k: std::num::NonZeroUsize,
+    format: Format,
+) -> Result<()> {
     let index = crate::eyez::Index::open(path)?;
     let hits = index.search(query, top_k);
-    if json {
+    if matches!(format, Format::Json) {
         output::print_line(&serde_json::to_string_pretty(&hits)?)?;
     } else if hits.is_empty() {
         output::print_line(&format!(
@@ -241,7 +270,12 @@ fn render_report(report: &crate::report::AnalysisReport, options: &ScanOptions) 
     if options.json {
         return crate::reporter::to_json(report, crate::reporter::ScanDiagnostics::from_env());
     }
-    Ok(crate::reporter::render(report, options.explain))
+    let glossary = if options.explain {
+        Glossary::Shown
+    } else {
+        Glossary::Hidden
+    };
+    Ok(crate::reporter::render(report, glossary))
 }
 
 /// A gated run fails when an analyzer was skipped, instead of passing on partial results.

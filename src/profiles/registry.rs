@@ -59,14 +59,34 @@ pub fn is_declaration_only(path: &Path) -> bool {
 }
 
 fn profile(language: Language) -> &'static dyn LanguageProfile {
-    match PROFILES
-        .iter()
-        .copied()
-        .find(|p| ParseProfile::info(*p).language == language)
-    {
-        Some(profile) => profile,
-        None => panic!("missing compiled-in profile for {language:?}"),
+    match language {
+        #[cfg(feature = "lang-python")]
+        Language::Python => &crate::profiles::python::PythonProfile,
+        #[cfg(not(feature = "lang-python"))]
+        Language::Python => not_compiled(language),
+        #[cfg(feature = "lang-javascript")]
+        Language::JavaScript => &crate::profiles::javascript::JsProfile,
+        #[cfg(not(feature = "lang-javascript"))]
+        Language::JavaScript => not_compiled(language),
+        #[cfg(feature = "lang-typescript")]
+        Language::TypeScript => &crate::profiles::typescript::TsProfile,
+        #[cfg(not(feature = "lang-typescript"))]
+        Language::TypeScript => not_compiled(language),
+        #[cfg(feature = "lang-rust")]
+        Language::Rust => &crate::profiles::rust::RustProfile,
+        #[cfg(not(feature = "lang-rust"))]
+        Language::Rust => not_compiled(language),
     }
+}
+
+#[cfg(not(all(
+    feature = "lang-python",
+    feature = "lang-javascript",
+    feature = "lang-typescript",
+    feature = "lang-rust"
+)))]
+fn not_compiled(language: Language) -> ! {
+    panic!("{language:?} profile is not compiled into this build")
 }
 
 pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {

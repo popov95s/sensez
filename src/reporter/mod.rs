@@ -10,7 +10,7 @@ mod terminal;
 pub use diagnostics::ScanDiagnostics;
 pub use filter::apply;
 pub use json::to_json;
-pub use terminal::render;
+pub use terminal::{render, Glossary};
 
 /// Output format selector.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

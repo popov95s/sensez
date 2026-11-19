@@ -334,7 +334,7 @@ pub fn scan(path: &Path, threshold: Option<usize>, format: Format, max: usize) -
     noze::limit(&mut report, max);
     match format {
         Format::Json => reporter::to_json(&report, reporter::ScanDiagnostics::from_env()),
-        Format::Terminal => Ok(reporter::render(&report, false)),
+        Format::Terminal => Ok(reporter::render(&report, reporter::Glossary::Hidden)),
     }
 }
 

@@ -1,16 +1,16 @@
+use super::scope::InstallScope;
 use anyhow::{Context, Result};
 use std::path::Path;
 
 const SENSEZ_SKILL: &str = include_str!("../../skills/sensez/SKILL.md");
 
-pub fn install(root: &Path, agent: &str, global: bool) -> Result<Option<String>> {
+pub fn install(root: &Path, agent: &str, scope: InstallScope) -> Result<Option<String>> {
     let Some(spec) = crate::setup::agents::find(agent) else {
         return Ok(None);
     };
-    let rel = if global {
-        spec.global_skill_relpath
-    } else {
-        spec.skill_relpath
+    let rel = match scope {
+        InstallScope::Global => spec.global_skill_relpath,
+        InstallScope::Project => spec.skill_relpath,
     };
     let Some(rel) = rel else { return Ok(None) };
     let source = root.join("skills").join("sensez");
