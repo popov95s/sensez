@@ -299,4 +299,5 @@ fn occurrence(unit: &Unit) -> CloneOccurrence {
 }
 
 #[cfg(test)]
+#[path = "semantic_tests.rs"]
 mod tests;

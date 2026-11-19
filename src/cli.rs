@@ -325,14 +325,20 @@ fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> Result<Option
     Ok(Some(ChangedLines::from_unified(&text, path)))
 }
 #[cfg(test)]
+#[path = "cli_gate_filter_tests.rs"]
 mod gate_filter_tests;
 #[cfg(test)]
+#[path = "cli_gate_tests.rs"]
 mod gate_tests;
 #[cfg(test)]
+#[path = "cli_parse_tests.rs"]
 mod parse_tests;
 #[cfg(test)]
+#[path = "cli_reflexez_tests.rs"]
 mod reflexez_tests;
 #[cfg(test)]
+#[path = "cli_summary_tests.rs"]
 mod summary_tests;
 #[cfg(test)]
+#[path = "cli_tests.rs"]
 mod tests;

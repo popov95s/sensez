@@ -156,9 +156,9 @@ fn config_issue(problem: ConfigProblem) -> ScanIssue {
 }
 
 #[cfg(test)]
-#[path = "config/tests.rs"]
+#[path = "config_tests.rs"]
 mod tests;
 
 #[cfg(test)]
-#[path = "config/semantic_tests.rs"]
+#[path = "config_semantic_tests.rs"]
 mod semantic_tests;

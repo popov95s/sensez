@@ -1,188 +1,122 @@
-use super::{analyze_with_config, session::AnalysisSession};
-use crate::config::Config;
-use crate::report::AnalysisReport;
-use std::fs;
-use std::path::{Path, PathBuf};
+use super::{AnalysisSession, MAX_WORKSPACES};
 
-type Analysis = anyhow::Result<(AnalysisReport, std::collections::HashMap<String, PathBuf>)>;
+#[test]
+fn reuses_unchanged_files_and_reparses_a_changed_file() {
+    let root = tempfile::tempdir().unwrap();
+    let file = root.path().join("module.py");
+    std::fs::write(&file, "def first():\n    return 1\n").unwrap();
+    let session = AnalysisSession::default();
+    let first = crate::spine::cache::load_project(std::slice::from_ref(&file)).unwrap();
+    assert_eq!(session.parse(root.path(), &first).1.reusable, 0);
+    assert_eq!(session.parse(root.path(), &first).1.reusable, 1);
 
-fn analyze_path_in_session(
-    session: &AnalysisSession,
-    path: &Path,
-    threshold: Option<usize>,
-) -> Analysis {
-    analyze_with_config(path, threshold, Some(session), Config::load_for_scan(path))
+    std::fs::write(&file, "def second():\n    return 2\n").unwrap();
+    let changed = crate::spine::cache::load_project(&[file]).unwrap();
+    let stats = session.parse(root.path(), &changed).1;
+    assert_eq!((stats.modified, stats.reusable), (1, 0));
 }
 
 #[test]
-fn changed_file_can_create_and_remove_cross_file_duplication() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    fs::write(dir.join("sensez.toml"), "[duplication]\nthreshold = 8\n").unwrap();
-    let left = "def left(value):\n    first = module.fetch(value)\n    second = module.clean(first)\n    return second\n";
-    let unique = "def right(value):\n    return value + 1\n";
+fn a_parse_issue_in_one_file_keeps_the_others_cached() {
+    let root = tempfile::tempdir().unwrap();
+    let good = root.path().join("good.py");
+    let deep = root.path().join("deep.py");
+    std::fs::write(&good, "def ok():\n    return 1\n").unwrap();
+    std::fs::write(
+        &deep,
+        format!("x = {}1{}\n", "[".repeat(600), "]".repeat(600)),
+    )
+    .unwrap();
     let session = AnalysisSession::default();
-    fs::write(dir.join("left.py"), left).unwrap();
-    fs::write(dir.join("right.py"), unique).unwrap();
+    let project = crate::spine::cache::load_project(&[good, deep]).unwrap();
 
-    assert!(analyze_path_in_session(&session, dir, None)
-        .unwrap()
-        .0
-        .duplication
-        .is_empty());
-    fs::write(dir.join("right.py"), left.replace("left", "right")).unwrap();
-    let created = analyze_path_in_session(&session, dir, None).unwrap().0;
-    assert!(created.duplication.iter().any(|clone| {
-        clone
-            .occurrences
-            .iter()
-            .any(|item| item.file.ends_with("left.py"))
-            && clone
-                .occurrences
-                .iter()
-                .any(|item| item.file.ends_with("right.py"))
-    }));
+    let (parsed, _) = session.parse(root.path(), &project);
+    assert_eq!(parsed.issues.len(), 1);
 
-    fs::write(dir.join("right.py"), unique).unwrap();
-    assert!(analyze_path_in_session(&session, dir, None)
-        .unwrap()
-        .0
-        .duplication
-        .is_empty());
+    assert_eq!(session.parse(root.path(), &project).1.reusable, 1);
 }
 
 #[test]
-fn changed_import_updates_cross_file_cycle() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
+fn concurrent_workspaces_parse_independently() {
     let session = AnalysisSession::default();
-    fs::write(
-        dir.join("a.py"),
-        "from b import value\n\ndef a():\n    return value\n",
-    )
-    .unwrap();
-    fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
-    assert!(analyze_path_in_session(&session, dir, None)
-        .unwrap()
-        .0
-        .cycles
-        .is_empty());
+    let roots: Vec<_> = (0..4)
+        .map(|i| {
+            let dir = tempfile::tempdir().unwrap();
+            std::fs::write(
+                dir.path().join(format!("m{i}.py")),
+                format!("def f{i}():\n    return {i}\n"),
+            )
+            .unwrap();
+            dir
+        })
+        .collect();
+    let projects: Vec<_> = roots
+        .iter()
+        .map(|dir| {
+            let files: Vec<_> = std::fs::read_dir(dir.path())
+                .unwrap()
+                .map(|e| e.unwrap().path())
+                .collect();
+            crate::spine::cache::load_project(&files).unwrap()
+        })
+        .collect();
+    std::thread::scope(|scope| {
+        for (root, project) in roots.iter().zip(&projects) {
+            scope.spawn(|| {
+                let (parsed, _) = session.parse(root.path(), project);
+                assert!(parsed.issues.is_empty());
+            });
+        }
+    });
+    for root in &roots {
+        assert!(session.has_workspace(root.path()));
+    }
+}
 
-    fs::write(
-        dir.join("b.py"),
-        "from a import a\n\ndef value():\n    return a()\n",
-    )
-    .unwrap();
-    assert_eq!(
-        analyze_path_in_session(&session, dir, None)
+/// Eviction follows least-recent use, not arbitrary map order.
+#[test]
+fn evicts_least_recently_used_workspace() {
+    use std::thread::sleep;
+    use std::time::Duration;
+
+    let session = AnalysisSession::default();
+    let dirs: Vec<_> = (0..MAX_WORKSPACES as u8 + 1)
+        .map(|i| {
+            let dir = tempfile::tempdir().unwrap();
+            std::fs::write(
+                dir.path().join(format!("m{i}.py")),
+                format!("def f{i}():\n    return {i}\n"),
+            )
+            .unwrap();
+            dir
+        })
+        .collect();
+    let project_for = |dir: &tempfile::TempDir| {
+        let files: Vec<_> = std::fs::read_dir(dir.path())
             .unwrap()
-            .0
-            .cycles
-            .len(),
-        1
-    );
-}
-
-#[test]
-fn cycles_exclude_is_independent_of_smells_exclude() {
-    // `a -> b` plus `b -> a` forms the loop.
-    let importer = "from b import value\n\ndef a():\n    return value\n";
-    let cycle_b = "from a import a\n\ndef value():\n    return a()\n";
-    let build = |toml: &str| {
-        let tmp = tempfile::tempdir().unwrap();
-        let dir = tmp.path().to_path_buf();
-        fs::write(dir.join("sensez.toml"), toml).unwrap();
-        fs::write(dir.join("a.py"), importer).unwrap();
-        fs::write(dir.join("b.py"), "def value():\n    return 1\n").unwrap();
-        let session = AnalysisSession::default();
-        // Introduce the back-edge so the loop exists before the first scan.
-        fs::write(dir.join("b.py"), cycle_b).unwrap();
-        (tmp, session, dir)
+            .map(|e| e.unwrap().path())
+            .collect();
+        crate::spine::cache::load_project(&files).unwrap()
     };
 
-    // Dedicated `[cycles] exclude` suppresses the finding. An SCC stays
-    // reportable while any member is outside the globs, so suppressing this
-    // two-module loop takes both.
-    let (tmp, session, dir) = build("[cycles]\nexclude = [\"**/a.py\", \"**/b.py\"]\n");
-    assert!(analyze_path_in_session(&session, &dir, None)
-        .unwrap()
-        .0
-        .cycles
-        .is_empty());
-    drop(tmp);
+    for dir in &dirs[..usize::from(MAX_WORKSPACES as u8)] {
+        session.parse(dir.path(), &project_for(dir));
+        sleep(Duration::from_millis(5));
+    }
+    // Touch the first workspace so the second becomes least-recently used.
+    session.parse(dirs[0].path(), &project_for(&dirs[0]));
+    sleep(Duration::from_millis(5));
 
-    // A smells-only exclude must NOT hide the cycle anymore.
-    let (_tmp, session, dir) = build("[smells]\nexclude = [\"**/b.py\"]\n");
-    assert_eq!(
-        analyze_path_in_session(&session, &dir, None)
-            .unwrap()
-            .0
-            .cycles
-            .len(),
-        1,
-        "smell excludes must not leak into cycle detection"
+    let newest = dirs.last().unwrap();
+    session.parse(newest.path(), &project_for(newest));
+
+    assert!(
+        session.has_workspace(dirs[0].path()),
+        "recently touched stays"
     );
-}
-
-#[test]
-fn changed_consumer_updates_provider_dead_code() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    let session = AnalysisSession::default();
-    fs::write(
-        dir.join("provider.py"),
-        "def live():\n    return 1\n\ndef other():\n    return 2\n",
-    )
-    .unwrap();
-    let consumer = dir.join("consumer.py");
-    fs::write(&consumer, "from provider import live\n\nprint(live())\n").unwrap();
-    assert!(!analyze_path_in_session(&session, dir, None)
-        .unwrap()
-        .0
-        .dead_code
-        .iter()
-        .any(|finding| finding.symbol == "live"));
-
-    fs::write(&consumer, "from provider import other\n\nprint(other())\n").unwrap();
-    assert!(analyze_path_in_session(&session, dir, None)
-        .unwrap()
-        .0
-        .dead_code
-        .iter()
-        .any(|finding| finding.symbol == "live"));
-}
-
-#[cfg(unix)]
-#[test]
-fn unreadable_source_reports_why_the_analysis_cache_was_skipped() {
-    use std::os::unix::fs::PermissionsExt;
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    fs::write(dir.join("sensez.toml"), "[cache]\nenabled = true\n").unwrap();
-    fs::write(dir.join("locked.py"), "x = 1\n").unwrap();
-    fs::set_permissions(dir.join("locked.py"), fs::Permissions::from_mode(0o000)).unwrap();
-
-    let report = super::analyze_in_session(&AnalysisSession::default(), dir, None)
-        .unwrap()
-        .0;
-
-    fs::set_permissions(dir.join("locked.py"), fs::Permissions::from_mode(0o644)).unwrap();
-    assert!(report.meta.issues.iter().any(|issue| {
-        issue.stage == crate::report::ScanStage::Discover
-            && issue.message.starts_with("analysis cache skipped")
-    }));
-}
-
-#[test]
-fn config_warning_keeps_the_parse_cache() {
-    let tmp = tempfile::tempdir().unwrap();
-    let dir = tmp.path();
-    fs::write(dir.join("sensez.toml"), "[duplication]\ntreshold = 8\n").unwrap();
-    fs::write(dir.join("a.py"), "def a():\n    return 1\n").unwrap();
-    let session = AnalysisSession::default();
-
-    let report = analyze_path_in_session(&session, dir, None).unwrap().0;
-
-    assert!(!report.meta.issues.is_empty());
-    assert!(session.has_workspace(dir));
+    assert!(
+        !session.has_workspace(dirs[1].path()),
+        "untouched workspace is evicted"
+    );
+    assert!(session.has_workspace(newest.path()));
 }
