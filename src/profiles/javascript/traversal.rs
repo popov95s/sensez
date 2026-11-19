@@ -1,7 +1,4 @@
-//! Pre-order JS/TS traversal: emits the genericized token stream + spans and
-//! extracts imports/declarations while tracking a lexical scope stack. Function
-//! metric collection is fused into this single walk — there is no second
-//! per-function body pass.
+//! Pre-order JS/TS traversal: tokens, spans, imports and declarations.
 
 use super::comment_runs::CommentRun;
 use super::typespace::TypeSpace;
@@ -14,8 +11,8 @@ use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, credit_string, declare, register_method, Scope,
 };
-use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
+use crate::spine::ir::{FileId, SymbolKind};
 use tree_sitter::Node;
 
 struct ActiveFn {
@@ -35,7 +32,7 @@ struct VisitCtx<'a, 'tree> {
 }
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
-pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+pub fn walk(root: Node, src: &[u8], file_id: FileId, module_name: &str) -> Walked {
     let mut out = Walked::default();
     let mut scope: Vec<Scope> = Vec::new();
     let mut fn_bounds: Vec<BoundNames> = Vec::new();
@@ -68,7 +65,7 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
 fn visit<'tree>(
     node: Node<'tree>,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     is_member_property: bool,
     space: TypeSpace,
@@ -77,7 +74,6 @@ fn visit<'tree>(
     let kind = node.kind_name();
     let parent = ctx.path.last().copied();
 
-    // ES imports / re-exports: extracted, not descended into.
     if imports::is_import_statement(kind) {
         let enclosing = ctx.scope.last().map(|s| s.name.as_str());
         let ctxs = imports::extract(node, src, module_name, enclosing);
@@ -88,8 +84,7 @@ fn visit<'tree>(
         }
     }
 
-    // CommonJS / dynamic `require("…")` / `import("…")`: record an edge, but
-    // keep emitting the call token so duplication still sees the call shape.
+    // Record the require/import edge but keep emitting the call token for duplication.
     if kind == "call_expression" {
         let enclosing = ctx.scope.last().map(|s| s.name.as_str());
         if let Some(ictx) = imports::require_import(node, src, module_name, enclosing) {
@@ -98,13 +93,10 @@ fn visit<'tree>(
         super::mock_targets::record(node, src, &mut ctx.out.units.mock_targets);
     }
 
-    // Directive prologues / bare string statements ("use strict") are not logic.
     if kind == "string" && parent.is_some_and(|p| p.kind_name() == "expression_statement") {
         return;
     }
 
-    // Comments never map to a structural token, so capturing their text for the
-    // eyez index cannot affect duplication.
     if kind == "comment" {
         #[cfg(feature = "eyez")]
         {
@@ -263,9 +255,7 @@ fn leading_function(node: Node, src: &[u8]) -> Option<String> {
     }
 }
 
-/// Per-unit structural summaries for the design-smell pillar. Function-metric
-/// collection is fused into the main traversal; this helper handles classes,
-/// variable declarators, and type aliases only.
+/// Per-unit structural summaries for the design-smell pillar.
 fn record_units(node: Node, src: &[u8], kind: &str, ctx: &mut VisitCtx) {
     if token_map::is_class(kind) {
         ctx.out

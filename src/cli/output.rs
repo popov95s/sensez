@@ -2,6 +2,7 @@
 
 use super::spec::ScanOptions;
 use crate::report::{self, AnalysisReport, Confidence, LimitPolicy, Pillar, SmellCap};
+use crate::reporter::Format;
 use std::io::{self, Write};
 
 const DEFAULT_PILLAR_TOP: usize = 5;
@@ -76,5 +77,13 @@ fn apply_pillar_filter(report: &mut AnalysisReport, options: &ScanOptions) {
     if !options.smells {
         report.smells.clear();
         report.meta.filtered_pillars.push(Pillar::Smells);
+    }
+}
+
+pub(super) fn format_for(json: bool) -> Format {
+    if json {
+        Format::Json
+    } else {
+        Format::Terminal
     }
 }

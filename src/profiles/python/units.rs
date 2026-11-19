@@ -1,6 +1,4 @@
 //! Per-function / per-class structural metrics for the design-smell pillar.
-//!
-//! Nested functions/lambdas get their own unit, so metrics do not double-count.
 
 use super::chains::CHAIN;
 use super::nesting::{cognitive_weight, is_branch, is_nesting};
@@ -61,7 +59,6 @@ impl<'u> Acc<'u> {
     /// Recurse a body node at block-nesting `depth`, accumulating metrics.
     fn visit(&mut self, node: Node, src: &[u8], depth: usize, frame: Option<usize>) {
         let kind = node.kind_name();
-        // Nested functions/lambdas get their own unit — do not descend.
         if control_shapes::is_function(kind) {
             self.unit.review_risks.test_has_nested_function = true;
             return;
@@ -132,8 +129,6 @@ impl<'u> Acc<'u> {
                         .receiver_access
                         .entry(base.to_string())
                         .or_insert(0) += 1;
-                    // Feed LCOM from this body walk instead of traversing each
-                    // method again later.
                     if base == "self" {
                         if let Some(attr) =
                             node.field("attribute").and_then(|a| a.utf8_text(src).ok())
@@ -231,7 +226,6 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
         properties: classunit::properties(class, src),
         ..Default::default()
     };
-    // An ABC/Protocol base makes the class itself abstract.
     unit.is_abstract = unit.bases.iter().any(|b| is_abstract_base(b));
 
     let Some(body) = class.field("body") else {
@@ -260,13 +254,10 @@ pub fn analyze_class(class: Node, src: &[u8]) -> ClassUnit {
         }
         unit.methods.push(name.clone());
         if let Some(mbody) = method.field("body") {
-            // A `@abstractmethod` stub is a correct declaration, not a refused bequest.
             if !is_abstract_method && is_stub_body(mbody, src) {
                 unit.overrides_to_stub.push(name.clone());
             }
         }
-        // `method_attr_use[name]` is filled by the post-walk join in `traversal`
-        // from each method's own `FunctionUnit.self_attrs` — no second body walk.
     }
     unit
 }
@@ -279,8 +270,7 @@ pub(super) fn is_abstract_base(base: &str) -> bool {
     )
 }
 
-/// A method body is a "stub" if its only real statement is `pass` or
-/// `raise NotImplementedError` (a leading docstring is ignored).
+/// A method body whose only statement is `pass` or `raise NotImplementedError`.
 fn is_stub_body(body: Node, src: &[u8]) -> bool {
     let mut cursor = body.walk();
     let mut stmts: Vec<Node> = body.named_children(&mut cursor).collect();

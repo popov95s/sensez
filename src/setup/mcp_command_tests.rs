@@ -1,5 +1,6 @@
 //! MCP launch command tests.
 
+use super::scope::InstallScope;
 use super::tests::temp_root;
 use super::*;
 use std::fs;

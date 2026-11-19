@@ -1,16 +1,12 @@
-//! Staleness: which carried-forward findings are old enough to suspect as
-//! probable false positives or accepted debt — the candidates for human
-//! triage.
+//! Staleness.
 
 use super::fingerprint::Aged;
 use std::collections::HashSet;
 
-/// Findings unresolved for this long are "stale": probable false positives or
-/// accepted debt — candidates for human triage.
+/// Findings unresolved for this long are "stale".
 pub const STALE_AFTER_SECS: u64 = 7 * 86_400;
 
-/// Untriaged stale findings, labeled for human review:
-/// `(pillar, fingerprint key, label, days unresolved)`.
+/// Untriaged stale findings, labeled for human review.
 pub fn stale_entries(
     aged: &Aged,
     now: u64,

@@ -1,8 +1,5 @@
-//! `type_escape_cast`: casts and suppressions that silence the type checker
-//! inside a function body. Signatures belong to `loose_typing`.
-
 use super::lines::{hit_lines, line_list};
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -70,10 +67,7 @@ fn finding(
         ctx.path,
         first,
         &m.name,
-        Severity::Info,
-        count as u32,
-        0,
-    );
+        Severity::Info, Measure::new(count, 0));
     Some(SmellFinding { lines, ..finding })
 }
 

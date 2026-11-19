@@ -3,6 +3,7 @@
 use super::test_support as fixture;
 use super::*;
 use crate::config::smells::{Smells, Strictness};
+use crate::report::{Severity, SmellFinding};
 
 /// Write `body` to a temp `.py` file, parse it, and run the local detectors.
 fn local(name: &str, body: &str, cfg: &Smells) -> Vec<SmellFinding> {
@@ -66,7 +67,6 @@ fn loose_typing_skips_domain_types_and_unannotated() {
     let cfg = Smells::default();
     let body = "def f(req: CreateUserRequest, x, n: int) -> UserModel:\n    return n\n";
     assert!(find(&local("lt_ok", body, &cfg), "loose_typing").is_none());
-    // Containers OF domain types and Literal annotations are typed, not loose.
     let typed = "def g(refs: list[CustomFileRef], mode: Literal[\"json\", \"xml\"]) -> dict[str, UserModel]:\n    return {}\n";
     assert!(find(&local("lt_dom", typed, &cfg), "loose_typing").is_none());
 }
@@ -103,7 +103,7 @@ fn magic_string_default_flags_conditional_fallbacks_too() {
 
 #[test]
 fn boolean_blindness_over_threshold_only() {
-    let cfg = Smells::default(); // max_bool_params = 2
+    let cfg = Smells::default();
     let two = "def f(a: bool, b: bool, x: str):\n    return x\n";
     assert!(find(&local("bb2", two, &cfg), "boolean_blindness").is_none());
     let three = "def f(a: bool, b: bool, c: bool):\n    return a\n";
@@ -113,7 +113,7 @@ fn boolean_blindness_over_threshold_only() {
 
 #[test]
 fn tuple_packing_flags_bare_and_annotated_returns() {
-    let cfg = Smells::default(); // max_tuple_return = 2
+    let cfg = Smells::default();
     let bare = "def f(x):\n    return x, x + 1, x + 2\n";
     let s = find(&local("tp_bare", bare, &cfg), "tuple_packing").expect("bare tuple");
     assert_eq!(s.metric, 3);
@@ -144,12 +144,9 @@ fn mutating_locals_or_self_is_fine() {
 
 #[test]
 fn param_attr_mutation_is_opt_in() {
-    // Mutating a parameter's attribute contents (`msg.kwargs[k]=v`,
-    // `msg.items.append(...)`) is caller-visible but only flagged when the
-    // stricter `param_attr_mutation` flag is on.
     let body = "def f(msg):\n    msg.additional_kwargs[\"k\"] = 1\n    msg.items.append(2)\n    return msg\n";
 
-    let off = Smells::default(); // param_attr_mutation = false
+    let off = Smells::default();
     assert!(
         find(&local("pam_off", body, &off), "mutated_parameter").is_none(),
         "attribute-deep mutation must NOT flag by default"
@@ -166,8 +163,6 @@ fn param_attr_mutation_is_opt_in() {
 
 #[test]
 fn param_attr_mutation_still_spares_self_and_locals() {
-    // Even with the strict flag on, `self.cache.update()` (own state) and a
-    // local's attribute mutation must not flag — only parameters do.
     let on = Smells {
         param_attr_mutation: true,
         ..Smells::default()
@@ -190,14 +185,12 @@ fn reassigned_parameter_is_opt_in() {
 
 #[test]
 fn implicit_schema_needs_distinct_keys_and_dictish_type() {
-    let cfg = Smells::default(); // implicit_schema_min_keys = 4
+    let cfg = Smells::default();
     let body = "def f(cfg):\n    a = cfg[\"host\"]\n    b = cfg[\"port\"]\n    c = cfg[\"user\"]\n    d = cfg[\"pass\"]\n    return a, b\n";
     let s = find(&local("is4", body, &cfg), "implicit_schema").expect("4 keys must flag");
     assert_eq!(s.metric, 4);
-    // Same keys but receiver annotated as a DataFrame → typed, skipped.
     let typed = "def f(cfg: DataFrame):\n    a = cfg[\"host\"]\n    b = cfg[\"port\"]\n    c = cfg[\"user\"]\n    d = cfg[\"pass\"]\n    return a\n";
     assert!(find(&local("is_df", typed, &cfg), "implicit_schema").is_none());
-    // Repeated access to ONE key is not a schema.
     let one =
         "def f(cfg):\n    return cfg[\"host\"] + cfg[\"host\"] + cfg[\"host\"] + cfg[\"host\"]\n";
     assert!(find(&local("is1", one, &cfg), "implicit_schema").is_none());
@@ -209,7 +202,6 @@ fn literal_membership_flags_string_lists_only() {
     let body = "def f(role):\n    if role in [\"admin\", \"super_user\"]:\n        return True\n    return False\n";
     let s = find(&local("lm", body, &cfg), "literal_membership").expect("must flag");
     assert_eq!(s.metric, 1);
-    // Membership in a variable or non-string list is fine.
     let ok = "def f(x, allowed):\n    return x in allowed or x in [1, 2, 3]\n";
     assert!(find(&local("lm_ok", ok, &cfg), "literal_membership").is_none());
 }
@@ -220,7 +212,6 @@ fn heavy_nested_function_flagged_but_thin_wrappers_pass() {
         max_nested_function_lines: 5,
         ..Smells::default()
     };
-    // A nested def with real logic must flag, attributed to its parent.
     let heavy = format!(
         "def outer(items):\n    def process(batch):\n{}        return batch\n    return process(items)\n",
         "        batch = transform(batch)\n".repeat(8)
@@ -229,7 +220,6 @@ fn heavy_nested_function_flagged_but_thin_wrappers_pass() {
     assert_eq!(s.symbol, "process");
     assert!(s.message.contains("`outer`"), "{}", s.message);
     assert!(s.message.contains("unit-tested"), "{}", s.message);
-    // A thin closure stays silent; so does a method on a class (not nested).
     let thin = "def outer(x):\n    def add(y):\n        return x + y\n    return add\n";
     assert!(find(&local("hn_thin", thin, &cfg), "heavy_nested_function").is_none());
     let method = format!(
@@ -237,7 +227,6 @@ fn heavy_nested_function_flagged_but_thin_wrappers_pass() {
         "        x = 1\n".repeat(8)
     );
     assert!(find(&local("hn_method", &method, &cfg), "heavy_nested_function").is_none());
-    // 0 disables the detector entirely.
     let off = Smells {
         max_nested_function_lines: 0,
         ..Smells::default()

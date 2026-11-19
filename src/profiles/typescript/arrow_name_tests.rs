@@ -4,6 +4,7 @@ use super::tests::findings_for;
 use super::TsProfile;
 use crate::config::smells::Smells;
 use crate::report::SmellKind;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_source;
 
 #[test]
@@ -55,7 +56,7 @@ fn same_named_methods_keep_their_own_param_types() {
 #[test]
 fn callback_arrows_are_named_after_their_call_site() {
     let src = b"describe(\"rows\", () => {\n  it(\"adds rows\", () => {});\n  it(\"drops rows\", () => {});\n  items.forEach((x) => x);\n});\n";
-    let names: Vec<_> = parse_source(src, 0, "m", &TsProfile)
+    let names: Vec<_> = parse_source(src, FileId::default(), "m", &TsProfile)
         .unwrap()
         .units
         .functions
@@ -74,7 +75,7 @@ fn callback_arrows_are_named_after_their_call_site() {
 }
 
 fn function_names(src: &[u8]) -> Vec<String> {
-    parse_source(src, 0, "m", &TsProfile)
+    parse_source(src, FileId::default(), "m", &TsProfile)
         .unwrap()
         .units
         .functions

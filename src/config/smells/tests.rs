@@ -1,13 +1,11 @@
-//! Per-language smell configuration: built-in defaults differ per language, and
-//! `[smells]` base keys + `[smells.<lang>]` tables overlay on top.
+//! Per-language smell configuration.
 
 use super::SmellConfig;
 use crate::config::smells::Strictness;
 use crate::report::{ActionLevel, SmellKind};
 use crate::spine::ir::Language;
 
-/// The built-in defaults differ: TS enables `large_class` and disables the
-/// ESLint/SonarJS-owned always-on smells; Python keeps the bare baseline.
+/// The built-in defaults differ.
 #[test]
 fn defaults_differ_per_language() {
     let cfg = SmellConfig::default();
@@ -33,7 +31,6 @@ fn defaults_differ_per_language() {
     assert!(ts.disabled.contains(&SmellKind::NPlusOneCall));
     assert!(ts.disabled.contains(&SmellKind::DefensiveFallback));
     assert!(ts.disabled.contains(&SmellKind::RedundantValidation));
-    // JavaScript shares the TS default.
     assert!(cfg
         .for_language(Language::JavaScript)
         .disabled
@@ -48,8 +45,7 @@ fn defaults_differ_per_language() {
         .contains(&SmellKind::NestedTernary));
 }
 
-/// A `[smells.<lang>]` table overrides only the keys it names; the rest keep the
-/// language default. A base `[smells]` knob applies to every language.
+/// A `[smells.<lang>]` table overrides only the keys it names.
 #[test]
 fn overlays_merge_onto_language_default() {
     let cfg: SmellConfig = toml::from_str(
@@ -65,15 +61,12 @@ fn overlays_merge_onto_language_default() {
     .unwrap();
 
     let ts = cfg.for_language(Language::TypeScript);
-    // Per-language override applied.
     assert_eq!(ts.max_cyclomatic, 12);
     assert_eq!(ts.disabled, vec![SmellKind::FeatureEnvy]);
-    // Unspecified TS-default knob is preserved through the merge.
     assert!(
         ts.large_class,
         "TS default large_class survives a partial table"
     );
-    // Base `[smells]` knob reaches every language.
     assert!(!ts.loose_typing, "base override reaches TypeScript");
     assert!(
         !cfg.for_language(Language::Python).loose_typing,

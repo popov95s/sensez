@@ -1,7 +1,7 @@
 //! `loose_typing` on class fields: `private store: any`, `meta: dict[str, Any]`.
 
 use super::typing::reportable_loose;
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::typevocab::LooseTypeKind;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -48,8 +48,7 @@ pub(super) fn detect(
             first.line,
             &class.name,
             severity,
-            loose.len() as u32,
-            0,
+            Measure::new(loose.len(), 0),
         ));
     }
 }

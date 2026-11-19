@@ -162,7 +162,8 @@ fn duplication_skips_test_and_generated_copies() {
     );
     assert_eq!(report.meta.duplication_skipped.tests, 3);
     assert_eq!(report.meta.duplication_skipped.generated, 3);
-    assert!(reporter::render(&report, false).contains("skipped 3 test, 3 generated"));
+    assert!(reporter::render(&report, reporter::Glossary::Hidden)
+        .contains("skipped 3 test, 3 generated"));
 
     write(
         dir,

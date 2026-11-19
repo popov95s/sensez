@@ -1,5 +1,4 @@
-//! Records how the MCP server is used and how often its findings lead to real
-//! fixes. Everything stays on disk under each repo's `.sensez/local-metrics/`.
+//! Records how the MCP server is used and how often its findings lead to real fixes.
 
 mod aging;
 mod events;
@@ -7,6 +6,7 @@ pub(crate) mod file_lock;
 mod fingerprint;
 mod flush;
 mod gate_memory;
+mod hooks;
 mod hub;
 mod json_file;
 mod ranking;
@@ -26,21 +26,13 @@ mod verdict;
 pub use events::Origin;
 pub use flush::flush;
 pub use gate_memory::{finding_identities, retain_unseen_gate_findings};
+pub(crate) use hooks::observe_source_state;
+pub use hooks::recapture;
 pub use ranking::{rank_by_precision, regressions};
 #[cfg(feature = "eyez")]
 pub use recording::record_search;
 pub use recording::{record_gate_block, record_scan, triage_finding};
 
-pub(crate) fn observe_source_state(
-    root: &std::path::Path,
-    state: crate::source_state::SourceState,
-) {
-    hub::observe_source_state(root, state);
-}
 pub use suppression::apply_suppressions;
 pub use usage::usage_report;
 pub use verdict::{TriageVerdict, VERDICTS};
-
-pub fn recapture() {
-    recapture::run();
-}

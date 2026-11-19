@@ -1,16 +1,12 @@
 //! Language-neutral import data model (populated by each language's walker).
 
-/// Context for a single resolved import target.
-///
-/// `import a, b` yields two `ImportContext`s; `from x import a, b` yields one
-/// with `imported_symbols = ["a", "b"]`.
+/// One resolved import target; `import a, b` yields two contexts.
 #[derive(Debug, Clone, serde::Serialize, serde::Deserialize)]
 pub struct ImportContext {
     pub source_module: String,
     pub target_module: String,
     pub imported_symbols: Vec<String>,
-    /// Local names this import binds into the file (alias-aware). Used for
-    /// unused-import detection. `import a.b` binds `a`; `x as y` binds `y`.
+    /// Local names this import binds (alias-aware): `import a.b` binds `a`.
     pub bindings: Vec<String>,
     /// Per-binding phase, in the same order and with the same length as `bindings`.
     pub binding_phases: Vec<ImportPhase>,
@@ -19,10 +15,7 @@ pub struct ImportContext {
     pub phase: ImportPhase,
     /// True if found inside a function/class body (not at module top level).
     pub is_inline: bool,
-    /// True for a module-hierarchy declaration (Rust `mod x;`): containment,
-    /// not coupling. Counts as usage (the child is reachable) but is excluded
-    /// from cycle detection — parent declares child + child uses `super::` is
-    /// the idiomatic Rust layout, not a circular dependency.
+    /// Rust `mod x;` declaration: containment, not coupling, so excluded from cycle detection.
     pub is_module_decl: bool,
     /// True for a re-export (`export { x } from "./y"`): forwards names, binds none locally.
     #[serde(default)]

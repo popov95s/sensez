@@ -1,10 +1,4 @@
 //! Language-neutral mechanics shared by type-vocabulary profiles.
-//!
-//! Language-specific annotation names and classifications belong exclusively
-//! to each language's `typevocab` module and are exposed through
-//! [`super::TypeVocabularyProfile`].
-
-// ---- shared lexical helpers (used by every language's vocab) ----------------
 
 /// `ch` continues an identifier: alphanumeric, `_`, or one of the language's `extra` characters.
 pub(crate) fn is_ident_char(ch: char, extra: &[char]) -> bool {
@@ -44,9 +38,7 @@ pub(crate) fn split_top_level(text: &str, sep: char) -> Vec<&str> {
     parts
 }
 
-/// Base name of an annotation: `dict[str, Any]` → `dict`,
-/// `Record<string, any>` → `Record`, `any[]` → `any`. Splits on the first
-/// generic/subscript bracket (`[` or `<`) so both syntaxes work.
+/// Base name of an annotation: `dict[str, Any]` gives `dict`.
 pub fn base_type(annotation: &str) -> &str {
     annotation
         .split(['[', '<'])
@@ -62,8 +54,7 @@ pub(crate) fn idents(annotation: &str) -> impl Iterator<Item = &str> {
         .filter(|t| !t.is_empty())
 }
 
-/// Any capitalized identifier that isn't a known container/builtin name — i.e. a
-/// dataclass/model/interface appears somewhere in the annotation.
+/// A capitalized identifier that is not a known container or builtin name.
 pub(crate) fn has_domain_type(annotation: &str, builtins: &[&str]) -> bool {
     idents(annotation)
         .any(|t| t.chars().next().is_some_and(char::is_uppercase) && !builtins.contains(&t))
@@ -102,20 +93,5 @@ pub(crate) fn is_nominal(annotation: &str, extra_chars: &[char]) -> bool {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn arrow_inside_generic_does_not_close_a_bracket() {
-        assert_eq!(
-            split_top_level("Foo<A<() => B, C>>, D", ','),
-            vec!["Foo<A<() => B, C>>", "D"]
-        );
-    }
-
-    #[test]
-    fn union_inside_generic_stays_nominal() {
-        assert!(is_nominal_ignoring("Repo<A | B> | null", &["null"], &[]));
-        assert!(!is_nominal("A | B", &[]));
-    }
-}
+#[path = "typevocab_tests.rs"]
+mod tests;

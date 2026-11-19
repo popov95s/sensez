@@ -1,15 +1,10 @@
-//! `eyez`-only: capture Python docstrings + comments during the walk into
-//! [`Walked::docs`](crate::spine::parser::Walked). This module reads node text only; it
-//! never writes to the structural `tokens`/`lexemes`/`spans` the duplication
-//! pillar consumes, so it cannot affect clone detection.
+//! `eyez`-only: capture Python docstrings and comments into [`Walked::docs`](crate::spine::parser::Walked).
 
 use crate::eyez::{DocKind, RawDoc};
 use crate::spine::ir::Walked;
 use tree_sitter::Node;
 
-/// True when a bare `string`/`concatenated_string` (whose parent is an
-/// `expression_statement`) sits in docstring position: the first statement of its
-/// enclosing module/class/function body. Leading comments are allowed before it.
+/// True when a bare string statement sits in docstring position.
 pub fn is_docstring(string_node: Node) -> bool {
     let Some(stmt) = string_node.parent() else {
         return false;

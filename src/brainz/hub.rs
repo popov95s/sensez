@@ -13,8 +13,7 @@ pub(super) struct Baseline {
     pub ts: u64,
     pub ms: u64,
     pub threshold: Option<usize>,
-    /// Branch the baseline was taken on. Recapture skips when the working tree
-    /// has since switched branches (the re-scan would reflect different code).
+    /// Branch the baseline was taken on.
     pub branch: String,
     pub source_state: Option<SourceState>,
 }

@@ -1,19 +1,19 @@
 //! Tests for the Python traversal/import extraction (kept out of `traversal.rs`
-//! to respect the per-file line limit).
 
 use super::super::PythonProfile;
 use crate::profiles::test_fixtures::{tokens, walked};
-use crate::spine::parser::{parse_source, StructuralToken};
+use crate::spine::ir::FileId;
+use crate::spine::ir::StructuralToken;
+use crate::spine::parser::parse_source;
 
 fn imports(src: &[u8]) -> Vec<crate::spine::parser::ImportContext> {
-    parse_source(src, 0, "m", &super::super::PythonProfile)
+    parse_source(src, FileId::default(), "m", &super::super::PythonProfile)
         .unwrap()
         .symbols
         .imports
 }
 
-/// Two functions with identical control structure but entirely different
-/// identifier/literal names produce identical token vectors.
+/// Functions with identical control structure but different names produce identical tokens.
 #[test]
 fn rename_invariance_yields_identical_tokens() {
     let a = b"def compute(items):\n    total = 0\n    for item in items:\n        if item > 10:\n            total = total + item\n    return total\n";
@@ -83,11 +83,7 @@ fn nested_inline_import_uses_nearest_scope() {
     assert_eq!(json.line, 3);
 }
 
-/// REGRESSION GUARD for the duplication pillar: docstrings and comments must
-/// never enter the structural token/lexeme stream (clone detection ignores
-/// them). The same function with vs without a docstring + comment must yield
-/// identical `tokens` and `lexemes`. If a future change let a docstring fall
-/// through to `map_kind`, this fails — exactly the regression we must prevent.
+/// Docstrings and comments never enter the token or lexeme stream.
 #[test]
 fn docstrings_and_comments_never_enter_token_or_lexeme_stream() {
     let with_docs =
@@ -111,8 +107,7 @@ fn docstrings_and_comments_never_enter_token_or_lexeme_stream() {
     );
 }
 
-/// Under `eyez`, docstrings + comments are captured into `Walked.docs` and
-/// mapped to their fully-qualified symbol paths — without disturbing the above.
+/// Under `eyez`, docstrings and comments are captured into `Walked.docs`.
 #[cfg(feature = "eyez")]
 #[test]
 fn captures_docs_with_qualified_symbol_paths() {

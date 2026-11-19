@@ -1,5 +1,4 @@
-//! TS type positions for duplication lexemes: inline annotations are dropped so
-//! a typed copy matches its JS twin; declared types get their own code space.
+//! TS type positions for duplication lexemes.
 
 use crate::profiles::lexeme as shared;
 use crate::profiles::node_names::NodeNames;

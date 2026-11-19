@@ -16,8 +16,6 @@ extern "C" {
 }
 
 fn main() -> std::process::ExitCode {
-    // With the default delayed purge a long-lived server kept a scan's freed pages.
-    // tree-sitter's C core allocates through libc malloc unless told otherwise; set before any parse.
     #[cfg(not(windows))]
     unsafe {
         mi_option_set(MI_OPTION_PURGE_DELAY, 0);

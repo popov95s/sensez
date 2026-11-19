@@ -1,5 +1,4 @@
-//! A minimal async JSON-RPC 2.0 server speaking the Model Context Protocol over
-//! newline-delimited stdio.
+//! A minimal async JSON-RPC 2.0 MCP server over newline-delimited stdio.
 
 mod agent_scope;
 mod compact;

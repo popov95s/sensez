@@ -1,8 +1,4 @@
 //! Profile registry + extension-based dispatch.
-//!
-//! `PROFILES` is assembled at compile time from whichever language features are
-//! enabled. The default build enables every supported profile; smaller builds
-//! can opt into individual language features.
 
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{
@@ -59,14 +55,34 @@ pub fn is_declaration_only(path: &Path) -> bool {
 }
 
 fn profile(language: Language) -> &'static dyn LanguageProfile {
-    match PROFILES
-        .iter()
-        .copied()
-        .find(|p| ParseProfile::info(*p).language == language)
-    {
-        Some(profile) => profile,
-        None => panic!("missing compiled-in profile for {language:?}"),
+    match language {
+        #[cfg(feature = "lang-python")]
+        Language::Python => &crate::profiles::python::PythonProfile,
+        #[cfg(not(feature = "lang-python"))]
+        Language::Python => not_compiled(language),
+        #[cfg(feature = "lang-javascript")]
+        Language::JavaScript => &crate::profiles::javascript::JsProfile,
+        #[cfg(not(feature = "lang-javascript"))]
+        Language::JavaScript => not_compiled(language),
+        #[cfg(feature = "lang-typescript")]
+        Language::TypeScript => &crate::profiles::typescript::TsProfile,
+        #[cfg(not(feature = "lang-typescript"))]
+        Language::TypeScript => not_compiled(language),
+        #[cfg(feature = "lang-rust")]
+        Language::Rust => &crate::profiles::rust::RustProfile,
+        #[cfg(not(feature = "lang-rust"))]
+        Language::Rust => not_compiled(language),
     }
+}
+
+#[cfg(not(all(
+    feature = "lang-python",
+    feature = "lang-javascript",
+    feature = "lang-typescript",
+    feature = "lang-rust"
+)))]
+fn not_compiled(language: Language) -> ! {
+    panic!("{language:?} profile is not compiled into this build")
 }
 
 pub fn module_profile(language: Language) -> &'static dyn ModuleProfile {
@@ -206,90 +222,8 @@ fn globs_by_language(
         feature = "lang-typescript"
     )
 ))]
-mod tests {
-    use super::{is_test_source, Language};
-    use std::path::Path;
-
-    #[test]
-    fn test_sources_follow_the_owning_profiles() {
-        #[cfg(feature = "lang-python")]
-        {
-            assert!(is_test_source(
-                Language::Python,
-                Path::new("tests/test_api.py")
-            ));
-            assert!(is_test_source(
-                Language::Python,
-                Path::new("src/api_test.py")
-            ));
-            assert!(!is_test_source(
-                Language::Python,
-                Path::new("src/api.test.py")
-            ));
-        }
-        #[cfg(feature = "lang-javascript")]
-        {
-            assert!(is_test_source(
-                Language::JavaScript,
-                Path::new("src/api.test.js")
-            ));
-            assert!(is_test_source(
-                Language::JavaScript,
-                Path::new("src/api.spec.jsx")
-            ));
-        }
-        #[cfg(feature = "lang-typescript")]
-        {
-            assert!(is_test_source(
-                Language::TypeScript,
-                Path::new("src/api.spec.tsx")
-            ));
-            assert!(is_test_source(
-                Language::TypeScript,
-                Path::new("__tests__/api.ts")
-            ));
-            assert!(is_test_source(
-                Language::TypeScript,
-                Path::new("src/api.test.mts")
-            ));
-            assert!(is_test_source(
-                Language::TypeScript,
-                Path::new("src/api.spec.cts")
-            ));
-            assert!(!is_test_source(
-                Language::TypeScript,
-                Path::new("src/test_api.ts")
-            ));
-        }
-    }
-
-    #[cfg(feature = "lang-typescript")]
-    #[test]
-    fn test_support_layouts_are_test_code_but_not_test_sources() {
-        use super::is_test_or_support_source;
-        for path in [
-            "src/__mocks__/api.ts",
-            "src/__fixtures__/user.ts",
-            "e2e/login.ts",
-            "src/test-utils/render.tsx",
-            "src/Button.stories.tsx",
-        ] {
-            assert!(is_test_or_support_source(
-                Language::TypeScript,
-                Path::new(path)
-            ));
-            assert!(!is_test_source(Language::TypeScript, Path::new(path)));
-        }
-        assert!(is_test_or_support_source(
-            Language::TypeScript,
-            Path::new("src/a.test.ts")
-        ));
-        assert!(!is_test_or_support_source(
-            Language::TypeScript,
-            Path::new("src/lib/testing-utils.ts")
-        ));
-    }
-}
+#[path = "registry_tests.rs"]
+mod tests;
 
 /// Grammars of every compiled-in profile.
 pub(crate) fn grammars() -> impl Iterator<Item = tree_sitter::Language> {

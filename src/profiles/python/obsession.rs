@@ -1,6 +1,4 @@
-//! Per-node recorders for the type/mutation-discipline smells, called from the
-//! single body walk in [`super::units`] (no second traversal). Collects raw
-//! structure only — thresholds and severity live in `noze::smells`.
+//! Per-node recorders for the type and mutation smells.
 
 use super::fallback_sink::fallback_sink;
 use super::membership;
@@ -183,8 +181,7 @@ fn attribute_name<'a>(attribute: Node, src: &'a [u8]) -> Option<&'a str> {
         .and_then(|name| name.utf8_text(src).ok())
 }
 
-/// `value if value else "?"` or `"?" if value is None else value` — Python leaves
-/// the branches unnamed, but the grammar fixes them as then, condition, otherwise.
+/// `value if value else "?"` or `"?" if value is None else value`.
 fn record_conditional_fallback(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     let (Some(then), Some(condition), Some(otherwise)) = (
         node.named_child(0),
@@ -277,18 +274,14 @@ fn record_mutating_call(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     }
 }
 
-/// Record a subscript-assign / `del` target. Only subscript targets count
-/// (`d[k]=v`, `m.x[k]=v`), never a bare name (`x = ...` is reassignment, not
-/// mutation). Routes to the direct vs attribute-deep set by whether the path
-/// to the root identifier crossed an attribute.
+/// Record a subscript-assign or `del` target.
 fn record_subscript_target(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     if node.kind_name() == "subscript" {
         record_root(unit, node, src);
     }
 }
 
-/// Resolve `node` to its root identifier (via [`target_root`]) and record it as
-/// a direct or attribute-deep mutation. See [`walk::record_mutation_root`].
+/// Resolve `node` to its root identifier and record it as a direct or attribute-deep mutation.
 fn record_root(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     walk::record_mutation_root(unit, node, src, target_root);
 }

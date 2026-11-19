@@ -1,6 +1,4 @@
-//! Python type-annotation vocabulary for the type-discipline smells. Shared
-//! lexical helpers live in [`crate::profiles::typevocab`]; this module owns only
-//! Python's conventions (`dict[str, Any]`, `Optional[...]`, `Literal`, ...).
+//! Python type-annotation vocabulary for the type-discipline smells.
 
 use crate::profiles::node_names::NodeNames;
 use crate::profiles::typevocab::{
@@ -10,9 +8,6 @@ use crate::spine::ir::MutatorFamily;
 use tree_sitter::Node;
 
 /// Annotation bases that are loose collections (a missing domain type).
-/// Sets are included: `set[int]` / `set[str]` is the same "collection of bare
-/// primitives" smell as `list[int]` — `set[UserModel]` is spared by the
-/// domain-type check, exactly like the other containers.
 const LOOSE_BASES: [&str; 12] = [
     "dict",
     "Dict",
@@ -29,7 +24,6 @@ const LOOSE_BASES: [&str; 12] = [
 ];
 
 /// Typing-module names that are containers/wrappers, not domain types.
-/// `Literal` is deliberately absent: a `Literal` annotation is disciplined.
 const TYPING_NAMES: [&str; 16] = [
     "Dict",
     "List",
@@ -68,8 +62,7 @@ pub(crate) fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
     primitive_collection.then_some(LooseTypeKind::PrimitiveCollection)
 }
 
-/// `list[str]` / `dict[str, Any]` / `set[int]` are loose; `list[UserModel]` /
-/// `Literal["json", "xml"]` are typed and never match.
+/// Loose collection annotations match; typed ones never do.
 #[cfg(test)]
 pub(crate) fn is_loose(annotation: &str) -> bool {
     loose_kind(annotation).is_some()
@@ -180,34 +173,5 @@ fn mapping_kind(annotation: &str) -> Option<LooseTypeKind> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn qualified_optional_is_unwrapped_before_the_nominal_check() {
-        assert!(is_nominal_type("typing.Optional[Order]"));
-        assert!(!is_nominal_type("typing.Optional[Order | Invoice]"));
-    }
-
-    #[test]
-    fn sets_of_primitives_are_loose_but_sets_of_domain_types_are_not() {
-        assert!(is_loose("set[int]"));
-        assert!(is_loose("set[str]"));
-        assert!(is_loose("Set[int]"));
-        assert!(is_loose("frozenset[str]"));
-        assert!(is_loose("Optional[set[int]]"));
-        assert!(!is_loose("set[UserModel]"));
-        // Parity with the existing containers stays intact.
-        assert!(is_loose("list[int]"));
-        assert!(!is_loose("list[UserModel]"));
-        assert!(!is_loose("Literal[\"json\", \"xml\"]"));
-    }
-
-    #[test]
-    fn bool_and_dictish() {
-        assert!(is_bool("bool"));
-        assert!(!is_bool("boolean"));
-        assert!(is_dictish("dict[str, int]"));
-        assert!(!is_dictish("DataFrame"));
-    }
-}
+#[path = "typevocab_tests.rs"]
+mod tests;

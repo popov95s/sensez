@@ -1,4 +1,5 @@
 use crate::report::CloneClass;
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, ParsedFile};
 use std::fs;
 
@@ -11,7 +12,7 @@ pub(crate) fn write_files(dir: &std::path::Path, files: &[(&str, &str)]) -> Vec<
     files
         .iter()
         .enumerate()
-        .map(|(i, (name, _))| parse_file(&dir.join(name), i as u32).unwrap())
+        .map(|(i, (name, _))| parse_file(&dir.join(name), FileId::from_index(i)).unwrap())
         .collect()
 }
 

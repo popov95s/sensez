@@ -215,9 +215,7 @@ fn diff_scan_refreshes_metrics_baseline() {
         .exists());
 }
 
-/// `noze_sniff` must land a Scan event in brainz with the report's
-/// detector counts. Without this, the precision/fix reintroduction signals
-/// would be starved of their numerator.
+/// `noze_sniff` records a Scan event with the report's detector counts.
 #[test]
 fn noze_sniff_populates_reported_counts() {
     let _metrics = crate::test_support::metrics_guard();
@@ -252,10 +250,7 @@ fn noze_sniff_populates_reported_counts() {
     );
 }
 
-/// `noze_gate` must also record a Scan event (the gate sees the
-/// same findings the tool would) and a GateBlock event when it
-/// blocks. A regression that drops either would silently zero out
-/// the gate-funnel / conversion signals.
+/// `noze_gate` records a Scan event, and a GateBlock event when it blocks.
 #[test]
 fn noze_gate_populates_scan_and_block_metrics() {
     let _metrics = crate::test_support::metrics_guard();
@@ -291,17 +286,13 @@ fn noze_gate_populates_scan_and_block_metrics() {
     );
 }
 
-/// When the gate allows because there is nothing to nag about
-/// (no diff vs. head), the gate short-circuits before the scan
-/// runs. The metrics counters stay at zero — fingerprinting
-/// something identical to the last scan would be wasted I/O.
+/// The gate allows without scanning when there is no diff vs. head.
 #[test]
 fn noze_gate_skips_scan_when_nothing_changed() {
     let _metrics = crate::test_support::metrics_guard();
     let Some(repo) = fresh_repo("added.py") else {
         return;
     };
-    // No edits — the gate will allow.
 
     let resp = call_tool("noze_gate", json!({"path": repo.path}));
     assert_eq!(resp["isError"], false);

@@ -2,10 +2,15 @@
 
 #[cfg(feature = "mcp")]
 mod brainz;
+#[cfg(feature = "eyez")]
+mod eyez;
 pub(crate) mod output;
 pub(crate) mod spec;
 
 use crate::diff::ChangedLines;
+#[cfg(feature = "eyez")]
+use crate::eyez::{Rebuild, Warmup};
+use crate::reporter::Glossary;
 use anyhow::{Context, Result};
 use clap::Parser;
 use spec::{Cli, Command, FailOnNewLevel, NozeAction, NozeArgs, ScanOptions};
@@ -49,10 +54,11 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
         },
         #[cfg(feature = "mcp")]
         Some(Command::Brainz(args)) => match args.action {
-            spec::BrainzAction::Report { path, json } => {
-                brainz::run_report(&path.unwrap_or_else(|| PathBuf::from(".")), json)
-                    .map(|()| ExitCode::SUCCESS)
-            }
+            spec::BrainzAction::Report { path, json } => brainz::run_report(
+                &path.unwrap_or_else(|| PathBuf::from(".")),
+                output::format_for(json),
+            )
+            .map(|()| ExitCode::SUCCESS),
         },
         #[cfg(feature = "eyez")]
         Some(Command::Eyez(args)) => match args.action {
@@ -62,14 +68,27 @@ fn run_inner(cli: Cli) -> Result<ExitCode> {
                     [query] => (PathBuf::from("."), query.as_str()),
                     _ => anyhow::bail!("eyez search takes [PATH] QUERY"),
                 };
-                run_search(&path, query, top_k, json).map(|()| ExitCode::SUCCESS)
+                eyez::run_search(&path, query, top_k, output::format_for(json))
+                    .map(|()| ExitCode::SUCCESS)
             }
             spec::EyezAction::Reindex {
                 path,
                 force,
                 semantic,
-            } => run_reindex(&path.unwrap_or_else(|| PathBuf::from(".")), force, semantic)
-                .map(|()| ExitCode::SUCCESS),
+            } => {
+                let rebuild = if force {
+                    Rebuild::Full
+                } else {
+                    Rebuild::Incremental
+                };
+                let warmup = if semantic {
+                    Warmup::SemanticDuplication
+                } else {
+                    Warmup::Skip
+                };
+                eyez::run_reindex(&path.unwrap_or_else(|| PathBuf::from(".")), rebuild, warmup)
+                    .map(|()| ExitCode::SUCCESS)
+            }
         },
         None => {
             let path = cli.path.unwrap_or_else(|| PathBuf::from("."));
@@ -104,44 +123,6 @@ fn serve_mcp() -> Result<ExitCode> {
         .context("starting tokio runtime")?
         .block_on(crate::mcp::serve())
         .map(|()| ExitCode::SUCCESS)
-}
-
-#[cfg(feature = "eyez")]
-fn run_reindex(path: &Path, force: bool, semantic: bool) -> Result<()> {
-    let report = crate::eyez::reindex(path, force, semantic)?;
-    output::print_line(&format!(
-        "Indexed {} doc/comment item(s).{}",
-        report.docs,
-        if report.semantic_warmed {
-            " Semantic duplication cache warmed."
-        } else {
-            ""
-        }
-    ))?;
-    Ok(())
-}
-
-/// Build/refresh the eyez index for `path` and print the top hits for `query`.
-#[cfg(feature = "eyez")]
-fn run_search(path: &Path, query: &str, top_k: std::num::NonZeroUsize, json: bool) -> Result<()> {
-    let index = crate::eyez::Index::open(path)?;
-    let hits = index.search(query, top_k);
-    if json {
-        output::print_line(&serde_json::to_string_pretty(&hits)?)?;
-    } else if hits.is_empty() {
-        output::print_line(&format!(
-            "No indexed documentation matched (index size: {}).",
-            index.len()
-        ))?;
-    } else {
-        for hit in &hits {
-            output::print_line(&format!(
-                "{:.3}  {}:{}  {}  [{:?}]\n        {}",
-                hit.score, hit.file, hit.line, hit.symbol_path, hit.kind, hit.text
-            ))?;
-        }
-    }
-    Ok(())
 }
 
 /// Print the plain-English definition of one finding category, or all of them.
@@ -241,7 +222,12 @@ fn render_report(report: &crate::report::AnalysisReport, options: &ScanOptions) 
     if options.json {
         return crate::reporter::to_json(report, crate::reporter::ScanDiagnostics::from_env());
     }
-    Ok(crate::reporter::render(report, options.explain))
+    let glossary = if options.explain {
+        Glossary::Shown
+    } else {
+        Glossary::Hidden
+    };
+    Ok(crate::reporter::render(report, glossary))
 }
 
 /// A gated run fails when an analyzer was skipped, instead of passing on partial results.
@@ -325,14 +311,20 @@ fn build_diff(path: &Path, diff: bool, diff_from: Option<&str>) -> Result<Option
     Ok(Some(ChangedLines::from_unified(&text, path)))
 }
 #[cfg(test)]
+#[path = "cli_gate_filter_tests.rs"]
 mod gate_filter_tests;
 #[cfg(test)]
+#[path = "cli_gate_tests.rs"]
 mod gate_tests;
 #[cfg(test)]
+#[path = "cli_parse_tests.rs"]
 mod parse_tests;
 #[cfg(test)]
+#[path = "cli_reflexez_tests.rs"]
 mod reflexez_tests;
 #[cfg(test)]
+#[path = "cli_summary_tests.rs"]
 mod summary_tests;
 #[cfg(test)]
+#[path = "cli_tests.rs"]
 mod tests;

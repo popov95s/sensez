@@ -1,6 +1,6 @@
 //! Shipped Stub: a production function whose body only defers its work.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionUnit, StubBody};
@@ -35,8 +35,7 @@ pub(super) fn detect(
             unit.start_line,
             &unit.name,
             Severity::Warning,
-            1,
-            0,
+            Measure::new(1, 0),
         ));
     }
 }

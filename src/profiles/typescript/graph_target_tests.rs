@@ -1,3 +1,4 @@
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use crate::test_support::write;
 use petgraph::visit::EdgeRef;
@@ -9,7 +10,7 @@ fn internal_targets(root: &Path, files: &[(&str, &str)], importer: &str) -> Vec<
         .iter()
         .enumerate()
         .filter(|(_, (path, _))| !path.ends_with(".json"))
-        .map(|(i, (path, _))| parse_file(&root.join(path), i as u32).unwrap())
+        .map(|(i, (path, _))| parse_file(&root.join(path), FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
     let from = graph

@@ -1,6 +1,4 @@
-//! Rust dead-code conventions. Decorator classification doesn't apply (proc
-//! macros are a deferred enhancement), but Cargo gives authoritative entry
-//! points: `main.rs`/`build.rs` stems, `[[bin]]` targets, and `src/bin/*.rs`.
+//! Rust dead-code conventions.
 
 use super::roots;
 use crate::profiles::{DeadCodeDefaults, DecoratorClass};
@@ -30,9 +28,7 @@ pub fn is_entry_file_stem(stem: &str) -> bool {
     matches!(stem, "main" | "build" | "lib")
 }
 
-/// Module keys of binary targets declared in `root/Cargo.toml` (`[[bin]]`
-/// `path` entries) plus auto-discovered `src/bin/*.rs`. Best-effort: a
-/// missing/invalid manifest contributes none.
+/// Module keys of `[[bin]]` targets and `src/bin/*.rs`.
 pub fn entry_modules(root: &Path) -> Vec<String> {
     let mut keys = Vec::new();
     if let Some(manifest) = super::manifest::manifest(root) {

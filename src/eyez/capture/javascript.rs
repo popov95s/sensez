@@ -1,8 +1,4 @@
-//! `eyez`-only: capture JS/TS comments + JSDoc during the walk into
-//! [`Walked::docs`](crate::spine::parser::Walked). Reads node text only — never writes
-//! to the structural token stream, so duplication is unaffected. JS bare strings
-//! are directive prologues (`"use strict"`), not docs, so only comments are
-//! indexed here.
+//! `eyez`-only: capture JS/TS comments and JSDoc into [`Walked::docs`](crate::spine::parser::Walked).
 
 use crate::eyez::{DocKind, RawDoc};
 use crate::spine::ir::Walked;

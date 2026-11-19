@@ -1,17 +1,10 @@
 //! Function-scope bound-name analysis for duplication normalization.
-//!
-//! A name is *bound-local* to a function if it's a parameter or is assigned in
-//! the body (assignment / `for` / `with as` / walrus target). Those are the
-//! only names a real clone may rename, so they collapse to a single token;
-//! everything else (module/free names, attribute/method names, type
-//! annotations, literals) is kept verbatim.
 
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
-/// Names bound within `func` (its parameters + body targets), not descending
-/// into nested functions/lambdas (those have their own scope).
+/// Names bound within `func`, not descending into nested scopes.
 pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
     let mut set = BoundNames::default();
     if let Some(params) = func.field("parameters") {
@@ -29,8 +22,6 @@ fn collect_params(params: Node, src: &[u8], set: &mut BoundNames) {
         let name = if p.kind_name() == "identifier" {
             text(p, src)
         } else {
-            // typed_parameter / default_parameter / *args / **kwargs: the name
-            // is the first identifier child (the type, if any, comes after).
             first_identifier(p, src)
         };
         if let Some(name) = name {
@@ -39,8 +30,7 @@ fn collect_params(params: Node, src: &[u8], set: &mut BoundNames) {
     }
 }
 
-/// Recursively collect assignment/`for`/walrus/`as` targets, skipping nested
-/// function/lambda scopes.
+/// Collect binding targets, skipping nested function and lambda scopes.
 fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
@@ -71,8 +61,7 @@ fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     }
 }
 
-/// Names on the left of a binding. `self.x`/`arr[i]` targets are attribute or
-/// subscript writes, not local bindings, so they are deliberately ignored.
+/// Names on the left of a binding; attribute and subscript targets are ignored.
 fn collect_target_names(node: Node, src: &[u8], set: &mut BoundNames) {
     match node.kind_name() {
         "identifier" => {

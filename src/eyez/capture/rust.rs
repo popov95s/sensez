@@ -1,15 +1,10 @@
-//! `eyez`-only: capture Rust comments (incl. `///` and `//!` doc comments)
-//! during the walk into [`Walked::docs`](crate::spine::parser::Walked). Reads node
-//! text only — never writes to the structural token stream, so duplication is
-//! unaffected.
+//! `eyez`-only: capture Rust comments into [`Walked::docs`](crate::spine::parser::Walked).
 
 use crate::eyez::{DocKind, RawDoc};
 use crate::spine::ir::Walked;
 use tree_sitter::Node;
 
-/// Record a `//`, `///`, `//!`, or `/* … */` comment for `scope_path`. Doc
-/// comments index as docstrings (they document the following item); plain
-/// comments index as comments.
+/// Record a Rust comment for `scope_path`; doc comments index as docstrings.
 pub fn push_comment(out: &mut Walked, module: &str, scope_path: &[&str], node: Node, src: &[u8]) {
     let raw = super::lossy_text(node, src);
     {

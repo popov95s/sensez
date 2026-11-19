@@ -1,9 +1,6 @@
-//! Structural smells: deep nesting, long parameter lists, too many returns,
-//! magic numbers, message chains (Law of Demeter), and split variables.
-
 use super::exclusive_paths::max_on_one_path;
 use super::lines::{hit_lines, line_list, SHOWN_LINES};
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionUnit, MagicContext, MagicNumber};
@@ -57,8 +54,7 @@ impl StructuralDetector<'_, '_> {
             m.start_line,
             &m.name,
             Severity::Warning,
-            m.max_nesting as u32,
-            self.cfg.max_nesting as u32,
+            Measure::new(m.max_nesting, self.cfg.max_nesting),
         ));
     }
 
@@ -74,8 +70,7 @@ impl StructuralDetector<'_, '_> {
             m.start_line,
             &m.name,
             Severity::Warning,
-            params as u32,
-            self.cfg.max_params as u32,
+            Measure::new(params, self.cfg.max_params),
         ));
     }
 
@@ -104,8 +99,7 @@ impl StructuralDetector<'_, '_> {
             m.start_line,
             &m.name,
             Severity::Warning,
-            counted as u32,
-            self.cfg.max_returns as u32,
+            Measure::new(counted, self.cfg.max_returns),
         ));
     }
 
@@ -138,8 +132,7 @@ impl StructuralDetector<'_, '_> {
             first.line,
             &m.name,
             Severity::Info,
-            sites.len() as u32,
-            0,
+            Measure::new(sites.len(), 0),
         );
         self.out.push(SmellFinding {
             lines: hit_lines(sites.iter().map(|site| site.line)),
@@ -196,8 +189,7 @@ impl StructuralDetector<'_, '_> {
             first,
             &m.name,
             Severity::Warning,
-            depth as u32,
-            self.cfg.max_chain_depth as u32,
+            Measure::new(depth, self.cfg.max_chain_depth),
         );
         self.out.push(SmellFinding { lines, ..finding });
     }
@@ -218,8 +210,7 @@ impl StructuralDetector<'_, '_> {
             line,
             &m.name,
             Severity::Info,
-            count as u32,
-            0,
+            Measure::new(count, 0),
         );
         self.out.push(SmellFinding { lines, ..finding });
     }
@@ -249,15 +240,9 @@ impl StructuralDetector<'_, '_> {
             self.ctx.path,
             line,
             &m.name,
-            Severity::Warning,
-            deepest as u32,
-            0,
-        ));
+            Severity::Warning, Measure::new(deepest, 0)));
     }
 
-    /// Advisory: a local assigned `split_variable_min_assigns`+ times either holds
-    /// distinct concepts or is branch-bound state — both want a single binding
-    /// (extract a helper that returns the value).
     fn split_variables(&mut self, m: &FunctionUnit) {
         let min_assigns = self.cfg.split_variable_min_assigns.max(2);
         let mut locals: Vec<_> = m.local_reassigns.iter().collect();
@@ -275,10 +260,7 @@ impl StructuralDetector<'_, '_> {
                 self.ctx.path,
                 m.start_line,
                 &m.name,
-                Severity::Info,
-                count as u32,
-                (min_assigns - 1) as u32,
-            ));
+                Severity::Info, Measure::new(count, min_assigns - 1)));
         }
     }
 }

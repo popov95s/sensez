@@ -1,19 +1,10 @@
 //! Resolve a Rust `use` path to a module key.
-//!
-//! `crate::` resolves against the importer's crate source dir (the nearest
-//! ancestor holding `lib.rs`/`main.rs`), `self::`/`super::` against the
-//! importer's own module path, and the package's own name (from the root
-//! `Cargo.toml`, hyphens normalized) like `crate` — so `use sensez::cli` in
-//! `main.rs` or an integration test resolves to the in-repo lib module.
-//! Everything else (`std::…`, third-party crates) is returned unchanged and
-//! becomes an external node.
 
 use super::roots;
 use crate::spine::ir::ImportContext;
 use std::path::Path;
 
-/// The package (directory key) containing `module_name`. An index module
-/// (`mod.rs`/`lib.rs`) is its own package; otherwise drop the last segment.
+/// The package (directory key) containing `module_name`.
 pub fn containing_package(module_name: &str, is_index: bool) -> String {
     if is_index {
         return module_name.to_string();
@@ -40,10 +31,7 @@ pub fn resolve_target(import: &ImportContext, importer_file: &Path, root: &Path)
             join_key(src_key(importer_file, root), &rest)
         }
         name => {
-            // Rust 2018 uniform path: a bare first segment may be a sibling
-            // submodule in scope (`use reachability::…` next to a
-            // `mod reachability;`). If the child module file exists on disk,
-            // resolve it like `self::…`; otherwise it's an external crate.
+            // Rust 2018 uniform path: a bare first segment may be a sibling module file.
             if child_module_exists(importer_file, name) {
                 let module = roots::module_name(importer_file, root);
                 return join_key(join_key(module, &[name]), &rest);
@@ -80,9 +68,7 @@ impl<'a> SuperPath<'a> {
     }
 }
 
-/// True if `name` is a child module file of the importer: `name.rs` or
-/// `name/mod.rs` in the importer's module directory (its own dir for an index
-/// file `mod.rs`/`lib.rs`/`main.rs`, else a dir named after its stem).
+/// True if `name` is a child module file of the importer.
 fn child_module_exists(importer_file: &Path, name: &str) -> bool {
     let Some(parent) = importer_file.parent() else {
         return false;
@@ -105,10 +91,7 @@ fn join_key(base: String, rest: &[&str]) -> String {
     format!("{base}/{}", rest.join("/"))
 }
 
-/// Key of the importer's crate source dir: the nearest ancestor (up to `root`)
-/// containing `lib.rs` or `main.rs`, else `root/src` when that is a crate dir
-/// (covers `tests/`/`benches/`, which are sibling crates of `src/`), else the
-/// root itself.
+/// Key of the importer's crate source dir.
 fn src_key(importer_file: &Path, root: &Path) -> String {
     let mut dir = importer_file.parent();
     while let Some(d) = dir {

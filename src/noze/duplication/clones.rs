@@ -1,14 +1,7 @@
-//! Suffix-array clone extraction: build SA + LCP (Kasai), then group each
-//! LCP interval (consecutive suffixes sharing a prefix >= threshold) into a
-//! single *n-way* clone class. This replaces per-pair emission, which both
-//! fragmented long clones and exploded a 3-way clone into 3 pairwise records.
-
 use super::flatten::Master;
 use bio::data_structures::suffix_array::suffix_array_int;
 use libsais::SuffixArrayConstruction;
 
-/// One n-way structural clone: all `positions` share a common prefix of `len`
-/// tokens in the master buffer.
 pub struct RawGroup {
     pub len: usize,
     pub positions: Vec<usize>,
@@ -32,10 +25,6 @@ pub fn extract(master: &mut Master, min_len: usize, nesting: Nesting) -> Vec<Raw
     let sa = build_suffix_array(&master.text);
     let lcp = kasai(&master.text, &sa);
 
-    // Bottom-up LCP-interval walk: each popped `(len, left)` covers sa[left..i],
-    // whose suffixes share exactly `len` tokens. Only *left-maximal* intervals
-    // are kept: if every occurrence is preceded by the same token, it is the
-    // tail of a longer clone reported one offset earlier.
     let mut groups = Vec::new();
     let mut stack: Vec<(usize, usize)> = vec![(0, 0)];
     for i in 1..=n {
@@ -96,8 +85,6 @@ fn build_suffix_array(text: &[i32]) -> Vec<usize> {
             .collect(),
         Err(err) => {
             eprintln!("[sensez] suffix array: libsais failed ({err}); using portable fallback");
-            // Master-buffer codes are dense and non-negative by construction
-            // (see `flatten::DenseAlphabet`), so widening is lossless here.
             let fallback: Vec<usize> = text.iter().map(|&value| value as usize).collect();
             suffix_array_int(&fallback)
         }
@@ -111,9 +98,6 @@ fn can_be_disjoint(positions: &[usize], len: usize) -> bool {
     sorted.windows(2).all(|pair| pair[1] - pair[0] >= len)
 }
 
-/// A run is left-maximal unless all its occurrences share the same preceding
-/// token (in which case it's contained in a longer clone). Position 0 has no
-/// predecessor, which counts as a distinct boundary.
 fn is_left_maximal(text: &[i32], positions: &[usize]) -> bool {
     let prev = |p: usize| -> i64 {
         if p == 0 {
@@ -173,88 +157,5 @@ impl PrefixScan {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::spine::parser::tokens::TokenSpan;
-
-    fn span(id: u32) -> TokenSpan {
-        TokenSpan {
-            file_id: id,
-            start_row: 1,
-            end_row: 1,
-            start_byte: 0,
-            end_byte: 0,
-        }
-    }
-
-    #[test]
-    fn groups_three_way_clone() {
-        // Three identical runs [1,2,3,4] separated by unique sentinels (5,6,7)
-        // + terminator 0. Alphabet is dense (0..=7), as suffix_array_int requires.
-        let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 1, 2, 3, 4, 7, 0];
-        let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let mut master = Master { text, spans };
-        let groups = extract(&mut master, 4, Nesting::Outermost);
-        assert_eq!(groups.len(), 1, "one n-way group, not pairwise records");
-        assert_eq!(groups[0].len, 4);
-        assert_eq!(
-            groups[0].positions.len(),
-            3,
-            "all three occurrences grouped"
-        );
-    }
-
-    #[test]
-    fn nothing_below_threshold() {
-        let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 0];
-        let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let mut master = Master { text, spans };
-        assert!(extract(&mut master, 5, Nesting::Outermost).is_empty());
-    }
-
-    /// Regression: two identical runs must collapse to ONE left-maximal group,
-    /// not one group per starting offset (the fragmentation bug). Here the run
-    /// [1,2,3,4] repeats; offsets 1,2,3 share the same preceding token and must
-    /// be suppressed, leaving a single length-4 clone.
-    #[test]
-    fn left_maximal_collapses_offset_fragments() {
-        let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 0]; // dense alphabet 0..=5
-        let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let mut master = Master { text, spans };
-        let groups = extract(&mut master, 2, Nesting::Outermost);
-        assert_eq!(
-            groups.len(),
-            1,
-            "must not fragment into one group per offset"
-        );
-        assert_eq!(groups[0].len, 4);
-        assert_eq!(groups[0].positions.len(), 2);
-    }
-
-    #[test]
-    fn adjacent_overlap_is_not_disjoint_despite_a_wide_span() {
-        assert!(!can_be_disjoint(&[10, 0, 1], 4));
-        assert!(can_be_disjoint(&[8, 0, 4], 4));
-    }
-
-    #[test]
-    fn nested_intervals_keep_longer_clones_among_fewer_occurrences() {
-        // [1,2,3] occurs three times; [1,2,3,4,5] only in the last two.
-        let text = vec![1, 2, 3, 9, 1, 2, 3, 4, 5, 8, 1, 2, 3, 4, 5, 7, 0];
-        let spans = (0..text.len()).map(|i| span(i as u32)).collect();
-        let mut master = Master { text, spans };
-        let shape = |groups: Vec<RawGroup>| -> Vec<(usize, usize)> {
-            let mut out: Vec<_> = groups.iter().map(|g| (g.len, g.positions.len())).collect();
-            out.sort_unstable();
-            out
-        };
-        assert_eq!(
-            shape(extract(&mut master, 3, Nesting::Outermost)),
-            vec![(3, 3)]
-        );
-        assert_eq!(
-            shape(extract(&mut master, 3, Nesting::Seeded { report_len: 3 })),
-            vec![(3, 3), (5, 2)]
-        );
-    }
-}
+#[path = "clones_tests.rs"]
+mod tests;

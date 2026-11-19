@@ -1,12 +1,21 @@
+use super::depth::{tree_depth, MAX_TREE_DEPTH};
 use super::*;
 use crate::profiles::registry;
+use crate::spine::ir::FileId;
+use std::path::Path;
 
 #[test]
 fn pathological_nesting_is_rejected_not_crashed() {
     let profile = registry::parse_for_path(Path::new("x.py")).unwrap();
     let src = format!("x = {}1{}", "(".repeat(100_000), ")".repeat(100_000));
-    assert!(parse_source(src.as_bytes(), 0, "x", profile).is_err());
-    assert!(parse_source(b"def f():\n    return (1 + 2)\n", 0, "x", profile).is_ok());
+    assert!(parse_source(src.as_bytes(), FileId::default(), "x", profile).is_err());
+    assert!(parse_source(
+        b"def f():\n    return (1 + 2)\n",
+        FileId::default(),
+        "x",
+        profile
+    )
+    .is_ok());
 }
 
 #[test]
@@ -22,8 +31,20 @@ fn depth_gate_boundary_is_exact() {
     let at_limit = MAX_TREE_DEPTH - (depth_of(10) - 10);
 
     assert_eq!(depth_of(at_limit), MAX_TREE_DEPTH);
-    assert!(parse_source(src_with(at_limit).as_bytes(), 0, "x", profile).is_ok());
-    assert!(parse_source(src_with(at_limit + 1).as_bytes(), 0, "x", profile).is_err());
+    assert!(parse_source(
+        src_with(at_limit).as_bytes(),
+        FileId::default(),
+        "x",
+        profile
+    )
+    .is_ok());
+    assert!(parse_source(
+        src_with(at_limit + 1).as_bytes(),
+        FileId::default(),
+        "x",
+        profile
+    )
+    .is_err());
 }
 
 #[test]
@@ -49,6 +70,9 @@ fn too_deep_generated_file_says_it_was_a_generated_file() {
     let path = dir.join("model.d.ts");
     let src = format!("type T = {}1{};\n", "(".repeat(600), ")".repeat(600));
     std::fs::write(&path, src).unwrap();
-    let error = format!("{:#}", parse_file(&path, 0).unwrap_err());
+    let error = format!(
+        "{:#}",
+        parse_file(&path, FileId::from_index(0)).unwrap_err()
+    );
     assert!(error.contains("generated file skipped"), "{error}");
 }

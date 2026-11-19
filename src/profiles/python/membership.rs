@@ -8,8 +8,7 @@ const OPERAND_KINDS: &[&str] = &["identifier", "attribute", "call"];
 /// Fewest `x == "a" or …` comparisons that read as a category list.
 const MIN_CHAIN: usize = 3;
 
-/// `x in ["a", "b"]` — an `in`/`not in` test against a literal collection
-/// whose elements are all strings.
+/// `x in ["a", "b"]`: a membership test against a literal collection of strings.
 pub(super) fn literal_membership(node: Node, src: &[u8]) -> Option<LiteralMembership> {
     let has_in = node
         .children(&mut node.walk())

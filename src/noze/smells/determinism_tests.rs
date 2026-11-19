@@ -1,9 +1,8 @@
-//! The smell pillar fans out over files with rayon; its output order and
-//! content must not depend on scheduling. Findings are compared across
-//! repeated runs of the same corpus.
+//! The smell pillar fans out over files with rayon; its output order and content must not depend on scheduling.
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::noze::source_scope::SourceScope;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -11,8 +10,6 @@ use std::fs;
 fn parallel_detection_is_deterministic() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
-    // Several files, each tripping a different local smell, so the rayon
-    // fan-out has real per-file work to reorder if it could.
     let deep = format!(
         "def deep(a):\n{}{}return a\n",
         (1..=5)
@@ -35,7 +32,7 @@ fn parallel_detection_is_deterministic() {
     let files: Vec<_> = ["deep.py", "wide.py", "magic.py", "chain.py"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&files, &[]);
     let cfg = Smells::default();

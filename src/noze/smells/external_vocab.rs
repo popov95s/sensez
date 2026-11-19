@@ -1,6 +1,3 @@
-//! Literal lists taken from an outside vocabulary (file extensions, MIME types,
-//! paths, error or status codes) rather than the codebase's own categories.
-
 pub(super) fn is_external_vocabulary(literals: &[String]) -> bool {
     !literals.is_empty() && literals.iter().all(|literal| is_external(literal))
 }

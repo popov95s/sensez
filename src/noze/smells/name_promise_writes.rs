@@ -130,8 +130,6 @@ fn call_write(
     Some(write(call, reach))
 }
 
-/// Assignments outside `locals`; the profile already dropped plain names `unit` binds, so
-/// plain names are checked only against the functions around it (`outer`).
 fn assignment_writes<'a>(
     unit: &'a FunctionUnit,
     locals: &'a HashSet<&str>,

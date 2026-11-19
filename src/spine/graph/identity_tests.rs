@@ -1,4 +1,5 @@
 use super::for_files;
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, ParsedFile};
 use crate::test_support::write;
 use std::path::{Path, PathBuf};
@@ -7,7 +8,13 @@ fn parsed(root: &Path, files: &[&str]) -> Vec<ParsedFile> {
     files
         .iter()
         .enumerate()
-        .map(|(i, rel)| parse_file(&write(root, rel, "export const x = 1;\n"), i as u32).unwrap())
+        .map(|(i, rel)| {
+            parse_file(
+                &write(root, rel, "export const x = 1;\n"),
+                FileId::from_index(i),
+            )
+            .unwrap()
+        })
         .collect()
 }
 

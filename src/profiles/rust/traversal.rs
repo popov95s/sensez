@@ -1,5 +1,4 @@
-//! Pre-order Rust traversal: emits the genericized token stream + spans and
-//! extracts imports/declarations while tracking a lexical scope stack.
+//! Pre-order Rust traversal: tokens, spans, imports and declarations.
 
 use super::{imports, lexeme, scope, symbols, tokens as token_map, units};
 use crate::profiles::lexeme::BoundNames;
@@ -7,18 +6,18 @@ use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
 };
-use crate::spine::ir::{record_attr, TypeAlias, Walked};
+use crate::spine::ir::{record_attr, FileId, TypeAlias, Walked};
 use tree_sitter::Node;
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
-pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+pub fn walk(root: Node, src: &[u8], file_id: FileId, module_name: &str) -> Walked {
     walk::run(root, src, file_id, module_name, visit)
 }
 
 fn visit(
     node: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     scope: &mut Vec<Scope>,
     fn_bounds: &mut Vec<BoundNames>,
@@ -43,15 +42,13 @@ struct RustWalkState<'a> {
 fn visit_node(
     node: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     state: &mut RustWalkState<'_>,
     out: &mut Walked,
 ) {
     let kind = node.kind_name();
 
-    // `use` declarations (incl. `pub use` re-exports): extracted, not descended
-    // into, so import internals never pollute the token stream.
     if kind == "use_declaration" {
         let use_enclosing = state.scope.last().map(|s| s.name.as_str());
         out.symbols
@@ -60,8 +57,6 @@ fn visit_node(
         return;
     }
 
-    // `mod name;` (no body): an edge to the child module. Inline `mod x { … }`
-    // falls through — it opens a scope and its body is traversed.
     if kind == "mod_item" && node.field("body").is_none() {
         let mod_enclosing = state.scope.last().map(|s| s.name.as_str());
         if let Some(ctx) = imports::mod_decl(node, src, module_name, mod_enclosing) {
@@ -70,7 +65,6 @@ fn visit_node(
         return;
     }
 
-    // Attributes (`#[derive(…)]`, `#![…]`) are metadata, not logic.
     if kind == "attribute_item" || kind == "inner_attribute_item" {
         if is_cfg_test_text(node, src) {
             state.next_is_cfg_test = true;
@@ -81,8 +75,6 @@ fn visit_node(
     let cfg_test_here = state.next_is_cfg_test || has_cfg_test_attr(node, src);
     state.next_is_cfg_test = false;
 
-    // Comments never map to a structural token, so capturing their text for the
-    // eyez index cannot affect duplication.
     if kind == "line_comment" || kind == "block_comment" {
         walk::record_comment_span(
             out,
@@ -113,16 +105,11 @@ fn visit_node(
         credit_name(out, node, src);
     }
 
-    // `base.field` / `base.method()` per base identifier, and `base::item`
-    // path access — both feed the graph's attribute-access crediting (a module
-    // used only as `module::func()` isn't falsely flagged dead).
     if kind == "field_expression" {
         credit_attr(out, node, src, "value", "field");
     }
     if kind == "scoped_identifier" {
         credit_attr(out, node, src, "path", "name");
-        // Fully-qualified expression paths (`crate::diff::git::apply(...)`) are
-        // inline usage edges, not module-level coupling.
         if let Some(ctx) = imports::qualified_path(
             node,
             src,
@@ -133,9 +120,7 @@ fn visit_node(
         }
     }
 
-    // Macro bodies are token trees, not parsed expressions — `m::f(…)` inside
-    // `vec![…]`/`assert!(…)` would otherwise lose its usage credit. Scan the
-    // raw token sequence for `ident :: ident` and credit it the same way.
+    // Macro bodies are token trees: scan for `ident :: ident` to credit module usage.
     if kind == "token_tree" {
         let mut token_cursor = node.walk();
         let children: Vec<Node> = node.children(&mut token_cursor).collect();

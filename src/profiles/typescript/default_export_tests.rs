@@ -1,5 +1,6 @@
 use crate::config::model::DeadCode;
 use crate::noze::dead_code::detect;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -13,7 +14,7 @@ fn dead_symbols(sources: &[(&str, &str)]) -> Vec<String> {
         .enumerate()
         .map(|(i, (name, source))| {
             fs::write(dir.join(name), source).unwrap();
-            parse_file(&dir.join(name), i as u32).unwrap()
+            parse_file(&dir.join(name), FileId::from_index(i)).unwrap()
         })
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);

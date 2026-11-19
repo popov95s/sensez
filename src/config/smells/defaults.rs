@@ -1,8 +1,4 @@
 //! Built-in per-language smell defaults.
-//!
-//! Python and Rust use the baseline [`Smells::default`]. JavaScript/TypeScript defer the rules
-//! ESLint / typescript-eslint / SonarJS own and keep the heuristic, cross-file,
-//! and type-discipline smells. Each profile may switch off more smells on top.
 
 use super::knobs::Smells;
 use crate::profiles::registry;
@@ -24,11 +20,7 @@ pub fn default_for(lang: Language) -> Smells {
     smells
 }
 
-/// JS/TS: enable `large_class` (no native method-count rule) and switch off the
-/// always-on smells ESLint/SonarJS own (`max-depth`, cognitive complexity). The
-/// remaining linter-owned smells are already off via shared metric toggles
-/// (`cyclomatic_complexity`, `long_function`, `long_parameter_list`,
-/// `magic_numbers`), so a user can still opt into them per language.
+/// JS/TS.
 fn js_ts_default() -> Smells {
     let mut smells = Smells {
         large_class: true,

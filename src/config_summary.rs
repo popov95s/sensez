@@ -246,4 +246,5 @@ fn relative_path(root: &Path, file: &Path) -> PathBuf {
 }
 
 #[cfg(test)]
+#[path = "config_summary_tests.rs"]
 mod tests;

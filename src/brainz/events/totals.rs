@@ -2,8 +2,7 @@ use super::{Event, OutcomeKey, Resolved};
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-/// Running aggregates for one repo. Persisted as `totals.json` and also kept
-/// per-session in memory; both are built by absorbing [`Event`]s.
+/// Running aggregates for one repo.
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 pub struct Totals {
     pub first_used: u64,
@@ -22,18 +21,15 @@ pub struct Totals {
     pub reported_by_detector: BTreeMap<String, u64>,
     /// Detector → resolved count + summed time-to-resolution (seconds).
     pub resolved_by_detector: BTreeMap<String, Resolved>,
-    /// Detector → previously-resolved findings that came back,
-    /// with the summed interval they stayed resolved.
+    /// Detector → previously-resolved findings that came back.
     pub reintroduced_by_detector: BTreeMap<String, Resolved>,
     /// Scan origin (`tool` | `gate` | `cli`) → scans recorded.
     pub scans_by_origin: BTreeMap<String, u64>,
-    /// Summed scan wall-time (ms), analyzed files, and source lines, for
-    /// ms-per-file / ms-per-kloc throughput health.
+    /// Summed scan wall-time (ms), analyzed files.
     pub scan_ms_total: u64,
     pub scan_files_total: u64,
     pub scan_loc_total: u64,
-    /// Times the effective config changed between consecutive scans, and the
-    /// most recent config hash (the comparison anchor — not a reported metric).
+    /// Times the effective config changed between consecutive scans.
     pub config_changes: u64,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub last_config_hash: Option<u64>,
@@ -115,9 +111,7 @@ impl Totals {
         }
     }
 
-    /// Fold per-detector resolved tallies (count + time-to-resolution) and
-    /// reintroduction counts into the running aggregates. Shared by `Scan` and
-    /// `AutoResolve`.
+    /// Fold per-detector resolved tallies.
     fn absorb_diff(
         &mut self,
         resolved: &BTreeMap<String, Resolved>,

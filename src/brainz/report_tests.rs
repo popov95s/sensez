@@ -2,7 +2,6 @@ use super::*;
 
 fn totals() -> Totals {
     let mut t = Totals::default();
-    // dead_code/function: 3 fixed, 1 deferred (debt), 0 wrong → precision 1.0.
     t.resolved_by_detector.insert(
         "dead_code/function".into(),
         Resolved {
@@ -14,7 +13,6 @@ fn totals() -> Totals {
         OutcomeKey::new(TriageVerdict::Debt, "dead_code/function"),
         1,
     );
-    // smells/god_module: 1 fixed, 3 false positives → precision 0.25.
     t.resolved_by_detector.insert(
         "smells/god_module".into(),
         Resolved {
@@ -30,8 +28,6 @@ fn totals() -> Totals {
     t.scans_by_origin.insert("tool".into(), 1);
     t.searches = 4;
     t.searches_zero_hit = 1;
-    // 2 of dead_code/function's 3 fixes came back → reintroduction rate 0.67,
-    // each having held for 5 days on average (2 * 5 days summed).
     t.reintroduced_by_detector.insert(
         "dead_code/function".into(),
         Resolved {
@@ -67,7 +63,6 @@ fn gate_and_search_funnels_are_ratios() {
 fn mean_resolution_days_rolls_up() {
     let ttr = mean_resolution_days(&totals().resolved_by_detector);
     assert_eq!(ttr["dead_code/function"], 1.0);
-    // 4 findings over (3+1) days total → 1.0 day overall.
     assert_eq!(ttr["_overall"], 1.0);
 }
 
@@ -93,9 +88,7 @@ fn self_health_reports_throughput() {
 #[test]
 fn low_precision_detectors_need_evidence_and_a_floor() {
     let noisy = low_precision_detectors(&totals());
-    // god_module: 1 real / 4 adjudicated = 0.25 < floor, 4 samples → noisy.
     assert!(noisy.contains("smells/god_module"));
-    // dead_code/function: 4 real / 4 = 1.0 → trusted.
     assert!(!noisy.contains("dead_code/function"));
 
     // One stray false positive is not enough evidence to brand a detector.

@@ -1,8 +1,4 @@
-//! Human triage of stale findings: persistent "debt" vs "false_positive"
-//! verdicts, recorded via the `brainz_triage` MCP tool on the user's behalf.
-//! Verdicts live in `.sensez/local-metrics/triage.json`, keyed by finding fingerprint,
-//! and feed back into the metrics: triaged findings stop appearing as stale,
-//! and a vanished false positive is never counted as resolved value.
+//! Human triage of stale findings.
 
 use super::file_lock;
 use super::fingerprint::{Detector, Pillar};
@@ -19,8 +15,7 @@ pub struct Verdict {
     /// `Debt` (real, deliberately deferred) or `FalsePositive` (wrong).
     pub verdict: TriageVerdict,
     pub pillar: Pillar,
-    /// Label at triage time (kept so reports stay readable after the finding
-    /// leaves the scan output).
+    /// Label at triage time (kept so reports stay readable after the finding leaves the scan output).
     pub label: String,
     pub ts: u64,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -47,9 +42,7 @@ fn save(root: &Path, triage: &Triage) -> Result<()> {
     store::write_durable(&d.join("triage.json"), &json)
 }
 
-/// Mark every finding in `pillar` whose label contains `pattern`
-/// (case-insensitive) with `verdict`; `Clear` removes existing marks instead.
-/// Errors when nothing matches so the agent can show what is available.
+/// Mark every finding in `pillar` whose label contains `pattern`.
 pub fn mark(
     root: &Path,
     branch: &str,
@@ -119,77 +112,5 @@ pub fn ignored_keys(triage: &Triage) -> std::collections::HashSet<String> {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-    use crate::brainz::fingerprint::{Aged, AgedEntry, Label};
-    use std::fs;
-
-    #[test]
-    fn mark_matches_by_label_and_clears() {
-        let tmp = tempfile::tempdir().unwrap();
-        let root = tmp.path().to_path_buf();
-        fs::create_dir_all(&root).unwrap();
-
-        let aged: Aged = BTreeMap::from([(
-            Pillar::DeadCode,
-            BTreeMap::from([(
-                "abc1".to_string(),
-                AgedEntry {
-                    first_seen: 1,
-                    label: Label::DeadCode {
-                        module: "app".to_string(),
-                        symbol: "orphan".to_string(),
-                        symbol_kind: "function".to_string(),
-                    },
-                    class: Detector::DeadCode {
-                        symbol_kind: "function".to_string(),
-                    },
-                },
-            )]),
-        )]);
-        store::save_fingerprints(&root, "main", &aged, &Default::default(), 1).unwrap();
-
-        assert!(mark(
-            &root,
-            "main",
-            Pillar::DeadCode,
-            "nomatch",
-            TriageVerdict::Debt,
-            None
-        )
-        .is_err());
-
-        let hit = mark(
-            &root,
-            "main",
-            Pillar::DeadCode,
-            "ORPHAN",
-            TriageVerdict::FalsePositive,
-            Some("dynamic dispatch".into()),
-        )
-        .unwrap();
-        assert_eq!(
-            hit,
-            vec![Marked {
-                label: "app::orphan (function)".to_string(),
-                detector: Detector::DeadCode {
-                    symbol_kind: "function".to_string(),
-                },
-            }]
-        );
-        let triage = load(&root);
-        assert_eq!(triage["abc1"].verdict, TriageVerdict::FalsePositive);
-        assert!(ignored_keys(&triage).contains("abc1"));
-
-        mark(
-            &root,
-            "main",
-            Pillar::DeadCode,
-            "orphan",
-            TriageVerdict::Clear,
-            None,
-        )
-        .unwrap();
-        assert!(load(&root).is_empty());
-    }
-}
+#[path = "triage_tests.rs"]
+mod tests;

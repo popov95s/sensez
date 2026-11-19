@@ -3,7 +3,7 @@
 mod external;
 mod loop_context;
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::{registry, PerformanceProfile};
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -301,7 +301,6 @@ fn significant_loops<'a>(
         .collect()
 }
 
-#[allow(clippy::too_many_arguments)]
 fn finding(
     kind: SmellKind,
     ctx: &SmellContext<'_>,
@@ -318,7 +317,6 @@ fn finding(
         line,
         &m.name,
         severity,
-        metric as u32,
-        1,
+        Measure::new(metric, 1),
     )
 }

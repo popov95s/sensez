@@ -1,9 +1,4 @@
 //! Top-level declaration extraction for Rust.
-//!
-//! Only `pub` items (any visibility scope: `pub`, `pub(crate)`, `pub(super)`)
-//! are declared: rustc's own `dead_code` lint already owns private unreachable
-//! items, so sensez complements it with what the compiler cannot see — public
-//! items no module in the scan reaches.
 
 use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::SymbolKind;
@@ -16,8 +11,7 @@ pub fn def_name(node: Node, src: &[u8]) -> Option<String> {
         .map(str::to_string)
 }
 
-/// Display name for a scope opener: the `name` field, or the implemented type
-/// for an `impl` block, or [`crate::spine::ir::ANONYMOUS`] (closures).
+/// Display name for a scope opener.
 pub fn scope_name(node: Node, src: &[u8]) -> String {
     node.field("name")
         .or_else(|| node.field("type"))

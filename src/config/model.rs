@@ -68,7 +68,7 @@ pub struct DeadCode {
     #[serde(skip)]
     pub entry_modules: Vec<String>,
     pub orphan_modules: bool,
-    /// Percent of a directory's modules with no importers that marks it as runtime-loaded (0 = off).
+    /// Percent of a directory's modules with no importers that marks it as runtime-loaded.
     pub unimported_dir_share: u8,
     pub unused_imports: bool,
     pub unused_methods: bool,

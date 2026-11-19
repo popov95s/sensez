@@ -1,14 +1,5 @@
-//! Data Clumps: groups of parameters that recur together across signatures.
-//!
-//! Scoped per file (a clump is refactored within its module): mines fixed-size
-//! parameter combinations appearing in `min_occurrences`+ signatures of one
-//! file, then **merges overlapping combinations** so a recurring bundle of N
-//! fields is reported once (as the union) instead of once per size-k subset —
-//! a sign the fields want to become one object. Per-file scoping also avoids
-//! ubiquitous fields (`id`, `org_id`) chaining unrelated bundles together.
-
-use super::make;
 use super::union_find::{find, union};
+use super::{make, Measure};
 use crate::config::smells::{SmellConfig, Smells};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -60,8 +51,6 @@ fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
         }
     }
 
-    // Keep only recurring combinations, then merge ones that overlap (a recurring
-    // 5-field bundle yields many size-3 seeds sharing >= size-1 fields).
     let qualifying: Vec<(Vec<String>, Seed)> = seeds
         .into_iter()
         .filter(|(_, s)| s.funcs.len() >= cfg.data_clump_min_occurrences)
@@ -83,8 +72,7 @@ fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
                 group.line,
                 &fields.join("+"),
                 Severity::Info,
-                group.support as u32,
-                cfg.data_clump_min_occurrences as u32,
+                Measure::new(group.support, cfg.data_clump_min_occurrences),
             )
         })
         .collect()
@@ -109,8 +97,6 @@ struct Group {
     line: usize,
 }
 
-/// Union-find merge of seeds that share at least `size - 1` fields, collapsing
-/// the subset explosion of one recurring bundle into a single group.
 fn merge_overlapping(seeds: Vec<(Vec<String>, Seed)>, size: usize) -> Vec<Group> {
     let n = seeds.len();
     let mut parent: Vec<usize> = (0..n).collect();

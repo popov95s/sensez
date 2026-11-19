@@ -4,8 +4,7 @@ use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, ImportPhase};
 use tree_sitter::Node;
 
-/// Extract zero or more imports from an `import_statement` /
-/// `import_from_statement` node.
+/// Extract imports from an import statement node.
 pub fn extract(
     node: Node,
     src: &[u8],

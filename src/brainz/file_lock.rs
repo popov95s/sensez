@@ -1,8 +1,4 @@
 //! OS advisory file locks for cross-process synchronization.
-//!
-//! Uses `fs4` for proper `flock` (Unix) / `LockFileEx` (Windows) semantics.
-//! The kernel releases these locks automatically when the process dies,
-//! preventing the stale-lock permadeath that sentinel-file approaches suffer.
 
 use anyhow::{Context, Result};
 use fs4::{FileExt, TryLockError};
@@ -12,12 +8,9 @@ use std::time::{Duration, Instant};
 
 /// Poll interval while waiting for a peer process to release the lock.
 const LOCK_POLL: Duration = Duration::from_millis(25);
-/// How long to wait before telling the user we are blocked — a wedged peer
-/// (SIGSTOP, NFS flock quirk) must not hang every sensez process silently.
+/// How long to wait before telling the user we are blocked.
 const WARN_AFTER: Duration = Duration::from_secs(1);
-/// Give up entirely after this long. Metrics are best-effort by contract
-/// ("metrics must never fail the scan"), so timing out and reporting is
-/// strictly better than blocking forever behind a stuck peer.
+/// Give up entirely after this long.
 const GIVE_UP_AFTER: Duration = Duration::from_secs(10);
 
 pub(crate) struct FileLock {
@@ -27,8 +20,6 @@ pub(crate) struct FileLock {
 impl Drop for FileLock {
     fn drop(&mut self) {
         let _ = FileExt::unlock(&self.file);
-        // Keep the lockfile around — it's cheap and avoids recreating it.
-        // The lock itself is released by unlock() above (and by the kernel on death).
     }
 }
 

@@ -1,7 +1,4 @@
-//! Parse facts on disk under `.sensez/parse-cache/`, shared by every scan child
-//! of a repository. One entry per file, keyed by the sensez build, the config
-//! signature, the path and the content hash; written atomically and evicted
-//! oldest-first once the directory passes [`BUDGET_BYTES`].
+//! On-disk parse-facts cache under `.sensez/parse-cache/`.
 
 use super::{ChangeStats, ParseCacheState, ProjectInputs, SourceFile, SourceFingerprint};
 use crate::spine::ir::{Language, Walked};

@@ -1,19 +1,12 @@
 //! Function-scope bound-name analysis for JS/TS duplication normalization.
-//!
-//! Mirrors the Python analysis: a name local to a function (its parameters, or
-//! a `var`/`let`/`const` / `for` / `catch` binding in its body) is the only
-//! thing a real clone may freely rename, so it collapses to one lexeme code.
-//! Member/property names, free names, and literals are kept verbatim.
 
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
-/// Names bound within `func` (parameters + body declarations), not descending
-/// into nested function scopes.
+/// Names bound within `func` (parameters + body declarations), not descending into nested function scopes.
 pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
     let mut set = BoundNames::default();
-    // arrow_function may have a single `parameter` or a `parameters` list.
     if let Some(param) = func.field("parameter") {
         collect_pattern(param, src, &mut set);
     }
@@ -76,7 +69,6 @@ fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
             }
         }
         "required_parameter" | "optional_parameter" => {
-            // TS parameter wrappers: the binding is the `pattern` field.
             if let Some(pat) = node.field("pattern") {
                 collect_pattern(pat, src, set);
             }

@@ -1,6 +1,6 @@
 //! Cyclomatic and cognitive complexity per function.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::FunctionUnit;
@@ -29,8 +29,7 @@ pub fn detect(
                 m.start_line,
                 &m.name,
                 sev,
-                cyclomatic as u32,
-                cfg.max_cyclomatic as u32,
+                Measure::new(cyclomatic, cfg.max_cyclomatic),
             ));
         }
         if m.cognitive > cfg.max_cognitive {
@@ -49,8 +48,7 @@ pub fn detect(
                 m.start_line,
                 &m.name,
                 sev,
-                m.cognitive as u32,
-                cfg.max_cognitive as u32,
+                Measure::new(m.cognitive, cfg.max_cognitive),
             ));
         }
     }

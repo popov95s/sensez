@@ -1,9 +1,4 @@
 //! tree-sitter node-kind → [`StructuralToken`] mapping (genericization).
-//!
-//! Node-kind names are tied to the pinned `tree-sitter-python` grammar
-//! (0.25). Identifiers and every literal kind collapse to their generic
-//! token; unrecognized kinds return `None` (the walker descends but emits
-//! nothing for them).
 
 use crate::spine::ir::tokens::StructuralToken;
 
@@ -31,9 +26,6 @@ pub fn map_kind(kind: &str) -> Option<StructuralToken> {
 }
 
 /// Kinds whose children must not be traversed: leaf literals/identifiers.
-///
-/// Prevents f-string interpolations or numeric sub-nodes from leaking extra
-/// tokens into the genericized stream.
 pub fn is_leaf(kind: &str) -> bool {
     matches!(
         kind,
@@ -48,8 +40,7 @@ pub fn is_leaf(kind: &str) -> bool {
     )
 }
 
-/// Import-statement kinds. These are handled specially (extracted, not
-/// descended into) so import internals never pollute the token stream.
+/// Import-statement kinds, extracted rather than descended into.
 pub fn is_import(kind: &str) -> bool {
     matches!(kind, "import_statement" | "import_from_statement")
 }

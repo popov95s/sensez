@@ -1,12 +1,4 @@
-//! Type-discipline smells (annotation-gated: unannotated code is skipped).
-//!
-//! - `loose_typing`: params/return typed as bare collections or `Any` where a
-//!   dataclass/model almost always belongs.
-//! - `magic_string_default`: see [`super::magic_string`].
-//! - `boolean_blindness`: more than `max_bool_params` bool parameters.
-//! - `tuple_packing`: position-based grouped data in returns.
-
-use super::{magic_string, make, SmellContext};
+use super::{magic_string, make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::typevocab::{base_type, split_top_level, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -61,7 +53,6 @@ fn loose_typing(
                 .map(|kind| (format!("{}: {ty}", shown_param(p)), kind))
         })
         .collect();
-    // Tuple returns are tuple_packing's finding — don't double-report here.
     let ret = return_type.and_then(|ty| reportable_return(ctx, ty, cfg.loose_typing_strictness));
     if offenders.is_empty() && ret.is_none() {
         return;
@@ -99,8 +90,7 @@ fn loose_typing(
         m.start_line,
         &m.name,
         severity,
-        (offenders.len() + ret.is_some() as usize) as u32,
-        0,
+        Measure::new(offenders.len() + usize::from(ret.is_some()), 0),
     ));
 }
 
@@ -135,15 +125,10 @@ fn boolean_blindness(
             ctx.path,
             m.start_line,
             &m.name,
-            Severity::Warning,
-            bools as u32,
-            cfg.max_bool_params as u32,
-        ));
+            Severity::Warning, Measure::new(bools, cfg.max_bool_params)));
     }
 }
 
-/// Bare tuple returns (`return a, b, c`) or `tuple[...]` return annotations
-/// wider than `max_tuple_return` — position-based grouped data.
 fn tuple_packing(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
@@ -170,8 +155,7 @@ fn tuple_packing(
             m.start_line,
             &m.name,
             Severity::Info,
-            arity as u32,
-            cfg.max_tuple_return as u32,
+            Measure::new(arity, cfg.max_tuple_return),
         ));
     }
 }
@@ -223,10 +207,7 @@ fn type_hiding_aliases(ctx: &SmellContext<'_>, out: &mut Vec<SmellFinding>) {
             ctx.path,
             alias.line,
             &alias.name,
-            Severity::Warning,
-            1,
-            0,
-        ));
+            Severity::Warning, Measure::new(1, 0)));
     }
 }
 

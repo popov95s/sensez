@@ -101,8 +101,6 @@ fn is_reportable_scc(cg: &CodebaseGraph, scc: &[NodeIndex], excluded: &globset::
         .any(|&n| !excluded.is_match(&cg.graph[n].file_path))
 }
 
-/// Shortest closed import path through the SCC's lexicographically smallest
-/// module (BFS), over the same edges the SCC pass used.
 fn shortest_cycle(cg: &CodebaseGraph, scc: &[NodeIndex], phases: &[ImportPhase]) -> Vec<CycleEdge> {
     let members: HashSet<NodeIndex> = scc.iter().copied().collect();
     let Some(&start) = scc

@@ -1,14 +1,8 @@
 //! Shared package/crate-root detection for path-keyed languages (JS/TS, Rust).
-//!
-//! Both key modules by root-relative file path; they differ only in the
-//! marker file (`package.json` vs `Cargo.toml`), the vendor boundaries, and
-//! the per-language key rule (extension strip + index collapse), which each
-//! language applies to the segments returned by [`rel_parts`].
 
 use std::path::{Path, PathBuf};
 
-/// Nearest ancestor of `file` containing one of `markers`, without crossing a
-/// `boundaries` directory; else the file's own directory.
+/// Nearest ancestor of `file` containing one of `markers`, not crossing a `boundaries` directory.
 pub(crate) fn root_for(file: &Path, markers: &[&str], boundaries: &[&str]) -> PathBuf {
     let start = file.parent().unwrap_or(Path::new("."));
     let mut dir = Some(start);
@@ -26,8 +20,7 @@ pub(crate) fn root_for(file: &Path, markers: &[&str], boundaries: &[&str]) -> Pa
     start.to_path_buf()
 }
 
-/// Root-relative path segments of `file` (the input to each language's
-/// key rule).
+/// Root-relative path segments of `file`.
 pub(crate) fn rel_parts(file: &Path, root: &Path) -> Vec<String> {
     file.strip_prefix(root)
         .unwrap_or(file)

@@ -1,9 +1,10 @@
-//! JavaScript profile behavior tests (structural pillars: tokens, imports,
-//! resolution, cycles, duplication, cross-language isolation).
+//! JavaScript profile behavior tests.
 
 use super::JsProfile;
 use crate::profiles::test_fixtures::tokens;
-use crate::spine::parser::{parse_file, parse_source, StructuralToken};
+use crate::spine::ir::FileId;
+use crate::spine::ir::StructuralToken;
+use crate::spine::parser::{parse_file, parse_source};
 use std::fs;
 
 #[cfg(feature = "eyez")]
@@ -11,7 +12,7 @@ use std::fs;
 fn jsdoc_before_declaration_belongs_to_function() {
     let walked = parse_source(
         b"/** Parse the incoming request into a verified user identity. */\nexport function authenticate() { return true; }\n// This describes the next function and its intent.\nfunction authorize() { return true; }\n",
-        0,
+        FileId::from_index(0),
         "m",
         &JsProfile,
     )
@@ -20,8 +21,7 @@ fn jsdoc_before_declaration_belongs_to_function() {
     assert_eq!(walked.docs[1].symbol_path, "m::authorize");
 }
 
-/// Two functions with the same control-flow shape but different local names
-/// produce identical structural-token vectors (rename invariance).
+/// Same control-flow shape with different local names gives identical token vectors.
 #[test]
 fn rename_invariance_yields_identical_tokens() {
     let a = b"function compute(items) {\n  let total = 0;\n  for (const item of items) {\n    if (item > 10) { total = total + item; }\n  }\n  return total;\n}\n";
@@ -42,7 +42,7 @@ fn rename_invariance_yields_identical_tokens() {
 #[test]
 fn extracts_es_and_commonjs_imports() {
     let src = b"import { a, b as c } from './mod';\nimport def from 'pkg';\nexport { x } from './re';\nconst fsx = require('fs');\n";
-    let imports = parse_source(src, 0, "m", &JsProfile)
+    let imports = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .symbols
         .imports;
@@ -64,7 +64,7 @@ fn extracts_es_and_commonjs_imports() {
 fn extracts_dynamic_import_destructuring_and_namespace_bindings() {
     let src =
         b"const { load: fetch, save } = await import('./store');\nconst api = require('./api');\n";
-    let imports = parse_source(src, 0, "m", &JsProfile)
+    let imports = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .symbols
         .imports;
@@ -87,14 +87,14 @@ fn extracts_dynamic_import_destructuring_and_namespace_bindings() {
 #[test]
 fn credits_template_shorthand_and_type_references() {
     let src = b"const LABEL = 'ok';\nconst item = { LABEL };\nconst text = `${LABEL}`;\ntype Label = typeof LABEL;\n";
-    let walked = parse_source(src, 0, "m", &JsProfile).unwrap();
+    let walked = parse_source(src, FileId::default(), "m", &JsProfile).unwrap();
     assert_eq!(walked.usage.name_counts.get("LABEL"), Some(&4));
 }
 
 #[test]
 fn function_facts_preserve_order_and_exclude_nested_bodies() {
     let src = b"function outer(items) {\n  if (items.length) return make(items);\n  function inner(value) { return value + 42; }\n  return this.finish(items);\n}\n";
-    let functions = parse_source(src, 0, "m", &JsProfile)
+    let functions = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions;
@@ -115,7 +115,7 @@ fn function_facts_preserve_order_and_exclude_nested_bodies() {
 #[test]
 fn else_if_chain_stays_at_one_nesting_level() {
     let src = b"function pick(n) {\n  if (n === 1) {\n    return 'a';\n  } else if (n === 2) {\n    return 'b';\n  } else if (n === 3) {\n    return 'c';\n  } else if (n === 4) {\n    return 'd';\n  } else if (n === 5) {\n    return 'e';\n  }\n  return 'z';\n}\n";
-    let f = &parse_source(src, 0, "m", &JsProfile)
+    let f = &parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions[0];
@@ -126,7 +126,7 @@ fn else_if_chain_stays_at_one_nesting_level() {
 #[test]
 fn nested_blocks_still_count_every_level() {
     let src = b"function walk(xs) {\n  if (xs) {\n    for (const row of xs) {\n      if (row) {\n        while (row.length) {\n          if (row.pop()) {\n            return 1;\n          }\n        }\n      }\n    }\n  }\n  return 0;\n}\n";
-    let f = &parse_source(src, 0, "m", &JsProfile)
+    let f = &parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions[0];
@@ -136,7 +136,7 @@ fn nested_blocks_still_count_every_level() {
 #[test]
 fn only_the_outermost_member_records_a_chain() {
     let src = b"import * as ns from './api';\nfunction f(o) {\n  return o.a.b.c.d + ns.x.y.z;\n}\n";
-    let functions = parse_source(src, 0, "m", &JsProfile)
+    let functions = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions;
@@ -173,7 +173,7 @@ fn relative_imports_resolve_and_detect_cycle() {
     let files: Vec<_> = ["src/a.js", "src/b.js"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     assert!(cg.name_to_index.contains_key("src/a"));
@@ -196,7 +196,7 @@ fn identical_functions_are_a_clone() {
     let files: Vec<_> = ["one.js", "two.js"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cfg = crate::config::model::Duplication {
         exclude: vec![],
@@ -208,8 +208,7 @@ fn identical_functions_are_a_clone() {
     assert!(!dup.is_empty(), "identical JS functions must be a clone");
 }
 
-/// A Python and a JS file with the same control-flow shape must NOT be reported
-/// as a cross-language clone (duplication is partitioned per language).
+/// A Python and a JS file with the same shape are not a cross-language clone.
 #[cfg(feature = "lang-python")]
 #[test]
 fn no_cross_language_clones() {
@@ -230,7 +229,7 @@ fn no_cross_language_clones() {
     let files: Vec<_> = ["m.py", "m.js"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cfg = crate::config::model::Duplication {
         exclude: vec![],

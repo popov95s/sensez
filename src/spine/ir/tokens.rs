@@ -1,10 +1,4 @@
 //! Structural token vocabulary.
-//!
-//! A [`StructuralToken`] stream is a *genericized* projection of the AST: all
-//! identifiers collapse to [`StructuralToken::GenericIdentifier`] and all
-//! literals to [`StructuralToken::GenericLiteral`]. Two functions that share a
-//! control-flow shape but differ only in names/values therefore produce
-//! byte-identical token vectors — the basis of structural clone detection.
 
 #[derive(
     Debug, Clone, Copy, PartialEq, Eq, PartialOrd, Ord, Hash, serde::Serialize, serde::Deserialize,
@@ -25,13 +19,12 @@ pub enum StructuralToken {
     GenericLiteral,
 }
 
-/// Source location for the token at the same index in the token vector.
-///
-/// Rows are 1-indexed (tree-sitter reports 0-indexed). Lets the duplication
-/// pillar map master-buffer offsets back to concrete file + line ranges.
+use super::FileId;
+
+/// Source location of the token at the same index; rows are 1-indexed.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 pub struct TokenSpan {
-    pub file_id: u32,
+    pub file_id: FileId,
     pub start_row: u32,
     pub end_row: u32,
     pub start_byte: u32,

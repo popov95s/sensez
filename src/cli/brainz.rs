@@ -1,13 +1,14 @@
 //! CLI presentation for local-only Brainz metrics.
 
 use super::output::print_line;
+use crate::reporter::Format;
 use anyhow::{Context, Result};
 use serde_json::Value;
 use std::path::Path;
 
-pub fn run_report(path: &Path, json: bool) -> Result<()> {
+pub fn run_report(path: &Path, format: Format) -> Result<()> {
     let report = crate::brainz::usage_report(path);
-    if json {
+    if matches!(format, Format::Json) {
         print_line(&serde_json::to_string_pretty(&report).context("serializing brainz report")?)?;
     } else {
         print_line(&render(&report))?;

@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 
 /// The merge pass before candidates were found in parallel: one candidate at a time, skipping consumed clusters.
 fn sequential_merge_pass(clusters: &mut Vec<Cluster>, spans: &[TokenSpan], max_gap: usize) -> bool {
@@ -55,9 +56,9 @@ fn spans(rng: &mut Rng) -> Vec<TokenSpan> {
         end_byte: 0,
     };
     let mut spans = Vec::new();
-    for file_id in 0..1 + rng.below(4) as u32 {
-        spans.extend((0..8 + rng.below(40)).map(|_| span(file_id)));
-        spans.push(span(u32::MAX));
+    for file_id in 0..1 + rng.below(4) {
+        spans.extend((0..8 + rng.below(40)).map(|_| span(FileId::from_index(file_id))));
+        spans.push(span(FileId::SEPARATOR));
     }
     spans
 }

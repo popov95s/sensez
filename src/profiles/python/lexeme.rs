@@ -1,7 +1,4 @@
 //! Python identifier rule for duplication lexemes (core in [`crate::profiles::lexeme`]).
-//!
-//! Attribute/method names and keyword-argument names are API surface, never
-//! local variables — kept verbatim. Only function-bound locals collapse.
 
 use crate::profiles::lexeme as shared;
 use crate::profiles::lexeme::BoundNames;
@@ -9,8 +6,7 @@ use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::StructuralToken;
 use tree_sitter::Node;
 
-/// Compute the lexeme code for an emitted token. `fn_bounds` is the stack of
-/// enclosing functions' bound-name sets (innermost last).
+/// Compute the lexeme code for an emitted token.
 pub fn code(node: Node, tok: StructuralToken, src: &[u8], fn_bounds: &[BoundNames]) -> u64 {
     shared::code_with_api_surface(node, tok, src, fn_bounds, |node| {
         is_attribute_name(node) || is_keyword_arg_name(node)

@@ -3,8 +3,7 @@ use crate::test_support::GitTestRepo;
 use serde_json::{json, Value};
 use std::path::Path;
 
-/// Fix-then-reintroduce: recapture banks the fix as resolved, then
-/// counts the reappearance as a reintroduction.
+/// Recapture banks a fix as resolved, then counts its return as a reintroduction.
 #[test]
 fn brainz_records_fix_and_reintroduction() {
     let _metrics = crate::test_support::metrics_guard();
@@ -40,8 +39,7 @@ fn brainz_records_fix_and_reintroduction() {
     );
 }
 
-/// A finding fixed and reintroduced more than `repeat_limit` times defers,
-/// and a fresh finding next to it still blocks with the deferral named.
+/// A finding reintroduced past `repeat_limit` defers; a fresh finding still blocks.
 #[test]
 fn gate_block_message_mentions_deferred_repeats() {
     let _metrics = crate::test_support::metrics_guard();
@@ -81,8 +79,7 @@ fn gate_block_message_mentions_deferred_repeats() {
     assert!(reason.contains("1 diff finding(s)"), "{reason}");
 }
 
-/// Auto-defer is bounded: the first defer expires after three days
-/// and the finding resurfaces; a second defer is permanent.
+/// The first auto-defer expires after three days; a second is permanent.
 #[test]
 fn gate_deferred_finding_resurfaces_after_expiry() {
     use super::repeats::{suppress_repeated, RepeatState, DEFER_EXPIRY_SECS};

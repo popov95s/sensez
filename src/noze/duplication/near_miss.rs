@@ -1,20 +1,9 @@
-//! Consistent-rename (near-miss Type-2) detection: on for long functions, `near_miss` extends it to all.
-//!
-//! The default suffix-array matcher is strict: it keeps every name/type/literal
-//! verbatim, so renaming an API breaks a clone. This pass relaxes that *only*
-//! under a consistent 1:1 renaming — it groups whole functions by an
-//! alpha-canonical key that renames identifiers and literals (by first-occurrence
-//! ordinal) while keeping operators and control-flow structure verbatim. Two
-//! functions share a key iff a consistent rename maps one onto the other.
-
 use crate::config::model::Duplication;
 use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence};
 use crate::spine::parser::tokens::StructuralToken;
 use crate::spine::parser::ParsedFile;
 use std::collections::{BTreeMap, HashMap};
 
-/// Tag bit marking a kept (non-renameable) structural/operator code, so it can
-/// never collide with a small rename ordinal.
 const STRUCT_TAG: u64 = 1 << 63;
 
 struct Member {
@@ -60,8 +49,6 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
         if members.len() < 2 {
             continue;
         }
-        // Skip groups that are exact clones (already found by the suffix array):
-        // a genuine near-miss must have at least two differing raw sequences.
         if members.iter().all(|m| m.raw == members[0].raw) {
             continue;
         }
@@ -79,8 +66,6 @@ pub fn detect(files: &[&ParsedFile], threshold: usize) -> Vec<CloneClass> {
     out
 }
 
-/// Tokens (kind, lexeme) of one top-level function, sliced by binary search
-/// over the file's row-sorted spans (see [`super::span_index_range`]).
 pub(super) fn function_tokens(
     file: &ParsedFile,
     func: &crate::spine::parser::FunctionUnit,
@@ -94,9 +79,6 @@ pub(super) fn function_tokens(
         .collect()
 }
 
-/// Alpha-canonical key: renameable tokens (identifiers/literals) become their
-/// first-occurrence ordinal; everything else (operators, calls, control flow)
-/// keeps its verbatim code, tagged so the two namespaces never collide.
 pub(super) fn canonical_key(tokens: &[(StructuralToken, u64)]) -> Vec<u64> {
     let mut ordinal: HashMap<u64, u64> = HashMap::new();
     tokens

@@ -1,4 +1,6 @@
 use super::*;
+use crate::config::model::DeadCode;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 use std::path::Path;
@@ -25,7 +27,7 @@ fn dead_symbols(dir: &Path, names: &[&str]) -> Vec<(String, String)> {
     let files: Vec<_> = names
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     detect(&cg, &files, &cfg())
@@ -112,8 +114,8 @@ fn test_sources_do_not_emit_dead_code_findings() {
     .unwrap();
 
     let files = vec![
-        parse_file(&dir.join("prod.py"), 0).unwrap(),
-        parse_file(&dir.join("tests/test_helpers.py"), 1).unwrap(),
+        parse_file(&dir.join("prod.py"), FileId::from_index(0)).unwrap(),
+        parse_file(&dir.join("tests/test_helpers.py"), FileId::from_index(1)).unwrap(),
     ];
     let cg = crate::spine::graph::build(&files, &[]);
     let mut config = cfg();
@@ -150,8 +152,8 @@ fn entry_point_files_do_not_emit_dead_code_findings() {
     .unwrap();
 
     let files = vec![
-        parse_file(&dir.join("public_api.py"), 0).unwrap(),
-        parse_file(&dir.join("internal.py"), 1).unwrap(),
+        parse_file(&dir.join("public_api.py"), FileId::from_index(0)).unwrap(),
+        parse_file(&dir.join("internal.py"), FileId::from_index(1)).unwrap(),
     ];
     let cg = crate::spine::graph::build(&files, &[]);
     let mut config = cfg();

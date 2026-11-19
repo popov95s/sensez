@@ -1,6 +1,6 @@
 use super::{SourceFile, SourceFingerprint};
 use crate::source_state::SourceManifest;
-use crate::spine::ir::{Language, Walked};
+use crate::spine::ir::{FileId, Language, Walked};
 use crate::spine::parser::ParsedFile;
 use std::collections::HashMap;
 use std::path::PathBuf;
@@ -24,13 +24,13 @@ struct CachedFile {
     language: Language,
     lines: u32,
     walked: Arc<Walked>,
-    uniform_file_id: Option<u32>,
+    uniform_file_id: Option<FileId>,
     is_generated: bool,
     runs_as_program: bool,
 }
 
 impl CachedFile {
-    fn restore(&self, source: &SourceFile, file_id: u32) -> ParsedFile {
+    fn restore(&self, source: &SourceFile, file_id: FileId) -> ParsedFile {
         let walked = if self.walked.syntax.spans.is_empty() || self.uniform_file_id == Some(file_id)
         {
             Arc::clone(&self.walked)
@@ -45,8 +45,7 @@ impl CachedFile {
             path: source.path.clone(),
             language: self.language,
             lines: self.lines,
-            // A cache hit means `self.content_hash == source.content_hash` by
-            // definition, so reuse the stored hash — no third byte-scan.
+            // A hit means equal hashes, so reuse the stored one.
             fingerprint: SourceFingerprint::with_content_hash(
                 &source.path,
                 self.language,
@@ -123,7 +122,7 @@ impl ParseCacheState {
         stats
     }
 
-    pub fn restore(&mut self, source: &SourceFile, file_id: u32) -> Option<ParsedFile> {
+    pub fn restore(&mut self, source: &SourceFile, file_id: FileId) -> Option<ParsedFile> {
         self.files
             .get(&(source.path.clone(), source.content_hash))
             .map(|cached| cached.restore(source, file_id))

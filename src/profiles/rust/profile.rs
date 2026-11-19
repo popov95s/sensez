@@ -1,0 +1,172 @@
+use super::{deadcode, performance, resolve, roots, traversal, typevocab, wording};
+use crate::profiles::{
+    DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
+    PerformanceProfile, TypeVocabularyProfile,
+};
+use crate::report::SmellKind;
+use crate::spine::ir::{FileId, ImportContext, MutatorFamily, Walked};
+use std::collections::HashSet;
+use std::path::{Path, PathBuf};
+
+/// The Rust language profile (zero-sized).
+pub struct RustProfile;
+
+static RUST_INFO: LanguageInfo = LanguageInfo {
+    language: Language::Rust,
+    extensions: &["rs"],
+    test_support: &[],
+    migration_layouts: &[],
+    test_runners: &[],
+    // The same-name gate cannot tell a copied helper from sibling modules' parallel free functions.
+    default_off_smells: &[SmellKind::SiblingHelperRedefinition],
+    #[cfg(feature = "lsp")]
+    project_files: &["Cargo.toml"],
+    import_words: &["use", "mod"],
+    wording: &wording::WORDING,
+};
+impl ParseProfile for RustProfile {
+    fn info(&self) -> &'static LanguageInfo {
+        &RUST_INFO
+    }
+
+    fn ts_language(&self) -> tree_sitter::Language {
+        tree_sitter_rust::LANGUAGE.into()
+    }
+
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: FileId,
+        module_name: &str,
+    ) -> Walked {
+        traversal::walk(root, src, file_id, module_name)
+    }
+}
+
+impl ModuleProfile for RustProfile {
+    fn root_for(&self, file: &Path) -> PathBuf {
+        roots::root_for(file)
+    }
+
+    fn module_name(&self, file: &Path, root: &Path) -> String {
+        roots::module_name(file, root)
+    }
+
+    fn is_package_index(&self, file: &Path) -> bool {
+        roots::is_package_index(file)
+    }
+
+    fn containing_package(&self, module_name: &str, is_index: bool) -> String {
+        resolve::containing_package(module_name, is_index)
+    }
+
+    fn import_resolver(&self) -> Box<dyn ImportResolver> {
+        Box::new(RustProfile)
+    }
+
+    fn submodule_candidate(&self, target: &str, symbol: &str) -> Option<String> {
+        Some(format!("{target}/{symbol}"))
+    }
+
+    fn is_containment(&self, importer: &str, target: &str) -> bool {
+        // An edge into the importer's own subtree is containment, like `mod x;`.
+        target
+            .strip_prefix(importer)
+            .is_some_and(|rest| rest.starts_with('/'))
+    }
+}
+
+impl ImportResolver for RustProfile {
+    fn resolve_target(
+        &mut self,
+        import: &ImportContext,
+        _importer_package: &str,
+        file: &Path,
+        root: &Path,
+    ) -> String {
+        resolve::resolve_target(import, file, root)
+    }
+}
+
+impl DeadCodeProfile for RustProfile {
+    fn classify_decorator(
+        &self,
+        paths: Option<&Vec<String>>,
+        user_entrypoints: &HashSet<String>,
+    ) -> crate::profiles::DecoratorClass {
+        deadcode::classify(paths, user_entrypoints)
+    }
+
+    fn is_conventionally_private(&self, symbol: &str) -> bool {
+        deadcode::is_conventionally_private(symbol)
+    }
+
+    fn is_entry_file_stem(&self, stem: &str) -> bool {
+        deadcode::is_entry_file_stem(stem)
+    }
+
+    fn dead_code_defaults(&self) -> crate::profiles::DeadCodeDefaults {
+        deadcode::defaults()
+    }
+
+    fn entry_modules(&self, project_root: &Path) -> Vec<String> {
+        deadcode::entry_modules(project_root)
+    }
+}
+
+impl PerformanceProfile for RustProfile {
+    fn receiver_root<'a>(&self, receiver: &'a str) -> &'a str {
+        performance::receiver_root(receiver)
+    }
+
+    fn is_mutating_call(&self, method: &str) -> bool {
+        performance::is_mutating_call(method)
+    }
+
+    fn is_bounded_loop(&self, subject: &str) -> bool {
+        performance::is_bounded_loop(subject)
+    }
+
+    fn is_external_loop_call(
+        &self,
+        method: &str,
+        receiver: &str,
+        receiver_type: Option<&str>,
+        loops: &[crate::spine::ir::PerfLine],
+    ) -> bool {
+        performance::is_external_loop_call(method, receiver, receiver_type, loops)
+    }
+}
+
+impl crate::profiles::DependencyProfile for RustProfile {}
+
+impl TypeVocabularyProfile for RustProfile {
+    fn loose_kind(&self, annotation: &str) -> Option<crate::profiles::typevocab::LooseTypeKind> {
+        typevocab::loose_kind(annotation)
+    }
+
+    fn is_bool(&self, annotation: &str) -> bool {
+        typevocab::is_bool(annotation)
+    }
+
+    fn is_dictish(&self, annotation: &str) -> bool {
+        typevocab::is_dictish(annotation)
+    }
+
+    fn has_domain_model(&self, annotation: &str) -> bool {
+        typevocab::has_domain_model(annotation)
+    }
+
+    fn is_primitive_scalar_alias(&self, annotation: &str) -> bool {
+        typevocab::is_primitive_scalar_alias(annotation)
+    }
+
+    fn is_mutable_collection(&self, annotation: &str, family: MutatorFamily) -> bool {
+        typevocab::is_mutable_collection(annotation, family)
+    }
+
+    fn is_void(&self, annotation: &str) -> bool {
+        typevocab::is_void(annotation)
+    }
+}

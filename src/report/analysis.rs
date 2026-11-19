@@ -49,19 +49,7 @@ impl AnalysisReport {
             .count()
     }
 
-    /// Hash over the *content* the gate would nag the agent about
-    /// (file + line + kind per finding), not over file mtimes. Two
-    /// invocations with the same complaint set get the same hash; an
-    /// edit that doesn't touch any of the reported files/lines leaves
-    /// the hash alone. Used by the `noze_gate` end-of-turn hook to
-    /// avoid re-blocking the same unchanged work when an MCP host
-    /// (e.g. anything besides Claude Code's CLI) does not set the
-    /// `stop_hook_active` flag.
-    ///
-    /// Pillar tags prefix each section so a dead-code and a smell on
-    /// the same file+line don't collide. Line numbers in a file are
-    /// not perturbed by edits to other files, so they're stable across
-    /// turns; mtimes would not be.
+    /// Hash over the *content* the gate would nag the agent about.
     pub fn finding_signature(&self) -> u64 {
         use std::hash::{Hash, Hasher};
         let mut h = rustc_hash::FxHasher::default();
@@ -170,66 +158,5 @@ impl AnalysisReport {
 }
 
 #[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn aggregates_actions_across_findings() {
-        let report = AnalysisReport {
-            duplication: vec![
-                CloneClass {
-                    action: ActionLevel::Warning,
-                    token_length: 10,
-                    occurrences: Vec::new(),
-                    hint: None,
-                    ..Default::default()
-                },
-                CloneClass {
-                    action: ActionLevel::MustFix,
-                    token_length: 20,
-                    occurrences: Vec::new(),
-                    hint: None,
-                    ..Default::default()
-                },
-            ],
-            ..AnalysisReport::default()
-        };
-
-        assert_eq!(report.finding_count(), 2);
-        assert_eq!(report.count_at_action(ActionLevel::MustFix), 1);
-        assert_eq!(
-            report.actions().collect::<Vec<_>>(),
-            vec![ActionLevel::Warning, ActionLevel::MustFix]
-        );
-    }
-
-    #[test]
-    fn top_summary_puts_a_must_fix_finding_before_advisory_ones() {
-        let orphan = |n: usize| DeadCodeFinding {
-            action: ActionLevel::Advisory,
-            module: "pkg".into(),
-            symbol: format!("orphan{n}"),
-            kind: SymbolKind::Function,
-            confidence: Confidence::High,
-            file: "pkg.py".into(),
-            line: n,
-            reason: String::new(),
-        };
-        let report = AnalysisReport {
-            dead_code: (1..=6).map(orphan).collect(),
-            boundaries: vec![BoundaryViolation {
-                action: ActionLevel::MustFix,
-                from_module: "core".into(),
-                to_module: "api".into(),
-                rule: "core-not-api".into(),
-                file: "core.py".into(),
-                line: 1,
-            }],
-            ..AnalysisReport::default()
-        };
-
-        let summary = report.top_n_summary(5);
-        assert!(summary.starts_with("boundary core -> api"), "{summary}");
-        assert!(summary.contains("orphan1") && !summary.contains("orphan5"));
-    }
-}
+#[path = "analysis_tests.rs"]
+mod tests;

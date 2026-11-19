@@ -3,12 +3,17 @@
 use super::detect_local;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, ParsedFile};
 
 /// `body` parsed as a file called `name` in a throwaway directory.
 pub(crate) fn parsed(name: &str, body: &str) -> ParsedFile {
     let tmp = tempfile::tempdir().unwrap();
-    parse_file(&crate::test_support::write(tmp.path(), name, body), 0).unwrap()
+    parse_file(
+        &crate::test_support::write(tmp.path(), name, body),
+        FileId::from_index(0),
+    )
+    .unwrap()
 }
 
 /// File-local findings for `body` parsed as `name`.
@@ -35,7 +40,7 @@ pub(super) fn project(
         .map(|(index, (name, body))| {
             parse_file(
                 &crate::test_support::write(tmp.path(), name, body),
-                index as u32,
+                FileId::from_index(index),
             )
             .unwrap()
         })
@@ -61,7 +66,7 @@ impl Project {
         let parsed = paths
             .iter()
             .filter(|path| crate::profiles::registry::should_parse_path(path))
-            .map(|path| parse_file(path, 0).unwrap())
+            .map(|path| parse_file(path, FileId::from_index(0)).unwrap())
             .collect();
         Project {
             _root: root,

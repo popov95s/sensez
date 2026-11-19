@@ -2,6 +2,7 @@ use super::detect_local;
 use super::test_support as fixture;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 
 pub(super) fn local(ext: &str, source: &str) -> Vec<SmellFinding> {
@@ -210,7 +211,7 @@ fn opt_in_oracle_findings(toml: &str) -> Vec<SmellFinding> {
     crate::test_support::write(temp.path(), "sensez.toml", toml);
     let config = Config::load(temp.path()).unwrap();
     super::detect(
-        &[parse_file(&path, 0).unwrap()],
+        &[parse_file(&path, FileId::from_index(0)).unwrap()],
         &CodebaseGraph::default(),
         &config.smells,
         &SourceScope::for_smells(&config.smells),

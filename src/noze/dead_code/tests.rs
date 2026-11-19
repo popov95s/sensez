@@ -1,5 +1,7 @@
 use super::*;
+use crate::config::model::DeadCode;
 use crate::report::Confidence;
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, SymbolKind};
 use std::fs;
 
@@ -35,7 +37,7 @@ fn configured_class_bases_mark_dynamic_entrypoints() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("apps.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("apps.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let mut cfg = cfg();
     cfg.entrypoint_bases = vec!["AppConfig".to_string()];
@@ -64,7 +66,7 @@ fn python_profile_class_bases_mark_dynamic_entrypoints_by_default() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("apps.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("apps.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let dead: Vec<_> = detect(
         &cg,
@@ -95,7 +97,7 @@ fn flags_unused_functions_only_by_default() {
     let files: Vec<_> = ["lib.py", "app.py"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
 
@@ -105,7 +107,6 @@ fn flags_unused_functions_only_by_default() {
         .collect();
     assert!(dead.contains(&"dead_fn".to_string()));
     assert!(!dead.contains(&"used_fn".to_string()));
-    // module-level variables are off in this config
     assert!(!dead.contains(&"DEAD_CONST".to_string()));
 
     let mut on = cfg();
@@ -128,7 +129,7 @@ fn unused_properties_are_opt_in_dead_code() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("model.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("model.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
 
     let default = crate::config::model::Config::default().dead_code;
@@ -147,9 +148,6 @@ fn unused_properties_are_opt_in_dead_code() {
     assert!(opted_in.contains(&"User.stale".to_string()));
 }
 
-/// Python profile defaults treat alembic migrations, docs/examples, and test
-/// files as entry points: their symbols aren't flagged dead (external runners
-/// call them), but real dead code elsewhere still is.
 #[test]
 fn alembic_and_tests_excluded_by_default() {
     let tmp = tempfile::tempdir().unwrap();
@@ -190,10 +188,10 @@ fn alembic_and_tests_excluded_by_default() {
     let files: Vec<_> = names
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
-    let cfg = crate::config::model::Config::default().dead_code; // includes default entry_points
+    let cfg = crate::config::model::Config::default().dead_code;
     let dead: Vec<_> = detect(&cg, &files, &cfg)
         .iter()
         .map(|f| f.symbol.clone())
@@ -221,10 +219,6 @@ fn alembic_and_tests_excluded_by_default() {
     );
 }
 
-/// A symbol reached via module attribute access (`crud.fetch_rows()`) is
-/// credited to *that* module precisely: `pkg.crud.fetch_rows` is live, but a
-/// same-named `fetch_rows` in an unrelated, unimported module stays flagged
-/// (proving it's per-binding resolution, not a global name match).
 #[test]
 fn module_attribute_access_is_credited_precisely() {
     let tmp = tempfile::tempdir().unwrap();
@@ -232,7 +226,6 @@ fn module_attribute_access_is_credited_precisely() {
     fs::create_dir_all(dir.join("pkg")).unwrap();
     fs::write(dir.join("pkg/__init__.py"), "").unwrap();
     fs::write(dir.join("pkg/crud.py"), "def fetch_rows():\n    return 1\n").unwrap();
-    // Same symbol name, different module, never imported or accessed.
     fs::write(
         dir.join("pkg/other.py"),
         "def fetch_rows():\n    return 2\n",
@@ -253,7 +246,7 @@ fn module_attribute_access_is_credited_precisely() {
     let files: Vec<_> = names
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     let dead: Vec<_> = detect(&cg, &files, &cfg())
@@ -271,8 +264,6 @@ fn module_attribute_access_is_credited_precisely() {
     );
 }
 
-/// An unimported "app" module with a decorated route handler must NOT flag the
-/// handler, and a plain unused function there is an unreachable-module Medium.
 #[test]
 fn decorated_handlers_live_unimported_module_is_medium() {
     let tmp = tempfile::tempdir().unwrap();
@@ -283,7 +274,7 @@ fn decorated_handlers_live_unimported_module_is_medium() {
         "import framework\n\napp = framework.App()\n\n\n@app.get(\"/\")\ndef handler():\n    return 1\n\n\ndef plain():\n    return 2\n",
     )
     .unwrap();
-    let files = vec![parse_file(&dir.join("app.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("app.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let findings = detect(&cg, &files, &cfg());
 

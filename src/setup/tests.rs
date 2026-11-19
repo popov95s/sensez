@@ -61,7 +61,6 @@ fn flag_driven_init_writes_all_artifacts() {
     assert!(root.join(".sensez").is_dir(), ".sensez dir created");
     assert!(root.join(".sensez/.gitignore").exists());
 
-    // Idempotent: a second run must not duplicate the hook entry.
     run(InitOptions {
         path: Some(root.clone()),
         agent: Some("claude-code".into()),
@@ -235,7 +234,6 @@ fn pyproject_mode_appends_tool_sensez() {
     let text = fs::read_to_string(root.join("pyproject.toml")).unwrap();
     assert!(text.contains("[tool.sensez.self_improvement]"));
     assert!(text.contains("[tool.sensez.duplication]"));
-    // Round-trip: the config layer must actually parse what init wrote.
     let cfg = crate::config::model::Config::load(&root).unwrap();
     assert!(cfg.self_improvement.enabled);
 }

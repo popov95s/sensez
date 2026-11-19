@@ -5,7 +5,14 @@ use colored::Colorize;
 use std::collections::{HashMap, HashSet};
 use std::fmt::Write;
 
-pub fn render(report: &AnalysisReport, explain: bool) -> String {
+/// Whether the terminal report appends the glossary.
+#[derive(Debug, Clone, Copy)]
+pub enum Glossary {
+    Hidden,
+    Shown,
+}
+
+pub fn render(report: &AnalysisReport, glossary: Glossary) -> String {
     let mut out = String::new();
     let _ = writeln!(
         out,
@@ -216,7 +223,7 @@ pub fn render(report: &AnalysisReport, explain: bool) -> String {
         );
     }
 
-    if explain && !report.meta.glossary.is_empty() {
+    if matches!(glossary, Glossary::Shown) && !report.meta.glossary.is_empty() {
         let _ = writeln!(out, "\n{}", "What these mean".bold());
         for g in &report.meta.glossary {
             let _ = writeln!(out, "  {} — {}", g.title.cyan(), g.explanation.dimmed());
