@@ -1,5 +1,4 @@
-//! JavaScript profile behavior tests (structural pillars: tokens, imports,
-//! resolution, cycles, duplication, cross-language isolation).
+//! JavaScript profile behavior tests.
 
 use super::JsProfile;
 use crate::profiles::test_fixtures::tokens;
@@ -22,8 +21,7 @@ fn jsdoc_before_declaration_belongs_to_function() {
     assert_eq!(walked.docs[1].symbol_path, "m::authorize");
 }
 
-/// Two functions with the same control-flow shape but different local names
-/// produce identical structural-token vectors (rename invariance).
+/// Same control-flow shape with different local names gives identical token vectors.
 #[test]
 fn rename_invariance_yields_identical_tokens() {
     let a = b"function compute(items) {\n  let total = 0;\n  for (const item of items) {\n    if (item > 10) { total = total + item; }\n  }\n  return total;\n}\n";
@@ -210,8 +208,7 @@ fn identical_functions_are_a_clone() {
     assert!(!dup.is_empty(), "identical JS functions must be a clone");
 }
 
-/// A Python and a JS file with the same control-flow shape must NOT be reported
-/// as a cross-language clone (duplication is partitioned per language).
+/// A Python and a JS file with the same shape are not a cross-language clone.
 #[cfg(feature = "lang-python")]
 #[test]
 fn no_cross_language_clones() {

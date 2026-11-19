@@ -1,10 +1,4 @@
-//! Presentation-only report filtering. This never changes scan scope: analyzers
-//! run over the full project first, then the rendered/serialized report is
-//! narrowed to findings whose source paths match the requested globs.
-//!
-//! Sits in `reporter` (not its own module) because every other type here is
-//! a view over [`crate::report::AnalysisReport`] and the filter is just
-//! another one — same data, narrower slice.
+//! Presentation-only report filtering.
 
 use crate::globs::build_globset;
 use crate::report::AnalysisReport;
@@ -12,10 +6,7 @@ use anyhow::Result;
 use globset::GlobSet;
 use std::path::{Path, PathBuf};
 
-/// Drop findings from `report` whose source paths do not match the
-/// `--output-glob` patterns (`!pattern` excludes). Updates the per-pillar
-/// totals and the derived `smell_totals` / `glossary` so the rendered report
-/// stays internally consistent.
+/// Drop findings from `report` whose source paths do not match the `--output-glob` patterns.
 pub fn apply(report: &mut AnalysisReport, root: &Path, patterns: &[String]) -> Result<()> {
     if patterns.is_empty() {
         return Ok(());

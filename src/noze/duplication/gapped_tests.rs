@@ -1,7 +1,6 @@
 use super::*;
 use crate::spine::ir::FileId;
 
-// Layout: indices 0..=5 file 0, 6 separator, 7..=12 file 1.
 fn spans() -> Vec<TokenSpan> {
     let f = |file_id: FileId| TokenSpan {
         file_id,
@@ -11,13 +10,11 @@ fn spans() -> Vec<TokenSpan> {
         end_byte: 0,
     };
     let mut s: Vec<TokenSpan> = (0..6).map(|_| f(FileId::from_index(0))).collect();
-    s.push(f(FileId::SEPARATOR)); // separator at index 6
-    s.extend((0..6).map(|_| f(FileId::from_index(1)))); // indices 7..=12
+    s.push(f(FileId::SEPARATOR));
+    s.extend((0..6).map(|_| f(FileId::from_index(1))));
     s
 }
 
-// Two exact clones with a consistent small gap in both files:
-//   file 0: [0,2) gap [3,5)   file 1: [7,9) gap [11,13)
 fn groups() -> Vec<RawGroup> {
     vec![
         RawGroup {
@@ -37,15 +34,12 @@ fn stitches_consistent_gap() {
     assert_eq!(clusters.len(), 1, "two adjacent clones merge into one");
     assert_eq!(clusters[0].matched, 4, "matched excludes the gap");
     assert_eq!(clusters[0].occ.len(), 2);
-    // spans cover the gap: (0,5) and (7,13)
     assert!(clusters[0].occ.contains(&(0, 5)));
     assert!(clusters[0].occ.contains(&(7, 13)));
 }
 
 #[test]
 fn does_not_stitch_when_gap_exceeds_budget() {
-    // file-1 gap is 2 (9->11); a budget of 1 leaves that occurrence
-    // unfollowed, so nothing merges.
     let clusters = stitch(groups(), &spans(), 1);
     assert_eq!(clusters.len(), 2, "inconsistent/over-budget gap → no merge");
 }
@@ -90,7 +84,6 @@ fn overlapping_follower_is_stitched_without_double_counting() {
 
 #[test]
 fn sparse_stitch_fails_the_density_guard() {
-    // Layout: indices 0..=7 file 0, 8 separator, 9..=16 file 1.
     let f = |file_id: FileId| TokenSpan {
         file_id,
         start_row: 1,
@@ -111,6 +104,5 @@ fn sparse_stitch_fails_the_density_guard() {
             positions: vec![5, 14],
         },
     ];
-    // 4 matched tokens over a 7-token span is below the 60% density floor.
     assert_eq!(stitch(clusters, &spans, 3).len(), 2);
 }

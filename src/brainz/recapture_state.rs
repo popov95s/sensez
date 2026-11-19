@@ -3,9 +3,7 @@
 use super::hub;
 use std::path::Path;
 
-/// Confirm an mtime candidate with the same path/content manifest used by the
-/// parser cache. A scan without an opt-in cache has no manifest baseline, so
-/// preserve the existing conservative rescan behavior.
+/// Confirm an mtime candidate with the same path/content manifest used by the parser cache.
 pub(super) fn changed(root: &Path, baseline: &hub::Baseline) -> bool {
     let Some(previous) = baseline.source_state.as_ref() else {
         return true;

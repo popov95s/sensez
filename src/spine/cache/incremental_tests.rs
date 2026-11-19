@@ -129,7 +129,6 @@ fn insert_before_cached_files_restamps_shifted_spans() {
     let (warm, stats) = crate::spine::parser::parse_sources_incremental(&batch, &mut state);
     assert_eq!(stats.reusable, 2, "only the inserted file is a cache miss");
 
-    // Fresh parses of the same bytes are the ground truth for token content.
     let (fresh, _) = crate::spine::parser::parse_sources_incremental(
         &[
             source(root.path().join("00_new.py"), b"x = 0\n"),
@@ -178,9 +177,6 @@ fn deleted_file_is_evicted_from_state() {
     assert_eq!(stats.deleted, 1);
     assert_eq!(stats.changed_paths, vec![PathBuf::from("drop.py")]);
 
-    // Eviction is committed by the caller's replace() (the analysis session
-    // does exactly this after a clean batch); until then the manifest still
-    // knows about the deleted file.
     state.replace(std::slice::from_ref(&mk_keep()), &warm.files);
     assert_eq!(
         state.changes(std::slice::from_ref(&mk_keep())).deleted,

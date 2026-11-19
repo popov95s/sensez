@@ -1,20 +1,9 @@
 //! Package-root detection and dotted module-name computation.
-//!
-//! A *root* is the directory from which dotted module paths are measured.
-//! Detection prefers the project's **marker** (`pyproject.toml`/`setup.py`/
-//! `setup.cfg`): the nearest ancestor with a marker is the root (or its `src/`
-//! for src-layout, when the file lives under it). Naming is then relative to
-//! that single root, so PEP 420 namespace packages (dirs with no `__init__.py`)
-//! are handled — `backend/app/db/models.py` is `app.db.models` even though
-//! `app/db/` has no `__init__.py`. Files with no marker ancestor use the
-//! `__init__.py` package walk.
 
 use std::path::{Path, PathBuf};
 
 const MARKERS: [&str; 3] = ["pyproject.toml", "setup.py", "setup.cfg"];
-/// The marker walk stops at these boundaries so it can't escape into an
-/// unrelated parent project — e.g. scanning an installed package under
-/// `.venv/site-packages` must not pick up the surrounding repo's pyproject.
+/// Boundaries the marker walk must not cross.
 const BOUNDARIES: [&str; 6] = [
     "site-packages",
     ".venv",
@@ -42,9 +31,7 @@ pub fn root_for(file: &Path) -> PathBuf {
     init_walk(start)
 }
 
-/// Nearest ancestor directory (inclusive) containing a project marker, without
-/// crossing a vendor/env boundary (so installed packages don't pick up a
-/// surrounding repo's marker).
+/// Nearest ancestor directory containing a project marker, not crossing a vendor boundary.
 fn nearest_marker(start: &Path) -> Option<PathBuf> {
     let mut dir = Some(start);
     while let Some(d) = dir {
@@ -74,8 +61,6 @@ fn init_walk(start: &Path) -> PathBuf {
 }
 
 /// Compute a file's dotted module name relative to its root.
-///
-/// `root/pkg/sub/mod.py` → `pkg.sub.mod`; `root/pkg/__init__.py` → `pkg`.
 pub fn module_name(file: &Path, root: &Path) -> String {
     let rel = file.strip_prefix(root).unwrap_or(file);
     let mut parts: Vec<String> = rel

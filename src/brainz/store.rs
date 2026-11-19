@@ -1,6 +1,4 @@
-//! Disk persistence for local metrics: `.sensez/local-metrics/` inside the target
-//! repo (already gitignored alongside the eyez cache). Plain JSON only —
-//! no network, no exporters.
+//! Disk persistence for local metrics.
 
 use super::events::{Event, Totals};
 use super::json_file;
@@ -12,8 +10,7 @@ pub(super) fn dir(root: &Path) -> PathBuf {
     root.join(".sensez").join("local-metrics")
 }
 
-/// Load the repo's all-time aggregates (default-empty when missing/corrupt —
-/// metrics must never fail the server).
+/// Load the repo's all-time aggregates.
 pub fn load_totals(root: &Path) -> Totals {
     json_file::load_or_default(&dir(root).join("totals.json"))
 }
@@ -66,19 +63,15 @@ pub fn append_events(root: &Path, events: &[Event]) -> Result<()> {
         .with_context(|| format!("appending {}", path.display()))?;
     file.write_all(lines.as_bytes())
         .with_context(|| format!("appending {}", path.display()))?;
-    // The log is the source of truth for resolution metrics; make the batch
-    // durable before reporting success.
     file.sync_all()
         .with_context(|| format!("syncing {}", path.display()))?;
     Ok(())
 }
 
-/// `events.jsonl` is compacted once it grows past this (bytes). The append-only
-/// log must stay bounded; compaction keeps only the recent retention window.
+/// `events.jsonl` is compacted once it grows past this (bytes).
 const EVENTS_MAX_BYTES: u64 = 4 * 1024 * 1024;
 
-/// Parse the repo's event log (skipping any unparseable lines). Empty when the
-/// log is missing — callers treat that as "no history yet".
+/// Parse the repo's event log (skipping any unparseable lines).
 pub fn load_events(root: &Path) -> Vec<Event> {
     fs::read_to_string(dir(root).join("events.jsonl"))
         .map(|text| {
@@ -89,9 +82,7 @@ pub fn load_events(root: &Path) -> Vec<Event> {
         .unwrap_or_default()
 }
 
-/// If the event log has grown past [`EVENTS_MAX_BYTES`], rewrite it keeping only
-/// events at or after `keep_after`. A no-op when the log is small or absent, so
-/// it is cheap to call on every flush. Errors are returned for the caller to log.
+/// If the event log has grown past [`EVENTS_MAX_BYTES`], rewrite it keeping only events at or after `keep_after`.
 pub fn compact_events(root: &Path, keep_after: u64) -> Result<()> {
     let path = dir(root).join("events.jsonl");
     let oversize = fs::metadata(&path)

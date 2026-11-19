@@ -1,6 +1,3 @@
-//! Structural smells: deep nesting, long parameter lists, too many returns,
-//! magic numbers, message chains (Law of Demeter), and split variables.
-
 use super::exclusive_paths::max_on_one_path;
 use super::lines::{hit_lines, line_list, SHOWN_LINES};
 use super::{make, Measure, SmellContext};
@@ -246,9 +243,6 @@ impl StructuralDetector<'_, '_> {
             Severity::Warning, Measure::new(deepest, 0)));
     }
 
-    /// Advisory: a local assigned `split_variable_min_assigns`+ times either holds
-    /// distinct concepts or is branch-bound state — both want a single binding
-    /// (extract a helper that returns the value).
     fn split_variables(&mut self, m: &FunctionUnit) {
         let min_assigns = self.cfg.split_variable_min_assigns.max(2);
         let mut locals: Vec<_> = m.local_reassigns.iter().collect();

@@ -1,8 +1,4 @@
-//! Obtain working-tree diffs and changed paths from `git`.
-//!
-//! Diffs against the `HEAD` commit (so staged *and* unstaged edits are seen) and treats
-//! untracked source files as fully added (a freshly-written file emits no diff
-//! hunks but is exactly the common edit-loop case).
+//! Working-tree diffs and changed paths from `git`.
 
 use super::ChangedLines;
 use anyhow::{anyhow, Context, Result};
@@ -12,10 +8,7 @@ use std::process::Command;
 use std::time::Duration;
 use wait_timeout::ChildExt;
 
-/// Per-invocation wall-clock cap on the `git` subprocess. Long enough for any
-/// reasonable local operation (`diff`/`ls-files` on a large repo finishes in
-/// well under a second), short enough that a hung `git` on a network mount
-/// or a misbehaving hook does not stall the scan.
+/// Wall-clock cap on one `git` subprocess.
 const GIT_TIMEOUT: Duration = Duration::from_secs(30);
 
 /// Which edits a change scan reads.
@@ -37,8 +30,7 @@ pub fn repository_root(scan_path: &Path) -> Result<PathBuf> {
     Ok(PathBuf::from(root.trim()))
 }
 
-/// Resolve all changed paths for test-impact analysis, including non-source
-/// manifests and configuration files that may require a full-suite fallback.
+/// Changed paths for test-impact analysis, including non-source manifests.
 pub fn changed_paths(
     scan_path: &Path,
     base: Option<&str>,
@@ -165,9 +157,7 @@ fn untracked_sources(root: &Path) -> Result<Vec<PathBuf>> {
 }
 
 #[cfg(feature = "mcp")]
-/// Current branch name, or `None` when not a git repo, on a detached HEAD, or
-/// git is unavailable. Used to key local metrics so resolved-tracking never
-/// cross-diffs findings between branches.
+/// Current branch name, or `None` outside a git repo or on a detached HEAD.
 pub fn current_branch(path: &Path) -> Option<String> {
     let output = run_with_timeout(
         Command::new("git").args(["rev-parse", "--abbrev-ref", "HEAD"]),
@@ -178,7 +168,6 @@ pub fn current_branch(path: &Path) -> Option<String> {
         return None;
     }
     let name = String::from_utf8_lossy(&output.stdout).trim().to_string();
-    // "HEAD" means detached; bucket those with non-git rather than guess a key.
     if name.is_empty() || name == "HEAD" {
         None
     } else {
@@ -217,14 +206,7 @@ fn run(args: &[&str], cwd: &Path) -> Result<String> {
     Ok(String::from_utf8_lossy(&output.stdout).into_owned())
 }
 
-/// Spawn `cmd` (already configured with args + current_dir) and wait up to
-/// [`GIT_TIMEOUT`] for completion. On timeout the child is killed and the
-/// function returns an error rather than blocking indefinitely.
-///
-/// Both streams are piped AND drained concurrently on helper threads: a child
-/// whose output exceeds the OS pipe buffer (~64 KB) would otherwise block on
-/// write forever (it cannot exit until the pipe drains, so waiting for exit
-/// first deadlocks until the timeout kills it — which then loses the diff).
+/// Run `cmd` in `cwd`, waiting up to [`GIT_TIMEOUT`] and killing the child on timeout.
 fn run_with_timeout(cmd: &mut Command, cwd: &Path) -> std::io::Result<std::process::Output> {
     use std::io::Read;
     use std::process::Stdio;
@@ -241,11 +223,11 @@ fn run_with_timeout(cmd: &mut Command, cwd: &Path) -> std::io::Result<std::proce
             buf
         })
     }
+    // Drain both pipes concurrently: a full pipe buffer would block the child forever.
     let stdout_reader = drain(child.stdout.take());
     let stderr_reader = drain(child.stderr.take());
     match child.wait_timeout(GIT_TIMEOUT) {
         Ok(Some(status)) => {
-            // The child exited, so both pipes are at EOF; the joins are prompt.
             let stdout = stdout_reader.join().unwrap_or_default();
             let stderr = stderr_reader.join().unwrap_or_default();
             Ok(std::process::Output {

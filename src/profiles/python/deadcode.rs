@@ -1,15 +1,4 @@
-//! Python dead-code conventions: decorator-shape classification, private/test
-//! naming, and entry-file stems.
-//!
-//! Decorators are classified by *shape* — not by a framework name list:
-//! - **Registration**: hands the function to an external object, so it's
-//!   reachable outside the import graph — `@app.get(...)`, `@router.websocket`,
-//!   `@celery.task`, or any decorator whose trailing name the user listed in
-//!   `entrypoints`. ⇒ treat as live.
-//! - **Neutral**: structural/wrapping stdlib decorators — `@property`,
-//!   `@functools.lru_cache`. ⇒ ignore.
-//! - **Unknown**: a bare custom/unrecognized decorator (`@lru_cache`,
-//!   `@my_wrapper`). ⇒ downgrade.
+//! Python dead-code conventions: decorator shape, private naming, entry-file stems.
 
 use crate::globs::matches_any;
 use crate::profiles::walk;
@@ -79,7 +68,6 @@ pub fn classify(paths: Option<&Vec<String>>, user_entrypoints: &HashSet<String>)
         if matches_any(user_entrypoints, trailing) {
             return DecoratorClass::Registration;
         }
-        // Attribute-access decorator on a non-neutral object ⇒ registration.
         if is_attr && !NEUTRAL_BASES.contains(&head) {
             return DecoratorClass::Registration;
         }

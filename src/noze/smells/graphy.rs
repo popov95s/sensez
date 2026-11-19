@@ -1,9 +1,3 @@
-//! Graph-metric smells: Shotgun-Surgery Hazard and God Module.
-//!
-//! Both read the existing module-level dependency graph — no history needed.
-//! Shotgun-Surgery *Hazard* is predictive: a module depended on by many distinct
-//! modules is one whose change forces edits across a wide, scattered blast radius.
-
 use super::{make, Measure};
 use crate::config::smells::{SmellConfig, Smells};
 use crate::profiles::registry;
@@ -15,10 +9,6 @@ use petgraph::visit::EdgeRef;
 use petgraph::Direction;
 use rayon::prelude::*;
 
-/// Blast radius is judged relative to repo size: in a large codebase the core
-/// modules are *expected* to have many dependents, so the configured floor
-/// scales up to this percentage of internal modules. Small repos keep the
-/// configured absolute threshold.
 const BLAST_FLOOR_REPO_PERCENT: usize = 15;
 
 /// `in_scope` drops skipped files both as candidates and as importers.
@@ -44,7 +34,6 @@ pub fn detect(
             if !is_graph_hotspot_candidate(node) || !scoped[idx.index()] {
                 return None;
             }
-            // Thresholds are per-language (a node's `language` selects the set).
             let lcfg = cfg.for_language(node.language);
             let blast_floor = lcfg
                 .shotgun_blast_threshold
@@ -73,16 +62,11 @@ impl Edges {
     }
 }
 
-/// API barrels/re-export surfaces are expected to have high fan-in. They still
-/// stay in the graph for cycles and reachability; they just are not actionable
-/// graph-smell hotspots.
+/// API barrels/re-export surfaces are expected to have high fan-in.
 fn is_graph_hotspot_candidate(node: &crate::spine::graph::ModuleNode) -> bool {
     !node.is_external && !registry::module_profile(node.language).is_package_index(&node.file_path)
 }
 
-/// Afferent coupling: distinct dependent modules, counting only real coupling
-/// edges (containment — `mod x;`, façade re-exports — is hierarchy, not blast
-/// radius). The module itself is excluded; siblings count.
 fn afferent(
     graph: &CodebaseGraph,
     idx: petgraph::graph::NodeIndex,
@@ -104,8 +88,6 @@ fn afferent(
     sources.len()
 }
 
-/// Efferent coupling: distinct internal modules depended upon at runtime.
-/// Packages and type-only imports don't make a module change with its targets.
 fn efferent(graph: &CodebaseGraph, idx: petgraph::graph::NodeIndex) -> usize {
     let mut targets: Vec<_> = graph
         .graph
@@ -126,7 +108,7 @@ fn shotgun(
     cfg: &Smells,
 ) -> Option<SmellFinding> {
     if !cfg.is_enabled(SmellKind::ShotgunSurgeryHazard) || blast < floor {
-        return None; // disabled for this language, or not a hazard
+        return None;
     }
     let sev = if blast >= floor * 2 {
         Severity::Critical
@@ -173,9 +155,6 @@ fn god_module(
     cfg: &Smells,
 ) -> Option<SmellFinding> {
     let fan = ca + ce;
-    // A god module is a sizeable hub: depended upon *and* depending widely.
-    // Requiring both sides rules out entrypoints (fan-in ~0) and leaf utilities
-    // (fan-out ~0); the size gate rules out small, widely imported leaves.
     let hub = ca >= cfg.god_module_min_fan_in
         && ce >= cfg.god_module_min_fan_out
         && fan >= cfg.god_module_fan;

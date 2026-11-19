@@ -90,8 +90,7 @@ fn invalid_boundary_glob_is_a_config_error() {
     );
 }
 
-/// `[tool.sensez]` in pyproject.toml configures sensez when sensez.toml is absent;
-/// sensez.toml wins when both exist.
+/// `[tool.sensez]` in pyproject.toml configures sensez when sensez.toml is absent.
 #[test]
 fn pyproject_tool_sensez_fallback() {
     let tmp = tempfile::tempdir().unwrap();
@@ -108,7 +107,6 @@ fn pyproject_tool_sensez_fallback() {
     assert_eq!(cfg.duplication.threshold, 33);
     assert!(!cfg.self_improvement.enabled);
 
-    // sensez.toml takes precedence over pyproject.
     std::fs::write(dir.join("sensez.toml"), "[duplication]\nthreshold = 44\n").unwrap();
     let cfg = Config::load(&dir).unwrap();
     assert_eq!(cfg.duplication.threshold, 44);

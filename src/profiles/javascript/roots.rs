@@ -1,10 +1,4 @@
 //! Package-root detection and path-style module-name keys for JS/TS.
-//!
-//! Unlike Python's dotted packages, a JS module's identity is its file path.
-//! We key modules by their root-relative path with the extension dropped and a
-//! trailing `index` collapsed (so `src/api/index.js` and an `import "./api"`
-//! both resolve to the key `src/api`). Path keys use `/` and cannot collide
-//! with Python dotted names in a mixed-language scan.
 
 use crate::profiles::pathroot;
 use std::path::{Component, Path, PathBuf};
@@ -18,8 +12,7 @@ pub fn is_package_index(path: &Path) -> bool {
     path.file_stem().is_some_and(|s| s == "index")
 }
 
-/// Package root: nearest ancestor containing `package.json` (without crossing a
-/// vendor boundary), else the file's own directory.
+/// Package root: nearest ancestor with `package.json`, else the file's directory.
 pub fn root_for(file: &Path) -> PathBuf {
     pathroot::root_for(file, &MARKERS, &BOUNDARIES)
 }
@@ -33,7 +26,6 @@ pub fn workspace_root(start: &Path) -> Option<PathBuf> {
 }
 
 /// Root-relative path key: drop the extension and collapse a trailing `index`.
-/// `root/src/api/index.ts` → `src/api`; `root/src/util.ts` → `src/util`.
 pub fn module_name(file: &Path, root: &Path) -> String {
     key_from_parts(pathroot::rel_parts(file, root))
 }

@@ -73,8 +73,7 @@ fn callback_name(lineage: Lineage, args: Node, src: &[u8]) -> Option<String> {
     })
 }
 
-/// Names declared by a `lexical_declaration` / `variable_declaration`, each with
-/// a kind: `Function` when the initializer is a function/arrow, else `Variable`.
+/// Names declared by a lexical or variable declaration, with a kind.
 pub fn declared_vars(node: Node, src: &[u8]) -> Vec<(String, SymbolKind)> {
     let mut cursor = node.walk();
     node.named_children(&mut cursor)

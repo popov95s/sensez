@@ -1,7 +1,4 @@
 //! Persistent vector cache for semantic-duplication comment bundles.
-//!
-//! This cache is separate from raw doc search because semantic duplication
-//! indexes per-symbol bundles, not individual comments/docstrings.
 
 use super::cache;
 use super::embed::{Embedder, MODEL_ID};

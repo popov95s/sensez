@@ -1,7 +1,4 @@
 //! Codex adapter (`.codex/config.toml`).
-//!
-//! Edits through `toml_edit` so the user's comments and formatting survive;
-//! an existing but unparseable file is a hard error, never a reset.
 
 use anyhow::{Context, Result};
 use std::path::Path;

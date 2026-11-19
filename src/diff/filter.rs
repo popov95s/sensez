@@ -1,6 +1,3 @@
-//! Per-pillar touch-filter: keep only findings the change is responsible for,
-//! attaching provenance an agent can act on.
-
 use super::ChangedLines;
 use crate::report::{
     AnalysisReport, BoundaryViolation, CloneClass, CycleFinding, DeadCodeFinding, SmellFinding,
@@ -8,8 +5,7 @@ use crate::report::{
 use std::collections::HashMap;
 use std::path::PathBuf;
 
-/// Filter `report` in place to diff-relevant findings. `module_files` maps a
-/// module name to its file (cycles/boundaries reference modules, not paths).
+/// Filter `report` in place to diff-relevant findings.
 pub fn apply(
     report: &mut AnalysisReport,
     changed: &ChangedLines,
@@ -49,7 +45,6 @@ pub fn apply(
 
     report.meta.mode = crate::report::ReportMode::Diff;
     report.refresh_totals();
-    // Re-scope the glossary to the categories that survived diff filtering.
     report.meta.glossary = crate::noze::glossary::for_report(report);
 }
 
@@ -107,8 +102,7 @@ fn smell_body_touches_diff(finding: &SmellFinding, changed: &ChangedLines) -> bo
         .any(|(start, end)| start > 0 && changed.touches(&finding.file, start, end))
 }
 
-/// n-way-aware guidance: if any copy predates the change, point at it to reuse;
-/// otherwise the change itself introduced multiple copies.
+/// Guidance pointing at a pre-existing copy to reuse, else at the change itself.
 fn dup_hint(class: &CloneClass, changed: &ChangedLines) -> String {
     let outside: Vec<_> = class
         .occurrences

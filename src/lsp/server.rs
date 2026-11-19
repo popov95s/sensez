@@ -23,9 +23,6 @@ pub fn serve() -> Result<()> {
         .initialize_finish(id, capabilities())
         .context("sending initialize result")?;
     let result = run(connection, roots, settings);
-    // In-flight scans only write metrics/publish through the (now-closed)
-    // sender; joining them keeps shutdown deterministic and lets bounded
-    // flushes finish.
     scan::join_all();
     io_threads.join().context("joining LSP I/O threads")?;
     result

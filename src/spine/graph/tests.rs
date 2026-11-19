@@ -24,18 +24,15 @@ fn builds_nodes_and_resolves_edges() {
     let cg = build(&files, &[]);
     assert!(cg.name_to_index.contains_key("app.models"));
     assert!(cg.name_to_index.contains_key("app.views"));
-    // `os` is unresolved -> synthetic external node.
     let os_idx = cg.name_to_index["os"];
     assert!(cg.graph[os_idx].is_external);
-    // Edge app.views -> app.models carries imported symbol "User".
     let views = cg.name_to_index["app.views"];
     let models = cg.name_to_index["app.models"];
     let edge = cg.graph.find_edge(views, models).unwrap();
     assert_eq!(cg.graph[edge].imported_symbols, vec!["User"]);
 }
 
-/// Relative imports resolve against the importer's package: `from . import b`
-/// and `from .b import x` in `pkg.a` both target `pkg.b`.
+/// Relative imports resolve against the importer's package.
 #[test]
 fn relative_imports_resolve_to_sibling() {
     let tmp = tempfile::tempdir().unwrap();
@@ -57,7 +54,6 @@ fn relative_imports_resolve_to_sibling() {
         cg.graph.find_edge(a_idx, b_idx).is_some(),
         "relative import pkg.a -> pkg.b must resolve"
     );
-    // `from .b import helper` credits the symbol on (one of) the edges to pkg.b.
     let has_helper = cg
         .graph
         .edges_connecting(a_idx, b_idx)

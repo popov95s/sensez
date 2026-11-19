@@ -1,8 +1,4 @@
 //! TypeScript `tsconfig` path-alias resolution.
-//!
-//! This profile module intentionally owns the TypeScript-specific
-//! `compilerOptions.paths` behavior. The shared graph receives only the
-//! resulting, language-neutral module target.
 
 use super::compiler_options::CompilerOptions;
 use super::type_imports::{self, TypeOnlyImports};

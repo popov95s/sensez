@@ -1,7 +1,4 @@
-//! Unified-diff (`git diff --unified=0`) hunk parser.
-//!
-//! Extracts, per file, the **new-side** added/modified line ranges from `@@`
-//! hunk headers, and the text of every removed line.
+//! Parses `git diff --unified=0` hunks into new-side line ranges and removed text.
 
 /// One file section of a unified diff.
 #[derive(Debug, Default, PartialEq)]

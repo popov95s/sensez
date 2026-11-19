@@ -21,8 +21,7 @@ fn slow_repos_wait_for_the_rescan_interval_and_fast_ones_do_not() {
     assert!(super::rescan_due(&base(super::SLOW_SCAN_MS), later));
 }
 
-/// Scan → fix → auto-recapture (no second scan call, no agent report):
-/// the vanished finding must be banked as resolved.
+/// Scan → fix → auto-recapture (no second scan call, no agent report).
 #[test]
 fn recapture_banks_resolved_without_a_second_scan() {
     let _metrics = crate::test_support::metrics_guard();

@@ -1,12 +1,4 @@
 //! The shared MCP scan pipeline.
-//!
-//! Both the `noze_sniff` tool (see [`super::handlers::scan_tool`]) and the
-//! `noze_gate` end-of-turn hook (see [`super::gate::gate`]) do the same
-//! two things after `analyze_path` (which already applies triaged
-//! suppressions and precision ranking):
-//!
-//! 1. drop scan-issues from the report, except skipped analyzers and config problems
-//! 2. count each pillar, then cap it to its top-N findings (`max = 0` skips)
 
 use crate::report::{AnalysisReport, ScanStage};
 use anyhow::{Context, Result};

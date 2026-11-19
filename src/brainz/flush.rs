@@ -6,8 +6,6 @@ const EVENTS_RETENTION_SECS: u64 = 45 * 86_400;
 
 pub fn flush() {
     for (root, batch) in hub::drain_pending() {
-        // Acquire exclusive lock for the entire flush sequence to prevent
-        // cross-process interleaving of read-modify-write operations.
         let _lock = match file_lock::acquire(&root, "flush.lock") {
             Ok(lock) => lock,
             Err(err) => {

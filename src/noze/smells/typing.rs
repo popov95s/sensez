@@ -1,11 +1,3 @@
-//! Type-discipline smells (annotation-gated: unannotated code is skipped).
-//!
-//! - `loose_typing`: params/return typed as bare collections or `Any` where a
-//!   dataclass/model almost always belongs.
-//! - `magic_string_default`: see [`super::magic_string`].
-//! - `boolean_blindness`: more than `max_bool_params` bool parameters.
-//! - `tuple_packing`: position-based grouped data in returns.
-
 use super::{magic_string, make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::typevocab::{base_type, split_top_level, LooseTypeKind};
@@ -61,7 +53,6 @@ fn loose_typing(
                 .map(|kind| (format!("{}: {ty}", shown_param(p)), kind))
         })
         .collect();
-    // Tuple returns are tuple_packing's finding — don't double-report here.
     let ret = return_type.and_then(|ty| reportable_return(ctx, ty, cfg.loose_typing_strictness));
     if offenders.is_empty() && ret.is_none() {
         return;
@@ -138,8 +129,6 @@ fn boolean_blindness(
     }
 }
 
-/// Bare tuple returns (`return a, b, c`) or `tuple[...]` return annotations
-/// wider than `max_tuple_return` — position-based grouped data.
 fn tuple_packing(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,

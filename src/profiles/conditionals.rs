@@ -1,8 +1,4 @@
 //! Shared conditional-shape helpers for language unit walkers.
-//!
-//! Each grammar names `if`, then-body, and else/alternative fields differently,
-//! but the smell semantics are language-neutral: an outer `if` with no
-//! alternative whose entire then-body is one inner `if` with no alternative.
 
 use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::NestedTernary;

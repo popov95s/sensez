@@ -91,9 +91,6 @@ fn diff_mode_filters_to_touched_files() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     fs::create_dir_all(&dir).unwrap();
-    // One imported module with an unreferenced top-level function, plus an
-    // untouched module. The import gives the touched module enough usage
-    // evidence to report its unused symbol.
     fs::write(
         dir.join("touched.py"),
         "def used_here():\n    return 0\n\n\ndef unused_here():\n    return 1\n",
@@ -130,10 +127,7 @@ fn diff_mode_filters_to_touched_files() {
         .all(|f| f.reason == "added_unreferenced"));
 }
 
-/// `--diff` scopes smells by the symbol's BODY span, not just its `def`
-/// line: editing code inside a function (even one you didn't originally
-/// write) surfaces its smell, while an edit entirely outside it does not.
-/// Pinned on synthetic code (NOT from any real repo).
+/// `--diff` scopes smells by the symbol's BODY span, not just its `def` line.
 #[test]
 fn diff_smell_scoping_covers_the_function_body() {
     use crate::report::SmellKind;
@@ -141,11 +135,7 @@ fn diff_smell_scoping_covers_the_function_body() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     fs::create_dir_all(&dir).unwrap();
-    // `split_variable` is opt-in; enable just it to keep the report focused.
     fs::write(dir.join("sensez.toml"), "[smells]\nsplit_variable = true\n").unwrap();
-    // `result` is plainly reassigned 3x (default threshold) -> SplitVariable
-    // on `proc` (def line 1, body lines 2-5). `untouched` is a second fn so
-    // an "elsewhere" edit has somewhere to land.
     let src = "def proc(data):\n    \
                result = []\n    \
                result = step_one(data)\n    \
@@ -165,7 +155,6 @@ fn diff_smell_scoping_covers_the_function_body() {
             .any(|s| s.kind == SmellKind::SplitVariable && s.symbol == "proc")
     };
 
-    // Sanity: a full scan finds it (proves the fixture triggers the smell).
     assert!(
         analyze_path(&dir, None)
             .unwrap()

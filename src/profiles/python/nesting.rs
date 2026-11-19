@@ -23,8 +23,7 @@ pub(super) fn is_branch(kind: &str) -> bool {
     )
 }
 
-/// Cognitive-complexity increment (Sonar-style): control structures cost
-/// `1 + nesting`; boolean operators and `elif` cost a flat `1`.
+/// Cognitive-complexity increment: control structures cost `1 + nesting`.
 pub(super) fn cognitive_weight(kind: &str, depth: usize) -> Option<usize> {
     match kind {
         "if_statement" | "for_statement" | "while_statement" | "conditional_expression" => {

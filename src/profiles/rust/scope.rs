@@ -1,20 +1,12 @@
 //! Function-scope bound-name analysis for Rust duplication normalization.
-//!
-//! Mirrors the Python/JS analysis: a name local to a function (its parameters,
-//! or a `let`/`for`/`if let` binding in its body) is the only thing a real
-//! clone may freely rename, so it collapses to one lexeme code. Field names,
-//! free names, types, and literals are kept verbatim.
 
 use crate::profiles::lexeme::BoundNames;
 use crate::profiles::node_names::NodeNames;
 use tree_sitter::Node;
 
-/// Names bound within `func` (parameters + body bindings), not descending into
-/// nested function/closure scopes.
+/// Names bound within `func`, excluding nested function and closure scopes.
 pub fn bound_names(func: Node, src: &[u8]) -> BoundNames {
     let mut set = BoundNames::default();
-    // `function_item` has a `parameters` list; `closure_expression` has
-    // `closure_parameters` (patterns directly as children).
     if let Some(params) = func.field("parameters") {
         let mut cursor = params.walk();
         for p in params.named_children(&mut cursor) {
@@ -58,9 +50,7 @@ fn collect_targets(node: Node, src: &[u8], set: &mut BoundNames) {
     }
 }
 
-/// Names introduced by a binding pattern (identifier or destructuring). The
-/// constructor path of `Some(x)` / `Point { x, y }` is a *type*, not a binding,
-/// so the `type` field child is skipped.
+/// Names introduced by a binding pattern (identifier or destructuring).
 fn collect_pattern(node: Node, src: &[u8], set: &mut BoundNames) {
     match node.kind_name() {
         "identifier" | "shorthand_field_identifier" => {

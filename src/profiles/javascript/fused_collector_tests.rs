@@ -4,8 +4,7 @@ use super::JsProfile;
 use crate::spine::ir::FileId;
 use crate::spine::parser::parse_source;
 
-/// Parent function metrics exclude nested arrow and declaration bodies, while
-/// each nested unit tracks its own scope.
+/// Parent metrics exclude nested arrow and declaration bodies.
 #[test]
 fn fused_collector_nested_arrows_and_declarations() {
     let src = b"function top(x) {\n  const f = () => x + 1;\n  function helper(y) { return y * 2; }\n  return f(helper(x));\n}\n";
@@ -16,22 +15,17 @@ fn fused_collector_nested_arrows_and_declarations() {
 
     assert_eq!(functions.len(), 3);
     assert_eq!(functions[0].name, "top");
-    // arrow appears first in body (variable_declarator → arrow_function),
-    // then the named function_declaration helper.
     assert_eq!(functions[1].name, "f");
     assert_eq!(functions[2].name, "helper");
     assert!(functions[2].is_nested);
     assert_eq!(functions[2].parent, "top");
 
-    // top's return count = 1 (the `return f(helper(x))`) — not the returns
-    // inside helper or the arrow.
     assert_eq!(functions[0].return_count, 1);
     assert_eq!(functions[2].return_count, 1); // helper's own return
     assert_eq!(functions[0].branch_count, 0);
 }
 
-/// Nested loop inside a conditional: cognitive complexity, nesting depth, and
-/// loop-call facts are attributed to the correct nesting context.
+/// Nested loop in a conditional keeps cognitive, nesting and loop-call facts.
 #[test]
 fn fused_collector_nested_loop_and_conditional() {
     let src =
@@ -43,19 +37,14 @@ fn fused_collector_nested_loop_and_conditional() {
 
     assert_eq!(functions.len(), 1);
     let f = &functions[0];
-    // nesting: `if` + `for` inside body → max_nesting = 2
     assert_eq!(f.max_nesting, 2);
-    // cognitive: if (1+0) + for (1+1) = 3
     assert_eq!(f.cognitive, 3);
-    // branches: if_statement + for_in_statement = 2
     assert_eq!(f.branch_count, 2);
-    // one call `log(x)` inside a loop
     assert_eq!(f.performance.loop_calls.len(), 1);
     assert_eq!(f.performance.loops.len(), 1);
 }
 
-/// Class method: is_method is true, `this.attr` access populates self_attrs,
-/// and methods appear in source order.
+/// Class methods set is_method and self_attrs, in source order.
 #[test]
 fn fused_collector_class_method() {
     let src = b"class Store {\n  save(data) { this.buffer = data; return this.ok; }\n  load() { return this.buffer; }\n}\n";
@@ -80,13 +69,11 @@ fn fused_collector_class_method() {
     assert!(load.is_method);
     assert_eq!(load.return_count, 1);
     assert!(load.self_attrs.contains("buffer"));
-    // receiver_access credits `this` as "self"
     assert!(save.receiver_access.contains_key("self"));
     assert!(load.receiver_access.contains_key("self"));
 }
 
-/// Sequential parse of a fixture produces identical debug representation before
-/// and after the traversal fusion (smell detectors run from the same IR).
+/// Parsing a fixture gives the same IR before and after traversal fusion.
 #[test]
 fn fused_collector_json_identity() {
     let src = b"function compute(n) {\n  let s = 0;\n  for (let i = 0; i < n; i++) {\n    if (i % 2) { s += i; } else { s += 1; }\n  }\n  return s;\n}\n";

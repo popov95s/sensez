@@ -1,5 +1,4 @@
-//! Rust profile behavior tests (structural pillars: tokens, imports,
-//! resolution, cycles, duplication, dead-code crediting).
+//! Rust profile behavior tests.
 
 use super::RustProfile;
 use crate::profiles::test_fixtures::tokens;
@@ -9,8 +8,7 @@ use crate::spine::parser::{parse_file, parse_source};
 use std::fs;
 use std::path::Path;
 
-/// Two functions with the same control-flow shape but different local names
-/// produce identical structural-token vectors (rename invariance).
+/// Same control-flow shape with different local names gives identical token vectors.
 #[test]
 fn rename_invariance_yields_identical_tokens() {
     let a = b"fn compute(items: &[i64]) -> i64 {\n    let mut total = 0;\n    for item in items {\n        if *item > 10 { total += item; }\n    }\n    total\n}\n";
@@ -65,8 +63,7 @@ fn use_tree_flattening() {
     assert_eq!(glob.imported_symbols, vec!["*"]);
 }
 
-/// `crate::`/`self::`/`super::` and the package's own name resolve to in-repo
-/// module keys; `std`/third-party stay external.
+/// `crate`, `self`, `super` and the package name resolve in-repo; `std` and crates stay external.
 #[test]
 fn path_resolution() {
     let tmp = tempfile::tempdir().unwrap();
@@ -98,8 +95,6 @@ fn path_resolution() {
     assert_eq!(resolve("self::tests", &cycles), "src/noze/cycles/tests");
     assert_eq!(resolve("super::boundaries", &cycles), "src/noze/boundaries");
     assert_eq!(resolve("super::super::config", &cycles), "src/config");
-    // The package's own name (normalized) acts like `crate` — also from a
-    // sibling crate dir like tests/.
     assert_eq!(
         resolve("my_crate::config", &dir.join("tests/it.rs")),
         "src/config"
@@ -107,8 +102,7 @@ fn path_resolution() {
     assert_eq!(resolve("std::collections", &cycles), "std::collections");
 }
 
-/// Mutual `use` between two modules forms a detected cycle, and `mod` decls
-/// from lib.rs resolve to the module files.
+/// Mutual `use` forms a cycle; `mod` decls resolve to module files.
 #[test]
 fn mutual_use_is_a_cycle() {
     let tmp = tempfile::tempdir().unwrap();
@@ -145,9 +139,7 @@ fn mutual_use_is_a_cycle() {
     assert_eq!(cycles.len(), 1, "src/a <-> src/b is a circular use");
 }
 
-/// Parent `mod child;` + child `use super::…` is the idiomatic Rust module
-/// hierarchy — containment, not coupling — and must NOT be reported as a
-/// circular import (caught by scanning sensez itself).
+/// Parent `mod child;` plus child `use super::` is containment, not a cycle.
 #[test]
 fn module_hierarchy_is_not_a_cycle() {
     let tmp = tempfile::tempdir().unwrap();
@@ -186,9 +178,7 @@ fn module_hierarchy_is_not_a_cycle() {
     );
 }
 
-/// The façade pattern — parent re-exports its child's API (`pub use
-/// child::go`) while the child uses the parent's types (`use super::T`) — is
-/// idiomatic Rust, not a circular import (caught by scanning sensez itself).
+/// A parent's `pub use` of its child plus the child's `use super::T` is not a cycle.
 #[test]
 fn facade_reexport_is_not_a_cycle() {
     let tmp = tempfile::tempdir().unwrap();
@@ -220,8 +210,7 @@ fn facade_reexport_is_not_a_cycle() {
     );
 }
 
-/// Two byte-identical Rust functions in different files are a clone; a Python
-/// function with the same shape never joins them (per-language partition).
+/// Identical Rust functions in two files are a clone; a Python twin never joins them.
 #[test]
 fn identical_functions_are_a_clone_within_rust_only() {
     let tmp = tempfile::tempdir().unwrap();
@@ -246,8 +235,7 @@ fn identical_functions_are_a_clone_within_rust_only() {
     assert!(!dup.is_empty(), "identical Rust functions must be a clone");
 }
 
-/// Only `pub` items are declared (rustc owns private dead code), and a module
-/// used solely via `module::func()` paths is credited, not flagged.
+/// Only `pub` items are declared; use via `module::func()` credits the module.
 #[test]
 fn pub_only_declarations_and_path_access_crediting() {
     let src = b"pub fn used() {}\npub fn unused() {}\nfn private() {}\npub struct Conf;\n";

@@ -1,8 +1,4 @@
 //! Shared, compact source identity snapshots.
-//!
-//! This deliberately contains no parsed syntax, findings, or source bytes.
-//! Spine uses the manifest to classify parser-cache reuse; Brainz can retain a
-//! complete scan baseline without sharing either subsystem's policy.
 
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};

@@ -1,9 +1,4 @@
 //! In-memory linear similarity search over the flat vector set.
-//!
-//! Vectors are L2-normalized, so cosine similarity is a plain dot product. For
-//! the doc counts a codebase produces (well under 10k), a rayon sweep + partial
-//! sort is sub-millisecond — no vector database needed. We rank indices and clone
-//! only the `top_k` survivors (never every `symbol_path` per query).
 
 use super::cache::CachedDoc;
 use crate::eyez::DocKind;

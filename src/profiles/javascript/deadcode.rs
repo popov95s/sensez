@@ -1,6 +1,4 @@
-//! JS/TS dead-code conventions. Decorators (a TS feature) and Python-style
-//! naming conventions don't apply; exported initializer callees stand in for
-//! registration decorators.
+//! JS/TS dead-code conventions.
 
 use crate::globs::matches_any;
 use crate::profiles::walk;
@@ -101,8 +99,7 @@ pub fn typescript_defaults() -> DeadCodeDefaults {
     }
 }
 
-/// `paths` are initializer callees (`export const x = register(...)`): a user-listed
-/// trailing name marks a registration; anything else stays unclassified, never unknown.
+/// Initializer callees: a user-listed trailing name marks a registration.
 pub fn classify(paths: Option<&Vec<String>>, user: &HashSet<String>) -> DecoratorClass {
     let registered = paths.is_some_and(|paths| {
         paths

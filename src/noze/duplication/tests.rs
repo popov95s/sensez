@@ -29,8 +29,7 @@ fn touches(clones: &[CloneClass], stem: &str) -> bool {
     })
 }
 
-/// Verbatim copy (only local variable names differ) → reported. Local renames
-/// are allowed; the methods/modules/structure are identical.
+/// Verbatim copy (only local variable names differ) → reported.
 #[test]
 fn local_rename_copy_is_a_clone() {
     let tmp = tempfile::tempdir().unwrap();
@@ -42,8 +41,6 @@ fn local_rename_copy_is_a_clone() {
     assert!(!clones.is_empty(), "local-renamed copy should be a clone");
 }
 
-/// Different methods / different structure → NOT a clone, even though the
-/// "shape" (assign-ish, call, return) is similar. `.get` vs `.post`/`.del`.
 #[test]
 fn different_methods_are_not_a_clone() {
     let tmp = tempfile::tempdir().unwrap();
@@ -73,9 +70,6 @@ fn different_literals_are_not_a_clone() {
     assert_eq!(structural, 0, "differing literal constants must not match");
 }
 
-/// Parameter TYPES are kept, so two signatures that differ only by type don't
-/// match (tiny bodies keep the signature as the matched region; an identical
-/// *body* would legitimately clone regardless of the signature).
 #[test]
 fn different_param_types_are_not_a_clone() {
     let tmp = tempfile::tempdir().unwrap();
@@ -88,7 +82,6 @@ fn different_param_types_are_not_a_clone() {
         "signatures differing only by type must not match, got {:?}",
         detect(&files, &cfg(6))
     );
-    // Same types → the (renamed) signature matches.
     let bar_str = "def bar(x: str, y: str, z: str):\n    return x\n";
     let same = write_files(&dir, &[("foo.py", foo), ("bar.py", bar_str)]);
     assert!(
@@ -97,9 +90,6 @@ fn different_param_types_are_not_a_clone() {
     );
 }
 
-/// Docstrings are ignored (like comments): two identical functions whose only
-/// difference is a reworded docstring are one clone, and it spans the signature
-/// (the differing docstring no longer splits the run).
 #[test]
 fn docstrings_are_ignored() {
     let tmp = tempfile::tempdir().unwrap();
@@ -107,8 +97,6 @@ fn docstrings_are_ignored() {
     let foo = "def transform(a, b):\n    \"\"\"One-line doc.\"\"\"\n    d = module_a.run(b)\n    e = module_c.run(a)\n    return e\n";
     let bar = "def shape(x, y):\n    \"\"\"A much longer docstring.\n\n    Args:\n        x: first.\n        y: second.\n    \"\"\"\n    f = module_a.run(y)\n    g = module_c.run(x)\n    return g\n";
     let files = write_files(&dir, &[("foo.py", foo), ("bar.py", bar)]);
-    // Threshold above the body alone, so a match requires the signature too —
-    // only possible if the differing docstring is ignored.
     let clones = detect(&files, &cfg(14));
     assert!(
         !clones.is_empty(),
@@ -116,8 +104,6 @@ fn docstrings_are_ignored() {
     );
 }
 
-/// Consistent-rename clones (`users`↔`orders`, `User`↔`Order`) shorter than
-/// twice the threshold are caught only with `near_miss` enabled.
 #[test]
 fn near_miss_consistent_rename() {
     let tmp = tempfile::tempdir().unwrap();
@@ -158,8 +144,6 @@ fn near_miss_over_a_structural_sub_range_is_reported_once() {
     assert!(clones[0].occurrences.iter().all(|o| o.start_row == 1));
 }
 
-/// Near-miss must not flag short, unrelated functions that merely share a shape
-/// (the length threshold filters them out).
 #[test]
 fn near_miss_ignores_short_unrelated() {
     let tmp = tempfile::tempdir().unwrap();
@@ -181,9 +165,7 @@ fn exclude_globs_drop_matches() {
     let body =
         "def handler(a, b):\n    d = module_a.run(b)\n    e = module_c.run(a)\n    return e\n";
     let files = write_files(&dir, &[("scripts/x.py", body), ("scripts/y.py", body)]);
-    // Without excludes: the identical bodies clone.
     assert!(touches(&detect(&files, &cfg(8)), "x.py"));
-    // With the scripts exclude: nothing reported.
     let excluded = Duplication {
         exclude: vec!["**/scripts/**".to_string()],
         threshold: 8,
@@ -213,8 +195,6 @@ fn original() -> String {
     .concat()
 }
 
-/// Both halves around a one-statement insert are below the threshold, so only
-/// seed extraction plus stitching reports the copy.
 #[test]
 fn one_statement_insert_is_stitched_at_defaults() {
     let tmp = tempfile::tempdir().unwrap();
@@ -284,8 +264,6 @@ const IDIOM_STORE: &str =
 const FILLER_USERS: &str = "    users = directory.lookup(payload.owner)\n    if users.active:\n        mailer.send(users.email, subject=\"welcome\")\n    audit.touch(users.id)\n    cache.drop(users.id)\n";
 const FILLER_LEDGER: &str = "    total = sum(item.price for item in payload.items)\n    ledger.record(total, currency=\"EUR\")\n    ledger.flush(batch=True)\n    ledger.close()\n";
 
-/// Two unrelated functions sharing two short idioms: the gap outweighs the
-/// matched tokens, so the density guard refuses to stitch them.
 #[test]
 fn sparse_shared_idioms_are_not_stitched() {
     let tmp = tempfile::tempdir().unwrap();

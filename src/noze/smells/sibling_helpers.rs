@@ -1,9 +1,3 @@
-//! Sibling helper redefinition: one small helper written again in another module.
-//!
-//! Module-level functions are grouped by clone family, name and arity; members
-//! in different modules whose lexeme bodies reach `sibling_helper_min_similarity`
-//! percent similarity form one finding, anchored at the first definition.
-
 use super::union_find::{find, union};
 use super::{make, Measure};
 use crate::config::smells::SmellConfig;

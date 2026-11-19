@@ -1,5 +1,4 @@
-//! Plain-English definitions for every noze finding category. These feed terminal
-//! `--explain`, the `explain` CLI subcommand, generated docs, and MCP explain.
+//! Plain-English definitions for every noze finding category.
 
 pub struct GlossaryDoc {
     pub term: &'static str,
@@ -159,8 +158,6 @@ fn smell_entry(kind: SmellKind) -> GlossaryEntry {
     entry(kind.as_str(), doc.title, doc.explanation)
 }
 
-/// Definitions for exactly the categories present in `report` (deduped): each
-/// non-empty pillar, then each distinct smell kind that appears.
 pub fn for_report(report: &AnalysisReport) -> Vec<GlossaryEntry> {
     let mut out = Vec::new();
     let present = [

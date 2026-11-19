@@ -1,8 +1,4 @@
 //! Profile registry + extension-based dispatch.
-//!
-//! `PROFILES` is assembled at compile time from whichever language features are
-//! enabled. The default build enables every supported profile; smaller builds
-//! can opt into individual language features.
 
 use crate::profiles::wording::SmellWording;
 use crate::profiles::{

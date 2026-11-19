@@ -45,8 +45,7 @@ impl CachedFile {
             path: source.path.clone(),
             language: self.language,
             lines: self.lines,
-            // A cache hit means `self.content_hash == source.content_hash` by
-            // definition, so reuse the stored hash — no third byte-scan.
+            // A hit means equal hashes, so reuse the stored one.
             fingerprint: SourceFingerprint::with_content_hash(
                 &source.path,
                 self.language,

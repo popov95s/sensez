@@ -1,9 +1,4 @@
 //! Python generated/data source detection.
-//!
-//! These files are valid Python, but they are not useful maintainability
-//! targets: generated codec tables, schema validators, locale data modules,
-//! and generated SDK models dominate reports while not being code humans
-//! should refactor by hand.
 
 use std::path::Path;
 

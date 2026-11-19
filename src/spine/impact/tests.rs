@@ -1,6 +1,9 @@
 use super::*;
+use crate::spine::graph::CodebaseGraph;
 use crate::spine::{graph, parser};
+use std::collections::BTreeSet;
 use std::fs;
+use std::path::PathBuf;
 
 fn project() -> (tempfile::TempDir, CodebaseGraph, Vec<PathBuf>) {
     let root = tempfile::tempdir().unwrap();

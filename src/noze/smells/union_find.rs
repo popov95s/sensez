@@ -1,8 +1,3 @@
-//! Minimal slice-backed union-find (path-halving, no rank) shared by the
-//! data-clump and cohesion (LCOM) detectors. Component counts stay small
-//! (methods of one class / params of one function), so amortized O(α(n))
-//! without union-by-rank is plenty.
-
 /// Root of `x`, compressing the path as it walks.
 pub(super) fn find(parent: &mut [usize], x: usize) -> usize {
     let mut node = x;

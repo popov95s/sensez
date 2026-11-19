@@ -1,10 +1,4 @@
 //! Type-3 (gapped) clone stitching.
-//!
-//! Exact clones separated by a small, *consistent* gap (a few inserted/edited
-//! tokens) are merged into one near-duplicate. Two clusters stitch when every
-//! occurrence of the first is followed — in the same file, within `max_gap`
-//! tokens — by an occurrence of the second. The merged span includes the gap,
-//! but `matched` counts only the genuinely-identical tokens.
 
 use super::clones::{Nesting, RawGroup};
 use crate::spine::parser::tokens::TokenSpan;
@@ -18,12 +12,6 @@ pub struct Cluster {
     pub occ: Vec<(usize, usize)>,
 }
 
-/// Each merge pass combines clusters *pairwise* (a cluster merges at most
-/// once per pass), so a chain of k gap-separated fragments halves each pass
-/// and fully collapses in ceil(log2(k)) passes. 8 passes therefore handle
-/// chains up to 2^8 = 256 fragments — far beyond real copy-paste — while
-/// bounding worst-case work on adversarial input. Real inputs exit after a
-/// pass merges nothing (usually pass 1 or 2).
 const MAX_MERGE_PASSES: usize = 8;
 
 /// Minimum share of matched tokens in every stitched occurrence's span.
@@ -65,8 +53,6 @@ pub fn stitch(groups: Vec<RawGroup>, spans: &[TokenSpan], max_gap: usize) -> Vec
     if max_gap == 0 {
         return clusters;
     }
-    // Bounded fixpoint: each pass merges independent adjacent pairs; chains
-    // (X gap Y gap Z) collapse over successive passes (see MAX_MERGE_PASSES).
     for _ in 0..MAX_MERGE_PASSES {
         if !merge_pass(&mut clusters, spans, max_gap) {
             break;

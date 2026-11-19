@@ -1,9 +1,3 @@
-//! Semantic duplication: edited copies and same-intent rewrites.
-//!
-//! Structure is 4-gram Jaccard over the alpha-canonical token stream. Whole
-//! function source, the words of the function's signature and its doc comment
-//! are each compared by embedding with a code model.
-
 mod candidates;
 mod intent;
 mod keying;

@@ -1,7 +1,4 @@
-//! Per-node recorders for the JS/TS type/mutation-discipline smells, called
-//! from the single body walk in [`super::units`]. Mirrors `lang::python::obsession`
-//! against JS/TS node kinds. Collects raw structure only — thresholds and
-//! severity live in `noze::smells`.
+//! Per-node recorders for the type and mutation-discipline smells.
 
 use super::fallback_sink::fallback_sink;
 use super::membership;
@@ -306,8 +303,7 @@ fn identifier_arguments(node: Node, src: &[u8]) -> Vec<String> {
         .collect()
 }
 
-/// Resolve `node` to its root identifier (via [`target_root`]) and record it as
-/// a direct or attribute-deep mutation. See [`walk::record_mutation_root`].
+/// Record `node` as a direct or attribute-deep mutation of its root identifier.
 fn record_root(unit: &mut FunctionUnit, node: Node, src: &[u8]) {
     walk::record_mutation_root(unit, node, src, target_root);
 }

@@ -1,6 +1,3 @@
-//! Size smells: long function, narrating comments, large class, and heavy
-//! nested functions.
-
 use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};

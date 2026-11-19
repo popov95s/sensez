@@ -18,8 +18,6 @@ struct DirCount {
     unimported: usize,
 }
 
-/// Make modules nothing imports at runtime into production roots when they sit under a
-/// directory where at least `share` percent of the modules are like them.
 pub(super) fn promote(cg: &CodebaseGraph, roles: &mut HashMap<NodeIndex, Role>, share: u8) {
     if share == 0 {
         return;

@@ -1,5 +1,4 @@
-//! Service scans in a short-lived child process, so a long-lived server hands
-//! each scan's memory back to the OS when the child exits.
+//! Service scans in a short-lived child process.
 
 use crate::report::{AnalysisReport, Severity};
 use anyhow::{Context, Result};

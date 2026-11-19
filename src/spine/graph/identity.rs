@@ -1,5 +1,3 @@
-//! Language-neutral module identities used while building the import graph.
-
 use crate::profiles::registry;
 use crate::spine::ir::Language;
 use crate::spine::parser::ParsedFile;

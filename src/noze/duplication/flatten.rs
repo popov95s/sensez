@@ -1,10 +1,4 @@
 //! Flatten all files into one master buffer of lexeme codes.
-//!
-//! Layout: `[file0 lexemes][sep0][file1 lexemes][sep1]...[term]`. Separators
-//! are globally unique and live in a high namespace that lexeme codes never
-//! reach, so no shared prefix between two suffixes can span a separator —
-//! cross-file matches across a boundary are impossible by construction. Codes
-//! are then densified to a contiguous `0..K` alphabet for `suffix_array_int`.
 
 use crate::spine::ir::FileId;
 use crate::spine::parser::tokens::TokenSpan;
@@ -20,8 +14,6 @@ pub struct Master {
     pub spans: Vec<TokenSpan>,
 }
 
-/// Build the densified master buffer over `files` (file ids are local indices
-/// into this slice, so callers may pass a filtered subset).
 pub fn build(files: &[&ParsedFile]) -> Master {
     let capacity = files
         .iter()
@@ -66,15 +58,6 @@ fn non_token_span() -> TokenSpan {
 }
 
 /// Remap raw codes to a contiguous `0..K` alphabet for `suffix_array_int`.
-///
-/// bio imposes exactly two constraints: the alphabet must be gap-free `0..K`
-/// (it indexes by symbol, so a missing value panics), and the sentinel must be
-/// the lexicographically smallest symbol. Beyond that the *order* of symbols is
-/// irrelevant here: clone groups are maximal runs of suffixes sharing a prefix
-/// of equal symbols, and that equivalence — hence every emitted clone — is
-/// invariant under any bijective relabeling. A first-seen pass over a flat hash
-/// map yields dense ids in O(n); the global terminator (raw `0`, the unique
-/// minimum) is pinned to id `0` so it remains the smallest symbol.
 struct DenseAlphabet {
     id_of: FxHashMap<u64, i32>,
     next: i32,

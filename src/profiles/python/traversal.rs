@@ -1,5 +1,4 @@
-//! Pre-order AST traversal: emits the genericized token stream + spans, and
-//! extracts imports/declarations while tracking an explicit lexical scope stack.
+//! Pre-order AST traversal emitting tokens, spans, imports and declarations.
 
 use super::{imports, lexeme, nested, scope, symbols, tokens as token_map, typehints, units};
 use crate::profiles::lexeme::BoundNames;
@@ -29,7 +28,6 @@ fn visit(
 ) {
     let kind = node.kind_name();
 
-    // Imports are extracted, never descended into (keeps the token stream clean).
     if token_map::is_import(kind) {
         let enclosing = scope.last().map(|s| s.name.as_str());
         let phase = if is_under_type_checking_guard(node, src) {
@@ -43,8 +41,6 @@ fn visit(
         return;
     }
 
-    // Docstrings (and any bare string statement) are documentation, not logic.
-    // Under `eyez`, capture them for docs search before skipping token emission.
     if matches!(kind, "string" | "concatenated_string")
         && node
             .parent()
@@ -58,8 +54,6 @@ fn visit(
         return;
     }
 
-    // Comments never map to a structural token (`map_kind` returns `None`), so
-    // capturing their text here cannot affect duplication either.
     if kind == "comment" {
         walk::record_comment_span(
             out,
@@ -86,8 +80,6 @@ fn visit(
         lexeme::code,
     );
 
-    // Count identifier occurrences and `obj.attr` accesses per base identifier,
-    // so `crud.fetch(...)` can be credited to the module `crud` was bound to.
     if kind == "identifier" {
         credit_name(out, node, src);
     }
@@ -96,10 +88,6 @@ fn visit(
         credit_call_result_attr(out, node, src);
     }
 
-    // f-string interpolations hold real expressions. Credit identifier and
-    // attribute usage inside them so a function called only from an f-string
-    // isn't flagged dead — but emit no tokens (string internals must stay out
-    // of the duplication stream, and `is_leaf` still stops normal descent).
     if kind == "string" || kind == "concatenated_string" {
         if let Some(value) = symbols::string_value(node, src) {
             credit_string(out, &value);
@@ -109,16 +97,12 @@ fn visit(
 
     record_declarations(node, src, kind, scope, out);
 
-    // Per-unit structural summaries for the design-smell pillar. `scope` still
-    // reflects the *enclosing* scope here (the current node is pushed below),
-    // so a function directly inside a class is a method.
     if kind == "function_definition" {
         record_function_unit(node, src, scope, fn_bounds, out);
     } else if kind == "class_definition" {
         out.units.classes.push(units::analyze_class(node, src));
     }
 
-    // Type hints are collected inline; pruned subtrees contain no annotations.
     match kind {
         "call" => super::mock_targets::record(node, src, &mut out.units.mock_targets),
         "function_definition" => typehints::record_function(node, src, &mut out.units.type_hints),
@@ -150,7 +134,6 @@ fn visit(
             is_class: kind == "class_definition",
         });
     }
-    // A function opens a new local-variable scope for lexeme normalization.
     let opened_fn = kind == "function_definition";
     if opened_fn {
         fn_bounds.push(scope::bound_names(node, src));
@@ -215,8 +198,7 @@ fn callable_name<'a>(node: Node, src: &'a [u8]) -> Option<&'a str> {
     }
 }
 
-/// Usage-only mini-walk over a string's `interpolation` subtrees: bump
-/// identifier counts and record attribute accesses, nothing else.
+/// Usage-only walk over a string's `interpolation` subtrees.
 fn credit_interpolations(node: Node, src: &[u8], out: &mut Walked) {
     let mut cursor = node.walk();
     for child in node.named_children(&mut cursor) {
@@ -254,7 +236,6 @@ fn is_type_checking_condition(text: &str) -> bool {
 
 /// Record top-level declarations and class methods.
 fn record_declarations(node: Node, src: &[u8], kind: &str, scope: &[Scope], out: &mut Walked) {
-    // A function defined directly inside a class is a method.
     if kind == "function_definition" && scope.last().is_some_and(|s| s.is_class) {
         if let Some(name) = symbols::def_name(node, src) {
             register_method(out, name, node.start_position().row + 1);

@@ -1,9 +1,4 @@
 //! tree-sitter-javascript node-kind → [`StructuralToken`] mapping.
-//!
-//! Targets the same shared 13-token vocabulary as every other language (never a
-//! per-language enum), so JS-specific constructs (JSX, `switch`, ternaries)
-//! collapse onto existing tokens or emit nothing. Identifiers and literals
-//! genericize; unrecognized kinds return `None`.
 
 use crate::spine::ir::tokens::StructuralToken;
 
@@ -55,8 +50,7 @@ pub fn is_leaf(kind: &str) -> bool {
     )
 }
 
-/// Kinds that open a new lexical scope (function/class — for `enclosing_scope`
-/// and method detection).
+/// Kinds that open a new lexical scope (function/class — for `enclosing_scope` and method detection).
 pub fn is_scope(kind: &str) -> bool {
     matches!(
         kind,

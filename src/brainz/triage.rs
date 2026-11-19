@@ -1,8 +1,4 @@
-//! Human triage of stale findings: persistent "debt" vs "false_positive"
-//! verdicts, recorded via the `brainz_triage` MCP tool on the user's behalf.
-//! Verdicts live in `.sensez/local-metrics/triage.json`, keyed by finding fingerprint,
-//! and feed back into the metrics: triaged findings stop appearing as stale,
-//! and a vanished false positive is never counted as resolved value.
+//! Human triage of stale findings.
 
 use super::file_lock;
 use super::fingerprint::{Detector, Pillar};
@@ -19,8 +15,7 @@ pub struct Verdict {
     /// `Debt` (real, deliberately deferred) or `FalsePositive` (wrong).
     pub verdict: TriageVerdict,
     pub pillar: Pillar,
-    /// Label at triage time (kept so reports stay readable after the finding
-    /// leaves the scan output).
+    /// Label at triage time (kept so reports stay readable after the finding leaves the scan output).
     pub label: String,
     pub ts: u64,
     #[serde(skip_serializing_if = "Option::is_none", default)]
@@ -47,9 +42,7 @@ fn save(root: &Path, triage: &Triage) -> Result<()> {
     store::write_durable(&d.join("triage.json"), &json)
 }
 
-/// Mark every finding in `pillar` whose label contains `pattern`
-/// (case-insensitive) with `verdict`; `Clear` removes existing marks instead.
-/// Errors when nothing matches so the agent can show what is available.
+/// Mark every finding in `pillar` whose label contains `pattern`.
 pub fn mark(
     root: &Path,
     branch: &str,

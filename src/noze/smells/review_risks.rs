@@ -52,7 +52,6 @@ fn wrapper_chains(
         }
     }
 
-    // Begin at chain roots so each local forwarding chain produces one finding.
     for outer in wrappers {
         if forwarded_to.contains(outer.name.as_str()) || ambiguous.contains(outer.name.as_str()) {
             continue;

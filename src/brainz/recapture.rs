@@ -1,7 +1,4 @@
-//! Automatic fix recapture: re-derive "resolved" findings without requiring
-//! the agent to report back. For each repo scanned this session whose source
-//! files changed since its baseline, quietly re-run the pipeline and bank
-//! findings that vanished. Runs on the periodic flush tick and at shutdown.
+//! Automatic fix recapture.
 
 use super::events::Event;
 use super::{aging, fingerprint, hub, store};
@@ -9,12 +6,10 @@ use std::path::Path;
 use std::sync::{Mutex, OnceLock};
 use std::time::UNIX_EPOCH;
 
-/// Skip auto-rescans for repos whose original scan was slower than this —
-/// shutdown must stay fast (MCP clients SIGKILL slow servers).
+/// Skip auto-rescans for repos whose original scan was slower than this.
 const MAX_RESCAN_MS: u64 = 3_000;
 
-/// Repos whose scan takes at least this long are rescanned at most once per
-/// [`SLOW_RESCAN_INTERVAL_SECS`], since each rescan repeats the whole scan.
+/// Repos whose scan takes at least this long are rescanned at most once per [`SLOW_RESCAN_INTERVAL_SECS`].
 const SLOW_SCAN_MS: u64 = 1_000;
 const SLOW_RESCAN_INTERVAL_SECS: u64 = 300;
 
@@ -116,9 +111,7 @@ fn recapture(root: &Path, branch: &str, threshold: Option<usize>, baseline_ts: u
     }
 }
 
-/// Cheap stat sweep: does any discovered source file have an mtime at or
-/// after `ts`? (`>=` so a same-second edit is never missed; the baseline
-/// advancing after each recapture debounces repeats.)
+/// Cheap stat sweep.
 fn changed_since(root: &Path, ts: u64) -> bool {
     let exclude = crate::config::model::Config::load(root)
         .map(|c| c.exclude)

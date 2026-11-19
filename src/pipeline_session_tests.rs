@@ -103,7 +103,6 @@ fn evicts_least_recently_used_workspace() {
         session.parse(dir.path(), &project_for(dir));
         sleep(Duration::from_millis(5));
     }
-    // Touch the first workspace so the second becomes least-recently used.
     session.parse(dirs[0].path(), &project_for(&dirs[0]));
     sleep(Duration::from_millis(5));
 

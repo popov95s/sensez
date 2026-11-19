@@ -1,10 +1,3 @@
-//! Opt-in dead-code passes: unused imports, methods, and properties.
-//!
-//! Unused imports are reliable intra-file checks. Class members use a
-//! project-wide attribute evidence model so cross-file receiver access can keep
-//! methods and properties live without pushing language-specific rules into the
-//! shared graph or parser IR.
-
 mod exports;
 mod methods;
 mod overrides;
@@ -67,8 +60,7 @@ pub fn module_map(cg: &CodebaseGraph) -> HashMap<PathBuf, String> {
         .collect()
 }
 
-/// Imports whose bound name is never referenced in the file. `__init__.py` is
-/// skipped (its imports are typically intentional re-exports).
+/// Imports whose bound name is never referenced in the file.
 pub fn unused_imports<'a>(
     files: impl IntoIterator<Item = &'a ParsedFile>,
     modmap: &HashMap<PathBuf, String>,

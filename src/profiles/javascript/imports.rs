@@ -1,9 +1,4 @@
 //! JavaScript/TypeScript import extraction into the shared [`ImportContext`].
-//!
-//! Handles ES module `import`/`export … from` statements (including
-//! re-export barrels and `export *`) and CommonJS `require("…")` calls. The
-//! `target_module` is the raw specifier (`./foo`, `react`); resolution to a
-//! module key happens later in `resolve`.
 
 use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, ImportPhase};
@@ -14,8 +9,7 @@ pub fn is_import_statement(kind: &str) -> bool {
     matches!(kind, "import_statement" | "export_statement")
 }
 
-/// Extract imports from an `import_statement` / `export_statement` (the latter
-/// only when it re-exports `from` a source).
+/// Extract imports from an `import_statement` or a re-exporting `export_statement`.
 pub fn extract(
     node: Node,
     src: &[u8],
@@ -53,8 +47,6 @@ pub fn extract(
 }
 
 /// Extract a CommonJS `require("…")` / dynamic `import("…")` call as an import.
-/// When the call initializes a variable declarator, preserve its binding shape so
-/// the graph can credit namespace access and destructured symbols.
 pub fn require_import(
     node: Node,
     src: &[u8],
@@ -210,8 +202,6 @@ fn import_phase(node: Node, src: &[u8]) -> ImportPhase {
 }
 
 /// Collect (imported symbols, local bindings) from an import/export clause.
-/// `import Foo` → default; `* as ns` → namespace; `{ a, b as c }` → named;
-/// `export * from` / `export * as ns from` → symbol `*`.
 fn clause_symbols(node: Node, src: &[u8], phase: ImportPhase) -> ImportClause {
     let mut clause = ImportClause::default();
     let mut cursor = node.walk();

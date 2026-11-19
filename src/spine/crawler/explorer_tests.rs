@@ -1,8 +1,7 @@
 use super::*;
 use std::fs;
 
-/// Test predicate: keep `.py` files only. Stand-in for what production
-/// callers build from `profiles::registry::parse_for_path`.
+/// Test predicate: keep `.py` files only.
 fn is_python(path: &Path) -> bool {
     path.extension().is_some_and(|e| e == "py")
 }
@@ -27,7 +26,6 @@ fn finds_py_files_and_skips_others() {
     assert!(names.contains(&"b.py".to_string()));
     assert!(!names.iter().any(|n| n.ends_with(".txt")));
 
-    // exclude glob drops matching files from discovery
     let filtered = collect_source_files(&dir, &["**/pkg/**".to_string()], &is_python).unwrap();
     let fnames: Vec<_> = filtered
         .files
@@ -82,8 +80,6 @@ fn symlinked_sources_are_included_and_broken_links_reported() {
         names.contains(&"link.py".to_string()),
         "file symlink must be discovered, got {names:?}"
     );
-    // The directory symlink is not followed: `pkg/nested.py` is reachable
-    // exactly once through the real directory.
     assert_eq!(
         names.iter().filter(|n| *n == "nested.py").count(),
         1,

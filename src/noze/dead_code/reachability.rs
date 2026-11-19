@@ -32,7 +32,7 @@ pub(super) fn skip_symbol(
         .unwrap_or(0)
         > 1
     {
-        return true; // referenced within its own module
+        return true;
     }
     is_asked(file, symbol, used)
 }

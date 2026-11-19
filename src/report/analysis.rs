@@ -49,19 +49,7 @@ impl AnalysisReport {
             .count()
     }
 
-    /// Hash over the *content* the gate would nag the agent about
-    /// (file + line + kind per finding), not over file mtimes. Two
-    /// invocations with the same complaint set get the same hash; an
-    /// edit that doesn't touch any of the reported files/lines leaves
-    /// the hash alone. Used by the `noze_gate` end-of-turn hook to
-    /// avoid re-blocking the same unchanged work when an MCP host
-    /// (e.g. anything besides Claude Code's CLI) does not set the
-    /// `stop_hook_active` flag.
-    ///
-    /// Pillar tags prefix each section so a dead-code and a smell on
-    /// the same file+line don't collide. Line numbers in a file are
-    /// not perturbed by edits to other files, so they're stable across
-    /// turns; mtimes would not be.
+    /// Hash over the *content* the gate would nag the agent about.
     pub fn finding_signature(&self) -> u64 {
         use std::hash::{Hash, Hasher};
         let mut h = rustc_hash::FxHasher::default();

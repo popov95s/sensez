@@ -1,5 +1,4 @@
-//! Config discovery: `sensez.toml` first; else a `[tool.sensez]` table in
-//! `pyproject.toml` for projects that centralize tool config there.
+//! Config discovery.
 
 use super::problem::ConfigProblem;
 use std::path::Path;

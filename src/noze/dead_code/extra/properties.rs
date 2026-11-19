@@ -1,9 +1,4 @@
 //! Opt-in dead-property detection.
-//!
-//! This pass is class-aware: a property is live when its owning class methods
-//! use it, when a typed receiver uses it, when the same file has an untyped
-//! attribute access to that name, or when the name appears as a string literal
-//! for dynamic APIs/serializers.
 
 use super::usage::ProjectUsage;
 use crate::profiles::{registry, DeadCodeProfile};

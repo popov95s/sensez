@@ -15,11 +15,7 @@ fn cached(sym: &str) -> CachedDoc {
 #[test]
 fn ranks_by_similarity_and_caps_k() {
     let docs = vec![cached("a"), cached("b"), cached("c")];
-    let vectors = vec![
-        vec![1.0, 0.0], // a: orthogonal to query
-        vec![0.0, 1.0], // b: aligned with query
-        vec![0.7, 0.7], // c: partial
-    ];
+    let vectors = vec![vec![1.0, 0.0], vec![0.0, 1.0], vec![0.7, 0.7]];
     let hits = top_k(
         &vectors,
         &docs,

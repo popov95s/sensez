@@ -1,6 +1,4 @@
-//! Crawl + parse a project and collect its documentation elements. Reuses the
-//! same discovery/parse path as the scan pipeline; the docs come from the walk's
-//! `Walked.docs` (populated only under this feature).
+//! Crawl and parse a project and collect its documentation elements.
 
 use crate::config::model::Config;
 use crate::eyez::DocKind;

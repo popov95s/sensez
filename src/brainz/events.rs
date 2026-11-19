@@ -1,13 +1,10 @@
-//! Local-only usage metric types. Everything here serializes to plain JSON on
-//! the user's own disk under `.sensez/local-metrics/` — nothing is ever exported.
+//! Local-only usage metric types.
 
 use super::verdict::TriageVerdict;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 
-/// How a recorded scan was triggered. Lets reports isolate the Stop-hook
-/// gate's effect (issues caught on the edit that introduced them) from
-/// explicit `noze_sniff` calls.
+/// How a recorded scan was triggered.
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Origin {
@@ -30,9 +27,7 @@ impl Origin {
     }
 }
 
-/// Resolved findings for one detector in a single diff: how many vanished and
-/// the summed age (seconds from `first_seen` to disappearance) of those
-/// findings, so reports can compute a mean time-to-resolution per detector.
+/// Resolved findings for one detector in a single diff.
 #[derive(Debug, Clone, Default, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Resolved {
     pub count: u64,
@@ -90,9 +85,7 @@ impl<'de> Deserialize<'de> for OutcomeKey {
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
 pub enum Event {
-    /// A `noze_sniff` tool call: what each detector reported, and which previous
-    /// findings disappeared since the last full scan of this repo (= likely
-    /// fixed after we reported them).
+    /// A `noze_sniff` tool call.
     Scan {
         ts: u64,
         session: String,
@@ -103,22 +96,18 @@ pub enum Event {
         origin: Origin,
         /// Detector (`pillar/<kind>`) → findings reported this scan.
         reported: BTreeMap<String, u64>,
-        /// Detector → findings that vanished since the last scan, with their
-        /// summed time-to-resolution.
+        /// Detector → findings that vanished since the last scan.
         resolved: BTreeMap<String, Resolved>,
-        /// Detector → findings previously resolved that came back (a fix that
-        /// did not stick), with the summed interval they stayed resolved.
+        /// Detector → findings previously resolved that came back.
         reintroduced: BTreeMap<String, Resolved>,
         /// Files analyzed and total source lines (size denominators for health).
         files: u64,
         loc: u64,
-        /// Hash of the effective config, for detecting config churn. `None`
-        /// when the config could not be loaded.
+        /// Hash of the effective config, for detecting config churn.
         #[serde(skip_serializing_if = "Option::is_none", default)]
         config_hash: Option<u64>,
     },
-    /// An `eyez_search_docs` call. `first_on_repo` marks a first-ever search of this
-    /// codebase (first-time orientation sensez served).
+    /// An `eyez_search_docs` call.
     Search {
         ts: u64,
         session: String,
@@ -128,14 +117,11 @@ pub enum Event {
         hits: u64,
         top_score: f32,
         first_on_repo: bool,
-        /// Snippet bytes actually returned vs. the total size of the files
-        /// those snippets point into — context the agent did NOT have to read.
+        /// Snippet bytes actually returned vs.
         bytes_returned: u64,
         file_bytes_referenced: u64,
     },
-    /// Automatic fix recapture: the server itself re-ran the pipeline after
-    /// sources changed and found previously-reported findings gone. No agent
-    /// cooperation involved.
+    /// Automatic fix recapture.
     AutoResolve {
         ts: u64,
         session: String,
@@ -145,9 +131,7 @@ pub enum Event {
         /// Detector → reintroductions + summed resolved-interval.
         reintroduced: BTreeMap<String, Resolved>,
     },
-    /// The end-of-turn gate blocked, listing the fingerprints it flagged. Lets
-    /// the report compute block→fix conversion: of findings the gate caught at
-    /// edit time, how many were gone by the next full scan vs. escaped open.
+    /// The end-of-turn gate blocked, listing the fingerprints it flagged.
     GateBlock {
         ts: u64,
         session: String,
@@ -156,9 +140,7 @@ pub enum Event {
         scope: Option<String>,
         fingerprints: Vec<String>,
     },
-    /// A user-triage outcome: the user adjudicated a finding (debt /
-    /// false_positive) via `brainz_triage`, per detector so per-detector
-    /// precision is derivable. Never produced by the model.
+    /// A user-triage outcome.
     Outcome {
         ts: u64,
         session: String,

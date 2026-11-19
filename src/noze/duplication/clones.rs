@@ -1,14 +1,7 @@
-//! Suffix-array clone extraction: build SA + LCP (Kasai), then group each
-//! LCP interval (consecutive suffixes sharing a prefix >= threshold) into a
-//! single *n-way* clone class. This replaces per-pair emission, which both
-//! fragmented long clones and exploded a 3-way clone into 3 pairwise records.
-
 use super::flatten::Master;
 use bio::data_structures::suffix_array::suffix_array_int;
 use libsais::SuffixArrayConstruction;
 
-/// One n-way structural clone: all `positions` share a common prefix of `len`
-/// tokens in the master buffer.
 pub struct RawGroup {
     pub len: usize,
     pub positions: Vec<usize>,
@@ -32,10 +25,6 @@ pub fn extract(master: &mut Master, min_len: usize, nesting: Nesting) -> Vec<Raw
     let sa = build_suffix_array(&master.text);
     let lcp = kasai(&master.text, &sa);
 
-    // Bottom-up LCP-interval walk: each popped `(len, left)` covers sa[left..i],
-    // whose suffixes share exactly `len` tokens. Only *left-maximal* intervals
-    // are kept: if every occurrence is preceded by the same token, it is the
-    // tail of a longer clone reported one offset earlier.
     let mut groups = Vec::new();
     let mut stack: Vec<(usize, usize)> = vec![(0, 0)];
     for i in 1..=n {
@@ -96,8 +85,6 @@ fn build_suffix_array(text: &[i32]) -> Vec<usize> {
             .collect(),
         Err(err) => {
             eprintln!("[sensez] suffix array: libsais failed ({err}); using portable fallback");
-            // Master-buffer codes are dense and non-negative by construction
-            // (see `flatten::DenseAlphabet`), so widening is lossless here.
             let fallback: Vec<usize> = text.iter().map(|&value| value as usize).collect();
             suffix_array_int(&fallback)
         }
@@ -111,9 +98,6 @@ fn can_be_disjoint(positions: &[usize], len: usize) -> bool {
     sorted.windows(2).all(|pair| pair[1] - pair[0] >= len)
 }
 
-/// A run is left-maximal unless all its occurrences share the same preceding
-/// token (in which case it's contained in a longer clone). Position 0 has no
-/// predecessor, which counts as a distinct boundary.
 fn is_left_maximal(text: &[i32], positions: &[usize]) -> bool {
     let prev = |p: usize| -> i64 {
         if p == 0 {

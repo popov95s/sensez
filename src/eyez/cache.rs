@@ -1,10 +1,4 @@
 //! On-disk eyez cache (bincode) with a content-hash delta.
-//!
-//! Correctness rests on a per-doc content key — `hash(symbol_path, kind, text)` —
-//! NOT on mtime and NOT on a tree structure. On refresh, any doc whose key is
-//! already cached keeps its vector; only genuinely new/changed docs are embedded;
-//! docs that disappeared are dropped. So a docstring edit re-embeds exactly that
-//! one symbol, and untouched docs are never recomputed.
 
 use super::embed::Embedder;
 use super::extract::Doc;
@@ -98,20 +92,15 @@ impl SystemCache {
             self.model_id = embedder.model_id().to_string();
         }
 
-        // Cached key -> vector. Both sides are rebuilt below, so the old
-        // entries are MOVED out, never cloned (vectors can be MBs in total).
         let mut have: HashMap<u64, Vec<f32>> = std::mem::take(&mut self.docs)
             .into_iter()
             .map(|d| d.key)
             .zip(std::mem::take(&mut self.vectors))
             .collect();
 
-        // Desired docs, de-duplicated by key (identical doc text under the same
-        // symbol/kind collapses to one entry).
         let mut seen: HashSet<u64> = HashSet::new();
         let wanted: Vec<&Doc> = docs.iter().filter(|d| seen.insert(key(d))).collect();
 
-        // Embed the cache misses in one batch.
         let missing: Vec<&Doc> = wanted
             .iter()
             .copied()
@@ -130,12 +119,10 @@ impl SystemCache {
             have.insert(key(d), vector);
         }
 
-        // Rebuild aligned docs+vectors for exactly the wanted set (drops stale).
         let mut new_docs = Vec::with_capacity(wanted.len());
         let mut new_vecs = Vec::with_capacity(wanted.len());
         for d in &wanted {
             let k = key(d);
-            // `wanted` is key-deduplicated, so each vector is taken exactly once.
             if let Some(vector) = have.remove(&k) {
                 new_docs.push(CachedDoc {
                     key: k,

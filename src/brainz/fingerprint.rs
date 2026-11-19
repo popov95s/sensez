@@ -1,10 +1,4 @@
 //! Stable finding fingerprints.
-//!
-//! A fingerprint is built only from a finding's *identity* (symbols, modules,
-//! rules, participating files) — never line numbers or measured metrics — so
-//! unrelated edits that shift code around don't masquerade as fixes. Each
-//! fingerprint carries a human-readable label so stale findings can be shown
-//! to (and triaged by) the user.
 
 mod types;
 
@@ -20,9 +14,7 @@ pub use types::{Detector, Label};
 /// One scan's findings: pillar → fingerprints in report order.
 pub type Prints = fingerprints::Groups<Pillar, Label, Detector>;
 
-/// A single finding's stable identity for a scan: a content hash, a
-/// human-readable label, and the detector that produced it (`pillar/<kind>`,
-/// or just the pillar for detectors without sub-kinds).
+/// A single finding's stable identity for a scan.
 pub type Print = Fingerprint<Pillar, Label, Detector>;
 
 /// A fingerprint persisted across scans with its age, label, and detector.
@@ -33,21 +25,17 @@ pub struct AgedEntry {
     pub class: Detector,
 }
 
-/// Fingerprints banked as resolved, kept so a finding that later comes back is
-/// detected as a *reintroduction* (a fix that did not stick). Key = fingerprint
-/// hex. Pruned by age so the set cannot grow without bound.
+/// Fingerprints banked as resolved, kept so a finding that later comes back is detected as a *reintroduction*.
 pub type ResolvedHistory = BTreeMap<String, ResolvedRecord>;
 
-/// One previously-resolved finding: its detector (to attribute the reintro) and
-/// when it was banked as resolved (to expire stale history).
+/// One previously-resolved finding.
 #[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct ResolvedRecord {
     pub class: Detector,
     pub resolved_ts: u64,
 }
 
-/// Pillar → fingerprint (hex string; JSON keys must be strings) → entry.
-/// Persisted per branch under `baselines/`.
+/// Pillar → fingerprint (hex string.
 pub type Aged = BTreeMap<Pillar, BTreeMap<String, AgedEntry>>;
 
 /// Fingerprint every pillar of a JSON-serialized `AnalysisReport`.
@@ -75,9 +63,6 @@ pub fn fingerprints(report: &Value) -> Prints {
 }
 
 /// Retain items whose fingerprint satisfies the predicate.
-///
-/// Walks `items` in lockstep with the corresponding `prints` vector (which must
-/// be in the same order). Items without a matching print are kept by default.
 pub fn retain_by_fingerprint<T>(
     items: &mut Vec<T>,
     prints: Option<&Vec<Print>>,
@@ -95,10 +80,6 @@ pub fn retain_by_fingerprint<T>(
 }
 
 /// Partition items by fingerprint predicate, moving matching items to the end.
-///
-/// Walks `items` in lockstep with the corresponding `prints` vector (which must
-/// be in the same order). Items whose fingerprint satisfies the predicate are
-/// moved to the end while preserving relative order within each group.
 pub fn partition_by_fingerprint<T>(
     items: &mut Vec<T>,
     prints: Option<&Vec<Print>>,
@@ -120,8 +101,7 @@ pub fn partition_by_fingerprint<T>(
     *items = trusted;
 }
 
-/// Per-detector reported counts for a report (e.g. `smells/god_module → 4`).
-/// Recorded on every scan, including diff/gate scans that skip aging.
+/// Per-detector reported counts for a report (e.g.
 pub fn detector_counts(report: &Value) -> BTreeMap<String, u64> {
     fingerprints::class_counts(&fingerprints(report))
 }
@@ -171,8 +151,7 @@ fn cycle_key(finding: &Value) -> FingerprintKey {
     }
 }
 
-/// Identity: which symbol in which module (confidence may legitimately change).
-/// Detector sub-kind is the symbol kind (function / class / method / import).
+/// Identity.
 fn dead_code_key(finding: &Value) -> FingerprintKey {
     let (module, symbol, kind) = (
         field(finding, "module"),
@@ -212,8 +191,7 @@ fn boundary_key(finding: &Value) -> FingerprintKey {
     }
 }
 
-/// Identity: the sorted set of files the clone class spans plus its arity.
-/// Rows shift on every edit, so they are deliberately excluded.
+/// Identity.
 fn clone_key(finding: &Value) -> FingerprintKey {
     let mut files: Vec<&str> = finding
         .get("occurrences")
@@ -236,8 +214,7 @@ fn clone_key(finding: &Value) -> FingerprintKey {
     }
 }
 
-/// Identity: smell kind on a symbol in a file (metric value may fluctuate).
-/// Detector sub-kind is the smell kind (long_function / god_module / …).
+/// Identity.
 fn smell_key(finding: &Value) -> FingerprintKey {
     let (kind, file, symbol) = (
         field(finding, "kind"),

@@ -1,8 +1,4 @@
 //! Shared glob-set compilation for exclude/entry-point patterns.
-//!
-//! One implementation for every pillar (crawler, dead code, duplication,
-//! smells). User-configured globs are validated at config-load time so a typo'd
-//! exclude fails loudly instead of silently changing scan scope.
 
 use anyhow::{anyhow, Result};
 use globset::{GlobBuilder, GlobSet};

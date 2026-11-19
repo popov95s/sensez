@@ -8,9 +8,7 @@ use crate::spine::ir::FunctionUnit;
 use rustc_hash::{FxHashMap, FxHashSet};
 use std::collections::HashMap;
 
-/// A receiver subscripted with ≥ N distinct string-literal keys — an implicit
-/// schema that wants a dataclass. Receivers annotated as a non-dict type
-/// (DataFrame, ndarray, ...) are skipped; dict-annotated or unknown both flag.
+/// A receiver subscripted with ≥ N distinct string-literal keys — an implicit schema that wants a dataclass.
 pub(super) fn detect(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,

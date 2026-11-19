@@ -1,7 +1,4 @@
-//! Per-branch fingerprint baselines: `baselines.json` indexes branches by last
-//! update, and each branch's fingerprints and resolved-history live in their own
-//! file under `baselines/`, rewritten only when they change. The single-file
-//! `last-scan.json` of earlier releases is read until the first write moves it over.
+//! Per-branch fingerprint baselines.
 
 use super::super::file_lock;
 use super::super::fingerprint::{Aged, ResolvedHistory};
@@ -11,8 +8,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::path::{Path, PathBuf};
 
-/// Cap on distinct branches kept (prune oldest by `updated`). Bounds growth
-/// across many short-lived feature branches.
+/// Cap on distinct branches kept (prune oldest by `updated`).
 const MAX_BRANCHES: usize = 12;
 
 /// One branch's fingerprints and resolved-history (for reintroduction detection).
@@ -30,8 +26,7 @@ struct BranchEntry {
     inline: Option<BranchData>,
 }
 
-/// `baselines.json`, or the legacy `last-scan.json` with data inline. Keying by branch stops resolved-tracking from cross-diffing
-/// findings when the working tree switches branches.
+/// `baselines.json`, or the legacy `last-scan.json` with data inline.
 #[derive(Default, Serialize, Deserialize)]
 struct BranchIndex {
     branches: BTreeMap<String, BranchEntry>,
@@ -73,15 +68,12 @@ pub fn branch_updated(root: &Path, branch: &str) -> Option<u64> {
         .map(|entry| entry.updated)
 }
 
-/// Load the fingerprints recorded by the previous full scan **on `branch`**
-/// (empty when none — e.g. the first scan on a freshly checked-out branch).
+/// Load the fingerprints recorded by the previous full scan **on `branch`**.
 pub fn load_fingerprints(root: &Path, branch: &str) -> Aged {
     branch_state(root, branch).0
 }
 
 /// One branch's fingerprints plus whether a full-scan baseline exists at all.
-/// The flag lets the report distinguish "clean repo" (baseline exists, empty)
-/// from "never fully scanned" (no baseline).
 pub fn branch_state(root: &Path, branch: &str) -> (Aged, bool) {
     match load_branch(root, &load_index(root), branch) {
         Some(data) => (data.prints, true),
@@ -89,8 +81,7 @@ pub fn branch_state(root: &Path, branch: &str) -> (Aged, bool) {
     }
 }
 
-/// Load the resolved-history (banked-resolved fingerprints) for `branch`, used
-/// to detect findings that were fixed and later reintroduced.
+/// Load the resolved-history.
 pub fn load_resolved_history(root: &Path, branch: &str) -> ResolvedHistory {
     load_branch(root, &load_index(root), branch)
         .map(|data| data.history)
@@ -105,8 +96,7 @@ pub struct BranchWrite<'a> {
     pub now: u64,
 }
 
-/// Persist this scan's fingerprints and resolved-history under `branch`,
-/// stamping `now` and pruning to the most-recently-updated [`MAX_BRANCHES`].
+/// Persist this scan's fingerprints and resolved-history under `branch`, stamping `now` and pruning to the most-recently-updated [`MAX_BRANCHES`].
 #[cfg(test)]
 pub fn save_fingerprints(
     root: &Path,

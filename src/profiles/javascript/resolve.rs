@@ -1,17 +1,10 @@
 //! Resolve a JS/TS import specifier to a module key.
-//!
-//! Relative specifiers (`./foo`, `../bar/baz`) resolve against the importing
-//! file's directory on the filesystem, then map to a root-relative path key
-//! (extension dropped, `index` collapsed) — matching the keys `roots` assigns
-//! to nodes. Bare specifiers (`react`, `@scope/pkg`) are returned unchanged and
-//! become external nodes.
 
 use super::roots;
 use crate::spine::ir::ImportContext;
 use std::path::{Path, PathBuf};
 
-/// The package (directory key) containing `module_name`. An index module is its
-/// own package; otherwise drop the last path segment.
+/// The package (directory key) containing `module_name`.
 pub fn containing_package(module_name: &str, is_index: bool) -> String {
     if is_index {
         return module_name.to_string();

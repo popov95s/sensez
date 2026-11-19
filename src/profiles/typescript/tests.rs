@@ -147,9 +147,7 @@ fn export_type_is_type_only_phase() {
     assert_eq!(imports[0].target_module, "./shape");
 }
 
-/// The type-discipline + mutation smells fire for TypeScript via the new
-/// unit/type-hint extraction; the ESLint-owned smells are suppressed by the
-/// built-in TS default but can be re-enabled per language.
+/// Type-discipline and mutation smells fire for TypeScript.
 #[test]
 fn ts_smells_fire_and_defaults_gate_eslint_owned() {
     let src = b"export function handle(cfg: Record<string, any>, a: boolean, b: boolean, c: boolean): [string, number, boolean] {\n  if (a) { if (b) { if (c) { if (cfg) { if (a) { return [\"x\", 7, true]; } } } } }\n  return [\"y\", 8, false];\n}\nexport function pump(items: any[]): void { items.push(1); }\nexport function coerce(name?: string): string { return name || \"\"; }\nexport function fallback(name?: string): string { return name ? name : \"?\"; }\n";
@@ -162,11 +160,9 @@ fn ts_smells_fire_and_defaults_gate_eslint_owned() {
     assert!(kinds.contains(&SmellKind::MutatedParameter), "{kinds:?}");
     assert!(kinds.contains(&SmellKind::MagicStringDefault), "{kinds:?}");
     assert!(kinds.contains(&SmellKind::UnnecessaryNestedIf), "{kinds:?}");
-    // ESLint/SonarJS own these — off by the TS default.
     assert!(!kinds.contains(&SmellKind::DeepNesting), "{kinds:?}");
     assert!(!kinds.contains(&SmellKind::MagicNumbers), "{kinds:?}");
 
-    // Per-language override re-enables them.
     let enabled = Smells {
         disabled: Vec::new(),
         magic_numbers: true,
@@ -220,8 +216,7 @@ fn ts_loose_typing_high_reports_arrays_and_aliases() {
     );
 }
 
-/// TS type annotations/interfaces don't break structural tokenization, and
-/// the control-flow shape is still captured.
+/// TS annotations and interfaces do not break structural tokenization.
 #[test]
 fn typed_function_yields_structural_tokens() {
     let src = b"interface U { id: number }\nexport function f(xs: number[]): number {\n  let n: number = 0;\n  for (const x of xs) { if (x > 0) { n = n + x; } }\n  return n;\n}\n";

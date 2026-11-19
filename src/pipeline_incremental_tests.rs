@@ -85,7 +85,6 @@ fn changed_import_updates_cross_file_cycle() {
 
 #[test]
 fn cycles_exclude_is_independent_of_smells_exclude() {
-    // `a -> b` plus `b -> a` forms the loop.
     let importer = "from b import value\n\ndef a():\n    return value\n";
     let cycle_b = "from a import a\n\ndef value():\n    return a()\n";
     let build = |toml: &str| {
@@ -100,9 +99,6 @@ fn cycles_exclude_is_independent_of_smells_exclude() {
         (tmp, session, dir)
     };
 
-    // Dedicated `[cycles] exclude` suppresses the finding. An SCC stays
-    // reportable while any member is outside the globs, so suppressing this
-    // two-module loop takes both.
     let (tmp, session, dir) = build("[cycles]\nexclude = [\"**/a.py\", \"**/b.py\"]\n");
     assert!(analyze_path_in_session(&session, &dir, None)
         .unwrap()

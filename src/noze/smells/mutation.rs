@@ -1,8 +1,4 @@
 //! Mutation & stringly-typed discipline smells.
-//!
-//! - `mutated_parameter`: caller-visible mutation of an input parameter.
-//! - `reassigned_parameter` (opt-in): rebinding a parameter name.
-//! - `literal_membership`: branching on `x in ["a", "b"]` string lists.
 
 use super::external_vocab::{is_external_vocabulary, is_markup_operand};
 use super::implicit_schema;
@@ -98,17 +94,12 @@ fn has_literal_union_type(ctx: &SmellContext<'_>, m: &FunctionUnit, operand: &st
             .any(|alias| alias.name == annotation.trim() && vocab.is_literal_union(&alias.target))
 }
 
-/// Parameters whose *object* is mutated in the body (subscript-assign, `del`,
-/// or a mutating method call) — a caller-visible side effect. With
-/// `param_attr_mutation`, also counts mutation reached through a parameter's
-/// attribute (`p.kwargs[k]=v`); `self`/`cls` stay excluded either way.
 fn mutated_params(
     ctx: &SmellContext<'_>,
     m: &FunctionUnit,
     cfg: &Smells,
     out: &mut Vec<SmellFinding>,
 ) {
-    // An inline callback's params are elements of the caller's own data.
     if m.callback_position == CallbackPosition::Argument {
         return;
     }
@@ -149,8 +140,6 @@ fn mutated_params(
     out.push(SmellFinding { lines, ..finding });
 }
 
-/// A mutating method call counts only when the param's declared type (if any)
-/// is a built-in collection that method family mutates.
 fn is_method_mutated(ctx: &SmellContext<'_>, m: &FunctionUnit, param: &str) -> bool {
     let declared = ctx.type_hints.param_type(m, param);
     m.method_mutations.iter().any(|(name, family)| {

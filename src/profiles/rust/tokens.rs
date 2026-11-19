@@ -1,11 +1,4 @@
 //! tree-sitter-rust node-kind → [`StructuralToken`] mapping.
-//!
-//! Targets the shared 13-token vocabulary (never a per-language enum), so
-//! Rust-specific constructs collapse onto existing tokens or emit nothing:
-//! `match` is a multi-way branch (→ `IfStatement`), `loop` is an unconditional
-//! `while`, `?` is structured error propagation (→ `TryStatement`), and
-//! `struct`/`enum`/`trait`/`impl` are all type-shaped containers (→ `ClassDef`).
-//! Unrecognized kinds return `None` (the walker descends but emits nothing).
 
 use crate::spine::ir::tokens::StructuralToken;
 
@@ -35,8 +28,7 @@ pub fn map_kind(kind: &str) -> Option<StructuralToken> {
     })
 }
 
-/// Leaf kinds whose children must not be traversed (prevents literal/identifier
-/// sub-nodes from leaking extra tokens into the genericized stream).
+/// Leaf kinds whose children are not traversed.
 pub fn is_leaf(kind: &str) -> bool {
     matches!(
         kind,
@@ -55,9 +47,7 @@ pub fn is_leaf(kind: &str) -> bool {
     )
 }
 
-/// Kinds that open a new lexical scope (for `enclosing_scope`, method
-/// detection, and keeping inline `mod tests { … }` items out of the module's
-/// top-level declarations).
+/// Kinds that open a new lexical scope.
 pub fn is_scope(kind: &str) -> bool {
     matches!(
         kind,

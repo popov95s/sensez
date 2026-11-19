@@ -1,7 +1,4 @@
-//! Indexes a project's docstrings + comments (captured during the language walk
-//! into [`Walked::docs`](crate::spine::parser::Walked)) and answers intent queries via
-//! local CPU embeddings + an in-memory linear similarity sweep. State persists in
-//! a single bincode cache under `.sensez/`; only new/changed docs are re-embedded.
+//! Indexes a project's docstrings and comments and answers intent queries by embedding similarity.
 
 mod cache;
 pub(crate) mod capture;

@@ -11,8 +11,7 @@ fn module_name_flat_and_init() {
     assert_eq!(module_name(Path::new("/proj/top.py"), root), "top");
 }
 
-/// A pyproject marker anchors the root, so a namespace package (no
-/// `__init__.py`) is still named with its full dotted path.
+/// A pyproject marker anchors the root for a namespace package.
 #[test]
 fn marker_root_handles_namespace_packages() {
     use std::fs;
@@ -44,9 +43,7 @@ fn marker_root_handles_src_layout() {
     assert_eq!(module_name(&f, &root), "pkg.mod");
 }
 
-/// An installed package under `site-packages` must NOT pick up a surrounding
-/// repo's marker — the walk stops at the vendor boundary and falls back to
-/// the `__init__` walk.
+/// An installed package under `site-packages` ignores a surrounding repo's marker.
 #[test]
 fn marker_walk_stops_at_vendor_boundary() {
     use std::fs;

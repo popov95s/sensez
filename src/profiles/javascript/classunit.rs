@@ -89,8 +89,7 @@ fn normalize_type(text: &str) -> String {
     text.split_whitespace().collect::<Vec<_>>().join(" ")
 }
 
-/// `extends Base` + TS `implements I1, I2` — every (type-)identifier named in
-/// the class heritage clause.
+/// `extends Base` + TS `implements I1, I2` — every (type-)identifier named in the class heritage clause.
 fn base_classes(class: Node, src: &[u8]) -> Vec<String> {
     let mut out = Vec::new();
     let mut cursor = class.walk();
@@ -134,8 +133,7 @@ fn collect_idents(node: Node, src: &[u8], out: &mut Vec<String>) {
     }
 }
 
-/// A method body that only `throw`s (`throw new Error("not implemented")`) — the
-/// JS/TS analog of a `raise NotImplementedError` stub.
+/// A method body that only `throw`s: the JS/TS stub shape.
 fn is_stub_body(body: Node) -> bool {
     let mut cursor = body.walk();
     let stmts: Vec<Node> = body

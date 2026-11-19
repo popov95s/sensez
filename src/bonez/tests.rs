@@ -1,4 +1,6 @@
 use super::*;
+use crate::config::model::ForbiddenRule;
+use crate::spine::graph::CodebaseGraph;
 use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
@@ -27,21 +29,17 @@ fn flags_forbidden_edge() {
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
 
-    // Plain prefix rule (original behavior).
     let prefix = audit(&cg, &[rule("domain", "web")]);
     assert_eq!(prefix.violations.len(), 1);
     assert_eq!(prefix.violations[0].from_module, "domain.core");
     assert!(prefix.unmatched_rules.is_empty());
 
-    // Glob on module name.
     let glob = audit(&cg, &[rule("domain.*", "web.*")]);
     assert_eq!(glob.violations.len(), 1, "glob on module name matches");
 
-    // Glob on file path — robust to module naming.
     let path = audit(&cg, &[rule("**/domain/**", "**/web/**")]);
     assert_eq!(path.violations.len(), 1, "glob on file path matches");
 
-    // A rule that matches no module is reported, not silently "clean".
     let dead = audit(&cg, &[rule("nonexistent.layer", "web")]);
     assert!(dead.violations.is_empty());
     assert_eq!(dead.unmatched_rules.len(), 1, "dead rule surfaced");
@@ -54,10 +52,7 @@ fn rule(from: &str, to: &str) -> ForbiddenRule {
     }
 }
 
-/// Regression: a namespace-package layout (no `__init__.py`, no `roots`)
-/// where the import target doesn't resolve to an in-repo node is still
-/// caught by a path-glob `from` + a dotted-glob `to` (matched against the
-/// literal import string).
+/// A namespace-package layout with an unresolved import target is still caught.
 #[test]
 fn matches_namespace_layout_via_path_and_literal_target() {
     let tmp = tempfile::tempdir().unwrap();
@@ -78,13 +73,10 @@ fn matches_namespace_layout_via_path_and_literal_target() {
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
 
-    // dotted `to` glob matches the literal import string.
     let dotted = audit(&cg, &[rule("**/api/endpoints/**", "app.db.*")]);
     assert_eq!(dotted.violations.len(), 1, "path-from + dotted-to matches");
     assert!(dotted.unmatched_rules.is_empty());
 
-    // path `to` glob matches the dotted import via dot→slash — the rule
-    // shape that previously failed on a namespace (no __init__.py) layout.
     let path = audit(&cg, &[rule("**/endpoints/**", "**/db/**")]);
     assert_eq!(
         path.violations.len(),

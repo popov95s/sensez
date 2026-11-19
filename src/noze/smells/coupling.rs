@@ -1,8 +1,3 @@
-//! Type-assisted coupling smells: Feature Envy and Inappropriate Intimacy.
-//!
-//! Both need to resolve a receiver's type. When the type is unknown (no
-//! annotation, no obvious instantiation) the smell is skipped — we never guess.
-
 use super::SmellContext;
 use super::{make, Measure};
 use crate::config::smells::Smells;
@@ -10,22 +5,13 @@ use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionUnit, TypeHints};
 use std::collections::{HashMap, HashSet};
 
-/// Per-file view of cross-function facts only Feature Envy /
-/// Inappropriate Intimacy read. Bundled so neither smell has to reach back
-/// into the full `ParsedFile` just to fetch a usage table.
+/// Per-file view of cross-function facts only Feature Envy / Inappropriate Intimacy read.
 pub(super) struct UsageFacts<'a> {
-    /// Base identifier → distinct attribute names accessed on it
-    /// (`obj.attr` per function, unioned file-wide). Consumed by
-    /// Inappropriate Intimacy to flag a non-`self` receiver reaching into
-    /// the private members of a class defined in this file.
+    /// Base identifier → distinct attribute names accessed on it (`obj.attr` per function, unioned file-wide).
     pub attribute_accesses: &'a HashMap<String, HashSet<String>>,
 }
 
-/// Minimum external member touches before envy is worth reporting. One or two
-/// touches of another object is ordinary collaboration; three+ dereferences of
-/// the same foreign receiver inside one method is the classic envy signature
-/// (Fowler's rule of three), and in practice the lowest floor that doesn't
-/// flag every delegating wrapper.
+/// Minimum external member touches before envy is worth reporting.
 const ENVY_FLOOR: usize = 3;
 
 pub fn detect(
@@ -42,21 +28,13 @@ pub fn detect(
 
 fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<SmellFinding>) {
     for m in metrics {
-        // Feature envy is about a *method* neglecting its own object's data. Free
-        // functions (endpoints, helpers) have no "own data", so they can't envy.
         if !m.is_method || m.is_constructor {
             continue;
         }
         let self_uses = m.receiver_access.get("self").copied().unwrap_or(0);
-        // Never touching self, or only writing it (mapping a foreign object in), is not envy.
         if self_uses == 0 || self_uses == m.self_writes {
             continue;
         }
-        // The most-touched non-self receiver. Tie-break on the receiver name
-        // (smallest wins) so the pick is deterministic: `receiver_access` is a
-        // HashMap, and a bare `max_by_key` would otherwise return whichever tied
-        // receiver iteration yields last — which, combined with the type-resolve
-        // gate below, made the finding flip on/off run to run.
         let envied = m
             .receiver_access
             .iter()
@@ -65,11 +43,9 @@ fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<
         let Some((receiver, &count)) = envied else {
             continue;
         };
-        // Require a clear margin over own-data access to avoid borderline noise.
         if count < ENVY_FLOOR || count <= self_uses * 2 {
             continue;
         }
-        // Resolve the receiver's type; skip if unknown (precision over recall).
         let Some(ty) = resolve_type(m, receiver, ctx.type_hints)
             .filter(|ty| ctx.type_vocabulary.is_nominal_type(ty))
             .map(|ty| display_type(&ty))
@@ -105,7 +81,7 @@ fn inappropriate_intimacy(
             continue;
         };
         if !locals.contains(ty.as_str()) {
-            continue; // only flag intimacy with a class defined in this module
+            continue;
         }
         let privates = private_attrs(attrs);
         if !privates.is_empty() {

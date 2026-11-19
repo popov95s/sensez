@@ -14,8 +14,6 @@ fn span(file_id: FileId) -> TokenSpan {
 
 #[test]
 fn groups_three_way_clone() {
-    // Three identical runs [1,2,3,4] separated by unique sentinels (5,6,7)
-    // + terminator 0. Alphabet is dense (0..=7), as suffix_array_int requires.
     let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 1, 2, 3, 4, 7, 0];
     let spans = (0..text.len())
         .map(|i| span(FileId::from_index(i)))
@@ -41,13 +39,9 @@ fn nothing_below_threshold() {
     assert!(extract(&mut master, 5, Nesting::Outermost).is_empty());
 }
 
-/// Regression: two identical runs must collapse to ONE left-maximal group,
-/// not one group per starting offset (the fragmentation bug). Here the run
-/// [1,2,3,4] repeats; offsets 1,2,3 share the same preceding token and must
-/// be suppressed, leaving a single length-4 clone.
 #[test]
 fn left_maximal_collapses_offset_fragments() {
-    let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 0]; // dense alphabet 0..=5
+    let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 0];
     let spans = (0..text.len())
         .map(|i| span(FileId::from_index(i)))
         .collect();
@@ -70,7 +64,6 @@ fn adjacent_overlap_is_not_disjoint_despite_a_wide_span() {
 
 #[test]
 fn nested_intervals_keep_longer_clones_among_fewer_occurrences() {
-    // [1,2,3] occurs three times; [1,2,3,4,5] only in the last two.
     let text = vec![1, 2, 3, 9, 1, 2, 3, 4, 5, 8, 1, 2, 3, 4, 5, 7, 0];
     let spans = (0..text.len())
         .map(|i| span(FileId::from_index(i)))

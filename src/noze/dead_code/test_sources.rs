@@ -1,4 +1,5 @@
 use super::*;
+use crate::config::model::DeadCode;
 use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;

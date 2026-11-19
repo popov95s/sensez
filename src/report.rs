@@ -1,6 +1,4 @@
-//! The analysis-report data model: one type per finding kind plus run-level
-//! metadata and scan diagnostics. Pure data used by analyzers, renderers, diff
-//! filtering, and metrics.
+//! The analysis-report data model.
 
 use crate::spine::ir::SymbolKind;
 use serde::{Deserialize, Serialize};
@@ -18,13 +16,11 @@ pub struct CycleFinding {
     pub modules: Vec<String>,
     #[serde(skip_serializing_if = "Option::is_none", default)]
     pub hint: Option<String>,
-    /// One representative closed loop through the cycle (the shortest through
-    /// the first module by name), in order; `modules` lists every member.
+    /// One representative closed loop through the cycle.
     pub edges: Vec<CycleEdge>,
 }
 
-/// An import that participates in a cycle: `from_module` imports `to_module` at
-/// `file:line`.
+/// An import that participates in a cycle.
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CycleEdge {
     pub from_module: String,
@@ -40,7 +36,7 @@ pub enum Confidence {
     High,
     /// Unused, but evidence suggests hidden use or the module has no root (see `reason`).
     Medium,
-    /// Likely used where sensez cannot see (e.g. unresolved member access); dropped by every consumer.
+    /// Likely used where sensez cannot see.
     Low,
 }
 
@@ -56,7 +52,7 @@ pub struct DeadCodeFinding {
     /// 1-indexed source line; 0 is an internal "unknown/not applicable" sentinel.
     #[serde(skip_serializing_if = "line_is_unknown", default)]
     pub line: usize,
-    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance ("added_unreferenced", "reference_removed").
+    /// Why it is reported: "test_only", "unreachable_module", or diff-mode provenance.
     #[serde(skip_serializing_if = "String::is_empty", default)]
     pub reason: String,
 }
@@ -286,7 +282,7 @@ pub struct ReportMeta {
     pub smell_totals: BTreeMap<String, usize>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub unmatched_boundary_rules: Vec<String>,
-    /// Pillars this run left out on request; their totals are 0 by filter, not by a clean scan.
+    /// Pillars this run left out on request; their totals are 0 by filter.
     #[serde(skip_serializing_if = "Vec::is_empty", default)]
     pub filtered_pillars: Vec<Pillar>,
     #[serde(skip_serializing_if = "Vec::is_empty", default)]

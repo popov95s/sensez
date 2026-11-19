@@ -1,7 +1,4 @@
-//! TypeScript/JavaScript type-annotation vocabulary for the type-discipline
-//! smells. Shared lexical helpers live in [`crate::profiles::typevocab`]; this
-//! module owns only the TS/JS conventions (`Record<string, any>`, `any`,
-//! `Set<number>`, ...). TypeScript reuses this module (it reuses the JS walker).
+//! TypeScript/JavaScript type-annotation vocabulary for the type-discipline smells.
 
 use crate::profiles::typevocab::{
     base_type, has_domain_type, has_token, idents, is_nominal_ignoring, split_top_level,
@@ -9,8 +6,7 @@ use crate::profiles::typevocab::{
 };
 use crate::spine::ir::MutatorFamily;
 
-/// Loose escape-hatch identifiers: `any`/`unknown`/`object` and the built-in
-/// untyped containers. Their presence (with no domain type alongside) is loose.
+/// Loose escape-hatch identifiers: `any`/`unknown`/`object` and the built-in untyped containers.
 const LOOSE_TOKENS: [&str; 11] = [
     "any", "unknown", "object", "Object", "Function", "Record", "Map", "Dict", "WeakMap", "Set",
     "WeakSet",
@@ -72,8 +68,7 @@ pub(crate) fn loose_kind(annotation: &str) -> Option<LooseTypeKind> {
     None
 }
 
-/// `Record<string, any>` / `any` / `Set<number>` are loose;
-/// `Record<string, UserDto>` / `User[]` / `string` are typed and never match.
+/// `Record<string, any>`, `any` and `Set<number>` are loose; typed forms never match.
 #[cfg(test)]
 pub(crate) fn is_loose(annotation: &str) -> bool {
     loose_kind(annotation).is_some()

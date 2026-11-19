@@ -7,10 +7,7 @@ use crate::report::SmellKind;
 use crate::spine::ir::Language;
 use std::collections::BTreeMap;
 
-/// Build a `SmellConfig` from a [`SmellsRaw`]: validate each scope, then
-/// resolve every per-language [`Smells`] by overlaying the base table
-/// followed by the per-language table, and finally applying the per-scope
-/// `rules` table.
+/// Build a `SmellConfig` from a [`SmellsRaw`].
 pub(super) fn resolve_config(mut raw: SmellsRaw) -> Result<super::SmellConfig, String> {
     let mut scoped = Vec::with_capacity(Language::ALL.len());
     for lang in Language::ALL {
@@ -27,7 +24,7 @@ pub(super) fn resolve_config(mut raw: SmellsRaw) -> Result<super::SmellConfig, S
         explicit_exclude: raw.exclude.clone(),
         exclude: raw.exclude,
         include_tests: raw.include_tests,
-        languages: super::LanguageSmells(languages),
+        languages: super::smell_config::LanguageSmells(languages),
     })
 }
 
@@ -48,9 +45,7 @@ const FLAT_THRESHOLDS: [(&str, SmellKind); 13] = [
     ("max_nested_function_lines", SmellKind::HeavyNestedFunction),
 ];
 
-/// Resolve one language's [`Smells`]: start from the per-language defaults,
-/// overlay the base table, then the per-language table, then apply both
-/// rule sets.
+/// Resolve one language's [`Smells`].
 fn resolve(
     lang: Language,
     base: &toml::Table,
@@ -79,8 +74,7 @@ fn resolve(
     Ok(smells)
 }
 
-/// Whether a flat threshold enables its rule: the most specific table that
-/// sets the threshold wins unless it, or a more specific one, sets the toggle.
+/// Whether a flat threshold enables its rule.
 fn flat_threshold_enables(
     key: &str,
     kind: SmellKind,

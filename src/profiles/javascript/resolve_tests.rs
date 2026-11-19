@@ -29,7 +29,6 @@ fn relative_resolves_to_sibling_key() {
         resolve_target(&ctx("../models"), &importer, root),
         "src/models"
     );
-    // `./` directory import collapses to the dir key (its index module).
     assert_eq!(
         resolve_target(&ctx("../db/index"), &importer, root),
         "src/db"

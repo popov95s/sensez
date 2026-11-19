@@ -1,11 +1,4 @@
 //! Rust `use`-tree extraction into the shared [`ImportContext`].
-//!
-//! A `use` declaration is a tree (`use crate::a::{b, c::{d as e, self}, *};`)
-//! that flattens to one [`ImportContext`] per leaf: the leaf's prefix path is
-//! the `target_module` (raw, `::`-separated — resolution to a module key
-//! happens later in `resolve`), the leaf itself is the imported symbol, and
-//! the alias (if any) is the local binding. `pub use` re-exports are extracted
-//! identically — the re-export *edge* is what keeps the target alive.
 
 use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::{ImportContext, ImportPhase};
@@ -27,8 +20,7 @@ pub fn extract(
     out
 }
 
-/// A `mod name;` declaration (no body): an edge from the declaring module to
-/// its child module, expressed as a `self::name` import.
+/// A `mod name;` declaration as a `self::name` import.
 pub fn mod_decl(
     node: Node,
     src: &[u8],
@@ -46,12 +38,7 @@ pub fn mod_decl(
     ))
 }
 
-/// A fully-qualified expression path rooted at `crate`/`self`/`super` with at
-/// least two path segments (`crate::diff::git::apply`): an import edge to the
-/// prefix module, crediting the final segment. Always inline — an expression
-/// executes inside some item body, so it can't form a module-level cycle.
-/// Single-segment-base paths (`git::apply`) are credited via attribute access
-/// instead; type-rooted paths (`Foo::new`) are not imports and return `None`.
+/// A `crate`/`self`/`super`-rooted expression path as an import edge to its prefix module.
 pub fn qualified_path(
     node: Node,
     src: &[u8],
@@ -173,8 +160,7 @@ fn with_path_prefix<R>(
     result
 }
 
-/// Append a (possibly scoped) path's segments to `prefix`; returns how many
-/// segments were pushed so the caller can truncate back.
+/// Append a path's segments to `prefix` and return how many were pushed.
 fn push_path(path: Option<Node>, src: &[u8], prefix: &mut Vec<String>) -> usize {
     let Some(path) = path else { return 0 };
     let before = prefix.len();
@@ -206,7 +192,6 @@ fn context(
     is_module_decl: bool,
 ) -> ImportContext {
     let (target, symbols, bindings) = match leaf {
-        // Single-segment `use serde_json;` → a plain crate import.
         Leaf::Named { name, alias } if prefix.is_empty() => {
             let binding = alias.unwrap_or_else(|| name.clone());
             (name, Vec::new(), vec![binding])

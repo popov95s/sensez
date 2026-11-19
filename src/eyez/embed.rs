@@ -1,9 +1,4 @@
-//! Embedding backend. Default: Model2Vec `potion-code-16M-v2` — a pure-Rust
-//! static embedding model (token lookup + pool, no ONNX runtime), located or
-//! downloaded by [`super::model`].
-//!
-//! Embeddings are L2-normalized (`normalize = Some(true)`), so a dot product over
-//! two vectors equals their cosine similarity — what the linear search relies on.
+//! Embedding backend: Model2Vec static code embeddings, L2-normalized.
 
 use anyhow::{anyhow, Result};
 use model2vec_rs::model::StaticModel;

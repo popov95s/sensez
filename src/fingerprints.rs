@@ -1,8 +1,4 @@
 //! Generic fingerprint primitives for scan-time refreshes.
-//!
-//! Callers provide typed namespaces, labels, and classes. This module owns the
-//! shared shape: stable identity hash, optional content hash, grouped sets, and
-//! persisted aging records.
 
 use std::collections::BTreeMap;
 use std::fmt::Display;

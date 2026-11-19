@@ -11,11 +11,7 @@ pub fn def_name(node: Node, src: &[u8]) -> Option<String> {
         .map(str::to_string)
 }
 
-/// Dotted path of every decorator on a `decorated_definition`, call args
-/// stripped. `@app.route("/")` → `app.route`; `@functools.lru_cache` →
-/// `functools.lru_cache`; `@fixture` → `fixture`. The dead-code analyzer uses
-/// the shape (attribute vs bare, head identifier) to classify registration vs
-/// neutral vs unknown decorators.
+/// Dotted path of every decorator on a `decorated_definition`, call args stripped.
 pub fn decorator_paths(node: Node, src: &[u8]) -> Vec<String> {
     let mut cursor = node.walk();
     node.named_children(&mut cursor)
@@ -35,9 +31,7 @@ fn dotted_path(decorator: Node, src: &[u8]) -> Option<String> {
     }
 }
 
-/// Parameter names of a `function_definition`, in order. `self`/`cls` are
-/// kept (callers that want to ignore them can filter). `*args`/`**kwargs`/
-/// typed/default parameters all resolve to their leading identifier.
+/// Parameter names of a `function_definition`, in order.
 pub fn param_names(func: Node, src: &[u8]) -> Vec<String> {
     let Some(params) = func.field("parameters") else {
         return Vec::new();
@@ -56,7 +50,6 @@ pub fn param_names(func: Node, src: &[u8]) -> Vec<String> {
 }
 
 /// Base-class names of a `class_definition` (`superclasses` argument list).
-/// `class A(B, c.D)` → `["B", "c.D"]`; keyword args (`metaclass=`) are skipped.
 pub fn base_classes(node: Node, src: &[u8]) -> Vec<String> {
     let Some(args) = node.field("superclasses") else {
         return Vec::new();
@@ -75,7 +68,6 @@ fn first_identifier(node: Node, src: &[u8]) -> Option<String> {
 }
 
 /// Assignment target names: handles `x = ...` and `a, b = ...`.
-/// `self.<attr>`.
 pub fn is_self_attribute(node: Node, src: &[u8]) -> bool {
     node.kind_name() == "attribute"
         && node

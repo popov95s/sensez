@@ -17,7 +17,6 @@ fn age_tracks_resolved_staleness_and_triage_exclusions() {
     let first_age = age(&Aged::new(), &first, &empty_hist, 1_000, &none);
     assert!(first_age.resolved.is_empty(), "first scan: nothing to diff");
 
-    // Much later: `g` was deleted; `f` survives (moved lines, metric drifted).
     let later = 1_000 + STALE_AFTER_SECS + 86_401;
     let current = fingerprints(&json!({
         "dead_code": [{"module": "a", "symbol": "f", "kind": "function", "line": 99}],
@@ -36,15 +35,12 @@ fn age_tracks_resolved_staleness_and_triage_exclusions() {
         None,
         "line/metric drift is not a fix"
     );
-    // `f` survived from t=1000 past the stale window → reported as stale.
     let entries = crate::brainz::staleness::stale_entries(&a.aged, later, &none);
     assert_eq!(entries.len(), 2);
     assert!(entries
         .iter()
         .any(|(p, _, label, days)| p == "dead_code" && label == "a::f (function)" && *days >= 8));
 
-    // Human triages `f` as a false positive: it stops being stale, and its
-    // later disappearance must not count as resolved value.
     let fp_key = entries
         .iter()
         .find(|(p, ..)| p == "dead_code")
@@ -77,7 +73,6 @@ fn reintroduced_finding_is_detected_and_history_expires() {
             "dead_code": [{"module": "a", "symbol": "f", "kind": "function", "line": line}],
         }))
     };
-    // Seen at t=100, fixed (gone) at t=200 → banked in history.
     let seen = age(&Aged::new(), &dc(10), &ResolvedHistory::new(), 100, &none);
     let gone = age(
         &seen.aged,
@@ -89,8 +84,6 @@ fn reintroduced_finding_is_detected_and_history_expires() {
     assert_eq!(gone.resolved["dead_code/function"].count, 1);
     assert_eq!(gone.history.len(), 1, "resolved fingerprint is remembered");
 
-    // Comes back at t=300 → reintroduction (dead for 300-200=100s), and it
-    // leaves the history.
     let back = age(&gone.aged, &dc(42), &gone.history, 300, &none);
     let r = back
         .reintroduced

@@ -1,9 +1,4 @@
 //! Dynamic class entrypoints discovered by configured base-class conventions.
-//!
-//! Some frameworks instantiate subclasses by config strings, manifests, or
-//! reflection rather than ordinary imports. The dead-code pillar only needs the
-//! language-neutral rule: a top-level class is live when it inherits from one of
-//! the configured dynamic bases, directly or through another class in the file.
 
 use crate::profiles::registry;
 use crate::spine::parser::{ParsedFile, SymbolKind};

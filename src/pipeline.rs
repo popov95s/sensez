@@ -21,9 +21,7 @@ use session::{AnalysisSession, ParseCache};
 
 static SERVICE_SESSION: OnceLock<AnalysisSession> = OnceLock::new();
 
-/// Crawl, parse, build the graph, run analyzers, apply triaged suppressions
-/// and precision ranking. Returns the report and a module→file map (needed for
-/// diff filtering via [`crate::diff::apply`]).
+/// Crawl, parse, build the graph, run analyzers, apply triaged suppressions and precision ranking.
 pub fn analyze_path(
     path: &Path,
     threshold: Option<usize>,
@@ -58,8 +56,7 @@ pub(crate) fn analyze_path_for_child(
         .map(|(report, module_files, _)| (report, module_files))
 }
 
-/// [`analyze_path`] for the long-lived MCP/LSP service: reuses parses when `[cache]` is enabled,
-/// otherwise scans in a child process once the server opted in.
+/// [`analyze_path`] for the long-lived MCP/LSP service.
 pub(crate) fn analyze_path_in_service(
     path: &Path,
     threshold: Option<usize>,

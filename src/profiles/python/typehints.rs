@@ -1,13 +1,4 @@
 //! Best-effort type extraction: annotations + obvious `Name(...)` instantiation.
-//!
-//! No inference engine — when a type can't be read off the syntax, it's simply
-//! absent, and type-assisted smells skip that target (precision over recall).
-//!
-//! These are per-node recorders, called from the main pre-order traversal as it
-//! reaches each `function_definition`/`assignment`. Folding them in avoids a
-//! second full-tree walk (the dominant FFI cost was re-descending every node):
-//! the main visit already reaches exactly these nodes in the same pre-order, so
-//! the collected hints are identical, one traversal cheaper.
 
 use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk;
@@ -105,8 +96,7 @@ fn pep695_alias(node: Node, src: &[u8]) -> Option<(String, String)> {
     Some((name.trim().to_string(), target.trim().to_string()))
 }
 
-/// If `right` is `Name(...)` / `mod.Name(...)` with a Capitalized callee, return
-/// that type name (the last dotted segment).
+/// The type name of a `Name(...)` or `mod.Name(...)` call with a capitalized callee.
 pub(super) fn instantiated_type(right: Option<Node>, src: &[u8]) -> Option<String> {
     let call = right.filter(|r| r.kind_name() == "call")?;
     let func = call.field("function")?;

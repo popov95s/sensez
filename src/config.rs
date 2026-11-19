@@ -43,8 +43,7 @@ pub(crate) const GLOBAL_BASELINE_EXCLUDE: [&str; 13] = [
 const BASELINE_MIGRATION_EXCLUDE: [&str; 1] = ["**/migrations/**"];
 
 impl Config {
-    /// Load configuration: `sensez.toml`, else `[tool.sensez]` from
-    /// `pyproject.toml`, else defaults (see [`source`]). Warnings are dropped.
+    /// Load configuration.
     pub fn load(project_root: &Path) -> Result<Config> {
         Ok(Self::load_with_warnings(project_root)?.0)
     }

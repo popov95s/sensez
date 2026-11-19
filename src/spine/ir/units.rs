@@ -1,6 +1,4 @@
-//! Per-function / per-class structural summaries consumed by the design-smell
-//! pillar. Populated during the language walk (the only place AST nesting and
-//! scope are known); languages that don't populate a field leave its default.
+//! Per-function and per-class structural summaries.
 
 use super::rare::sparse;
 use super::{

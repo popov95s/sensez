@@ -7,19 +7,14 @@ use ignore::{Error as IgnoreError, WalkBuilder, WalkState};
 use std::path::{Path, PathBuf};
 use std::sync::mpsc;
 
-/// Result of a discovery walk: the source files found, plus one issue per entry
-/// that could not be read, surfaced in the report so an incomplete scan is never mistaken for "clean".
+/// Source files found, plus one issue per unreadable entry.
 #[derive(Debug, Default)]
 pub struct Discovery {
     pub files: Vec<PathBuf>,
     pub issues: Vec<ScanIssue>,
 }
 
-/// Walk `root` in parallel, returning every regular file for which
-/// `is_source_file` returns `true`, minus any `exclude`-glob match.
-///
-/// `.gitignore`, `.ignore`, and hidden-file rules are respected by default.
-/// I/O errors on individual entries are counted, not silently dropped.
+/// Walk `root` in parallel, returning source files not matching `exclude`.
 pub fn collect_source_files<F>(
     root: &Path,
     exclude: &[String],

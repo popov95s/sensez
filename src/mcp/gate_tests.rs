@@ -136,8 +136,7 @@ fn gate_reports_an_unsubstituted_path_as_an_error() {
         .contains("${cwd}"));
 }
 
-/// Dedup is over the finding identity, not line position. A content edit that
-/// only moves a known finding does not create a new gate complaint.
+/// Dedup is over finding identity, not line position.
 #[test]
 fn gate_identity_survives_line_moves() {
     let _metrics = crate::test_support::metrics_guard();
@@ -153,8 +152,7 @@ fn gate_identity_survives_line_moves() {
     assert_eq!(moved["content"][0]["text"], "{}");
 }
 
-/// Across many calls the gate blocks exactly when a new finding identity
-/// appears — one block per new complaint, not one block per turn.
+/// The gate blocks exactly when a new finding identity appears.
 #[test]
 fn gate_block_count_tracks_new_identities() {
     let _metrics = crate::test_support::metrics_guard();
@@ -175,8 +173,6 @@ fn gate_block_count_tracks_new_identities() {
         }
     };
 
-    // Sequence: intro → same → trailing comment → fix → reintro → line-move → same.
-    // Blocks fire on the first unseen identity and again when it comes back after a fix.
     assert_eq!(blocks("def orphan():\n    return 1\n"), 1);
     assert_eq!(blocks("def orphan():\n    return 1\n"), 0);
     assert_eq!(
@@ -189,8 +185,7 @@ fn gate_block_count_tracks_new_identities() {
     assert_eq!(blocks("# new comment\ndef orphan():\n    return 1\n"), 0);
 }
 
-/// Companion to `gate_block_count_tracks_signature_changes`: with the
-/// content unchanged, the gate blocks exactly once and then allows.
+/// With unchanged content, the gate blocks once and then allows.
 #[test]
 fn gate_blocks_unchanged_finding_only_once() {
     let _metrics = crate::test_support::metrics_guard();

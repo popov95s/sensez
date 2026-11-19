@@ -1,6 +1,8 @@
+use super::depth::{tree_depth, MAX_TREE_DEPTH};
 use super::*;
 use crate::profiles::registry;
 use crate::spine::ir::FileId;
+use std::path::Path;
 
 #[test]
 fn pathological_nesting_is_rejected_not_crashed() {

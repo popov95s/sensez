@@ -1,7 +1,4 @@
 //! JS/TS identifier rule for duplication lexemes (core in [`crate::profiles::lexeme`]).
-//!
-//! Member/property names are API surface — kept verbatim. Only function-bound
-//! locals collapse. Shorthand keys get their own code space, apart from member names.
 
 use crate::profiles::lexeme as shared;
 use crate::profiles::lexeme::BoundNames;
@@ -9,8 +6,7 @@ use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::StructuralToken;
 use tree_sitter::Node;
 
-/// Lexeme code for an emitted token. `fn_bounds` is the stack of enclosing
-/// functions' bound-name sets (innermost last).
+/// Lexeme code for an emitted token.
 pub fn code(
     node: Node,
     tok: StructuralToken,

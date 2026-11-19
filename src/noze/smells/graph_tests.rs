@@ -1,6 +1,9 @@
 use super::test_support as fixture;
 use super::*;
+use crate::config::smells::SmellConfig;
 use crate::config::smells::Smells;
+use crate::noze::source_scope::SourceScope;
+use crate::report::{SmellFinding, SmellKind};
 use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
@@ -31,7 +34,6 @@ fn god_module_is_a_hub_not_an_entrypoint() {
     let tmp = tempfile::tempdir().unwrap();
     let dir = tmp.path().to_path_buf();
     write(&dir, "pkg/__init__.py", "");
-    // hub imports 4 leaves AND is imported by 4 dependents -> a real hub.
     write(
         &dir,
         "pkg/hub.py",
@@ -41,7 +43,6 @@ fn god_module_is_a_hub_not_an_entrypoint() {
         write(&dir, &format!("pkg/l{n}.py"), "a = 1\n");
         write(&dir, &format!("pkg/d{n}.py"), "from pkg.hub import x\n");
     }
-    // entry imports 8 modules but nobody imports it -> a composition root.
     write(
         &dir,
         "pkg/entry.py",
@@ -67,8 +68,6 @@ fn god_module_is_a_hub_not_an_entrypoint() {
         .map(|(i, p)| parse_file(&dir.join(p), FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
-    // Raise the shotgun threshold so the hub is evaluated as a god module rather
-    // than being claimed first by the shotgun-hazard check.
     let cfg = Smells {
         god_module_fan: 8,
         god_module_min_fan_in: 4,
@@ -95,7 +94,6 @@ fn god_module_is_a_hub_not_an_entrypoint() {
 
 #[test]
 fn primitive_params_alone_are_not_a_smell() {
-    // Plain str/int/float params are idiomatic and must stay silent.
     let cfg = Smells::default();
     let body = "def f(a: str, b: int, c: float):\n    return a\n";
     assert!(local("po_off", body, &cfg).is_empty());
@@ -104,7 +102,6 @@ fn primitive_params_alone_are_not_a_smell() {
 #[test]
 fn linter_owned_smells_are_off_by_default() {
     let cfg = Smells::default();
-    // Many params, magic number, 6 returns — linter-owned, so silent here.
     let body = "def f(a, b, c, d, e, f, g):\n    x = 9999\n    if a: return 1\n    if b: return 2\n    if c: return 3\n    if d: return 4\n    if e: return 5\n    return x\n";
     let found = local("linter_off", body, &cfg);
     for kind in [
@@ -122,7 +119,7 @@ fn linter_owned_smells_are_off_by_default() {
 
 #[test]
 fn data_clumps_need_min_support() {
-    let cfg = Smells::default(); // min_fields = 4, min_occurrences = 3
+    let cfg = Smells::default();
     let sig = "(start, end, tz, fmt)";
     let two = format!("def a{sig}:\n    return 1\ndef b{sig}:\n    return 2\n");
     let pf = parsed("clump2", &two);
@@ -140,8 +137,7 @@ fn data_clumps_need_min_support() {
 
 #[test]
 fn data_clump_respects_min_fields_default() {
-    let cfg = Smells::default(); // min_fields = 4
-                                 // A recurring 3-field bundle must NOT trigger at the default minimum of 4.
+    let cfg = Smells::default();
     let body = "def a(x, y, z):\n    return 1\ndef b(x, y, z):\n    return 2\ndef c(x, y, z):\n    return 3\n";
     let pf = parsed("clump_3field", body);
     assert!(
@@ -163,7 +159,6 @@ fn shotgun_hazard_needs_blast_radius() {
     let dir = tmp.path().to_path_buf();
     let core = write(&dir, "pkg/core.py", "def helper():\n    return 1\n");
     let mut files = vec![core];
-    // Five distinct dependents import pkg.core -> blast = 5 >= threshold 4.
     for i in 0..5 {
         files.push(write(
             &dir,

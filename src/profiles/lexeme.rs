@@ -1,11 +1,4 @@
 //! Shared lexeme-code core for refined (Type-2) duplication matching.
-//!
-//! A clone is a run of identical lexeme codes. The codes keep real meaning —
-//! free names, attribute/method names, types, literals, operators — and
-//! collapse *only* function-bound local variables to [`LOCAL`]. The mapping
-//! from structural token to code is language-neutral; each language supplies
-//! only its identifier rule (which names are API surface vs. renameable
-//! locals) via the `identifier_code` closure.
 
 use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::StructuralToken;
@@ -21,8 +14,7 @@ const HASH_BASE: u64 = 16;
 /// Keeps hashed lexemes below the separator namespace used by `flatten`.
 const HASH_SPAN: u64 = 1 << 62;
 
-/// Lexeme code for an emitted token. `identifier_code` is the per-language
-/// rule for [`StructuralToken::GenericIdentifier`].
+/// Lexeme code for an emitted token.
 pub(crate) fn code(
     node: Node,
     tok: StructuralToken,
@@ -47,8 +39,7 @@ pub(crate) fn code(
     }
 }
 
-/// Classify an identifier as stable API surface, a renameable local, or a
-/// stable free name. Profiles only provide their grammar-specific API rule.
+/// Classify an identifier as stable API surface, a renameable local, or a stable free name.
 fn identifier_code(
     node: Node,
     src: &[u8],
@@ -67,7 +58,6 @@ fn identifier_code(
 }
 
 /// Apply the shared token mapping and identifier classification in one call.
-/// The predicate is the only grammar-specific part of a profile's lexeme rule.
 pub(crate) fn code_with_api_surface(
     node: Node,
     tok: StructuralToken,
@@ -80,9 +70,7 @@ pub(crate) fn code_with_api_surface(
     })
 }
 
-/// The operator token of a binary/comparison node: the `operator` field where
-/// the grammar names one (JS, Rust, most Python operators), else the first
-/// anonymous child (Python `comparison_operator` chains).
+/// The operator token of a binary or comparison node.
 fn operator(node: Node) -> &'static str {
     if let Some(op) = node.field("operator") {
         return op.kind_name();
@@ -119,13 +107,7 @@ fn rehash(code: u64, salt: u64) -> u64 {
 }
 
 pub(crate) fn hash(text: &str) -> u64 {
-    // Non-cryptographic: lexeme codes are an internal equality alphabet, never
-    // exposed to adversarial input, so SipHash's DoS-resistance is wasted cost.
-    // fxhash is a single multiply-rotate per word — ~2-3x faster in this
-    // per-identifier hot loop. Folded into [HASH_BASE, HASH_SPAN) so codes stay
-    // below the separator namespace and clear of the reserved structural codes.
-    // Within-family only (duplication partitions by clone family before flatten),
-    // so codes are never compared across families and need not agree.
+    // Non-cryptographic fxhash: codes never face adversarial input and are compared within one family only.
     use std::hash::BuildHasher;
     HASH_BASE + (rustc_hash::FxBuildHasher.hash_one(text) % (HASH_SPAN - HASH_BASE))
 }

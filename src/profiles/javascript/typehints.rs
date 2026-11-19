@@ -1,7 +1,4 @@
-//! Best-effort TypeScript type extraction: parameter/return annotations and
-//! obvious `new Foo()` instantiations. Unknown types stay absent, and
-//! type-assisted smells skip those targets. JavaScript files usually contribute
-//! only obvious instantiations.
+//! Best-effort type extraction from annotations and `new Foo()` instantiations.
 
 use super::symbols;
 use crate::profiles::lineage::Lineage;

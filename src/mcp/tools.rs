@@ -1,9 +1,4 @@
 //! MCP tool catalog: name + description + JSON schema for `tools/list`.
-//!
-//! Sensez records routine metrics automatically and in the background (scans and
-//! searches self-record; fixes are recaptured on rescan) — the model is NEVER
-//! asked to report, so no tokens are spent on bookkeeping. The only feedback
-//! tool is `brainz_triage`, and it is purely user-initiated.
 
 use serde_json::{json, Value};
 
@@ -116,12 +111,11 @@ fn search_docs() -> Value {
     })
 }
 
-/// If `path` sits inside a larger repository, a warning the agent will relay:
-/// partial scans produce false dead-code positives and miss cross-module issues.
+/// A warning when `path` sits inside a larger repository.
 pub fn scope_warning(path: &std::path::Path) -> Option<String> {
     let scanned_path = path.canonicalize().ok()?;
     if scanned_path.join(".git").exists() {
-        return None; // already the repo root
+        return None;
     }
     let root = scanned_path
         .ancestors()

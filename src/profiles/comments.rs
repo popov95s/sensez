@@ -3,9 +3,7 @@
 use crate::spine::ir::{CommentClass, CommentSpan, FunctionUnit, Walked};
 use std::cmp::Reverse;
 
-/// Attach each recorded comment span to the innermost function that contains
-/// it. Nested functions keep their own comments; outer functions do not inherit
-/// them.
+/// Attach each recorded comment span to the innermost function containing it.
 pub(crate) fn attach(out: &mut Walked) {
     if out.units.comment_spans.is_empty() || out.units.functions.is_empty() {
         return;

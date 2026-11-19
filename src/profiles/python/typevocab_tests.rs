@@ -14,7 +14,6 @@ fn sets_of_primitives_are_loose_but_sets_of_domain_types_are_not() {
     assert!(is_loose("frozenset[str]"));
     assert!(is_loose("Optional[set[int]]"));
     assert!(!is_loose("set[UserModel]"));
-    // Parity with the existing containers stays intact.
     assert!(is_loose("list[int]"));
     assert!(!is_loose("list[UserModel]"));
     assert!(!is_loose("Literal[\"json\", \"xml\"]"));

@@ -1,14 +1,3 @@
-//! Cohesion smells: Divergent Change (via LCOM).
-//!
-//! LCOM here is component-based (LCOM4-style): methods are nodes, linked when
-//! they share a `self.<attr>` or call one another. A class whose methods fall
-//! into several disjoint components is poorly cohesive.
-//!
-//! Only methods that actually touch instance state participate. Stateless
-//! classes (CRUD repos of `@staticmethod`s, Pydantic/`Enum` data classes) carry
-//! no cohesion signal, so they are skipped rather than flagged as a wall of
-//! one-method "islands".
-
 use super::union_find::{find, union};
 use super::SmellContext;
 use super::{make, Measure};
@@ -16,10 +5,7 @@ use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use std::collections::HashMap;
 
-/// Minimum instance-stateful methods before LCOM is meaningful. With one or
-/// two, the component count can only be 1 or 2, and two methods on disjoint
-/// attributes is ordinary (a getter/setter pair) — only from three methods up
-/// does "the methods split into islands" carry a divergent-change signal.
+/// Minimum instance-stateful methods before LCOM is meaningful.
 const MIN_STATEFUL_METHODS: usize = 3;
 
 pub fn detect(
@@ -34,13 +20,9 @@ pub fn detect(
 }
 
 fn divergent_change(ctx: &SmellContext<'_>, class: &ClassUnit, out: &mut Vec<SmellFinding>) {
-    // Data classes (Pydantic / settings / enums) hold fields, not behavior.
-    // Interface members are cohesive by contract, not by shared state.
     if class.bases.iter().any(|b| is_data_base(b)) || !class.implements.is_empty() {
         return;
     }
-    // Methods that genuinely use instance state (ignore static/util methods that
-    // never touch `self`, which would otherwise read as cohesion "islands").
     let stateful: Vec<&str> = class
         .method_attr_use
         .iter()

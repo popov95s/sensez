@@ -34,9 +34,7 @@ pub(super) fn take_language_table(
     }
 }
 
-/// Pop the `rules` sub-table off `table`, returning (the remaining per-
-/// language table, the extracted rules). Reports a typed error so the
-/// caller can attach the language scope.
+/// Pop the `rules` sub-table off `table`, returning.
 pub(super) fn split_rules(
     scope: &str,
     table: &toml::Table,

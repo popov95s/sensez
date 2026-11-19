@@ -1,5 +1,3 @@
-//! Assemble a [`CodebaseGraph`] from parsed files.
-
 use super::identity;
 use crate::profiles::registry;
 use crate::spine::graph::{CodebaseGraph, ModuleNode};
@@ -19,14 +17,10 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     let mut by_path_key: HashMap<PathBuf, String> = HashMap::new();
     let mut resolvers = registry::import_resolvers();
 
-    // Pass 1: create a node per file. Re-exports are NOT folded into declared
-    // symbols — a re-exported name is kept alive in its defining module by the
-    // re-export *edge*, and folding it here would falsely flag the package's
-    // re-export as dead.
+    // Re-exports stay out of declared symbols: the re-export edge keeps the name alive.
     for (source_index, (file, identity)) in files.iter().zip(&identities).enumerate() {
         if cg.name_to_index.contains_key(&identity.name) {
-            // Same logical module identity, e.g. app.py and app/__init__.py.
-            // Keep the first node so imports remain deterministic.
+            // Keep the first node of a repeated logical module (app.py vs app/__init__.py).
             module_of.push(None);
             continue;
         }
@@ -48,7 +42,6 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
         module_of.push(Some(identity.name.clone()));
     }
 
-    // Pass 2: add an edge per import.
     let empty_scope = HashMap::new();
     for (i, file) in files.iter().enumerate() {
         let Some(module_name) = module_of[i].as_ref() else {
@@ -99,11 +92,7 @@ pub fn build(files: &[ParsedFile], configured_roots: &[PathBuf]) -> CodebaseGrap
     cg
 }
 
-/// Add edge(s) for one import. `from pkg import name` where `pkg.name` is a
-/// *submodule* resolves to that submodule, not to a `name` symbol on the
-/// package. Crucially, the symbols accessed on the bound name via attribute
-/// access (`crud.fetch(...)`) are credited to that edge — so a module used only
-/// through `module.func()` isn't falsely flagged dead.
+/// Add edge(s) for one import, crediting attribute accesses on the bound name.
 fn add_import_edges(
     cg: &mut CodebaseGraph,
     src_idx: NodeIndex,
@@ -144,7 +133,6 @@ fn add_import_edges(
             package_symbols.push(symbol.clone());
         }
     }
-    // Plain `import x` / `import x as y`: credit attrs accessed via the bound name.
     if import.imported_symbols.is_empty() {
         let used = import.bindings.first().and_then(|b| attrs.get(b));
         add_qualified_edge(cg, &add_edge, src_lang, import, target, used);
@@ -181,8 +169,7 @@ fn add_package_edge(
     add_edge(cg, dst, ctx);
 }
 
-/// An edge to `module` whose used symbols are the attributes accessed on the
-/// bound name (empty if none) — the precise attribute-access credit.
+/// An edge to `module` crediting the attributes accessed on the bound name.
 fn qualified_import(
     base: &crate::spine::parser::ImportContext,
     module: &str,
@@ -197,12 +184,8 @@ fn qualified_import(
 }
 
 /// Look up a target node, creating a synthetic external node if unresolved.
-/// Synthetic nodes inherit the importing module's language (irrelevant to the
-/// analyzers, which skip external nodes).
 fn node_for_target(cg: &mut CodebaseGraph, src_lang: Language, target: &str) -> NodeIndex {
-    // Deliberately get-then-insert rather than `entry()`: hits (the common
-    // case — most imports point at already-known modules) stay allocation-free,
-    // whereas `entry(target.to_string())` would allocate the key on every call.
+    // get-then-insert keeps the common hit path allocation-free.
     if let Some(&idx) = cg.name_to_index.get(target) {
         return idx;
     }

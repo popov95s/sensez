@@ -1,9 +1,4 @@
-//! Async stdio transport: read newline-delimited JSON-RPC, dispatch each
-//! request on its own task, and serialize replies through a single writer
-//! task. Requests therefore never block each other or the shutdown signal:
-//! a long scan no longer delays pings, subsequent requests, or SIGTERM.
-//! Also owns the metrics lifecycle: periodic flushes while serving, and a
-//! final flush on any exit path (stdin EOF, Ctrl-C, SIGTERM).
+//! Async stdio transport: per-request tasks and a single writer task.
 
 use anyhow::{Context, Result};
 use serde_json::{json, Value};
@@ -13,15 +8,11 @@ use std::time::Duration;
 use tokio::io::{AsyncBufRead, AsyncBufReadExt, AsyncWriteExt, BufReader};
 use tokio::sync::{mpsc, Semaphore};
 
-/// Refuse absurdly large frames instead of buffering them whole: nothing in
-/// the MCP surface needs remotely this much, and an uncapped line read would
-/// let anything writing to stdin balloon process memory.
+/// Largest accepted frame size.
 const MAX_LINE_BYTES: usize = 10 * 1024 * 1024;
-/// Upper bound on concurrently executing requests. Beyond this, callers get
-/// an immediate busy error instead of the server silently accumulating work.
+/// Upper bound on concurrently executing requests.
 const MAX_CONCURRENT_REQUESTS: usize = 8;
-/// Hard deadline for one request's work. A timed-out scan keeps running on
-/// the blocking pool, but the server stays responsive and answers the client.
+/// Hard deadline for one request's work.
 const REQUEST_TIMEOUT: Duration = Duration::from_secs(crate::setup::MCP_REQUEST_TIMEOUT_SECS);
 
 /// Serve the MCP protocol over stdin/stdout until EOF or a shutdown signal.
@@ -39,8 +30,7 @@ pub async fn serve() -> Result<()> {
     let served = loop {
         tokio::select! {
             frame = read_frame(&mut input, &mut frame_state) => match frame.context("reading stdin") {
-                // Do NOT `?` here: a dispatch error (e.g. broken pipe when the
-                // client exits early) must still reach the final metrics flush.
+                // A dispatch error must still reach the final metrics flush.
                 Ok(Some(Frame::Line(line))) => {
                     if let Err(err) = dispatch(&line, &permits, &tx).await {
                         break Err(err);
@@ -60,21 +50,15 @@ pub async fn serve() -> Result<()> {
                 Err(err) => break Err(err),
             },
             _ = flush_tick.tick() => {
-                // Spawn blocking to avoid stalling the async runtime during
-                // potentially expensive recapture/flush operations.
                 let _ = tokio::task::spawn_blocking(|| {
-                    crate::brainz::recapture(); // bank fixes since the last scan
+                    crate::brainz::recapture();
                     crate::brainz::flush();
                 }).await;
             }
             _ = &mut shutdown => break Ok(()),  // Ctrl-C / SIGTERM
         }
     };
-    // Graceful shutdown: close the response queue so the writer drains
-    // whatever is already in flight, then persist buffered metrics. We
-    // deliberately do *not* run a final recapture here — the periodic tick
-    // already covers in-session fixes, and a shutdown-time recapture would do
-    // an O(repo) cheap-scan guard walk under SIGTERM pressure.
+    // No final recapture: it would walk the repo under SIGTERM pressure.
     drop(tx);
     let _ = tokio::time::timeout(Duration::from_secs(5), writer).await;
     let _ = tokio::task::spawn_blocking(crate::brainz::flush).await;
@@ -92,8 +76,7 @@ struct FrameState {
     oversized: bool,
 }
 
-/// Keep partial frames across select! cancellations and discard oversized
-/// frames through their newline without growing the buffer.
+/// Keep partial frames across `select!` cancellations; discard oversized ones.
 async fn read_frame<R: AsyncBufRead + Unpin>(
     reader: &mut R,
     state: &mut FrameState,
@@ -132,9 +115,7 @@ async fn read_frame<R: AsyncBufRead + Unpin>(
     }
 }
 
-/// Validate and route one incoming frame. Cheap parsing happens here so the
-/// read loop stays responsive; the expensive handler runs on the blocking
-/// pool inside [`handle`].
+/// Validate and route one incoming frame.
 async fn dispatch(line: &str, permits: &Arc<Semaphore>, tx: &mpsc::Sender<String>) -> Result<()> {
     let trimmed = line.trim();
     if trimmed.is_empty() {
@@ -172,7 +153,6 @@ async fn dispatch(line: &str, permits: &Arc<Semaphore>, tx: &mpsc::Sender<String
             tokio::spawn(handle(message, permit, tx.clone()));
             Ok(())
         }
-        // A notification expects no reply regardless of load.
         Err(_) if id.is_none() => Ok(()),
         Err(_) => {
             send(
@@ -211,8 +191,7 @@ async fn handle(
 async fn writer_task(mut rx: mpsc::Receiver<String>) {
     let mut stdout = tokio::io::stdout();
     while let Some(text) = rx.recv().await {
-        // A dead stdout means the client is gone; stop writing and drain the
-        // queue so producers never hang on a closed channel.
+        // A dead stdout means the client is gone.
         if stdout.write_all(text.as_bytes()).await.is_err() {
             break;
         }
@@ -228,8 +207,7 @@ async fn send(tx: &mpsc::Sender<String>, value: &Value) -> Result<()> {
     tx.send(text).await.context("response channel closed")
 }
 
-/// Resolve when the process is asked to stop (Ctrl-C everywhere; SIGTERM on
-/// Unix — what an MCP client sends when shutting a server down).
+/// Resolve when the process is asked to stop.
 async fn shutdown_signal() {
     #[cfg(unix)]
     {

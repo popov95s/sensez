@@ -3,8 +3,7 @@
 use super::handlers::{self, ToolResult};
 use serde_json::{json, Value};
 
-/// Protocol versions this server can speak, oldest first. A supported request is
-/// echoed back; anything else gets the latest, as the MCP spec asks.
+/// Protocol versions this server can speak, oldest first.
 const SUPPORTED_PROTOCOL_VERSIONS: [&str; 3] = ["2024-11-05", "2025-03-26", "2025-06-18"];
 const LATEST_PROTOCOL_VERSION: &str =
     SUPPORTED_PROTOCOL_VERSIONS[SUPPORTED_PROTOCOL_VERSIONS.len() - 1];
@@ -31,8 +30,6 @@ pub fn handle_message(msg: &Value) -> Option<Value> {
         Some("tools/call") => handle_tool_call(msg.get("params")),
         Some("ping") => Ok(json!({})),
         Some(other) => Err((-32601, format!("method not found: {other}"))),
-        // Non-string method values are still answered with -32601; format the
-        // raw JSON so the message is never an empty interpolation.
         None => Err((-32601, format!("method not found: {method}"))),
     };
 

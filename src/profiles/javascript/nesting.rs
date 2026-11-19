@@ -35,8 +35,7 @@ pub(super) fn is_branch(kind: &str, node: Node, src: &[u8]) -> bool {
     }
 }
 
-/// Cognitive-complexity increment (Sonar-style): control structures cost
-/// `1 + nesting`; logical operators a flat `1`.
+/// Cognitive-complexity increment: `1 + nesting` for control structures, `1` for logical operators.
 pub(super) fn cognitive_weight(
     kind: &str,
     lineage: Lineage,

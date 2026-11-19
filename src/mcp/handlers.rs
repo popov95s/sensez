@@ -79,12 +79,10 @@ struct ScanArgs {
     /// Per-pillar cap on returned findings (`0` = no cap).
     #[serde(default)]
     limit: usize,
-    /// Scope the scan to the diff vs. HEAD (`true` is the agent-friendly
-    /// default; pass `false` for a full scan).
+    /// Scope the scan to the diff vs. HEAD.
     #[serde(default = "default_true")]
     diff: bool,
-    /// `false` for a shape-only call (e.g. an agent-facing limited
-    /// preview) that should not record into brainz.
+    /// `false` skips recording into brainz.
     #[serde(default = "default_true")]
     record: bool,
 }
@@ -94,8 +92,6 @@ fn default_true() -> bool {
 }
 
 fn run_scan(path: &Path, args: &ScanArgs) -> anyhow::Result<(String, Value)> {
-    // Scan first; the caller decides whether to record. Keeps the scan
-    // pipeline independent of the metrics layer.
     let scope = if args.diff {
         super::scan::Scope::DiffVsHead
     } else {

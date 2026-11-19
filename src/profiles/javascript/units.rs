@@ -1,8 +1,4 @@
-//! Per-function / per-class structural metrics for the design-smell pillar
-//! (JavaScript/TypeScript). Mirrors `lang::python::units`: each function's
-//! metrics cover its own body only — nested functions/arrows get their own
-//! [`FunctionUnit`] — and `this.<attr>` is normalized to the canonical `"self"`
-//! receiver so the language-neutral detectors work unchanged.
+//! Per-function / per-class structural metrics for the design-smell pillar (JavaScript/TypeScript).
 
 use super::chains::CHAIN;
 use super::compared_defaults::ComparedDefaults;
@@ -212,7 +208,6 @@ impl FunctionFacts {
     }
 
     /// Open the enclosing loop's frame when `node` runs once per iteration.
-    /// Push the frame of a loop part `node` starts; returns how many frames were pushed.
     fn enter_loop_part(&mut self, node: Node) -> usize {
         let Some(&id) = self.loop_parts.get(&node.id()) else {
             return 0;

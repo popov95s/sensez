@@ -1,6 +1,3 @@
-//! `type_escape_cast`: casts and suppressions that silence the type checker
-//! inside a function body. Signatures belong to `loose_typing`.
-
 use super::lines::{hit_lines, line_list};
 use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
