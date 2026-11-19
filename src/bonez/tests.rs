@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -22,7 +23,7 @@ fn flags_forbidden_edge() {
     let files: Vec<_> = names
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
 
@@ -73,7 +74,7 @@ fn matches_namespace_layout_via_path_and_literal_target() {
     let files: Vec<_> = ["app/api/endpoints/users.py", "app/db/models.py"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
 
@@ -99,7 +100,7 @@ fn graph_of(files: &[(&str, &str)]) -> (tempfile::TempDir, CodebaseGraph) {
         .map(|(name, text)| crate::test_support::write(tmp.path(), name, text))
         .filter(|path| path.extension().is_some_and(|ext| ext != "json"))
         .enumerate()
-        .map(|(i, path)| parse_file(&path, i as u32).unwrap())
+        .map(|(i, path)| parse_file(&path, FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&parsed, &[]);
     (tmp, cg)

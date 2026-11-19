@@ -1,6 +1,7 @@
 use crate::config::model::{Config, DeadCode};
 use crate::noze::dead_code::detect;
 use crate::report::{Confidence, DeadCodeFinding};
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, SymbolKind};
 use std::fs;
 
@@ -20,7 +21,7 @@ pub(super) fn scan(sources: &[(&str, &str)], config: &DeadCode) -> Vec<DeadCodeF
         .iter()
         .filter(|path| path.extension().is_some_and(|ext| ext != "json"))
         .enumerate()
-        .map(|(index, path)| parse_file(path, index as u32).unwrap())
+        .map(|(index, path)| parse_file(path, FileId::from_index(index)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     detect(&cg, &files, config)

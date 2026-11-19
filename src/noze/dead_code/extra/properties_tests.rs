@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -14,7 +15,7 @@ fn symbols_for(sources: &[(&str, &str)]) -> Vec<String> {
         .map(|(index, (name, src))| {
             let file = tmp.path().join(name);
             fs::write(&file, src).unwrap();
-            parse_file(&file, index as u32).unwrap()
+            parse_file(&file, FileId::from_index(index)).unwrap()
         })
         .collect();
     unused_properties(&files, &HashMap::new())

@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use crate::test_support::write;
 
@@ -7,7 +8,9 @@ fn graph_for(sources: &[(&str, &str)]) -> CodebaseGraph {
     let files: Vec<_> = sources
         .iter()
         .enumerate()
-        .map(|(i, (name, body))| parse_file(&write(tmp.path(), name, body), i as u32).unwrap())
+        .map(|(i, (name, body))| {
+            parse_file(&write(tmp.path(), name, body), FileId::from_index(i)).unwrap()
+        })
         .collect();
     crate::spine::graph::build(&files, &[])
 }

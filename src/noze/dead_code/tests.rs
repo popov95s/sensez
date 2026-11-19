@@ -1,5 +1,6 @@
 use super::*;
 use crate::report::Confidence;
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, SymbolKind};
 use std::fs;
 
@@ -35,7 +36,7 @@ fn configured_class_bases_mark_dynamic_entrypoints() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("apps.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("apps.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let mut cfg = cfg();
     cfg.entrypoint_bases = vec!["AppConfig".to_string()];
@@ -64,7 +65,7 @@ fn python_profile_class_bases_mark_dynamic_entrypoints_by_default() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("apps.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("apps.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let dead: Vec<_> = detect(
         &cg,
@@ -95,7 +96,7 @@ fn flags_unused_functions_only_by_default() {
     let files: Vec<_> = ["lib.py", "app.py"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
 
@@ -128,7 +129,7 @@ fn unused_properties_are_opt_in_dead_code() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("model.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("model.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
 
     let default = crate::config::model::Config::default().dead_code;
@@ -190,7 +191,7 @@ fn alembic_and_tests_excluded_by_default() {
     let files: Vec<_> = names
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     let cfg = crate::config::model::Config::default().dead_code; // includes default entry_points
@@ -253,7 +254,7 @@ fn module_attribute_access_is_credited_precisely() {
     let files: Vec<_> = names
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     let dead: Vec<_> = detect(&cg, &files, &cfg())
@@ -283,7 +284,7 @@ fn decorated_handlers_live_unimported_module_is_medium() {
         "import framework\n\napp = framework.App()\n\n\n@app.get(\"/\")\ndef handler():\n    return 1\n\n\ndef plain():\n    return 2\n",
     )
     .unwrap();
-    let files = vec![parse_file(&dir.join("app.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("app.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let findings = detect(&cg, &files, &cfg());
 

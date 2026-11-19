@@ -3,6 +3,7 @@
 use super::graphy;
 use crate::config::smells::Smells;
 use crate::report::{SmellFinding, SmellKind};
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -22,7 +23,7 @@ fn god_module_findings(files: &[(String, String)], cfg: Smells) -> Vec<SmellFind
         .map(|(i, (name, body))| {
             let path = tmp.path().join(format!("{name}.ts"));
             fs::write(&path, body).unwrap();
-            parse_file(&path, i as u32).unwrap()
+            parse_file(&path, FileId::from_index(i)).unwrap()
         })
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);

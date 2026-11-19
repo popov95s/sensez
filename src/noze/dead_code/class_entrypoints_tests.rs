@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -14,7 +15,7 @@ fn subclasses_of_configured_bases_are_entrypoints() {
          class Plain:\n    pass\n",
     )
     .unwrap();
-    let parsed = parse_file(&file, 0).unwrap();
+    let parsed = parse_file(&file, FileId::from_index(0)).unwrap();
     let entrypoints = ClassEntrypoints::from_files(&[parsed], &["AppConfig".to_string()]);
 
     assert!(entrypoints.is_entrypoint(&file, "AdminConfig", SymbolKind::Class));

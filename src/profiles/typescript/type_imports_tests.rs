@@ -1,4 +1,5 @@
 use crate::report::ActionLevel;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -25,7 +26,7 @@ fn cycle_actions(x_import: &str, configs: &[(&str, &str)]) -> Vec<ActionLevel> {
     let files: Vec<_> = ["src/x.ts", "src/y.ts"]
         .iter()
         .enumerate()
-        .map(|(i, name)| parse_file(&dir.join(name), i as u32).unwrap())
+        .map(|(i, name)| parse_file(&dir.join(name), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     crate::noze::cycles::detect(&cg, &crate::config::Cycles::default())

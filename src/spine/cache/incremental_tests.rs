@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 
 fn source(path: PathBuf, bytes: &[u8]) -> SourceFile {
     SourceFile {
@@ -80,7 +81,7 @@ fn memory_state_reuses_walks_after_file_order_changes() {
             .syntax
             .spans
             .iter()
-            .all(|span| span.file_id == file_id as u32));
+            .all(|span| span.file_id == FileId::from_index(file_id)));
     }
 }
 

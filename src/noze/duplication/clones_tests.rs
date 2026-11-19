@@ -1,9 +1,10 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::tokens::TokenSpan;
 
-fn span(id: u32) -> TokenSpan {
+fn span(file_id: FileId) -> TokenSpan {
     TokenSpan {
-        file_id: id,
+        file_id,
         start_row: 1,
         end_row: 1,
         start_byte: 0,
@@ -16,7 +17,9 @@ fn groups_three_way_clone() {
     // Three identical runs [1,2,3,4] separated by unique sentinels (5,6,7)
     // + terminator 0. Alphabet is dense (0..=7), as suffix_array_int requires.
     let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 1, 2, 3, 4, 7, 0];
-    let spans = (0..text.len()).map(|i| span(i as u32)).collect();
+    let spans = (0..text.len())
+        .map(|i| span(FileId::from_index(i)))
+        .collect();
     let mut master = Master { text, spans };
     let groups = extract(&mut master, 4, Nesting::Outermost);
     assert_eq!(groups.len(), 1, "one n-way group, not pairwise records");
@@ -31,7 +34,9 @@ fn groups_three_way_clone() {
 #[test]
 fn nothing_below_threshold() {
     let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 6, 0];
-    let spans = (0..text.len()).map(|i| span(i as u32)).collect();
+    let spans = (0..text.len())
+        .map(|i| span(FileId::from_index(i)))
+        .collect();
     let mut master = Master { text, spans };
     assert!(extract(&mut master, 5, Nesting::Outermost).is_empty());
 }
@@ -43,7 +48,9 @@ fn nothing_below_threshold() {
 #[test]
 fn left_maximal_collapses_offset_fragments() {
     let text = vec![1, 2, 3, 4, 5, 1, 2, 3, 4, 0]; // dense alphabet 0..=5
-    let spans = (0..text.len()).map(|i| span(i as u32)).collect();
+    let spans = (0..text.len())
+        .map(|i| span(FileId::from_index(i)))
+        .collect();
     let mut master = Master { text, spans };
     let groups = extract(&mut master, 2, Nesting::Outermost);
     assert_eq!(
@@ -65,7 +72,9 @@ fn adjacent_overlap_is_not_disjoint_despite_a_wide_span() {
 fn nested_intervals_keep_longer_clones_among_fewer_occurrences() {
     // [1,2,3] occurs three times; [1,2,3,4,5] only in the last two.
     let text = vec![1, 2, 3, 9, 1, 2, 3, 4, 5, 8, 1, 2, 3, 4, 5, 7, 0];
-    let spans = (0..text.len()).map(|i| span(i as u32)).collect();
+    let spans = (0..text.len())
+        .map(|i| span(FileId::from_index(i)))
+        .collect();
     let mut master = Master { text, spans };
     let shape = |groups: Vec<RawGroup>| -> Vec<(usize, usize)> {
         let mut out: Vec<_> = groups.iter().map(|g| (g.len, g.positions.len())).collect();

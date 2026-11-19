@@ -43,7 +43,7 @@ use crate::profiles::{
     DeadCodeProfile, ImportResolver, Language, LanguageInfo, ModuleProfile, ParseProfile,
     PerformanceProfile, TypeVocabularyProfile,
 };
-use crate::spine::ir::{ClassProperty, ClassUnit, ImportContext, MutatorFamily, Walked};
+use crate::spine::ir::{ClassProperty, ClassUnit, FileId, ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -71,7 +71,13 @@ impl ParseProfile for PythonProfile {
         tree_sitter_python::LANGUAGE.into()
     }
 
-    fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: FileId,
+        module_name: &str,
+    ) -> Walked {
         traversal::walk(root, src, file_id, module_name)
     }
 

@@ -3,6 +3,7 @@
 
 use super::RustProfile;
 use crate::profiles::test_fixtures::tokens;
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, parse_source, StructuralToken};
 use std::fs;
 use std::path::Path;
@@ -28,7 +29,7 @@ fn rename_invariance_yields_identical_tokens() {
 #[test]
 fn use_tree_flattening() {
     let src = b"mod helpers;\nuse crate::noze::{AnalysisReport, smells};\nuse std::collections::HashMap as Map;\nuse crate::config::*;\nuse serde_json;\n";
-    let imports = parse_source(src, 0, "m", &RustProfile)
+    let imports = parse_source(src, FileId::default(), "m", &RustProfile)
         .unwrap()
         .symbols
         .imports;
@@ -128,7 +129,7 @@ fn mutual_use_is_a_cycle() {
     let files: Vec<_> = ["src/lib.rs", "src/a.rs", "src/b.rs"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     assert!(cg.name_to_index.contains_key("src"), "lib.rs keys as src");
@@ -167,7 +168,7 @@ fn module_hierarchy_is_not_a_cycle() {
     let files: Vec<_> = ["src/lib.rs", "src/p/mod.rs", "src/p/child.rs"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     let p = cg.name_to_index["src/p"];
@@ -208,7 +209,7 @@ fn facade_reexport_is_not_a_cycle() {
     let files: Vec<_> = ["src/lib.rs", "src/p/mod.rs", "src/p/child.rs"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     let cycles = crate::noze::cycles::detect(&cg, &crate::config::Cycles::default());
@@ -232,7 +233,7 @@ fn identical_functions_are_a_clone_within_rust_only() {
     let files: Vec<_> = ["one.rs", "two.rs"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cfg = crate::config::model::Duplication {
         exclude: vec![],
@@ -249,7 +250,7 @@ fn identical_functions_are_a_clone_within_rust_only() {
 #[test]
 fn pub_only_declarations_and_path_access_crediting() {
     let src = b"pub fn used() {}\npub fn unused() {}\nfn private() {}\npub struct Conf;\n";
-    let walked = parse_source(src, 0, "m", &RustProfile).unwrap();
+    let walked = parse_source(src, FileId::default(), "m", &RustProfile).unwrap();
     assert_eq!(walked.symbols.declared, vec!["used", "unused", "Conf"]);
     assert_eq!(
         walked.symbols.declared_kinds["Conf"],
@@ -262,7 +263,7 @@ fn pub_only_declarations_and_path_access_crediting() {
 
     let caller = parse_source(
         b"use crate::m;\npub fn go() { m::used(); }\n",
-        1,
+        FileId::from_index(1),
         "caller",
         &RustProfile,
     )

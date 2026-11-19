@@ -14,8 +14,8 @@ use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, credit_string, declare, register_method, Scope,
 };
-use crate::spine::ir::SymbolKind;
 use crate::spine::ir::Walked;
+use crate::spine::ir::{FileId, SymbolKind};
 use tree_sitter::Node;
 
 struct ActiveFn {
@@ -35,7 +35,7 @@ struct VisitCtx<'a, 'tree> {
 }
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
-pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+pub fn walk(root: Node, src: &[u8], file_id: FileId, module_name: &str) -> Walked {
     let mut out = Walked::default();
     let mut scope: Vec<Scope> = Vec::new();
     let mut fn_bounds: Vec<BoundNames> = Vec::new();
@@ -68,7 +68,7 @@ pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
 fn visit<'tree>(
     node: Node<'tree>,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     is_member_property: bool,
     space: TypeSpace,

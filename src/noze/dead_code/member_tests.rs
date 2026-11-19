@@ -1,6 +1,7 @@
 use crate::config::model::Config;
 use crate::noze;
 use crate::report::Confidence;
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_file, SymbolKind};
 use std::fs;
 
@@ -157,7 +158,7 @@ fn parse_files(dir: &std::path::Path, names: &[&str]) -> Vec<crate::spine::parse
     names
         .iter()
         .enumerate()
-        .map(|(index, name)| parse_file(&dir.join(name), index as u32).unwrap())
+        .map(|(index, name)| parse_file(&dir.join(name), FileId::from_index(index)).unwrap())
         .collect()
 }
 

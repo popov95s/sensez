@@ -3,10 +3,11 @@
 
 use super::super::PythonProfile;
 use crate::profiles::test_fixtures::{tokens, walked};
+use crate::spine::ir::FileId;
 use crate::spine::parser::{parse_source, StructuralToken};
 
 fn imports(src: &[u8]) -> Vec<crate::spine::parser::ImportContext> {
-    parse_source(src, 0, "m", &super::super::PythonProfile)
+    parse_source(src, FileId::default(), "m", &super::super::PythonProfile)
         .unwrap()
         .symbols
         .imports

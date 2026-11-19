@@ -7,6 +7,7 @@
 mod counters;
 mod echo;
 mod fallback;
+mod file_id;
 mod import_context;
 mod lang;
 mod loop_frame;
@@ -27,6 +28,7 @@ use crate::eyez::RawDoc;
 pub(crate) use counters::{bump, record_attr};
 pub use echo::{EchoAssertion, EchoShape};
 pub use fallback::{FallbackSink, FallbackSite, StringFallback};
+pub use file_id::FileId;
 pub use import_context::{ImportContext, ImportPhase};
 pub use lang::Language;
 pub use loop_frame::{LoopBound, LoopFrame, LoopKind};

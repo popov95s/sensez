@@ -7,18 +7,18 @@ use crate::profiles::node_names::NodeNames;
 use crate::profiles::walk::{
     self, credit_attr, credit_name, declare, emit_mapped, register_method, Scope,
 };
-use crate::spine::ir::{record_attr, TypeAlias, Walked};
+use crate::spine::ir::{record_attr, FileId, TypeAlias, Walked};
 use tree_sitter::Node;
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
-pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+pub fn walk(root: Node, src: &[u8], file_id: FileId, module_name: &str) -> Walked {
     walk::run(root, src, file_id, module_name, visit)
 }
 
 fn visit(
     node: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     scope: &mut Vec<Scope>,
     fn_bounds: &mut Vec<BoundNames>,
@@ -43,7 +43,7 @@ struct RustWalkState<'a> {
 fn visit_node(
     node: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     state: &mut RustWalkState<'_>,
     out: &mut Walked,

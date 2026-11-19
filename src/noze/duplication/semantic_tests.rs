@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 
 #[test]
 fn repeated_method_name_uses_nearest_documentation() {
@@ -61,7 +62,7 @@ fn regression_documented_functions_form_a_candidate_without_internal_comment_noi
     ]
     .iter()
     .enumerate()
-    .map(|(index, name)| parse_file(&fixture_root.join(name), index as u32).unwrap())
+    .map(|(index, name)| parse_file(&fixture_root.join(name), FileId::from_index(index)).unwrap())
     .collect();
     let refs: Vec<_> = files.iter().collect();
     let documented_only = SemanticDuplication {

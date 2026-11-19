@@ -6,12 +6,10 @@
 //! cross-file matches across a boundary are impossible by construction. Codes
 //! are then densified to a contiguous `0..K` alphabet for `suffix_array_int`.
 
+use crate::spine::ir::FileId;
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::ParsedFile;
 use rustc_hash::FxHashMap;
-
-/// Sentinel `file_id` marking a separator/terminator position (not a token).
-pub const NON_TOKEN: u32 = u32::MAX;
 
 /// Per-file separator namespace, above every lexeme code (see `lexeme.rs`).
 const SEP_BASE: u64 = 1 << 62;
@@ -44,7 +42,7 @@ pub fn build(files: &[&ParsedFile]) -> Master {
         {
             text.push(dense.id(*code));
             spans.push(TokenSpan {
-                file_id: file_idx as u32,
+                file_id: FileId::from_index(file_idx),
                 ..*span
             });
         }
@@ -59,7 +57,7 @@ pub fn build(files: &[&ParsedFile]) -> Master {
 
 fn non_token_span() -> TokenSpan {
     TokenSpan {
-        file_id: NON_TOKEN,
+        file_id: FileId::SEPARATOR,
         start_row: 0,
         end_row: 0,
         start_byte: 0,

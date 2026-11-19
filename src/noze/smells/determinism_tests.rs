@@ -4,6 +4,7 @@
 
 use crate::config::smells::{SmellConfig, Smells};
 use crate::noze::source_scope::SourceScope;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -35,7 +36,7 @@ fn parallel_detection_is_deterministic() {
     let files: Vec<_> = ["deep.py", "wide.py", "magic.py", "chain.py"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&files, &[]);
     let cfg = Smells::default();

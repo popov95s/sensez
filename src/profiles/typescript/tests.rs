@@ -2,6 +2,7 @@ use super::{TsProfile, TsxProfile};
 use crate::config::smells::{SmellConfig, Smells};
 use crate::noze::smells::detect_local;
 use crate::report::{SmellFinding, SmellKind};
+use crate::spine::ir::FileId;
 use crate::spine::ir::Language;
 use crate::spine::parser::{parse_file, parse_source, ImportPhase, ParsedFile, StructuralToken};
 use std::fs;
@@ -45,7 +46,7 @@ fn graph_resolves_tsconfig_paths_and_keeps_workspace_module_ids_unique() {
     ]
     .iter()
     .enumerate()
-    .map(|(index, file)| parse_file(&dir.join(file), index as u32).unwrap())
+    .map(|(index, file)| parse_file(&dir.join(file), FileId::from_index(index)).unwrap())
     .collect();
     let graph = crate::spine::graph::build(&files, &[]);
 
@@ -58,7 +59,7 @@ fn graph_resolves_tsconfig_paths_and_keeps_workspace_module_ids_unique() {
 
 /// Build a `ParsedFile` for a TS source and return the smells `cfg` produces.
 pub(super) fn findings_for(src: &[u8], cfg: &Smells) -> Vec<SmellFinding> {
-    let walked = parse_source(src, 0, "m", &TsProfile).unwrap();
+    let walked = parse_source(src, FileId::default(), "m", &TsProfile).unwrap();
     let file = ParsedFile {
         path: PathBuf::from("m.ts"),
         language: Language::TypeScript,
@@ -83,7 +84,7 @@ fn smells_for(src: &[u8], cfg: &Smells) -> Vec<SmellKind> {
 fn import_type_is_type_only_phase() {
     let imports = parse_source(
             b"import type { MassiveUserClass } from './heavy_database_models';\nimport { live } from './runtime';\n",
-            0,
+            FileId::from_index(0),
             "m",
             &TsProfile,
         )
@@ -109,7 +110,7 @@ fn import_type_is_type_only_phase() {
 fn mixed_import_specifiers_track_per_binding_phase() {
     let imports = parse_source(
             b"import { type MassiveUserClass, connect as runtimeConnect } from './heavy_database_models';\n",
-            0,
+            FileId::from_index(0),
             "m",
             &TsProfile,
         )
@@ -134,7 +135,7 @@ fn mixed_import_specifiers_track_per_binding_phase() {
 fn export_type_is_type_only_phase() {
     let imports = parse_source(
         b"export type { Shape } from './shape';\n",
-        0,
+        FileId::from_index(0),
         "m",
         &TsProfile,
     )
@@ -223,7 +224,10 @@ fn ts_loose_typing_high_reports_arrays_and_aliases() {
 #[test]
 fn typed_function_yields_structural_tokens() {
     let src = b"interface U { id: number }\nexport function f(xs: number[]): number {\n  let n: number = 0;\n  for (const x of xs) { if (x > 0) { n = n + x; } }\n  return n;\n}\n";
-    let toks = parse_source(src, 0, "m", &TsProfile).unwrap().syntax.tokens;
+    let toks = parse_source(src, FileId::default(), "m", &TsProfile)
+        .unwrap()
+        .syntax
+        .tokens;
     assert!(toks.contains(&StructuralToken::FunctionDef));
     assert!(toks.contains(&StructuralToken::ForStatement));
     assert!(toks.contains(&StructuralToken::Return));
@@ -233,7 +237,7 @@ fn typed_function_yields_structural_tokens() {
 #[test]
 fn tsx_parses() {
     let src = b"export function View() { return foo(); }\n";
-    let toks = parse_source(src, 0, "m", &TsxProfile)
+    let toks = parse_source(src, FileId::default(), "m", &TsxProfile)
         .unwrap()
         .syntax
         .tokens;
@@ -261,7 +265,7 @@ fn ts_relative_import_resolves_internal() {
     let files: Vec<_> = ["src/models.ts", "src/service.ts"]
         .iter()
         .enumerate()
-        .map(|(i, n)| parse_file(&dir.join(n), i as u32).unwrap())
+        .map(|(i, n)| parse_file(&dir.join(n), FileId::from_index(i)).unwrap())
         .collect();
     let cg = crate::spine::graph::build(&files, &[]);
     let service = cg.name_to_index["src/service"];
@@ -283,7 +287,7 @@ fn python_class_base_defaults_do_not_leak_to_typescript() {
     )
     .unwrap();
 
-    let files = vec![parse_file(&dir.join("plugin.ts"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("plugin.ts"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let dead: Vec<_> = crate::noze::dead_code::detect(
         &cg,
@@ -304,7 +308,7 @@ fn python_class_base_defaults_do_not_leak_to_typescript() {
 #[test]
 fn fused_collector_ts_return_annotation_not_in_body() {
     let src = b"function add(a: number, b: number): number {\n  return a + b;\n}\n";
-    let functions = parse_source(src, 0, "m", &TsProfile)
+    let functions = parse_source(src, FileId::default(), "m", &TsProfile)
         .unwrap()
         .units
         .functions;
@@ -322,7 +326,7 @@ fn fused_collector_ts_return_annotation_not_in_body() {
 fn inverted_self_guard_is_a_string_fallback() {
     let fallbacks = |body: &str| {
         let src = format!("export function f(x?: string) {{ return {body}; }}\n");
-        parse_source(src.as_bytes(), 0, "m", &TsProfile)
+        parse_source(src.as_bytes(), FileId::default(), "m", &TsProfile)
             .unwrap()
             .units
             .functions[0]

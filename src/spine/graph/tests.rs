@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use crate::test_support::write;
 
@@ -17,7 +18,7 @@ fn builds_nodes_and_resolves_edges() {
     let files: Vec<_> = [&p_init, &p_models, &p_views]
         .iter()
         .enumerate()
-        .map(|(i, p)| parse_file(p, i as u32).unwrap())
+        .map(|(i, p)| parse_file(p, FileId::from_index(i)).unwrap())
         .collect();
 
     let cg = build(&files, &[]);
@@ -46,7 +47,7 @@ fn relative_imports_resolve_to_sibling() {
     let files: Vec<_> = [&init, &a, &b]
         .iter()
         .enumerate()
-        .map(|(i, p)| parse_file(p, i as u32).unwrap())
+        .map(|(i, p)| parse_file(p, FileId::from_index(i)).unwrap())
         .collect();
     let cg = build(&files, &[]);
 
@@ -74,7 +75,7 @@ fn duplicate_module_names_do_not_overwrite_first_node() {
     let files: Vec<_> = [&flat, &init]
         .iter()
         .enumerate()
-        .map(|(i, p)| parse_file(p, i as u32).unwrap())
+        .map(|(i, p)| parse_file(p, FileId::from_index(i)).unwrap())
         .collect();
     let cg = build(&files, &[]);
 

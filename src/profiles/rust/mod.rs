@@ -36,7 +36,7 @@ use crate::profiles::{
     PerformanceProfile, TypeVocabularyProfile,
 };
 use crate::report::SmellKind;
-use crate::spine::ir::{ImportContext, MutatorFamily, Walked};
+use crate::spine::ir::{FileId, ImportContext, MutatorFamily, Walked};
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
 
@@ -65,7 +65,13 @@ impl ParseProfile for RustProfile {
         tree_sitter_rust::LANGUAGE.into()
     }
 
-    fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: FileId,
+        module_name: &str,
+    ) -> Walked {
         traversal::walk(root, src, file_id, module_name)
     }
 }

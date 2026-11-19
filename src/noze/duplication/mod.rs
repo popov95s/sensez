@@ -32,6 +32,7 @@ pub(crate) use lexeme_similarity::{function_lexemes, length_ceiling_percent, sim
 use crate::config::model::Duplication;
 use crate::noze::source_scope::SourceScope;
 use crate::report::{ActionLevel, CloneClass, CloneDetector, CloneOccurrence, ScanIssue};
+use crate::spine::ir::FileId;
 use crate::spine::parser::tokens::TokenSpan;
 use crate::spine::parser::{FunctionUnit, ParsedFile};
 use rayon::prelude::*;
@@ -240,10 +241,10 @@ fn occurrence(
 ) -> Option<CloneOccurrence> {
     let first = spans.get(start)?;
     let last = spans.get(end.saturating_sub(1))?;
-    if first.file_id == flatten::NON_TOKEN || last.file_id == flatten::NON_TOKEN {
+    if first.file_id == FileId::SEPARATOR || last.file_id == FileId::SEPARATOR {
         return None; // defensive: matches never span separators
     }
-    let file = files.get(first.file_id as usize)?.path.clone();
+    let file = files.get(first.file_id.index())?.path.clone();
     Some(CloneOccurrence {
         file,
         start_row: first.start_row as usize,

@@ -1,4 +1,5 @@
 use super::*;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 
@@ -12,7 +13,7 @@ fn detects_unused_import_and_method() {
         "import os\nimport sys\n\nsys.exit(0)\n\nclass C:\n    def used(self):\n        return self.unused()\n    def unused(self):\n        return 1\n    def orphan(self):\n        return 2\n",
     )
     .unwrap();
-    let files = vec![parse_file(&dir.join("m.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("m.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let modmap = module_map(&cg);
 
@@ -51,7 +52,7 @@ fn ignores_type_checking_only_imports() {
         "from typing import TYPE_CHECKING\n\nif TYPE_CHECKING:\n    from app.models import User\n\nimport os\n",
     )
     .unwrap();
-    let files = vec![parse_file(&dir.join("m.py"), 0).unwrap()];
+    let files = vec![parse_file(&dir.join("m.py"), FileId::from_index(0)).unwrap()];
     let cg = crate::spine::graph::build(&files, &[]);
     let modmap = module_map(&cg);
 
@@ -83,8 +84,8 @@ fn ignores_type_only_bindings_but_reports_runtime_bindings() {
     )
     .unwrap();
     let files = vec![
-        parse_file(&dir.join("consumer.ts"), 0).unwrap(),
-        parse_file(&dir.join("models.ts"), 1).unwrap(),
+        parse_file(&dir.join("consumer.ts"), FileId::from_index(0)).unwrap(),
+        parse_file(&dir.join("models.ts"), FileId::from_index(1)).unwrap(),
     ];
     let cg = crate::spine::graph::build(&files, &[]);
     let modmap = module_map(&cg);
@@ -114,8 +115,8 @@ fn recognizes_runtime_imports_referenced_only_by_types() {
     )
     .unwrap();
     let files = vec![
-        parse_file(&dir.join("consumer.ts"), 0).unwrap(),
-        parse_file(&dir.join("models.ts"), 1).unwrap(),
+        parse_file(&dir.join("consumer.ts"), FileId::from_index(0)).unwrap(),
+        parse_file(&dir.join("models.ts"), FileId::from_index(1)).unwrap(),
     ];
     let graph = crate::spine::graph::build(&files, &[]);
     let modmap = module_map(&graph);

@@ -10,18 +10,18 @@ use crate::profiles::walk::{
 };
 use crate::spine::ir::ImportPhase;
 use crate::spine::ir::Walked;
-use crate::spine::ir::{record_attr, SymbolKind};
+use crate::spine::ir::{record_attr, FileId, SymbolKind};
 use tree_sitter::Node;
 
 /// Walk `root` pre-order, producing tokens/spans/imports for the file.
-pub fn walk(root: Node, src: &[u8], file_id: u32, module_name: &str) -> Walked {
+pub fn walk(root: Node, src: &[u8], file_id: FileId, module_name: &str) -> Walked {
     walk::run_with_method_attrs(root, src, file_id, module_name, visit)
 }
 
 fn visit(
     node: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     scope: &mut Vec<Scope>,
     fn_bounds: &mut Vec<BoundNames>,

@@ -9,7 +9,7 @@ pub use crate::spine::ir::{
 use crate::profiles::{registry, ParseProfile};
 use crate::report::{ScanIssue, ScanStage};
 pub use crate::spine::cache::SourceFingerprint;
-use crate::spine::ir::Language;
+use crate::spine::ir::{FileId, Language};
 use anyhow::{anyhow, Context, Result};
 use rayon::prelude::*;
 use std::fs;
@@ -46,7 +46,7 @@ pub fn parse_files(files: &[PathBuf]) -> ParseBatch {
         .enumerate()
         .map_init(
             tree_sitter::Parser::new,
-            |parser, (i, path)| match parse_file_with_parser(path, i as u32, parser) {
+            |parser, (i, path)| match parse_file_with_parser(path, FileId::from_index(i), parser) {
                 Ok(parsed) => Ok(parsed),
                 Err(err) => Err(ScanIssue {
                     stage: ScanStage::Parse,
@@ -76,7 +76,7 @@ pub fn parse_sources(files: &[crate::spine::cache::SourceFile]) -> ParseBatch {
         .par_iter()
         .enumerate()
         .map_init(tree_sitter::Parser::new, |parser, (i, source)| {
-            parse_loaded_source(source, i as u32, parser).map_err(|err| ScanIssue {
+            parse_loaded_source(source, FileId::from_index(i), parser).map_err(|err| ScanIssue {
                 stage: ScanStage::Parse,
                 file: Some(source.path.clone()),
                 message: format!("{err:#}"),
@@ -105,7 +105,7 @@ pub fn parse_sources_incremental(
     let stats = cache.changes(files);
     let mut outcomes: Vec<Option<Result<ParsedFile>>> = (0..files.len()).map(|_| None).collect();
     for (index, source) in files.iter().enumerate() {
-        if let Some(parsed) = cache.restore(source, index as u32) {
+        if let Some(parsed) = cache.restore(source, FileId::from_index(index)) {
             outcomes[index] = Some(Ok(parsed));
         }
     }
@@ -114,7 +114,10 @@ pub fn parse_sources_incremental(
         .enumerate()
         .filter(|(index, _)| outcomes[*index].is_none())
         .map_init(tree_sitter::Parser::new, |parser, (index, source)| {
-            (index, parse_loaded_source(source, index as u32, parser))
+            (
+                index,
+                parse_loaded_source(source, FileId::from_index(index), parser),
+            )
         })
         .collect();
     for (index, outcome) in misses {
@@ -137,13 +140,13 @@ pub fn parse_sources_incremental(
 }
 
 #[cfg(test)]
-pub fn parse_file(path: &Path, file_id: u32) -> Result<ParsedFile> {
+pub fn parse_file(path: &Path, file_id: FileId) -> Result<ParsedFile> {
     parse_file_with_parser(path, file_id, &mut tree_sitter::Parser::new())
 }
 
 fn parse_file_with_parser(
     path: &Path,
-    file_id: u32,
+    file_id: FileId,
     parser: &mut tree_sitter::Parser,
 ) -> Result<ParsedFile> {
     let read_started = timing::enabled().then(std::time::Instant::now);
@@ -169,7 +172,7 @@ fn parse_file_with_parser(
 
 fn parse_loaded_source(
     source: &crate::spine::cache::SourceFile,
-    file_id: u32,
+    file_id: FileId,
     parser: &mut tree_sitter::Parser,
 ) -> Result<ParsedFile> {
     let path = &source.path;
@@ -215,7 +218,7 @@ const MAX_TREE_DEPTH: usize = 512;
 #[cfg(test)]
 pub fn parse_source(
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     profile: &dyn ParseProfile,
 ) -> Result<Walked> {
@@ -225,7 +228,7 @@ pub fn parse_source(
 
 fn parse_source_with_parser(
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     profile: &dyn ParseProfile,
     parser: &mut tree_sitter::Parser,

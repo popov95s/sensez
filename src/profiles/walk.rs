@@ -10,7 +10,8 @@ use crate::profiles::lexeme::BoundNames;
 use crate::profiles::node_names::NodeNames;
 use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 use crate::spine::ir::{
-    bump, record_attr, CommentSpan, FallbackSite, FunctionUnit, StringFallback, SymbolKind, Walked,
+    bump, record_attr, CommentSpan, FallbackSite, FileId, FunctionUnit, StringFallback, SymbolKind,
+    Walked,
 };
 use rustc_hash::FxHashSet;
 use tree_sitter::Node;
@@ -26,7 +27,7 @@ pub(crate) type LexemeFn = fn(Node, StructuralToken, &[u8], &[BoundNames]) -> u6
 
 /// A language's recursive visit function (the per-grammar walk body).
 pub(crate) type VisitFn =
-    fn(Node, &[u8], u32, &str, &mut Vec<Scope>, &mut Vec<BoundNames>, &mut Walked);
+    fn(Node, &[u8], FileId, &str, &mut Vec<Scope>, &mut Vec<BoundNames>, &mut Walked);
 
 /// Root identifier of a mutated subscript/member chain.
 pub(crate) enum MutationTarget {
@@ -53,7 +54,7 @@ pub(crate) type TargetRootFn = fn(Node, &[u8]) -> Option<MutationTarget>;
 pub(crate) fn run(
     root: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     visit: VisitFn,
 ) -> Walked {
@@ -77,7 +78,7 @@ pub(crate) fn run(
 pub(crate) fn run_with_method_attrs(
     root: Node,
     src: &[u8],
-    file_id: u32,
+    file_id: FileId,
     module_name: &str,
     visit: VisitFn,
 ) -> Walked {
@@ -152,7 +153,7 @@ pub(crate) fn credit_string(out: &mut Walked, value: &str) {
 /// Emit `node` with its lexeme code when `map_kind` gives it a structural token.
 pub(crate) fn emit_mapped(
     out: &mut Walked,
-    file_id: u32,
+    file_id: FileId,
     node: Node,
     src: &[u8],
     fn_bounds: &[BoundNames],
@@ -165,7 +166,7 @@ pub(crate) fn emit_mapped(
 }
 
 /// Emit one structural token with its lexeme code and 1-indexed line span.
-pub(crate) fn emit(out: &mut Walked, file_id: u32, node: Node, tok: StructuralToken, code: u64) {
+pub(crate) fn emit(out: &mut Walked, file_id: FileId, node: Node, tok: StructuralToken, code: u64) {
     let start = node.start_position();
     let end = node.end_position();
     out.syntax.tokens.push(tok);

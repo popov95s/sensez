@@ -1,17 +1,18 @@
 use super::*;
+use crate::spine::ir::FileId;
 
 // Layout: indices 0..=5 file 0, 6 separator, 7..=12 file 1.
 fn spans() -> Vec<TokenSpan> {
-    let f = |id: u32| TokenSpan {
-        file_id: id,
+    let f = |file_id: FileId| TokenSpan {
+        file_id,
         start_row: 1,
         end_row: 1,
         start_byte: 0,
         end_byte: 0,
     };
-    let mut s: Vec<TokenSpan> = (0..6).map(|_| f(0)).collect();
-    s.push(f(u32::MAX)); // separator at index 6
-    s.extend((0..6).map(|_| f(1))); // indices 7..=12
+    let mut s: Vec<TokenSpan> = (0..6).map(|_| f(FileId::from_index(0))).collect();
+    s.push(f(FileId::SEPARATOR)); // separator at index 6
+    s.extend((0..6).map(|_| f(FileId::from_index(1)))); // indices 7..=12
     s
 }
 
@@ -90,16 +91,16 @@ fn overlapping_follower_is_stitched_without_double_counting() {
 #[test]
 fn sparse_stitch_fails_the_density_guard() {
     // Layout: indices 0..=7 file 0, 8 separator, 9..=16 file 1.
-    let f = |id: u32| TokenSpan {
-        file_id: id,
+    let f = |file_id: FileId| TokenSpan {
+        file_id,
         start_row: 1,
         end_row: 1,
         start_byte: 0,
         end_byte: 0,
     };
-    let mut spans: Vec<TokenSpan> = (0..8).map(|_| f(0)).collect();
-    spans.push(f(u32::MAX));
-    spans.extend((0..8).map(|_| f(1)));
+    let mut spans: Vec<TokenSpan> = (0..8).map(|_| f(FileId::from_index(0))).collect();
+    spans.push(f(FileId::SEPARATOR));
+    spans.extend((0..8).map(|_| f(FileId::from_index(1))));
     let clusters = vec![
         RawGroup {
             len: 2,

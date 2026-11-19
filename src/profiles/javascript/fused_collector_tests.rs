@@ -1,6 +1,7 @@
 //! The fused collector's function facts.
 
 use super::JsProfile;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_source;
 
 /// Parent function metrics exclude nested arrow and declaration bodies, while
@@ -8,7 +9,7 @@ use crate::spine::parser::parse_source;
 #[test]
 fn fused_collector_nested_arrows_and_declarations() {
     let src = b"function top(x) {\n  const f = () => x + 1;\n  function helper(y) { return y * 2; }\n  return f(helper(x));\n}\n";
-    let functions = parse_source(src, 0, "m", &JsProfile)
+    let functions = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions;
@@ -35,7 +36,7 @@ fn fused_collector_nested_arrows_and_declarations() {
 fn fused_collector_nested_loop_and_conditional() {
     let src =
         b"function scan(items) {\n  if (items.length) {\n    for (const x of items) {\n      log(x);\n    }\n  }\n}\n";
-    let functions = parse_source(src, 0, "m", &JsProfile)
+    let functions = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions;
@@ -58,7 +59,9 @@ fn fused_collector_nested_loop_and_conditional() {
 #[test]
 fn fused_collector_class_method() {
     let src = b"class Store {\n  save(data) { this.buffer = data; return this.ok; }\n  load() { return this.buffer; }\n}\n";
-    let units = parse_source(src, 0, "m", &JsProfile).unwrap().units;
+    let units = parse_source(src, FileId::default(), "m", &JsProfile)
+        .unwrap()
+        .units;
 
     assert_eq!(units.classes.len(), 1);
     assert_eq!(units.classes[0].name, "Store");
@@ -87,7 +90,7 @@ fn fused_collector_class_method() {
 #[test]
 fn fused_collector_json_identity() {
     let src = b"function compute(n) {\n  let s = 0;\n  for (let i = 0; i < n; i++) {\n    if (i % 2) { s += i; } else { s += 1; }\n  }\n  return s;\n}\n";
-    let functions = parse_source(src, 0, "m", &JsProfile)
+    let functions = parse_source(src, FileId::default(), "m", &JsProfile)
         .unwrap()
         .units
         .functions;

@@ -1,6 +1,7 @@
 use super::test_support as fixture;
 use super::*;
 use crate::config::smells::Smells;
+use crate::spine::ir::FileId;
 use crate::spine::parser::parse_file;
 use std::fs;
 use std::path::{Path, PathBuf};
@@ -63,7 +64,7 @@ fn god_module_is_a_hub_not_an_entrypoint() {
     let parsed: Vec<_> = paths
         .iter()
         .enumerate()
-        .map(|(i, p)| parse_file(&dir.join(p), i as u32).unwrap())
+        .map(|(i, p)| parse_file(&dir.join(p), FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
     // Raise the shotgun threshold so the hub is evaluated as a god module rather
@@ -174,7 +175,7 @@ fn shotgun_hazard_needs_blast_radius() {
     let parsed: Vec<_> = files
         .iter()
         .enumerate()
-        .map(|(i, p)| parse_file(p, i as u32).unwrap())
+        .map(|(i, p)| parse_file(p, FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
     let cfg = Smells::default();
@@ -199,7 +200,7 @@ fn package_index_barrels_are_not_graph_hotspots() {
     let parsed: Vec<_> = files
         .iter()
         .enumerate()
-        .map(|(i, p)| parse_file(p, i as u32).unwrap())
+        .map(|(i, p)| parse_file(p, FileId::from_index(i)).unwrap())
         .collect();
     let graph = crate::spine::graph::build(&parsed, &[]);
     let cfg = Smells::default();

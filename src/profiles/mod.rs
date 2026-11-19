@@ -55,7 +55,8 @@ pub mod rust;
 pub mod typescript;
 
 use crate::spine::ir::{
-    ClassProperty, ClassUnit, ImportContext, ImportPhase, Language, MutatorFamily, PerfLine, Walked,
+    ClassProperty, ClassUnit, FileId, ImportContext, ImportPhase, Language, MutatorFamily,
+    PerfLine, Walked,
 };
 use std::collections::HashSet;
 use std::path::{Path, PathBuf};
@@ -149,7 +150,13 @@ pub struct EntryCandidate<'a> {
 pub trait ParseProfile: Send + Sync {
     fn info(&self) -> &'static LanguageInfo;
     fn ts_language(&self) -> tree_sitter::Language;
-    fn walk(&self, root: tree_sitter::Node, src: &[u8], file_id: u32, module_name: &str) -> Walked;
+    fn walk(
+        &self,
+        root: tree_sitter::Node,
+        src: &[u8],
+        file_id: FileId,
+        module_name: &str,
+    ) -> Walked;
     fn is_generated_or_data_source(&self, _path: &Path) -> bool {
         false
     }
