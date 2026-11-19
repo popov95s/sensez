@@ -4,7 +4,8 @@
 use super::RustProfile;
 use crate::profiles::test_fixtures::tokens;
 use crate::spine::ir::FileId;
-use crate::spine::parser::{parse_file, parse_source, StructuralToken};
+use crate::spine::ir::StructuralToken;
+use crate::spine::parser::{parse_file, parse_source};
 use std::fs;
 use std::path::Path;
 

@@ -1,6 +1,6 @@
 //! `magic_string_default`: string fallbacks standing in for a missing value.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FallbackSink, FunctionUnit, StringFallback};
@@ -35,10 +35,7 @@ pub(super) fn detect(
         ctx.path,
         first.line,
         &m.name,
-        Severity::Warning,
-        hits.len() as u32,
-        0,
-    ));
+        Severity::Warning, Measure::new(hits.len(), 0)));
 }
 
 fn is_sentinel(ctx: &SmellContext<'_>, fallback: &StringFallback, strictness: Strictness) -> bool {

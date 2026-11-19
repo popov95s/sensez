@@ -7,8 +7,8 @@
 //! a sign the fields want to become one object. Per-file scoping also avoids
 //! ubiquitous fields (`id`, `org_id`) chaining unrelated bundles together.
 
-use super::make;
 use super::union_find::{find, union};
+use super::{make, Measure};
 use crate::config::smells::{SmellConfig, Smells};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -83,8 +83,7 @@ fn detect_in_file(file: &ParsedFile, cfg: &Smells) -> Vec<SmellFinding> {
                 group.line,
                 &fields.join("+"),
                 Severity::Info,
-                group.support as u32,
-                cfg.data_clump_min_occurrences as u32,
+                Measure::new(group.support, cfg.data_clump_min_occurrences),
             )
         })
         .collect()

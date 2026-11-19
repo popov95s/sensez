@@ -1,7 +1,7 @@
 //! Size smells: long function, narrating comments, large class, and heavy
 //! nested functions.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
@@ -23,8 +23,7 @@ pub fn detect(
                 m.start_line,
                 &m.name,
                 Severity::Warning,
-                lines as u32,
-                cfg.max_function_lines as u32,
+                Measure::new(lines, cfg.max_function_lines),
             ));
         }
         if cfg.is_enabled(SmellKind::NarratingCode) {
@@ -44,8 +43,7 @@ pub fn detect(
                 class.start_line,
                 &class.name,
                 Severity::Warning,
-                methods as u32,
-                cfg.max_class_methods as u32,
+                Measure::new(methods, cfg.max_class_methods),
             ));
         }
     }
@@ -93,8 +91,7 @@ fn heavy_nested_function(
         m.start_line,
         &m.name,
         severity,
-        lines as u32,
-        cfg.max_nested_function_lines as u32,
+        Measure::new(lines, cfg.max_nested_function_lines),
     )
 }
 
@@ -135,7 +132,6 @@ fn narrating_code(
         m.first_noisy_comment_line.unwrap_or(m.start_line),
         &m.name,
         Severity::Info,
-        ratio as u32,
-        cfg.max_comment_ratio_percent as u32,
+        Measure::new(ratio, cfg.max_comment_ratio_percent),
     ));
 }

@@ -173,10 +173,10 @@ pub(crate) fn emit(out: &mut Walked, file_id: FileId, node: Node, tok: Structura
     out.syntax.lexemes.push(code);
     out.syntax.spans.push(TokenSpan {
         file_id,
-        start_row: (start.row + 1) as u32,
-        end_row: (end.row + 1) as u32,
-        start_byte: node.start_byte() as u32,
-        end_byte: node.end_byte() as u32,
+        start_row: saturating_u32(start.row + 1),
+        end_row: saturating_u32(end.row + 1),
+        start_byte: saturating_u32(node.start_byte()),
+        end_byte: saturating_u32(node.end_byte()),
     });
 }
 
@@ -297,4 +297,8 @@ pub(crate) fn record_comment_block(
             end_line: node.end_position().row + 1,
             class: comment_class::classify_in(*node, block, Some(parent), src, syntax),
         }));
+}
+
+fn saturating_u32(count: usize) -> u32 {
+    u32::try_from(count).unwrap_or(u32::MAX)
 }

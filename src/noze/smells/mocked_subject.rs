@@ -1,7 +1,7 @@
 //! Test files that replace the module their subject under test comes from.
 
 use super::mock_modules::{ModuleKeys, ReachedMember};
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionUnit, MockFidelity, MockHost, MockScope, MockTarget};
@@ -140,8 +140,5 @@ fn finding(ctx: &SmellContext<'_>, mock: &MockTarget, subject: &str) -> SmellFin
         ctx.path,
         mock.line,
         subject,
-        Severity::Warning,
-        1,
-        0,
-    )
+        Severity::Warning, Measure::new(1, 0))
 }

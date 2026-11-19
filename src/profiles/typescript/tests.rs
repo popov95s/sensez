@@ -4,7 +4,8 @@ use crate::noze::smells::detect_local;
 use crate::report::{SmellFinding, SmellKind};
 use crate::spine::ir::FileId;
 use crate::spine::ir::Language;
-use crate::spine::parser::{parse_file, parse_source, ImportPhase, ParsedFile, StructuralToken};
+use crate::spine::ir::StructuralToken;
+use crate::spine::parser::{parse_file, parse_source, ImportPhase, ParsedFile};
 use std::fs;
 use std::path::{Path, PathBuf};
 

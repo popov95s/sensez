@@ -4,8 +4,8 @@
 //! in different modules whose lexeme bodies reach `sibling_helper_min_similarity`
 //! percent similarity form one finding, anchored at the first definition.
 
-use super::make;
 use super::union_find::{find, union};
+use super::{make, Measure};
 use crate::config::smells::SmellConfig;
 use crate::noze::duplication::{function_lexemes, length_ceiling_percent, similarity_percent};
 use crate::profiles::registry;
@@ -224,10 +224,7 @@ fn finding(cluster: &[Definition]) -> SmellFinding {
         &anchor.file.path,
         anchor.func.start_line,
         &anchor.func.name,
-        Severity::Info,
-        members.len() as u32,
-        2,
-    )
+        Severity::Info, Measure::new(members.len(), 2))
 }
 
 fn common_root<'a>(members: &[&'a Definition]) -> &'a Path {

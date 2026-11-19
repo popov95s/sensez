@@ -5,7 +5,7 @@
 //! base-method comparison is a future refinement (the import graph carries the
 //! edge); this conservative form flags clear stub-heavy overrides.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::ClassUnit;
@@ -37,8 +37,7 @@ pub fn detect(
                 class.start_line,
                 &class.name,
                 Severity::Warning,
-                stubs as u32,
-                methods as u32,
+                Measure::new(stubs, methods),
             ));
         }
     }

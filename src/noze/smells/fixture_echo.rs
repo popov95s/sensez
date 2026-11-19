@@ -1,7 +1,7 @@
 //! Test assertions that cannot fail.
 
 use super::review_risks::{calls_check, checked_helpers};
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{EchoAssertion, EchoShape, FunctionUnit};
@@ -43,10 +43,7 @@ fn echo_finding(
         ctx.path,
         assertion.line,
         &metric.name,
-        Severity::Warning,
-        1,
-        0,
-    )
+        Severity::Warning, Measure::new(1, 0))
 }
 
 fn mock_only_tests(
@@ -68,10 +65,7 @@ fn mock_only_tests(
             ctx.path,
             metric.start_line,
             &metric.name,
-            Severity::Info,
-            metric.review_risks.test_checks as u32,
-            0,
-        ));
+            Severity::Info, Measure::new(metric.review_risks.test_checks, 0)));
     }
 }
 

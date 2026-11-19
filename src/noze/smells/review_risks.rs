@@ -1,6 +1,6 @@
 //! Structurally derived risks that warrant focused review.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
@@ -87,10 +87,7 @@ fn wrapper_chains(
             ctx.path,
             outer.start_line,
             &outer.name,
-            Severity::Info,
-            chain.len() as u32,
-            max_depth as u32,
-        ));
+            Severity::Info, Measure::new(chain.len(), max_depth)));
     }
 }
 
@@ -116,10 +113,7 @@ fn weak_test_oracle(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut Vec
         ctx.path,
         metric.start_line,
         symbol,
-        Severity::Info,
-        0,
-        1,
-    ));
+        Severity::Info, Measure::new(0, 1)));
 }
 
 /// Test sources bypass the usual test-file smell exclusions only for this rule.
@@ -203,8 +197,7 @@ fn defensive_fallback(ctx: &SmellContext<'_>, metric: &FunctionUnit, out: &mut V
         metric.start_line,
         &metric.name,
         Severity::Warning,
-        (facts.broad_handlers + facts.empty_fallbacks) as u32,
-        3,
+        Measure::new(facts.broad_handlers + facts.empty_fallbacks, 3),
     ));
 }
 
@@ -223,8 +216,7 @@ fn redundant_validation(
         metric.start_line,
         &metric.name,
         Severity::Info,
-        metric.review_risks.repeated_guards as u32,
-        0,
+        Measure::new(metric.review_risks.repeated_guards, 0),
     ));
 }
 
@@ -257,8 +249,7 @@ fn divergent_abstractions(
             abstraction.start_line,
             &abstraction.name,
             Severity::Warning,
-            2,
-            2,
+            Measure::new(2, 2),
         ));
     }
 }

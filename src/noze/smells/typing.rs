@@ -6,7 +6,7 @@
 //! - `boolean_blindness`: more than `max_bool_params` bool parameters.
 //! - `tuple_packing`: position-based grouped data in returns.
 
-use super::{magic_string, make, SmellContext};
+use super::{magic_string, make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::typevocab::{base_type, split_top_level, LooseTypeKind};
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -99,8 +99,7 @@ fn loose_typing(
         m.start_line,
         &m.name,
         severity,
-        (offenders.len() + ret.is_some() as usize) as u32,
-        0,
+        Measure::new(offenders.len() + usize::from(ret.is_some()), 0),
     ));
 }
 
@@ -135,10 +134,7 @@ fn boolean_blindness(
             ctx.path,
             m.start_line,
             &m.name,
-            Severity::Warning,
-            bools as u32,
-            cfg.max_bool_params as u32,
-        ));
+            Severity::Warning, Measure::new(bools, cfg.max_bool_params)));
     }
 }
 
@@ -170,8 +166,7 @@ fn tuple_packing(
             m.start_line,
             &m.name,
             Severity::Info,
-            arity as u32,
-            cfg.max_tuple_return as u32,
+            Measure::new(arity, cfg.max_tuple_return),
         ));
     }
 }
@@ -223,10 +218,7 @@ fn type_hiding_aliases(ctx: &SmellContext<'_>, out: &mut Vec<SmellFinding>) {
             ctx.path,
             alias.line,
             &alias.name,
-            Severity::Warning,
-            1,
-            0,
-        ));
+            Severity::Warning, Measure::new(1, 0)));
     }
 }
 

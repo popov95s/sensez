@@ -3,8 +3,8 @@
 //! Both need to resolve a receiver's type. When the type is unknown (no
 //! annotation, no obvious instantiation) the smell is skipped — we never guess.
 
-use super::make;
 use super::SmellContext;
+use super::{make, Measure};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionUnit, TypeHints};
@@ -86,8 +86,7 @@ fn feature_envy(ctx: &SmellContext<'_>, metrics: &[FunctionUnit], out: &mut Vec<
             m.start_line,
             &m.name,
             Severity::Warning,
-            count as u32,
-            self_uses as u32,
+            Measure::new(count, self_uses),
         ));
     }
 }
@@ -120,8 +119,7 @@ fn inappropriate_intimacy(
                 0,
                 base,
                 Severity::Info,
-                privates.len() as u32,
-                0,
+                Measure::new(privates.len(), 0),
             ));
         }
     }

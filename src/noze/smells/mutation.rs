@@ -7,7 +7,7 @@
 use super::external_vocab::{is_external_vocabulary, is_markup_operand};
 use super::implicit_schema;
 use super::lines::{hit_lines, line_list};
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{
@@ -68,10 +68,7 @@ fn literal_membership(
         ctx.path,
         first,
         &m.name,
-        Severity::Info,
-        hits.len() as u32,
-        0,
-    );
+        Severity::Info, Measure::new(hits.len(), 0));
     out.push(SmellFinding { lines, ..finding });
 }
 
@@ -147,8 +144,7 @@ fn mutated_params(
         lines.first().copied().unwrap_or(m.start_line),
         &m.name,
         severity,
-        mutated.len() as u32,
-        0,
+        Measure::new(mutated.len(), 0),
     );
     out.push(SmellFinding { lines, ..finding });
 }
@@ -220,7 +216,6 @@ fn reassigned_params(ctx: &SmellContext<'_>, m: &FunctionUnit, out: &mut Vec<Sme
         m.start_line,
         &m.name,
         Severity::Info,
-        rebound.len() as u32,
-        0,
+        Measure::new(rebound.len(), 0),
     ));
 }

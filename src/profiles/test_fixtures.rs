@@ -2,8 +2,9 @@
 
 use crate::profiles::ParseProfile;
 use crate::spine::ir::FileId;
+use crate::spine::ir::StructuralToken;
 use crate::spine::ir::Walked;
-use crate::spine::parser::{parse_source, StructuralToken};
+use crate::spine::parser::parse_source;
 
 pub(crate) fn walked(src: impl AsRef<[u8]>, profile: &dyn ParseProfile) -> Walked {
     parse_source(src.as_ref(), FileId::default(), "m", profile).unwrap()

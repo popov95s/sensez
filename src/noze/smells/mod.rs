@@ -5,6 +5,8 @@
 //! (data clumps) aggregate over every function, and graph-metric smells
 //! (shotgun-surgery hazard, god module, instability) read the dependency graph.
 
+mod measure;
+use measure::Measure;
 mod clumps;
 mod cohesion;
 mod complexity;
@@ -261,7 +263,6 @@ fn fill_spans(file: &ParsedFile, out: &mut [SmellFinding]) {
 }
 
 /// Construct a finding (keeps the per-smell call sites terse).
-#[allow(clippy::too_many_arguments)]
 pub(super) fn make(
     kind: SmellKind,
     message: String,
@@ -269,8 +270,7 @@ pub(super) fn make(
     line: usize,
     symbol: &str,
     severity: Severity,
-    metric: u32,
-    threshold: u32,
+    measure: Measure,
 ) -> SmellFinding {
     SmellFinding {
         action: ActionLevel::from_severity(severity),
@@ -282,8 +282,8 @@ pub(super) fn make(
         lines: Vec::new(),
         symbol: symbol.to_string(),
         severity,
-        metric,
-        threshold,
+        metric: measure.value(),
+        threshold: measure.threshold(),
         reason: String::new(),
     }
 }

@@ -1,6 +1,6 @@
 //! Small module-level functions that re-implement a utility the project already depends on.
 
-use super::make;
+use super::{make, Measure};
 use crate::config::smells::SmellConfig;
 use crate::profiles::dependencies::{DeclaredPackages, DependencyScope};
 use crate::profiles::registry;
@@ -101,8 +101,7 @@ fn finding(file: &ParsedFile, copy: &UtilityLookalike, copies: usize) -> SmellFi
         copy.line,
         &copy.name,
         Severity::Info,
-        copies as u32,
-        ADVISORY_COPIES as u32,
+        Measure::new(copies, ADVISORY_COPIES),
     );
     finding.end_line = copy.line + copy.lines - 1;
     finding.action = match copies >= ADVISORY_COPIES {

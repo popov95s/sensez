@@ -1,6 +1,6 @@
 //! `swallowed_error_sentinel`: handlers that hide a failure behind a placeholder value or a log.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{FunctionUnit, GuardedBody, HandlerComment, HandlerEnd, SentinelHandler};
@@ -36,8 +36,7 @@ pub(super) fn detect(
             handler.line,
             &metric.name,
             Severity::Warning,
-            1,
-            0,
+            Measure::new(1, 0),
         ));
     }
 }

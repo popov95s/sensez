@@ -4,7 +4,7 @@
 //! Shotgun-Surgery *Hazard* is predictive: a module depended on by many distinct
 //! modules is one whose change forces edits across a wide, scattered blast radius.
 
-use super::make;
+use super::{make, Measure};
 use crate::config::smells::{SmellConfig, Smells};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -140,8 +140,7 @@ fn shotgun(
         0,
         &node.module_name,
         sev,
-        blast as u32,
-        floor as u32,
+        Measure::new(blast, floor),
     ))
 }
 
@@ -194,8 +193,5 @@ fn god_module(
         &node.file_path,
         1,
         &node.module_name,
-        Severity::Warning,
-        fan as u32,
-        cfg.god_module_fan as u32,
-    ))
+        Severity::Warning, Measure::new(fan, cfg.god_module_fan)))
 }

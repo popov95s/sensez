@@ -1,7 +1,5 @@
 pub use crate::spine::ir::tokens;
 pub(crate) mod timing;
-#[allow(unused_imports)]
-pub use crate::spine::ir::tokens::{StructuralToken, TokenSpan};
 pub use crate::spine::ir::{
     ClassProperty, FunctionUnit, ImportContext, ImportPhase, SymbolKind, Walked,
 };
@@ -200,7 +198,7 @@ fn parse_loaded_source(
     let lines = if src.is_empty() {
         0
     } else {
-        (src.iter().filter(|&&b| b == b'\n').count() + 1) as u32
+        u32::try_from(src.iter().filter(|&&b| b == b'\n').count() + 1).unwrap_or(u32::MAX)
     };
     Ok(ParsedFile {
         path: path.to_path_buf(),

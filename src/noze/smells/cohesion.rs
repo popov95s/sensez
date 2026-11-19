@@ -9,9 +9,9 @@
 //! no cohesion signal, so they are skipped rather than flagged as a wall of
 //! one-method "islands".
 
-use super::make;
 use super::union_find::{find, union};
 use super::SmellContext;
+use super::{make, Measure};
 use crate::report::{Severity, SmellFinding, SmellKind};
 use crate::spine::ir::{ClassUnit, FunctionUnit};
 use std::collections::HashMap;
@@ -63,8 +63,7 @@ fn divergent_change(ctx: &SmellContext<'_>, class: &ClassUnit, out: &mut Vec<Sme
             class.start_line,
             &class.name,
             Severity::Warning,
-            components as u32,
-            1,
+            Measure::new(components, 1),
         ));
     }
 }

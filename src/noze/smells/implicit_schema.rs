@@ -1,6 +1,6 @@
 //! `implicit_schema`: one receiver read with many distinct string keys.
 
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::Smells;
 use crate::profiles::typevocab::base_type;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -48,8 +48,7 @@ pub(super) fn detect(
             m.str_key_lines.get(recv).copied().unwrap_or(m.start_line),
             &m.name,
             Severity::Info,
-            keys.len() as u32,
-            cfg.implicit_schema_min_keys as u32,
+            Measure::new(keys.len(), cfg.implicit_schema_min_keys),
         ));
     }
 }

@@ -1,7 +1,7 @@
 //! `name_promise_mismatch`: a read-named function that writes state.
 
 use super::name_promise_writes::{normalized, writes, Body, Reach, Write};
-use super::{make, SmellContext};
+use super::{make, Measure, SmellContext};
 use crate::config::smells::{Smells, Strictness};
 use crate::profiles::registry;
 use crate::report::{Severity, SmellFinding, SmellKind};
@@ -138,8 +138,7 @@ fn finding(ctx: &SmellContext<'_>, unit: &FunctionUnit, found: &[Write]) -> Smel
         unit.start_line,
         &unit.name,
         Severity::Info,
-        found.len() as u32,
-        0,
+        Measure::new(found.len(), 0),
     );
     SmellFinding {
         lines: found.iter().map(|write| write.line).collect(),
